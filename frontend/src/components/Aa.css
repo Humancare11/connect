@@ -1,0 +1,413 @@
+/* ── Section Wrapper ── */
+.aa-section {
+  background: #e0e5ec;
+  padding: 40px 20px;
+}
+
+/* ── Container with max-width ── */
+.aa-container {
+  max-width: 1500px;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Header ── */
+.aa-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 44px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* ── Eyebrow Label ── */
+.aa-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ── Title ── */
+.aa-title {
+  font-family: "Satoshi", sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* ── Tabs Container ── */
+.aa-tabs {
+  width: 100%;
+  max-width: 475px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  overflow: hidden;
+  position: relative; /* ✅ IMPORTANT */
+}
+
+/* ── Animated Pill ── */
+.aa-pill {
+  position: absolute;
+  top: 0px;
+  left: 0;
+  height: calc(100% - 0px);
+  width: 0;
+  background: #0b1f3adb;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* ── Tab Button ── */
+.aa-tab {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.25s ease;
+  border-radius: 8px;
+  position: relative;
+  z-index: 2; /* ✅ above pill */
+}
+
+/* ── Active Tab (only when no other tab is hovered) ── */
+.aa-tab-active {
+  font-weight: 600;
+}
+
+/* ── Tab Hover ── */
+.aa-tab:hover {
+  color: white; /* dark text on hover */
+}
+
+/* ── Tab with pill underneath (active OR hovered) ── */
+.aa-tab-hovered,
+.aa-tab-active:not(.aa-tab-inactive) {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ── Grid Wrapper ── */
+.aa-grid-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 500px;
+  overflow: hidden;
+}
+
+/* ── Grid ── */
+.aa-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 25px;
+  justify-items: center;
+}
+
+/* ── Card ── */
+.aa-card {
+  background: #e0e5ec;
+  border-radius: 28px;
+  padding: 36px;
+  width: 100%;
+  max-width: 339px;
+  box-shadow:
+    8px 8px 16px rgba(34, 58, 94, 0.12),
+    -11px -8px 20px rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease;
+}
+
+/* ── Card Gradient Overlay ── */
+.aa-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #6687b7 0%, #ffffff 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+/* ── Card Hover ── */
+.aa-card:hover {
+  box-shadow:
+    12px 12px 24px rgba(34, 58, 94, 0.18),
+    -12px -12px 24px rgba(255, 255, 255, 0.9);
+  border-color: transparent;
+  border-radius: 28px;
+}
+
+.aa-card:hover::before {
+  opacity: 1;
+}
+
+.aa-card:hover .aa-icon,
+.aa-card:hover .aa-name,
+.aa-card:hover .aa-count {
+  color: #ffffff;
+}
+
+.aa-card:hover .aa-icon svg {
+  color: #ffffff;
+}
+
+/* ── Icon ── */
+.aa-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.aa-icon svg {
+  font-size: 2.5rem;
+  color: #526b91;
+  transition: color 0.3s ease;
+}
+
+/* ── Name ── */
+.aa-name {
+  font-family: "Satoshi", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
+  color: var(--text);
+  transition: color 0.3s ease;
+}
+
+/* ── Count ── */
+.aa-count {
+  font-size: 15px;
+  color: var(--muted);
+  position: relative;
+  z-index: 1;
+  transition: color 0.3s ease;
+  display: block;
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE DESIGN
+══════════════════════════════════════════════ */
+
+/* Extra Large: ≥ 1200px (Default - 4 columns) */
+@media (min-width: 1200px) {
+  .aa-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .aa-grid-wrapper {
+    min-height: 500px;
+  }
+
+  .aa-card {
+    max-width: 339px;
+  }
+}
+
+/* Large: 992px - 1199px (Laptops and desktops - 3 columns) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .aa-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .aa-grid-wrapper {
+    min-height: 650px;
+  }
+
+  .aa-card {
+    max-width: 100%;
+    padding: 32px;
+  }
+
+  .aa-container {
+    max-width: 1100px;
+  }
+}
+
+/* Medium: 768px - 991px (Landscape tablets - 3 columns) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .aa-section {
+    padding: 50px 20px;
+  }
+
+  .aa-container {
+    max-width: 900px;
+  }
+
+  .aa-header {
+    margin-bottom: 36px;
+  }
+
+  .aa-tabs {
+    width: 400px;
+  }
+
+  .aa-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .aa-grid-wrapper {
+    min-height: 650px;
+  }
+
+  .aa-card {
+    max-width: 100%;
+    padding: 28px;
+  }
+
+  .aa-icon svg {
+    font-size: 2.2rem;
+  }
+
+  .aa-name {
+    font-size: 18px;
+  }
+}
+
+/* Small: 600px - 767px (Portrait tablets and large phones - 2 columns) */
+@media (min-width: 600px) and (max-width: 767px) {
+  .aa-section {
+    padding: 45px 20px;
+  }
+
+  .aa-container {
+    max-width: 700px;
+  }
+
+  .aa-header {
+    margin-bottom: 32px;
+  }
+
+  .aa-tabs {
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .aa-tab {
+    padding: 11px 0;
+    font-size: 13px;
+  }
+
+  .aa-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .aa-grid-wrapper {
+    min-height: 850px;
+  }
+
+  .aa-card {
+    max-width: 100%;
+    padding: 26px;
+  }
+
+  .aa-icon svg {
+    font-size: 2rem;
+  }
+
+  .aa-name {
+    font-size: 17px;
+  }
+
+  .aa-count {
+    font-size: 14px;
+  }
+}
+
+/* Extra Small: < 600px (Mobile phones - 1 column) */
+@media (max-width: 599px) {
+  .aa-section {
+    padding: 40px 16px;
+  }
+
+  .aa-container {
+    max-width: 100%;
+  }
+
+  .aa-title {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+
+  .aa-eyebrow {
+    font-size: 10px;
+    margin-bottom: 8px;
+  }
+
+  .aa-header {
+    margin-bottom: 28px;
+  }
+
+  .aa-tabs {
+    width: 100%;
+    padding: 4px;
+  }
+
+  .aa-tab {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .aa-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 12px;
+  }
+
+  .aa-grid-wrapper {
+    min-height: 1150px;
+  }
+
+  .aa-card {
+    max-width: 100%;
+    padding: 24px;
+    border-radius: 24px;
+  }
+
+  .aa-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+  }
+
+  .aa-icon svg {
+    font-size: 2rem;
+  }
+
+  .aa-name {
+    font-size: 17px;
+    margin-bottom: 4px;
+  }
+
+  .aa-count {
+    font-size: 13px;
+  }
+}

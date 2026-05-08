@@ -1,0 +1,733 @@
+/* ================================================
+   DoctorAppointments.css  —  HumaniCare Dark Theme
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    --navy: #0d1b2a;
+    --navy-lt: #162436;
+    --navy-card: #1a2d42;
+    --teal: #19c9a3;
+    --teal-dim: rgba(25, 201, 163, 0.12);
+    --teal-glow: rgba(25, 201, 163, 0.25);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245, 158, 11, 0.12);
+    --green: #22c55e;
+    --green-dim: rgba(34, 197, 94, 0.12);
+    --slate: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.08);
+    --text-primary: #f0f6ff;
+    --text-secondary: #7a93ad;
+    --text-muted: #4a6174;
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Root ── */
+.da-root {
+    font-family: 'Outfit', sans-serif;
+    background: var(--navy);
+    min-height: 100vh;
+    color: var(--text-primary);
+    padding: 40px;
+}
+
+/* ── Header ── */
+.da-header {
+    margin-bottom: 32px;
+    animation: da-up 0.5s var(--ease) both;
+}
+
+.da-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal);
+    display: block;
+    margin-bottom: 8px;
+}
+
+.da-greeting {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+    line-height: 1.15;
+}
+
+.da-wave {
+    display: inline-block;
+    animation: da-wave-anim 1.8s ease-in-out infinite;
+    transform-origin: 70% 70%;
+}
+
+@keyframes da-wave-anim {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    20% {
+        transform: rotate(-10deg);
+    }
+
+    40% {
+        transform: rotate(12deg);
+    }
+
+    60% {
+        transform: rotate(-8deg);
+    }
+
+    80% {
+        transform: rotate(8deg);
+    }
+}
+
+.da-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* ── Stats Row ── */
+.da-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.da-stat {
+    background: var(--navy-lt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    animation: da-up 0.45s var(--ease) both;
+}
+
+.da-stat::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 0% 50%, var(--teal-dim) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.da-stat:hover::before {
+    opacity: 1;
+}
+
+.da-stat:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.da-stat--active {
+    border-color: var(--teal) !important;
+    background: var(--navy-card);
+}
+
+.da-stat--active::before {
+    opacity: 1 !important;
+}
+
+/* Status dots */
+.da-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+}
+
+.da-dot--amber {
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+}
+
+.da-dot--teal {
+    background: var(--teal);
+    box-shadow: 0 0 8px var(--teal);
+}
+
+.da-dot--green {
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+}
+
+.da-dot--purple {
+    background: #a78bfa;
+    box-shadow: 0 0 8px #a78bfa;
+}
+
+.da-stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.da-stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* ── Main Panel ── */
+.da-panel {
+    background: var(--navy-lt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    animation: da-up 0.55s var(--ease) 0.1s both;
+}
+
+.da-panel-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 26px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.da-panel-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 3px;
+}
+
+.da-panel-sub {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ── Tabs ── */
+.da-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--navy);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+}
+
+.da-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+}
+
+.da-tab:hover {
+    color: var(--text-primary);
+    background: var(--slate);
+}
+
+.da-tab--active {
+    background: var(--navy-card);
+    color: var(--teal);
+}
+
+.da-tab-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: var(--slate);
+    padding: 1px 6px;
+    border-radius: 20px;
+    color: var(--text-muted);
+}
+
+.da-tab--active .da-tab-count {
+    background: var(--teal-dim);
+    color: var(--teal);
+}
+
+/* ── Table ── */
+.da-table-wrap {
+    overflow-x: auto;
+}
+
+.da-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.da-table thead tr {
+    border-bottom: 1px solid var(--border);
+}
+
+.da-table th {
+    padding: 13px 20px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.da-row {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    animation: da-up 0.3s var(--ease) both;
+}
+
+.da-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.da-row--open {
+    background: rgba(25, 201, 163, 0.04);
+}
+
+.da-row--focused {
+    outline: 2px solid rgba(25, 201, 163, 0.5);
+    outline-offset: -2px;
+    background: rgba(25, 201, 163, 0.07);
+}
+
+.da-table td {
+    padding: 14px 20px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.da-mono {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 12.5px !important;
+    color: var(--text-secondary) !important;
+}
+
+.da-problem {
+    color: var(--text-secondary) !important;
+    font-style: italic;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Patient cell ── */
+.da-patient {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.da-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--teal-dim);
+    border: 1.5px solid var(--teal-glow);
+    color: var(--teal);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.da-patient-name {
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* ── Badges ── */
+.da-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+}
+
+.da-badge--teal {
+    background: var(--teal-dim);
+    color: var(--teal);
+    border: 1px solid var(--teal-glow);
+}
+
+.da-badge--amber {
+    background: var(--amber-dim);
+    color: var(--amber);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.da-badge--green {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.da-badge--red {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.da-badge--slate {
+    background: var(--slate);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+/* ── Action group ── */
+.da-action-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── Buttons ── */
+.da-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+    white-space: nowrap;
+}
+
+.da-btn:active {
+    transform: scale(0.96);
+}
+
+.da-btn--join {
+    background: var(--teal);
+    color: #0d1b2a;
+    font-weight: 600;
+}
+
+.da-btn--join:hover {
+    box-shadow: 0 0 20px var(--teal-glow);
+    background: #1edbb3;
+}
+
+.da-btn--confirm {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--amber);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    min-width: 76px;
+    justify-content: center;
+}
+
+.da-btn--confirm:hover {
+    background: rgba(245, 158, 11, 0.25);
+}
+
+.da-btn--confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.da-btn--ghost {
+    background: var(--slate);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 7px 10px;
+}
+
+.da-btn--ghost:hover,
+.da-btn--ghost-on {
+    background: var(--teal-dim);
+    color: var(--teal);
+    border-color: var(--teal-glow);
+}
+
+.da-btn--wide {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+/* ── Expanded detail row ── */
+.da-expand-row td {
+    padding: 0 !important;
+    border-bottom: 1px solid var(--border);
+}
+
+.da-expand {
+    padding: 20px 24px;
+    background: rgba(25, 201, 163, 0.03);
+    border-top: 1px dashed rgba(25, 201, 163, 0.2);
+    animation: da-expand-anim 0.25s var(--ease) both;
+}
+
+@keyframes da-expand-anim {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.da-expand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px 24px;
+    margin-bottom: 18px;
+}
+
+.da-exp-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.da-exp-item--full {
+    grid-column: 1 / -1;
+}
+
+.da-exp-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.da-exp-value {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ── Medical Reports in expand row ── */
+.da-reports {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(25, 201, 163, 0.15);
+}
+
+.da-reports-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+.da-reports-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.da-report-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--teal-dim);
+  border: 1px solid var(--teal-glow);
+  color: var(--teal);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+  max-width: 240px;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.da-report-chip:hover {
+  background: rgba(25, 201, 163, 0.2);
+  box-shadow: 0 0 12px var(--teal-glow);
+}
+
+.da-report-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.da-report-chip-arrow {
+  font-size: 10px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.da-no-reports {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Skeleton ── */
+.da-skeletons {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 0;
+}
+
+.da-skeleton {
+    height: 64px;
+    background: linear-gradient(90deg,
+            var(--navy-card) 25%,
+            rgba(255, 255, 255, 0.04) 50%,
+            var(--navy-card) 75%);
+    background-size: 200% 100%;
+    animation: da-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes da-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ── Empty ── */
+.da-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 64px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.da-empty span {
+    font-size: 32px;
+    opacity: 0.4;
+}
+
+/* ── Spinner ── */
+.da-spinner {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border: 2px solid rgba(245, 158, 11, 0.3);
+    border-top-color: var(--amber);
+    border-radius: 50%;
+    animation: da-spin 0.7s linear infinite;
+}
+
+@keyframes da-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Animations ── */
+@keyframes da-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .da-root {
+        padding: 20px 16px;
+    }
+
+    .da-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .da-greeting {
+        font-size: 24px;
+    }
+
+    .da-panel-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .da-tabs {
+        overflow-x: auto;
+        width: 100%;
+        scrollbar-width: none;
+    }
+
+    .da-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .da-table th,
+    .da-table td {
+        padding: 12px 14px;
+    }
+
+    .da-problem {
+        max-width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .da-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .da-stat-num {
+        font-size: 24px;
+    }
+}

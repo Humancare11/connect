@@ -1,0 +1,665 @@
+/* ══════════════════════════════════════════════
+   Sa.css — ServicesSection
+   Scoped class names, no conflicts.
+   Layout preserved exactly as designed.
+══════════════════════════════════════════════ */
+
+/* ── Section Wrapper ── */
+.services-section-wrapper {
+  padding: 100px 48px;
+  background: linear-gradient(-45deg, #223a5e, #1a2f47, #2c4a6b, #223a5e);
+  background-size: 400% 400%;
+  animation: gradShift 12s ease infinite;
+  border-top-left-radius: 40px;
+  border-top-right-radius: 40px;
+}
+
+@keyframes gradShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 75% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ── Inner Container ── */
+.services-inner-container {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Header Block ── */
+.services-header-block {
+  margin-bottom: 48px;
+}
+
+.services-eyebrow-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: white;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.services-main-heading,
+.services-heading-highlight {
+  font-family: "Playfair Display", serif;
+  font-weight: 300;
+  font-size: clamp(40px, 6vw, 64px);
+  color: white;
+  letter-spacing: -1px;
+  line-height: 1.15;
+}
+
+/* ══════════════════════════════════════════════
+   CARD BASE
+══════════════════════════════════════════════ */
+.services-card-item {
+  background-color: rgba(221, 206, 206, 0.082);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius, 16px);
+  padding: 10px;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.25s ease,
+    background 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.services-card-item:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Icon Box ── */
+.services-icon-box {
+  position: relative;
+  overflow: visible;
+  width: 35px;
+  height: 35px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+}
+
+.services-icon-box svg {
+  width: 22px;
+  height: 22px;
+  color: rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* ── Card Title ── */
+.services-card-title {
+  font-family: "Satoshi", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+
+/* ── Card Description ── */
+.services-card-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 3px;
+  flex-grow: 1;
+}
+
+/* ── CTA Link ── */
+.services-card-cta-link {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  letter-spacing: 0.02em;
+  margin-top: auto;
+}
+
+.services-card-cta-link:hover {
+  color: rgb(214, 204, 204);
+  transform: translateX(4px);
+}
+
+/* ── Badge ── */
+.services-feature-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 5px 12px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  /* sits beside icon on the same row */
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── Stats ── */
+.services-stat-mini {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  padding: 3px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.services-stat-mini:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.services-stat-value-text {
+  font-family: "Satoshi", sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.services-stat-label-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.4;
+  font-weight: 500;
+  text-transform: capitalize;
+  margin-top: -1px;
+}
+
+/* ── Split layout inside large card ── */
+.services-content-split {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.services-content-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.services-content-right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 129px;
+  flex-shrink: 0;
+}
+
+/* ── Weight Loss Stats ── */
+.services-weight-stat-block {
+  margin-top: auto;
+}
+
+.services-weight-stat-eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.services-weight-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.services-weight-stat-number {
+  font-family: "Satoshi", sans-serif;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+.services-weight-stat-period {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+}
+
+/* ══════════════════════════════════════════════
+   BENTO GRID — Desktop default (6-col)
+   Layout: matches screenshot exactly
+══════════════════════════════════════════════ */
+.services-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: minmax(165px, auto);
+  gap: 8px;
+}
+
+/* Prescription Refills — 4 cols, 1 row */
+.services-bento-large {
+  grid-column: span 4;
+  height: 167px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Weight Loss — 2 cols, 1 row */
+.services-bento-small-weightloss {
+  grid-column: span 2;
+  height: 167px;
+  padding: 10px;
+}
+
+/* Mental Health — 2 cols, 2 rows (tall) */
+.services-bento-smal-1 {
+  grid-column: span 2;
+  grid-row: span 2;
+  height: 340px;
+}
+
+/* General Consultation — 2 cols, 1 row */
+.services-bento-small {
+  grid-column: span 2;
+  height: 165px;
+}
+
+/* Sexual Health — 2 cols, 1 row */
+.services-bento-small-0 {
+  grid-column: span 2;
+  height: 165px;
+}
+
+/* Chronic Care — 4 cols, 1 row */
+.services-bento-wide {
+  grid-column: span 4;
+  height: 165px;
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════ */
+
+/* ─── Large Desktop 1200px+ ─── */
+@media (min-width: 1200px) {
+  .services-section-wrapper {
+    padding: 100px 48px;
+  }
+  .services-bento-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+}
+
+/* ─── Medium Desktop 992px–1199px ─── */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .services-section-wrapper {
+    padding: 80px 40px;
+  }
+  .services-inner-container {
+    padding: 0 20px;
+  }
+  /* Switch to 4-col, everything reflows */
+  .services-bento-grid {
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(180px, auto);
+    gap: 10px;
+  }
+  .services-bento-large {
+    grid-column: span 2;
+    grid-row: span 2;
+    height: auto;
+  }
+  .services-bento-small-weightloss {
+    grid-column: span 2;
+    grid-row: span 2;
+    height: auto;
+  }
+  .services-bento-smal-1 {
+    grid-column: span 2;
+    grid-row: span 2;
+    height: auto;
+  }
+  .services-bento-small {
+    grid-column: span 2;
+    height: auto;
+  }
+  .services-bento-small-0 {
+    grid-column: span 2;
+    height: auto;
+  }
+  .services-bento-wide {
+    grid-column: span 4;
+    height: auto;
+  }
+  .services-content-right {
+    width: 160px;
+  }
+}
+
+/* ─── Tablet 768px–991px ─── */
+@media (max-width: 991px) and (min-width: 768px) {
+  .services-section-wrapper {
+    padding: 70px 32px;
+    border-top-left-radius: 32px;
+    border-top-right-radius: 32px;
+  }
+  .services-inner-container {
+    padding: 0 16px;
+  }
+  .services-header-block {
+    margin-bottom: 36px;
+  }
+  /* 2-col grid, all cards full width */
+  .services-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: auto;
+    gap: 11px;
+  }
+  .services-bento-large,
+  .services-bento-small-weightloss,
+  .services-bento-smal-1,
+  .services-bento-small,
+  .services-bento-small-0,
+  .services-bento-wide {
+    grid-column: span 2;
+    grid-row: span 1;
+    height: auto;
+    padding: 24px;
+  }
+  .services-content-split {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .services-content-right {
+    flex-direction: row;
+    width: 100%;
+  }
+  .services-content-right .services-stat-mini {
+    flex: 1;
+  }
+}
+
+/* ─── Mobile Landscape 600px–767px ─── */
+@media (max-width: 767px) and (min-width: 600px) {
+  .services-section-wrapper {
+    padding: 60px 24px;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+  }
+  .services-inner-container {
+    padding: 0 12px;
+  }
+  .services-header-block {
+    margin-bottom: 30px;
+  }
+  .services-eyebrow-label {
+    font-size: 10px;
+  }
+  /* 1-col stacked */
+  .services-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+  .services-bento-large,
+  .services-bento-small-weightloss,
+  .services-bento-smal-1,
+  .services-bento-small,
+  .services-bento-small-0,
+  .services-bento-wide {
+    grid-column: span 1;
+    grid-row: span 1;
+    height: auto;
+    padding: 22px;
+  }
+  .services-content-split {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .services-content-right {
+    flex-direction: row;
+    width: 100%;
+    gap: 10px;
+  }
+  .services-content-right .services-stat-mini {
+    flex: 1;
+    padding: 10px 16px;
+  }
+  .services-card-title {
+    font-size: 18px;
+  }
+  .services-card-description {
+    font-size: 13px;
+  }
+  .services-feature-badge {
+    font-size: 9px;
+    padding: 4px 10px;
+  }
+}
+
+/* ─── Mobile Portrait 400px–599px ─── */
+@media (max-width: 599px) and (min-width: 400px) {
+  .services-section-wrapper {
+    padding: 50px 16px;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+  }
+  .services-inner-container {
+    padding: 0 8px;
+  }
+  .services-header-block {
+    margin-bottom: 28px;
+  }
+  .services-eyebrow-label {
+    font-size: 9px;
+    margin-bottom: 10px;
+  }
+  .services-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .services-bento-large,
+  .services-bento-small-weightloss,
+  .services-bento-smal-1,
+  .services-bento-small,
+  .services-bento-small-0,
+  .services-bento-wide {
+    grid-column: span 1;
+    grid-row: span 1;
+    height: auto;
+    padding: 20px;
+  }
+  .services-card-item {
+    padding: 20px;
+  }
+  .services-icon-box {
+    width: 35px;
+    height: 35px;
+  }
+  .services-icon-box svg {
+    width: 20px;
+    height: 20px;
+  }
+  .services-card-title {
+    font-size: 17px;
+    margin-bottom: 8px;
+  }
+  .services-card-description {
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .services-content-split {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .services-content-right {
+    flex-direction: row;
+    width: 100%;
+    gap: 10px;
+  }
+  .services-content-right .services-stat-mini {
+    flex: 1;
+    padding: 12px;
+  }
+  .services-stat-value-text {
+    font-size: 18px;
+  }
+  .services-weight-stat-number {
+    font-size: 28px;
+  }
+  .services-weight-stat-period {
+    font-size: 13px;
+  }
+  .services-feature-badge {
+    font-size: 8px;
+    padding: 4px 9px;
+  }
+  .services-card-cta-link {
+    font-size: 13px;
+  }
+}
+
+/* ─── Small Mobile < 400px ─── */
+@media (max-width: 399px) {
+  .services-section-wrapper {
+    padding: 40px 14px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+  }
+  .services-inner-container {
+    padding: 0 6px;
+  }
+  .services-header-block {
+    margin-bottom: 24px;
+  }
+  .services-eyebrow-label {
+    font-size: 9px;
+    margin-bottom: 8px;
+  }
+  .services-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .services-bento-large,
+  .services-bento-small-weightloss,
+  .services-bento-smal-1,
+  .services-bento-small,
+  .services-bento-small-0,
+  .services-bento-wide {
+    grid-column: span 1;
+    grid-row: span 1;
+    height: auto;
+    padding: 18px;
+  }
+  .services-card-item {
+    padding: 18px;
+  }
+  .services-icon-box {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .services-icon-box svg {
+    width: 18px;
+    height: 18px;
+  }
+  .services-card-title {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .services-card-description {
+    font-size: 12px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .services-content-split {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .services-content-right {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  .services-content-right .services-stat-mini {
+    padding: 10px;
+  }
+  .services-stat-value-text {
+    font-size: 16px;
+  }
+  .services-stat-label-text {
+    font-size: 10px;
+  }
+  .services-weight-stat-number {
+    font-size: 24px;
+  }
+  .services-weight-stat-period {
+    font-size: 12px;
+  }
+  .services-weight-stat-eyebrow {
+    font-size: 9px;
+  }
+  .services-feature-badge {
+    font-size: 8px;
+    padding: 3px 8px;
+  }
+  .services-card-cta-link {
+    font-size: 12px;
+  }
+}

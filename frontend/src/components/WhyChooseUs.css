@@ -1,0 +1,1344 @@
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap");
+
+:root {
+  --teal: #0c8b7a;
+  --teal-bright: #0c8b7a;
+  --teal-dark: #076b5d;
+  --teal-glow: rgba(15, 212, 188, 0.45);
+  --navy: #07192b;
+  --textt: #f0f6f5;
+  --text-soft: rgba(210, 235, 232, 0.75);
+  --text-muted: rgba(160, 200, 195, 0.55);
+  --glass-card: rgba(8, 30, 45, 0.38);
+  --glass-border: rgba(255, 255, 255, 0.11);
+  --glass-border-bright: rgba(15, 212, 188, 0.3);
+  --shadow-card:
+    0 4px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-hover:
+    0 20px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(15, 212, 188, 0.25);
+  --ease-spring: cubic-bezier(0.34, 1.06, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wcu-section {
+  position: relative;
+  background: var(--primary);
+  padding: 100px 56px 110px;
+  overflow: hidden;
+}
+
+.wcu-bg-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.wcu-bg-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 72% 25%,
+      rgba(12, 139, 122, 0.2) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 90% 85%,
+      rgba(6, 107, 93, 0.14) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 5% 75%,
+      rgba(7, 25, 43, 0.95) 0%,
+      transparent 60%
+    );
+}
+
+.wcu-bg-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle,
+    rgba(15, 212, 188, 0.055) 1px,
+    transparent 1px
+  );
+  background-size: 34px 34px;
+}
+
+.wcu-bg-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(130px);
+}
+
+.wcu-bg-glow--a {
+  width: 640px;
+  height: 640px;
+  top: -120px;
+  right: -100px;
+  background: radial-gradient(
+    circle,
+    rgba(12, 139, 122, 0.24) 0%,
+    transparent 65%
+  );
+}
+
+.wcu-bg-glow--b {
+  width: 420px;
+  height: 420px;
+  bottom: -80px;
+  left: -60px;
+  background: radial-gradient(
+    circle,
+    rgba(7, 107, 93, 0.18) 0%,
+    transparent 65%
+  );
+}
+
+.wcu-layout {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 72px;
+  align-items: start;
+}
+
+.wcu-left {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  position: sticky;
+  top: 60px;
+}
+
+.wcu-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wcu-eyebrow__line {
+  display: block;
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--teal-bright));
+  flex-shrink: 0;
+}
+
+.wcu-eyebrow__text {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--teal-bright);
+  white-space: nowrap;
+}
+
+.wcu-heading {
+  font-size: clamp(32px, 3.2vw, 50px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1.07;
+  color: #fff;
+  margin: 0;
+}
+
+.wcu-heading__em {
+  display: block;
+  font-style: normal;
+  background: linear-gradient(125deg, var(--teal-bright) 0%, var(--teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.wcu-desc {
+  font-size: 14px;
+  line-height: 1.82;
+  color: var(--text-soft);
+  margin: 0;
+}
+
+.wcu-metrics {
+  display: flex;
+  align-items: stretch;
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+.wcu-metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 20px 10px;
+}
+
+.wcu-metric__num {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  color: var(--textt);
+  line-height: 1;
+}
+
+.wcu-metric__num sup {
+  font-size: 13px;
+  color: var(--teal-bright);
+  font-weight: 700;
+}
+
+.wcu-metric__lbl {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.wcu-metric__sep {
+  width: 1px;
+  background: var(--glass-border);
+  flex-shrink: 0;
+}
+
+.wcu-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+  border: 1px solid rgba(15, 212, 188, 0.3);
+  border-radius: 12px;
+  cursor: pointer;
+  width: fit-content;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.3px;
+  transition:
+    transform 0.3s var(--ease-spring),
+    box-shadow 0.3s ease,
+    filter 0.2s ease;
+  box-shadow: 0 4px 20px rgba(12, 139, 122, 0.35);
+}
+
+.wcu-cta:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(12, 139, 122, 0.55);
+  filter: brightness(1.1);
+}
+
+.wcu-cta svg {
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.wcu-cta:hover svg {
+  transform: translateX(4px);
+}
+
+.wcu-right {
+  width: 100%;
+}
+
+.wcu-masonry {
+  column-count: 3;
+  column-gap: 14px;
+}
+
+.wcu-card-wrap {
+  break-inside: avoid;
+  margin-bottom: 14px;
+  display: block;
+}
+
+@keyframes wcu-float-a {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes wcu-float-b {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-11px);
+  }
+}
+
+@keyframes wcu-float-c {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.wcu-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-card);
+  animation: wcu-float-a 6s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  transition:
+    transform 0.4s var(--ease-spring),
+    box-shadow 0.4s ease,
+    border-color 0.3s ease;
+}
+
+.wcu-card:nth-child(2n) {
+  animation-name: wcu-float-b;
+}
+.wcu-card:nth-child(3n) {
+  animation-name: wcu-float-c;
+}
+
+.wcu-card:hover {
+  transform: scale(1.03) translateY(-5px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--glass-border-bright);
+}
+
+.wcu-card--sm {
+  min-height: 158px;
+}
+.wcu-card--md {
+  min-height: 210px;
+}
+.wcu-card--lg {
+  min-height: 258px;
+}
+
+.wcu-card__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.wcu-card__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition:
+    transform 0.65s var(--ease-out),
+    filter 0.4s ease;
+  filter: saturate(0.65) brightness(0.5);
+}
+
+.wcu-card:hover .wcu-card__photo img {
+  transform: scale(1.07);
+  filter: saturate(0.85) brightness(0.42);
+}
+
+.wcu-card__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    165deg,
+    rgba(8, 28, 42, 0.3) 0%,
+    rgba(7, 22, 36, 0.65) 100%
+  );
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  transition:
+    backdrop-filter 0.4s ease,
+    background 0.4s ease;
+}
+
+.wcu-card:hover .wcu-card__glass {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  background: linear-gradient(
+    165deg,
+    rgba(8, 28, 42, 0.42) 0%,
+    rgba(7, 22, 36, 0.75) 100%
+  );
+}
+
+.wcu-card__shine {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+.wcu-card__body {
+  position: relative;
+  z-index: 3;
+  padding: 20px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wcu-card--sm .wcu-card__body {
+  padding: 16px 15px 18px;
+}
+.wcu-card--lg .wcu-card__body {
+  padding: 24px 20px 26px;
+}
+
+.wcu-card__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.wcu-card__tag-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--teal-bright);
+  flex-shrink: 0;
+  box-shadow: 0 0 7px var(--teal-glow);
+}
+
+.wcu-card__tag-text {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--teal-bright);
+}
+
+.wcu-card__title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--textt);
+  letter-spacing: -0.2px;
+}
+
+.wcu-card--md .wcu-card__title,
+.wcu-card--lg .wcu-card__title {
+  font-size: 14.5px;
+}
+
+.wcu-card__short {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.wcu-card__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(15, 212, 188, 0.2);
+}
+
+.wcu-card__stat-num {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: var(--teal-bright);
+  text-shadow: 0 0 18px rgba(15, 212, 188, 0.45);
+}
+
+.wcu-card--sm .wcu-card__stat-num {
+  font-size: 22px;
+}
+
+.wcu-card__stat-lbl {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.wcu-card__hint {
+  margin-top: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--teal-bright);
+  opacity: 0;
+  transform: translateY(5px);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.wcu-card:hover .wcu-card__hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.wcu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 12, 20, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.38s var(--ease-out);
+}
+
+.wcu-overlay--visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.wcu-overlay--hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wcu-popup {
+  position: relative;
+  width: 100%;
+  max-width: 530px;
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 212, 188, 0.22);
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: scale(0.7) translateY(40px);
+  opacity: 0;
+  transition:
+    transform 0.46s var(--ease-spring),
+    opacity 0.4s var(--ease-out);
+  transform-origin: center center;
+}
+
+.wcu-popup--visible {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.wcu-popup--hiding {
+  transform: scale(0.75) translateY(30px);
+  opacity: 0;
+  transition:
+    transform 0.34s var(--ease-out),
+    opacity 0.3s var(--ease-out);
+}
+
+.wcu-popup__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.wcu-popup__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.6) brightness(0.38);
+}
+
+.wcu-popup__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    165deg,
+    rgba(8, 26, 40, 0.5) 0%,
+    rgba(6, 18, 30, 0.88) 65%,
+    rgba(4, 13, 22, 0.95) 100%
+  );
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+
+.wcu-popup__shine {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    transparent 45%
+  );
+  pointer-events: none;
+}
+
+.wcu-popup__close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-soft);
+  transition:
+    background 0.22s ease,
+    transform 0.25s ease,
+    color 0.22s ease,
+    border-color 0.22s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.wcu-popup__close:hover {
+  background: rgba(15, 212, 188, 0.14);
+  border-color: rgba(15, 212, 188, 0.38);
+  transform: scale(1.1) rotate(90deg);
+  color: var(--teal-bright);
+}
+
+.wcu-popup__inner {
+  position: relative;
+  z-index: 3;
+  padding: 40px 36px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wcu-popup__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 2px;
+}
+
+.wcu-popup__tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teal-bright);
+  box-shadow: 0 0 10px var(--teal-glow);
+  flex-shrink: 0;
+}
+
+.wcu-popup__tag-text {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--teal-bright);
+}
+
+.wcu-popup__stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.wcu-popup__stat-num {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+  color: var(--teal-bright);
+  text-shadow: 0 0 32px rgba(15, 212, 188, 0.5);
+}
+
+.wcu-popup__stat-lbl {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.wcu-popup__title {
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.18;
+  color: var(--textt);
+  margin: 0;
+}
+
+.wcu-popup__short {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--teal-bright);
+  margin: 0;
+  opacity: 0.88;
+}
+
+.wcu-popup__divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(15, 212, 188, 0.3), transparent);
+  margin: 4px 0;
+}
+
+.wcu-popup__body {
+  font-size: 14px;
+  line-height: 1.82;
+  color: var(--text-soft);
+  margin: 0;
+}
+
+/* ================================================================
+   RESPONSIVE BREAKPOINTS
+================================================================ */
+
+/* Large Tablets and Small Laptops */
+@media (max-width: 1080px) {
+  .wcu-section {
+    padding: 90px 48px 100px;
+  }
+
+  .wcu-layout {
+    grid-template-columns: 320px 1fr;
+    gap: 56px;
+  }
+
+  .wcu-heading {
+    font-size: clamp(30px, 3.5vw, 44px);
+  }
+
+  .wcu-bg-glow--a {
+    width: 520px;
+    height: 520px;
+  }
+
+  .wcu-bg-glow--b {
+    width: 360px;
+    height: 360px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 860px) {
+  .wcu-section {
+    padding: 72px 32px 80px;
+  }
+
+  .wcu-layout {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+
+  .wcu-left {
+    position: static;
+    align-items: center;
+    text-align: center;
+    gap: 22px;
+  }
+
+  .wcu-heading {
+    font-size: clamp(28px, 5vw, 40px);
+  }
+
+  .wcu-heading__em {
+    display: inline;
+  }
+
+  .wcu-eyebrow {
+    justify-content: center;
+  }
+
+  .wcu-desc {
+    max-width: 560px;
+    font-size: 13.5px;
+  }
+
+  .wcu-metrics {
+    max-width: 500px;
+  }
+
+  .wcu-masonry {
+    column-count: 2;
+    column-gap: 12px;
+  }
+
+  .wcu-card-wrap {
+    margin-bottom: 12px;
+  }
+
+  .wcu-bg-glow--a {
+    width: 450px;
+    height: 450px;
+    top: -80px;
+    right: -70px;
+  }
+
+  .wcu-bg-glow--b {
+    width: 320px;
+    height: 320px;
+    bottom: -60px;
+    left: -50px;
+  }
+}
+
+/* Mobile Landscape */
+@media (max-width: 640px) {
+  .wcu-section {
+    padding: 60px 24px 68px;
+  }
+
+  .wcu-layout {
+    gap: 40px;
+  }
+
+  .wcu-left {
+    gap: 20px;
+  }
+
+  .wcu-eyebrow__line {
+    width: 22px;
+  }
+
+  .wcu-eyebrow__text {
+    font-size: 9px;
+    letter-spacing: 2.5px;
+  }
+
+  .wcu-heading {
+    font-size: clamp(26px, 6vw, 36px);
+    letter-spacing: -1.2px;
+  }
+
+  .wcu-desc {
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .wcu-metrics {
+    border-radius: 16px;
+  }
+
+  .wcu-metric {
+    padding: 18px 8px;
+  }
+
+  .wcu-metric__num {
+    font-size: 22px;
+  }
+
+  .wcu-metric__num sup {
+    font-size: 12px;
+  }
+
+  .wcu-metric__lbl {
+    font-size: 8.5px;
+  }
+
+  .wcu-cta {
+    padding: 13px 24px;
+    font-size: 13px;
+    gap: 8px;
+  }
+
+  .wcu-cta svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .wcu-masonry {
+    column-count: 2;
+    column-gap: 10px;
+  }
+
+  .wcu-card-wrap {
+    margin-bottom: 10px;
+  }
+
+  .wcu-card {
+    border-radius: 16px;
+  }
+
+  .wcu-card--sm {
+    min-height: 140px;
+  }
+
+  .wcu-card--md {
+    min-height: 185px;
+  }
+
+  .wcu-card--lg {
+    min-height: 220px;
+  }
+
+  .wcu-card__body {
+    padding: 17px 15px 19px;
+    gap: 5px;
+  }
+
+  .wcu-card--sm .wcu-card__body {
+    padding: 14px 13px 16px;
+  }
+
+  .wcu-card--lg .wcu-card__body {
+    padding: 20px 17px 22px;
+  }
+
+  .wcu-card__tag-text {
+    font-size: 8px;
+    letter-spacing: 1.5px;
+  }
+
+  .wcu-card__title {
+    font-size: 12px;
+  }
+
+  .wcu-card--md .wcu-card__title,
+  .wcu-card--lg .wcu-card__title {
+    font-size: 13.5px;
+  }
+
+  .wcu-card__short {
+    font-size: 10.5px;
+  }
+
+  .wcu-card__stat-num {
+    font-size: 24px;
+  }
+
+  .wcu-card--sm .wcu-card__stat-num {
+    font-size: 20px;
+  }
+
+  .wcu-card__hint {
+    font-size: 9px;
+  }
+
+  .wcu-popup {
+    max-width: 480px;
+    border-radius: 22px;
+  }
+
+  .wcu-popup__inner {
+    padding: 34px 28px 30px;
+  }
+
+  .wcu-popup__close {
+    width: 34px;
+    height: 34px;
+    top: 16px;
+    right: 16px;
+  }
+
+  .wcu-popup__close svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .wcu-bg-glow--a {
+    width: 350px;
+    height: 350px;
+  }
+
+  .wcu-bg-glow--b {
+    width: 260px;
+    height: 260px;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 540px) {
+  .wcu-section {
+    padding: 52px 18px 60px;
+  }
+
+  .wcu-layout {
+    gap: 36px;
+  }
+
+  .wcu-left {
+    gap: 18px;
+  }
+
+  .wcu-eyebrow {
+    gap: 10px;
+  }
+
+  .wcu-eyebrow__line {
+    width: 18px;
+  }
+
+  .wcu-eyebrow__text {
+    font-size: 8.5px;
+    letter-spacing: 2.2px;
+  }
+
+  .wcu-heading {
+    font-size: clamp(24px, 7vw, 32px);
+    letter-spacing: -1px;
+  }
+
+  .wcu-desc {
+    font-size: 12.5px;
+    line-height: 1.7;
+    max-width: 100%;
+  }
+
+  .wcu-metrics {
+    flex-direction: column;
+    max-width: 280px;
+    border-radius: 14px;
+  }
+
+  .wcu-metric {
+    padding: 16px 12px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .wcu-metric__num {
+    font-size: 20px;
+  }
+
+  .wcu-metric__lbl {
+    font-size: 8px;
+  }
+
+  .wcu-metric__sep {
+    display: none;
+  }
+
+  .wcu-cta {
+    padding: 12px 22px;
+    font-size: 12.5px;
+    border-radius: 10px;
+  }
+
+  .wcu-masonry {
+    column-count: 1;
+    column-gap: 0;
+  }
+
+  .wcu-card-wrap {
+    margin-bottom: 12px;
+  }
+
+  .wcu-card {
+    border-radius: 14px;
+  }
+
+  .wcu-card--sm {
+    min-height: 150px;
+  }
+
+  .wcu-card--md {
+    min-height: 190px;
+  }
+
+  .wcu-card--lg {
+    min-height: 230px;
+  }
+
+  .wcu-card__body {
+    padding: 18px 16px 20px;
+  }
+
+  .wcu-card--sm .wcu-card__body {
+    padding: 15px 14px 17px;
+  }
+
+  .wcu-card--lg .wcu-card__body {
+    padding: 22px 18px 24px;
+  }
+
+  .wcu-card__tag-dot {
+    width: 4px;
+    height: 4px;
+  }
+
+  .wcu-card__tag-text {
+    font-size: 7.5px;
+  }
+
+  .wcu-card__title {
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+
+  .wcu-card--md .wcu-card__title,
+  .wcu-card--lg .wcu-card__title {
+    font-size: 14px;
+  }
+
+  .wcu-card__short {
+    font-size: 11px;
+  }
+
+  .wcu-card__stat {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .wcu-card__stat-num {
+    font-size: 26px;
+  }
+
+  .wcu-card--sm .wcu-card__stat-num {
+    font-size: 22px;
+  }
+
+  .wcu-card__stat-lbl {
+    font-size: 8.5px;
+  }
+
+  .wcu-overlay {
+    padding: 20px 16px;
+  }
+
+  .wcu-popup {
+    border-radius: 20px;
+  }
+
+  .wcu-popup__inner {
+    padding: 30px 24px 28px;
+    gap: 8px;
+  }
+
+  .wcu-popup__close {
+    width: 32px;
+    height: 32px;
+    top: 14px;
+    right: 14px;
+  }
+
+  .wcu-popup__tag-text {
+    font-size: 8.5px;
+    letter-spacing: 2px;
+  }
+
+  .wcu-popup__stat-num {
+    font-size: 38px;
+    letter-spacing: -1.5px;
+  }
+
+  .wcu-popup__stat-lbl {
+    font-size: 9px;
+  }
+
+  .wcu-popup__title {
+    font-size: 20px;
+    letter-spacing: -0.6px;
+  }
+
+  .wcu-popup__short {
+    font-size: 12.5px;
+  }
+
+  .wcu-popup__body {
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .wcu-bg-glow--a {
+    width: 280px;
+    height: 280px;
+    top: -50px;
+    right: -50px;
+  }
+
+  .wcu-bg-glow--b {
+    width: 220px;
+    height: 220px;
+    bottom: -40px;
+    left: -40px;
+  }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 380px) {
+  .wcu-section {
+    padding: 44px 14px 52px;
+  }
+
+  .wcu-layout {
+    gap: 32px;
+  }
+
+  .wcu-left {
+    gap: 16px;
+  }
+
+  .wcu-eyebrow__line {
+    width: 16px;
+  }
+
+  .wcu-eyebrow__text {
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+
+  .wcu-heading {
+    font-size: 22px;
+  }
+
+  .wcu-desc {
+    font-size: 12px;
+  }
+
+  .wcu-metrics {
+    max-width: 260px;
+  }
+
+  .wcu-metric {
+    padding: 14px 10px;
+  }
+
+  .wcu-metric__num {
+    font-size: 18px;
+  }
+
+  .wcu-metric__num sup {
+    font-size: 10px;
+  }
+
+  .wcu-metric__lbl {
+    font-size: 7.5px;
+  }
+
+  .wcu-cta {
+    padding: 11px 20px;
+    font-size: 12px;
+  }
+
+  .wcu-card--sm {
+    min-height: 140px;
+  }
+
+  .wcu-card--md {
+    min-height: 175px;
+  }
+
+  .wcu-card--lg {
+    min-height: 210px;
+  }
+
+  .wcu-card__body {
+    padding: 16px 14px 18px;
+  }
+
+  .wcu-card--sm .wcu-card__body {
+    padding: 14px 12px 16px;
+  }
+
+  .wcu-card--lg .wcu-card__body {
+    padding: 20px 16px 22px;
+  }
+
+  .wcu-card__title {
+    font-size: 12px;
+  }
+
+  .wcu-card--md .wcu-card__title,
+  .wcu-card--lg .wcu-card__title {
+    font-size: 13px;
+  }
+
+  .wcu-card__short {
+    font-size: 10.5px;
+  }
+
+  .wcu-card__stat-num {
+    font-size: 24px;
+  }
+
+  .wcu-card--sm .wcu-card__stat-num {
+    font-size: 20px;
+  }
+
+  .wcu-overlay {
+    padding: 16px 12px;
+  }
+
+  .wcu-popup__inner {
+    padding: 26px 20px 24px;
+  }
+
+  .wcu-popup__stat-num {
+    font-size: 34px;
+  }
+
+  .wcu-popup__title {
+    font-size: 18px;
+  }
+
+  .wcu-popup__short {
+    font-size: 12px;
+  }
+
+  .wcu-popup__body {
+    font-size: 12.5px;
+  }
+
+  .wcu-bg-glow--a {
+    width: 220px;
+    height: 220px;
+  }
+
+  .wcu-bg-glow--b {
+    width: 180px;
+    height: 180px;
+  }
+}
+
+/* Touch devices optimization */
+@media (hover: none) and (pointer: coarse) {
+  .wcu-card:hover {
+    transform: none;
+  }
+
+  .wcu-card:active {
+    transform: scale(0.98);
+  }
+
+  .wcu-card__hint {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+
+  .wcu-cta:hover {
+    transform: none;
+  }
+
+  .wcu-cta:active {
+    transform: scale(0.97);
+  }
+}

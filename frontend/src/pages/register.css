@@ -1,0 +1,96 @@
+/* ── Country Select ───────────────────── */
+.country-select {
+  position: relative;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.country-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1.5px solid #E8E3DC;
+  cursor: pointer;
+  font-size: 15px;
+  color: #1A1714;
+  transition: border-color 0.2s;
+}
+
+.country-trigger:hover { border-bottom-color: #A0876B; }
+
+.country-trigger .placeholder { color: #C0B9B0; font-weight: 300; }
+.country-trigger .arrow { font-size: 10px; color: #9E9790; }
+
+.country-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #fff;
+  border: 1.5px solid #E8E3DC;
+  border-radius: 6px;
+  z-index: 999;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.country-search {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 1.5px solid #E8E3DC;
+  font-size: 14px;
+  outline: none;
+  background: #FAFAF8;
+  color: #1A1714;
+  box-sizing: border-box;
+}
+
+.country-dropdown ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.country-dropdown ul::-webkit-scrollbar { width: 4px; }
+.country-dropdown ul::-webkit-scrollbar-thumb {
+  background: #E8E3DC;
+  border-radius: 4px;
+}
+
+.country-dropdown li {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1A1714;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+
+.country-dropdown li:hover { background: #F4F1EC; }
+.country-dropdown li.active { background: #F4F1EC; font-weight: 500; color: #A0876B; }
+.country-dropdown li .check { margin-left: auto; font-size: 12px; color: #A0876B; }
+.country-dropdown li.no-result {
+  color: #9E9790;
+  text-align: center;
+  cursor: default;
+  font-size: 13px;
+  justify-content: center;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.row input,
+.row select {
+  width: 50%;
+  height: 45px;
+  border-radius: 8px;
+  padding: 0 10px;
+}

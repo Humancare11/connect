@@ -1,0 +1,333 @@
+/* AdminDashboard.css — HumaniCare Admin, prefix: ad- */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.ad-root {
+  display: flex;
+  min-height: 100vh;
+  background: #f1f5f9;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  color: #0f172a;
+}
+
+/* ─── Sidebar ─────────────────────────────────────── */
+.ad-sidebar {
+  width: 256px;
+  flex-shrink: 0;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 200;
+  overflow-y: auto;
+}
+
+.ad-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.ad-brand-mark {
+  width: 36px; height: 36px;
+  background: #19c9a3;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; color: #fff;
+  flex-shrink: 0;
+}
+.ad-brand-name { font-size: 16px; font-weight: 800; color: #fff; }
+
+.ad-profile {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ad-profile-avatar {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, #19c9a3, #0ea5e9);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+.ad-profile-info { min-width: 0; }
+.ad-profile-name  { font-size: 14px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ad-profile-role  { font-size: 11px; color: #94a3b8; font-weight: 500; margin-top: 2px; }
+
+.ad-nav { padding: 14px 12px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.ad-nav-section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: #475569; padding: 10px 8px 4px; margin-top: 6px;
+}
+
+.ad-nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px; border-radius: 10px; border: none;
+  background: transparent; color: #94a3b8;
+  font-family: inherit; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all .15s; text-align: left; width: 100%;
+  position: relative;
+}
+.ad-nav-item:hover { background: rgba(255,255,255,.06); color: #e2e8f0; }
+.ad-nav-item.active { background: rgba(25,201,163,.15); color: #19c9a3; font-weight: 700; }
+.ad-nav-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.ad-nav-badge {
+  margin-left: auto; font-size: 11px; font-weight: 700;
+  background: #dc2626; color: #fff;
+  padding: 1px 7px; border-radius: 20px;
+}
+
+.ad-sidebar-footer { padding: 12px 12px 20px; border-top: 1px solid rgba(255,255,255,.07); }
+.ad-logout-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: none; background: transparent;
+  color: #94a3b8; font-family: inherit; font-size: 14px;
+  font-weight: 500; cursor: pointer; transition: all .15s;
+}
+.ad-logout-btn:hover { background: rgba(220,38,38,.15); color: #f87171; }
+
+/* ─── Main area ───────────────────────────────────── */
+.ad-main {
+  margin-left: 256px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.ad-topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+}
+.ad-topbar-title { font-size: 16px; font-weight: 800; color: #0f172a; }
+.ad-topbar-right { display: flex; align-items: center; gap: 12px; }
+.ad-topbar-user {
+  font-size: 13px; color: #64748b; font-weight: 500;
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  padding: 6px 14px; border-radius: 20px;
+}
+
+.ad-content { padding: 28px; flex: 1; }
+
+/* ─── Page header ─────────────────────────────────── */
+.adp-header { margin-bottom: 24px; }
+.adp-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #19c9a3; }
+.adp-title   { font-size: 22px; font-weight: 800; color: #0f172a; margin: 4px 0 2px; }
+.adp-sub     { font-size: 14px; color: #64748b; margin: 0; }
+
+/* ─── Stat cards ──────────────────────────────────── */
+.adp-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.adp-stat {
+  background: #fff; border: 1.5px solid #e2e8f0;
+  border-radius: 14px; padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.adp-stat-value { font-size: 30px; font-weight: 800; color: #0f172a; line-height: 1; }
+.adp-stat-label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+.adp-stat-icon  { font-size: 22px; margin-bottom: 4px; }
+.adp-stat--blue   { border-color: #bfdbfe; background: #eff6ff; }
+.adp-stat--blue   .adp-stat-value { color: #1d4ed8; }
+.adp-stat--green  { border-color: #6ee7b7; background: #ecfdf5; }
+.adp-stat--green  .adp-stat-value { color: #059669; }
+.adp-stat--amber  { border-color: #fcd34d; background: #fefce8; }
+.adp-stat--amber  .adp-stat-value { color: #b45309; }
+.adp-stat--purple { border-color: #ddd6fe; background: #f5f3ff; }
+.adp-stat--purple .adp-stat-value { color: #7c3aed; }
+
+/* ─── Card / section ──────────────────────────────── */
+.adp-card {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.adp-card-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.adp-card-title { font-size: 15px; font-weight: 700; color: #0f172a; margin: 0; }
+
+/* ─── Search bar ──────────────────────────────────── */
+.adp-search {
+  display: flex; align-items: center; gap: 8px;
+  background: #f8fafc; border: 1.5px solid #e2e8f0;
+  border-radius: 10px; padding: 7px 14px;
+  min-width: 240px;
+}
+.adp-search input {
+  border: none; outline: none; background: transparent;
+  font-family: inherit; font-size: 13px; color: #0f172a; width: 100%;
+}
+.adp-search svg { flex-shrink: 0; color: #94a3b8; }
+
+/* ─── Table ───────────────────────────────────────── */
+.adp-table-wrap { overflow-x: auto; }
+.adp-table {
+  width: 100%; border-collapse: collapse; font-size: 13.5px;
+}
+.adp-table thead tr { background: #f8fafc; }
+.adp-table th {
+  padding: 12px 16px; text-align: left;
+  font-size: 11px; font-weight: 700; color: #64748b;
+  text-transform: uppercase; letter-spacing: .07em;
+  border-bottom: 1.5px solid #e2e8f0; white-space: nowrap;
+}
+.adp-table td {
+  padding: 13px 16px; border-bottom: 1px solid #f1f5f9;
+  color: #334155; vertical-align: middle;
+}
+.adp-table tbody tr:hover { background: #f8fafc; }
+.adp-table tbody tr:last-child td { border-bottom: none; }
+
+/* ─── Avatar initial ──────────────────────────────── */
+.adp-avatar {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: #e2e8f0; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #475569; flex-shrink: 0;
+}
+
+/* ─── Status badge ────────────────────────────────── */
+.adp-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; text-transform: capitalize; white-space: nowrap;
+}
+.adp-badge--pending  { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; }
+.adp-badge--approved, .adp-badge--confirmed, .adp-badge--completed { background: #ecfdf5; color: #059669; border: 1px solid #6ee7b7; }
+.adp-badge--rejected, .adp-badge--cancelled { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+.adp-badge--open     { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.adp-badge--resolved { background: #ecfdf5; color: #059669; border: 1px solid #6ee7b7; }
+
+/* ─── Action buttons ──────────────────────────────── */
+.adp-btn {
+  padding: 6px 14px; border-radius: 8px; border: none;
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: opacity .2s; white-space: nowrap;
+}
+.adp-btn:hover { opacity: .85; }
+.adp-btn--view    { background: #eff6ff; color: #2563eb; }
+.adp-btn--approve { background: #ecfdf5; color: #059669; }
+.adp-btn--reject  { background: #fef2f2; color: #dc2626; }
+.adp-btn--resolve { background: #19c9a3; color: #fff; }
+.adp-btn--ghost   { background: #f8fafc; color: #475569; border: 1.5px solid #e2e8f0; }
+
+/* ─── Loading / empty ─────────────────────────────── */
+.adp-loading { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 64px 20px; color: #94a3b8; }
+.adp-spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #19c9a3; border-radius: 50%; animation: adp-spin .7s linear infinite; }
+@keyframes adp-spin { to { transform: rotate(360deg); } }
+.adp-empty { text-align: center; padding: 64px 20px; color: #64748b; }
+.adp-empty-icon { font-size: 44px; margin-bottom: 12px; }
+.adp-empty h3 { font-size: 17px; color: #334155; margin: 0 0 6px; }
+.adp-empty p  { font-size: 14px; margin: 0 auto; max-width: 360px; }
+
+/* ─── Modal ───────────────────────────────────────── */
+.adp-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(15,23,42,.5);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  animation: adp-fadein .2s ease;
+}
+.adp-modal {
+  background: #fff; border-radius: 18px;
+  width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(15,23,42,.25);
+  animation: adp-scalein .2s ease;
+}
+@keyframes adp-fadein  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes adp-scalein { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+.adp-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; border-bottom: 1px solid #f1f5f9;
+}
+.adp-modal-title { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0; }
+.adp-modal-close {
+  background: #f1f5f9; border: none; border-radius: 50%;
+  width: 32px; height: 32px; cursor: pointer; font-size: 14px; color: #64748b;
+}
+.adp-modal-close:hover { background: #e2e8f0; }
+.adp-modal-body { padding: 20px 24px; }
+.adp-modal-footer { padding: 0 24px 20px; display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ─── Overview quick-action cards ────────────────────*/
+.ado-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 24px; }
+.ado-action-card {
+  background: #fff; border: 1.5px solid #e2e8f0;
+  border-radius: 14px; padding: 20px;
+  cursor: pointer; transition: all .2s;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ado-action-card:hover { border-color: #19c9a3; box-shadow: 0 4px 16px rgba(25,201,163,.15); transform: translateY(-2px); }
+.ado-action-icon { font-size: 28px; }
+.ado-action-label { font-size: 14px; font-weight: 700; color: #0f172a; }
+.ado-action-sub   { font-size: 12px; color: #64748b; }
+
+/* ─── Toast ───────────────────────────────────────── */
+.adp-toast {
+  position: fixed; top: 20px; right: 20px; z-index: 10000;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 20px; border-radius: 12px;
+  font-size: 14px; font-weight: 500;
+  box-shadow: 0 8px 24px rgba(15,23,42,.15);
+  animation: adp-fadein .3s ease;
+}
+.adp-toast--ok  { background: #f0fdf4; border: 1px solid #86efac; color: #16a34a; }
+.adp-toast--err { background: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; }
+
+/* ─── Detail row (modal) ──────────────────────────── */
+.adp-detail-row {
+  display: flex; gap: 12px; padding: 9px 0;
+  border-bottom: 1px solid #f1f5f9; font-size: 13.5px;
+}
+.adp-detail-label { min-width: 160px; font-weight: 600; color: #64748b; }
+.adp-detail-value { color: #0f172a; }
+
+/* ─── Ticket card ─────────────────────────────────── */
+.adp-ticket-card {
+  border: 1px solid #e2e8f0; border-radius: 12px;
+  background: #fff; margin-bottom: 10px; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15,23,42,.05);
+}
+.adp-ticket-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; cursor: pointer;
+}
+.adp-ticket-body {
+  padding: 4px 18px 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* ─── Tabs ────────────────────────────────────────── */
+.adp-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.adp-tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 16px; border-radius: 10px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc;
+  font-size: 13px; font-weight: 500; color: #64748b;
+  cursor: pointer; transition: all .15s;
+}
+.adp-tab:hover { border-color: #19c9a3; color: #0f172a; }
+.adp-tab.active { background: #19c9a3; border-color: #19c9a3; color: #fff; }
+.adp-tab-count {
+  font-size: 11px; font-weight: 700; padding: 1px 7px;
+  border-radius: 20px; background: rgba(255,255,255,.25);
+}
+.adp-tab:not(.active) .adp-tab-count { background: #e2e8f0; color: #64748b; }
+
+@media (max-width: 768px) {
+  .ad-sidebar { transform: translateX(-100%); transition: transform .25s; }
+  .ad-sidebar.open { transform: translateX(0); }
+  .ad-main { margin-left: 0; }
+  .ad-content { padding: 16px; }
+}

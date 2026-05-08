@@ -1,0 +1,179 @@
+/* =============================================
+   MyRecords.css — HumaniCare
+   All classes prefixed: mr-
+   ============================================= */
+
+.mr-root {
+  padding: 32px;
+  max-width: 860px;
+  margin: 0 auto;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  color: #0f172a;
+}
+
+/* ── Header ── */
+.mr-eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: #19c9a3;
+}
+.mr-title {
+  font-size: 26px; font-weight: 700; color: #0f172a;
+  margin: 4px 0 2px;
+}
+.mr-sub { font-size: 14px; color: #64748b; margin: 0 0 24px; }
+
+/* ── Summary Cards ── */
+.mr-summary {
+  display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap;
+}
+.mr-summary-card {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border: 1.5px solid #e2e8f0;
+  border-radius: 14px; padding: 18px 24px; flex: 1; min-width: 140px;
+}
+.mr-summary-icon { font-size: 28px; }
+.mr-summary-num  { font-size: 28px; font-weight: 700; color: #19c9a3; line-height: 1; }
+.mr-summary-label { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+/* ── Tabs ── */
+.mr-tabs {
+  display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.mr-tab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 10px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc;
+  font-size: 14px; font-weight: 500; color: #64748b;
+  cursor: pointer; transition: all .2s;
+}
+.mr-tab:hover { border-color: #19c9a3; color: #0f172a; }
+.mr-tab--active {
+  background: #19c9a3; border-color: #19c9a3; color: #fff;
+}
+.mr-tab-count {
+  background: rgba(255,255,255,.25); border-radius: 20px;
+  padding: 1px 8px; font-size: 12px; font-weight: 700;
+}
+.mr-tab--active .mr-tab-count { background: rgba(255,255,255,.3); }
+.mr-tab:not(.mr-tab--active) .mr-tab-count {
+  background: #e2e8f0; color: #475569;
+}
+
+/* ── Loading ── */
+.mr-loading {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 60px 0; color: #64748b;
+}
+.mr-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #19c9a3;
+  border-radius: 50%;
+  animation: mr-spin .7s linear infinite;
+}
+@keyframes mr-spin { to { transform: rotate(360deg); } }
+
+/* ── Empty State ── */
+.mr-empty {
+  text-align: center; padding: 70px 20px; color: #64748b;
+}
+.mr-empty-icon { font-size: 48px; margin-bottom: 12px; }
+.mr-empty h3   { font-size: 18px; color: #334155; margin: 0 0 8px; }
+.mr-empty p    { font-size: 14px; max-width: 380px; margin: 0 auto; }
+
+/* ── Record List ── */
+.mr-list { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Record Card ── */
+.mr-card {
+  border-radius: 14px; border: 1.5px solid transparent;
+  overflow: hidden; background: #fff;
+  box-shadow: 0 1px 4px rgba(15,23,42,.06);
+  transition: box-shadow .2s;
+}
+.mr-card:hover { box-shadow: 0 4px 16px rgba(15,23,42,.1); }
+
+.mr-card--rx   { border-color: #bbf7d0; }
+.mr-card--cert { border-color: #bfdbfe; }
+
+.mr-card-top {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; cursor: pointer;
+  user-select: none;
+}
+.mr-card-top:hover { background: #f8fafc; }
+
+.mr-card-icon {
+  font-size: 24px; flex-shrink: 0;
+  width: 44px; height: 44px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+.mr-card--rx   .mr-card-icon { background: #f0fdf4; }
+.mr-card--cert .mr-card-icon { background: #eff6ff; }
+
+.mr-card-meta { flex: 1; min-width: 0; }
+.mr-card-title {
+  font-size: 15px; font-weight: 600; color: #0f172a;
+  margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mr-card-sub { font-size: 12px; color: #64748b; margin: 0; }
+
+.mr-chevron {
+  font-size: 20px; color: #94a3b8; flex-shrink: 0;
+  transition: transform .2s;
+  display: inline-block;
+}
+.mr-chevron--open { transform: rotate(90deg); }
+
+/* ── Card Body (expanded) ── */
+.mr-card-body {
+  padding: 0 20px 20px;
+  border-top: 1px solid #f1f5f9;
+  animation: mr-expand .2s ease;
+}
+@keyframes mr-expand {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.mr-section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: #94a3b8;
+  margin: 16px 0 8px;
+}
+
+/* Medicine table */
+.mr-med-table-wrap { overflow-x: auto; margin-bottom: 8px; }
+.mr-med-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px; color: #334155;
+}
+.mr-med-table th {
+  text-align: left; padding: 8px 12px;
+  background: #f8fafc; color: #64748b;
+  font-weight: 600; font-size: 11px; text-transform: uppercase;
+  border-bottom: 1px solid #e2e8f0;
+}
+.mr-med-table td {
+  padding: 9px 12px; border-bottom: 1px solid #f1f5f9;
+}
+.mr-med-table tr:last-child td { border-bottom: none; }
+
+.mr-note { font-size: 13px; color: #475569; margin: 4px 0; }
+
+/* Info block */
+.mr-info-block { margin-top: 14px; }
+.mr-info-label {
+  display: block; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em; color: #94a3b8;
+  margin-bottom: 4px;
+}
+.mr-info-value { font-size: 14px; color: #334155; margin: 0; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .mr-root { padding: 16px; }
+  .mr-summary { flex-direction: column; }
+  .mr-tabs { flex-direction: column; }
+  .mr-card-sub { white-space: normal; }
+}

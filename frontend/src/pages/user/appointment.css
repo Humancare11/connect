@@ -1,0 +1,734 @@
+/* =============================================
+   Appointments.css — HumaniCare
+   Theme: Refined Medical | Deep Navy + Teal
+   ============================================= */
+
+
+/* ---------- Root Variables ---------- */
+:root {
+  --navy: #0d1b2a;
+  --navy-lt: #162436;
+  --navy-card: #1a2d42;
+  --teal: #19c9a3;
+  --teal-dim: rgba(25, 201, 163, 0.12);
+  --teal-glow: rgba(25, 201, 163, 0.25);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245, 158, 11, 0.12);
+  --green: #22c55e;
+  --green-dim: rgba(34, 197, 94, 0.12);
+  --slate: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f0f6ff;
+  --text-secondary: #7a93ad;
+  --text-muted: #4a6174;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Page Layout ---------- */
+.appt-page {
+  min-height: 100vh;
+  width: 100%;
+  background: var(--navy);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-primary);
+  margin: 0;
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
+/* ---------- Header ---------- */
+.appt-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 36px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.appt-eyebrow {
+  font-family: 'Sora', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin: 0 0 6px;
+}
+
+.appt-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.appt-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 400;
+}
+
+.appt-book-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--teal);
+  color: var(--navy);
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px 22px;
+  border-radius: 50px;
+  text-decoration: none;
+  letter-spacing: 0.4px;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  white-space: nowrap;
+  box-shadow: 0 4px 20px var(--teal-glow);
+}
+
+.appt-book-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px var(--teal-glow);
+}
+
+.appt-book-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ---------- Stats Strip ---------- */
+.appt-stats {
+  display: flex;
+  align-items: center;
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 32px;
+  margin-bottom: 28px;
+  gap: 0;
+}
+
+.appt-stat-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.appt-stat-num {
+  font-family: 'Sora', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.appt-stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.appt-stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 4px;
+}
+
+.pending-dot  { background: var(--amber); }
+.confirmed-dot { background: var(--teal); }
+.completed-dot { background: var(--green); }
+
+.appt-stat-divider {
+  width: 1px;
+  height: 44px;
+  background: var(--border);
+  margin: 0 8px;
+}
+
+/* ---------- Tabs ---------- */
+.appt-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+}
+
+.appt-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all 0.2s var(--ease);
+  letter-spacing: 0.3px;
+}
+
+.appt-tab:hover {
+  color: var(--text-secondary);
+  background: var(--slate);
+}
+
+.appt-tab.active {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.appt-tab.active.tab-pending  { background: var(--amber); }
+.appt-tab.active.tab-confirmed { background: var(--teal); }
+.appt-tab.active.tab-completed { background: var(--green); }
+
+.tab-label {
+  text-transform: capitalize;
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.18);
+}
+
+/* ---------- Loading ---------- */
+.appt-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 80px 0;
+  color: var(--text-secondary);
+}
+
+.appt-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Empty State ---------- */
+.appt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 64px 24px;
+  gap: 12px;
+}
+
+.appt-empty-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+  filter: grayscale(0.3);
+}
+
+.appt-empty h3 {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.appt-empty p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 300px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.appt-empty-cta {
+  margin-top: 8px;
+  padding: 10px 22px;
+  border-radius: 50px;
+  background: var(--teal-dim);
+  color: var(--teal);
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid rgba(25, 201, 163, 0.3);
+  transition: all 0.2s var(--ease);
+}
+
+.appt-empty-cta:hover {
+  background: var(--teal);
+  color: var(--navy);
+}
+
+/* ---------- Appointment List ---------- */
+.appt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- Appointment Card ---------- */
+.appt-card {
+  display: flex;
+  gap: 0;
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: slideUp 0.35s var(--ease) both;
+  transition: transform 0.2s var(--ease), border-color 0.2s, box-shadow 0.2s;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.appt-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.appt-card[data-focused="true"] {
+  border-color: rgba(25, 201, 163, 0.65);
+  box-shadow: 0 0 0 3px rgba(25, 201, 163, 0.16), var(--shadow);
+}
+
+.appt-card--pending  { border-left: 3px solid var(--amber); }
+.appt-card--confirmed { border-left: 3px solid var(--teal); }
+.appt-card--completed { border-left: 3px solid var(--green); }
+
+/* Card Left (avatar column) */
+.appt-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0 24px 20px;
+  gap: 0;
+}
+
+.appt-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--teal-dim);
+  color: var(--teal);
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(25, 201, 163, 0.2);
+}
+
+.appt-status-line {
+  width: 2px;
+  flex: 1;
+  margin-top: 10px;
+  min-height: 20px;
+  border-radius: 2px;
+  opacity: 0.25;
+}
+
+.status-line--pending  { background: var(--amber); }
+.status-line--confirmed { background: var(--teal); }
+.status-line--completed { background: var(--green); }
+
+/* Card Body */
+.appt-card-body {
+  flex: 1;
+  padding: 22px 22px 22px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.appt-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.appt-doctor-name {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 3px;
+}
+
+.appt-doctor-email {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.appt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.appt-badge--pending  { background: var(--amber-dim);  color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+.appt-badge--confirmed { background: var(--teal-dim);   color: var(--teal);  border: 1px solid rgba(25,201,163,0.25); }
+.appt-badge--completed { background: var(--green-dim);  color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+
+/* Meta Info */
+.appt-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.appt-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.appt-problem {
+  flex-basis: 100%;
+  background: var(--slate);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.appt-meta-icon {
+  font-size: 14px;
+}
+
+/* Card Actions */
+.appt-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.appt-waiting-text {
+  font-size: 12px;
+  color: var(--amber);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.appt-done-text {
+  font-size: 12px;
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- Buttons ---------- */
+.appt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: all 0.2s var(--ease);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.appt-btn--primary {
+  background: var(--teal);
+  color: var(--navy);
+  box-shadow: 0 4px 16px var(--teal-glow);
+}
+
+.appt-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px var(--teal-glow);
+}
+
+.appt-btn--outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.appt-btn--outline:hover {
+  background: var(--slate);
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.appt-btn.full-width {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ---------- Modal ---------- */
+.appt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 16, 26, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s var(--ease);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.appt-modal {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  animation: modalUp 0.28s var(--ease);
+}
+
+@keyframes modalUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.appt-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.appt-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.appt-modal-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--teal-dim);
+  color: var(--teal);
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(25, 201, 163, 0.2);
+}
+
+.appt-modal-header h3 {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+}
+
+.appt-modal-header p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.appt-modal-close {
+  background: var(--slate);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.appt-modal-close:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+}
+
+.appt-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  min-height: 200px;
+}
+
+.appt-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .appt-page {
+    padding: 24px 16px 60px;
+  }
+
+  .appt-title {
+    font-size: 24px;
+  }
+
+  .appt-stats {
+    padding: 16px 20px;
+  }
+
+  .appt-stat-num {
+    font-size: 22px;
+  }
+
+  .appt-tabs {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .appt-tab {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .appt-card-body {
+    padding: 16px 16px 16px 12px;
+  }
+
+  .appt-meta {
+    gap: 12px;
+  }
+
+  .appt-card-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .appt-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .appt-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .appt-book-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Medical Reports in appointment card ── */
+.appt-reports {
+  margin: 10px 0 4px;
+}
+
+.appt-reports-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 7px;
+}
+
+.appt-reports-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.appt-report-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  max-width: 200px;
+  background: var(--teal-dim);
+  color: var(--teal);
+  border: 1px solid var(--teal-glow);
+  border-radius: 20px;
+  padding: 4px 10px;
+  text-decoration: none;
+  transition: background 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.appt-report-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appt-report-chip:hover {
+  background: rgba(25, 201, 163, 0.2);
+  box-shadow: 0 0 12px var(--teal-glow);
+}

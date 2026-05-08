@@ -1,0 +1,81 @@
+/* ── Payment-specific additions (builds on AdminAppointments.css) ── */
+
+.adpy-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.adpy-pay-badge--paid {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #6ee7b7;
+}
+
+.adpy-pay-badge--unpaid {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fcd34d;
+}
+
+.adpy-method {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.adpy-method--card {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.adpy-method--upi {
+  background: #fdf4ff;
+  color: #9333ea;
+  border: 1px solid #e9d5ff;
+}
+
+.adpy-method--unknown {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.adpy-method--loading {
+  background: #f8fafc;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+  animation: adpy-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes adpy-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .5; }
+}
+
+.adpy-pi-id {
+  font-family: monospace;
+  font-size: 12px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+.adpy-mono {
+  font-family: monospace;
+  font-size: 12px;
+  color: #475569;
+  word-break: break-all;
+}

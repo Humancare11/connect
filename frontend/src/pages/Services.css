@@ -1,0 +1,533 @@
+/* ============================================
+   HealthcareAlternating.css
+   Premium Zig-Zag Healthcare Services
+   ============================================ */
+
+/* @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap'); */
+
+/* ── Variables ── */
+:root {
+  --primary: #223a5e;
+  --primary-dark: #1b2f4b;
+  --primary-light: #ebf4ff;
+  --accent: #4299e1;
+  --text-dark: #1a202c;
+  --text-mid: #4a5568;
+  --text-light: #718096;
+  --bg-section: #f5f7fb;
+  --bg-alt: #ffffff;
+  --border-light: #e2e8f0;
+  --shadow-img: 0 12px 40px rgba(43, 108, 176, 0.14);
+  --shadow-btn: 0 6px 20px rgba(43, 108, 176, 0.38);
+  --radius-img: 16px;
+  --radius-btn: 50px;
+  --transition: 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  --font: "Poppins", sans-serif;
+}
+
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================
+   PAGE WRAPPER
+   ============================================ */
+.ha-page {
+  font-family: var(--font);
+  background: var(--bg-section);
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ============================================
+   PAGE HEADER
+   ============================================ */
+.ms-hero {
+  background: var(--section);
+  padding-top: 142px;
+  padding-bottom: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ms-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.ms-hero::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 42px;
+  background-color: var(--section);
+}
+
+.ms-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+  z-index: 1;
+  animation: slideDown 0.5s var(--ease);
+}
+
+.ms-hero h1 {
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin-bottom: 12px;
+}
+
+.ms-hero p {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.65;
+  max-width: 520px;
+  margin-bottom: 28px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ms-hero {
+    padding-top: 120px;
+    padding-bottom: 50px;
+  }
+
+  .ms-hero-inner {
+    padding: 0 20px;
+  }
+
+  .ms-hero p {
+    font-size: 14px;
+  }
+}
+/* ============================================
+   SERVICE BLOCK (alternating row)
+   ============================================ */
+.ha-service-block {
+  padding: 80px 24px;
+  position: relative;
+}
+
+/* Alternate backgrounds */
+.ha-service-block:nth-child(even) {
+  /* background: var(--bg-alt); */
+  background: #ffffff;
+}
+
+.ha-service-block:nth-child(odd) {
+  /* background: var(--bg-section); */
+  background: #f5f7fb;
+}
+
+/* Separator line between blocks */
+.ha-service-block + .ha-service-block::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-light),
+    transparent
+  );
+}
+
+/* Inner container */
+.ha-service-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  align-items: center;
+}
+
+/* ── Zig-zag: reverse every even block ── */
+.ha-service-block.reverse .ha-service-inner {
+  direction: rtl;
+}
+
+.ha-service-block.reverse .ha-service-inner > * {
+  direction: ltr;
+}
+
+/* ============================================
+   IMAGE SIDE
+   ============================================ */
+.ha-img-wrap {
+  position: relative;
+  border-radius: var(--radius-img);
+  overflow: hidden;
+  box-shadow: var(--shadow-img);
+  aspect-ratio: 4 / 3;
+  flex-shrink: 0;
+}
+
+/* Decorative corner accent */
+.ha-img-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(43, 108, 176, 0.1) 0%,
+    transparent 50%
+  );
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity var(--transition);
+}
+
+.ha-img-wrap:hover::before {
+  opacity: 0;
+}
+
+.ha-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ha-img-wrap:hover img {
+  transform: scale(1.06);
+}
+
+/* Number badge on image */
+.ha-img-badge {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 2;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.ha-img-badge-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.ha-img-badge-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mid);
+  line-height: 1.4;
+  max-width: 80px;
+}
+
+/* ============================================
+   CONTENT SIDE
+   ============================================ */
+.ha-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Service label */
+.ha-content-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 14px;
+}
+
+.ha-content-label::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 2px;
+}
+
+/* Title */
+.ha-content-title {
+  font-size: clamp(22px, 3vw, 34px);
+  font-weight: 800;
+  color: var(--text-dark);
+  line-height: 1.22;
+  letter-spacing: -0.4px;
+  margin-bottom: 18px;
+}
+
+/* Description */
+.ha-content-desc {
+  font-size: 15px;
+  color: var(--text-light);
+  line-height: 1.8;
+  margin-bottom: 28px;
+  font-weight: 400;
+}
+
+/* Feature bullets */
+.ha-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-bottom: 36px;
+}
+
+.ha-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-mid);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.ha-feature-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-light), #bee3f8);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.ha-feature-icon svg {
+  width: 11px;
+  height: 11px;
+  stroke: var(--primary);
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* CTA button */
+.ha-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-btn);
+  padding: 14px 32px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  align-self: flex-start;
+  position: relative;
+  overflow: hidden;
+  transition:
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.ha-cta-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark) 0%,
+    var(--primary) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.ha-cta-btn:hover {
+  box-shadow: var(--shadow-btn);
+  transform: translateY(-3px);
+}
+
+.ha-cta-btn:hover::after {
+  opacity: 1;
+}
+
+.ha-cta-btn span,
+.ha-cta-btn-icon {
+  position: relative;
+  z-index: 1;
+}
+
+.ha-cta-btn-icon {
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition);
+}
+
+.ha-cta-btn:hover .ha-cta-btn-icon {
+  transform: translateX(4px);
+}
+
+.ha-cta-btn-icon svg {
+  width: 9px;
+  height: 9px;
+  stroke: white;
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ============================================
+   SCROLL ANIMATION — JS adds .is-visible
+   ============================================ */
+.ha-animate {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.ha-animate.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children when parent becomes visible */
+.ha-animate.is-visible .ha-img-wrap {
+  transition-delay: 0.05s;
+}
+
+.ha-animate.is-visible .ha-content {
+  transition-delay: 0.15s;
+}
+
+/* ============================================
+   FOOTER CTA STRIP
+   ============================================ */
+.ha-footer-strip {
+  background: linear-gradient(135deg, var(--primary) 0%, #4299e1 100%);
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.ha-footer-strip-inner {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.ha-footer-strip h3 {
+  font-size: clamp(20px, 4vw, 30px);
+  font-weight: 800;
+  color: white;
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+.ha-footer-strip p {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 28px;
+  line-height: 1.7;
+}
+
+.ha-footer-strip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  color: var(--primary);
+  border: none;
+  border-radius: var(--radius-btn);
+  padding: 14px 36px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.ha-footer-strip-btn:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 900px) {
+  .ha-service-inner {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  /* Cancel zig-zag on tablet/mobile */
+  .ha-service-block.reverse .ha-service-inner {
+    direction: ltr;
+  }
+
+  .ha-service-block {
+    padding: 56px 20px;
+  }
+
+  .ha-img-wrap {
+    aspect-ratio: 16 / 9;
+  }
+
+  .ha-cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .ha-page-header {
+    padding: 64px 16px 52px;
+  }
+
+  .ha-service-block {
+    padding: 44px 16px;
+  }
+
+  .ha-service-inner {
+    gap: 28px;
+  }
+
+  .ha-content-title {
+    font-size: 22px;
+  }
+}

@@ -1,0 +1,223 @@
+/* ── Tabs ── */
+.adp-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.adp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.adp-tab:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.adp-tab.active {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #6ee7b7;
+}
+
+.adp-tab-count {
+  font-size: 11px;
+  background: #e2e8f0;
+  color: #64748b;
+  padding: 1px 6px;
+  border-radius: 20px;
+}
+
+.adp-tab.active .adp-tab-count {
+  background: #d1fae5;
+  color: #059669;
+}
+
+/* ── Problem cell ── */
+.adp-problem {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #475569;
+  font-style: italic;
+}
+
+/* ── Expandable row ── */
+.adp-row {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.adp-row--open {
+  background: #f0fdf4 !important;
+}
+
+.adp-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.adp-expand-btn svg {
+  transition: transform 0.22s;
+}
+
+.adp-expand-btn--open svg {
+  transform: rotate(180deg);
+}
+
+.adp-expand-btn:hover,
+.adp-expand-btn--open {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #059669;
+}
+
+/* ── Expand content ── */
+.adp-expand-row td {
+  padding: 0 !important;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.adp-expand {
+  padding: 18px 22px;
+  background: #f8fafc;
+  border-top: 1px dashed #d1fae5;
+  animation: adp-expand-in 0.22s ease both;
+}
+
+@keyframes adp-expand-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.adp-expand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px 24px;
+  margin-bottom: 16px;
+}
+
+.adp-exp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adp-exp-item--full {
+  grid-column: 1 / -1;
+}
+
+.adp-exp-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.adp-exp-value {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+/* ── Reports section ── */
+.adp-reports {
+  padding-top: 14px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.adp-reports-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 10px;
+}
+
+.adp-reports-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 20px;
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #6ee7b7;
+}
+
+.adp-reports-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.adp-report-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  color: #059669;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+  max-width: 260px;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.adp-report-chip:hover {
+  background: #d1fae5;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.15);
+}
+
+.adp-report-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adp-report-arrow {
+  font-size: 10px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.adp-no-reports {
+  font-size: 13px;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0;
+}
