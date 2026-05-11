@@ -484,7 +484,7 @@ export default function DoctorAuthPage() {
             </button>
           </div>
           <div className="doctor-panel-content doctor-panel-right">
-            <h1>Join HumaniCare</h1>
+            <h1>Join Humancare Connect</h1>
             <p>Register now and become part of our trusted doctor network.</p>
             <button
               className="doctor-transparent-btn"

@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
 
 // ── shared cookie options (exported so login routes can reuse) ────────────────
+// HTTPS=true must be set in .env when SSL is enabled; without it, Secure+SameSite=None
+// cookies are silently dropped by browsers on HTTP connections.
+const isHTTPS = process.env.HTTPS === "true";
 const COOKIE_OPTS = {
   httpOnly: true,
-  // For cross-site requests (frontend hosted on different origin), browsers
-  // require SameSite=None and Secure to send cookies. Use 'none' in
-  // production where frontend/backends are on different hosts.
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  secure: process.env.NODE_ENV === "production",
+  sameSite: isHTTPS ? "none" : "lax",
+  secure: isHTTPS,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
