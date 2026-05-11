@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "./header.css";
 import { Link, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
-import logo from "../assets/logo.png";
+import logo from "../assets/Logo.png";
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

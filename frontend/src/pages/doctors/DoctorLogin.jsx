@@ -4,20 +4,9 @@ import { GoogleLogin } from "@react-oauth/google";
 import "./Doctor.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import { FaFacebookF, FaLinkedinIn } from "react-icons/fa";
 
 /* ─── Google icon ────────────────────────────────────────────── */
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-      <path fill="none" d="M0 0h48v48H0z"/>
-    </svg>
-  );
-}
-
 /* ─── 6-digit OTP input ──────────────────────────────────────── */
 function OTPInput({ value, onChange, boxClass = "doctor-otp-box" }) {
   const inputs = useRef([]);
@@ -114,14 +103,32 @@ export default function DoctorAuthPage() {
     name: "", email: "", password: "", confirmPassword: "",
   });
 
-  const handleLoginChange = (e) => {
-    setLoginForm({ ...loginForm, [e.target.name]: e.target.value });
-    setError("");
+  const [otpValue, setOtpValue] = useState("");
+  const [otpTimer, setOtpTimer] = useState(0);
+  const timerRef = useRef(null);
+
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+
+  const clrErr = () => setFormError("");
+
+  const startTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setOtpTimer(60);
+    timerRef.current = setInterval(() => {
+      setOtpTimer((t) => {
+        if (t <= 1) { clearInterval(timerRef.current); return 0; }
+        return t - 1;
+      });
+    }, 1000);
   };
 
-  const handleRegisterChange = (e) => {
-    setRegisterForm({ ...registerForm, [e.target.name]: e.target.value });
-    setError("");
+  const goTo = (nextView) => {
+    setView(nextView);
+    setFormError("");
+    setOtpValue("");
   };
 
   function afterLogin(doctor, isNewUser = false) {
@@ -136,7 +143,7 @@ export default function DoctorAuthPage() {
     setLoading(true); clrErr();
     try {
       const res = await api.post("/api/auth/google-doctor", {
-        credential: credentialResponse.credential,
+        credential: cr.credential,
       });
 
       // ✅ Save token to localStorage (both keys used across app)
@@ -170,10 +177,10 @@ export default function DoctorAuthPage() {
       afterLogin(res.data.doctor);
     } catch (err) {
       // ✅ Backend sends "msg" not "message"
-      setError(err.response?.data?.msg || "Invalid email or password.");
+      setFormError(err.response?.data?.msg || "Invalid email or password.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   /* ── Register → send OTP ─────────────────────────────────── */
@@ -207,8 +214,11 @@ export default function DoctorAuthPage() {
       });
 
       // ✅ Register doesn't auto-login, redirect to login side
+      setView("auth");
       setIsRegister(false);
-      setError("");
+      setFormError("");
+      setOtpValue("");
+      if (timerRef.current) clearInterval(timerRef.current);
       setRegisterForm({
         name: "",
         email: "",
@@ -217,12 +227,12 @@ export default function DoctorAuthPage() {
       });
       alert("Registration successful! Please login.");
     } catch (err) {
-      setError(
+      setFormError(
         err.response?.data?.msg || "Registration failed. Please try again.",
       );
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleResendRegisterOTP = async () => {
@@ -367,7 +377,7 @@ export default function DoctorAuthPage() {
             </a>
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setError("Google Sign-In failed.")}
+              onError={() => setFormError("Google Sign-In failed.")}
               type="icon"
               shape="circle"
               size="large"
@@ -379,7 +389,7 @@ export default function DoctorAuthPage() {
 
           <span>Create your professional account</span>
 
-          {error && <p className="doctor-error">{error}</p>}
+          {formError && <p className="doctor-error">{formError}</p>}
 
           <input type="text" placeholder="Dr. John Doe"
             value={registerForm.name}
@@ -419,7 +429,7 @@ export default function DoctorAuthPage() {
             </a>
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setError("Google Sign-In failed.")}
+              onError={() => setFormError("Google Sign-In failed.")}
               type="icon"
               shape="circle"
               size="large"
@@ -431,7 +441,7 @@ export default function DoctorAuthPage() {
 
           <span>Login to your doctor dashboard</span>
 
-          {error && <p className="doctor-error">{error}</p>}
+          {formError && <p className="doctor-error">{formError}</p>}
 
           <input type="email" placeholder="doctor@example.com"
             value={loginForm.email}
@@ -467,7 +477,7 @@ export default function DoctorAuthPage() {
               className="doctor-transparent-btn"
               onClick={() => {
                 setIsRegister(false);
-                setError("");
+                setFormError("");
               }}
             >
               Login
@@ -480,7 +490,7 @@ export default function DoctorAuthPage() {
               className="doctor-transparent-btn"
               onClick={() => {
                 setIsRegister(true);
-                setError("");
+                setFormError("");
               }}
             >
               Register
