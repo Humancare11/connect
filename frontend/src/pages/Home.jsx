@@ -592,7 +592,7 @@ export default function HomePage() {
 
           <p>
             Book video consultations, get prescriptions, and receive follow-up
-            care from board-certified physicians, without leaving home.
+            care from board-certified physicians, without leaving home..
           </p>
 
           <div className="search-bar">
