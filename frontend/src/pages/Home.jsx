@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import "./home.css";
 import Sa from "../components/Sa";
 import Aa from "../components/Aa";
@@ -476,7 +476,7 @@ export default function HomePage() {
     },
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: wrapperRef.current,

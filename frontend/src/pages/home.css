@@ -56,7 +56,6 @@ body {
   font-family: "Inter", sans-serif;
   background: var(--bg);
   color: var(--text);
-  scroll-snap-type: y proximity;
 }
 
 h1,

@@ -6,7 +6,7 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import "./App.css";
 
 import Header from "./components/Header";
@@ -74,6 +74,14 @@ import Test from "./pages/Test";
 
 // import MDemo from "./pages/MDemo";
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 function PrivateRoute({ children, allowedRoles }) {
   const { admin, loading } = useAdmin();
 
@@ -138,6 +146,7 @@ function AppLayout() {
 
   return (
     <>
+      <ScrollToTop />
       {!hideLayout && <Header />}
 
       <Routes>
