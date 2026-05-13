@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 import socket from "../socket";
 import PhoneInputLib from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
@@ -159,18 +159,22 @@ export default function AuthPage() {
   }
 
   /* ── Google ──────────────────────────────────────────────── */
-  const handleGoogleSuccess = async (cr) => {
-    clrErr();
-    try {
-      const res = await api.post("/api/auth/google", { credential: cr.credential });
-      if (res.data.isNewUser) {
-        setGooglePending({ credential: cr.credential, name: res.data.googleName, email: res.data.googleEmail });
-        setIsRegister(true);
-        return;
-      }
-      afterLogin(res.data.user);
-    } catch (err) { setFormError(err.response?.data?.msg || "Google Sign-In failed."); }
-  };
+  const initiateGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      clrErr();
+      try {
+        const res = await api.post("/api/auth/google", { accessToken: tokenResponse.access_token });
+        if (res.data.isNewUser) {
+          setGooglePending({ accessToken: tokenResponse.access_token, name: res.data.googleName, email: res.data.googleEmail });
+          setIsRegister(true);
+          return;
+        }
+        if (res.data.token) localStorage.setItem("token", res.data.token);
+        afterLogin(res.data.user);
+      } catch (err) { setFormError(err.response?.data?.msg || "Google Sign-In failed."); }
+    },
+    onError: () => setFormError("Google Sign-In failed."),
+  });
 
   const handleGoogleComplete = async (e) => {
     e.preventDefault();
@@ -180,9 +184,10 @@ export default function AuthPage() {
     setLoading(true); clrErr();
     try {
       const res = await api.post("/api/auth/google", {
-        credential: googlePending.credential,
+        accessToken: googlePending.accessToken,
         mobile: googleProfile.mobile, dob: googleProfile.dob, gender: googleProfile.gender,
       });
+      if (res.data.token) localStorage.setItem("token", res.data.token);
       afterLogin(res.data.user);
     } catch (err) { setFormError(err.response?.data?.msg || "Registration failed."); }
     finally { setLoading(false); }
@@ -194,6 +199,7 @@ export default function AuthPage() {
     setLoading(true); clrErr();
     try {
       const res = await api.post("/api/auth/login", loginForm);
+      if (res.data.token) localStorage.setItem("token", res.data.token);
       afterLogin(res.data.user);
     } catch (err) { setFormError(err.response?.data?.msg || "Login failed."); }
     finally { setLoading(false); }
@@ -223,7 +229,8 @@ export default function AuthPage() {
     setLoading(true); clrErr();
     try {
       const { terms, ...data } = registerForm;
-      await api.post("/api/auth/register", { ...data, otp: otpValue });
+      const res = await api.post("/api/auth/register", { ...data, otp: otpValue });
+      if (res.data.token) localStorage.setItem("token", res.data.token);
       if (timerRef.current) clearInterval(timerRef.current);
       setView("auth"); setIsRegister(false); setOtpValue("");
       setRegisterForm({ name:"", email:"", mobile:"", dob:"", gender:"", password:"", terms:false });
@@ -409,13 +416,9 @@ export default function AuthPage() {
             <p className="form-subtitle">Join HumaniCare and take charge of your health</p>
 
             <div className="social-links">
-              <GoogleLogin onSuccess={handleGoogleSuccess}
-                onError={() => setFormError("Google Sign-In failed.")}
-                render={(rp) => (
-                  <button type="button" className="google-btn" onClick={rp.onClick} disabled={rp.disabled}>
-                    <GoogleIcon /> Continue with Google
-                  </button>
-                )} />
+              <button type="button" className="google-btn" onClick={() => initiateGoogleLogin()}>
+                <GoogleIcon /> Continue with Google
+              </button>
             </div>
 
             {formError && <p className="form-error">{formError}</p>}
@@ -469,13 +472,9 @@ export default function AuthPage() {
             <p className="form-subtitle">Sign in to continue your healthcare journey</p>
 
             <div className="social-links">
-              <GoogleLogin onSuccess={handleGoogleSuccess}
-                onError={() => setFormError("Google Sign-In failed.")}
-                render={(rp) => (
-                  <button type="button" className="google-btn" onClick={rp.onClick} disabled={rp.disabled}>
-                    <GoogleIcon /> Continue with Google
-                  </button>
-                )} />
+              <button type="button" className="google-btn" onClick={() => initiateGoogleLogin()}>
+                <GoogleIcon /> Continue with Google
+              </button>
             </div>
 
             {formError && <p className="form-error">{formError}</p>}

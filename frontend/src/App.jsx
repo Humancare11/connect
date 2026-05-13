@@ -31,6 +31,7 @@ import socket from "./socket";
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import useLenis from "./hooks/useLenis";
+import api from "./api";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 import DoctorLogin from "./pages/doctors/DoctorLogin";

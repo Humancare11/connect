@@ -3,11 +3,8 @@ const bcrypt     = require("bcryptjs");
 const jwt        = require("jsonwebtoken");
 const User       = require("../models/User");
 const Doctor     = require("../models/Doctor");
-const { OAuth2Client }                    = require("google-auth-library");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
 const { COOKIE_OPTS }                     = require("../middleware/verifyToken");
-
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ── helpers ───────────────────────────────────────────
 const generateToken = (user) =>
@@ -85,7 +82,7 @@ const register = async (req, res) => {
 
     const token = generateToken(user);
     res.cookie("userToken", token, COOKIE_OPTS);
-    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user) });
+    return res.status(201).json({ msg: "Registration successful.", token, user: safeUser(user) });
   } catch (err) {
     console.error("register error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -114,7 +111,7 @@ const login = async (req, res) => {
 
     const token = generateToken(user);
     res.cookie("userToken", token, COOKIE_OPTS);
-    return res.json({ msg: "Login successful.", user: safeUser(user) });
+    return res.json({ msg: "Login successful.", token, user: safeUser(user) });
   } catch (err) {
     console.error("login error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -207,7 +204,7 @@ const adminLogin = async (req, res) => {
 
     const token = generateToken(user);
     res.cookie("adminToken", token, COOKIE_OPTS);
-    return res.json({ msg: "Login successful.", user: safeUser(user) });
+    return res.json({ msg: "Login successful.", token, user: safeUser(user) });
   } catch (err) {
     console.error("adminLogin error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -250,12 +247,15 @@ const updateProfile = async (req, res) => {
 // ════════════════════════════════════════════
 const googleAuthUser = async (req, res) => {
   try {
-    const { credential, mobile, dob, gender } = req.body;
-    if (!credential) return res.status(400).json({ msg: "Google credential is required." });
+    const { accessToken, mobile, dob, gender } = req.body;
+    if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
-    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
-    const payload = ticket.getPayload();
-    const { sub: googleId, email, name } = payload;
+    // Verify token and fetch profile via Google's userinfo endpoint
+    const infoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!infoRes.ok) return res.status(401).json({ msg: "Invalid Google token. Please try signing in again." });
+    const { sub: googleId, email, name } = await infoRes.json();
 
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
     if (user) {
@@ -263,7 +263,7 @@ const googleAuthUser = async (req, res) => {
       if (!user.googleId) { user.googleId = googleId; await user.save(); }
       const token = generateToken(user);
       res.cookie("userToken", token, COOKIE_OPTS);
-      return res.json({ msg: "Login successful.", user: safeUser(user) });
+      return res.json({ msg: "Login successful.", token, user: safeUser(user) });
     }
 
     if (!mobile || !dob || !gender)
@@ -272,7 +272,7 @@ const googleAuthUser = async (req, res) => {
     user = await User.create({ name, email, googleId, role: "user", mobile, dob, gender });
     const newToken = generateToken(user);
     res.cookie("userToken", newToken, COOKIE_OPTS);
-    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user) });
+    return res.status(201).json({ msg: "Registration successful.", token: newToken, user: safeUser(user) });
   } catch (err) {
     console.error("googleAuthUser error:", err);
     return res.status(500).json({ msg: "Google Sign-In failed. Please try again." });
@@ -284,12 +284,14 @@ const googleAuthUser = async (req, res) => {
 // ════════════════════════════════════════════
 const googleAuthDoctor = async (req, res) => {
   try {
-    const { credential } = req.body;
-    if (!credential) return res.status(400).json({ msg: "Google credential is required." });
+    const { accessToken } = req.body;
+    if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
-    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
-    const payload = ticket.getPayload();
-    const { sub: googleId, email, name } = payload;
+    const infoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!infoRes.ok) return res.status(401).json({ msg: "Invalid Google token. Please try signing in again." });
+    const { sub: googleId, email, name } = await infoRes.json();
 
     let doctor = await Doctor.findOne({ $or: [{ googleId }, { email }] });
     const isNewUser = !doctor;

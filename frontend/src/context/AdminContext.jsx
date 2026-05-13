@@ -18,6 +18,7 @@ export function AdminProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/auth/admin-logout"); } catch { /* ignore */ }
+    localStorage.removeItem("token");
     setAdmin(null);
   }, []);
 

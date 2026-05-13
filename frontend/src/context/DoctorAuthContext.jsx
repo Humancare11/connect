@@ -18,6 +18,8 @@ export function DoctorAuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/doctor/logout"); } catch { /* ignore */ }
+    localStorage.removeItem("token");
+    localStorage.removeItem("doctorToken");
     setDoctor(null);
   }, []);
 

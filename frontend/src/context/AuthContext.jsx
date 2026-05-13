@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/auth/logout"); } catch { /* ignore */ }
+    localStorage.removeItem("token");
     setUser(null);
   }, []);
 

@@ -27,7 +27,7 @@ export default function AdminAuthPage() {
 
     try {
       const res = await api.post("/api/auth/admin-login", adminForm);
-      const { user } = res.data;
+      const { user, token } = res.data;
 
       if (user.role !== "admin") {
         setError("This account is not an Admin. Use Super Admin login.");
@@ -35,6 +35,7 @@ export default function AdminAuthPage() {
         return;
       }
 
+      if (token) localStorage.setItem("token", token);
       login(user);
       navigate("/admin-dashboard");
     } catch (err) {
@@ -51,7 +52,7 @@ export default function AdminAuthPage() {
 
     try {
       const res = await api.post("/api/auth/admin-login", superAdminForm);
-      const { user } = res.data;
+      const { user, token } = res.data;
 
       if (user.role !== "superadmin") {
         setError("This account is not a Super Admin. Use Admin login.");
@@ -59,6 +60,7 @@ export default function AdminAuthPage() {
         return;
       }
 
+      if (token) localStorage.setItem("token", token);
       login(user);
       navigate("/superadmin-dashboard");
     } catch (err) {
