@@ -27,19 +27,15 @@ function MethodBadge({ info, loading }) {
       </span>
     );
   }
-  if (info.type === "upi") {
-    return <span className="adpy-method adpy-method--upi">🏦 UPI{info.upiVpa ? ` — ${info.upiVpa}` : ""}</span>;
-  }
   return <span className="adpy-method adpy-method--unknown">{info.type}</span>;
 }
 
 export default function AdminPayments() {
-  const [appointments,  setAppointments]  = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [search,        setSearch]        = useState("");
-  const [filterMethod,  setFilterMethod]  = useState("all"); // "all" | "card" | "upi"
-  const [expandedId,    setExpandedId]    = useState(null);
-  const [details,       setDetails]       = useState({});     // { [_id]: methodInfo | null }
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const [details, setDetails] = useState({});     // { [_id]: methodInfo | null }
   const [detailLoading, setDetailLoading] = useState({});     // { [_id]: bool }
 
   useEffect(() => {
@@ -49,9 +45,9 @@ export default function AdminPayments() {
       .finally(() => setLoading(false));
   }, []);
 
-  const paid    = appointments.filter(a => a.paymentStatus === "paid");
+  const paid = appointments.filter(a => a.paymentStatus === "paid");
   const revenue = paid.reduce((s, a) => s + (a.paymentAmount || 0), 0);
-  const avgFee  = paid.length > 0 ? Math.round(revenue / paid.length) : 0;
+  const avgFee = paid.length > 0 ? Math.round(revenue / paid.length) : 0;
 
   const fetchDetails = async (appt) => {
     if (details[appt._id] !== undefined) return;
@@ -74,11 +70,9 @@ export default function AdminPayments() {
 
   const filtered = appointments.filter(a => {
     const patient = (a.patientId?.name || "").toLowerCase();
-    const doctor  = (a.doctorId?.name  || "").toLowerCase();
+    const doctor = (a.doctorId?.name || "").toLowerCase();
     const q = search.trim().toLowerCase();
     if (q && !patient.includes(q) && !doctor.includes(q)) return false;
-    if (filterMethod === "card" && details[a._id]?.type !== "card") return false;
-    if (filterMethod === "upi"  && details[a._id]?.type !== "upi")  return false;
     return true;
   });
 
@@ -116,20 +110,18 @@ export default function AdminPayments() {
         <div className="adp-card-header">
           <div className="adp-tabs">
             {[
-              { key: "all",  label: "All Payments" },
-              { key: "card", label: "Card" },
-              { key: "upi",  label: "UPI" },
+              { key: "all", label: "All Payments" },
             ].map(t => (
               <button key={t.key}
-                className={`adp-tab ${filterMethod === t.key ? "active" : ""}`}
-                onClick={() => setFilterMethod(t.key)}>
+                className={`adp-tab ${t.key === "all" ? "active" : ""}`}
+                onClick={() => { }}>
                 {t.label}
               </button>
             ))}
           </div>
           <div className="adp-search">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input placeholder="Search patient or doctor…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
@@ -201,7 +193,7 @@ export default function AdminPayments() {
                             onClick={() => handleExpand(a)} title="View payment details"
                           >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <polyline points="6 9 12 15 18 9"/>
+                              <polyline points="6 9 12 15 18 9" />
                             </svg>
                           </button>
                         </td>

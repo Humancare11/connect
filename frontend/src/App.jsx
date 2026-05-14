@@ -62,6 +62,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageDoctors from "./pages/admin/ManageDoctors";
 import ManageUsers from "./pages/admin/ManageUsers";
+import AdminPayments from "./pages/admin/AdminPayments";
 import AdminAppointments from "./pages/admin/AdminAppointments";
 import AdminQnA from "./pages/admin/QnAPage";
 import AdminTickets from "./pages/admin/SupportTickets";
@@ -166,6 +167,7 @@ function AppLayout() {
         <Route path="/book-appointment" element={<BookAppointment />} />
         <Route path="/home-demo" element={<Home2 />} />
         <Route path="/test" element={<Test />} />
+
 
         {/* <Route path="/m" element={<MDemo />} /> */}
 
@@ -388,6 +390,16 @@ function AppLayout() {
             <PrivateRoute allowedRoles={["admin", "superadmin"]}>
               <AdminLayout>
                 <AdminTickets />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/payments"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <AdminPayments />
               </AdminLayout>
             </PrivateRoute>
           }

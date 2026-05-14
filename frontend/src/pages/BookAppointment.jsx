@@ -13,21 +13,21 @@ const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 const ELEMENTS_APPEARANCE = {
   theme: "stripe",
   variables: {
-    colorPrimary:     "#0c8b7a",
-    colorBackground:  "#ffffff",
-    colorText:        "#0f172a",
-    colorDanger:      "#dc2626",
-    fontFamily:       "'DM Sans', 'Inter', system-ui, sans-serif",
-    borderRadius:     "10px",
-    fontSizeBase:     "15px",
-    spacingUnit:      "4px",
+    colorPrimary: "#0c8b7a",
+    colorBackground: "#ffffff",
+    colorText: "#0f172a",
+    colorDanger: "#dc2626",
+    fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif",
+    borderRadius: "10px",
+    fontSizeBase: "15px",
+    spacingUnit: "4px",
   },
   rules: {
-    ".Input":         { border: "1.5px solid #e2e8f0", boxShadow: "none", backgroundColor: "#f8fafc" },
-    ".Input:focus":   { border: "1.5px solid #0c8b7a", boxShadow: "0 0 0 3px rgba(12,139,122,.12)", backgroundColor: "#fff" },
-    ".Label":         { color: "#334155", fontWeight: "600", fontSize: "13px" },
-    ".Tab":           { border: "1.5px solid #e2e8f0", borderRadius: "10px" },
-    ".Tab:hover":     { border: "1.5px solid #0c8b7a" },
+    ".Input": { border: "1.5px solid #e2e8f0", boxShadow: "none", backgroundColor: "#f8fafc" },
+    ".Input:focus": { border: "1.5px solid #0c8b7a", boxShadow: "0 0 0 3px rgba(12,139,122,.12)", backgroundColor: "#fff" },
+    ".Label": { color: "#334155", fontWeight: "600", fontSize: "13px" },
+    ".Tab": { border: "1.5px solid #e2e8f0", borderRadius: "10px" },
+    ".Tab:hover": { border: "1.5px solid #0c8b7a" },
     ".Tab--selected": { border: "1.5px solid #0c8b7a", backgroundColor: "#f0fdf4" },
   },
 };
@@ -59,25 +59,25 @@ function formatINR(paise) {
 
 const FILE_ICONS = { pdf: "📄", image: "🖼️", doc: "📝", default: "📎" };
 function fileIcon(type = "") {
-  if (type.includes("pdf"))                        return FILE_ICONS.pdf;
-  if (type.startsWith("image/"))                   return FILE_ICONS.image;
+  if (type.includes("pdf")) return FILE_ICONS.pdf;
+  if (type.startsWith("image/")) return FILE_ICONS.image;
   if (type.includes("word") || type.includes("doc")) return FILE_ICONS.doc;
   return FILE_ICONS.default;
 }
 function formatBytes(b) {
   if (!b) return "";
-  if (b < 1024)    return `${b} B`;
+  if (b < 1024) return `${b} B`;
   if (b < 1048576) return `${(b / 1024).toFixed(1)} KB`;
   return `${(b / 1048576).toFixed(1)} MB`;
 }
 
 /* ─── Stripe payment form (must be inside <Elements>) ─────── */
 function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess }) {
-  const stripe   = useStripe();
+  const stripe = useStripe();
   const elements = useElements();
-  const [paying,   setPaying]   = useState(false);
+  const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState("");
-  const [ready,    setReady]    = useState(false);
+  const [ready, setReady] = useState(false);
 
   const handlePay = async (e) => {
     e.preventDefault();
@@ -85,7 +85,7 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess }) 
     setPaying(true);
     setPayError("");
 
-    /* Save booking data so we can recover it after a UPI / 3DS redirect */
+    /* Save booking data so we can recover it after 3DS redirect */
     sessionStorage.setItem("ap_booking_pending", JSON.stringify({ doctor, form, reports, amount }));
 
     const { error } = await stripe.confirmPayment({
@@ -107,7 +107,10 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess }) 
   return (
     <form onSubmit={handlePay} className="ap-pay-form">
       <div className="ap-pay-element-wrap">
-        <PaymentElement onReady={() => setReady(true)} options={{ layout: "tabs" }} />
+        <PaymentElement onReady={() => setReady(true)} options={{ layout: "tabs", paymentMethodOrder: ["card"] }} />
+      </div>
+      <div className="ap-pay-notice" style={{ fontSize: "12px", padding: "12px", background: "#f0fdf4", border: "1px solid #d1fae5", borderRadius: "8px", color: "#065f46", marginTop: "12px" }}>
+        <strong>Test Mode:</strong> Use card number <code style={{ background: "#fff", padding: "2px 4px", borderRadius: "4px" }}>4242 4242 4242 4242</code> with any future date and any CVC.
       </div>
 
       {!ready && (
@@ -120,7 +123,7 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess }) 
 
       <div className="ap-pay-security">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
         Payments are secured and encrypted by Stripe
       </div>
@@ -136,12 +139,12 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess }) 
 
 /* ─── Payment stage ───────────────────────────────────────── */
 function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
-  const [method,         setMethod]         = useState(null); // null | "stripe" | "paypal"
-  const [clientSecret,   setClientSecret]   = useState("");
+  const [method, setMethod] = useState(null); // null | "stripe" | "paypal"
+  const [clientSecret, setClientSecret] = useState("");
   const [stripeCreating, setStripeCreating] = useState(false);
-  const [stripeError,    setStripeError]    = useState("");
-  const [paypalLoading,  setPaypalLoading]  = useState(false);
-  const [paypalError,    setPaypalError]    = useState("");
+  const [stripeError, setStripeError] = useState("");
+  const [paypalLoading, setPaypalLoading] = useState(false);
+  const [paypalError, setPaypalError] = useState("");
 
   const selectStripe = async () => {
     setStripeError("");
@@ -185,7 +188,7 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <polyline points="15 18 9 12 15 6"/>
+            <polyline points="15 18 9 12 15 6" />
           </svg>
           Back to details
         </button>
@@ -216,7 +219,7 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
               {stripeCreating
                 ? <span className="ap-spinner" />
                 : <span className="ap-pay-method-icon">💳</span>}
-              <span>Card / UPI</span>
+              <span>Credit / Debit Card</span>
               <span className="ap-pay-method-sub">Stripe · Secure</span>
             </button>
 
@@ -228,8 +231,8 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
             >
               <span className="ap-pay-method-icon">
                 <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
-                  <path d="M19.5 7.5c.28 1.63-.1 3.14-1.1 4.3C17.4 13 15.88 13.75 14 13.75H12.3l-.9 5.25H8.5L10.5 7.5h9z" fill="#009cde"/>
-                  <path d="M21.5 5.5c.28 1.63-.1 3.14-1.1 4.3C19.4 11 17.88 11.75 16 11.75H14.3l-.9 5.25H10.5L12.5 5.5h9z" fill="#012169" opacity=".6"/>
+                  <path d="M19.5 7.5c.28 1.63-.1 3.14-1.1 4.3C17.4 13 15.88 13.75 14 13.75H12.3l-.9 5.25H8.5L10.5 7.5h9z" fill="#009cde" />
+                  <path d="M21.5 5.5c.28 1.63-.1 3.14-1.1 4.3C19.4 11 17.88 11.75 16 11.75H14.3l-.9 5.25H10.5L12.5 5.5h9z" fill="#012169" opacity=".6" />
                 </svg>
               </span>
               <span>PayPal</span>
@@ -286,32 +289,32 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
 export default function BookAppointment() {
   const { state } = useLocation();
 
-  const [doctor,        setDoctor]        = useState(state?.doctor || null);
-  const [form,          setForm]          = useState({ date: "", time: "", problem: "" });
-  const [reports,       setReports]       = useState([]);
-  const [uploading,     setUploading]     = useState(false);
-  const [dragOver,      setDragOver]      = useState(false);
-  const [stage,         setStage]         = useState("form"); // "form" | "payment" | "confirming" | "success"
-  const [appointment,   setAppointment]   = useState(null);
-  const [error,         setError]         = useState("");
-  const [bookedSlots,   setBookedSlots]   = useState([]);
-  const [loadingSlots,  setLoadingSlots]  = useState(false);
+  const [doctor, setDoctor] = useState(state?.doctor || null);
+  const [form, setForm] = useState({ date: "", time: "", problem: "" });
+  const [reports, setReports] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [stage, setStage] = useState("form"); // "form" | "payment" | "confirming" | "success"
+  const [appointment, setAppointment] = useState(null);
+  const [error, setError] = useState("");
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(0);
-  const [fetchingFee,   setFetchingFee]   = useState(false);
+  const [fetchingFee, setFetchingFee] = useState(false);
   const fileInputRef = useRef(null);
   const todayStr = new Date().toISOString().slice(0, 10);
 
   /* ── Handle Stripe redirect return (UPI / 3DS bank redirect) ── */
   useEffect(() => {
-    const params         = new URLSearchParams(window.location.search);
-    const piId           = params.get("payment_intent");
+    const params = new URLSearchParams(window.location.search);
+    const piId = params.get("payment_intent");
     const redirectStatus = params.get("redirect_status");
 
     if (!piId) return;
 
     window.history.replaceState({}, "", window.location.pathname);
 
-    const raw     = sessionStorage.getItem("ap_booking_pending");
+    const raw = sessionStorage.getItem("ap_booking_pending");
     const pending = raw ? JSON.parse(raw) : null;
     sessionStorage.removeItem("ap_booking_pending");
 
@@ -404,17 +407,17 @@ export default function BookAppointment() {
   const bookAppointment = async (paymentRef, gateway, doc, frm, reps, amt) => {
     setError("");
     try {
-      const d        = doc || doctor;
-      const f        = frm || form;
-      const r        = reps || reports;
+      const d = doc || doctor;
+      const f = frm || form;
+      const r = reps || reports;
       const doctorId = d.doctorId || d.id;
 
       const body = {
         doctorId, date: f.date, time: f.time,
         problem: f.problem, medicalReports: r,
       };
-      if (gateway === "paypal") body.paypalOrderId   = paymentRef;
-      else                      body.paymentIntentId = paymentRef;
+      if (gateway === "paypal") body.paypalOrderId = paymentRef;
+      else body.paymentIntentId = paymentRef;
 
       const res = await api.post("/api/appointments", body);
       setAppointment(res.data.appointment);
@@ -429,8 +432,8 @@ export default function BookAppointment() {
 
   /* ── Render helpers ── */
   const availableCount = form.date ? ALL_SLOTS.filter(s => slotStatus(s) === "available").length : 0;
-  const stepBase       = form.date ? 0 : -1;
-  const canProceed     = form.date && form.time && form.problem.trim() && !uploading;
+  const stepBase = form.date ? 0 : -1;
+  const canProceed = form.date && form.time && form.problem.trim() && !uploading;
 
   /* Confirming — spinner while booking is being created */
   if (stage === "confirming") {
@@ -524,7 +527,7 @@ export default function BookAppointment() {
                             onClick={() => selectSlot(slot)} disabled={status !== "available"}>
                             {formatSlot(slot)}
                             {status === "booked" && <span className="ap-slot-tag">Booked</span>}
-                            {status === "past"   && <span className="ap-slot-tag">Passed</span>}
+                            {status === "past" && <span className="ap-slot-tag">Passed</span>}
                           </button>
                         );
                       })}
@@ -617,7 +620,7 @@ export default function BookAppointment() {
           <div className="ap-success">
             <div className="ap-success-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
+                <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
             <h3 className="ap-success-title">Appointment Booked!</h3>

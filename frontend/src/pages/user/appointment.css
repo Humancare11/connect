@@ -468,6 +468,27 @@
   gap: 6px;
 }
 
+.appt-completed-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.appt-btn--records {
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  font-size: 12px;
+  padding: 7px 14px;
+}
+.appt-btn--records:hover {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: rgba(99, 102, 241, 0.55);
+  color: #c7d2fe;
+  transform: translateY(-1px);
+}
+
 /* ---------- Buttons ---------- */
 .appt-btn {
   display: inline-flex;

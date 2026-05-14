@@ -1,11 +1,11 @@
-const express    = require("express");
-const router     = express.Router();
-const stripe     = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const express = require("express");
+const router = express.Router();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Enrollment = require("../models/Enrollment");
 const { verifyUserToken, verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 
 /* POST /api/payments/create-intent
-   Creates a Stripe PaymentIntent with automatic payment methods (Card, UPI, NetBanking…).
+   Creates a Stripe PaymentIntent for card payments only.
    Returns clientSecret and amount in paise. */
 router.post("/create-intent", verifyUserToken, async (req, res) => {
   try {
@@ -20,11 +20,11 @@ router.post("/create-intent", verifyUserToken, async (req, res) => {
     const feePaise = Math.round((enrollment?.consultantFees || 500) * 100);
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount:               feePaise,
-      currency:             "inr",
-      payment_method_types: ["card", "upi"],
+      amount: feePaise,
+      currency: "inr",
+      payment_method_types: ["card"],
       metadata: {
-        doctorId:  doctorId.toString(),
+        doctorId: doctorId.toString(),
         patientId: req.user.id,
       },
     });
@@ -66,19 +66,18 @@ router.get("/admin/intent/:id", verifyAdminToken, adminOnly, async (req, res) =>
 
     const pm = pi.payment_method;
     const methodInfo = pm ? {
-      type:    pm.type,
-      brand:   pm.card?.brand   || null,
-      last4:   pm.card?.last4   || null,
+      type: pm.type,
+      brand: pm.card?.brand || null,
+      last4: pm.card?.last4 || null,
       network: pm.card?.network || null,
-      upiVpa:  pm.upi?.vpa      || null,
     } : null;
 
     res.json({
-      id:         pi.id,
-      status:     pi.status,
-      amount:     pi.amount,
-      currency:   pi.currency,
-      created:    pi.created,
+      id: pi.id,
+      status: pi.status,
+      amount: pi.amount,
+      currency: pi.currency,
+      created: pi.created,
       methodInfo,
     });
   } catch (err) {

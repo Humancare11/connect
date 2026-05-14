@@ -210,14 +210,10 @@ const completeAppointment = async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      io.to(`patient_${appointment.patientId}`).emit("appointment-updated", {
-        appointmentId: appointment._id,
-        status: appointment.status,
-      });
-      io.to("admin_room").emit("appointment-updated", {
-        appointmentId: appointment._id,
-        status: appointment.status,
-      });
+      const payload = { appointmentId: appointment._id, status: appointment.status };
+      io.to(`patient_${appointment.patientId}`).emit("appointment-updated", payload);
+      io.to(`appointment_${appointment._id}`).emit("appointment-updated", payload);
+      io.to("admin_room").emit("appointment-updated", payload);
     }
 
     res.status(200).json({ msg: "Appointment marked as completed.", appointment });

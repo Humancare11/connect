@@ -6,6 +6,12 @@ import { useAuth } from "../../context/AuthContext";
 import socket from "../../socket";
 import { USER_ACTIVITY_UPDATED_EVENT } from "../../utils/activityEvents";
 
+// Helper: format date
+const formatDateShort = (d) => {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const location = useLocation();
@@ -13,6 +19,8 @@ export default function Dashboard() {
   const [appointments, setAppointments] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [tickets, setTickets] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const refreshTimerRef = useRef(null);
@@ -22,10 +30,12 @@ export default function Dashboard() {
     if (withLoader) setLoading(true);
 
     try {
-      const [apptRes, qnaRes, ticketRes] = await Promise.allSettled([
+      const [apptRes, qnaRes, ticketRes, rxRes, certRes] = await Promise.allSettled([
         api.get("/api/appointments/mine"),
         api.get("/api/qna/user-questions"),
         api.get("/api/tickets/user/my"),
+        api.get("/api/medical/my-prescriptions"),
+        api.get("/api/medical/my-certificates"),
       ]);
 
       if (apptRes.status === "fulfilled") {
@@ -47,6 +57,18 @@ export default function Dashboard() {
       } else {
         console.error("Dashboard tickets load error", ticketRes.reason);
         setTickets([]);
+      }
+
+      if (rxRes.status === "fulfilled") {
+        setPrescriptions(Array.isArray(rxRes.value.data) ? rxRes.value.data : []);
+      } else {
+        setPrescriptions([]);
+      }
+
+      if (certRes.status === "fulfilled") {
+        setCertificates(Array.isArray(certRes.value.data) ? certRes.value.data : []);
+      } else {
+        setCertificates([]);
       }
     } catch (err) {
       console.error("Dashboard load error", err);
@@ -83,6 +105,8 @@ export default function Dashboard() {
       "question-approved",
       "ticket-created",
       "ticket-updated",
+      "new-prescription",
+      "new-certificate",
     ];
 
     window.addEventListener(USER_ACTIVITY_UPDATED_EVENT, onActivityEvent);
@@ -99,8 +123,9 @@ export default function Dashboard() {
     };
   }, [queueRefresh]);
 
-  const pendingCount = appointments.filter((a) => a.status === "pending").length;
+  const pendingCount   = appointments.filter((a) => a.status === "pending").length;
   const confirmedCount = appointments.filter((a) => a.status === "confirmed").length;
+  const completedCount = appointments.filter((a) => a.status === "completed").length;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "—";
@@ -217,7 +242,7 @@ export default function Dashboard() {
             <span className="hc-dash__ov-num">{appointments.length}</span>
             <span className="hc-dash__ov-label">Total Appointments</span>
             <span className="hc-dash__ov-sub">
-              {pendingCount} pending · {confirmedCount} confirmed
+              {pendingCount} pending · {confirmedCount} confirmed · {completedCount} completed
             </span>
           </div>
         </div>
@@ -244,6 +269,70 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Medical Records Summary ─────────────────────── */}
+      {(prescriptions.length > 0 || certificates.length > 0) && (
+        <div className="hc-dash__section">
+          <div className="hc-dash__section-header">
+            <div>
+              <h2 className="hc-dash__section-title">Medical Records</h2>
+              <p className="hc-dash__section-sub">Prescriptions and certificates from your consultations</p>
+            </div>
+            <Link to="/user/my-records" className="hc-dash__section-link">View all →</Link>
+          </div>
+          <div className="hc-dash__records-grid">
+            {/* Prescriptions */}
+            <div className="hc-dash__record-card">
+              <div className="hc-dash__record-header">
+                <span className="hc-dash__record-icon">💊</span>
+                <div>
+                  <h4 className="hc-dash__record-title">Prescriptions</h4>
+                  <p className="hc-dash__record-count">{prescriptions.length} total</p>
+                </div>
+              </div>
+              <div className="hc-dash__record-list">
+                {prescriptions.slice(0, 3).map((rx) => (
+                  <div key={rx._id} className="hc-dash__record-item">
+                    <div className="hc-dash__record-item-dot hc-dash__record-item-dot--rx" />
+                    <div className="hc-dash__record-item-body">
+                      <span className="hc-dash__record-item-title">{rx.diagnosis}</span>
+                      <span className="hc-dash__record-item-meta">
+                        Dr. {rx.doctorId?.name || "—"} · {formatDateShort(rx.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link to="/user/my-records" className="hc-dash__record-cta">View prescriptions →</Link>
+            </div>
+
+            {/* Certificates */}
+            <div className="hc-dash__record-card">
+              <div className="hc-dash__record-header">
+                <span className="hc-dash__record-icon">📄</span>
+                <div>
+                  <h4 className="hc-dash__record-title">Medical Certificates</h4>
+                  <p className="hc-dash__record-count">{certificates.length} total</p>
+                </div>
+              </div>
+              <div className="hc-dash__record-list">
+                {certificates.slice(0, 3).map((cert) => (
+                  <div key={cert._id} className="hc-dash__record-item">
+                    <div className="hc-dash__record-item-dot hc-dash__record-item-dot--cert" />
+                    <div className="hc-dash__record-item-body">
+                      <span className="hc-dash__record-item-title">{cert.diagnosis}</span>
+                      <span className="hc-dash__record-item-meta">
+                        Dr. {cert.doctorId?.name || "—"} · Issued {formatDateShort(cert.issuedDate)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link to="/user/my-records?tab=certificates" className="hc-dash__record-cta">View certificates →</Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="hc-dash__section">
         <div className="hc-dash__section-header">

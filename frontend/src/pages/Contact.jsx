@@ -1,40 +1,10 @@
 import { useState } from "react";
 import "./contact.css";
 
-const DETAILS = [
-  {
-    label: "Email Us",
-    value: "hello@humancare.com",
-    sub: "We respond within 2 business hours",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-        <polyline points="22,6 12,13 2,6" />
-      </svg>
-    ),
-  },
-  {
-    label: "Call Us",
-    value: "+1 (800) 555-0199",
-    sub: "Monday–Friday, 9am–6pm EST",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 11.9 19.79 19.79 0 0 1 1 3.28 2 2 0 0 1 2.98 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Headquarters",
-    value: "350 Fifth Avenue, New York, NY 10118",
-    sub: "By appointment only",
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" />
-        <circle cx="12" cy="10" r="3" />
-      </svg>
-    ),
-  },
-];
+const CONTACT_NOTE = {
+  title: "Get in touch",
+  body: "Use the form to send your message directly to the HumaniCare Connect team. We’ll reply by email as soon as possible.",
+};
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
@@ -75,24 +45,18 @@ export default function Contact() {
       <div className="page-body">
         <div className="contact-layout">
           <div className="contact-left">
-            <div className="contact-details">
-              {DETAILS.map((d) => (
-                <div key={d.label} className="contact-detail hc-card">
-                  <div className="contact-detail__icon">{d.icon}</div>
-                  <div>
-                    <p className="contact-detail__label">{d.label}</p>
-                    <p className="contact-detail__value">{d.value}</p>
-                    <p className="contact-detail__sub">{d.sub}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="contact-detail hc-card" style={{ flexDirection: "column", gap: 16, padding: 28 }}>
+              <div>
+                <p className="contact-detail__label">{CONTACT_NOTE.title}</p>
+                <p className="contact-detail__value" style={{ fontSize: 18, lineHeight: 1.6, marginBottom: 0 }}>{CONTACT_NOTE.body}</p>
+              </div>
             </div>
             <div className="contact-badge hc-card">
               <div className="contact-badge__row">
                 <span className="contact-badge__dot" />
                 <span className="contact-badge__text">Average response time: <strong>under 2 hours</strong></span>
               </div>
-              <p className="contact-badge__note">Our team is available Monday–Friday, 9am–6pm EST. For medical emergencies, please call your local emergency services.</p>
+              <p className="contact-badge__note">Our team is available Monday–Friday, 9am–6pm IST. For medical emergencies, please contact local emergency services immediately.</p>
             </div>
           </div>
 

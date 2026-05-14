@@ -103,6 +103,16 @@ const createPrescription = async (req, res) => {
       followUpDate: followUpDate || "",
     });
 
+    // Notify patient in real-time
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`patient_${patientId}`).emit("new-prescription", {
+        prescriptionId: prescription._id,
+        diagnosis,
+        patientId,
+      });
+    }
+
     res.status(201).json({ msg: "Prescription created.", prescription });
   } catch (err) {
     console.error("createPrescription error:", err);
@@ -136,6 +146,16 @@ const createMedicalCertificate = async (req, res) => {
       notes:          notes          || "",
       issuedDate,
     });
+
+    // Notify patient in real-time
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`patient_${patientId}`).emit("new-certificate", {
+        certificateId: certificate._id,
+        diagnosis,
+        patientId,
+      });
+    }
 
     res.status(201).json({ msg: "Medical certificate issued.", certificate });
   } catch (err) {

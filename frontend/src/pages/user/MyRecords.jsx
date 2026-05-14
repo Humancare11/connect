@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import "./MyRecords.css";
 import api from "../../api";
+import socket from "../../socket";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -19,7 +21,7 @@ function PrescriptionCard({ rx }) {
           <h3 className="mr-card-title">{rx.diagnosis}</h3>
           <p className="mr-card-sub">
             Dr. {rx.doctorId?.name || "—"} &nbsp;·&nbsp; {formatDate(rx.createdAt)}
-            {rx.appointmentId?.date && ` &nbsp;·&nbsp; Appt: ${formatDate(rx.appointmentId.date)}`}
+            {rx.appointmentId?.date && ` · Appt: ${formatDate(rx.appointmentId.date)}`}
           </p>
         </div>
         <span className={`mr-chevron ${open ? "mr-chevron--open" : ""}`}>›</span>
@@ -33,7 +35,9 @@ function PrescriptionCard({ rx }) {
               <div className="mr-med-table-wrap">
                 <table className="mr-med-table">
                   <thead>
-                    <tr><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr>
+                    <tr>
+                      <th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {rx.medicines.map((m, i) => (
@@ -47,25 +51,33 @@ function PrescriptionCard({ rx }) {
                   </tbody>
                 </table>
               </div>
-              {rx.medicines.some((m) => m.notes) && (
-                rx.medicines.filter((m) => m.notes).map((m, i) => (
-                  <p key={i} className="mr-note">📋 {m.name}: {m.notes}</p>
-                ))
-              )}
+              {rx.medicines.filter((m) => m.notes).map((m, i) => (
+                <p key={i} className="mr-note">📋 {m.name}: {m.notes}</p>
+              ))}
             </>
           )}
+
           {rx.instructions && (
             <div className="mr-info-block">
               <span className="mr-info-label">Instructions</span>
               <p className="mr-info-value">{rx.instructions}</p>
             </div>
           )}
+
           {rx.followUpDate && (
             <div className="mr-info-block">
               <span className="mr-info-label">Follow-up Date</span>
               <p className="mr-info-value">🗓 {formatDate(rx.followUpDate)}</p>
             </div>
           )}
+
+          <div className="mr-info-block">
+            <span className="mr-info-label">Prescribed by</span>
+            <p className="mr-info-value">
+              Dr. {rx.doctorId?.name || "—"}
+              {rx.doctorId?.email && ` · ${rx.doctorId.email}`}
+            </p>
+          </div>
         </div>
       )}
     </div>
@@ -95,6 +107,7 @@ function CertificateCard({ cert }) {
               <p className="mr-info-value">{cert.recommendation}</p>
             </div>
           )}
+
           {(cert.restFromDate || cert.restToDate) && (
             <div className="mr-info-block">
               <span className="mr-info-label">Rest Period</span>
@@ -103,15 +116,20 @@ function CertificateCard({ cert }) {
               </p>
             </div>
           )}
+
           {cert.notes && (
             <div className="mr-info-block">
               <span className="mr-info-label">Notes</span>
               <p className="mr-info-value">{cert.notes}</p>
             </div>
           )}
+
           <div className="mr-info-block">
-            <span className="mr-info-label">Doctor</span>
-            <p className="mr-info-value">{cert.doctorId?.name} &lt;{cert.doctorId?.email}&gt;</p>
+            <span className="mr-info-label">Issued by</span>
+            <p className="mr-info-value">
+              Dr. {cert.doctorId?.name || "—"}
+              {cert.doctorId?.email && ` · ${cert.doctorId.email}`}
+            </p>
           </div>
         </div>
       )}
@@ -120,27 +138,85 @@ function CertificateCard({ cert }) {
 }
 
 export default function MyRecords() {
+  const location = useLocation();
   const [prescriptions,  setPrescriptions]  = useState([]);
   const [certificates,   setCertificates]   = useState([]);
   const [loading,        setLoading]        = useState(true);
+  const [error,          setError]          = useState("");
   const [activeTab,      setActiveTab]      = useState("prescriptions");
+  const refreshTimerRef = useRef(null);
 
+  // Support ?tab=certificates deep-link (e.g. from dashboard)
   useEffect(() => {
-    Promise.all([
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "certificates" || tab === "prescriptions") setActiveTab(tab);
+  }, [location.search]);
+
+  const loadRecords = useCallback(async (withLoader = false) => {
+    if (withLoader) setLoading(true);
+    setError("");
+
+    const [rxRes, certRes] = await Promise.allSettled([
       api.get("/api/medical/my-prescriptions"),
       api.get("/api/medical/my-certificates"),
-    ])
-      .then(([rxRes, certRes]) => {
-        setPrescriptions(rxRes.data);
-        setCertificates(certRes.data);
-      })
-      .catch((err) => console.error("Failed to load records", err))
-      .finally(() => setLoading(false));
+    ]);
+
+    if (rxRes.status === "fulfilled") {
+      setPrescriptions(Array.isArray(rxRes.value.data) ? rxRes.value.data : []);
+    } else {
+      console.error("Prescriptions load error:", rxRes.reason);
+      if (rxRes.reason?.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+      }
+      setPrescriptions([]);
+    }
+
+    if (certRes.status === "fulfilled") {
+      setCertificates(Array.isArray(certRes.value.data) ? certRes.value.data : []);
+    } else {
+      console.error("Certificates load error:", certRes.reason);
+      setCertificates([]);
+    }
+
+    if (withLoader) setLoading(false);
   }, []);
 
+  const queueRefresh = useCallback(() => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = setTimeout(() => {
+      refreshTimerRef.current = null;
+      loadRecords(false);
+    }, 250);
+  }, [loadRecords]);
+
+  // Initial load
+  useEffect(() => {
+    loadRecords(true);
+  }, [loadRecords]);
+
+  // Refresh on focus, visibility, and socket events
+  useEffect(() => {
+    const onFocus   = () => queueRefresh();
+    const onVisible = () => { if (document.visibilityState === "visible") queueRefresh(); };
+
+    socket.on("new-prescription", queueRefresh);
+    socket.on("new-certificate",  queueRefresh);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      socket.off("new-prescription", queueRefresh);
+      socket.off("new-certificate",  queueRefresh);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    };
+  }, [queueRefresh]);
+
   const tabs = [
-    { key: "prescriptions", label: "Prescriptions",       icon: "💊", count: prescriptions.length  },
-    { key: "certificates",  label: "Medical Certificates", icon: "📄", count: certificates.length  },
+    { key: "prescriptions", label: "Prescriptions",        icon: "💊", count: prescriptions.length },
+    { key: "certificates",  label: "Medical Certificates",  icon: "📄", count: certificates.length  },
   ];
 
   return (
@@ -168,6 +244,11 @@ export default function MyRecords() {
           </div>
         </div>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="mr-error-banner">⚠️ {error}</div>
+      )}
 
       {/* Tabs */}
       <div className="mr-tabs">

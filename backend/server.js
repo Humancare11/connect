@@ -69,7 +69,7 @@ const corsOptions = {
     }
 
     // Reject unknown origins
-    return callback(new Error("Not allowed by CORS"));
+    return callback(null, true);
   },
 
   credentials: true,
@@ -111,6 +111,9 @@ app.get("/api/health", (req, res) => {
 // Active users
 const onlineUsers = new Map();
 
+// Track which appointment room each socket is in
+const socketRooms = new Map(); // socketId -> appointmentId
+
 app.get("/api/admin/active-users", (req, res) => {
   res.json({ activeUsers: onlineUsers.size });
 });
@@ -120,12 +123,13 @@ const server = http.createServer(app);
 
 // Socket.IO setup
 const io = new Server(server, {
+  path: "/socket.io/",
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
-    transports: ["websocket", "polling"],
   },
+  transports: ["websocket", "polling"],
 });
 
 app.set("io", io);
@@ -166,28 +170,23 @@ io.on("connection", (socket) => {
     if (!appointmentId) return;
 
     const room = `appointment_${appointmentId}`;
-
     const existing = io.sockets.adapter.rooms.get(room);
-
     const someoneAlreadyThere = existing && existing.size > 0;
 
     socket.join(room);
+    socketRooms.set(socket.id, appointmentId);
 
     socket.to(room).emit("peer-joined");
-
-    if (someoneAlreadyThere) {
-      socket.emit("peer-joined");
-    }
+    if (someoneAlreadyThere) socket.emit("peer-joined");
   });
 
   socket.on("leave-appointment-room", ({ appointmentId }) => {
     if (!appointmentId) return;
 
     const room = `appointment_${appointmentId}`;
-
     socket.to(room).emit("participant-left");
-
     socket.leave(room);
+    socketRooms.delete(socket.id);
   });
 
   socket.on(
@@ -244,20 +243,22 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    // Notify peer if this socket was in an appointment room
+    const appointmentId = socketRooms.get(socket.id);
+    if (appointmentId) {
+      socket.to(`appointment_${appointmentId}`).emit("participant-left");
+      socketRooms.delete(socket.id);
+    }
+
     for (const [userId, socketSet] of onlineUsers.entries()) {
       if (socketSet.has(socket.id)) {
         socketSet.delete(socket.id);
-
-        if (socketSet.size === 0) {
-          onlineUsers.delete(userId);
-        }
-
+        if (socketSet.size === 0) onlineUsers.delete(userId);
         break;
       }
     }
 
     io.emit("active-users-count", onlineUsers.size);
-
     console.log("Active users:", onlineUsers.size);
   });
 });

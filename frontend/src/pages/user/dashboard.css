@@ -336,6 +336,70 @@
 }
 .hc-dash__view-all:hover { background: #19c9a3; color: #0d1b2a; }
 
+.hc-dash__section-link {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: #19c9a3; text-decoration: none;
+  padding: 7px 14px; border-radius: 8px;
+  background: rgba(25,201,163,0.12);
+  border: 1px solid rgba(25,201,163,0.2);
+  transition: all 0.2s; white-space: nowrap;
+}
+.hc-dash__section-link:hover { background: #19c9a3; color: #0d1b2a; }
+
+/* ── Medical Records Grid ─────────────────────────────────────── */
+.hc-dash__records-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+@media (max-width: 640px) {
+  .hc-dash__records-grid { grid-template-columns: 1fr; }
+}
+.hc-dash__record-card {
+  padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+.hc-dash__record-card:last-child { border-right: none; }
+.hc-dash__record-header {
+  display: flex; align-items: center; gap: 12px;
+}
+.hc-dash__record-icon { font-size: 28px; line-height: 1; }
+.hc-dash__record-title {
+  font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600;
+  color: #f0f6ff; margin: 0 0 2px;
+}
+.hc-dash__record-count { font-size: 11px; color: #4a6174; margin: 0; }
+.hc-dash__record-list {
+  display: flex; flex-direction: column; gap: 10px; flex: 1;
+}
+.hc-dash__record-item {
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.hc-dash__record-item-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 4px;
+}
+.hc-dash__record-item-dot--rx   { background: #19c9a3; }
+.hc-dash__record-item-dot--cert { background: #6366f1; }
+.hc-dash__record-item-body {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.hc-dash__record-item-title {
+  font-size: 13px; font-weight: 600; color: #c8e0f5;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hc-dash__record-item-meta { font-size: 11px; color: #4a6174; }
+.hc-dash__record-cta {
+  font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600;
+  color: #19c9a3; text-decoration: none;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  transition: color 0.2s;
+}
+.hc-dash__record-cta:hover { color: #16b891; }
+
 /* ---------- Loading ---------- */
 .hc-dash__loading {
   display: flex;
