@@ -30,6 +30,8 @@ import { motion, useInView } from "framer-motion";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 
+import AmbientBackdrop from "../components/AmbientBackdrop";
+
 
 
 gsap.registerPlugin(ScrollTrigger);
@@ -574,7 +576,9 @@ export default function HomePage() {
 
   return (
     <>
-    
+    <AmbientBackdrop />
+    <div className="hero-light"></div>
+<div className="hero-grid"></div>
       {/* ════════════════════ HERO section ═════════════════════════════════════════════ */}
       <section className="hero">
         {/* hero canvas removed for production: decorative particles were disabled */}
