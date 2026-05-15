@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
+import "../log.css";
 
 export default function AdminAuthPage() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);

@@ -1,529 +1,1378 @@
-import { useState, useEffect } from "react";
-import PhoneInputLib from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
-import { getNames } from "country-list";
-import "./DoctorEnrollments.css";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../api";
 
-const PhoneInput = PhoneInputLib.default ?? PhoneInputLib;
+// ─── Constants ───
+const COUNTRIES = [
+  "United States","United Kingdom","India","Canada","Australia","Germany","France",
+  "Brazil","Mexico","South Africa","Nigeria","Kenya","UAE","Saudi Arabia","Singapore",
+  "Japan","South Korea","Philippines","Pakistan","Bangladesh","Sri Lanka","Nepal","Other"
+];
+const SPECIALTIES = [
+  "General Practice","Internal Medicine","Cardiology","Dermatology","Endocrinology",
+  "Gastroenterology","Neurology","Oncology","Ophthalmology","Orthopedics","Pediatrics",
+  "Psychiatry","Pulmonology","Radiology","Surgery","Urology","OB/GYN","Emergency Medicine",
+  "Anesthesiology","Pathology","Other"
+];
+const QUALIFICATIONS = ["MD","DO","NP","PA","Other"];
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 
-const LANGUAGES = ["English", "Hindi", "Bengali", "Tamil", "Telugu", "Marathi", "Gujarati", "Kannada", "Malayalam", "Punjabi"];
-
-const SPECIALITIES = {
-  "Cardiologist": ["Interventional Cardiology", "Non-Invasive Cardiology", "Electrophysiology", "Heart Failure", "Preventive Cardiology"],
-  "Dermatologist": ["Cosmetic Dermatology", "Dermatopathology", "Pediatric Dermatology", "Trichology", "Laser Dermatology"],
-  "Orthopedic Surgeon": ["Joint Replacement", "Spine Surgery", "Sports Injury", "Pediatric Orthopedics", "Trauma Surgery"],
-  "Neurologist": ["Stroke Specialist", "Epilepsy Specialist", "Neurophysiology", "Movement Disorders", "Neurocritical Care"],
-  "Oncologist": ["Medical Oncology", "Surgical Oncology", "Radiation Oncology", "Pediatric Oncology", "Gynecologic Oncology"],
-  "Pediatrician": ["Neonatology", "Pediatric Cardiology", "Pediatric Neurology", "Pediatric Oncology", "Developmental Pediatrics"],
-  "OB-GYN": ["Infertility Specialist", "Gynecologic Oncology", "Maternal-Fetal Medicine", "Reproductive Endocrinology", "Laparoscopic Surgery"],
-  "Psychiatrist": ["Child Psychiatry", "Addiction Psychiatry", "Geriatric Psychiatry", "Forensic Psychiatry", "Psychotherapy"],
-  "Radiologist": ["Interventional Radiology", "Neuroradiology", "Musculoskeletal Radiology", "Pediatric Radiology", "Breast Imaging"],
-  "Urologist": ["Andrology", "Endourology", "Uro-Oncology", "Pediatric Urology", "Reconstructive Urology"],
+// Countries with state/province-level medical licensing
+const STATE_LICENSING_COUNTRIES = {
+  "United States": {
+    label: "State",
+    plural: "States",
+    items: [
+      "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware",
+      "District of Columbia","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa",
+      "Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota",
+      "Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey",
+      "New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon",
+      "Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah",
+      "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
+    ]
+  },
+  "India": {
+    label: "State/UT",
+    plural: "States/UTs",
+    items: [
+      "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa",
+      "Gujarat","Haryana","Himachal Pradesh","Jammu & Kashmir","Jharkhand","Karnataka",
+      "Kerala","Ladakh","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
+      "Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu",
+      "Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Chandigarh"
+    ]
+  },
+  "Australia": {
+    label: "State/Territory",
+    plural: "States/Territories",
+    items: [
+      "New South Wales","Victoria","Queensland","South Australia","Western Australia",
+      "Tasmania","Northern Territory","Australian Capital Territory"
+    ]
+  },
+  "Canada": {
+    label: "Province/Territory",
+    plural: "Provinces/Territories",
+    items: [
+      "Alberta","British Columbia","Manitoba","New Brunswick","Newfoundland and Labrador",
+      "Northwest Territories","Nova Scotia","Nunavut","Ontario","Prince Edward Island",
+      "Quebec","Saskatchewan","Yukon"
+    ]
+  },
+  "Germany": {
+    label: "Bundesland",
+    plural: "Bundesländer",
+    items: [
+      "Baden-Württemberg","Bavaria","Berlin","Brandenburg","Bremen","Hamburg","Hesse",
+      "Lower Saxony","Mecklenburg-Vorpommern","North Rhine-Westphalia","Rhineland-Palatinate",
+      "Saarland","Saxony","Saxony-Anhalt","Schleswig-Holstein","Thuringia"
+    ]
+  },
+  "Brazil": {
+    label: "State",
+    plural: "States",
+    items: [
+      "Acre","Alagoas","Amapá","Amazonas","Bahia","Ceará","Distrito Federal",
+      "Espírito Santo","Goiás","Maranhão","Mato Grosso","Mato Grosso do Sul",
+      "Minas Gerais","Pará","Paraíba","Paraná","Pernambuco","Piauí","Rio de Janeiro",
+      "Rio Grande do Norte","Rio Grande do Sul","Rondônia","Roraima","Santa Catarina",
+      "São Paulo","Sergipe","Tocantins"
+    ]
+  },
+  "Mexico": {
+    label: "State",
+    plural: "States",
+    items: [
+      "Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas",
+      "Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Guanajuato",
+      "Guerrero","Hidalgo","Jalisco","México","Michoacán","Morelos","Nayarit",
+      "Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí",
+      "Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"
+    ]
+  },
+  "Nigeria": {
+    label: "State",
+    plural: "States",
+    items: [
+      "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno",
+      "Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT Abuja","Gombe","Imo",
+      "Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa",
+      "Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara"
+    ]
+  }
 };
 
-// Only these fields are truly required
-const REQUIRED = new Set([
-  "firstName", "surname", "email", "phoneNumber", "gender", "dob",
-  "qualification", "specialization", "experience", "consultantFees", "consultationMode",
-  "medicalRegistrationNumber", "medicalLicense",
-  "accountHolderName", "bankName", "accountNumber", "ifscCode",
-]);
-
-const V = {
-  email: v => !v ? "Required" : !/\S+@\S+\.\S+/.test(v) ? "Invalid email" : "",
-  phoneNumber: v => !v ? "Required" : v.length < 10 ? "Invalid number" : "",
-  firstName: v => !v ? "Required" : "",
-  surname: v => !v ? "Required" : "",
-  gender: v => !v ? "Required" : "",
-  dob: v => { if (!v) return "Required"; const a = Math.floor((Date.now() - new Date(v)) / 31557600000); return a < 23 ? "Min age 23" : a > 80 ? "Invalid date" : ""; },
-  qualification: v => !v ? "Required" : "",
-  specialization: v => !v ? "Required" : "",
-  experience: v => !v ? "Required" : v < 1 ? "Min 1 yr" : v > 60 ? "Max 60 yrs" : "",
-  consultantFees: v => !v ? "Required" : v < 100 ? "Min ₹100" : "",
-  consultationMode: v => !v ? "Required" : "",
-  medicalRegistrationNumber: v => !v ? "Required" : "",
-  medicalLicense: v => !v ? "Required" : "",
-  accountHolderName: v => !v ? "Required" : "",
-  bankName: v => !v ? "Required" : "",
-  accountNumber: v => !v ? "Required" : !/^\d{9,18}$/.test(v) ? "9–18 digits" : "",
-  ifscCode: v => !v ? "Required" : !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(v.toUpperCase()) ? "e.g. SBIN0001234" : "",
-  payoutEmail: v => v && !/\S+@\S+\.\S+/.test(v) ? "Invalid email" : "",
-  aboutDoctor: v => v && v.length > 300 ? "Max 300 chars" : "",
-};
-
-function Field({ label, error, hint, req, children }) {
-  return (
-    <div className={`de-field ${error ? "de-field--err" : ""}`}>
-      <label className="de-label">
-        {label}
-        {req && <span className="de-req"> *</span>}
-        {!req && <span className="de-opt"> optional</span>}
-      </label>
-      {children}
-      {hint && !error && <span className="de-hint">{hint}</span>}
-      {error && <span className="de-err-msg">⚠ {error}</span>}
-    </div>
-  );
-}
-
-const SECTIONS = [
-  { id: "personal", label: "Personal", num: "01" },
-  { id: "practice", label: "Practice", num: "02" },
-  { id: "credentials", label: "Credentials", num: "03" },
-  { id: "payout", label: "Payout", num: "04" },
+const TIMEZONES = [
+  "America/New_York (EST)","America/Chicago (CST)","America/Denver (MST)",
+  "America/Los_Angeles (PST)","America/Anchorage (AKST)","Pacific/Honolulu (HST)",
+  "Europe/London (GMT)","Europe/Berlin (CET)","Asia/Kolkata (IST)","Asia/Dubai (GST)",
+  "Asia/Tokyo (JST)","Asia/Singapore (SGT)","Australia/Sydney (AEST)","Other"
+];
+const CURRENCIES = ["USD","GBP","EUR","INR","AED","SAR","AUD","CAD","SGD","JPY","Other"];
+const LANGUAGES = [
+  "English","Spanish","French","German","Arabic","Hindi","Portuguese",
+  "Chinese (Mandarin)","Chinese (Cantonese)","Japanese","Korean","Italian",
+  "Russian","Dutch","Turkish","Urdu","Bengali","Tamil","Telugu","Swahili","Other"
+];
+const GENDERS = ["Male","Female","Non-binary","Prefer not to say"];
+const CONSULTATION_MODES = ["Video Call","In-Person","Both","Phone Call"];
+const STATUS_PIPELINE = [
+  { key: "pending", label: "Pending Verification", icon: "⏳" },
+  { key: "review", label: "Under Review", icon: "🔍" },
+  { key: "documents", label: "Waiting for Documents", icon: "📄" },
+  { key: "approved", label: "Approved", icon: "✅" },
+  { key: "completed", label: "Completed", icon: "🎉" },
 ];
 
-export default function DoctorEnrollments({ onComplete, initialData, doctorId }) {
-  const [countries, setCountries] = useState([]);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [isReadOnly, setIsReadOnly] = useState(!!initialData);
-  const [hasExistingPhoto, setHasExistingPhoto] = useState(false);
-  const [hasExistingCert, setHasExistingCert] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [activeSection, setActiveSection] = useState("personal");
+// ─── Styles ───
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@400;500;600;700;800&display=swap');
 
-  const [hasSubmitted, setHasSubmitted] = useState(false);
+:root {
+  --navy: #223A5E;
+  --teal: #0C8B7A;
+  --gold: #C97B1A;
+  --bg: #F4F7FB;
+  --section-tint: #DCE6F2;
+  --white: #FFFFFF;
+  --gray-50: #F8FAFC;
+  --gray-100: #F1F5F9;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-500: #64748B;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --red: #DC2626;
+  --green: #16A34A;
+  --amber: #D97706;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --shadow-sm: 0 1px 3px rgba(34,58,94,0.06);
+  --shadow-md: 0 4px 16px rgba(34,58,94,0.08);
+  --shadow-lg: 0 8px 32px rgba(34,58,94,0.12);
+  --shadow-xl: 0 16px 48px rgba(34,58,94,0.16);
+  --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+}
 
-  const [form, setForm] = useState({
-    email: "", phoneNumber: "", firstName: "", surname: "", gender: "", dob: "",
-    qualification: "", specialization: "", subSpecialization: "", consultantFees: "",
-    address: "", country: "", state: "", city: "", zip: "",
-    profilePhoto: null, experience: "", aboutDoctor: "", consultationMode: "",
-    languagesKnown: [], clinicName: "", clinicAddress: "",
-    medicalRegistrationNumber: "", medicalLicense: "", medicalCertification: null,
-    idProof: "", medicalCouncilName: "", registrationYear: "", idProofType: "",
-    payoutEmail: "", accountHolderName: "", bankName: "", accountNumber: "", ifscCode: "",
-  });
+* { margin:0; padding:0; box-sizing:border-box; }
+body, html {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+}
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.wizard-root {
+  min-height: 100vh;
+  background: var(--bg);
+  padding-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Top Bar ─── */
+.top-bar {
+  background: var(--navy); padding: 14px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.top-bar-logo {
+  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-size: 18px; color: var(--white); letter-spacing: -0.03em;
+}
+.top-bar-logo span { color: var(--teal); }
+.draft-badge {
+  background: rgba(201,123,26,0.2); color: var(--gold);
+  padding: 5px 14px; border-radius: 50px; font-size: 12px;
+  font-weight: 600; display: flex; align-items: center; gap: 6px;
+}
+.draft-badge .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ─── Progress ─── */
+.progress-section { max-width: 880px; margin: 28px auto 0; padding: 0 24px; }
+.progress-steps { display: flex; align-items: center; position: relative; }
+.progress-step {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; position: relative; z-index: 2;
+}
+.progress-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 14px;
+  transition: var(--transition); border: 2.5px solid var(--gray-300);
+  background: var(--white); color: var(--gray-400);
+}
+.progress-circle.active {
+  border-color: var(--teal); background: var(--teal); color: var(--white);
+  box-shadow: 0 0 0 4px rgba(12,139,122,0.15);
+}
+.progress-circle.done { border-color: var(--teal); background: var(--teal); color: var(--white); }
+.progress-label {
+  margin-top: 8px; font-size: 11px; font-weight: 500;
+  color: var(--gray-400); text-align: center; white-space: nowrap;
+}
+.progress-label.active { color: var(--teal); font-weight: 600; }
+.progress-label.done { color: var(--teal); }
+.progress-line-bg {
+  position: absolute; top: 18px; left: 10%; right: 10%;
+  height: 3px; background: var(--gray-200); z-index: 1; border-radius: 2px;
+}
+.progress-line-fill {
+  position: absolute; top: 18px; left: 10%; height: 3px;
+  background: var(--teal); z-index: 1; border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ─── Card ─── */
+.de-step-card {
+  max-width: 880px;
+  margin: 24px auto 0;
+  padding: 0 24px;
+  width: 100%;
+}
+.de-card {
+  background: var(--white); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); border: 1px solid rgba(34,58,94,0.06);
+  overflow: hidden; width: 100%;
+  // max-height: min(980px, calc(100dvh - 220px));
+  display: flex; flex-direction: column;
+  min-height: 0;
+}
+.de-card-header { padding: 28px 32px 20px; border-bottom: 1px solid var(--gray-100); }
+.de-card-header h2 { font-size: 22px; color: var(--navy); margin-bottom: 4px; }
+.de-card-header p { font-size: 14px; color: var(--gray-500); line-height: 1.5; }
+.de-card-body {
+  padding: 28px 32px 32px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Form ─── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-grid .full-width { grid-column: 1 / -1; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 13px; font-weight: 600; color: var(--navy); display: flex; align-items: center; gap: 4px; }
+.field-label .req { color: var(--red); font-size: 14px; }
+.field-input, .field-select, .field-textarea {
+  padding: 11px 14px; border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--navy); background: var(--white);
+  transition: var(--transition); outline: none; width: 100%;
+}
+.field-input:focus, .field-select:focus, .field-textarea:focus {
+  border-color: var(--teal); box-shadow: 0 0 0 3px rgba(12,139,122,0.1);
+}
+.field-input.error, .field-select.error {
+  border-color: var(--red); box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
+}
+.field-error { font-size: 12px; color: var(--red); font-weight: 500; }
+.field-textarea { resize: vertical; min-height: 80px; }
+.field-select {
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+}
+
+/* ─── Buttons ─── */
+.btn {
+  padding: 12px 28px; border-radius: 50px; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+  transition: var(--transition); display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-primary { background: var(--teal); color: var(--white); }
+.btn-primary:hover { background: #0a7a6b; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-secondary { background: var(--gray-100); color: var(--navy); }
+.btn-secondary:hover { background: var(--gray-200); }
+.btn-outline { background: transparent; border: 1.5px solid var(--gray-200); color: var(--navy); }
+.btn-outline:hover { border-color: var(--teal); color: var(--teal); }
+.btn-gold { background: var(--gold); color: var(--white); }
+.btn-gold:hover { background: #b56e16; }
+.btn-danger { background: rgba(220,38,38,0.08); color: var(--red); }
+.btn-danger:hover { background: rgba(220,38,38,0.15); }
+.btn-sm { padding: 8px 18px; font-size: 13px; }
+.btn-xs { padding: 5px 12px; font-size: 12px; border-radius: 8px; }
+.btn-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 24px; border-top: 1px solid var(--gray-100); margin-top: 28px;
+}
+
+/* ─── Success ─── */
+.success-banner {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--green); font-weight: 600; font-size: 14px;
+  padding: 10px 16px; background: rgba(22,163,74,0.08); border-radius: var(--radius-sm);
+}
+
+/* ─── File Upload ─── */
+.upload-zone {
+  border: 2px dashed var(--gray-300); border-radius: var(--radius-sm);
+  padding: 24px; text-align: center; cursor: pointer;
+  transition: var(--transition); background: var(--gray-50);
+}
+.upload-zone:hover { border-color: var(--teal); background: rgba(12,139,122,0.03); }
+.upload-zone.has-file { border-color: var(--teal); border-style: solid; background: rgba(12,139,122,0.04); }
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-text { font-size: 13px; color: var(--gray-500); }
+.upload-text strong { color: var(--teal); }
+.file-preview {
+  display: flex; align-items: center; gap: 12px; padding: 10px;
+  background: var(--white); border-radius: var(--radius-xs);
+  margin-top: 10px; border: 1px solid var(--gray-200);
+}
+.file-icon { font-size: 24px; }
+.file-info { flex: 1; }
+.file-name { font-size: 13px; font-weight: 600; color: var(--navy); }
+.file-size { font-size: 11px; color: var(--gray-400); }
+.file-remove { background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 16px; padding: 4px; }
+.file-remove:hover { color: var(--red); }
+
+/* ─── MultiSelect ─── */
+.ms-wrapper { position: relative; }
+.ms-trigger {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px;
+  border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+  min-height: 44px; align-items: center; cursor: pointer;
+  transition: var(--transition); background: var(--white);
+}
+.ms-trigger:hover { border-color: var(--gray-300); }
+.ms-trigger.open { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(12,139,122,0.1); }
+.ms-placeholder { font-size: 13px; color: var(--gray-400); }
+.ms-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; background: rgba(12,139,122,0.1);
+  color: var(--teal); border-radius: 6px; font-size: 12px; font-weight: 600;
+}
+.ms-tag button {
+  background: none; border: none; color: var(--teal);
+  cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px;
+}
+.ms-tag button:hover { color: var(--red); }
+.ms-overflow {
+  font-size: 11px; font-weight: 600; color: var(--teal);
+  background: rgba(12,139,122,0.08); padding: 3px 8px; border-radius: 50px;
+}
+.ms-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--white); border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-lg);
+  z-index: 50; max-height: 260px; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.ms-search {
+  padding: 10px 12px; border: none; border-bottom: 1px solid var(--gray-100);
+  font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+  background: var(--gray-50); flex-shrink: 0;
+}
+.ms-list { overflow-y: auto; flex: 1; padding: 4px 0; }
+.ms-option {
+  padding: 8px 14px; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; transition: background 0.15s;
+}
+.ms-option:hover { background: var(--gray-50); }
+.ms-check {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1.5px solid var(--gray-300); display: flex;
+  align-items: center; justify-content: center;
+  flex-shrink: 0; transition: var(--transition); font-size: 11px;
+}
+.ms-check.on { background: var(--teal); border-color: var(--teal); color: var(--white); }
+.ms-empty { padding: 16px; text-align: center; font-size: 13px; color: var(--gray-400); }
+
+/* ─── License Sections ─── */
+.license-section {
+  margin-top: 24px; padding: 20px; background: var(--gray-50);
+  border-radius: var(--radius-sm); border: 1px solid var(--gray-200);
+}
+.license-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.license-section-header h4 { font-size: 15px; }
+.ls-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.ls-icon.state { background: rgba(12,139,122,0.1); }
+.ls-icon.intl { background: rgba(201,123,26,0.1); }
+.ls-desc { font-size: 13px; color: var(--gray-500); margin-bottom: 14px; line-height: 1.5; }
+.selected-licenses-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.sel-license-card {
+  padding: 8px 14px; background: var(--white);
+  border: 1px solid var(--gray-200); border-radius: var(--radius-xs);
+  font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;
+}
+.sel-license-card .sl-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
+
+/* ─── Availability ─── */
+.avail-day {
+  background: var(--gray-50); border-radius: var(--radius-sm);
+  padding: 16px; margin-bottom: 12px; border: 1px solid var(--gray-100);
+}
+.avail-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.avail-day-name { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; }
+.avail-toggle {
+  position: relative; width: 40px; height: 22px;
+  background: var(--gray-300); border-radius: 11px;
+  cursor: pointer; border: none; transition: var(--transition);
+}
+.avail-toggle.on { background: var(--teal); }
+.avail-toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; background: var(--white);
+  border-radius: 50%; transition: var(--transition);
+}
+.avail-toggle.on::after { left: 20px; }
+.time-block { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.time-input {
+  padding: 8px 12px; border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-xs); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; outline: none; transition: var(--transition); width: 120px;
+}
+.time-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(12,139,122,0.1); }
+.time-sep { color: var(--gray-400); font-weight: 600; font-size: 13px; }
+
+/* ─── Status ─── */
+.status-dashboard { max-width: 700px; margin: 0 auto; }
+.status-pipeline { display: flex; align-items: center; margin: 24px 0; position: relative; }
+.status-node { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; }
+.status-dot {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; border: 2.5px solid var(--gray-300);
+  background: var(--white); transition: var(--transition);
+}
+.status-dot.reached { border-color: var(--teal); background: rgba(12,139,122,0.08); }
+.status-dot.current { border-color: var(--teal); background: var(--teal); box-shadow: 0 0 0 4px rgba(12,139,122,0.15); }
+.status-dot.current .st-icon { filter: grayscale(1) brightness(10); }
+.status-name { margin-top: 8px; font-size: 10px; font-weight: 500; color: var(--gray-400); text-align: center; max-width: 80px; }
+.status-name.reached { color: var(--teal); }
+.status-name.current { color: var(--teal); font-weight: 700; }
+.status-line-bg { position: absolute; top: 22px; left: 10%; right: 10%; height: 3px; background: var(--gray-200); z-index: 1; }
+.status-line-fill { position: absolute; top: 22px; left: 10%; height: 3px; background: var(--teal); z-index: 1; transition: width 0.5s ease; }
+.status-info-card {
+  background: var(--gray-50); border-radius: var(--radius-sm);
+  padding: 20px; text-align: center; border: 1px solid var(--gray-200); margin-top: 16px;
+}
+.status-info-card h3 { font-size: 16px; margin-bottom: 6px; }
+.status-info-card p { font-size: 13px; color: var(--gray-500); line-height: 1.6; }
+.postal-section {
+  margin-top: 20px; padding: 20px; background: rgba(201,123,26,0.06);
+  border-radius: var(--radius-sm); border: 1px solid rgba(201,123,26,0.2);
+}
+.postal-section h4 { color: var(--gold); font-size: 14px; margin-bottom: 8px; }
+
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .top-bar { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .de-card-body { padding: 20px 16px 24px; }
+  .de-card-header { padding: 20px 16px 16px; }
+  .de-card { max-height: none; }
+  .progress-label { font-size: 9px; }
+  .btn-row { flex-direction: column-reverse; gap: 10px; }
+  .btn-row .btn { width: 100%; justify-content: center; }
+  .time-block { flex-wrap: wrap; }
+  .ms-dropdown { max-height: 220px; }
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeSlideIn 0.35s ease forwards; }
+`;
+
+// ═══════════════════════════════════
+// HELPER COMPONENTS
+// ═══════════════════════════════════
+
+function MultiSelect({ items, selected, onChange, placeholder, searchPlaceholder }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef();
 
   useEffect(() => {
-    setCountries(getNames().sort((a, b) => a.localeCompare(b)));
-    if (initialData) {
-      setForm(p => ({ ...p, ...initialData, profilePhoto: null, medicalCertification: null }));
-      setHasExistingPhoto(!!(initialData.hasProfilePhoto || initialData.profilePhoto));
-      setHasExistingCert(!!(initialData.hasCertification || initialData.medicalCertification));
-    }
-  }, [initialData]);
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-  const set = (name, val) => {
-    setForm(p => ({ ...p, [name]: val, ...(name === "specialization" && { subSpecialization: "" }) }));
-    if (errors[name]) setErrors(p => ({ ...p, [name]: "" }));
+  const filtered = items.filter(i => i.toLowerCase().includes(search.toLowerCase()));
+  const toggle = (item) => {
+    onChange(selected.includes(item) ? selected.filter(s => s !== item) : [...selected, item]);
   };
-
-  const onChange = e => {
-    const { name, value, type, checked } = e.target;
-    set(name, type === "checkbox" ? checked : value);
-  };
-
-  const onFile = e => {
-    const { name, files } = e.target;
-    const file = files[0]; if (!file) return;
-    set(name, file);
-    if (name === "profilePhoto") { const r = new FileReader(); r.onloadend = () => setPhotoPreview(r.result); r.readAsDataURL(file); }
-  };
-
-  const toggleLang = lang => {
-    set("languagesKnown", form.languagesKnown.includes(lang)
-      ? form.languagesKnown.filter(l => l !== lang)
-      : [...form.languagesKnown, lang]);
-  };
-
-  const validateAll = () => {
-    const errs = {};
-    Object.entries(V).forEach(([field, fn]) => {
-      const e = fn(form[field]);
-      if (e) errs[field] = e;
-    });
-    setErrors(errs);
-    if (Object.keys(errs).length) {
-      // scroll to first error section
-      const firstErrField = Object.keys(errs)[0];
-      const el = document.querySelector(`[name="${firstErrField}"]`);
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return false;
-    }
-    return true;
-  };
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-    if (!validateAll()) return;
-    setSubmitting(true);
-    const { profilePhoto, medicalCertification, ...rest } = form;
-    try {
-      const res = await api.post("/api/doctor/enrollment", {
-        ...rest, doctorId,
-        hasProfilePhoto: hasExistingPhoto || !!profilePhoto,
-        hasCertification: hasExistingCert || !!medicalCertification,
-      });
-      setShowSuccess(true);
-      const enrollmentResult = res.data?.enrollment || res.data;
-      setTimeout(() => { setShowSuccess(false); setIsReadOnly(true); setHasSubmitted(true); onComplete?.(enrollmentResult); }, 3000);
-    } catch (err) { console.error(err); }
-    finally { setSubmitting(false); }
-  };
-
-  const charLen = form.aboutDoctor.length;
-  const isUpdate = !!initialData || hasSubmitted;
-  const successTitle = isUpdate ? "Update Request Submitted" : "Application Submitted";
-  const successMessage = isUpdate
-    ? "Your profile update request is pending admin approval. We'll notify you once it's reviewed."
-    : "We'll review your profile and respond within 2–3 business days.";
 
   return (
-    <div className="de-root">
-
-      {/* Success overlay */}
-      {showSuccess && (
-        <div className="de-success-overlay">
-          <div className="de-success-box">
-            <div className="de-success-ring">
-              <svg viewBox="0 0 60 60" fill="none">
-                <circle cx="30" cy="30" r="28" stroke="var(--de-teal)" strokeWidth="2.5" />
-                <polyline points="16,30 25,40 44,20" stroke="var(--de-teal)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h3>{successTitle}</h3>
-            <p>{successMessage}</p>
+    <div className="ms-wrapper" ref={ref}>
+      <div className={`ms-trigger ${open ? "open" : ""}`} onClick={() => setOpen(!open)}>
+        {selected.length === 0 ? (
+          <span className="ms-placeholder">{placeholder}</span>
+        ) : (
+          <>
+            {selected.slice(0, 3).map(s => (
+              <span key={s} className="ms-tag">
+                {s}
+                <button onClick={e => { e.stopPropagation(); toggle(s); }}>×</button>
+              </span>
+            ))}
+            {selected.length > 3 && <span className="ms-overflow">+{selected.length - 3} more</span>}
+          </>
+        )}
+      </div>
+      {open && (
+        <div className="ms-dropdown animate-in">
+          <input className="ms-search" placeholder={searchPlaceholder || "Search..."}
+            value={search} onChange={e => setSearch(e.target.value)}
+            onClick={e => e.stopPropagation()} autoFocus />
+          <div className="ms-list">
+            {filtered.length === 0 ? (
+              <div className="ms-empty">No results found</div>
+            ) : filtered.map(item => (
+              <div key={item} className="ms-option" onClick={e => { e.stopPropagation(); toggle(item); }}>
+                <div className={`ms-check ${selected.includes(item) ? "on" : ""}`}>
+                  {selected.includes(item) && "✓"}
+                </div>
+                <span>{item}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
-
-      {/* Page header */}
-      <header className="de-header">
-        <div className="de-header-inner">
-          <div className="de-header-logo">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="9" fill="var(--de-teal)" />
-              <path d="M16 7v18M7 16h18" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-            <span>HumaniCare</span>
-          </div>
-          <div className="de-header-text">
-            <h1>Doctor Enrollment</h1>
-            <p>Fill in your details below to join the platform</p>
-            {initialData?.approvalStatus && (
-              <div className="de-status-note">
-                {initialData.approvalStatus === "approved" ? (
-                  <p>Your profile is approved. Any edits will be submitted as an update request for admin review.</p>
-                ) : initialData.approvalStatus === "pending" ? (
-                  <p>Your latest profile submission is pending admin approval. You can review your data here.</p>
-                ) : (
-                  <p>Your latest submission was rejected. Update your details and resubmit for review.</p>
-                )}
-              </div>
-            )}
-          </div>
-          {(initialData || hasSubmitted) && isReadOnly && (
-            <button className="de-edit-btn" onClick={() => setIsReadOnly(false)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Edit Profile
-            </button>
-          )}
-        </div>
-      </header>
-
-      <div className="de-body">
-
-        {/* Sticky sidebar nav */}
-        <nav className="de-sidenav">
-          {SECTIONS.map(s => (
-            <button key={s.id}
-              className={`de-sidenav-item ${activeSection === s.id ? "de-sidenav-item--active" : ""}`}
-            >
-              <span className="de-sidenav-num">{s.num}</span>
-              <span className="de-sidenav-label">{s.label}</span>
-            </button>
-          ))}
-          <div className="de-sidenav-track">
-            <div className="de-sidenav-fill"
-              style={{ height: `${(SECTIONS.findIndex(s => s.id === activeSection) + 1) * 25}%` }} />
-          </div>
-        </nav>
-
-        {/* Scroll form */}
-        <form className="de-form" onSubmit={handleSubmit}>
-
-          {/* ─── SECTION 1: PERSONAL ─── */}
-          <section id="personal" className="de-section">
-            <div className="de-section-heading">
-              <span className="de-section-num">01</span>
-              <div>
-                <h2>Personal Information</h2>
-                <p>Your identity and contact details</p>
-              </div>
-            </div>
-
-            {/* Photo */}
-            <div className="de-photo-row">
-              <div className="de-photo-avatar">
-                {photoPreview
-                  ? <img src={photoPreview} alt="preview" />
-                  : hasExistingPhoto
-                    ? <span className="de-photo-placeholder">📸</span>
-                    : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="7" r="4" /><path d="M20 21a8 8 0 1 0-16 0" /></svg>
-                }
-              </div>
-              <div className="de-photo-meta">
-                <p className="de-photo-title">Profile Photo <span className="de-opt">optional</span></p>
-                <p className="de-photo-sub">JPG or PNG · max 2 MB</p>
-                {!isReadOnly && (
-                  <div className="de-photo-actions">
-                    <label className="de-upload-pill">
-                      <input type="file" name="profilePhoto" accept="image/jpeg,image/png" onChange={onFile} style={{ display: "none" }} />
-                      {form.profilePhoto || hasExistingPhoto ? "Change" : "Upload Photo"}
-                    </label>
-                    {(photoPreview || hasExistingPhoto) && (
-                      <button type="button" className="de-remove-link"
-                        onClick={() => { setPhotoPreview(null); setHasExistingPhoto(false); set("profilePhoto", null); }}>
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="de-grid-2">
-              <Field label="First Name" error={errors.firstName} req>
-                <input className="de-input" name="firstName" value={form.firstName} onChange={onChange} disabled={isReadOnly} placeholder="Rahul" />
-              </Field>
-              <Field label="Surname" error={errors.surname} req>
-                <input className="de-input" name="surname" value={form.surname} onChange={onChange} disabled={isReadOnly} placeholder="Sharma" />
-              </Field>
-              <Field label="Gender" error={errors.gender} req>
-                <select className="de-input de-select" name="gender" value={form.gender} onChange={onChange} disabled={isReadOnly}>
-                  <option value="">Select</option>
-                  <option>Male</option><option>Female</option><option>Other</option>
-                </select>
-              </Field>
-              <Field label="Date of Birth" error={errors.dob} req>
-                <input className="de-input" type="date" name="dob" value={form.dob} onChange={onChange} disabled={isReadOnly} />
-              </Field>
-              <Field label="Email Address" error={errors.email} req>
-                <input className="de-input" type="email" name="email" value={form.email} onChange={onChange} disabled={isReadOnly} placeholder="doctor@example.com" />
-              </Field>
-              <Field label="Phone Number" error={errors.phoneNumber} req>
-                <div className={`de-phone ${errors.phoneNumber ? "de-phone--err" : ""}`}>
-                  <PhoneInput country="in" value={form.phoneNumber} onChange={v => set("phoneNumber", v)} disabled={isReadOnly}
-                    inputStyle={{ width: "100%", height: "46px", fontSize: "14px", background: "transparent", color: "var(--de-text)", border: "none", outline: "none" }}
-                    buttonStyle={{ background: "transparent", border: "none", borderRight: "1px solid var(--de-border)" }}
-                    dropdownStyle={{ background: "#1a2535", color: "#e0eaff", border: "1px solid rgba(255,255,255,0.1)" }} />
-                </div>
-              </Field>
-            </div>
-          </section>
-
-          {/* ─── SECTION 2: PRACTICE ─── */}
-          <section id="practice" className="de-section">
-            <div className="de-section-heading">
-              <span className="de-section-num">02</span>
-              <div>
-                <h2>Practice Details</h2>
-                <p>Your medical expertise and clinic information</p>
-              </div>
-            </div>
-
-            <div className="de-grid-2">
-              <Field label="Qualification" error={errors.qualification} req>
-                <input className="de-input" name="qualification" value={form.qualification} onChange={onChange} disabled={isReadOnly} placeholder="MBBS, MD, MS…" />
-              </Field>
-              <Field label="Years of Experience" error={errors.experience} req>
-                <input className="de-input" type="number" name="experience" value={form.experience} onChange={onChange} disabled={isReadOnly} placeholder="e.g. 5" min="1" max="60" />
-              </Field>
-              <Field label="Specialization" error={errors.specialization} req>
-                <select className="de-input de-select" name="specialization" value={form.specialization} onChange={onChange} disabled={isReadOnly}>
-                  <option value="">Select</option>
-                  {Object.keys(SPECIALITIES).map(s => <option key={s}>{s}</option>)}
-                </select>
-              </Field>
-              <Field label="Sub-Specialization">
-                <select className="de-input de-select" name="subSpecialization" value={form.subSpecialization} onChange={onChange} disabled={isReadOnly || !form.specialization}>
-                  <option value="">Select (optional)</option>
-                  {SPECIALITIES[form.specialization]?.map((s, i) => <option key={i}>{s}</option>)}
-                </select>
-              </Field>
-              <Field label="Consultation Fee (₹)" error={errors.consultantFees} req>
-                <input className="de-input" type="number" name="consultantFees" value={form.consultantFees} onChange={onChange} disabled={isReadOnly} placeholder="Min ₹100" />
-              </Field>
-              <Field label="Consultation Mode" error={errors.consultationMode} req>
-                <div className="de-toggle-group">
-                  {["Online", "Offline", "Both"].map(m => (
-                    <button key={m} type="button"
-                      className={`de-toggle ${form.consultationMode === m ? "de-toggle--on" : ""}`}
-                      onClick={() => !isReadOnly && set("consultationMode", m)}
-                      disabled={isReadOnly}>{m}</button>
-                  ))}
-                </div>
-                {errors.consultationMode && <span className="de-err-msg">⚠ {errors.consultationMode}</span>}
-              </Field>
-            </div>
-
-            <Field label="Languages Known" hint="Select all you speak">
-              <div className="de-chips">
-                {LANGUAGES.map(l => (
-                  <button key={l} type="button"
-                    className={`de-chip ${form.languagesKnown.includes(l) ? "de-chip--on" : ""}`}
-                    onClick={() => !isReadOnly && toggleLang(l)} disabled={isReadOnly}>{l}</button>
-                ))}
-              </div>
-            </Field>
-
-            <Field label="About Yourself" error={errors.aboutDoctor} hint="Max 300 characters">
-              <textarea className="de-input de-textarea" name="aboutDoctor" value={form.aboutDoctor}
-                onChange={onChange} disabled={isReadOnly} rows={4} maxLength={300}
-                placeholder="Your experience, approach to patient care, areas of expertise…" />
-              {!isReadOnly && (
-                <div className="de-charcount">
-                  <div className="de-charbar"><div className="de-charbar-fill" style={{
-                    width: `${(charLen / 300) * 100}%`,
-                    background: charLen > 280 ? "var(--de-red)" : charLen > 0 ? "var(--de-teal)" : "transparent"
-                  }} /></div>
-                  <span style={{ color: charLen > 280 ? "var(--de-red)" : "var(--de-muted)" }}>{charLen}/300</span>
-                </div>
-              )}
-            </Field>
-
-            <div className="de-subsection-label">Clinic (optional)</div>
-            <div className="de-grid-2">
-              <Field label="Clinic Name">
-                <input className="de-input" name="clinicName" value={form.clinicName} onChange={onChange} disabled={isReadOnly} placeholder="Apollo Clinic, City Hospital…" />
-              </Field>
-              <Field label="Country">
-                <select className="de-input de-select" name="country" value={form.country} onChange={onChange} disabled={isReadOnly}>
-                  <option value="">Select country</option>
-                  {countries.map(c => <option key={c}>{c}</option>)}
-                </select>
-              </Field>
-              <Field label="Clinic Address">
-                <input className="de-input" name="clinicAddress" value={form.clinicAddress} onChange={onChange} disabled={isReadOnly} placeholder="Full clinic address" />
-              </Field>
-              <Field label="City">
-                <input className="de-input" name="city" value={form.city} onChange={onChange} disabled={isReadOnly} placeholder="Mumbai" />
-              </Field>
-            </div>
-          </section>
-
-          {/* ─── SECTION 3: CREDENTIALS ─── */}
-          <section id="credentials" className="de-section">
-            <div className="de-section-heading">
-              <span className="de-section-num">03</span>
-              <div>
-                <h2>Credentials & Verification</h2>
-                <p>Medical registration and identity documents</p>
-              </div>
-            </div>
-
-            <div className="de-grid-2">
-              <Field label="Medical Registration Number" error={errors.medicalRegistrationNumber} req>
-                <input className="de-input" name="medicalRegistrationNumber" value={form.medicalRegistrationNumber} onChange={onChange} disabled={isReadOnly} placeholder="MCI / State reg number" />
-              </Field>
-              <Field label="Medical License Number" error={errors.medicalLicense} req>
-                <input className="de-input" name="medicalLicense" value={form.medicalLicense} onChange={onChange} disabled={isReadOnly} placeholder="State medical license" />
-              </Field>
-              <Field label="Medical Council">
-                <select className="de-input de-select" name="medicalCouncilName" value={form.medicalCouncilName} onChange={onChange} disabled={isReadOnly}>
-                  <option value="">Select (optional)</option>
-                  <option>Medical Council of India</option>
-                  <option>State Medical Council</option>
-                  <option>Dental Council of India</option>
-                  <option>Other</option>
-                </select>
-              </Field>
-              <Field label="Registration Year">
-                <input className="de-input" type="number" name="registrationYear" value={form.registrationYear} onChange={onChange} disabled={isReadOnly} placeholder="e.g. 2010" min="1950" max={new Date().getFullYear()} />
-              </Field>
-              <Field label="ID Proof Type">
-                <select className="de-input de-select" name="idProofType" value={form.idProofType} onChange={onChange} disabled={isReadOnly}>
-                  <option value="">Optional</option>
-                  <option value="Aadhaar">Aadhaar Card</option>
-                  <option value="PAN">PAN Card</option>
-                  <option value="Passport">Passport</option>
-                </select>
-              </Field>
-              <Field label="ID Proof Number">
-                <input className="de-input" name="idProof" value={form.idProof} onChange={onChange} disabled={isReadOnly} placeholder="Optional ID number" />
-              </Field>
-            </div>
-
-            {/* Cert upload */}
-            <Field label="Medical Certification" hint="PDF, JPG, PNG · max 2 MB · optional">
-              {hasExistingCert ? (
-                <div className="de-file-done">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
-                  <span>Certificate uploaded</span>
-                  {!isReadOnly && <button type="button" className="de-replace-btn" onClick={() => setHasExistingCert(false)}>Replace</button>}
-                </div>
-              ) : !isReadOnly ? (
-                <label className="de-upload-zone">
-                  <input type="file" name="medicalCertification" accept=".pdf,.jpg,.jpeg,.png" onChange={onFile} style={{ display: "none" }} />
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
-                  <span className="de-upload-text">{form.medicalCertification ? form.medicalCertification.name : "Click to upload"}</span>
-                  <span className="de-upload-hint">PDF, JPG or PNG</span>
-                </label>
-              ) : null}
-            </Field>
-
-            <div className="de-notice">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
-              <p>Documents reviewed in <strong>2–3 business days</strong>. You'll receive an email once approved.</p>
-            </div>
-          </section>
-
-          {/* ─── SECTION 4: PAYOUT ─── */}
-          <section id="payout" className="de-section">
-            <div className="de-section-heading">
-              <span className="de-section-num">04</span>
-              <div>
-                <h2>Payout Setup</h2>
-                <p>Bank account details to receive consultation payments</p>
-              </div>
-            </div>
-
-            <div className="de-grid-2">
-              <Field label="Account Holder Name" error={errors.accountHolderName} req>
-                <input className="de-input" name="accountHolderName" value={form.accountHolderName} onChange={onChange} disabled={isReadOnly} placeholder="As printed on bank account" />
-              </Field>
-              <Field label="Bank Name" error={errors.bankName} req>
-                <input className="de-input" name="bankName" value={form.bankName} onChange={onChange} disabled={isReadOnly} placeholder="State Bank of India" />
-              </Field>
-              <Field label="Account Number" error={errors.accountNumber} req>
-                <input className="de-input" name="accountNumber" value={form.accountNumber} onChange={onChange} disabled={isReadOnly} placeholder="9–18 digit account number" />
-              </Field>
-              <Field label="IFSC Code" error={errors.ifscCode} req hint="e.g. SBIN0001234">
-                <input className="de-input" name="ifscCode" value={form.ifscCode} onChange={onChange} disabled={isReadOnly} placeholder="SBIN0001234" maxLength={11} style={{ textTransform: "uppercase" }} />
-              </Field>
-              <Field label="Payout Email" error={errors.payoutEmail} hint="Payment notifications only">
-                <input className="de-input" type="email" name="payoutEmail" value={form.payoutEmail} onChange={onChange} disabled={isReadOnly} placeholder="payments@example.com" />
-              </Field>
-            </div>
-
-            <div className="de-notice de-notice--secure">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-              <p>Bank details are <strong>encrypted end-to-end</strong> and used solely for payouts.</p>
-            </div>
-          </section>
-
-          {/* Submit bar */}
-          {!isReadOnly && (
-            <div className="de-submit-bar">
-              <p className="de-submit-note">Fields marked <span className="de-req">*</span> are required</p>
-              <button type="submit" className="de-submit-btn" disabled={submitting}>
-                {submitting
-                  ? <><span className="de-spin" />Submitting…</>
-                  : isUpdate ? "Update Application" : "Submit Application"
-                }
-              </button>
-            </div>
-          )}
-
-        </form>
-      </div>
     </div>
   );
 }
+
+function FileUpload({ label, file, onFile, onRemove, required }) {
+  const ref = useRef();
+  const handleDrop = e => { e.preventDefault(); if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]); };
+  return (
+    <div className="field-group">
+      <div className="field-label">{label} {required && <span className="req">*</span>}</div>
+      {!file ? (
+        <div className="upload-zone" onClick={() => ref.current?.click()}
+          onDragOver={e => e.preventDefault()} onDrop={handleDrop}>
+          <div className="upload-icon">📁</div>
+          <div className="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+          <div className="upload-text" style={{ fontSize: 11, marginTop: 4 }}>PDF, JPG, PNG up to 10MB</div>
+          <input ref={ref} type="file" hidden accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            onChange={e => { if (e.target.files[0]) onFile(e.target.files[0]); }} />
+        </div>
+      ) : (
+        <div className="upload-zone has-file">
+          <div className="file-preview">
+            <div className="file-icon">📄</div>
+            <div className="file-info">
+              <div className="file-name">{file.name}</div>
+              <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
+            </div>
+            <button className="file-remove" onClick={e => { e.stopPropagation(); onRemove(); }}>✕</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════
+export default function DoctorOnboardingWizard({ doctorId, initialData, onComplete }) {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [draft, setDraft] = useState({});
+
+  // Step 1
+  const [s1, setS1] = useState({
+    firstName:"", surname:"", countryCode:"", phone:"", email:"",
+    gender:"", dob:"", country:"", state:"", city:"", zip:"", address:"",
+  });
+  const [languagesKnown, setLanguagesKnown] = useState([]);
+  const [s1Errors, setS1Errors] = useState({});
+
+  // Step 2
+  const [s2, setS2] = useState({
+    npi:"", licenseNum:"", specialty:"", subSpecialization:"", qualification:"",
+    school:"", gradYear:"", experience:"", medicalCouncilName:"",
+    consultationMode:"", consultantFees:"", clinicName:"", clinicAddress:"",
+    aboutDoctor:"", certifications:"",
+  });
+  const [files, setFiles] = useState({ govId: null, degree: null, medicalLicense: null });
+  const [s2Errors, setS2Errors] = useState({});
+  const [licensedStates, setLicensedStates] = useState([]);
+  const [otherLicenseCountries, setOtherLicenseCountries] = useState([]);
+
+  // Step 3
+  const [availability, setAvailability] = useState(
+    DAYS.reduce((a, d) => ({ ...a, [d]: { enabled: false, blocks: [{ start: "09:00", end: "17:00" }] } }), {})
+  );
+  const [timezone, setTimezone] = useState("");
+
+  // Step 4
+  const [payoutFreq, setPayoutFreq] = useState("monthly");
+  const [s4, setS4] = useState({ bankName:"", accountNum:"", swift:"", iban:"", currency:"USD", paypalId:"" });
+  const [s4Errors, setS4Errors] = useState({});
+
+  // Step 5
+  const [regStatus, setRegStatus] = useState("pending");
+  const [submitBusy, setSubmitBusy] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
+
+  const isUS = s1.country === "United States";
+  const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
+  const otherCountryOptions = COUNTRIES.filter(c => c !== s1.country && c !== "Other");
+  const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Status"];
+
+  // Populate form states from saved enrollment data
+  const loadFromData = useCallback((data) => {
+    if (!data) return;
+    setS1({
+      firstName:   data.firstName || "",
+      surname:     data.surname || "",
+      countryCode: data.countryCode || "",
+      phone:       data.phoneNumber || "",
+      email:       data.email || "",
+      gender:      data.gender || "",
+      dob:         data.dob || "",
+      country:     data.country || "",
+      state:       data.state || "",
+      city:        data.city || "",
+      zip:         data.zip || "",
+      address:     data.address || "",
+    });
+    setLanguagesKnown(Array.isArray(data.languagesKnown) ? data.languagesKnown : []);
+    setS2({
+      npi:               data.medicalRegistrationNumber || "",
+      licenseNum:        data.medicalLicense || data.medicalRegistrationNumber || "",
+      specialty:         data.specialization || "",
+      subSpecialization: data.subSpecialization || "",
+      qualification:     data.qualification || "",
+      school:            data.medicalSchool || "",
+      gradYear:          data.registrationYear || "",
+      experience:        data.experience ? String(data.experience) : "",
+      medicalCouncilName: data.medicalCouncilName || "",
+      consultationMode:  data.consultationMode || "",
+      consultantFees:    data.consultantFees ? String(data.consultantFees) : "",
+      clinicName:        data.clinicName || "",
+      clinicAddress:     data.clinicAddress || "",
+      aboutDoctor:       data.aboutDoctor || "",
+      certifications:    "",
+    });
+    setS4({
+      bankName:  data.bankName || "",
+      accountNum: data.accountNumber || "",
+      swift:     data.ifscCode || "",
+      iban:      data.ifscCode || "",
+      currency:  "USD",
+      paypalId:  data.paypalId || "",
+    });
+    if (data.state) setLicensedStates([data.state]);
+  }, []);
+
+  useEffect(() => {
+    if (!initialData) return;
+    const nextStatus = ["pending", "approved", "rejected"].includes(initialData.approvalStatus)
+      ? initialData.approvalStatus
+      : "pending";
+    setRegStatus(nextStatus);
+
+    if (initialData.formCompleted) {
+      // Full form was already submitted — show status screen
+      setStep(5);
+    } else {
+      // Auto-created enrollment (just registered) — pre-fill basic info and start form
+      loadFromData(initialData);
+      setStep(1);
+    }
+  }, [initialData, loadFromData]);
+
+  const handleEditResubmit = () => {
+    loadFromData(initialData);
+    setStep(1);
+  };
+
+  // Validation
+  const validateS1 = () => {
+    const e = {};
+    if (!s1.firstName.trim()) e.firstName = "Required";
+    if (!s1.phone.trim()) e.phone = "Required";
+    if (!s1.email.trim()) e.email = "Required";
+    else if (!/\S+@\S+\.\S+/.test(s1.email)) e.email = "Invalid email";
+    if (!s1.country) e.country = "Required";
+    setS1Errors(e);
+    return Object.keys(e).length === 0;
+  };
+  const validateS2 = () => {
+    const e = {};
+    if (isUS && !s2.npi.trim()) e.npi = "NPI required for US";
+    if (!isUS && !s2.licenseNum.trim()) e.licenseNum = "License number required";
+    if (!s2.specialty) e.specialty = "Required";
+    if (!s2.qualification) e.qualification = "Required";
+    if (!s2.school.trim()) e.school = "Required";
+    if (!s2.gradYear.trim()) e.gradYear = "Required";
+    if (!files.govId) e.govId = "Required";
+    if (!files.degree) e.degree = "Required";
+    if (!files.medicalLicense) e.medicalLicense = "Required";
+    setS2Errors(e);
+    return Object.keys(e).length === 0;
+  };
+  const validateS4 = () => {
+    const e = {};
+    if (isUS) {
+      if (!s4.bankName.trim()) e.bankName = "Required";
+      if (!s4.accountNum.trim()) e.accountNum = "Required";
+      if (!s4.swift.trim()) e.swift = "Required";
+    } else {
+      if (!s4.iban.trim()) e.iban = "Required";
+      if (!s4.swift.trim()) e.swift = "Required";
+      if (!s4.currency) e.currency = "Required";
+    }
+    setS4Errors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleNext = () => {
+    if (submitBusy) return;
+    if (step === 1 && validateS1()) setStep(2);
+    else if (step === 2 && validateS2()) setStep(3);
+    else if (step === 3) setStep(4);
+    else if (step === 4 && validateS4()) submitEnrollment();
+  };
+  const handleBack = () => { if (step > 1) setStep(step - 1); };
+  const saveDraft = () => setDraft({ s1, s2, languagesKnown, files, availability, timezone, s4, payoutFreq, licensedStates, otherLicenseCountries, step });
+
+  const submitEnrollment = async () => {
+    if (!doctorId) {
+      setSubmitError("Doctor session not found. Please sign in again.");
+      return;
+    }
+
+    const payload = {
+      doctorId,
+      firstName:     s1.firstName.trim(),
+      surname:       s1.surname.trim(),
+      email:         s1.email.trim(),
+      countryCode:   s1.countryCode.trim(),
+      phoneNumber:   s1.phone.trim(),
+      gender:        s1.gender,
+      dob:           s1.dob,
+      country:       s1.country,
+      state:         licensedStates[0] || s1.state,
+      city:          s1.city.trim(),
+      zip:           s1.zip.trim(),
+      address:       s1.address.trim(),
+      languagesKnown,
+      specialization:        s2.specialty,
+      subSpecialization:     s2.subSpecialization.trim(),
+      qualification:         s2.qualification,
+      experience:            s2.experience ? Number(s2.experience) : undefined,
+      medicalSchool:         s2.school.trim(),
+      registrationYear:      s2.gradYear.trim(),
+      medicalCouncilName:    s2.medicalCouncilName.trim(),
+      medicalRegistrationNumber: isUS ? s2.npi.trim() : s2.licenseNum.trim(),
+      medicalLicense:        s2.licenseNum.trim(),
+      consultationMode:      s2.consultationMode,
+      consultantFees:        s2.consultantFees ? Number(s2.consultantFees) : 0,
+      clinicName:            s2.clinicName.trim(),
+      clinicAddress:         s2.clinicAddress.trim(),
+      aboutDoctor:           s2.aboutDoctor.trim() || s2.certifications.trim(),
+      idProof:               files.govId?.name || "",
+      medicalLicenseFile:    files.medicalLicense?.name || "",
+      accountHolderName:     `${s1.firstName} ${s1.surname}`.trim(),
+      payoutEmail:           s1.email.trim(),
+      bankName:              s4.bankName.trim(),
+      accountNumber:         s4.accountNum.trim(),
+      ifscCode:              s4.swift.trim(),
+      paypalId:              s4.paypalId.trim(),
+    };
+
+    setSubmitBusy(true);
+    setSubmitError("");
+    setSubmitSuccess("");
+
+    try {
+      const res = await api.post("/api/doctor/enrollment", payload);
+      const enrollment = res.data?.enrollment || null;
+      const nextStatus = enrollment?.approvalStatus === "approved" ? "approved" : "pending";
+      setRegStatus(nextStatus);
+      setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
+      setStep(5);
+      if (enrollment && typeof onComplete === "function") onComplete(enrollment);
+    } catch (err) {
+      setSubmitError(err.response?.data?.message || "Failed to submit enrollment. Please try again.");
+    } finally {
+      setSubmitBusy(false);
+    }
+  };
+
+  // ─── STEP 1 ───
+  const renderStep1 = () => (
+    <div className="animate-in">
+      <div className="de-card-header">
+        <h2>Personal &amp; Contact Details</h2>
+        <p>Enter your details exactly as they appear on your official documents.</p>
+      </div>
+      <div className="de-card-body">
+        <h4 style={{fontSize:13,marginBottom:14,color:"var(--gray-600)"}}>Name</h4>
+        <div className="form-grid">
+          <div className="field-group">
+            <label className="field-label">First Name <span className="req">*</span></label>
+            <input className={`field-input ${s1Errors.firstName?"error":""}`} placeholder="First name"
+              value={s1.firstName} onChange={e => setS1({...s1, firstName: e.target.value})} />
+            {s1Errors.firstName && <div className="field-error">{s1Errors.firstName}</div>}
+          </div>
+          <div className="field-group">
+            <label className="field-label">Surname / Last Name</label>
+            <input className="field-input" placeholder="Surname"
+              value={s1.surname} onChange={e => setS1({...s1, surname: e.target.value})} />
+          </div>
+        </div>
+
+        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Contact</h4>
+        <div className="form-grid">
+          <div className="field-group">
+            <label className="field-label">Mobile Number <span className="req">*</span></label>
+            <div style={{display:"flex",gap:8}}>
+              <input className="field-input" style={{width:80,flexShrink:0}} placeholder="+1"
+                value={s1.countryCode} onChange={e => setS1({...s1, countryCode: e.target.value})} />
+              <input className={`field-input ${s1Errors.phone?"error":""}`} placeholder="555-000-0000"
+                value={s1.phone} onChange={e => setS1({...s1, phone: e.target.value})} />
+            </div>
+            {s1Errors.phone && <div className="field-error">{s1Errors.phone}</div>}
+          </div>
+          <div className="field-group">
+            <label className="field-label">Email Address <span className="req">*</span></label>
+            <input className={`field-input ${s1Errors.email?"error":""}`} placeholder="doctor@email.com" type="email"
+              value={s1.email} onChange={e => setS1({...s1, email: e.target.value})} />
+            {s1Errors.email && <div className="field-error">{s1Errors.email}</div>}
+          </div>
+          <div className="field-group">
+            <label className="field-label">Gender</label>
+            <select className="field-select" value={s1.gender} onChange={e => setS1({...s1, gender: e.target.value})}>
+              <option value="">Select...</option>
+              {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+          <div className="field-group">
+            <label className="field-label">Date of Birth</label>
+            <input className="field-input" type="date"
+              value={s1.dob} onChange={e => setS1({...s1, dob: e.target.value})} />
+          </div>
+        </div>
+
+        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Location</h4>
+        <div className="form-grid">
+          <div className="field-group full-width">
+            <label className="field-label">Country of Practice <span className="req">*</span></label>
+            <select className={`field-select ${s1Errors.country?"error":""}`}
+              value={s1.country} onChange={e => { setS1({...s1, country: e.target.value, state:""}); setLicensedStates([]); setOtherLicenseCountries([]); }}>
+              <option value="">Select country...</option>
+              {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            {s1Errors.country && <div className="field-error">{s1Errors.country}</div>}
+          </div>
+          <div className="field-group">
+            <label className="field-label">State / Province / Region</label>
+            <input className="field-input" placeholder="e.g. California, Maharashtra"
+              value={s1.state} onChange={e => setS1({...s1, state: e.target.value})} />
+          </div>
+          <div className="field-group">
+            <label className="field-label">City</label>
+            <input className="field-input" placeholder="City"
+              value={s1.city} onChange={e => setS1({...s1, city: e.target.value})} />
+          </div>
+          <div className="field-group">
+            <label className="field-label">ZIP / Postal Code</label>
+            <input className="field-input" placeholder="ZIP or postal code"
+              value={s1.zip} onChange={e => setS1({...s1, zip: e.target.value})} />
+          </div>
+          <div className="field-group full-width">
+            <label className="field-label">Street Address</label>
+            <input className="field-input" placeholder="Full street address"
+              value={s1.address} onChange={e => setS1({...s1, address: e.target.value})} />
+          </div>
+        </div>
+
+        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Languages</h4>
+        <div className="field-group">
+          <label className="field-label">Languages Known</label>
+          <MultiSelect
+            items={LANGUAGES}
+            selected={languagesKnown}
+            onChange={setLanguagesKnown}
+            placeholder="Select languages you speak..."
+            searchPlaceholder="Search languages..."
+          />
+        </div>
+
+        <div className="btn-row">
+          <div />
+          <button className="btn btn-primary" onClick={handleNext}>Continue to Professional Info →</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ─── STEP 2 ───
+  const renderStep2 = () => (
+    <div className="animate-in">
+      <div className="de-card-header">
+        <h2>Professional Information</h2>
+        <p>Provide your medical credentials, licensing details, and upload required documents.</p>
+      </div>
+      <div className="de-card-body">
+        <h4 style={{fontSize:13,marginBottom:14,color:"var(--gray-600)"}}>Credentials &amp; Licensing</h4>
+        <div className="form-grid">
+          {isUS ? (
+            <div className="field-group">
+              <label className="field-label">NPI Number <span className="req">*</span></label>
+              <input className={`field-input ${s2Errors.npi?"error":""}`} placeholder="10-digit NPI"
+                value={s2.npi} onChange={e => setS2({...s2, npi: e.target.value})} />
+              {s2Errors.npi && <div className="field-error">{s2Errors.npi}</div>}
+            </div>
+          ) : (
+            <div className="field-group">
+              <label className="field-label">Medical License Number <span className="req">*</span></label>
+              <input className={`field-input ${s2Errors.licenseNum?"error":""}`} placeholder="License number"
+                value={s2.licenseNum} onChange={e => setS2({...s2, licenseNum: e.target.value})} />
+              {s2Errors.licenseNum && <div className="field-error">{s2Errors.licenseNum}</div>}
+            </div>
+          )}
+          <div className="field-group">
+            <label className="field-label">Medical Council Name</label>
+            <input className="field-input" placeholder="e.g. MCI, GMC, AMA"
+              value={s2.medicalCouncilName} onChange={e => setS2({...s2, medicalCouncilName: e.target.value})} />
+          </div>
+          <div className="field-group">
+            <label className="field-label">Specialty <span className="req">*</span></label>
+            <select className={`field-select ${s2Errors.specialty?"error":""}`}
+              value={s2.specialty} onChange={e => setS2({...s2, specialty: e.target.value})}>
+              <option value="">Select specialty...</option>
+              {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            {s2Errors.specialty && <div className="field-error">{s2Errors.specialty}</div>}
+          </div>
+          <div className="field-group">
+            <label className="field-label">Sub-Specialization</label>
+            <input className="field-input" placeholder="e.g. Interventional Cardiology"
+              value={s2.subSpecialization} onChange={e => setS2({...s2, subSpecialization: e.target.value})} />
+          </div>
+          <div className="field-group">
+            <label className="field-label">Qualification <span className="req">*</span></label>
+            <select className={`field-select ${s2Errors.qualification?"error":""}`}
+              value={s2.qualification} onChange={e => setS2({...s2, qualification: e.target.value})}>
+              <option value="">Select...</option>
+              {QUALIFICATIONS.map(q => <option key={q} value={q}>{q}</option>)}
+            </select>
+            {s2Errors.qualification && <div className="field-error">{s2Errors.qualification}</div>}
+          </div>
+          <div className="field-group">
+            <label className="field-label">Years of Experience</label>
+            <input className="field-input" type="number" min="0" placeholder="e.g. 10"
+              value={s2.experience} onChange={e => setS2({...s2, experience: e.target.value})} />
+          </div>
+        </div>
+
+        {/* ═══ STATE / PROVINCE LICENSING ═══ */}
+        {stateConfig && (
+          <div className="license-section animate-in">
+            <div className="license-section-header">
+              <div className="ls-icon state">🏛️</div>
+              <h4>{stateConfig.label} Licensing — {s1.country}</h4>
+            </div>
+            <p className="ls-desc">
+              In {s1.country}, doctors require {stateConfig.label.toLowerCase()}-level licensing. Select all {stateConfig.plural.toLowerCase()} where you are currently licensed to practice medicine.
+            </p>
+            <div className="field-group">
+              <label className="field-label">Licensed {stateConfig.plural}</label>
+              <MultiSelect
+                items={stateConfig.items}
+                selected={licensedStates}
+                onChange={setLicensedStates}
+                placeholder={`Select ${stateConfig.plural.toLowerCase()}...`}
+                searchPlaceholder={`Search ${stateConfig.plural.toLowerCase()}...`}
+              />
+            </div>
+            {licensedStates.length > 0 && (
+              <div className="selected-licenses-grid">
+                {licensedStates.map(st => (
+                  <div key={st} className="sel-license-card"><div className="sl-dot" />{st}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ INTERNATIONAL LICENSES ═══ */}
+        <div className="license-section animate-in" style={{marginTop: stateConfig ? 16 : 24}}>
+          <div className="license-section-header">
+            <div className="ls-icon intl">🌍</div>
+            <h4>International Medical Licenses</h4>
+          </div>
+          <p className="ls-desc">
+            Do you hold a valid medical license in any other countries besides {s1.country || "your primary country"}? This helps us determine cross-border telehealth eligibility and widen your patient reach.
+          </p>
+          <div className="field-group">
+            <label className="field-label">Other Countries Where You Hold a Medical License</label>
+            <MultiSelect
+              items={otherCountryOptions}
+              selected={otherLicenseCountries}
+              onChange={setOtherLicenseCountries}
+              placeholder="Select countries (if applicable)..."
+              searchPlaceholder="Search countries..."
+            />
+          </div>
+          {otherLicenseCountries.length > 0 && (
+            <div className="selected-licenses-grid">
+              {otherLicenseCountries.map(c => (
+                <div key={c} className="sel-license-card">
+                  <div className="sl-dot" style={{background:"var(--gold)"}} />{c}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Education</h4>
+        <div className="form-grid">
+          <div className="field-group">
+            <label className="field-label">Medical School <span className="req">*</span></label>
+            <input className={`field-input ${s2Errors.school?"error":""}`} placeholder="School name"
+              value={s2.school} onChange={e => setS2({...s2, school: e.target.value})} />
+            {s2Errors.school && <div className="field-error">{s2Errors.school}</div>}
+          </div>
+          <div className="field-group">
+            <label className="field-label">Graduation Year <span className="req">*</span></label>
+            <input className={`field-input ${s2Errors.gradYear?"error":""}`} placeholder="YYYY"
+              value={s2.gradYear} onChange={e => setS2({...s2, gradYear: e.target.value})} />
+            {s2Errors.gradYear && <div className="field-error">{s2Errors.gradYear}</div>}
+          </div>
+          <div className="field-group full-width">
+            <label className="field-label">Additional Certifications</label>
+            <textarea className="field-textarea" placeholder="Board certifications, fellowships, etc."
+              value={s2.certifications} onChange={e => setS2({...s2, certifications: e.target.value})} />
+          </div>
+        </div>
+
+        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Consultation &amp; Practice</h4>
+        <div className="form-grid">
+          <div className="field-group">
+            <label className="field-label">Consultation Fee (USD)</label>
+            <div style={{display:"flex",alignItems:"center",border:"1.5px solid var(--gray-200)",borderRadius:"var(--radius-sm)",overflow:"hidden",background:"var(--white)"}}>
+              <span style={{padding:"11px 12px",background:"var(--gray-100)",color:"var(--gray-600)",fontWeight:700,borderRight:"1.5px solid var(--gray-200)",fontSize:15}}>$</span>
+              <input className="field-input" style={{border:"none",borderRadius:0,boxShadow:"none"}} type="number" min="0" step="1" placeholder="e.g. 50"
+                value={s2.consultantFees} onChange={e => setS2({...s2, consultantFees: e.target.value})} />
+              <span style={{padding:"11px 10px",fontSize:12,color:"var(--gray-400)",whiteSpace:"nowrap"}}>USD</span>
+            </div>
+          </div>
+          <div className="field-group">
+            <label className="field-label">Clinic / Practice Name</label>
+            <input className="field-input" placeholder="e.g. City Health Clinic"
+              value={s2.clinicName} onChange={e => setS2({...s2, clinicName: e.target.value})} />
+          </div>
+          <div className="field-group">
+            <label className="field-label">Clinic Address</label>
+            <input className="field-input" placeholder="Clinic street address"
+              value={s2.clinicAddress} onChange={e => setS2({...s2, clinicAddress: e.target.value})} />
+          </div>
+          <div className="field-group full-width">
+            <label className="field-label">About You</label>
+            <textarea className="field-textarea" placeholder="Brief professional bio, areas of focus, patient care philosophy..."
+              value={s2.aboutDoctor} onChange={e => setS2({...s2, aboutDoctor: e.target.value})} />
+          </div>
+        </div>
+
+        <h4 style={{fontSize:14,margin:"24px 0 16px",color:"var(--gray-600)"}}>Required Documents</h4>
+        <div className="form-grid">
+          <FileUpload label="Government ID / Nationality Proof" required file={files.govId}
+            onFile={f => setFiles({...files, govId: f})} onRemove={() => setFiles({...files, govId: null})} />
+          <FileUpload label="Medical Degree Certificate" required file={files.degree}
+            onFile={f => setFiles({...files, degree: f})} onRemove={() => setFiles({...files, degree: null})} />
+          <FileUpload label="Medical License Document" required file={files.medicalLicense}
+            onFile={f => setFiles({...files, medicalLicense: f})} onRemove={() => setFiles({...files, medicalLicense: null})} />
+        </div>
+        {(s2Errors.govId||s2Errors.degree||s2Errors.medicalLicense) && (
+          <div className="field-error" style={{marginTop:8}}>Please upload all required documents.</div>
+        )}
+
+        <div className="btn-row">
+          <button className="btn btn-secondary" onClick={handleBack}>← Back</button>
+          <div style={{display:"flex",gap:10}}>
+            <button className="btn btn-outline btn-sm" onClick={saveDraft}>Save Draft</button>
+            <button className="btn btn-primary" onClick={handleNext}>Continue →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ─── STEP 3 ───
+  const toggleDay = day => setAvailability(p => ({...p,[day]:{...p[day],enabled:!p[day].enabled}}));
+  const updateBlock = (day,idx,field,val) => setAvailability(p => {
+    const blocks=[...p[day].blocks]; blocks[idx]={...blocks[idx],[field]:val};
+    return {...p,[day]:{...p[day],blocks}};
+  });
+  const addBlock = day => setAvailability(p => ({...p,[day]:{...p[day],blocks:[...p[day].blocks,{start:"09:00",end:"17:00"}]}}));
+  const removeBlock = (day,idx) => setAvailability(p => {
+    const blocks=p[day].blocks.filter((_,i)=>i!==idx);
+    return {...p,[day]:{...p[day],blocks:blocks.length?blocks:[{start:"09:00",end:"17:00"}]}};
+  });
+
+  const renderStep3 = () => (
+    <div className="animate-in">
+      <div className="de-card-header">
+        <h2>Availability Setup</h2>
+        <p>Set your weekly schedule. Patients will book based on these time slots.</p>
+      </div>
+      <div className="de-card-body">
+        <div className="field-group" style={{marginBottom:20}}>
+          <label className="field-label">Timezone <span className="req">*</span></label>
+          <select className="field-select" value={timezone} onChange={e => setTimezone(e.target.value)}>
+            <option value="">Select timezone...</option>
+            {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        {DAYS.map(day => (
+          <div key={day} className="avail-day">
+            <div className="avail-day-header">
+              <span className="avail-day-name">{day}</span>
+              <button className={`avail-toggle ${availability[day].enabled?"on":""}`}
+                onClick={() => toggleDay(day)} aria-label={`Toggle ${day}`} />
+            </div>
+            {availability[day].enabled && (
+              <div className="animate-in">
+                {availability[day].blocks.map((block,i) => (
+                  <div key={i} className="time-block">
+                    <input type="time" className="time-input" value={block.start} onChange={e => updateBlock(day,i,"start",e.target.value)} />
+                    <span className="time-sep">to</span>
+                    <input type="time" className="time-input" value={block.end} onChange={e => updateBlock(day,i,"end",e.target.value)} />
+                    {availability[day].blocks.length > 1 && <button className="btn btn-danger btn-xs" onClick={() => removeBlock(day,i)}>✕</button>}
+                  </div>
+                ))}
+                <button className="btn btn-outline btn-xs" style={{marginTop:4}} onClick={() => addBlock(day)}>+ Add Time Block</button>
+              </div>
+            )}
+          </div>
+        ))}
+        <div className="btn-row">
+          <button className="btn btn-secondary" onClick={handleBack}>← Back</button>
+          <div style={{display:"flex",gap:10}}>
+            <button className="btn btn-outline btn-sm" onClick={saveDraft}>Save Draft</button>
+            <button className="btn btn-primary" onClick={handleNext}>Continue →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ─── STEP 4 ───
+  const renderStep4 = () => (
+    <div className="animate-in">
+      <div className="de-card-header">
+        <h2>Payout Setup</h2>
+        <p>Configure how and when you'd like to receive payments.{isUS ? " US banking details required." : " International transfer details required."}</p>
+      </div>
+      <div className="de-card-body">
+        <div style={{display:"flex",gap:10,marginBottom:24}}>
+          {["weekly","monthly"].map(f => (
+            <button key={f} className={`btn ${payoutFreq===f?"btn-primary":"btn-outline"} btn-sm`}
+              onClick={() => setPayoutFreq(f)}>{f.charAt(0).toUpperCase()+f.slice(1)} Payout</button>
+          ))}
+        </div>
+        {isUS ? (
+          <div className="form-grid">
+            <div className="field-group">
+              <label className="field-label">Bank Name <span className="req">*</span></label>
+              <input className={`field-input ${s4Errors.bankName?"error":""}`} placeholder="Bank name"
+                value={s4.bankName} onChange={e => setS4({...s4,bankName:e.target.value})} />
+              {s4Errors.bankName && <div className="field-error">{s4Errors.bankName}</div>}
+            </div>
+            <div className="field-group">
+              <label className="field-label">Account Number <span className="req">*</span></label>
+              <input className={`field-input ${s4Errors.accountNum?"error":""}`} placeholder="Account number"
+                value={s4.accountNum} onChange={e => setS4({...s4,accountNum:e.target.value})} />
+              {s4Errors.accountNum && <div className="field-error">{s4Errors.accountNum}</div>}
+            </div>
+            <div className="field-group">
+              <label className="field-label">SWIFT / BIC Code <span className="req">*</span></label>
+              <input className={`field-input ${s4Errors.swift?"error":""}`} placeholder="SWIFT code"
+                value={s4.swift} onChange={e => setS4({...s4,swift:e.target.value})} />
+              {s4Errors.swift && <div className="field-error">{s4Errors.swift}</div>}
+            </div>
+            <div className="field-group">
+              <label className="field-label">PayPal ID</label>
+              <input className="field-input" placeholder="PayPal email or username"
+                value={s4.paypalId} onChange={e => setS4({...s4,paypalId:e.target.value})} />
+            </div>
+          </div>
+        ) : (
+          <div className="form-grid">
+            <div className="field-group">
+              <label className="field-label">IBAN <span className="req">*</span></label>
+              <input className={`field-input ${s4Errors.iban?"error":""}`} placeholder="International Bank Account Number"
+                value={s4.iban} onChange={e => setS4({...s4,iban:e.target.value})} />
+              {s4Errors.iban && <div className="field-error">{s4Errors.iban}</div>}
+            </div>
+            <div className="field-group">
+              <label className="field-label">SWIFT / BIC Code <span className="req">*</span></label>
+              <input className={`field-input ${s4Errors.swift?"error":""}`} placeholder="SWIFT code"
+                value={s4.swift} onChange={e => setS4({...s4,swift:e.target.value})} />
+              {s4Errors.swift && <div className="field-error">{s4Errors.swift}</div>}
+            </div>
+            <div className="field-group">
+              <label className="field-label">Preferred Currency <span className="req">*</span></label>
+              <select className={`field-select ${s4Errors.currency?"error":""}`}
+                value={s4.currency} onChange={e => setS4({...s4,currency:e.target.value})}>
+                {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="field-group">
+              <label className="field-label">PayPal ID</label>
+              <input className="field-input" placeholder="PayPal email or username"
+                value={s4.paypalId} onChange={e => setS4({...s4,paypalId:e.target.value})} />
+            </div>
+          </div>
+        )}
+        {submitError && <div className="field-error" style={{ marginTop: 12 }}>{submitError}</div>}
+        {submitSuccess && <div className="success-banner" style={{ marginTop: 12 }}>{submitSuccess}</div>}
+        <div className="btn-row">
+          <button className="btn btn-secondary" onClick={handleBack}>← Back</button>
+          <div style={{display:"flex",gap:10}}>
+            <button className="btn btn-outline btn-sm" onClick={saveDraft}>Save Draft</button>
+            <button className="btn btn-primary" onClick={handleNext} disabled={submitBusy}>
+              {submitBusy ? "Submitting..." : "Submit Application →"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ─── STEP 5 ───
+  const approvalPipeline = [
+    { key: "pending", label: "Awaiting Approval", icon: "⏳" },
+    { key: "approved", label: "Approved", icon: "✅" },
+  ];
+  const statusIdx = approvalPipeline.findIndex(s => s.key === regStatus);
+  const safeStatusIdx = statusIdx === -1 ? 0 : statusIdx;
+  const isRejected = regStatus === "rejected";
+  const renderStep5 = () => (
+    <div className="animate-in">
+      <div className="de-card-header">
+        <h2>Registration Status</h2>
+        <p>Your application has been submitted and sent to admin for approval.</p>
+      </div>
+      <div className="de-card-body">
+        <div className="status-dashboard">
+          <div className="status-pipeline">
+            <div className="status-line-bg" />
+            <div className="status-line-fill" style={{width:`${safeStatusIdx/(approvalPipeline.length-1)*80}%`}} />
+            {approvalPipeline.map((st,i) => (
+              <div key={st.key} className="status-node">
+                <div className={`status-dot ${i<safeStatusIdx?"reached":""} ${i===safeStatusIdx?"current":""}`}>
+                  <span className="st-icon">{st.icon}</span>
+                </div>
+                <div className={`status-name ${i<safeStatusIdx?"reached":""} ${i===safeStatusIdx?"current":""}`}>{st.label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="status-info-card">
+            <h3>{isRejected ? "❌ Rejected" : `${approvalPipeline[safeStatusIdx]?.icon} ${approvalPipeline[safeStatusIdx]?.label}`}</h3>
+            <p>
+              {regStatus==="pending"&&"Your request has been sent to admin and is awaiting approval."}
+              {regStatus==="approved"&&"Your application has been approved by admin."}
+              {regStatus==="rejected"&&"Your application was rejected by admin. Please update details and resubmit."}
+            </p>
+          </div>
+          <div style={{marginTop:20,padding:16,background:"var(--gray-50)",borderRadius:"var(--radius-sm)",border:"1px dashed var(--gray-300)"}}>
+            <div style={{fontSize:12,fontWeight:600,color:"var(--gray-500)"}}>
+              Status updates are managed by admin review.
+            </div>
+          </div>
+          {regStatus === "approved" && (
+            <div style={{marginTop:16}}>
+              <div className="success-banner animate-in" style={{marginBottom:12}}>
+                ✓ Approved by admin — your profile is now live on the platform.
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={() => navigate("/doctor-dashboard")}>
+                Go to Dashboard →
+              </button>
+            </div>
+          )}
+          {regStatus === "pending" && (
+            <div style={{ marginTop: 16, display:"flex", gap:10, flexWrap:"wrap" }}>
+              <button className="btn btn-outline btn-sm" onClick={handleEditResubmit}>
+                Edit Application
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={() => navigate("/doctor-pending")}>
+                View Application Status →
+              </button>
+            </div>
+          )}
+          {regStatus === "rejected" && (
+            <div style={{ marginTop: 16, display:"flex", gap:10, flexWrap:"wrap" }}>
+              <button className="btn btn-primary btn-sm" onClick={handleEditResubmit}>
+                Edit &amp; Resubmit
+              </button>
+              <button className="btn btn-outline btn-sm" onClick={() => navigate("/doctor-pending")}>
+                View Status
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // --- MAIN RENDER ---
+  return (
+    <>
+      <style>{css}</style>
+      <div className="wizard-root">
+        <div className="top-bar">
+          <div className="top-bar-logo">Humancare<span>Connect</span></div>
+          {step < 5 && <div className="draft-badge"><div className="dot" /> Draft Saved</div>}
+        </div>
+
+        <div className="progress-section">
+          <div className="progress-steps">
+            <div className="progress-line-bg" />
+            <div className="progress-line-fill" style={{ width: `${((step - 1) / (STEP_LABELS.length - 1)) * 80}%` }} />
+            {STEP_LABELS.map((label, i) => (
+              <div key={label} className="progress-step">
+                <div className={`progress-circle ${i + 1 === step ? "active" : ""} ${i + 1 < step ? "done" : ""}`}>
+                  {i + 1 < step ? "✓" : i + 1}
+                </div>
+                <div className={`progress-label ${i + 1 === step ? "active" : ""} ${i + 1 < step ? "done" : ""}`}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="de-step-card">
+          <div className="de-card">
+            {step === 1 && renderStep1()}
+            {step === 2 && renderStep2()}
+            {step === 3 && renderStep3()}
+            {step === 4 && renderStep4()}
+            {step === 5 && renderStep5()}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+

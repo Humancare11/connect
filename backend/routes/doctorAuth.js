@@ -52,8 +52,19 @@ router.post("/register", async (req, res) => {
     if (!check.valid) return res.status(400).json({ message: check.msg });
 
     const doctor = await Doctor.create({ name, email: cleanEmail, password });
-    const token  = signToken(doctor._id, doctor.email);
 
+    // Auto-create a minimal enrollment so the doctor can be tracked immediately
+    const nameParts = name.trim().split(/\s+/);
+    await Enrollment.create({
+      doctorId: doctor._id,
+      firstName: nameParts[0] || "",
+      surname:   nameParts.slice(1).join(" ") || "",
+      email:     cleanEmail,
+      approvalStatus: "pending",
+      formCompleted:  false,
+    });
+
+    const token  = signToken(doctor._id, doctor.email);
     res.cookie("doctorToken", token, COOKIE_OPTS);
     return res.status(201).json({
       message: "Doctor registered successfully.",
@@ -214,6 +225,7 @@ router.post("/enrollment", async (req, res) => {
       const wasApprovedOrRejected =
         enrollment.approvalStatus === "approved" || enrollment.approvalStatus === "rejected";
       Object.assign(enrollment, enrollmentData);
+      enrollment.formCompleted = true;
       if (wasApprovedOrRejected) {
         enrollment.approvalStatus = "pending";
         enrollment.verified = false;
@@ -222,15 +234,40 @@ router.post("/enrollment", async (req, res) => {
       enrollment.updatedAt = new Date();
       await enrollment.save();
     } else {
-      enrollment = new Enrollment({ doctorId, ...enrollmentData });
+      enrollment = new Enrollment({ doctorId, ...enrollmentData, formCompleted: true });
       await enrollment.save();
-      await Doctor.findByIdAndUpdate(doctorId, { isEnrolled: true });
     }
+
+    // Enrollment submission means the profile is under review until admin approval.
+    await Doctor.findByIdAndUpdate(doctorId, { isEnrolled: false });
 
     res.status(201).json({ message: responseMessage, enrollment });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ── PATCH /api/doctor/enrollment/:doctorId/consultation-fee ──────────────────
+router.patch("/enrollment/:doctorId/consultation-fee", async (req, res) => {
+  try {
+    const { consultantFees } = req.body;
+    const fee = Number(consultantFees);
+    if (isNaN(fee) || fee < 0)
+      return res.status(400).json({ message: "Invalid fee amount." });
+
+    const enrollment = await Enrollment.findOneAndUpdate(
+      { doctorId: req.params.doctorId },
+      { consultantFees: fee, updatedAt: new Date() },
+      { new: true }
+    );
+    if (!enrollment)
+      return res.status(404).json({ message: "Enrollment not found." });
+
+    return res.json({ message: "Consultation fee updated.", consultantFees: enrollment.consultantFees });
+  } catch (err) {
+    console.error("update consultation fee error:", err);
+    return res.status(500).json({ message: "Server error." });
   }
 });
 

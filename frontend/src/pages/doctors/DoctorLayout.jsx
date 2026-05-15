@@ -7,7 +7,7 @@ import { useDoctorAuth } from "../../context/DoctorAuthContext";
 
 const menuItems = [
   { path: "/doctor-dashboard",              label: "Dashboard",    icon: "dashboard" },
-  { path: "/doctor-dashboard/enrollments",  label: "Enrollments",  icon: "enrollments" },
+  { path: "/doctor-dashboard/profile",      label: "My Profile",   icon: "profile" },
   { path: "/doctor-dashboard/appointments", label: "Appointments", icon: "appointments" },
   { path: "/doctor-dashboard/patients",     label: "My Patients",  icon: "patients" },
   // { path: "/doctor-dashboard/messages",     label: "Messages",     icon: "messages" },
@@ -74,9 +74,16 @@ const NavIcon = ({ name }) => {
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     ),
+    profile: (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    ),
   };
   return icons[name] || null;
 };
+
 
 export default function DoctorLayout({ children }) {
   const navigate = useNavigate();
@@ -84,6 +91,8 @@ export default function DoctorLayout({ children }) {
   const { doctor, loading, logout: contextLogout } = useDoctorAuth();
   const [sideOpen, setSideOpen] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [formCompleted, setFormCompleted] = useState(false);
+  const [enrollmentLoaded, setEnrollmentLoaded] = useState(false);
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -99,10 +108,29 @@ export default function DoctorLayout({ children }) {
 
     if (doctor) {
       api.get(`/api/doctor/enrollment/${doctor._id || doctor.id}`)
-        .then((res) => setIsEnrolled(!!res.data))
-        .catch(() => setIsEnrolled(doctor.isEnrolled || false));
+        .then((res) => {
+          const enrollment = res.data;
+          setIsEnrolled(enrollment?.approvalStatus === "approved");
+          setFormCompleted(enrollment?.formCompleted === true);
+        })
+        .catch(() => {
+          setIsEnrolled(doctor.isEnrolled || false);
+          setFormCompleted(false);
+        })
+        .finally(() => setEnrollmentLoaded(true));
     }
   }, [doctor, loading, navigate]);
+
+  useEffect(() => {
+    if (!enrollmentLoaded) return;
+    if (!formCompleted) {
+      // Form not submitted yet → send to standalone enrollment wizard
+      navigate("/doctor-dashboard/enrollments", { replace: true });
+    } else if (!isEnrolled) {
+      // Submitted but not yet approved → "under review" page
+      navigate("/doctor-pending", { replace: true });
+    }
+  }, [enrollmentLoaded, formCompleted, isEnrolled, navigate]);
 
   useEffect(() => {
     if (!socket.connected) socket.connect();
@@ -116,7 +144,7 @@ export default function DoctorLayout({ children }) {
     navigate("/doctor-login");
   };
 
-  if (loading || !doctor) return null;
+  if (loading || !doctor || !enrollmentLoaded) return null;
 
   const initials = doctor.name
     ? doctor.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
@@ -131,10 +159,8 @@ export default function DoctorLayout({ children }) {
     return "Good evening";
   };
 
-  const isItemDisabled = (path) =>
-    !isEnrolled &&
-    path !== "/doctor-dashboard/enrollments" &&
-    path !== "/doctor-dashboard";
+  // All routes inside DoctorLayout are only reached by approved doctors (redirect handles the rest)
+  const isItemDisabled = () => false;
 
   return (
     <div className="dl-page">
@@ -195,15 +221,6 @@ export default function DoctorLayout({ children }) {
 
         {/* Bottom */}
         <div className="dl-sidebar-footer">
-          {!isEnrolled && (
-            <Link to="/doctor-dashboard/enrollments" className="dl-enroll-nudge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              Complete enrollment
-            </Link>
-          )}
           <button className="dl-logout-btn" onClick={logout}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -260,23 +277,6 @@ export default function DoctorLayout({ children }) {
 
         {/* Page Content */}
         <div className="dl-content">
-          {!isEnrolled && (
-            <div className="dl-enroll-banner">
-              <div className="dl-enroll-banner-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-              </div>
-              <div className="dl-enroll-banner-text">
-                <strong>Enrollment required</strong> — Complete your profile to unlock all features.
-              </div>
-              <Link to="/doctor-dashboard/enrollments" className="dl-enroll-banner-cta">
-                Enroll now →
-              </Link>
-            </div>
-          )}
           {children}
         </div>
       </main>

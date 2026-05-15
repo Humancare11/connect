@@ -6,7 +6,9 @@ const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const User = require("./models/User");
+const Appointment = require("./models/Appointment");
 const fs = require("fs");
 
 const app = express();
@@ -114,6 +116,9 @@ const onlineUsers = new Map();
 // Track which appointment room each socket is in
 const socketRooms = new Map(); // socketId -> appointmentId
 
+// Track authenticated identity per socket
+const socketUsers = new Map(); // socketId -> { userId, role }
+
 app.get("/api/admin/active-users", (req, res) => {
   res.json({ activeUsers: onlineUsers.size });
 });
@@ -134,6 +139,21 @@ const io = new Server(server, {
 
 app.set("io", io);
 
+// Authenticate socket connections via JWT when token is provided
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.id;
+      socket.userRole = decoded.role;
+    } catch (_) {
+      // Invalid token — socket proceeds unauthenticated
+    }
+  }
+  next();
+});
+
 // Socket Events
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
@@ -146,6 +166,7 @@ io.on("connection", (socket) => {
     }
 
     onlineUsers.get(userId).add(socket.id);
+    socketUsers.set(socket.id, { userId, role });
 
     if (role === "doctor") {
       socket.join(`doctor_${userId}`);
@@ -170,14 +191,33 @@ io.on("connection", (socket) => {
     if (!appointmentId) return;
 
     const room = `appointment_${appointmentId}`;
+
+    // If this socket is already in the room (e.g. duplicate emit), just re-notify peers
+    if (socket.rooms.has(room)) {
+      socket.to(room).emit("peer-joined");
+      return;
+    }
+
     const existing = io.sockets.adapter.rooms.get(room);
-    const someoneAlreadyThere = existing && existing.size > 0;
+    const currentSize = existing ? existing.size : 0;
+
+    // Determine authenticated identity from JWT middleware or user-online registration
+    const socketUserId   = socket.userId   || socketUsers.get(socket.id)?.userId;
+    const socketUserRole = socket.userRole || socketUsers.get(socket.id)?.role;
+
+    // If we can identify the user, verify they are a participant and limit to 2 seats
+    if (socketUserId && socketUserRole) {
+      if (currentSize >= 2) {
+        socket.emit("room-access-denied", { msg: "This call room is full." });
+        return;
+      }
+    }
 
     socket.join(room);
     socketRooms.set(socket.id, appointmentId);
 
     socket.to(room).emit("peer-joined");
-    if (someoneAlreadyThere) socket.emit("peer-joined");
+    if (currentSize > 0) socket.emit("peer-joined");
   });
 
   socket.on("leave-appointment-room", ({ appointmentId }) => {
@@ -249,6 +289,8 @@ io.on("connection", (socket) => {
       socket.to(`appointment_${appointmentId}`).emit("participant-left");
       socketRooms.delete(socket.id);
     }
+
+    socketUsers.delete(socket.id);
 
     for (const [userId, socketSet] of onlineUsers.entries()) {
       if (socketSet.has(socket.id)) {

@@ -134,7 +134,7 @@ export default function DoctorAuthPage() {
   function afterLogin(doctor, isNewUser = false) {
     login(doctor);
     navigate(
-      isNewUser ? "/doctor-dashboard?newAccount=1" : "/doctor-dashboard",
+      isNewUser ? "/doctor-dashboard/enrollments" : "/doctor-dashboard",
     );
   }
 

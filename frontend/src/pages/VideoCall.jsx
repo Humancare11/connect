@@ -6,6 +6,99 @@ import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
 
+// ── In-call prescription modal (doctor only) ──────────────────────────────────
+const EMPTY_MED = { name: "", dosage: "", frequency: "", duration: "" };
+
+function InCallPrescriptionModal({ appt, onClose, onSaved }) {
+  const [diagnosis, setDiagnosis] = useState("");
+  const [medicines, setMedicines] = useState([{ ...EMPTY_MED }]);
+  const [instructions, setInstructions] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const setMed = (i, k, v) =>
+    setMedicines((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], [k]: v };
+      return next;
+    });
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!diagnosis.trim()) { setError("Diagnosis is required."); return; }
+    setSaving(true); setError("");
+    try {
+      await api.post("/api/medical/prescriptions", {
+        appointmentId: appt._id,
+        patientId: appt.patientId?._id || appt.patientId,
+        diagnosis,
+        medicines: medicines.filter((m) => m.name.trim()),
+        instructions,
+        followUpDate,
+      });
+      onSaved();
+    } catch (err) {
+      setError(err.response?.data?.msg || "Failed to save prescription.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="hc-vc__rx-overlay" onClick={onClose}>
+      <div className="hc-vc__rx-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="hc-vc__rx-modal-head">
+          <span className="hc-vc__rx-modal-icon">💊</span>
+          <h3>Issue Prescription</h3>
+          <button className="hc-vc__rx-modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <form className="hc-vc__rx-modal-body" onSubmit={submit}>
+          {error && <div className="hc-vc__rx-error">{error}</div>}
+
+          <label className="hc-vc__rx-label">Diagnosis *</label>
+          <input
+            className="hc-vc__rx-input"
+            value={diagnosis}
+            onChange={(e) => setDiagnosis(e.target.value)}
+            placeholder="e.g. Acute viral pharyngitis"
+            autoFocus
+          />
+
+          <label className="hc-vc__rx-label">Medicines</label>
+          {medicines.map((med, i) => (
+            <div key={i} className="hc-vc__rx-med-row">
+              <input className="hc-vc__rx-input hc-vc__rx-med-name" value={med.name} onChange={(e) => setMed(i, "name", e.target.value)} placeholder="Medicine" />
+              <input className="hc-vc__rx-input hc-vc__rx-med-sm" value={med.dosage} onChange={(e) => setMed(i, "dosage", e.target.value)} placeholder="Dosage" />
+              <input className="hc-vc__rx-input hc-vc__rx-med-sm" value={med.frequency} onChange={(e) => setMed(i, "frequency", e.target.value)} placeholder="Frequency" />
+              <input className="hc-vc__rx-input hc-vc__rx-med-sm" value={med.duration} onChange={(e) => setMed(i, "duration", e.target.value)} placeholder="Duration" />
+              {medicines.length > 1 && (
+                <button type="button" className="hc-vc__rx-med-remove" onClick={() => setMedicines((p) => p.filter((_, idx) => idx !== i))}>✕</button>
+              )}
+            </div>
+          ))}
+          <button type="button" className="hc-vc__rx-add-med" onClick={() => setMedicines((p) => [...p, { ...EMPTY_MED }])}>
+            + Add Medicine
+          </button>
+
+          <label className="hc-vc__rx-label">Instructions</label>
+          <textarea className="hc-vc__rx-input hc-vc__rx-textarea" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Diet, rest, special instructions…" rows={2} />
+
+          <label className="hc-vc__rx-label">Follow-up Date</label>
+          <input className="hc-vc__rx-input" type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} />
+
+          <div className="hc-vc__rx-modal-foot">
+            <button type="button" className="hc-vc__rx-btn-ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="hc-vc__rx-btn-primary" disabled={saving}>
+              {saving ? "Saving…" : "Issue Prescription"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 const STUN_SERVERS = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
@@ -95,6 +188,12 @@ export default function VideoCall() {
   const [pipPos, setPipPos] = useState({ x: null, y: null });
   const pipRef = useRef(null);
   const dragRef = useRef({ active: false, ox: 0, oy: 0, ex: 0, ey: 0 });
+
+  // ── Completion + prescription notifications ───────────────────────
+  const [showCompletedOverlay, setShowCompletedOverlay] = useState(false);
+  const [prescriptionNotif, setPrescriptionNotif] = useState(null);
+  const [showRxModal, setShowRxModal] = useState(false);
+  const [rxSavedToast, setRxSavedToast] = useState(false);
 
   // ── Sync refs ─────────────────────────────────────────────────────
   useEffect(() => { inCallRef.current = inCall; }, [inCall]);
@@ -256,6 +355,20 @@ export default function VideoCall() {
       }
     };
 
+    // Fallback for browsers where onconnectionstatechange fires late or not at all
+    pc.oniceconnectionstatechange = () => {
+      const s = pc.iceConnectionState;
+      if (!mounted) return;
+      if (s === "connected" || s === "completed") {
+        setConnectionState("connected");
+        if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
+      } else if (s === "checking") {
+        if (!inCallRef.current) setConnectionState("connecting");
+      } else if (s === "failed") {
+        setConnectionState("disconnected");
+      }
+    };
+
     // Socket handlers
     const handleOffer = async ({ offer }) => {
       if (!offer || !mounted) return;
@@ -302,12 +415,34 @@ export default function VideoCall() {
       }
     };
 
+    const handleApptUpdated = ({ status }) => {
+      if (!mounted) return;
+      if (status === "completed" && !isDoctor) {
+        setShowCompletedOverlay(true);
+        setTimeout(() => navigate("/dashboard", { replace: true }), 4000);
+      }
+    };
+
+    const handleNewPrescription = ({ diagnosis }) => {
+      if (!mounted || isDoctor) return;
+      setPrescriptionNotif({ diagnosis });
+      setTimeout(() => setPrescriptionNotif(null), 10000);
+    };
+
+    const handleRoomDenied = ({ msg } = {}) => {
+      if (!mounted) return;
+      setApptError(msg || "Access to this call room was denied.");
+    };
+
     socket.on("video-offer", handleOffer);
     socket.on("video-answer", handleAnswer);
     socket.on("ice-candidate", handleIce);
     socket.on("peer-joined", handlePeerJoined);
     socket.on("participant-left", handleParticipantLeft);
     socket.on("appointment-message", handleChatMessage);
+    socket.on("appointment-updated", handleApptUpdated);
+    socket.on("new-prescription", handleNewPrescription);
+    socket.on("room-access-denied", handleRoomDenied);
 
     if (!socket.connected) socket.connect();
     socket.emit("join-appointment-room", { appointmentId });
@@ -320,6 +455,9 @@ export default function VideoCall() {
       socket.off("peer-joined", handlePeerJoined);
       socket.off("participant-left", handleParticipantLeft);
       socket.off("appointment-message", handleChatMessage);
+      socket.off("appointment-updated", handleApptUpdated);
+      socket.off("new-prescription", handleNewPrescription);
+      socket.off("room-access-denied", handleRoomDenied);
       pc.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       clearInterval(callTimerRef.current);
@@ -426,6 +564,12 @@ export default function VideoCall() {
       alert(err.response?.data?.msg || "Failed to complete consultation.");
     }
   }, [isDoctor, completing, appointmentId, navigate]);
+
+  const handleRxSaved = useCallback(() => {
+    setShowRxModal(false);
+    setRxSavedToast(true);
+    setTimeout(() => setRxSavedToast(false), 4000);
+  }, []);
 
   // ── PiP drag ──────────────────────────────────────────────────────
   const handlePipPointerDown = useCallback((e) => {
@@ -582,6 +726,43 @@ export default function VideoCall() {
   // ── Main call UI ──────────────────────────────────────────────────
   return (
     <div className="hc-vc__page">
+
+      {/* ── Consultation completed overlay (patient) ─────────────── */}
+      {showCompletedOverlay && !isDoctor && (
+        <div className="hc-vc__completed-overlay">
+          <div className="hc-vc__completed-card">
+            <div className="hc-vc__completed-icon">✅</div>
+            <h2>Consultation Completed</h2>
+            <p>Your doctor has marked this session as complete.</p>
+            <p className="hc-vc__completed-sub">Redirecting to your dashboard…</p>
+            <div className="hc-vc__completed-spinner" />
+          </div>
+        </div>
+      )}
+
+      {/* ── Prescription notification banner (patient) ───────────── */}
+      {prescriptionNotif && !isDoctor && (
+        <div className="hc-vc__rx-notif">
+          <span className="hc-vc__rx-notif-icon">💊</span>
+          <span className="hc-vc__rx-notif-text">
+            Prescription issued: <strong>{prescriptionNotif.diagnosis}</strong>
+          </span>
+          <button
+            className="hc-vc__rx-notif-view"
+            onClick={() => navigate("/user/my-records")}
+          >
+            View
+          </button>
+          <button className="hc-vc__rx-notif-close" onClick={() => setPrescriptionNotif(null)}>✕</button>
+        </div>
+      )}
+
+      {/* ── Rx saved toast (doctor) ──────────────────────────────── */}
+      {rxSavedToast && isDoctor && (
+        <div className="hc-vc__rx-saved-toast">
+          ✅ Prescription issued successfully
+        </div>
+      )}
 
       {/* ── Topbar ───────────────────────────────────────────────── */}
       <div className="hc-vc__topbar">
@@ -873,6 +1054,18 @@ export default function VideoCall() {
             </div>
           )}
 
+          {/* Prescription (doctor only) */}
+          {isDoctor && (
+            <button
+              className="hc-vc__btn hc-vc__btn--rx"
+              onClick={() => setShowRxModal(true)}
+              title="Issue prescription"
+            >
+              <span className="hc-vc__btn-icon">💊</span>
+              <span className="hc-vc__btn-label">Rx</span>
+            </button>
+          )}
+
           {/* Complete (doctor only) */}
           {isDoctor && (
             <button
@@ -903,6 +1096,15 @@ export default function VideoCall() {
         <div className="hc-vc__error-bar">
           ⚠️ Camera or microphone access denied — check browser permissions and reload.
         </div>
+      )}
+
+      {/* In-call prescription modal (doctor only) */}
+      {showRxModal && isDoctor && appt && (
+        <InCallPrescriptionModal
+          appt={appt}
+          onClose={() => setShowRxModal(false)}
+          onSaved={handleRxSaved}
+        />
       )}
     </div>
   );

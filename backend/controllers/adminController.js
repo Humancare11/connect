@@ -42,6 +42,10 @@ const approveDoctor = async (req, res) => {
     );
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
 
+    if (enrollment.doctorId) {
+      await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: true });
+    }
+
     res.status(200).json({ msg: "Doctor approved", enrollment });
   } catch (error) {
     console.error("approveDoctor error:", error);
@@ -58,6 +62,10 @@ const rejectDoctor = async (req, res) => {
       { new: true }
     );
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+
+    if (enrollment.doctorId) {
+      await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: false });
+    }
 
     res.status(200).json({ msg: "Doctor rejected", enrollment });
   } catch (error) {

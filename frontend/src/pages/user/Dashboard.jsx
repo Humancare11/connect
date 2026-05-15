@@ -6,7 +6,6 @@ import { useAuth } from "../../context/AuthContext";
 import socket from "../../socket";
 import { USER_ACTIVITY_UPDATED_EVENT } from "../../utils/activityEvents";
 
-// Helper: format date
 const formatDateShort = (d) => {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -78,10 +77,7 @@ export default function Dashboard() {
   }, []);
 
   const queueRefresh = useCallback(() => {
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
-    }
-
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = setTimeout(() => {
       refreshTimerRef.current = null;
       loadDashboardData(false);
@@ -112,18 +108,19 @@ export default function Dashboard() {
     window.addEventListener(USER_ACTIVITY_UPDATED_EVENT, onActivityEvent);
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
-    socketEvents.forEach((eventName) => socket.on(eventName, onActivityEvent));
+    socketEvents.forEach((evt) => socket.on(evt, onActivityEvent));
 
     return () => {
       window.removeEventListener(USER_ACTIVITY_UPDATED_EVENT, onActivityEvent);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
-      socketEvents.forEach((eventName) => socket.off(eventName, onActivityEvent));
+      socketEvents.forEach((evt) => socket.off(evt, onActivityEvent));
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     };
   }, [queueRefresh]);
 
-  const pendingCount   = appointments.filter((a) => a.status === "pending").length;
+  /* ── derived counts ── */
+  const pendingCount = appointments.filter((a) => a.status === "pending").length;
   const confirmedCount = appointments.filter((a) => a.status === "confirmed").length;
   const completedCount = appointments.filter((a) => a.status === "completed").length;
 
@@ -154,6 +151,7 @@ export default function Dashboard() {
     return "Good evening";
   };
 
+  /* ── unified activity feed ── */
   const allActivities = [
     ...appointments.map((a) => ({
       id: a._id,
@@ -187,8 +185,7 @@ export default function Dashboard() {
       status: t.status === "resolved" ? "completed" : "pending",
       createdAt: new Date(t.createdAt),
     })),
-  ]
-    .sort((a, b) => b.createdAt - a.createdAt);
+  ].sort((a, b) => b.createdAt - a.createdAt);
 
   const totalPages = Math.max(1, Math.ceil(allActivities.length / ACTIVITY_PAGE_SIZE));
   const pagedActivities = allActivities.slice(
@@ -206,7 +203,6 @@ export default function Dashboard() {
 
   const handleActivityClick = (activity) => {
     const encodedId = encodeURIComponent(activity.id);
-
     if (activity.type === "appointment") {
       navigate(`/user/appointments?activityId=${encodedId}`);
       return;
@@ -218,8 +214,10 @@ export default function Dashboard() {
     navigate(`/user/raise-ticket?activityId=${encodedId}`);
   };
 
+  /* ── render ── */
   return (
     <div className="hc-dash__page">
+      {/* header */}
       <div className="hc-dash__header">
         <div className="hc-dash__header-text">
           <p className="hc-dash__eyebrow">Humanncare</p>
@@ -233,6 +231,7 @@ export default function Dashboard() {
         </Link>
       </div>
 
+      {/* overview cards */}
       <div className="hc-dash__overview">
         <div className="hc-dash__ov-card hc-dash__ov-card--appt">
           <div className="hc-dash__ov-left">
@@ -246,6 +245,7 @@ export default function Dashboard() {
             </span>
           </div>
         </div>
+
         <div className="hc-dash__ov-card hc-dash__ov-card--qna">
           <div className="hc-dash__ov-left">
             <span className="hc-dash__ov-icon">❓</span>
@@ -258,6 +258,7 @@ export default function Dashboard() {
             </span>
           </div>
         </div>
+
         <div className="hc-dash__ov-card hc-dash__ov-card--ticket">
           <div className="hc-dash__ov-left">
             <span className="hc-dash__ov-icon">🎫</span>
@@ -270,7 +271,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Medical Records Summary ─────────────────────── */}
+      {/* medical records */}
       {(prescriptions.length > 0 || certificates.length > 0) && (
         <div className="hc-dash__section">
           <div className="hc-dash__section-header">
@@ -280,8 +281,8 @@ export default function Dashboard() {
             </div>
             <Link to="/user/my-records" className="hc-dash__section-link">View all →</Link>
           </div>
+
           <div className="hc-dash__records-grid">
-            {/* Prescriptions */}
             <div className="hc-dash__record-card">
               <div className="hc-dash__record-header">
                 <span className="hc-dash__record-icon">💊</span>
@@ -306,7 +307,6 @@ export default function Dashboard() {
               <Link to="/user/my-records" className="hc-dash__record-cta">View prescriptions →</Link>
             </div>
 
-            {/* Certificates */}
             <div className="hc-dash__record-card">
               <div className="hc-dash__record-header">
                 <span className="hc-dash__record-icon">📄</span>
@@ -334,6 +334,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* recent activity */}
       <div className="hc-dash__section">
         <div className="hc-dash__section-header">
           <div>
@@ -341,6 +342,7 @@ export default function Dashboard() {
             <p className="hc-dash__section-sub">Your latest actions across appointments, questions &amp; tickets</p>
           </div>
         </div>
+
         {loading ? (
           <div className="hc-dash__loading">
             <div className="hc-dash__spinner" />
@@ -351,9 +353,7 @@ export default function Dashboard() {
             <div className="hc-dash__empty-icon">📋</div>
             <h3>No activity yet</h3>
             <p>Your actions will appear here once you start using the platform.</p>
-            <Link to="/find-a-doctor" className="hc-dash__empty-cta">
-              Find a Doctor
-            </Link>
+            <Link to="/find-a-doctor" className="hc-dash__empty-cta">Find a Doctor</Link>
           </div>
         ) : (
           <ul className="hc-dash__activity-list">
@@ -398,7 +398,6 @@ export default function Dashboard() {
             >
               Previous
             </button>
-
             <div className="hc-dash__page-numbers">
               {Array.from({ length: totalPages }, (_, idx) => {
                 const page = idx + 1;
@@ -414,7 +413,6 @@ export default function Dashboard() {
                 );
               })}
             </div>
-
             <button
               type="button"
               className="hc-dash__page-btn"

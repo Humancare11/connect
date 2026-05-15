@@ -57,6 +57,7 @@ const NAV_ITEMS = [
       {
         path: "/admin-dashboard/payments",
         label: "Payments",
+        superadminOnly: true,
         icon: (
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
@@ -148,20 +149,22 @@ export default function AdminLayout({ children }) {
           {NAV_ITEMS.map(section => (
             <div key={section.section}>
               <div className="ad-nav-section-label">{section.section}</div>
-              {section.items.map(item => {
-                const active = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`ad-nav-item${active ? " active" : ""}`}
-                    onClick={() => setSideOpen(false)}
-                  >
-                    <span className="ad-nav-icon">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                );
-              })}
+              {section.items
+                .filter(item => !item.superadminOnly || user.role === "superadmin")
+                .map(item => {
+                  const active = location.pathname === item.path;
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`ad-nav-item${active ? " active" : ""}`}
+                      onClick={() => setSideOpen(false)}
+                    >
+                      <span className="ad-nav-icon">{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
             </div>
           ))}
 

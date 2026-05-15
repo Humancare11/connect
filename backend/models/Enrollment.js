@@ -31,19 +31,25 @@ const enrollmentSchema = new mongoose.Schema({
   medicalRegistrationNumber: String,
   medicalLicense: String,
   idProof: String,
+  medicalLicenseFile: String,
   medicalCouncilName: String,
   registrationYear: String,
   idProofType: String,
   payoutEmail: String,
+  paypalId: String,
   accountHolderName: String,
   bankName: String,
   accountNumber: String,
   ifscCode: String,
 
+  // Education
+  medicalSchool: String,
+
   // Flags
   hasProfilePhoto: { type: Boolean, default: false },
   hasCertification: { type: Boolean, default: false },
   verified: { type: Boolean, default: false },
+  formCompleted: { type: Boolean, default: false },
 
   // Admin approval
   approvalStatus: {

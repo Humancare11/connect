@@ -5,6 +5,7 @@ import {
   Route,
   useLocation,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import { useEffect, useLayoutEffect, useState } from "react";
 import "./App.css";
@@ -39,6 +40,8 @@ import DoctorLayout from "./pages/doctors/DoctorLayout";
 import Dashbord from "./pages/doctors/Dashbord";
 import DoctorEnrollments from "./pages/doctors/DoctorEnrollments";
 import { useDoctorAuth } from "./context/DoctorAuthContext";
+import DoctorProfile from "./pages/doctors/DoctorProfile";
+import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
 import DoctorAppointments from "./pages/doctors/DoctorAppointments";
 import DoctorPatients from "./pages/doctors/DoctorPatients";
 import DoctorMessages from "./pages/doctors/DoctorMessages";
@@ -46,6 +49,16 @@ import RaiseTicket from "./pages/doctors/RaiseTicket";
 import DoctorQnA from "./pages/doctors/DoctorQnA";
 import DoctorAnalytics from "./pages/doctors/DoctorAnalytics";
 import DoctorSettings from "./pages/doctors/DoctorSettings";
+import AdminAuthPage from "./pages/admin/AdminAuth";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ManageDoctors from "./pages/admin/ManageDoctors";
+import ManageUsers from "./pages/admin/ManageUsers";
+import AdminAppointments from "./pages/admin/AdminAppointments";
+import AdminPayments from "./pages/admin/AdminPayments";
+import QnAPage from "./pages/admin/QnAPage";
+import SupportTickets from "./pages/admin/SupportTickets";
+import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 
 import UserLayout from "./pages/user/UserLayout";
 import Dashboard from "./pages/user/Dashboard";
@@ -57,17 +70,6 @@ import ProfileSettings from "./pages/user/ProfileSettings";
 import ChangePassword from "./pages/user/ChangePassword";
 import MyRecords from "./pages/user/MyRecords";
 import UserRaiseTicket from "./pages/user/RaiseTicket";
-
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import ManageDoctors from "./pages/admin/ManageDoctors";
-import ManageUsers from "./pages/admin/ManageUsers";
-import AdminPayments from "./pages/admin/AdminPayments";
-import AdminAppointments from "./pages/admin/AdminAppointments";
-import AdminQnA from "./pages/admin/QnAPage";
-import AdminTickets from "./pages/admin/SupportTickets";
-import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
-import AdminAuth from "./pages/admin/AdminAuth";
 
 import Home2 from "./pages/Home-2";
 import Test from "./pages/Test";
@@ -95,27 +97,34 @@ function PrivateRoute({ children, allowedRoles }) {
   return children;
 }
 
+// Standalone wrapper — no DoctorLayout. The enrollment wizard has its own UI.
 function DoctorEnrollmentsWrapper() {
-  const { doctor, updateDoctor } = useDoctorAuth();
+  const { doctor, loading, updateDoctor } = useDoctorAuth();
+  const navigate = useNavigate();
   const [enrollmentData, setEnrollmentData] = useState(null);
   const [fetchDone, setFetchDone] = useState(false);
 
   useEffect(() => {
-    if (!doctor) return;
+    if (loading) return;
+    if (!doctor) {
+      navigate("/doctor-login", { replace: true });
+      return;
+    }
     const doctorId = doctor._id || doctor.id;
     api.get(`/api/doctor/enrollment/${doctorId}`)
       .then(res => setEnrollmentData(res.data || null))
       .catch(() => {})
       .finally(() => setFetchDone(true));
-  }, [doctor]);
+  }, [doctor, loading, navigate]);
 
-  if (!fetchDone) return null;
+  if (loading || !fetchDone) return null;
 
   const doctorId = doctor?._id || doctor?.id;
 
   const handleComplete = (data) => {
     setEnrollmentData(data);
-    updateDoctor({ ...doctor, isEnrolled: true });
+    const approved = data?.approvalStatus === "approved";
+    updateDoctor({ ...doctor, isEnrolled: approved });
   };
 
   return (
@@ -251,6 +260,7 @@ function AppLayout() {
 
         {/* <Route path="/doctor-register" element={<DoctorRegister />} /> */}
         <Route path="/doctor-login" element={<DoctorLogin />} />
+        <Route path="/doctor-pending" element={<DoctorPendingApproval />} />
 
         <Route
           path="/doctor-dashboard"
@@ -261,13 +271,15 @@ function AppLayout() {
           }
         />
         <Route
-          path="/doctor-dashboard/enrollments"
+          path="/doctor-dashboard/profile"
           element={
             <DoctorLayout>
-              <DoctorEnrollmentsWrapper />
+              <DoctorProfile />
             </DoctorLayout>
           }
         />
+        {/* Enrollment is standalone — no sidebar/header until approved */}
+        <Route path="/doctor-dashboard/enrollments" element={<DoctorEnrollmentsWrapper />} />
         <Route
           path="/doctor-dashboard/appointments"
           element={
@@ -325,15 +337,11 @@ function AppLayout() {
           }
         />
 
-        <Route path="/video-call/:appointmentId" element={<VideoCall />} />
-
-        <Route path="/adminauth" element={<AdminAuth />} />
-        {/* Compatibility redirect for older/alternate URL */}
+        <Route path="/adminauth" element={<AdminAuthPage />} />
         <Route
           path="/admin-auth"
           element={<Navigate to="/adminauth" replace />}
         />
-
         <Route
           path="/admin-dashboard"
           element={
@@ -375,26 +383,6 @@ function AppLayout() {
           }
         />
         <Route
-          path="/admin-dashboard/qna"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <AdminQnA />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/tickets"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <AdminTickets />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
           path="/admin-dashboard/payments"
           element={
             <PrivateRoute allowedRoles={["admin", "superadmin"]}>
@@ -404,7 +392,26 @@ function AppLayout() {
             </PrivateRoute>
           }
         />
-
+        <Route
+          path="/admin-dashboard/qna"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <QnAPage />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/tickets"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <SupportTickets />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/superadmin-dashboard"
           element={
@@ -413,7 +420,7 @@ function AppLayout() {
             </PrivateRoute>
           }
         />
-        <Route path="/home-demo" element={<Home2 />} />
+        <Route path="/video-call/:appointmentId" element={<VideoCall />} />
       </Routes>
       {!hideLayout && <Footer />}
     </>
