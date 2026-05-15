@@ -581,7 +581,7 @@ export default function HomePage() {
         <div className="hero-left">
           <div className="hero-badge">
             <div className="badge-pulse"></div>
-            Available in all 50 states — 24 / 7
+            Available in all 50 states — 24 / 7.
           </div>
 
           <h1>
