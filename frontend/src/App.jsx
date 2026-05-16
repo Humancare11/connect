@@ -178,10 +178,7 @@ function AppLayout() {
         <Route path="/test" element={<Test />} />
 
 
-<<<<<<< HEAD
         {/* <Route path="/m" element={<MDemo />} /> */}
-=======
->>>>>>> ca3aaa0 (A)
 
         <Route
           path="/user/dashboard"
