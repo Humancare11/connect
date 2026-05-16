@@ -49,6 +49,9 @@ import RaiseTicket from "./pages/doctors/RaiseTicket";
 import DoctorQnA from "./pages/doctors/DoctorQnA";
 import DoctorAnalytics from "./pages/doctors/DoctorAnalytics";
 import DoctorSettings from "./pages/doctors/DoctorSettings";
+import DoctorProfileForUser from "./pages/doctors/DoctorProfileForUser";
+
+
 import AdminAuthPage from "./pages/admin/AdminAuth";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -177,6 +180,8 @@ function AppLayout() {
         <Route path="/home-demo" element={<Home2 />} />
         <Route path="/test" element={<Test />} />
 
+
+<Route path="/doctor/:id" element={<DoctorProfileForUser />} />
 
         {/* <Route path="/m" element={<MDemo />} /> */}
 

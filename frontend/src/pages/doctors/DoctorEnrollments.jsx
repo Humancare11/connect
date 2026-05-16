@@ -606,8 +606,8 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
   const [s2, setS2] = useState({
     npi:"", licenseNum:"", specialty:"", subSpecialization:"", qualification:"",
     school:"", gradYear:"", experience:"", medicalCouncilName:"",
-    consultationMode:"", consultantFees:"", clinicName:"", clinicAddress:"",
-    aboutDoctor:"", certifications:"",
+    consultationMode:"", consultantFees:"", feeCurrency:"USD",
+    clinicName:"", clinicAddress:"", aboutDoctor:"", certifications:"",
   });
   const [files, setFiles] = useState({ govId: null, degree: null, medicalLicense: null });
   const [s2Errors, setS2Errors] = useState({});
@@ -666,6 +666,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       medicalCouncilName: data.medicalCouncilName || "",
       consultationMode:  data.consultationMode || "",
       consultantFees:    data.consultantFees ? String(data.consultantFees) : "",
+      feeCurrency:       data.feeCurrency || "USD",
       clinicName:        data.clinicName || "",
       clinicAddress:     data.clinicAddress || "",
       aboutDoctor:       data.aboutDoctor || "",
@@ -786,6 +787,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       medicalLicense:        s2.licenseNum.trim(),
       consultationMode:      s2.consultationMode,
       consultantFees:        s2.consultantFees ? Number(s2.consultantFees) : 0,
+      feeCurrency:           s2.feeCurrency || "USD",
       clinicName:            s2.clinicName.trim(),
       clinicAddress:         s2.clinicAddress.trim(),
       aboutDoctor:           s2.aboutDoctor.trim() || s2.certifications.trim(),
@@ -797,6 +799,8 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       accountNumber:         s4.accountNum.trim(),
       ifscCode:              s4.swift.trim(),
       paypalId:              s4.paypalId.trim(),
+      availability,
+      timezone,
     };
 
     setSubmitBusy(true);
@@ -1070,12 +1074,19 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Consultation &amp; Practice</h4>
         <div className="form-grid">
           <div className="field-group">
-            <label className="field-label">Consultation Fee (USD)</label>
+            <label className="field-label">Consultation Fee</label>
             <div style={{display:"flex",alignItems:"center",border:"1.5px solid var(--gray-200)",borderRadius:"var(--radius-sm)",overflow:"hidden",background:"var(--white)"}}>
-              <span style={{padding:"11px 12px",background:"var(--gray-100)",color:"var(--gray-600)",fontWeight:700,borderRight:"1.5px solid var(--gray-200)",fontSize:15}}>$</span>
-              <input className="field-input" style={{border:"none",borderRadius:0,boxShadow:"none"}} type="number" min="0" step="1" placeholder="e.g. 50"
+              <select
+                value={s2.feeCurrency}
+                onChange={e => setS2({...s2, feeCurrency: e.target.value})}
+                style={{padding:"11px 10px",background:"var(--gray-100)",color:"var(--gray-700)",fontWeight:700,borderRight:"1.5px solid var(--gray-200)",fontSize:13,border:"none",outline:"none",cursor:"pointer",flexShrink:0}}
+              >
+                {["USD","INR","GBP","EUR","AUD","CAD","AED","SAR","SGD","JPY"].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <input className="field-input" style={{border:"none",borderRadius:0,boxShadow:"none"}} type="number" min="0" step="1" placeholder="e.g. 500"
                 value={s2.consultantFees} onChange={e => setS2({...s2, consultantFees: e.target.value})} />
-              <span style={{padding:"11px 10px",fontSize:12,color:"var(--gray-400)",whiteSpace:"nowrap"}}>USD</span>
             </div>
           </div>
           <div className="field-group">

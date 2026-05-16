@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "./DoctorPatients.css";
 import api from "../../api";
+import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import { PrescriptionSlip, downloadPrescriptionPDF } from "../../components/PrescriptionSlip";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -187,14 +189,82 @@ function CertificateModal({ patient, appointments, onClose, onSaved }) {
   );
 }
 
+// ── Prescription letterhead preview modal ─────────────────────────────────────
+
+function RxSlipModal({ rx, patient, doctor, onClose }) {
+  const slipRef  = useRef(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleDownload = async () => {
+    if (!slipRef.current) return;
+    setBusy(true);
+    try {
+      const name = patient?.name?.replace(/\s+/g, "_") || "patient";
+      const date = rx.createdAt ? new Date(rx.createdAt).toISOString().split("T")[0] : "rx";
+      await downloadPrescriptionPDF(slipRef.current, `prescription_${name}_${date}.pdf`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="dp-modal-overlay" onClick={onClose}>
+      <div
+        className="dp-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 860, width: "95vw", padding: 0 }}
+      >
+        {/* Modal toolbar */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "14px 20px", borderBottom: "1px solid #e2e8f0",
+        }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Prescription Preview</span>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={handleDownload}
+              disabled={busy}
+              style={{
+                padding: "7px 18px", borderRadius: 8, border: "1.5px solid #1a3f7a",
+                background: "#1a3f7a", color: "#fff", fontSize: 13, fontWeight: 600,
+                cursor: busy ? "wait" : "pointer", opacity: busy ? .6 : 1,
+              }}
+            >
+              {busy ? "Generating…" : "⬇ Download PDF"}
+            </button>
+            <button
+              onClick={onClose}
+              style={{
+                padding: "7px 14px", borderRadius: 8, border: "1.5px solid #e2e8f0",
+                background: "#fff", color: "#64748b", fontSize: 13, cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable slip */}
+        <div style={{ overflow: "auto", background: "#f1f5f9", padding: 20 }}>
+          <div style={{ margin: "0 auto", display: "inline-block", boxShadow: "0 4px 24px rgba(15,23,42,.13)", border: "1px solid #d0daf0" }}>
+            <PrescriptionSlip rx={rx} patient={patient} doctor={doctor} slipRef={slipRef} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Patient Detail Panel ──────────────────────────────────────────────────────
 
 function PatientPanel({ entry, onClose }) {
   const { patient } = entry;
-  const [history, setHistory] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // "rx" | "cert"
-  const [toast, setToast] = useState("");
+  const { doctor } = useDoctorAuth();
+  const [history,    setHistory]    = useState(null);
+  const [loading,    setLoading]    = useState(true);
+  const [modal,      setModal]      = useState(null);   // "rx" | "cert"
+  const [previewRx,  setPreviewRx]  = useState(null);   // rx object to preview
+  const [toast,      setToast]      = useState("");
 
   useEffect(() => {
     api.get(`/api/medical/patients/${patient._id}/history`)
@@ -278,6 +348,13 @@ function PatientPanel({ entry, onClose }) {
                       <span className="dp-record-icon">💊</span>
                       <span className="dp-record-title">{rx.diagnosis}</span>
                       <span className="dp-record-date">{formatDate(rx.createdAt)}</span>
+                      <button
+                        className="dp-slip-btn"
+                        onClick={() => setPreviewRx(rx)}
+                        title="View & Download Prescription"
+                      >
+                        ⬇ View Slip
+                      </button>
                     </div>
                     {rx.medicines?.length > 0 && (
                       <ul className="dp-med-list">
@@ -333,6 +410,14 @@ function PatientPanel({ entry, onClose }) {
           appointments={completedAppts}
           onClose={() => setModal(null)}
           onSaved={() => handleSaved("cert")}
+        />
+      )}
+      {previewRx && (
+        <RxSlipModal
+          rx={previewRx}
+          patient={patient}
+          doctor={doctor}
+          onClose={() => setPreviewRx(null)}
         />
       )}
     </div>

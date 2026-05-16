@@ -3,6 +3,7 @@ import "./Findadoctor.css";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
+import { useCurrency } from "../hooks/useCurrency";
 
 const specialities = [
   "Adolescent Medicine",
@@ -157,6 +158,7 @@ const normalizeDoctor = (doc) => ({
 export default function DoctorFinder() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { formatPrice } = useCurrency();
   const [dynamicDoctors, setDynamicDoctors] = useState(allDoctors);
 
   // ✅ All hooks moved to top level of the component (not inside handleBook)
@@ -591,7 +593,7 @@ export default function DoctorFinder() {
                     <div className="fd-price-section">
                       <div className="fd-price-row">
                         <span className="fd-price">
-                          ₹{price.toLocaleString()}
+                          {formatPrice(price, doc.feeCurrency || "USD")}
                         </span>
                         <button
                           className="fd-heart"
@@ -610,7 +612,7 @@ export default function DoctorFinder() {
                       >
                         Book Appointment
                       </button>
-                      <button className="fd-profile-link">
+                      <button className="fd-profile-link" onClick={() => navigate(`/doctor/${doc.id}`)}>
                         View Profile →
                       </button>
                     </div>

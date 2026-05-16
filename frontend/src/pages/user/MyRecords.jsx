@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import "./MyRecords.css";
 import api from "../../api";
 import socket from "../../socket";
+import { useAuth } from "../../context/AuthContext";
+import { PrescriptionSlip, downloadPrescriptionPDF } from "../../components/PrescriptionSlip";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -11,10 +13,29 @@ function formatDate(d) {
   return parsed.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function PrescriptionCard({ rx }) {
-  const [open, setOpen] = useState(false);
+// ── Prescription Card with letterhead view ─────────────────────────────────────
+
+function PrescriptionCard({ rx, patient }) {
+  const [open,        setOpen]        = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const slipRef = useRef(null);
+
+  const handleDownload = async (e) => {
+    e.stopPropagation();
+    if (!slipRef.current) return;
+    setDownloading(true);
+    try {
+      const name = patient?.name?.replace(/\s+/g, "_") || "patient";
+      const date = rx.createdAt ? new Date(rx.createdAt).toISOString().split("T")[0] : "rx";
+      await downloadPrescriptionPDF(slipRef.current, `prescription_${name}_${date}.pdf`);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="mr-card mr-card--rx">
+      {/* ── Collapsed header ── */}
       <div className="mr-card-top" onClick={() => setOpen((p) => !p)}>
         <div className="mr-card-icon">💊</div>
         <div className="mr-card-meta">
@@ -24,65 +45,26 @@ function PrescriptionCard({ rx }) {
             {rx.appointmentId?.date && ` · Appt: ${formatDate(rx.appointmentId.date)}`}
           </p>
         </div>
+        <button
+          className="mr-download-btn"
+          onClick={handleDownload}
+          disabled={downloading}
+          title="Download PDF"
+        >
+          {downloading ? "…" : "⬇ PDF"}
+        </button>
         <span className={`mr-chevron ${open ? "mr-chevron--open" : ""}`}>›</span>
       </div>
 
-      {open && (
-        <div className="mr-card-body">
-          {rx.medicines?.length > 0 && (
-            <>
-              <h4 className="mr-section-label">Medicines</h4>
-              <div className="mr-med-table-wrap">
-                <table className="mr-med-table">
-                  <thead>
-                    <tr>
-                      <th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rx.medicines.map((m, i) => (
-                      <tr key={i}>
-                        <td><strong>{m.name}</strong></td>
-                        <td>{m.dosage || "—"}</td>
-                        <td>{m.frequency || "—"}</td>
-                        <td>{m.duration || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {rx.medicines.filter((m) => m.notes).map((m, i) => (
-                <p key={i} className="mr-note">📋 {m.name}: {m.notes}</p>
-              ))}
-            </>
-          )}
-
-          {rx.instructions && (
-            <div className="mr-info-block">
-              <span className="mr-info-label">Instructions</span>
-              <p className="mr-info-value">{rx.instructions}</p>
-            </div>
-          )}
-
-          {rx.followUpDate && (
-            <div className="mr-info-block">
-              <span className="mr-info-label">Follow-up Date</span>
-              <p className="mr-info-value">🗓 {formatDate(rx.followUpDate)}</p>
-            </div>
-          )}
-
-          <div className="mr-info-block">
-            <span className="mr-info-label">Prescribed by</span>
-            <p className="mr-info-value">
-              Dr. {rx.doctorId?.name || "—"}
-              {rx.doctorId?.email && ` · ${rx.doctorId.email}`}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Slip — always in DOM so ref is valid for PDF download */}
+      <div className={open ? "mr-slip-wrap" : "mr-slip-offscreen"}>
+        <PrescriptionSlip rx={rx} patient={patient} slipRef={slipRef} />
+      </div>
     </div>
   );
 }
+
+// ── Certificate Card (unchanged from original) ────────────────────────────────
 
 function CertificateCard({ cert }) {
   const [open, setOpen] = useState(false);
@@ -107,7 +89,6 @@ function CertificateCard({ cert }) {
               <p className="mr-info-value">{cert.recommendation}</p>
             </div>
           )}
-
           {(cert.restFromDate || cert.restToDate) && (
             <div className="mr-info-block">
               <span className="mr-info-label">Rest Period</span>
@@ -116,14 +97,12 @@ function CertificateCard({ cert }) {
               </p>
             </div>
           )}
-
           {cert.notes && (
             <div className="mr-info-block">
               <span className="mr-info-label">Notes</span>
               <p className="mr-info-value">{cert.notes}</p>
             </div>
           )}
-
           <div className="mr-info-block">
             <span className="mr-info-label">Issued by</span>
             <p className="mr-info-value">
@@ -137,8 +116,12 @@ function CertificateCard({ cert }) {
   );
 }
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function MyRecords() {
   const location = useLocation();
+  const { user } = useAuth();
+
   const [prescriptions,  setPrescriptions]  = useState([]);
   const [certificates,   setCertificates]   = useState([]);
   const [loading,        setLoading]        = useState(true);
@@ -146,7 +129,6 @@ export default function MyRecords() {
   const [activeTab,      setActiveTab]      = useState("prescriptions");
   const refreshTimerRef = useRef(null);
 
-  // Support ?tab=certificates deep-link (e.g. from dashboard)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
@@ -166,16 +148,13 @@ export default function MyRecords() {
       setPrescriptions(Array.isArray(rxRes.value.data) ? rxRes.value.data : []);
     } else {
       console.error("Prescriptions load error:", rxRes.reason);
-      if (rxRes.reason?.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-      }
+      if (rxRes.reason?.response?.status === 401) setError("Session expired. Please log in again.");
       setPrescriptions([]);
     }
 
     if (certRes.status === "fulfilled") {
       setCertificates(Array.isArray(certRes.value.data) ? certRes.value.data : []);
     } else {
-      console.error("Certificates load error:", certRes.reason);
       setCertificates([]);
     }
 
@@ -190,12 +169,8 @@ export default function MyRecords() {
     }, 250);
   }, [loadRecords]);
 
-  // Initial load
-  useEffect(() => {
-    loadRecords(true);
-  }, [loadRecords]);
+  useEffect(() => { loadRecords(true); }, [loadRecords]);
 
-  // Refresh on focus, visibility, and socket events
   useEffect(() => {
     const onFocus   = () => queueRefresh();
     const onVisible = () => { if (document.visibilityState === "visible") queueRefresh(); };
@@ -215,8 +190,8 @@ export default function MyRecords() {
   }, [queueRefresh]);
 
   const tabs = [
-    { key: "prescriptions", label: "Prescriptions",        icon: "💊", count: prescriptions.length },
-    { key: "certificates",  label: "Medical Certificates",  icon: "📄", count: certificates.length  },
+    { key: "prescriptions", label: "Prescriptions",       icon: "💊", count: prescriptions.length },
+    { key: "certificates",  label: "Medical Certificates", icon: "📄", count: certificates.length  },
   ];
 
   return (
@@ -227,7 +202,6 @@ export default function MyRecords() {
         <p className="mr-sub">Prescriptions and certificates from your consultations</p>
       </header>
 
-      {/* Summary */}
       <div className="mr-summary">
         <div className="mr-summary-card">
           <span className="mr-summary-icon">💊</span>
@@ -245,12 +219,8 @@ export default function MyRecords() {
         </div>
       </div>
 
-      {/* Error banner */}
-      {error && (
-        <div className="mr-error-banner">⚠️ {error}</div>
-      )}
+      {error && <div className="mr-error-banner">⚠️ {error}</div>}
 
-      {/* Tabs */}
       <div className="mr-tabs">
         {tabs.map((t) => (
           <button
@@ -275,7 +245,9 @@ export default function MyRecords() {
           </div>
         ) : (
           <div className="mr-list">
-            {prescriptions.map((rx) => <PrescriptionCard key={rx._id} rx={rx} />)}
+            {prescriptions.map((rx) => (
+              <PrescriptionCard key={rx._id} rx={rx} patient={user} />
+            ))}
           </div>
         )
       ) : (

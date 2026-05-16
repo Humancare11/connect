@@ -286,8 +286,9 @@ router.get("/approved", async (req, res) => {
       specialty:  e.specialization || "",
       languages:  e.languagesKnown || [],
       location:   [e.city, e.state].filter(Boolean).join(", "),
-      price:      e.consultantFees || 0,
-      experience: e.experience || 0,
+      price:       e.consultantFees || 0,
+      feeCurrency: e.feeCurrency || "USD",
+      experience:  e.experience || 0,
       gender:     e.gender || "",
       rating:     0,
       initials:   `${(e.firstName || " ")[0]}${(e.surname || " ")[0]}`.toUpperCase(),
@@ -298,6 +299,57 @@ router.get("/approved", async (req, res) => {
     return res.json(doctors);
   } catch (err) {
     console.error("approved doctors error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ── GET /api/doctor/:id ───────────────────────────────────────────────────────
+router.get("/:id", async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id)
+      .populate("doctorId", "name email")
+      .lean();
+
+    if (!enrollment || enrollment.approvalStatus !== "approved") {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    const e = enrollment;
+    return res.json({
+      id:          e._id,
+      doctorId:    e.doctorId?._id,
+      name:        `${e.firstName || ""} ${e.surname || ""}`.trim() || e.doctorId?.name || "Unknown",
+      email:       e.email || e.doctorId?.email || "",
+      specialty:   e.specialization || "",
+      subSpecialty: e.subSpecialization || "",
+      degree:      e.qualification || "",
+      experience:  e.experience || 0,
+      price:       e.consultantFees || 0,
+      feeCurrency: e.feeCurrency || "USD",
+      city:        e.city || "",
+      state:       e.state || "",
+      country:     e.country || "",
+      location:    [e.city, e.state].filter(Boolean).join(", "),
+      languages:   e.languagesKnown || [],
+      gender:      e.gender || "",
+      about:       e.aboutDoctor || "",
+      verified:    e.verified || false,
+      rating:      4.8,
+      medicalSchool:            e.medicalSchool || "",
+      registrationYear:         e.registrationYear || "",
+      clinicName:               e.clinicName || "",
+      clinicAddress:            e.clinicAddress || "",
+      consultationMode:         e.consultationMode || "",
+      medicalRegistrationNumber: e.medicalRegistrationNumber || "",
+      medicalCouncilName:       e.medicalCouncilName || "",
+      availability: e.availability || null,
+      timezone:    e.timezone || "",
+    });
+  } catch (err) {
+    console.error("getDoctorById error:", err);
+    if (err.name === "CastError") {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
     return res.status(500).json({ message: "Server error" });
   }
 });

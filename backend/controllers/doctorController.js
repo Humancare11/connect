@@ -136,6 +136,54 @@ export const getEnrollment = async (req, res) => {
   }
 };
 
+export const getDoctorById = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id)
+      .populate("doctorId", "name email")
+      .lean();
+
+    if (!enrollment || enrollment.approvalStatus !== "approved") {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    const e = enrollment;
+    const doctor = {
+      id: e._id,
+      doctorId: e.doctorId?._id,
+      name: e.firstName && e.surname ? `${e.firstName} ${e.surname}` : e.doctorId?.name || "Dr. Unknown",
+      email: e.email || e.doctorId?.email,
+      specialty: e.specialization,
+      subSpecialty: e.subSpecialization,
+      degree: e.qualification,
+      experience: e.experience,
+      price: e.consultantFees,
+      city: e.city,
+      state: e.state,
+      country: e.country,
+      location: e.city && e.state ? `${e.city}, ${e.state}` : "Location not specified",
+      languages: e.languagesKnown || [],
+      gender: e.gender,
+      about: e.aboutDoctor,
+      verified: e.verified,
+      rating: 4.8,
+      medicalSchool: e.medicalSchool,
+      clinicName: e.clinicName,
+      clinicAddress: e.clinicAddress,
+      consultationMode: e.consultationMode,
+      medicalRegistrationNumber: e.medicalRegistrationNumber,
+      medicalCouncilName: e.medicalCouncilName,
+      registrationYear: e.registrationYear,
+      phoneNumber: e.phoneNumber,
+      countryCode: e.countryCode,
+    };
+
+    res.status(200).json(doctor);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 export const getApprovedDoctors = async (req, res) => {
   try {
     const enrollments = await Enrollment.find({ approvalStatus: "approved" })

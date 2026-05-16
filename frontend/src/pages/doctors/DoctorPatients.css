@@ -202,11 +202,19 @@
 .dp-record-card--cert { background: #eff6ff; border-color: #bfdbfe; }
 
 .dp-record-header {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;
 }
 .dp-record-icon  { font-size: 16px; }
 .dp-record-title { font-size: 14px; font-weight: 600; color: #0f172a; flex: 1; }
 .dp-record-date  { font-size: 11px; color: #94a3b8; flex-shrink: 0; }
+
+/* View Slip button inside record card */
+.dp-slip-btn {
+  padding: 4px 10px; border-radius: 7px; border: 1.5px solid #1a3f7a;
+  background: #fff; color: #1a3f7a; font-size: 11px; font-weight: 600;
+  cursor: pointer; flex-shrink: 0; transition: background .15s, color .15s;
+}
+.dp-slip-btn:hover { background: #1a3f7a; color: #fff; }
 
 .dp-med-list { margin: 0 0 8px 20px; padding: 0; font-size: 13px; color: #334155; }
 .dp-med-list li { margin-bottom: 3px; }

@@ -181,10 +181,53 @@
 }
 .mr-info-value { font-size: 14px; color: #334155; margin: 0; }
 
+/* ── Download button ── */
+.mr-download-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #1a3f7a;
+  background: #fff;
+  color: #1a3f7a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .18s, color .18s;
+  margin-right: 6px;
+}
+.mr-download-btn:hover:not(:disabled) { background: #1a3f7a; color: #fff; }
+.mr-download-btn:disabled { opacity: .55; cursor: wait; }
+
+/* ── Prescription letterhead wrapper ── */
+.mr-slip-wrap {
+  overflow-x: auto;
+  padding: 20px;
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+}
+.mr-slip-wrap > div {
+  margin: 0 auto;
+  box-shadow: 0 4px 24px rgba(15,23,42,.13);
+  border: 1px solid #d0daf0;
+}
+
+/* Hidden but in DOM so PDF ref stays valid */
+.mr-slip-offscreen {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  visibility: hidden;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .mr-root { padding: 16px; }
   .mr-summary { flex-direction: column; }
   .mr-tabs { flex-direction: column; }
   .mr-card-sub { white-space: normal; }
+  .mr-slip-wrap { padding: 12px; }
 }

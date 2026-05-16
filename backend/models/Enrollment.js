@@ -15,6 +15,7 @@ const enrollmentSchema = new mongoose.Schema({
   specialization: String,
   subSpecialization: String,
   consultantFees: Number,
+  feeCurrency: { type: String, default: "USD" },
   address: String,
   country: String,
   state: String,
@@ -44,6 +45,10 @@ const enrollmentSchema = new mongoose.Schema({
 
   // Education
   medicalSchool: String,
+
+  // Availability
+  availability: { type: mongoose.Schema.Types.Mixed },
+  timezone: String,
 
   // Flags
   hasProfilePhoto: { type: Boolean, default: false },
