@@ -1,5 +1,39 @@
+:root {
+  --ink: #0A1F44;
+  --ink-2: #2A3F66;
+  --muted: #5C7099;
+  --line: rgba(11, 87, 232, .10);
+  --blue: #0B57E8;
+  --blue-2: #1E6BFF;
+  --blue-3: #7CB7FF;
+  --blue-4: #C8DFFF;
+  --blue-deep: #08308E;
+  --navy: #061333;
+  --mint: #0F9A88;
+  --good: #16A34A;
+  --glass: rgba(255, 255, 255, .62);
+  --glass-2: rgba(255, 255, 255, .38);
+  --glass-edge: rgba(255, 255, 255, .85);
+  --shadow-1: 0 18px 50px -20px rgba(11, 40, 100, .18);
+  --shadow-2: 0 30px 80px -30px rgba(11, 40, 100, .30);
+  --shadow-3: 0 50px 120px -40px rgba(11, 40, 100, .40);
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --display: "Satoshi", "Inter", system-ui, sans-serif;
+  /* --body: "Inter", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace; */
+}
 
-
+.body {
+  /* background: var(--bg); */
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  font-style: normal;
+}
 
 /* ---- Ambient backdrop ---- */
 .ambient {

@@ -1,15 +1,81 @@
 /* ── Section Wrapper ── */
 .aa-section {
-  background: #e0e5ec;
-  padding: 40px 20px;
+    position: relative;
+
+  width: calc(100% - 100px);
+
+  max-width: 1600px;
+
+  margin: 80px auto;
+
+  /* padding: 70px 50px; */
+
+  border-radius: 34px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #edf2f7 0%,
+      #e7edf5 50%,
+      #dde6f2 100%
+    );
+
+  border: 1px solid rgba(255,255,255,0.8);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    0 20px 60px rgba(15, 23, 42, 0.06);
+
+  overflow: hidden;
+}
+
+.aa-section::before {
+  content: "";
+
+  position: absolute;
+
+  width: 500px;
+  height: 500px;
+
+  top: -180px;
+  right: -120px;
+
+  background: rgba(103, 132, 180, 0.14);
+
+  border-radius: 50%;
+
+  filter: blur(90px);
+
+  pointer-events: none;
+}
+
+.aa-section::after {
+  content: "";
+
+  position: absolute;
+
+  width: 400px;
+  height: 400px;
+
+  bottom: -180px;
+  left: -120px;
+
+  background: rgba(255,255,255,0.7);
+
+  border-radius: 50%;
+
+  filter: blur(80px);
+
+  pointer-events: none;
 }
 
 /* ── Container with max-width ── */
 .aa-container {
-  max-width: 1500px;
+  width: 100%;
   margin: 0 auto;
   overflow: hidden;
   position: relative;
+  z-index: 2;
 }
 
 /* ── Header ── */

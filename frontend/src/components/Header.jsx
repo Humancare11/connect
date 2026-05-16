@@ -8,112 +8,43 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
-    /* Nav pill hover */
-    const pill = document.querySelector(".nav-pill");
-    const items = document.querySelectorAll(".nav-menu .nav-item");
+/* Nav pill hover */
 
-    items.forEach((item) => {
-      const onEnter = () => {
-        if (!pill) return;
+const pill = document.querySelector(".nav-pill");
 
-        pill.style.width = item.offsetWidth + "px";
-        pill.style.left = item.offsetLeft + "px";
-      };
+const navMenu = document.querySelector(".nav-menu");
 
-      item.addEventListener("mouseenter", onEnter);
-      item._onEnter = onEnter;
-    });
+const items = document.querySelectorAll(".nav-menu .nav-item");
 
-    const navMenu = document.querySelector(".nav-menu");
+items.forEach((item) => {
+  const onEnter = () => {
+    if (!pill || !navMenu) return;
 
-    const onNavLeave = () => {
-      if (pill) pill.style.width = "0px";
-    };
+    const navRect = navMenu.getBoundingClientRect();
 
-    navMenu?.addEventListener("mouseleave", onNavLeave);
+    const itemRect = item.getBoundingClientRect();
 
-    /* Scroll effect */
-    const handleScroll = () => {
-      const header = document.getElementById("header");
+    pill.style.width = `${itemRect.width}px`;
 
-      header?.classList.toggle("shrink", window.scrollY > 50);
+    pill.style.left = `${itemRect.left - navRect.left}px`;
 
-      // ✅ Logo hide + H show
-      setIsScrolled(window.scrollY > 50);
+    pill.style.opacity = "1";
+  };
 
-      const pct =
-        (window.scrollY /
-          (document.body.scrollHeight - window.innerHeight)) *
-        100;
+  item.addEventListener("mouseenter", onEnter);
 
-      const prog = document.getElementById("prog");
+  item._onEnter = onEnter;
+});
 
-      if (prog) prog.style.width = pct + "%";
-    };
+const onNavLeave = () => {
+  if (!pill) return;
 
-    window.addEventListener("scroll", handleScroll);
+  pill.style.width = "0px";
 
-    /* Hamburger menu */
-    const hamburger = document.getElementById("hamburger");
-    const mobileMenu = document.getElementById("mobileMenu");
+  pill.style.opacity = "0";
+};
 
-    const toggleMenu = () => {
-      if (!hamburger || !mobileMenu) return;
-
-      hamburger.classList.toggle("open");
-      mobileMenu.classList.toggle("open");
-    };
-
-    if (hamburger) hamburger.addEventListener("click", toggleMenu);
-
-    if (mobileMenu) {
-      const links = mobileMenu.querySelectorAll("a");
-
-      links.forEach((a) => {
-        const onMenuClick = () => {
-          hamburger?.classList.remove("open");
-          mobileMenu?.classList.remove("open");
-        };
-
-        a.addEventListener("click", onMenuClick);
-        a._onMenuClick = onMenuClick;
-      });
-    }
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-
-      navMenu?.removeEventListener("mouseleave", onNavLeave);
-
-      items.forEach((item) => {
-        if (item._onEnter) {
-          item.removeEventListener("mouseenter", item._onEnter);
-        }
-      });
-
-      if (hamburger) {
-        hamburger.removeEventListener("click", toggleMenu);
-      }
-
-      if (mobileMenu) {
-        mobileMenu.querySelectorAll("a").forEach((a) => {
-          if (a._onMenuClick) {
-            a.removeEventListener("click", a._onMenuClick);
-          }
-        });
-      }
-    };
-  }, []);
-
-  const navItems = [
-    { label: "Home", link: "/" },
-    { label: "Find a Doctor", link: "/find-a-doctor" },
-    { label: "Ask a Question", link: "/ask-a-question" },
-    { label: "Medical Services", link: "/medical-services" },
-    { label: "Corporates", link: "/corporates" },
-    { label: "Blogs", link: "/blogs" },
-  ];
+navMenu?.addEventListener("mouseleave", onNavLeave);
 
   // ✅ Check login
   useEffect(() => {
@@ -122,11 +53,31 @@ export default function Header() {
   }, []);
 
   const location = useLocation();
+  const navItems = [
+    ...(location.pathname !== "/"
+      ? [{ label: "Home", link: "/" }]
+      : []),
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-  }, [location.pathname]);
+    { label: "Find a Doctor", link: "/find-a-doctor" },
+    { label: "Ask a Question", link: "/ask-a-question" },
+    { label: "Medical Services", link: "/medical-services" },
+    { label: "Corporates", link: "/corporates" },
+    { label: "Blogs", link: "/blogs" },
+  ];
+
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   setIsLoggedIn(!!token);
+  // }, [location.pathname]);
+
+  // HELP SLIDER
+  const helpItems = [
+    "Lab Order",
+    "Doctor Consultation",
+    "Medical Reports",
+    "Emergency Care",
+    "Health Insurance",
+  ];
 
   return (
     <header className="glass-header" id="header">
@@ -141,6 +92,26 @@ export default function Header() {
           )}
         </Link>
 
+        <div className="help-slider">
+          <span className="help-label">GET HELP WITH</span>
+
+          <div className="help-slide-wrapper">
+            <div className="help-slide-track">
+              {helpItems.map((item, index) => (
+                <span key={index} className="help-slide-item">
+                  {item}
+                </span>
+              ))}
+
+              {/* duplicate for smooth loop */}
+              {helpItems.map((item, index) => (
+                <span key={`dup-${index}`} className="help-slide-item">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
         <nav className="nav-menu">
           <span className="nav-pill"></span>
 

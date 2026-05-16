@@ -144,7 +144,7 @@ const CIRCUMFERENCE = 2 * Math.PI * 10; // For auto-timer (radius 10)
 const STEP_CIRCUMFERENCE = 2 * Math.PI * 20; // For step dots (radius 20)
 
 export default function HomePage() {
-  // Testimonials data
+   // Testimonials data
   const testimonials = [
     {
       id: 1,
@@ -550,7 +550,7 @@ export default function HomePage() {
     return () => ctx.revert();
   }, []);
 
-  // inside your component
+ // inside your component
   const testimonialsRef = useRef(null);
   const bgRef = useRef(null);
 
@@ -574,11 +574,12 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+
   return (
     <>
-    <AmbientBackdrop />
+    {/* <AmbientBackdrop /> */}
     <div className="hero-light"></div>
-<div className="hero-grid"></div>
+     <div className="hero-grid"></div>
       {/* ════════════════════ HERO section ═════════════════════════════════════════════ */}
       <section className="hero">
         {/* hero canvas removed for production: decorative particles were disabled */}
@@ -613,7 +614,7 @@ export default function HomePage() {
                 width="12"
                 height="12"
                 fill="none"
-                stroke="currentColor"
+                stroke="#6B89B8"
                 strokeWidth="2.5"
                 viewBox="0 0 24 24"
               >
@@ -626,7 +627,7 @@ export default function HomePage() {
                 width="12"
                 height="12"
                 fill="none"
-                stroke="currentColor"
+                stroke="#6B89B8"
                 strokeWidth="2.5"
                 viewBox="0 0 24 24"
               >
@@ -639,7 +640,7 @@ export default function HomePage() {
                 width="12"
                 height="12"
                 fill="none"
-                stroke="currentColor"
+                stroke="#6B89B8"
                 strokeWidth="2.5"
                 viewBox="0 0 24 24"
               >
@@ -652,7 +653,7 @@ export default function HomePage() {
                 width="12"
                 height="12"
                 fill="none"
-                stroke="currentColor"
+                stroke="#6B89B8"
                 strokeWidth="2.5"
                 viewBox="0 0 24 24"
               >
@@ -770,6 +771,7 @@ export default function HomePage() {
       {/* ════════════════════ HERO section ═════════════════════════════════════════════ */}
 {/* ---------------------------------------------------------------- */}
  <LogoMarquee />
+ {/* -------------- SERVICE----------------------------- */}
       <Sa />
 
       {/* ══════════════════════════════════════════════
@@ -779,11 +781,11 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════
           DOCTORS
       ══════════════════════════════════════════════ */}
-      <section ref={wrapperRef} className="pcp-section-wrapper">
+      {/* <section ref={wrapperRef} className="pcp-section-wrapper">
         <div className="pcp-section">
-          <div className="pcp-container">
+          <div className="pcp-container"> */}
             {/* HEADER */}
-            <div className="pcp-header" ref={headerRef}>
+            {/* <div className="pcp-header" ref={headerRef}>
               <span className="pcp-eyebrow">— NO PCP? NO PROBLEM.</span>
               <h2 className="pcp-heading">
                 Don't have a primary care doctor?<span> We've got you.</span>
@@ -793,10 +795,10 @@ export default function HomePage() {
                 MediLink bridges that gap — giving you instant access to
                 licensed providers who can serve as your primary care team.
               </p>
-            </div>
+            </div> */}
 
             {/* LEFT — Features */}
-            <div className="pcp-left">
+            {/* <div className="pcp-left">
               <div className="pcp-features">
                 {features.map((f, i) => (
                   <div
@@ -820,10 +822,10 @@ export default function HomePage() {
                 <span></span>
                 Get a doctor today — free to start
               </button>
-            </div>
+            </div> */}
 
             {/* RIGHT — Steps */}
-            <div className="pcp-right" ref={rightRef}>
+            {/* <div className="pcp-right" ref={rightRef}>
               <h3 className="pcp-right-title">
                 Your first visit, step by step
               </h3>
@@ -845,7 +847,158 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
+
+
+      {/* ══════════════════════════════════════════════
+    HOW IT WORKS / PCP SECTION
+══════════════════════════════════════════════ */}
+<section className="pcp-section">
+  <div className="pcp-container">
+
+    {/* LEFT CONTENT */}
+    <div className="pcp-left">
+      <div className="pcp-badge">— NO PCP? NO PROBLEM.</div>
+
+      <h2 className="pcp-title">
+        Don't have a primary care doctor?
+        <span>We've got you.</span>
+      </h2>
+
+      <p className="pcp-desc">
+        Millions of Americans lack access to a regular physician.
+        MediLink bridges that gap — giving you instant access to
+        licensed providers who can serve as your primary care team.
+      </p>
+
+      <div className="pcp-features">
+
+        <div className="pcp-feature-card">
+          <div className="pcp-icon">01</div>
+          <div>
+            <h4>Acts as Your PCP</h4>
+            <p>
+              Our providers manage ongoing health, maintain your
+              records, and coordinate specialist referrals.
+            </p>
+          </div>
+        </div>
+
+        <div className="pcp-feature-card">
+          <div className="pcp-icon">02</div>
+          <div>
+            <h4>Continuity of Care</h4>
+            <p>
+              Build a relationship with the same doctor across visits.
+              Your health history stays in one secure place.
+            </p>
+          </div>
+        </div>
+
+        <div className="pcp-feature-card">
+          <div className="pcp-icon">03</div>
+          <div>
+            <h4>365 Days a Year</h4>
+            <p>
+              No more 3-week waits. Connect the same day —
+              including evenings and weekends.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {/* RIGHT SIDE */}
+    <div className="pcp-right">
+
+      <div className="pcp-image-stack">
+        <img
+          src="https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=1200&auto=format&fit=crop"
+          alt=""
+          className="pcp-img-main"
+        />
+
+        <img
+          src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop"
+          alt=""
+          className="pcp-img-small"
+        />
+      </div>
+
+      <div className="pcp-steps-card">
+
+        <div className="pcp-step-head">
+          <span className="pcp-mini">Get a doctor today — free to start</span>
+          <h3>Your first visit, step by step</h3>
+        </div>
+
+        <div className="pcp-steps">
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">1</div>
+            <div>
+              <h4>Create your free account</h4>
+              <p>Under 2 minutes. No credit card required.</p>
+            </div>
+          </div>
+
+          <div className="pcp-step-line"></div>
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">2</div>
+            <div>
+              <h4>Complete a health intake</h4>
+              <p>
+                Share your medical history and current medications.
+              </p>
+            </div>
+          </div>
+
+          <div className="pcp-step-line"></div>
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">3</div>
+            <div>
+              <h4>Match with a provider</h4>
+              <p>
+                We surface the best-fit doctor for your needs and state.
+              </p>
+            </div>
+          </div>
+
+          <div className="pcp-step-line"></div>
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">4</div>
+            <div>
+              <h4>Start your video visit</h4>
+              <p>
+                Meet face-to-face from anywhere, on any device.
+              </p>
+            </div>
+          </div>
+
+          <div className="pcp-step-line"></div>
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">5</div>
+            <div>
+              <h4>Receive care instantly</h4>
+              <p>
+                Prescription sent to your pharmacy within minutes.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
       {/* ══════════════════════════════════════════════
           WHY HUMANCARE
       ══════════════════════════════════════════════ */}
@@ -955,68 +1108,47 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════
-          TESTIMONIALS
+          TESTIMONIALS NEW
       ══════════════════════════════════════════════ */}
-      <section className="testimonials-section">
-        <div className="section-eyebrow">Patient Stories</div>
-        <h2 className="section-title">Real people, real outcomes.</h2>
-        <Swiper
-          modules={[Pagination, Autoplay]}
-          spaceBetween={20}
-          loop={true}
-          autoplay={{
-            delay: 3000,
-            disableOnInteraction: false,
-          }}
-          pagination={{
-            clickable: true,
-          }}
-          breakpoints={{
-            0: {
-              slidesPerView: 1,
-              spaceBetween: 16,
-            },
-            576: {
-              slidesPerView: 1,
-              spaceBetween: 16,
-            },
-            768: {
-              slidesPerView: 1,
-              spaceBetween: 18,
-            },
-            1024: {
-              slidesPerView: 2,
-              spaceBetween: 20,
-            },
-            1280: {
-              slidesPerView: 3,
-              spaceBetween: 20,
-            },
-            1600: {
-              slidesPerView: 3,
-              spaceBetween: 20,
-            },
-          }}
-          className="testi-track"
-        >
-          {testimonials.map((testimonial) => (
-            <SwiperSlide key={testimonial.id}>
-              <div className="testi-card">
-                <div className="testi-stars">
-                  <div className="testi-au">
-                    <div className="testi-avi">{testimonial.initials}</div>
-                    <div>
-                      <div className="testi-aname">{testimonial.name}</div>
-                      <div>{testimonial.stars}</div>
-                    </div>
-                  </div>
-                </div>
-                <p className="testi-q">"{testimonial.quote}"</p>
+      <section className="testimonials-section reveal reveal-stagger">
+        <div className="testi-header">
+          <div className="testi-eyebrow">
+            {/* <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg> */}
+            Testimonials
+          </div>
+          <h2 className="testi-title">What Our Patients Are Saying</h2>
+          <p className="testi-desc">
+            We take pride in delivering exceptional care that delivers great results.
+            But don't just take our word for it.
+          </p>
+        </div>
+
+        <div className="testi-marquee-container">
+          {/* ROW 1 — Left to Right */}
+          <div className="testi-marquee-row marquee-left">
+            {[...testimonials, ...testimonials].map((t, i) => (
+              <div className="testi-card-v2" key={`r1-${i}`}>
+                <p className="testi-quote">"{t.quote}"</p>
+                <div className="testi-author-simple">— {t.name}</div>
               </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+            ))}
+          </div>
+
+          {/* ROW 2 — Right to Left */}
+          <div className="testi-marquee-row marquee-right">
+            {[...testimonials, ...testimonials].reverse().map((t, i) => (
+              <div className="testi-card-v2" key={`r2-${i}`}>
+                <p className="testi-quote">"{t.quote}"</p>
+                <div className="testi-author-simple">— {t.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </section>
+
 
       {/* ══════════════════════════════════════════════
           CTA BAND

@@ -3,13 +3,13 @@
   --line:      #e2e2e2;
   --muted:     #888888;
   --ink-2:     #1a1a1a;
-  --display:   "Satoshi", sans-serif; /* swap for your project's display font */
+  --display:   "Satoshi", sans-serif; 
 }
 
 /* ── Logo Marquee ── */
 .logo-marquee {
-  /* margin-top: 64px; */
-  max-width: 1500px;
+  margin-top: 50px;
+  max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
   display: flex;
