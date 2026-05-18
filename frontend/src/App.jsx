@@ -190,8 +190,11 @@ function AppLayout() {
         <Route path="/test" element={<Test />} />
 
 
+<<<<<<< HEAD
 <Route path="/doctor/:id" element={<DoctorProfileForUser />} />
 
+=======
+>>>>>>> c10b505 (Resolved App.jsx merge conflict)
         {/* <Route path="/m" element={<MDemo />} /> */}
 
         <Route
