@@ -8,6 +8,23 @@ export function AdminProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    let role = "";
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        role = payload?.role || "";
+      } catch {
+        role = "";
+      }
+    }
+
+    if (!["admin", "superadmin"].includes(role)) {
+      setAdmin(null);
+      setLoading(false);
+      return;
+    }
+
     api.get("/api/auth/admin-me")
       .then(res => setAdmin(res.data.user))
       .catch(() => setAdmin(null))

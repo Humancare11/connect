@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import socket from "../socket";
 import api from "../api";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
-import "./test.css";
+// import "./test.css";
 
 const menuItems = [
   { path: "/doctor-dashboard",              label: "Dashboard",    icon: "dashboard" },

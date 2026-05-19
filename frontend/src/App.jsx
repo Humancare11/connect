@@ -150,6 +150,7 @@ function AppLayout() {
     location.pathname.startsWith("/video-call");
 
   const { user } = useAuth();
+  const { doctor } = useDoctorAuth();
 
   useEffect(() => {
     if (user?._id) {
@@ -157,6 +158,14 @@ function AppLayout() {
       socket.emit("user-online", { userId: user._id, role: user.role });
     }
   }, [user]);
+
+  useEffect(() => {
+    if (doctor?._id || doctor?.id) {
+      const doctorId = doctor._id || doctor.id;
+      if (!socket.connected) socket.connect();
+      socket.emit("user-online", { userId: doctorId, role: "doctor" });
+    }
+  }, [doctor]);
 
   return (
     <>

@@ -197,7 +197,7 @@ export default function MyRecords() {
   return (
     <div className="mr-root">
       <header className="mr-header">
-        <span className="mr-eyebrow">HumaniCare</span>
+        <span className="mr-eyebrow">Humancare Connect</span>
         <h1 className="mr-title">My Medical Records</h1>
         <p className="mr-sub">Prescriptions and certificates from your consultations</p>
       </header>

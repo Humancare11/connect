@@ -128,19 +128,39 @@ export default function VideoCall() {
   const { appointmentId } = useParams();
   const navigate = useNavigate();
 
-  const { doctor } = useDoctorAuth();
-  const { user } = useAuth();
-  const isDoctor = !!doctor;
-
-  const currentUser = useMemo(() => {
-    if (doctor) return { id: doctor._id || doctor.id || "doctor", name: doctor.name || "Doctor" };
-    return { id: user?._id || "user", name: user?.name || "Patient" };
-  }, [doctor, user]);
+  const { doctor, loading: doctorLoading } = useDoctorAuth();
+  const { user, loading: userLoading } = useAuth();
+  const doctorId = doctor?._id || doctor?.id || "";
+  const userId = user?._id || "";
 
   // ── Appointment ──────────────────────────────────────────────────
   const [appt, setAppt] = useState(null);
   const [apptLoading, setApptLoading] = useState(true);
   const [apptError, setApptError] = useState("");
+  const [activeRole, setActiveRole] = useState("");
+
+  const apptDoctorId = appt?.doctorId?._id || appt?.doctorId || "";
+  const apptPatientId = appt?.patientId?._id || appt?.patientId || "";
+
+  const isDoctor = useMemo(() => {
+    if (activeRole) return activeRole === "doctor";
+    if (doctorId && apptDoctorId && String(doctorId) === String(apptDoctorId)) return true;
+    if (userId && apptPatientId && String(userId) === String(apptPatientId)) return false;
+    return !!doctor && !user;
+  }, [activeRole, doctorId, apptDoctorId, userId, apptPatientId, doctor, user]);
+
+  const currentUser = useMemo(() => {
+    if (isDoctor) {
+      return {
+        id: doctorId || "doctor",
+        name: doctor?.name || "Doctor",
+      };
+    }
+    return {
+      id: userId || "user",
+      name: user?.name || "Patient",
+    };
+  }, [isDoctor, doctorId, doctor, userId, user]);
 
   // ── Video elements: mainVideoRef = full stage, pipVideoRef = thumbnail ─
   const mainVideoRef = useRef(null);
@@ -207,17 +227,81 @@ export default function VideoCall() {
   }, [messages]);
 
   // ── Fetch appointment ─────────────────────────────────────────────
+  // Wait for auth contexts so we know the caller's role, then hit a
+  // role-specific endpoint. The backend access check is participant-ID
+  // based (not role-based), so it always works as long as the right
+  // identity is decoded from the token.
   useEffect(() => {
+    if (doctorLoading || userLoading) return;
+    let cancelled = false;
+
     if (!appointmentId) {
       setApptError("No appointment ID found.");
       setApptLoading(false);
       return;
     }
-    api.get(`/api/appointments/${appointmentId}`)
-      .then((res) => setAppt(res.data))
-      .catch((err) => setApptError(err.response?.data?.msg || "Could not load appointment."))
-      .finally(() => setApptLoading(false));
-  }, [appointmentId]);
+
+    const doctorToken = localStorage.getItem("doctorToken");
+    const userToken = localStorage.getItem("token");
+    const userHeaders = userToken ? { Authorization: `Bearer ${userToken}` } : {};
+    const doctorHeaders = doctorToken ? { Authorization: `Bearer ${doctorToken}` } : {};
+    const errMsg = (err) =>
+      err?.response?.data?.msg ||
+      err?.response?.data?.message ||
+      "Could not load appointment.";
+
+    setApptLoading(true);
+    setApptError("");
+    setActiveRole("");
+
+    (async () => {
+      let lastError = null;
+
+      // Prefer patient ownership when user session exists.
+      if (user || userToken) {
+        try {
+          const res = await api.get(`/api/appointments/patient/${appointmentId}`, {
+            headers: userHeaders,
+          });
+          if (cancelled) return;
+          setAppt(res.data);
+          setActiveRole("user");
+          setApptLoading(false);
+          return;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+
+      // Fallback to doctor ownership.
+      if (doctor || doctorToken) {
+        try {
+          const res = await api.get(`/api/appointments/doctor/${appointmentId}`, {
+            headers: doctorHeaders,
+          });
+          if (cancelled) return;
+          setAppt(res.data);
+          setActiveRole("doctor");
+          setApptLoading(false);
+          return;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+
+      if (cancelled) return;
+      if (!user && !doctor && !userToken && !doctorToken) {
+        setApptError("Please login to access this appointment.");
+      } else {
+        setApptError(errMsg(lastError));
+      }
+      setApptLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appointmentId, doctor, user, doctorLoading, userLoading]);
 
   // ── Reliable cleanup: stop tracks + notify peers + optional API ───
   const performCleanup = useCallback((markComplete = false) => {
@@ -258,7 +342,7 @@ export default function VideoCall() {
       const leave = window.confirm("Leaving will end your consultation. Continue?");
       if (leave) {
         performCleanup(true);
-        navigate(isDoctor ? "/doctor-dashboard" : "/dashboard", { replace: true });
+        navigate(isDoctor ? "/doctor-dashboard" : "/user/dashboard", { replace: true });
       }
     };
 
@@ -298,6 +382,10 @@ export default function VideoCall() {
 
     let mounted = true;
     completedRef.current = false;
+    let resolveLocalReady = () => {};
+    const localReadyPromise = new Promise((resolve) => {
+      resolveLocalReady = resolve;
+    });
 
     const pc = new RTCPeerConnection(STUN_SERVERS);
     pcRef.current = pc;
@@ -322,8 +410,10 @@ export default function VideoCall() {
         stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
         if (mounted) { setIsReady(true); isReadyRef.current = true; }
+        resolveLocalReady(true);
       } catch (err) {
         if (mounted) setCamError(true);
+        resolveLocalReady(false);
       }
     })();
 
@@ -347,11 +437,13 @@ export default function VideoCall() {
       if (!mounted) return;
       if (s === "connected") {
         setConnectionState("connected");
+        setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
       } else if (s === "connecting") {
         setConnectionState("connecting");
       } else if (s === "disconnected" || s === "failed") {
         setConnectionState("disconnected");
+        setIsRemoteConnected(false);
       }
     };
 
@@ -361,11 +453,13 @@ export default function VideoCall() {
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
         setConnectionState("connected");
+        setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
       } else if (s === "failed") {
         setConnectionState("disconnected");
+        setIsRemoteConnected(false);
       }
     };
 
@@ -374,6 +468,10 @@ export default function VideoCall() {
       if (!offer || !mounted) return;
       try {
         setConnectionState("connecting");
+        // Ensure local tracks are attached before creating answer, so the
+        // patient reliably receives doctor audio/video.
+        await localReadyPromise;
+        if (!mounted) return;
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
@@ -419,7 +517,7 @@ export default function VideoCall() {
       if (!mounted) return;
       if (status === "completed" && !isDoctor) {
         setShowCompletedOverlay(true);
-        setTimeout(() => navigate("/dashboard", { replace: true }), 4000);
+        setTimeout(() => navigate("/user/dashboard", { replace: true }), 4000);
       }
     };
 
@@ -445,10 +543,18 @@ export default function VideoCall() {
     socket.on("room-access-denied", handleRoomDenied);
 
     if (!socket.connected) socket.connect();
+    const activeUserId = isDoctor ? doctorId : userId;
+    if (activeUserId) {
+      socket.emit("user-online", {
+        userId: activeUserId,
+        role: isDoctor ? "doctor" : "user",
+      });
+    }
     socket.emit("join-appointment-room", { appointmentId });
 
     return () => {
       mounted = false;
+      resolveLocalReady(false);
       socket.off("video-offer", handleOffer);
       socket.off("video-answer", handleAnswer);
       socket.off("ice-candidate", handleIce);
@@ -462,7 +568,7 @@ export default function VideoCall() {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       clearInterval(callTimerRef.current);
     };
-  }, [appt, appointmentId, assignStreams]);
+  }, [appt, appointmentId, assignStreams, isDoctor, doctorId, userId]);
 
   // ── Auto-start: patient sends offer when both sides ready ─────────
   useEffect(() => {
@@ -544,7 +650,7 @@ export default function VideoCall() {
 
   const endCall = useCallback(() => {
     performCleanup(false);
-    navigate(isDoctor ? "/doctor-dashboard" : "/dashboard", { replace: true });
+    navigate(isDoctor ? "/doctor-dashboard" : "/user/dashboard", { replace: true });
   }, [performCleanup, navigate, isDoctor]);
 
   const completeConsultation = useCallback(async () => {
@@ -1109,3 +1215,4 @@ export default function VideoCall() {
     </div>
   );
 }
+

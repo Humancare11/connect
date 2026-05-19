@@ -43,6 +43,8 @@
   font-family: 'Inter', sans-serif;
   color: var(--hd-text);
   min-height: 100%;
+ padding: 32px;
+
 }
 
 /* ══════════════════════════════════════════

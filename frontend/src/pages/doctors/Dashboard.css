@@ -42,7 +42,7 @@
   background: var(--navy);
   min-height: 100vh;
   color: var(--text-1);
-  padding: 30px 28px;
+  padding: 32px !important;
 }
 
 /* ════════════════════════════════════════

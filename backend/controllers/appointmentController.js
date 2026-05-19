@@ -286,17 +286,73 @@ const getAppointmentById = async (req, res) => {
       return res.status(404).json({ msg: "Appointment not found." });
     }
 
-    const isPatient = req.user.role === "user" && appointment.patientId._id.toString() === req.user.id;
-    const isDoctor = req.user.role === "doctor" && appointment.doctorId._id.toString() === req.user.id;
+    // Check by participant ID, not by role — works regardless of which
+    // cookie/token the shared verifyToken middleware happened to decode first.
+    const userId = req.user.id;
+    const patientId = appointment.patientId?._id?.toString() ?? appointment.patientId?.toString();
+    const doctorId  = appointment.doctorId?._id?.toString()  ?? appointment.doctorId?.toString();
+    const isParticipant = patientId === userId || doctorId === userId;
     const isAdmin = req.user.role === "admin" || req.user.role === "superadmin";
 
-    if (!isPatient && !isDoctor && !isAdmin) {
+    if (!isParticipant && !isAdmin) {
       return res.status(403).json({ msg: "Access denied." });
     }
 
     res.status(200).json(appointment);
   } catch (error) {
     console.error("getAppointmentById error:", error);
+    res.status(500).json({ msg: "Failed to fetch appointment." });
+  }
+};
+
+// Doctor-specific fetch — uses DB-level query so Mongoose handles ObjectId casting.
+// Only the owning doctor can access via this endpoint (verifyDoctorToken already
+// confirms the caller is a doctor; here we confirm they own this appointment).
+const getDoctorOwnAppointment = async (req, res) => {
+  try {
+    console.log("[getDoctorOwnAppointment] doctorJwtId:", req.user.id, "appointmentId:", req.params.id);
+    const owns = await Appointment.exists({ _id: req.params.id, doctorId: req.user.id });
+    console.log("[getDoctorOwnAppointment] owns:", owns);
+    if (!owns) {
+      const apptRaw = await Appointment.findById(req.params.id).select("doctorId").lean();
+      console.log("[getDoctorOwnAppointment] appointment.doctorId in DB:", apptRaw?.doctorId?.toString());
+      const exists = !!apptRaw;
+      if (!exists) return res.status(404).json({ msg: "Appointment not found." });
+      return res.status(403).json({ msg: "Access denied." });
+    }
+
+    const appointment = await Appointment.findById(req.params.id)
+      .populate("patientId", "name email mobile")
+      .populate("doctorId", "name email")
+      .lean();
+
+    res.status(200).json(appointment);
+  } catch (error) {
+    console.error("getDoctorOwnAppointment error:", error);
+    res.status(500).json({ msg: "Failed to fetch appointment." });
+  }
+};
+
+// Patient-specific fetch — DB-level ownership check to avoid mixed-role
+// session ambiguity when multiple auth cookies/tokens exist in one browser.
+const getPatientOwnAppointment = async (req, res) => {
+  try {
+    const owns = await Appointment.exists({ _id: req.params.id, patientId: req.user.id });
+    if (!owns) {
+      const apptRaw = await Appointment.findById(req.params.id).select("patientId").lean();
+      const exists = !!apptRaw;
+      if (!exists) return res.status(404).json({ msg: "Appointment not found." });
+      return res.status(403).json({ msg: "Access denied." });
+    }
+
+    const appointment = await Appointment.findById(req.params.id)
+      .populate("patientId", "name email mobile")
+      .populate("doctorId", "name email")
+      .lean();
+
+    res.status(200).json(appointment);
+  } catch (error) {
+    console.error("getPatientOwnAppointment error:", error);
     res.status(500).json({ msg: "Failed to fetch appointment." });
   }
 };
@@ -328,5 +384,7 @@ module.exports = {
   cancelAppointment,
   getAllAppointments,
   getAppointmentById,
+  getDoctorOwnAppointment,
+  getPatientOwnAppointment,
   getBookedSlots,
 };

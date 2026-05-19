@@ -445,7 +445,7 @@ export default function DoctorPatients() {
   );
 
   return (
-    <div className="dp-root">
+    <div className="dp-root-mp">
       <header className="dp-header">
         <div>
           <span className="dp-eyebrow">HumaniCare</span>

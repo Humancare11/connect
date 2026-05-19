@@ -16,8 +16,8 @@
   --urt-glass-blur-sm:      10px;
   --urt-glass-shadow:       0 8px 32px rgba(15, 23, 42, 0.10), 0 1.5px 5px rgba(15, 23, 42, 0.06);
   --urt-glass-shadow-hover: 0 18px 44px rgba(15, 23, 42, 0.14), 0 3px 10px rgba(15, 23, 42, 0.08);
-  --urt-teal:               #19c9a3;
-  --urt-teal-dark:          #12b090;
+  --urt-teal:               #08308E;
+  --urt-teal-dark:          #08308E;
   --urt-ink:                #0f172a;
   --urt-muted:              #64748b;
 }
@@ -51,8 +51,8 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 800; flex-shrink: 0;
 }
-.urt-toast--ok  { background: rgba(240,253,244,0.88); border: 1px solid rgba(134,239,172,0.70); color: #16a34a; }
-.urt-toast--ok  .urt-toast-icon { background: #22c55e; color: #fff; }
+.urt-toast--ok  { background: rgba(240,253,244,0.88); border: 1px solid #08308E; color: #08308E; }
+.urt-toast--ok  .urt-toast-icon { background: #08308E; color: #fff; }
 .urt-toast--err { background: rgba(254,242,242,0.88); border: 1px solid rgba(252,165,165,0.70); color: #dc2626; }
 .urt-toast--err .urt-toast-icon { background: #ef4444; color: #fff; }
 @keyframes urt-slide-in {
@@ -131,10 +131,10 @@
 .urt-panel-icon {
   width: 44px; height: 44px;
   border-radius: 13px;
-  background: rgba(25, 201, 163, 0.10);
+  background: #ffffff;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(25, 201, 163, 0.28);
+  border: 1px solid #08308E;
   color: var(--urt-teal);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(25,201,163,0.10);
@@ -185,13 +185,13 @@ select.urt-input { cursor: pointer; }
   color: #fff;
   font-family: inherit; font-size: 14.5px; font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(25,201,163,.32);
+  box-shadow: 0 4px 16px #08308E;
   transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
   margin-top: 4px;
 }
 .urt-submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(25,201,163,.42);
+  box-shadow: 0 8px 22px #08308E;
 }
 .urt-submit-btn:active  { transform: scale(.97); }
 .urt-submit-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
@@ -203,7 +203,7 @@ select.urt-input { cursor: pointer; }
   background: rgba(25, 201, 163, 0.06);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(25, 201, 163, 0.22);
+  border: 1px solid #08308E;
   border-radius: 14px;
 }
 .urt-tips-title { font-size: 13px; font-weight: 600; color: var(--urt-teal); margin: 0 0 8px; }

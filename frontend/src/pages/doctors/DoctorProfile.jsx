@@ -25,7 +25,11 @@ const COUNTRIES = [
 // ── Styles ──────────────────────────────────────────────────────────────────
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');
-.dp-root { max-width: 880px; margin: 0 auto; padding: 0 4px 48px; }
+.dp-root-dp {
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
 .dp-section {
   background: #fff; border-radius: 14px; border: 1px solid #e2e8f0;
   box-shadow: 0 1px 4px rgba(34,58,94,0.06); overflow: hidden; margin-bottom: 20px;
@@ -73,9 +77,58 @@ const CSS = `
 .dp-warn { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #92400e; margin-bottom: 20px; }
 .dp-success { background: #dcfce7; border: 1px solid #86efac; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #166534; margin-bottom: 20px; }
 .dp-error { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #991b1b; margin-bottom: 20px; }
-@media (max-width: 600px) {
+
+/* ── Header card classes ── */
+.dp-header-card {
+  background: linear-gradient(135deg,#223a5e 0%,#0c8b7a 100%);
+  border-radius: 16px; padding: 28px 32px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+  box-shadow: 0 4px 16px rgba(34,58,94,0.15);
+}
+.dp-header-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 700; color: #fff; font-family: 'Outfit',sans-serif;
+  border: 3px solid rgba(255,255,255,0.4); flex-shrink: 0;
+}
+.dp-header-info { flex: 1; min-width: 0; }
+.dp-header-name { margin: 0 0 6px; font-size: 24px; font-weight: 800; color: #fff; font-family: 'Outfit',sans-serif; }
+.dp-header-right {
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 10px; flex-shrink: 0;
+}
+
+/* ── Tablet (≤768px) ── */
+@media (max-width: 768px) {
+  .dp-root-dp { padding: 16px; }
+  .dp-section-head { padding: 12px 16px; }
+  .dp-section-body { padding: 16px; }
   .dp-grid { grid-template-columns: 1fr 1fr; }
+  .dp-header-card { padding: 20px; gap: 16px; }
+  .dp-header-avatar { width: 64px; height: 64px; font-size: 22px; }
+  .dp-header-name { font-size: 20px; }
+  .dp-header-right { flex-direction: row; align-items: center; width: 100%; justify-content: flex-start; }
+}
+
+/* ── Mobile (≤480px) ── */
+@media (max-width: 480px) {
+  .dp-root-dp { padding: 10px; }
+  .dp-section { border-radius: 10px; margin-bottom: 12px; }
+  .dp-section-head { padding: 10px 12px; flex-wrap: wrap; gap: 6px; }
+  .dp-section-title h3 { font-size: 13px; }
+  .dp-section-body { padding: 12px; }
+  .dp-grid { grid-template-columns: 1fr; }
   .dp-grid-2 { grid-template-columns: 1fr; }
+  .dp-header-card { padding: 16px; gap: 12px; border-radius: 12px; }
+  .dp-header-avatar { width: 52px; height: 52px; font-size: 18px; }
+  .dp-header-name { font-size: 17px !important; }
+  .dp-header-right { flex-direction: row; flex-wrap: wrap; align-items: center; width: 100%; justify-content: flex-start; gap: 8px; }
+  .dp-btn { padding: 8px 14px; font-size: 12px; }
+  .dp-edit-bar { padding-top: 16px; margin-top: 16px; }
+  .dp-fee-wrap { max-width: 100% !important; }
+  .dp-warn, .dp-success, .dp-error { font-size: 12px; padding: 10px 12px; }
+  .dp-status-bar { padding: 14px !important; border-radius: 10px !important; }
 }
 `;
 
@@ -303,7 +356,7 @@ export default function DoctorProfile() {
   return (
     <>
       <style>{CSS}</style>
-      <div className="dp-root">
+      <div className="dp-root-dp">
 
         {/* ── Global save/error messages ── */}
         {saveMsg.text && (
@@ -313,20 +366,10 @@ export default function DoctorProfile() {
         )}
 
         {/* ── Header card ── */}
-        <div style={{
-          background: "linear-gradient(135deg,#223a5e 0%,#0c8b7a 100%)",
-          borderRadius: 16, padding: "28px 32px", marginBottom: 20,
-          display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap",
-          boxShadow: "0 4px 16px rgba(34,58,94,0.15)",
-        }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 28, fontWeight: 700, color: "#fff", fontFamily: "'Outfit',sans-serif",
-            border: "3px solid rgba(255,255,255,0.4)", flexShrink: 0,
-          }}>{initials}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ margin: "0 0 6px", fontSize: 24, fontWeight: 800, color: "#fff", fontFamily: "'Outfit',sans-serif" }}>{fullName}</h1>
+        <div className="dp-header-card">
+          <div className="dp-header-avatar">{initials}</div>
+          <div className="dp-header-info">
+            <h1 className="dp-header-name">{fullName}</h1>
             {(enrollment.qualification || enrollment.specialization) && (
               <p style={{ margin: "0 0 6px", fontSize: 14, color: "rgba(255,255,255,0.85)" }}>
                 {[enrollment.qualification, enrollment.specialization].filter(Boolean).join(" · ")}
@@ -341,7 +384,7 @@ export default function DoctorProfile() {
               <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.7)" }}>📍 {locationStr}</p>
             )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
+          <div className="dp-header-right">
             <span style={{ background: statusStyle.bg, color: statusStyle.color, padding: "5px 14px", borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
               {statusStyle.label}
             </span>
@@ -552,7 +595,7 @@ export default function DoctorProfile() {
         </div>
 
         {/* ── Enrollment Status ── */}
-        <div style={{ background: statusStyle.bg, borderRadius: 14, padding: "20px 24px", border: `1.5px solid ${statusStyle.color}33` }}>
+        <div className="dp-status-bar" style={{ background: statusStyle.bg, borderRadius: 14, padding: "20px 24px", border: `1.5px solid ${statusStyle.color}33` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <span style={{ fontSize: 22 }}>
               {enrollment.approvalStatus === "approved" ? "✅" : enrollment.approvalStatus === "rejected" ? "❌" : "⏳"}

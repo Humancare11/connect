@@ -5,10 +5,14 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Auto-attach token to every request
+// Auto-attach token to every request.
+// Do NOT override an Authorization header that was explicitly set by the caller
+// (e.g. VideoCall sends doctorToken directly to avoid a stale userToken taking over).
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (!config.headers?.Authorization) {
+    const token = localStorage.getItem("token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 

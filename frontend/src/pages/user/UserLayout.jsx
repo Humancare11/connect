@@ -123,10 +123,10 @@ export default function UserLayout({ children }) {
       <aside className={`hc-ul__sidebar${sideOpen ? " hc-ul__sidebar--open" : ""}`}>
 
         <div className="hc-ul__brand">
-          <div className="hc-ul__brand-mark">
+          {/* <div className="hc-ul__brand-mark">
             <IconMedical />
-          </div>
-          <span className="hc-ul__brand-name">HumaniCare</span>
+          </div> */}
+          <span className="hc-ul__brand-name">Humancare Connect</span>
         </div>
 
         <div className="hc-ul__profile">
@@ -174,7 +174,7 @@ export default function UserLayout({ children }) {
           </button>
 
           <div className="hc-ul__topbar-left">
-            <p className="hc-ul__topbar-eyebrow">HumaniCare</p>
+            <p className="hc-ul__topbar-eyebrow">Humancare Connect</p>
             <h1 className="hc-ul__topbar-title">
               {currentPage?.icon}
               {currentPage?.label || "Dashboard"}
@@ -185,9 +185,9 @@ export default function UserLayout({ children }) {
             <Link to="/find-a-doctor" className="hc-ul__topbar-book">
               <IconPlus /> Book Appointment
             </Link>
-            <div className="hc-ul__topbar-avatar">
+            {/* <div className="hc-ul__topbar-avatar">
               {user.name?.charAt(0).toUpperCase()}
-            </div>
+            </div> */}
           </div>
         </header>
 

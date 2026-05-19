@@ -102,7 +102,7 @@ export default function Appointments() {
       {/* Header */}
       <div className="appt-header">
         <div className="appt-header-text">
-          <p className="appt-eyebrow">HumaniCare</p>
+          <p className="appt-eyebrow">Humancare connect</p>
           <h1 className="appt-title">My Appointments</h1>
           <p className="appt-subtitle">Track, manage and connect with your doctors</p>
         </div>

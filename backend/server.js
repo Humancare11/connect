@@ -201,13 +201,27 @@ io.on("connection", (socket) => {
     const existing = io.sockets.adapter.rooms.get(room);
     const currentSize = existing ? existing.size : 0;
 
-    // Determine authenticated identity from JWT middleware or user-online registration
-    const socketUserId   = socket.userId   || socketUsers.get(socket.id)?.userId;
-    const socketUserRole = socket.userRole || socketUsers.get(socket.id)?.role;
+    // Prefer runtime identity registered via user-online; fall back to JWT handshake.
+    const liveIdentity = socketUsers.get(socket.id);
+    const socketUserId = liveIdentity?.userId || socket.userId;
+    const socketUserRole = liveIdentity?.role || socket.userRole;
 
-    // If we can identify the user, verify they are a participant and limit to 2 seats
+    // Seat limit: max 2 unique users (not 2 raw sockets). This avoids false
+    // denials during reconnects / duplicate tabs from the same participant.
     if (socketUserId && socketUserRole) {
-      if (currentSize >= 2) {
+      const existingSocketIds = existing ? Array.from(existing) : [];
+      const uniqueUsersInRoom = new Set();
+
+      for (const sid of existingSocketIds) {
+        const peerSocket = io.sockets.sockets.get(sid);
+        if (!peerSocket) continue;
+        const peerLiveIdentity = socketUsers.get(sid);
+        const peerUserId = peerLiveIdentity?.userId || peerSocket.userId;
+        if (peerUserId) uniqueUsersInRoom.add(String(peerUserId));
+      }
+
+      const alreadyInRoom = uniqueUsersInRoom.has(String(socketUserId));
+      if (uniqueUsersInRoom.size >= 2 && !alreadyInRoom) {
         socket.emit("room-access-denied", { msg: "This call room is full." });
         return;
       }

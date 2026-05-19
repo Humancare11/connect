@@ -22,12 +22,26 @@ function extractToken(req, cookieName) {
 }
 
 // ── middleware factory for role-specific cookies ──────────────────────────────
+// roleMap maps cookie name → expected role value in the JWT payload.
+const roleMap = {
+  userToken:   "user",
+  doctorToken: "doctor",
+  adminToken:  null, // admin/superadmin — checked by adminOnly guard separately
+};
+
 function makeVerify(cookieName) {
+  const expectedRole = roleMap[cookieName];
   return function (req, res, next) {
     const token = extractToken(req, cookieName);
     if (!token) return res.status(401).json({ msg: "No token provided. Please login." });
     try {
-      req.user = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // Enforce the expected role so a stale user/doctor Bearer token can't
+      // slip through a role-specific middleware.
+      if (expectedRole && decoded.role !== expectedRole) {
+        return res.status(401).json({ msg: "No token provided. Please login." });
+      }
+      req.user = decoded;
       next();
     } catch {
       res.status(401).json({ msg: "Invalid or expired token. Please login again." });
@@ -36,23 +50,31 @@ function makeVerify(cookieName) {
 }
 
 // ── Generic verifyToken — tries all cookies, then header ─────────────────────
-// Use for routes accessible by any authenticated role (mixed routes)
+// Use for routes accessible by any authenticated role (mixed routes).
+// Priority: userToken → doctorToken → adminToken → Authorization header.
 const verifyToken = (req, res, next) => {
-  const token =
-    req.cookies?.userToken ||
-    req.cookies?.doctorToken ||
-    req.cookies?.adminToken ||
-    (req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.split(" ")[1]
-      : null);
+  const bearerToken = req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.split(" ")[1]
+    : null;
 
-  if (!token) return res.status(401).json({ msg: "No token provided. Please login." });
-  try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
-    next();
-  } catch {
-    res.status(401).json({ msg: "Invalid or expired token. Please login again." });
+  const candidates = [
+    req.cookies?.userToken,
+    req.cookies?.doctorToken,
+    req.cookies?.adminToken,
+    bearerToken,
+  ].filter(Boolean);
+
+  if (candidates.length === 0)
+    return res.status(401).json({ msg: "No token provided. Please login." });
+
+  for (const token of candidates) {
+    try {
+      req.user = jwt.verify(token, process.env.JWT_SECRET);
+      return next();
+    } catch { /* try next */ }
   }
+
+  res.status(401).json({ msg: "Invalid or expired token. Please login again." });
 };
 
 // ── Role-specific middleware ───────────────────────────────────────────────────
