@@ -5,6 +5,29 @@ import "./videocall.css";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
+import {
+  FiAlertTriangle,
+  FiCalendar,
+  FiCheckCircle,
+  FiClock,
+  FiMaximize,
+  FiMaximize2,
+  FiMessageSquare,
+  FiMic,
+  FiMicOff,
+  FiMinimize,
+  FiMinimize2,
+  FiMonitor,
+  FiPaperclip,
+  FiPhoneOff,
+  FiRefreshCw,
+  FiSend,
+  FiUser,
+  FiVideo,
+  FiVideoOff,
+  FiX,
+} from "react-icons/fi";
+import { FaCapsules } from "react-icons/fa";
 
 // ── In-call prescription modal (doctor only) ──────────────────────────────────
 const EMPTY_MED = { name: "", dosage: "", frequency: "", duration: "" };
@@ -109,6 +132,62 @@ const STUN_SERVERS = {
   ],
 };
 
+const MEDIA_CONSTRAINTS = {
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+    channelCount: { ideal: 2 },
+    sampleRate: { ideal: 48000 },
+    sampleSize: { ideal: 16 },
+  },
+  video: {
+    width: { ideal: 1920, max: 1920 },
+    height: { ideal: 1080, max: 1080 },
+    frameRate: { ideal: 30, max: 30 },
+    facingMode: "user",
+  },
+};
+
+const BITRATE_PROFILE = {
+  cameraVideo: 2_500_000,
+  screenShareVideo: 4_000_000,
+  voiceAudio: 128_000,
+};
+
+const setTrackHint = (track, hint) => {
+  if (!track || !("contentHint" in track)) return;
+  try {
+    track.contentHint = hint;
+  } catch (_) { }
+};
+
+const tuneSenderQuality = async (
+  sender,
+  { maxBitrate, maxFramerate, maintainResolution = false } = {}
+) => {
+  if (!sender?.track || !sender.getParameters || !sender.setParameters) return;
+  try {
+    const params = sender.getParameters();
+    if (!params) return;
+    if (!params.encodings || params.encodings.length === 0) {
+      params.encodings = [{}];
+    }
+
+    const encoding = params.encodings[0];
+    if (typeof maxBitrate === "number") encoding.maxBitrate = maxBitrate;
+    if (typeof maxFramerate === "number") encoding.maxFramerate = maxFramerate;
+    if (maintainResolution) {
+      params.degradationPreference = "maintain-resolution";
+      if (typeof encoding.scaleResolutionDownBy !== "number") {
+        encoding.scaleResolutionDownBy = 1;
+      }
+    }
+
+    await sender.setParameters(params);
+  } catch (_) { }
+};
+
 const fmtDate = (d) => {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -165,6 +244,7 @@ export default function VideoCall() {
   // ── Video elements: mainVideoRef = full stage, pipVideoRef = thumbnail ─
   const mainVideoRef = useRef(null);
   const pipVideoRef = useRef(null);
+  const pageRef = useRef(null);
 
   // ── Stream refs ───────────────────────────────────────────────────
   const localStreamRef = useRef(null);
@@ -191,6 +271,8 @@ export default function VideoCall() {
   const [isCamOff, setIsCamOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isSwapped, setIsSwapped] = useState(false);
+  const [isSelfViewMinimized, setIsSelfViewMinimized] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [camError, setCamError] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [peerLeft, setPeerLeft] = useState(false);
@@ -220,6 +302,14 @@ export default function VideoCall() {
   useEffect(() => { isReadyRef.current = isReady; }, [isReady]);
   useEffect(() => { chatOpenRef.current = chatOpen; }, [chatOpen]);
   useEffect(() => { isSwappedRef.current = isSwapped; }, [isSwapped]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -326,7 +416,7 @@ export default function VideoCall() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({}),
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }, [appointmentId, isDoctor]);
 
@@ -382,7 +472,7 @@ export default function VideoCall() {
 
     let mounted = true;
     completedRef.current = false;
-    let resolveLocalReady = () => {};
+    let resolveLocalReady = () => { };
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
@@ -397,17 +487,30 @@ export default function VideoCall() {
     // Get local media
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-        });
+        const stream = await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
 
         if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
 
         localStreamRef.current = stream;
         if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
 
-        stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+        stream.getVideoTracks().forEach((t) => setTrackHint(t, "detail"));
+        stream.getAudioTracks().forEach((t) => setTrackHint(t, "speech"));
+
+        const senderTuning = stream.getTracks().map((track) => {
+          const sender = pc.addTrack(track, stream);
+          return tuneSenderQuality(
+            sender,
+            track.kind === "video"
+              ? {
+                maxBitrate: BITRATE_PROFILE.cameraVideo,
+                maxFramerate: 30,
+                maintainResolution: true,
+              }
+              : { maxBitrate: BITRATE_PROFILE.voiceAudio }
+          );
+        });
+        await Promise.allSettled(senderTuning);
 
         if (mounted) { setIsReady(true); isReadyRef.current = true; }
         resolveLocalReady(true);
@@ -490,7 +593,7 @@ export default function VideoCall() {
 
     const handleIce = async ({ candidate }) => {
       if (!candidate || !mounted) return;
-      try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (_) {}
+      try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (_) { }
     };
 
     const handlePeerJoined = () => {
@@ -618,8 +721,16 @@ export default function VideoCall() {
       screenStreamRef.current = null;
       const camTrack = localStreamRef.current?.getVideoTracks()[0];
       if (camTrack) {
+        setTrackHint(camTrack, "detail");
         const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-        if (sender) await sender.replaceTrack(camTrack);
+        if (sender) {
+          await sender.replaceTrack(camTrack);
+          await tuneSenderQuality(sender, {
+            maxBitrate: BITRATE_PROFILE.cameraVideo,
+            maxFramerate: 30,
+            maintainResolution: true,
+          });
+        }
       }
       assignStreams(isSwappedRef.current);
       setIsScreenSharing(false);
@@ -628,8 +739,16 @@ export default function VideoCall() {
         const screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
         screenStreamRef.current = screen;
         const screenTrack = screen.getVideoTracks()[0];
+        setTrackHint(screenTrack, "detail");
         const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-        if (sender) await sender.replaceTrack(screenTrack);
+        if (sender) {
+          await sender.replaceTrack(screenTrack);
+          await tuneSenderQuality(sender, {
+            maxBitrate: BITRATE_PROFILE.screenShareVideo,
+            maxFramerate: 30,
+            maintainResolution: true,
+          });
+        }
         // Show screen in pip (local position)
         if (pipVideoRef.current) pipVideoRef.current.srcObject = screen;
         screenTrack.onended = () => toggleScreenShare();
@@ -648,28 +767,47 @@ export default function VideoCall() {
     });
   }, [assignStreams]);
 
-  const endCall = useCallback(() => {
-    performCleanup(false);
-    navigate(isDoctor ? "/doctor-dashboard" : "/user/dashboard", { replace: true });
-  }, [performCleanup, navigate, isDoctor]);
+  const toggleSelfView = useCallback(() => {
+    setIsSelfViewMinimized((prev) => !prev);
+  }, []);
 
-  const completeConsultation = useCallback(async () => {
-    if (!isDoctor || completing || completedRef.current) return;
+  const toggleFullscreen = useCallback(async () => {
+    const pageEl = pageRef.current;
+    if (!pageEl) return;
+
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await pageEl.requestFullscreen();
+      }
+    } catch (err) {
+      console.error("Fullscreen toggle failed:", err);
+    }
+  }, []);
+
+  const endCall = useCallback(async () => {
+    if (completing) return;
+
+    const confirmed = window.confirm(
+      isDoctor
+        ? "End this call and mark the consultation as completed?"
+        : "End this call now?"
+    );
+    if (!confirmed) return;
+
     setCompleting(true);
     try {
-      await api.put(`/api/appointments/${appointmentId}/complete`, {});
-      completedRef.current = true;
-      socket.emit("leave-appointment-room", { appointmentId });
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
-      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-      pcRef.current?.close();
-      clearInterval(callTimerRef.current);
-      navigate("/doctor-dashboard/patients", { replace: true });
+      if (isDoctor && appt?.status === "confirmed") {
+        await api.put(`/api/appointments/${appointmentId}/complete`, {});
+      }
+      performCleanup(false);
+      navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", { replace: true });
     } catch (err) {
       setCompleting(false);
-      alert(err.response?.data?.msg || "Failed to complete consultation.");
+      alert(err.response?.data?.msg || "Failed to complete consultation. Please try again.");
     }
-  }, [isDoctor, completing, appointmentId, navigate]);
+  }, [completing, isDoctor, appt?.status, appointmentId, performCleanup, navigate]);
 
   const handleRxSaved = useCallback(() => {
     setShowRxModal(false);
@@ -790,7 +928,7 @@ export default function VideoCall() {
   if (apptError) {
     return (
       <div className="hc-vc__gate">
-        <div className="hc-vc__gate-icon">⚠️</div>
+        <div className="hc-vc__gate-icon"><FiAlertTriangle /></div>
         <h2>Access Denied</h2>
         <p>{apptError}</p>
         <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>Go Back</button>
@@ -801,7 +939,7 @@ export default function VideoCall() {
   if (appt?.status === "pending") {
     return (
       <div className="hc-vc__gate">
-        <div className="hc-vc__gate-icon">⏳</div>
+        <div className="hc-vc__gate-icon"><FiClock /></div>
         <h2>Appointment Pending</h2>
         <p>
           {isDoctor
@@ -816,7 +954,9 @@ export default function VideoCall() {
   if (appt?.status === "completed" || appt?.status === "cancelled") {
     return (
       <div className="hc-vc__gate">
-        <div className="hc-vc__gate-icon">{appt.status === "completed" ? "✅" : "❌"}</div>
+        <div className="hc-vc__gate-icon">
+          {appt.status === "completed" ? <FiCheckCircle /> : <FiX />}
+        </div>
         <h2>Appointment {appt.status === "completed" ? "Completed" : "Cancelled"}</h2>
         <p>This appointment is no longer active.</p>
         <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>Go Back</button>
@@ -831,13 +971,50 @@ export default function VideoCall() {
 
   // ── Main call UI ──────────────────────────────────────────────────
   return (
-    <div className="hc-vc__page">
+    <div className="hc-vc__page" ref={pageRef}>
+
+      <div className="hc-vc__ctrlbar-meta">
+          <div className="hc-vc__meta-left">
+            <div className="hc-vc__logo-mark">
+              <div className="hc-vc__logo-dot" />
+              <span className="hc-vc__logo-text">Humancare Connect</span>
+            </div>
+
+            {otherParty && (
+              <div className="hc-vc__meta-party">
+                <span className="hc-vc__infobar-label">{otherParty.label}</span>
+                <span className="hc-vc__infobar-name">{otherParty.name}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="hc-vc__meta-right">
+            {inCall && (
+              <div className="hc-vc__timer">
+                <FiClock />
+                <span>{fmtDuration(callDuration)}</span>
+              </div>
+            )}
+
+            {/* <div className={`hc-vc__status-pill hc-vc__status-pill--${connectionState}`}>
+              <span className="hc-vc__status-dot" />
+              {connectionState === "idle" && "Waiting"}
+              {connectionState === "connecting" && "Connecting..."}
+              {connectionState === "connected" && "Live"}
+              {connectionState === "disconnected" && "Disconnected"}
+            </div> */}
+
+            {/* <span className="hc-vc__infobar-chip"><FiCalendar /> {fmtDate(appt.date)}</span>
+            <span className="hc-vc__infobar-chip"><FiClock /> {appt.time}</span>
+            <span className="hc-vc__infobar-chip hc-vc__infobar-chip--green"><FiCheckCircle /> Confirmed</span> */}
+          </div>
+        </div>
 
       {/* ── Consultation completed overlay (patient) ─────────────── */}
       {showCompletedOverlay && !isDoctor && (
         <div className="hc-vc__completed-overlay">
           <div className="hc-vc__completed-card">
-            <div className="hc-vc__completed-icon">✅</div>
+            <div className="hc-vc__completed-icon"><FiCheckCircle /></div>
             <h2>Consultation Completed</h2>
             <p>Your doctor has marked this session as complete.</p>
             <p className="hc-vc__completed-sub">Redirecting to your dashboard…</p>
@@ -847,9 +1024,9 @@ export default function VideoCall() {
       )}
 
       {/* ── Prescription notification banner (patient) ───────────── */}
-      {prescriptionNotif && !isDoctor && (
+      {/* {prescriptionNotif && !isDoctor && (
         <div className="hc-vc__rx-notif">
-          <span className="hc-vc__rx-notif-icon">💊</span>
+          <span className="hc-vc__rx-notif-icon"><FaCapsules /></span>
           <span className="hc-vc__rx-notif-text">
             Prescription issued: <strong>{prescriptionNotif.diagnosis}</strong>
           </span>
@@ -859,68 +1036,18 @@ export default function VideoCall() {
           >
             View
           </button>
-          <button className="hc-vc__rx-notif-close" onClick={() => setPrescriptionNotif(null)}>✕</button>
+          <button className="hc-vc__rx-notif-close" onClick={() => setPrescriptionNotif(null)}><FiX /></button>
         </div>
-      )}
+      )} */}
 
       {/* ── Rx saved toast (doctor) ──────────────────────────────── */}
-      {rxSavedToast && isDoctor && (
+      {/* {rxSavedToast && isDoctor && (
         <div className="hc-vc__rx-saved-toast">
-          ✅ Prescription issued successfully
+          <FiCheckCircle /> Prescription issued successfully
         </div>
-      )}
+      )} */}
 
-      {/* ── Topbar ───────────────────────────────────────────────── */}
-      <div className="hc-vc__topbar">
-        <div className="hc-vc__topbar-left">
-          <div className="hc-vc__logo-mark">
-            <div className="hc-vc__logo-dot" />
-            <span className="hc-vc__logo-text">HumaniCare</span>
-          </div>
-          <span className="hc-vc__topbar-divider" />
-          <span className="hc-vc__room-label">Video Consultation</span>
-        </div>
-
-        <div className="hc-vc__topbar-center">
-          {inCall && (
-            <div className="hc-vc__timer">
-              <span className="hc-vc__timer-dot" />
-              {fmtDuration(callDuration)}
-            </div>
-          )}
-        </div>
-
-        <div className="hc-vc__topbar-right">
-          <div className={`hc-vc__status-pill hc-vc__status-pill--${connectionState}`}>
-            <span className="hc-vc__status-dot" />
-            {connectionState === "idle" && "Waiting"}
-            {connectionState === "connecting" && "Connecting…"}
-            {connectionState === "connected" && "Live"}
-            {connectionState === "disconnected" && "Disconnected"}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Info bar ─────────────────────────────────────────────── */}
-      {otherParty && (
-        <div className="hc-vc__infobar">
-          <div className="hc-vc__infobar-avatar" style={{ background: `${otherParty.color}20`, color: otherParty.color }}>
-            {otherParty.initial}
-          </div>
-          <div className="hc-vc__infobar-details">
-            <span className="hc-vc__infobar-label">{otherParty.label}</span>
-            <span className="hc-vc__infobar-name">{otherParty.name}</span>
-            {otherParty.sub && <span className="hc-vc__infobar-sub">{otherParty.sub}</span>}
-          </div>
-          <div className="hc-vc__infobar-meta">
-            <span className="hc-vc__infobar-chip">📅 {fmtDate(appt.date)}</span>
-            <span className="hc-vc__infobar-chip">🕐 {appt.time}</span>
-            <span className="hc-vc__infobar-chip hc-vc__infobar-chip--green">✓ Confirmed</span>
-          </div>
-        </div>
-      )}
-
-      {/* ── Body ─────────────────────────────────────────────────── */}
+      {/* Main stage + chat */}
       <div className={`hc-vc__body ${chatOpen ? "hc-vc__body--chat" : ""}`}>
 
         {/* Stage */}
@@ -933,7 +1060,7 @@ export default function VideoCall() {
               autoPlay
               playsInline
               muted={isSwapped}
-              className="hc-vc__main-video"
+              className={`hc-vc__main-video${isSwapped ? " hc-vc__video--local" : ""}`}
             />
 
             {/* Waiting overlay — only when remote isn't connected and remote is in main */}
@@ -941,7 +1068,7 @@ export default function VideoCall() {
               <div className="hc-vc__waiting">
                 <div className="hc-vc__waiting-ring">
                   <div className="hc-vc__waiting-avatar-wrap">
-                    <span className="hc-vc__waiting-icon">{isDoctor ? "🧑‍💼" : "👨‍⚕️"}</span>
+                    <span className="hc-vc__waiting-icon"><FiUser /></span>
                   </div>
                 </div>
                 <p className="hc-vc__waiting-title">
@@ -958,44 +1085,55 @@ export default function VideoCall() {
             {/* Peer left notice */}
             {peerLeft && (
               <div className="hc-vc__peer-left-notice">
-                <span>📴</span>
+                <span><FiPhoneOff /></span>
                 <span>{isDoctor ? "Patient" : "Doctor"} has left the call.</span>
               </div>
             )}
           </div>
 
           {/* PiP — draggable local (or remote when swapped) */}
-          <div
-            ref={pipRef}
-            className={`hc-vc__pip ${isCamOff && !isSwapped ? "hc-vc__pip--cam-off" : ""}`}
-            style={pipStyle}
-            onPointerDown={handlePipPointerDown}
-            onPointerMove={handlePipPointerMove}
-            onPointerUp={handlePipPointerUp}
-          >
-            <video
-              ref={pipVideoRef}
-              autoPlay
-              playsInline
-              muted={!isSwapped}
-              className="hc-vc__pip-video"
-            />
+          {!isSelfViewMinimized && (
+            <div
+              ref={pipRef}
+              className={`hc-vc__pip ${isCamOff && !isSwapped ? "hc-vc__pip--cam-off" : ""}`}
+              style={pipStyle}
+              onPointerDown={handlePipPointerDown}
+              onPointerMove={handlePipPointerMove}
+              onPointerUp={handlePipPointerUp}
+            >
+              <video
+                ref={pipVideoRef}
+                autoPlay
+                playsInline
+                muted={!isSwapped}
+                className={`hc-vc__pip-video${!isSwapped ? " hc-vc__video--local" : ""}`}
+              />
 
-            {isCamOff && !isSwapped && (
-              <div className="hc-vc__pip-cam-off">
-                <span>📷</span>
+              {isCamOff && !isSwapped && (
+                <div className="hc-vc__pip-cam-off">
+                  <span><FiVideoOff /></span>
+                </div>
+              )}
+
+              <div className="hc-vc__pip-label">
+                {isSwapped ? otherParty?.label ?? "Remote" : `You${isDoctor ? " (Doctor)" : ""}`}
               </div>
-            )}
 
-            <div className="hc-vc__pip-label">
-              {isSwapped ? otherParty?.label ?? "Remote" : `You${isDoctor ? " (Doctor)" : ""}`}
+              <button className="hc-vc__pip-min-btn" onClick={toggleSelfView} title="Minimize self view">
+                <FiMinimize2 />
+              </button>
+
+              {/* Expand / swap button */}
+              <button className="hc-vc__pip-swap-btn" onClick={toggleSwap} title="Swap view"><FiRefreshCw /></button>
             </div>
+          )}
 
-            {/* Expand / swap button */}
-            <button className="hc-vc__pip-swap-btn" onClick={toggleSwap} title="Swap view">
-              ⇄
+          {isSelfViewMinimized && (
+            <button className="hc-vc__pip-restore-btn" onClick={toggleSelfView} title="Show self view">
+              <FiMaximize2 />
+              <span>Self View</span>
             </button>
-          </div>
+          )}
 
           {/* Peer joined toast */}
           {peerJoined && !isRemoteConnected && (
@@ -1011,16 +1149,16 @@ export default function VideoCall() {
           <div className="hc-vc__chat">
             <div className="hc-vc__chat-head">
               <div className="hc-vc__chat-head-left">
-                <span className="hc-vc__chat-icon">💬</span>
+                <span className="hc-vc__chat-icon"><FiMessageSquare /></span>
                 <span className="hc-vc__chat-title">In-call Chat</span>
               </div>
-              <button className="hc-vc__chat-close-btn" onClick={toggleChat}>✕</button>
+              <button className="hc-vc__chat-close-btn" onClick={toggleChat}><FiX /></button>
             </div>
 
             <div className="hc-vc__chat-body">
               {messages.length === 0 && (
                 <div className="hc-vc__chat-empty">
-                  <span>💬</span>
+                  <span><FiMessageSquare /></span>
                   <p>No messages yet.</p>
                   <p>Share notes or files here during the call.</p>
                 </div>
@@ -1044,8 +1182,8 @@ export default function VideoCall() {
                             <span className="hc-vc__msg-file-icon">
                               {msg.fileType?.includes("pdf") ? "📄"
                                 : msg.fileType?.includes("word") || msg.fileType?.includes("doc") ? "📝"
-                                : msg.fileType?.includes("sheet") || msg.fileType?.includes("excel") ? "📊"
-                                : "📎"}
+                                  : msg.fileType?.includes("sheet") || msg.fileType?.includes("excel") ? "📊"
+                                    : "📎"}
                             </span>
                             <span className="hc-vc__msg-file-name">{msg.fileName}</span>
                             <span className="hc-vc__msg-file-dl">↓</span>
@@ -1077,7 +1215,7 @@ export default function VideoCall() {
                 disabled={uploadingFile}
                 title="Attach file"
               >
-                {uploadingFile ? <span className="hc-vc__attach-spin" /> : "📎"}
+                {uploadingFile ? <span className="hc-vc__attach-spin" /> : <FiPaperclip />}
               </button>
               <input
                 className="hc-vc__chat-input"
@@ -1094,9 +1232,7 @@ export default function VideoCall() {
                 onClick={sendMessage}
                 disabled={!chatInput.trim()}
                 title="Send"
-              >
-                ➤
-              </button>
+              ><FiSend /></button>
             </div>
           </div>
         )}
@@ -1104,103 +1240,102 @@ export default function VideoCall() {
 
       {/* ── Controls bar ─────────────────────────────────────────── */}
       <div className="hc-vc__ctrlbar">
-        <div className="hc-vc__ctrlbar-inner">
+        
 
-          {/* Mute */}
+        <div className="hc-vc__ctrlbar-inner">
           <button
             className={`hc-vc__btn ${isMuted ? "hc-vc__btn--danger" : ""}`}
             onClick={toggleMute}
             disabled={!isReady}
             title={isMuted ? "Unmute" : "Mute microphone"}
           >
-            <span className="hc-vc__btn-icon">{isMuted ? "🔇" : "🎙️"}</span>
+            <span className="hc-vc__btn-icon">{isMuted ? <FiMicOff /> : <FiMic />}</span>
             <span className="hc-vc__btn-label">{isMuted ? "Unmute" : "Mute"}</span>
           </button>
 
-          {/* Camera */}
           <button
             className={`hc-vc__btn ${isCamOff ? "hc-vc__btn--danger" : ""}`}
             onClick={toggleCamera}
             disabled={!isReady}
             title={isCamOff ? "Turn camera on" : "Turn camera off"}
           >
-            <span className="hc-vc__btn-icon">{isCamOff ? "📷" : "📹"}</span>
+            <span className="hc-vc__btn-icon">{isCamOff ? <FiVideoOff /> : <FiVideo />}</span>
             <span className="hc-vc__btn-label">{isCamOff ? "Cam On" : "Cam Off"}</span>
           </button>
 
-          {/* Screen share */}
           <button
             className={`hc-vc__btn ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
             onClick={toggleScreenShare}
             disabled={!isReady}
             title={isScreenSharing ? "Stop sharing" : "Share screen"}
           >
-            <span className="hc-vc__btn-icon">🖥️</span>
+            <span className="hc-vc__btn-icon"><FiMonitor /></span>
             <span className="hc-vc__btn-label">{isScreenSharing ? "Stop" : "Share"}</span>
           </button>
+ {inCall && (
+            <div className="hc-vc__live-pill">
+              <span className="hc-vc__live-dot" />
+              Live
+            </div>
+          )}
+          <button
+            className={`hc-vc__btn ${isFullscreen ? "hc-vc__btn--active" : ""}`}
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit full screen" : "Full screen"}
+          >
+            <span className="hc-vc__btn-icon">{isFullscreen ? <FiMinimize /> : <FiMaximize />}</span>
+            <span className="hc-vc__btn-label">{isFullscreen ? "Exit" : "Full"}</span>
+          </button>
 
-          {/* Chat */}
+          <button
+            className={`hc-vc__btn ${isSelfViewMinimized ? "hc-vc__btn--active" : ""}`}
+            onClick={toggleSelfView}
+            title={isSelfViewMinimized ? "Show self view" : "Minimize self view"}
+          >
+            <span className="hc-vc__btn-icon">{isSelfViewMinimized ? <FiMaximize2 /> : <FiMinimize2 />}</span>
+            <span className="hc-vc__btn-label">{isSelfViewMinimized ? "Show Me" : "Hide Me"}</span>
+          </button>
+
           <button
             className={`hc-vc__btn ${chatOpen ? "hc-vc__btn--chat-on" : ""}`}
             onClick={toggleChat}
             title="Chat"
           >
-            <span className="hc-vc__btn-icon">💬</span>
+            <span className="hc-vc__btn-icon"><FiMessageSquare /></span>
             <span className="hc-vc__btn-label">Chat</span>
             {unreadCount > 0 && !chatOpen && (
               <span className="hc-vc__badge">{unreadCount > 9 ? "9+" : unreadCount}</span>
             )}
           </button>
 
-          {/* Live indicator */}
-          {inCall && (
-            <div className="hc-vc__live-pill">
-              <span className="hc-vc__live-dot" />
-              Live
-            </div>
-          )}
+         
 
-          {/* Prescription (doctor only) */}
-          {isDoctor && (
+          {/* {isDoctor && (
             <button
               className="hc-vc__btn hc-vc__btn--rx"
               onClick={() => setShowRxModal(true)}
               title="Issue prescription"
             >
-              <span className="hc-vc__btn-icon">💊</span>
+              <span className="hc-vc__btn-icon"><FaCapsules /></span>
               <span className="hc-vc__btn-label">Rx</span>
             </button>
-          )}
+          )} */}
 
-          {/* Complete (doctor only) */}
-          {isDoctor && (
-            <button
-              className="hc-vc__btn hc-vc__btn--complete"
-              onClick={completeConsultation}
-              disabled={completing}
-              title="Mark consultation as completed"
-            >
-              <span className="hc-vc__btn-icon">{completing ? "⏳" : "✅"}</span>
-              <span className="hc-vc__btn-label">{completing ? "Saving…" : "Complete"}</span>
-            </button>
-          )}
-
-          {/* End call */}
           <button
             className="hc-vc__btn hc-vc__btn--end"
             onClick={endCall}
-            title="End call"
+            disabled={completing}
+            title={isDoctor ? "End call and complete consultation" : "End call"}
           >
-            <span className="hc-vc__btn-icon">📵</span>
-            <span className="hc-vc__btn-label">End Call</span>
+            <span className="hc-vc__btn-icon">{completing ? <FiRefreshCw /> : <FiPhoneOff />}</span>
+            <span className="hc-vc__btn-label">{completing ? "Ending..." : "End Call"}</span>
           </button>
         </div>
       </div>
-
       {/* Cam error banner */}
       {camError && (
         <div className="hc-vc__error-bar">
-          ⚠️ Camera or microphone access denied — check browser permissions and reload.
+          <FiAlertTriangle /> Camera or microphone access denied. Check browser permissions and reload.
         </div>
       )}
 
@@ -1215,4 +1350,3 @@ export default function VideoCall() {
     </div>
   );
 }
-

@@ -10,7 +10,7 @@
 
 .hc-vc__page {
   position: fixed; inset: 0;
-  background: #06101a;
+  background: #000000;
   font-family: 'DM Sans', sans-serif;
   color: #e8f4ff;
   display: flex;
@@ -64,7 +64,7 @@
 .hc-vc__topbar {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 22px;
+  padding: 10px 18px;
   background: rgba(8,20,34,.9);
   border-bottom: 1px solid rgba(255,255,255,.07);
   backdrop-filter: blur(16px);
@@ -98,7 +98,7 @@
 .hc-vc__timer {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 16px; border-radius: 50px;
-  background: rgba(255,255,255,.05);
+  background: #01164a;
   border: 1px solid rgba(255,255,255,.08);
   font-family: 'Sora', sans-serif;
   font-size: 14px; font-weight: 600; color: #f0f8ff;
@@ -139,7 +139,7 @@
 .hc-vc__infobar {
   flex-shrink: 0;
   display: flex; align-items: center; gap: 12px;
-  padding: 9px 22px;
+  padding: 8px 18px;
   background: rgba(8,20,34,.85);
   border-bottom: 1px solid rgba(255,255,255,.05);
   backdrop-filter: blur(10px);
@@ -211,6 +211,12 @@
   object-fit: cover;
   display: block;
   background: #040c15;
+  image-rendering: high-quality;
+}
+
+/* Force non-mirrored orientation for local/self video */
+.hc-vc__video--local {
+  transform: scaleX(-1);
 }
 
 /* ── Waiting overlay ─────────────────────────────────────────── */
@@ -270,7 +276,9 @@
 /* ── PiP ─────────────────────────────────────────────────────── */
 .hc-vc__pip {
   position: absolute; top: 20px; right: 20px;
-  width: 200px; height: 140px;
+  width: clamp(210px, 24vw, 280px);
+  aspect-ratio: 16 / 9;
+  height: auto;
   border-radius: 14px;
   overflow: visible;
   border: 2px solid rgba(255,255,255,.1);
@@ -290,6 +298,7 @@
   width: 100%; height: 100%; object-fit: cover;
   border-radius: 12px; display: block;
   transition: opacity .2s;
+  image-rendering: high-quality;
 }
 
 /* Camera off overlay inside pip */
@@ -347,7 +356,7 @@
    CHAT PANEL
    ══════════════════════════════════════════════════════════════ */
 .hc-vc__chat {
-  width: 340px; flex-shrink: 0;
+  width: 320px; flex-shrink: 0;
   display: flex; flex-direction: column;
   background: #0a1826;
   border-left: 1px solid rgba(255,255,255,.07);
@@ -498,8 +507,8 @@
    ══════════════════════════════════════════════════════════════ */
 .hc-vc__ctrlbar {
   flex-shrink: 0;
-  padding: 18px 24px 26px;
-  background: rgba(8,20,34,.97);
+  padding: 12px 20px 16px;
+  background: rgba(0, 0, 0, 0.97);
   border-top: 1px solid rgba(255,255,255,.07);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -513,7 +522,7 @@
 .hc-vc__btn {
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   width: 72px; padding: 12px 8px; border-radius: 16px;
-  background: rgba(255,255,255,.06);
+  background: #01164a;
   border: 1px solid rgba(255,255,255,.08);
   color: #7a9ab4; cursor: pointer;
   font-family: 'Sora', sans-serif; font-size: 10px; font-weight: 600;
@@ -521,7 +530,7 @@
   position: relative; transition: all .18s cubic-bezier(.22,1,.36,1);
 }
 .hc-vc__btn:hover:not(:disabled) {
-  background: rgba(255,255,255,.11); color: #e8f4ff;
+  background: #01164a; color: #e8f4ff;
   border-color: rgba(255,255,255,.15); transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0,0,0,.3);
 }
@@ -857,7 +866,13 @@
   .hc-vc__infobar { padding: 8px 14px; }
   .hc-vc__infobar-sub { display: none; }
 
-  .hc-vc__pip { width: 110px; height: 80px; top: 12px; right: 12px; }
+  .hc-vc__pip {
+    width: clamp(118px, 36vw, 152px);
+    aspect-ratio: 16 / 9;
+    height: auto;
+    top: 12px;
+    right: 12px;
+  }
   .hc-vc__pip-swap-btn { width: 22px; height: 22px; font-size: 12px; }
 
   .hc-vc__ctrlbar { padding: 14px 10px 20px; }
@@ -873,4 +888,696 @@
   .hc-vc__error-bar { white-space: normal; text-align: center; width: calc(100% - 28px); }
   .hc-vc__join-toast { font-size: 11px; padding: 7px 14px; }
   .hc-vc__waiting-title { font-size: 15px; }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   2026 Video Call Layout Refresh
+   Dark Blue Premium UI
+============================================================ */
+
+.hc-vc__topbar,
+.hc-vc__infobar {
+  display: none;
+}
+
+.hc-vc__page {
+  min-height: 100vh;
+  background: radial-gradient(
+    circle at top,
+    #000000 0%,
+    #000000 45%,
+    #020814 100%
+  );
+  overflow: hidden;
+}
+
+.hc-vc__body {
+  padding: 14px;
+  background: transparent;
+}
+
+.hc-vc__stage {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #03101f;
+  border: 1px solid rgba(95, 150, 220, 0.18);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+/* ============================================================
+   Bottom Control Area
+============================================================ */
+
+.hc-vc__ctrlbar {
+  width: 100%;
+  padding: 14px 18px 18px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.95),
+    rgba(2, 12, 24, 0.98)
+  );
+  border-top: 1px solid rgba(91, 144, 220, 0.18);
+  backdrop-filter: blur(14px);
+}
+
+/* ============================================================
+   Bottom Meta Layout
+============================================================ */
+
+.hc-vc__ctrlbar-meta {
+  max-width: 100%;
+  /* margin: auto; */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 80px;
+  flex-wrap: wrap;
+  padding: 10px 20px 10px 20px;
+}
+
+/* ============================================================
+   Left Section
+============================================================ */
+
+.hc-vc__meta-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.hc-vc__logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 18px;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+.hc-vc__logo-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4da3ff, #006eff);
+  box-shadow: 0 0 12px rgba(77, 163, 255, 0.8);
+}
+
+.hc-vc__logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #f4f8ff;
+  font-family: "Sora", sans-serif;
+}
+
+.hc-vc__meta-party {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hc-vc__infobar-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #7ca4d6;
+}
+
+.hc-vc__infobar-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+/* ============================================================
+   Right Section
+============================================================ */
+
+.hc-vc__meta-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   Timer
+============================================================ */
+
+.hc-vc__timer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: #01164a;
+  border: 1px solid rgba(108, 167, 255, 0.2);
+  color: #dcecff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   Status Pill
+============================================================ */
+
+.hc-vc__status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.hc-vc__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.hc-vc__status-pill--idle {
+  background: rgba(120,120,120,0.12);
+  color: #cfd6e1;
+}
+
+.hc-vc__status-pill--idle .hc-vc__status-dot {
+  background: #9aa4b1;
+}
+
+.hc-vc__status-pill--connecting {
+  background: rgba(255, 193, 7, 0.12);
+  color: #ffd45d;
+}
+
+.hc-vc__status-pill--connecting .hc-vc__status-dot {
+  background: #ffc107;
+}
+
+.hc-vc__status-pill--connected {
+  background: rgba(0, 200, 120, 0.14);
+  color: #7dffbf;
+}
+
+.hc-vc__status-pill--connected .hc-vc__status-dot {
+  background: #00d084;
+}
+
+.hc-vc__status-pill--disconnected {
+  background: rgba(255, 80, 80, 0.14);
+  color: #ff8f8f;
+}
+
+.hc-vc__status-pill--disconnected .hc-vc__status-dot {
+  background: #ff4d4f;
+}
+
+/* ============================================================
+   Info Chips
+============================================================ */
+
+.hc-vc__infobar-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: rgba(16, 35, 58, 0.95);
+  border: 1px solid rgba(98, 148, 212, 0.18);
+  color: #dcecff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hc-vc__infobar-chip svg {
+  font-size: 14px;
+}
+
+.hc-vc__infobar-chip--green {
+  background: rgba(0, 185, 107, 0.14);
+  border-color: rgba(0, 185, 107, 0.24);
+  color: #8dffcb;
+}
+
+/* ============================================================
+   Responsive
+============================================================ */
+
+@media (max-width: 992px) {
+  .hc-vc__ctrlbar-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hc-vc__meta-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .hc-vc__infobar-name {
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hc-vc__ctrlbar {
+    padding: 12px;
+  }
+
+  .hc-vc__logo-text {
+    font-size: 16px;
+  }
+
+  .hc-vc__infobar-chip,
+  .hc-vc__timer,
+  .hc-vc__status-pill {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  .hc-vc__meta-left {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 540px) {
+  .hc-vc__meta-right {
+    gap: 8px;
+  }
+
+  .hc-vc__infobar-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hc-vc__status-pill,
+  .hc-vc__timer {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hc-vc__logo-mark {
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .hc-vc__meta-left {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.hc-vc__ctrlbar-inner {
+  max-width: 1240px;
+  gap: 11px;
+}
+
+.hc-vc__btn {
+  width: 82px;
+  padding: 10px 8px;
+  border-radius: 14px;
+  background: #01164a;
+  border-color: rgba(140, 182, 225, 0.14);
+  color: #a6c4e2;
+}
+
+.hc-vc__btn:hover:not(:disabled) {
+  background: #01164a;
+}
+
+.hc-vc__btn-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hc-vc__btn-label {
+  font-size: 10px;
+}
+
+.hc-vc__btn--end {
+  width: 96px;
+}
+
+.hc-vc__live-pill {
+  height: 40px;
+  border-radius: 12px;
+}
+
+.hc-vc__pip {
+  width: clamp(220px, 26vw, 340px);
+  border-color: rgba(98, 156, 219, 0.35);
+}
+
+.hc-vc__chat {
+  background: #07192d;
+  border-left-color: rgba(122, 173, 230, 0.2);
+}
+
+.hc-vc__error-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .hc-vc__ctrlbar-meta {
+    gap: 10px;
+    padding: 10px 0;
+    /* margin-bottom: 8px; */
+  }
+
+
+  .hc-vc__meta-right {
+    justify-content: flex-start;
+  }
+
+  .hc-vc__meta-party .hc-vc__infobar-name {
+    max-width: min(86vw, 520px);
+  }
+}
+
+@media (max-width: 600px) {
+  .hc-vc__ctrlbar {
+    padding: 10px 8px 12px;
+  }
+
+  .hc-vc__ctrlbar-meta {
+    margin-bottom: 7px;
+  }
+
+  .hc-vc__logo-text {
+    font-size: 14px;
+  }
+
+  .hc-vc__room-label {
+    display: none;
+  }
+
+  .hc-vc__meta-right .hc-vc__infobar-chip {
+    height: 30px;
+    font-size: 10px;
+    padding: 0 8px;
+  }
+
+  .hc-vc__status-pill,
+  .hc-vc__timer {
+    height: 30px;
+    font-size: 10px;
+  }
+
+  .hc-vc__btn {
+    width: 62px;
+    padding: 8px 5px;
+  }
+
+  .hc-vc__btn--end,
+  .hc-vc__btn--complete,
+  .hc-vc__btn--rx {
+    width: 70px;
+  }
+}
+
+/* ============================================================
+   Final Responsive Optimization + Self-View Minimize
+============================================================ */
+
+.hc-vc__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.hc-vc__stage {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.hc-vc__ctrlbar-meta {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: 8px 4px 10px;
+  gap: 12px;
+}
+
+.hc-vc__meta-left,
+.hc-vc__meta-right {
+  gap: 10px;
+}
+
+.hc-vc__pip {
+  width: clamp(190px, 24vw, 320px);
+  top: 16px;
+  right: 16px;
+}
+
+.hc-vc__pip-min-btn,
+.hc-vc__pip-swap-btn {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 12;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.hc-vc__pip-min-btn {
+  top: -10px;
+  left: -10px;
+  background: rgba(11, 29, 54, 0.95);
+  color: #cde4ff;
+}
+
+.hc-vc__pip-min-btn:hover {
+  background: #143b6b;
+}
+
+.hc-vc__pip-restore-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 12;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 173, 230, 0.35);
+  background: rgba(8, 25, 47, 0.95);
+  color: #d2e7ff;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: "Sora", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+
+.hc-vc__pip-restore-btn:hover {
+  background: #10345e;
+  border-color: rgba(124, 173, 230, 0.6);
+}
+
+@media (max-width: 1200px) {
+  .hc-vc__pip {
+    width: clamp(170px, 23vw, 280px);
+  }
+
+  .hc-vc__ctrlbar-inner {
+    gap: 9px;
+  }
+}
+
+@media (max-width: 992px) {
+  .hc-vc__body {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .hc-vc__ctrlbar-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hc-vc__meta-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .hc-vc__body {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .hc-vc__stage {
+    border-radius: 16px;
+  }
+
+  .hc-vc__pip {
+    width: clamp(128px, 34vw, 188px);
+    top: 10px;
+    right: 10px;
+  }
+
+  .hc-vc__pip-label {
+    font-size: 9px;
+  }
+
+  .hc-vc__ctrlbar {
+    padding: 10px 8px 12px;
+  }
+
+  .hc-vc__ctrlbar-meta {
+    margin-bottom: 6px;
+    padding: 6px 2px 8px;
+  }
+
+  .hc-vc__btn {
+    width: 64px;
+    padding: 8px 5px;
+  }
+
+  .hc-vc__btn--end {
+    width: 78px;
+  }
+
+  .hc-vc__btn-label {
+    font-size: 9px;
+  }
+
+  .hc-vc__chat {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    z-index: 80;
+    border-left: none;
+  }
+}
+
+@media (max-width: 540px) {
+  .hc-vc__meta-left {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .hc-vc__logo-mark {
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .hc-vc__meta-party .hc-vc__infobar-name {
+    max-width: min(90vw, 360px);
+  }
+
+  .hc-vc__meta-right {
+    gap: 6px;
+  }
+
+  .hc-vc__meta-right .hc-vc__infobar-chip,
+  .hc-vc__status-pill,
+  .hc-vc__timer {
+    height: 30px;
+    font-size: 10px;
+    padding: 0 8px;
+  }
+
+  .hc-vc__ctrlbar {
+    padding: 9px 6px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .hc-vc__ctrlbar-inner {
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .hc-vc__btn {
+    width: 58px;
+    padding: 7px 4px;
+    border-radius: 12px;
+  }
+
+  .hc-vc__btn--end {
+    width: 74px;
+  }
+
+  .hc-vc__btn-icon {
+    font-size: 17px;
+  }
+
+  .hc-vc__btn-label {
+    font-size: 8px;
+  }
+
+  .hc-vc__live-pill {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+
+  .hc-vc__pip-restore-btn {
+    top: 10px;
+    right: 10px;
+    height: 30px;
+    padding: 0 9px;
+    font-size: 10px;
+  }
 }
