@@ -21,7 +21,7 @@ const getAdminStats = async (req, res) => {
 const getAllDoctors = async (req, res) => {
   try {
     const enrollments = await Enrollment.find()
-      .populate("doctorId", "name email")
+      .populate("doctorId", "name email doctorId")
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -115,4 +115,28 @@ const getUserDetails = async (req, res) => {
   }
 };
 
-module.exports = { getAdminStats, getAllDoctors, approveDoctor, rejectDoctor, getAllUsers, deleteUser, getUserDetails };
+// POST /api/admin/migrate/doctor-ids — one-time migration to assign 5-digit IDs to existing doctors
+const migrateDoctorIds = async (req, res) => {
+  try {
+    const doctors = await Doctor.find({ doctorId: { $exists: false } });
+    let updated = 0;
+
+    for (const doctor of doctors) {
+      let id;
+      let exists = true;
+      while (exists) {
+        id = Math.floor(10000 + Math.random() * 90000);
+        exists = await Doctor.exists({ doctorId: id });
+      }
+      await Doctor.findByIdAndUpdate(doctor._id, { doctorId: id });
+      updated++;
+    }
+
+    res.status(200).json({ msg: `Migration complete. ${updated} doctor(s) assigned a new ID.` });
+  } catch (error) {
+    console.error("migrateDoctorIds error:", error);
+    res.status(500).json({ msg: "Migration failed." });
+  }
+};
+
+module.exports = { getAdminStats, getAllDoctors, approveDoctor, rejectDoctor, getAllUsers, deleteUser, getUserDetails, migrateDoctorIds };

@@ -63,6 +63,7 @@ export const loginDoctor = async (req, res) => {
       token,
       doctor: {
         id: doctor._id,
+        doctorId: doctor.doctorId,
         name: doctor.name,
         email: doctor.email,
         isEnrolled: doctor.isEnrolled,
@@ -90,7 +91,7 @@ export const submitEnrollment = async (req, res) => {
 
     // Check if enrollment already exists
     let enrollment = await Enrollment.findOne({ doctorId });
-    
+
     if (enrollment) {
       // Update existing enrollment
       enrollment = Object.assign(enrollment, enrollmentData);
@@ -187,13 +188,14 @@ export const getDoctorById = async (req, res) => {
 export const getApprovedDoctors = async (req, res) => {
   try {
     const enrollments = await Enrollment.find({ approvalStatus: "approved" })
-      .populate("doctorId", "name email")
+      .populate("doctorId", "name email doctorId")
       .lean();
 
     // Map enrollment data to doctor-friendly format
     const doctors = enrollments.map((e) => ({
       id: e._id,
-      doctorId: e.doctorId?._id,
+      doctorId: e.doctorId?.doctorId,
+      mongoId: e.doctorId?._id,
       name: e.firstName && e.surname ? `${e.firstName} ${e.surname}` : e.doctorId?.name || "Dr. Unknown",
       email: e.email || e.doctorId?.email,
       specialty: e.specialization,
@@ -201,6 +203,8 @@ export const getApprovedDoctors = async (req, res) => {
       degree: e.qualification,
       experience: e.experience,
       price: e.consultantFees,
+      country: e.country || "",
+      city: e.city || "",
       location: e.city && e.state ? `${e.city}, ${e.state}` : "Location not specified",
       languages: e.languagesKnown || [],
       gender: e.gender,

@@ -9,6 +9,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const Appointment = require("./models/Appointment");
+const Doctor = require("./models/Doctor");
 const fs = require("fs");
 
 const app = express();
@@ -49,6 +50,24 @@ const startServer = async () => {
     });
 
     console.log("Super Admin created ✅");
+  }
+
+  // Backfill 5-digit doctorId for any doctor that doesn't have one yet
+  const doctorsWithoutId = await Doctor.find({
+    $or: [{ doctorId: { $exists: false } }, { doctorId: null }],
+  });
+  for (const doc of doctorsWithoutId) {
+    let newId;
+    let taken = true;
+    while (taken) {
+      newId = Math.floor(10000 + Math.random() * 90000);
+      taken = await Doctor.exists({ doctorId: newId });
+    }
+    await Doctor.findByIdAndUpdate(doc._id, { doctorId: newId });
+    console.log(`Assigned doctorId ${newId} to doctor ${doc.email}`);
+  }
+  if (doctorsWithoutId.length > 0) {
+    console.log(`✅ Backfilled doctorId for ${doctorsWithoutId.length} doctor(s).`);
   }
 };
 

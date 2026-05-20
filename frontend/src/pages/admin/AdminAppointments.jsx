@@ -22,6 +22,11 @@ export default function AdminAppointments() {
   const [search,   setSearch]   = useState("");
   const [filter,   setFilter]   = useState("all");
   const [expandedId, setExpandedId] = useState(null);
+  const [doctors, setDoctors] = useState([]);
+  const [reassigningId, setReassigningId] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalAppt, setModalAppt] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     api.get("/api/appointments/admin/all")
@@ -29,6 +34,66 @@ export default function AdminAppointments() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    api.get("/api/doctor/approved")
+      .then((r) => setDoctors(r.data || []))
+      .catch(console.error);
+  }, []);
+
+  const changeDoctor = async (appointmentId, newDoctorId) => {
+    if (!newDoctorId) return;
+    setReassigningId(appointmentId);
+
+    try {
+      const res = await api.put(`/api/appointments/${appointmentId}/change-doctor`, {
+        doctorId: newDoctorId,
+      });
+
+      const updated = res.data.appointment;
+      const chosenDoctor = doctors.find((doc) => doc.doctorId?.toString() === newDoctorId?.toString());
+
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt._id === appointmentId
+            ? {
+                ...appt,
+                doctorId: updated?.doctorId || appt.doctorId,
+                doctorMeta: chosenDoctor
+                  ? {
+                      specialty: chosenDoctor.specialty || "—",
+                      city: chosenDoctor.city || "—",
+                      country: chosenDoctor.country || "—",
+                    }
+                  : appt.doctorMeta,
+              }
+            : appt
+        )
+      );
+
+      // close modal if open for this appointment
+      if (modalAppt && modalAppt._id === appointmentId) {
+        setModalOpen(false);
+        setModalAppt(null);
+      }
+
+      alert("Doctor reassigned successfully. The patient has been notified by email.");
+    } catch (error) {
+      console.error(error);
+      const message = error?.response?.data?.msg || "Could not change doctor.";
+      alert(message);
+    } finally {
+      setReassigningId(null);
+    }
+  };
+
+  const renderLocation = (entity) => {
+    if (!entity) return "—";
+    return [entity.city, entity.country].filter(Boolean).join(", ") || entity.location || "—";
+  };
+
+  const renderDoctorSpecialty = (appt) =>
+    appt.doctorMeta?.specialty || appt.doctorId?.specialty || "—";
 
   const counts = {
     all:       appointments.length,
@@ -53,6 +118,75 @@ export default function AdminAppointments() {
         <h1 className="adp-title">Appointments</h1>
         <p className="adp-sub">Monitor all appointments across the platform.</p>
       </div>
+      {/* Alternate Doctor modal */}
+      {modalOpen && modalAppt && (
+        <div className="adp-modal-backdrop" onClick={() => { setModalOpen(false); setModalAppt(null); }}>
+          <div className="adp-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="adp-modal-header">
+              <h3>Alternate Doctor — {modalAppt.patientId?.name || "Patient"}</h3>
+              <button className="adp-modal-close" onClick={() => { setModalOpen(false); setModalAppt(null); }}>Close</button>
+            </div>
+
+            <div className="adp-modal-body">
+              {/* Current doctor details */}
+              <div className="adp-current-doctor">
+                <h4>Current Doctor</h4>
+                {(() => {
+                  const curId = (modalAppt.doctorId?._id?.toString() || modalAppt.doctorId?.toString() || "");
+                  const cur = doctors.find(d => d.mongoId?.toString() === curId) || {};
+                  return (
+                    <div className="adp-cur-grid">
+                      <div className="adp-doctor-id-badge">Dr. {cur.doctorId || "ID"}</div>
+                      <div><strong>Name:</strong> {cur.name || modalAppt.doctorId?.name || '—'}</div>
+                      <div><strong>Specialty:</strong> {cur.specialty || modalAppt.doctorMeta?.specialty || '—'}</div>
+                      <div><strong>Country:</strong> {cur.country || modalAppt.doctorMeta?.country || '—'}</div>
+                      <div><strong>Consultation Fees:</strong> {cur.price ? `₹${cur.price}` : '—'}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Search + results */}
+              <div className="adp-search-doctor">
+                <h4>Alternate Doctor</h4>
+                <input
+                  className="adp-search-input"
+                  placeholder="Search by name or Doctor ID"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+
+                <div className="adp-search-results">
+                  {doctors.filter(d => {
+                    if (!searchQuery.trim()) return false;
+                    const q = searchQuery.toLowerCase();
+                    return (d.name || '').toLowerCase().includes(q) || (d.doctorId || '').toString() === searchQuery || (d.id || '').toString() === searchQuery;
+                  }).map((doc) => (
+                    <div key={doc.doctorId || doc.id} className="adp-doctor-row">
+                      <div style={{ flex: 1 }}>
+                        <div className="adp-doctor-id-inline">Dr. {doc.doctorId || "ID"}</div>
+                        <div style={{ fontWeight: 700 }}>{doc.name}</div>
+                        <div style={{ fontSize: 13, color: '#64748b' }}>{doc.specialty || '—'}</div>
+                        <div style={{ fontSize: 13, color: '#64748b' }}>Location: {doc.country || doc.city || '—'}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexDirection: 'column' }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{doc.price ? `₹${doc.price}` : '—'}</div>
+                        <button
+                          className="adp-assign-btn"
+                          disabled={reassigningId === modalAppt._id}
+                          onClick={() => changeDoctor(modalAppt._id, doc.doctorId)}
+                        >
+                          {reassigningId === modalAppt._id ? 'Assigning…' : 'Assign'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="adp-stats">
         {[
@@ -98,37 +232,72 @@ export default function AdminAppointments() {
             <table className="adp-table">
               <thead>
                 <tr>
+                  <th>Appointment ID</th>
                   <th>Patient</th>
                   <th>Doctor</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Problem</th>
+                  <th>Date & Time</th>
+                  <th>Alternate Doctor</th>
                   <th>Status</th>
-                  <th></th>
+                  <th>View</th>
                 </tr>
               </thead>
               <tbody>
                 {displayed.map(a => {
                   const sc = STATUS_COLORS[a.status] || STATUS_COLORS.pending;
                   const isOpen = expandedId === a._id;
+                  const currentDoctorId = a.doctorId?._id?.toString() || a.doctorId?.toString() || "";
+                  const doctorOptions = doctors.slice();
+                  const currentDoctorPresent = doctorOptions.some((doc) => doc.mongoId?.toString() === currentDoctorId);
+                  if (!currentDoctorPresent && a.doctorId) {
+                    doctorOptions.unshift({
+                      doctorId: null,
+                      mongoId: a.doctorId._id?.toString() || a.doctorId?.toString() || "",
+                      name: a.doctorId.name || "Current doctor",
+                      email: a.doctorId.email || "",
+                      specialty: a.doctorMeta?.specialty || "—",
+                      city: a.doctorMeta?.city || "—",
+                      country: a.doctorMeta?.country || "—",
+                    });
+                  }
+
                   return (
                     <>
                       <tr key={a._id} className={`adp-row ${isOpen ? "adp-row--open" : ""}`}>
+                        <td style={{ fontSize: 12, color: "#475569" }}>{a._id}</td>
                         <td>
                           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
                             <div className="adp-avatar" style={{ background: "#ede9fe", color: "#7c3aed" }}>{(a.patientId?.name || "P")[0].toUpperCase()}</div>
-                            <span style={{ fontWeight: 600, color: "#0f172a" }}>{a.patientId?.name || "Unknown"}</span>
+                            <div>
+                              <div style={{ fontWeight: 600, color: "#0f172a" }}>{a.patientId?.name || "Unknown"}</div>
+                              <div style={{ fontSize: 12, color: "#64748b" }}>{renderLocation(a.patientId)}</div>
+                            </div>
                           </div>
                         </td>
                         <td>
                           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
                             <div className="adp-avatar" style={{ background: "#ecfdf5", color: "#059669" }}>{(a.doctorId?.name || "D")[0].toUpperCase()}</div>
-                            <span>{a.doctorId?.name || "Unassigned"}</span>
+                            <div>
+                              <div>{a.doctorId?.name || "Unassigned"}</div>
+                              <div style={{ fontSize: 12, color: "#64748b" }}>{renderDoctorSpecialty(a)}</div>
+                            </div>
                           </div>
                         </td>
-                        <td style={{ whiteSpace: "nowrap" }}>{a.date}</td>
-                        <td style={{ whiteSpace: "nowrap" }}>{a.time}</td>
-                        <td className="adp-problem">{a.problem || "—"}</td>
+                        <td style={{ whiteSpace: "nowrap" }}>
+                          <div style={{ fontWeight: 600 }}>{a.date}</div>
+                          <div style={{ fontSize: 13, color: '#64748b' }}>{a.time || '—'}</div>
+                        </td>
+                        <td>
+                          <button
+                            className="adp-alt-btn"
+                            onClick={() => {
+                              setModalAppt(a);
+                              setSearchQuery("");
+                              setModalOpen(true);
+                            }}
+                          >
+                            Alternate Doctor
+                          </button>
+                        </td>
                         <td>
                           <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, textTransform: "capitalize" }}>
                             {a.status}
@@ -136,33 +305,62 @@ export default function AdminAppointments() {
                         </td>
                         <td>
                           <button
-                            className={`adp-expand-btn ${isOpen ? "adp-expand-btn--open" : ""}`}
+                            className="adp-view-btn"
                             onClick={() => setExpandedId(isOpen ? null : a._id)}
-                            title="View details"
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <polyline points="6 9 12 15 18 9" />
-                            </svg>
+                            View
                           </button>
                         </td>
                       </tr>
 
                       {isOpen && (
                         <tr key={`${a._id}-exp`} className="adp-expand-row">
-                          <td colSpan={7}>
+                          <td colSpan={8}>
                             <div className="adp-expand">
                               <div className="adp-expand-grid">
                                 <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Patient email</span>
-                                  <span className="adp-exp-value">{a.patientId?.email || "—"}</span>
+                                  <span className="adp-exp-label">Appointment ID</span>
+                                  <span className="adp-exp-value">{a._id}</span>
                                 </div>
                                 <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Doctor email</span>
-                                  <span className="adp-exp-value">{a.doctorId?.email || "—"}</span>
+                                  <span className="adp-exp-label">Patient</span>
+                                  <span className="adp-exp-value">{a.patientId?.name || "—"}</span>
                                 </div>
-                                <div className="adp-exp-item adp-exp-item--full">
-                                  <span className="adp-exp-label">Problem</span>
-                                  <span className="adp-exp-value">{a.problem || "—"}</span>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Gender</span>
+                                  <span className="adp-exp-value">{a.patientId?.gender || "—"}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Patient city & country</span>
+                                  <span className="adp-exp-value">{renderLocation(a.patientId)}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Doctor</span>
+                                  <span className="adp-exp-value">{a.doctorId?.name || "—"}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Specialty</span>
+                                  <span className="adp-exp-value">{renderDoctorSpecialty(a)}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Doctor city & country</span>
+                                  <span className="adp-exp-value">{renderLocation(a.doctorMeta)}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Appointment Date</span>
+                                  <span className="adp-exp-value">{a.date}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Appointment Time</span>
+                                  <span className="adp-exp-value">{a.time || "—"}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Alternate Doctor</span>
+                                  <span className="adp-exp-value">{doctors.find((doc) => doc.mongoId?.toString() === currentDoctorId)?.name || a.doctorId?.name || "—"}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Status</span>
+                                  <span className="adp-exp-value">{a.status}</span>
                                 </div>
                               </div>
 

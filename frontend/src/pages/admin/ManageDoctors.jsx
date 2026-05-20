@@ -82,7 +82,14 @@ function DoctorModal({ doctor, onClose, onAction }) {
               fontSize: 22, fontWeight: 700, color: "#fff", border: "2.5px solid rgba(255,255,255,0.4)", flexShrink: 0,
             }}>{initials}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", fontFamily: "'Outfit',sans-serif", marginBottom: 4 }}>{fullName}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", fontFamily: "'Outfit',sans-serif" }}>{fullName}</div>
+                {d.doctorId?.doctorId && (
+                  <span style={{ background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.35)", letterSpacing: 1 }}>
+                    ID: {d.doctorId.doctorId}
+                  </span>
+                )}
+              </div>
               {(d.qualification || d.specialization) && (
                 <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginBottom: 4 }}>
                   {[d.qualification, d.specialization].filter(Boolean).join(" · ")}
@@ -105,6 +112,7 @@ function DoctorModal({ doctor, onClose, onAction }) {
 
           {/* Personal */}
           <DmSection icon="👤" title="Personal Details">
+            <DmRow label="Doctor ID"     value={d.doctorId?.doctorId?.toString()} />
             <DmRow label="First Name"    value={d.firstName} />
             <DmRow label="Surname"       value={d.surname} />
             <DmRow label="Email"         value={d.email || d.doctorId?.email} />
@@ -255,9 +263,11 @@ export default function ManageDoctors() {
   };
 
   const displayed = enrollments.filter(e => {
-    const name  = `${e.firstName || ""} ${e.surname || ""}`.trim() || e.doctorId?.name || "";
-    const email = e.email || e.doctorId?.email || "";
-    const matchSearch = !search.trim() || name.toLowerCase().includes(search.toLowerCase()) || email.toLowerCase().includes(search.toLowerCase());
+    const name     = `${e.firstName || ""} ${e.surname || ""}`.trim() || e.doctorId?.name || "";
+    const email    = e.email || e.doctorId?.email || "";
+    const numericId = (e.doctorId?.doctorId || "").toString();
+    const q = search.trim().toLowerCase();
+    const matchSearch = !q || name.toLowerCase().includes(q) || email.toLowerCase().includes(q) || numericId === q;
     const matchFilter = filter === "all" || e.approvalStatus === filter;
     return matchSearch && matchFilter;
   });
@@ -303,7 +313,7 @@ export default function ManageDoctors() {
           </div>
           <div className="adp-search">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input placeholder="Search by name or email…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input placeholder="Search by name, email or Doctor ID…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
 
@@ -320,6 +330,7 @@ export default function ManageDoctors() {
             <table className="adp-table">
               <thead>
                 <tr>
+                  <th>Doctor ID</th>
                   <th>Doctor</th>
                   <th>Specialization</th>
                   <th>Experience</th>
@@ -333,6 +344,11 @@ export default function ManageDoctors() {
                   const email = e.email || e.doctorId?.email || "—";
                   return (
                     <tr key={e._id}>
+                      <td>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: "#223a5e", background: "#eff6ff", padding: "3px 10px", borderRadius: 8, letterSpacing: 1, border: "1px solid #bfdbfe" }}>
+                          {e.doctorId?.doctorId || "—"}
+                        </span>
+                      </td>
                       <td>
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                           <div className="adp-avatar">{name[0]?.toUpperCase() || "D"}</div>

@@ -1,8 +1,10 @@
 const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
+const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { paypalFetch } = require("../utils/paypal");
+const { sendEmail } = require("../utils/sendEmail");
 
 const createAppointment = async (req, res) => {
   try {
@@ -39,9 +41,9 @@ const createAppointment = async (req, res) => {
       if (pi.status !== "succeeded") {
         return res.status(402).json({ msg: "Stripe payment not completed. Please complete payment first." });
       }
-      paymentRef          = paymentIntentId;
-      paymentGateway      = "stripe";
-      paymentAmountFinal  = pi.amount;
+      paymentRef = paymentIntentId;
+      paymentGateway = "stripe";
+      paymentAmountFinal = pi.amount;
     } else {
       let order;
       try { order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`); }
@@ -49,10 +51,10 @@ const createAppointment = async (req, res) => {
       if (order.status !== "COMPLETED") {
         return res.status(402).json({ msg: "PayPal payment not completed." });
       }
-      const captureData   = order.purchase_units[0].payments.captures[0];
-      paymentRef          = paypalOrderId;
-      paymentGateway      = "paypal";
-      paymentAmountFinal  = Math.round(parseFloat(captureData.amount.value) * 100);
+      const captureData = order.purchase_units[0].payments.captures[0];
+      paymentRef = paypalOrderId;
+      paymentGateway = "paypal";
+      paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
     }
 
     const doctor = await Doctor.findById(doctorId);
@@ -77,11 +79,11 @@ const createAppointment = async (req, res) => {
       date,
       time,
       problem,
-      medicalReports:  Array.isArray(medicalReports) ? medicalReports : [],
+      medicalReports: Array.isArray(medicalReports) ? medicalReports : [],
       paymentIntentId: paymentRef,
-      paymentAmount:   paymentAmountFinal,
-      paymentStatus:   "paid",
-      paymentGateway:  paymentGateway,
+      paymentAmount: paymentAmountFinal,
+      paymentStatus: "paid",
+      paymentGateway: paymentGateway,
     });
 
     const io = req.app.get("io");
@@ -260,15 +262,120 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
+const reassignAppointmentDoctor = async (req, res) => {
+  try {
+    const { doctorId } = req.body;
+    if (!doctorId) {
+      return res.status(400).json({ msg: "A new doctorId is required." });
+    }
+
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ msg: "Appointment not found." });
+    }
+
+    // Find the new doctor by numeric doctorId
+    const newDoctor = await Doctor.findOne({ doctorId });
+    if (!newDoctor) {
+      return res.status(404).json({ msg: "Alternate doctor not found." });
+    }
+
+    if (appointment.doctorId.toString() === newDoctor._id.toString()) {
+      return res.status(200).json({ msg: "Appointment already assigned to this doctor.", appointment });
+    }
+
+    const conflict = await Appointment.findOne({
+      _id: { $ne: appointment._id },
+      doctorId: newDoctor._id,
+      date: appointment.date,
+      time: appointment.time,
+      status: { $in: ["pending", "confirmed"] },
+    });
+    if (conflict) {
+      return res.status(409).json({ msg: "The selected doctor is already booked for this slot." });
+    }
+
+    appointment.doctorId = newDoctor._id;
+    await appointment.save();
+
+    const patient = await User.findById(appointment.patientId).select("name email");
+    if (patient?.email) {
+      await sendEmail({
+        to: patient.email,
+        subject: "Doctor reassigned for your appointment",
+        text: "Your doctor has been changed due to the doctor's unavailability. Your appointment time will remain the same, but we are assigning a different doctor.",
+        html: `<p>Hello ${patient.name || "Patient"},</p><p>Your doctor has been changed due to the doctor's unavailability. Your appointment time will remain the same, but we are assigning a different doctor.</p><p>Thank you,<br/>Humancare Connect</p>`,
+      });
+    }
+
+    const populatedAppointment = await Appointment.findById(appointment._id)
+      .populate("patientId", "name email gender city country")
+      .populate("doctorId", "name email doctorId")
+      .lean();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`patient_${appointment.patientId}`).emit("appointment-updated", {
+        appointmentId: appointment._id,
+        status: appointment.status,
+        doctorId: appointment.doctorId,
+      });
+      io.to("admin_room").emit("appointment-updated", {
+        appointmentId: appointment._id,
+        status: appointment.status,
+        doctorId: appointment.doctorId,
+      });
+      io.to(`doctor_${newDoctor._id}`).emit("new-appointment", {
+        appointmentId: appointment._id,
+        patientId: appointment.patientId,
+        status: appointment.status,
+        date: appointment.date,
+        time: appointment.time,
+      });
+    }
+
+    res.status(200).json({ msg: "Doctor reassigned successfully.", appointment: populatedAppointment });
+  } catch (error) {
+    console.error("reassignAppointmentDoctor error:", error);
+    res.status(500).json({ msg: "Failed to reassign doctor." });
+  }
+};
+
 const getAllAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find()
-      .populate("patientId", "name email")
-      .populate("doctorId", "name email")
+      .populate("patientId", "name email gender city country")
+      .populate("doctorId", "name email doctorId")
       .sort({ createdAt: -1 })
       .lean();
 
-    res.status(200).json(appointments);
+    const doctorIds = appointments
+      .map((appt) => appt.doctorId?._id?.toString() || appt.doctorId?.toString())
+      .filter(Boolean);
+
+    const enrollments = await Enrollment.find({ doctorId: { $in: doctorIds } }).lean();
+    const enrollmentByDoctor = new Map(
+      enrollments.map((e) => [e.doctorId.toString(), e])
+    );
+
+    const enhancedAppointments = appointments.map((appt) => {
+      const doctorId = appt.doctorId?._id?.toString() || appt.doctorId?.toString();
+      const enrollment = doctorId ? enrollmentByDoctor.get(doctorId) : null;
+      return {
+        ...appt,
+        doctorMeta: {
+          specialty: enrollment?.specialization || "—",
+          city: enrollment?.city || "—",
+          country: enrollment?.country || "—",
+          experience: enrollment?.experience || "—",
+          price: enrollment?.consultantFees || null,
+          languages: enrollment?.languagesKnown || [],
+          address: enrollment?.clinicAddress || enrollment?.address || "—",
+        },
+      };
+    });
+
+    res.status(200).json(enhancedAppointments);
   } catch (error) {
     console.error("getAllAppointments error:", error);
     res.status(500).json({ msg: "Failed to fetch appointments." });
@@ -290,7 +397,7 @@ const getAppointmentById = async (req, res) => {
     // cookie/token the shared verifyToken middleware happened to decode first.
     const userId = req.user.id;
     const patientId = appointment.patientId?._id?.toString() ?? appointment.patientId?.toString();
-    const doctorId  = appointment.doctorId?._id?.toString()  ?? appointment.doctorId?.toString();
+    const doctorId = appointment.doctorId?._id?.toString() ?? appointment.doctorId?.toString();
     const isParticipant = patientId === userId || doctorId === userId;
     const isAdmin = req.user.role === "admin" || req.user.role === "superadmin";
 
@@ -382,6 +489,7 @@ module.exports = {
   confirmAppointment,
   completeAppointment,
   cancelAppointment,
+  reassignAppointmentDoctor,
   getAllAppointments,
   getAppointmentById,
   getDoctorOwnAppointment,

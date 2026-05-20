@@ -116,9 +116,9 @@ const buildEmailHTML = (otp, type) => `
 
       <p>
         ${type === "register"
-          ? "Thanks for registering with Humancare Connect! Use the OTP below to verify your email and complete your account setup."
-          : "We received a request to reset your Humancare Connect account password. Use the OTP below to proceed."
-        }
+    ? "Thanks for registering with Humancare Connect! Use the OTP below to verify your email and complete your account setup."
+    : "We received a request to reset your Humancare Connect account password. Use the OTP below to proceed."
+  }
       </p>
 
       <div class="otp-box">
@@ -162,4 +162,15 @@ const sendOTPEmail = async (to, otp, type = "register") => {
   });
 };
 
-module.exports = { sendOTPEmail };
+const sendEmail = async ({ to, subject, text, html }) => {
+  const transporter = createTransporter();
+  await transporter.sendMail({
+    from: `"HumanCare Connect" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html,
+  });
+};
+
+module.exports = { sendOTPEmail, sendEmail };

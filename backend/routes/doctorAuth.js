@@ -1,8 +1,8 @@
-const express  = require("express");
-const router   = express.Router();
-const jwt      = require("jsonwebtoken");
-const bcrypt   = require("bcryptjs");
-const Doctor   = require("../models/Doctor");
+const express = require("express");
+const router = express.Router();
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const { COOKIE_OPTS, verifyDoctorToken } = require("../middleware/verifyToken");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
@@ -58,18 +58,18 @@ router.post("/register", async (req, res) => {
     await Enrollment.create({
       doctorId: doctor._id,
       firstName: nameParts[0] || "",
-      surname:   nameParts.slice(1).join(" ") || "",
-      email:     cleanEmail,
+      surname: nameParts.slice(1).join(" ") || "",
+      email: cleanEmail,
       approvalStatus: "pending",
-      formCompleted:  false,
+      formCompleted: false,
     });
 
-    const token  = signToken(doctor._id, doctor.email);
+    const token = signToken(doctor._id, doctor.email);
     res.cookie("doctorToken", token, COOKIE_OPTS);
     return res.status(201).json({
       message: "Doctor registered successfully.",
       token,
-      doctor: { id: doctor._id, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
+      doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
     });
   } catch (err) {
     if (err.code === 11000)
@@ -112,7 +112,7 @@ router.post("/send-forgot-otp", async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email is required." });
 
-    const clean  = email.toLowerCase().trim();
+    const clean = email.toLowerCase().trim();
     const doctor = await Doctor.findOne({ email: clean });
     if (!doctor)
       return res.status(404).json({ message: "No doctor account found with this email." });
@@ -275,25 +275,26 @@ router.patch("/enrollment/:doctorId/consultation-fee", async (req, res) => {
 router.get("/approved", async (req, res) => {
   try {
     const enrollments = await Enrollment.find({ approvalStatus: "approved" })
-      .populate("doctorId", "name email")
+      .populate("doctorId", "name email doctorId")
       .lean();
 
     const doctors = enrollments.map((e) => ({
-      id:         e._id,
-      doctorId:   e.doctorId?._id,
-      name:       `Dr. ${e.firstName || ""} ${e.surname || ""}`.trim(),
-      degree:     e.qualification || "",
-      specialty:  e.specialization || "",
-      languages:  e.languagesKnown || [],
-      location:   [e.city, e.state].filter(Boolean).join(", "),
-      price:       e.consultantFees || 0,
+      id: e._id,
+      doctorId: e.doctorId?.doctorId,
+      mongoId: e.doctorId?._id,
+      name: `Dr. ${e.firstName || ""} ${e.surname || ""}`.trim(),
+      degree: e.qualification || "",
+      specialty: e.specialization || "",
+      languages: e.languagesKnown || [],
+      location: [e.city, e.state].filter(Boolean).join(", "),
+      price: e.consultantFees || 0,
       feeCurrency: e.feeCurrency || "USD",
-      experience:  e.experience || 0,
-      gender:     e.gender || "",
-      rating:     0,
-      initials:   `${(e.firstName || " ")[0]}${(e.surname || " ")[0]}`.toUpperCase(),
-      color:      "#2563eb",
-      source:     "enrollment",
+      experience: e.experience || 0,
+      gender: e.gender || "",
+      rating: 0,
+      initials: `${(e.firstName || " ")[0]}${(e.surname || " ")[0]}`.toUpperCase(),
+      color: "#2563eb",
+      source: "enrollment",
     }));
 
     return res.json(doctors);
@@ -307,7 +308,7 @@ router.get("/approved", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const enrollment = await Enrollment.findById(req.params.id)
-      .populate("doctorId", "name email")
+      .populate("doctorId", "name email doctorId")
       .lean();
 
     if (!enrollment || enrollment.approvalStatus !== "approved") {
@@ -316,34 +317,35 @@ router.get("/:id", async (req, res) => {
 
     const e = enrollment;
     return res.json({
-      id:          e._id,
-      doctorId:    e.doctorId?._id,
-      name:        `${e.firstName || ""} ${e.surname || ""}`.trim() || e.doctorId?.name || "Unknown",
-      email:       e.email || e.doctorId?.email || "",
-      specialty:   e.specialization || "",
+      id: e._id,
+      doctorId: e.doctorId?.doctorId,
+      mongoId: e.doctorId?._id,
+      name: `${e.firstName || ""} ${e.surname || ""}`.trim() || e.doctorId?.name || "Unknown",
+      email: e.email || e.doctorId?.email || "",
+      specialty: e.specialization || "",
       subSpecialty: e.subSpecialization || "",
-      degree:      e.qualification || "",
-      experience:  e.experience || 0,
-      price:       e.consultantFees || 0,
+      degree: e.qualification || "",
+      experience: e.experience || 0,
+      price: e.consultantFees || 0,
       feeCurrency: e.feeCurrency || "USD",
-      city:        e.city || "",
-      state:       e.state || "",
-      country:     e.country || "",
-      location:    [e.city, e.state].filter(Boolean).join(", "),
-      languages:   e.languagesKnown || [],
-      gender:      e.gender || "",
-      about:       e.aboutDoctor || "",
-      verified:    e.verified || false,
-      rating:      4.8,
-      medicalSchool:            e.medicalSchool || "",
-      registrationYear:         e.registrationYear || "",
-      clinicName:               e.clinicName || "",
-      clinicAddress:            e.clinicAddress || "",
-      consultationMode:         e.consultationMode || "",
+      city: e.city || "",
+      state: e.state || "",
+      country: e.country || "",
+      location: [e.city, e.state].filter(Boolean).join(", "),
+      languages: e.languagesKnown || [],
+      gender: e.gender || "",
+      about: e.aboutDoctor || "",
+      verified: e.verified || false,
+      rating: 4.8,
+      medicalSchool: e.medicalSchool || "",
+      registrationYear: e.registrationYear || "",
+      clinicName: e.clinicName || "",
+      clinicAddress: e.clinicAddress || "",
+      consultationMode: e.consultationMode || "",
       medicalRegistrationNumber: e.medicalRegistrationNumber || "",
-      medicalCouncilName:       e.medicalCouncilName || "",
+      medicalCouncilName: e.medicalCouncilName || "",
       availability: e.availability || null,
-      timezone:    e.timezone || "",
+      timezone: e.timezone || "",
     });
   } catch (err) {
     console.error("getDoctorById error:", err);

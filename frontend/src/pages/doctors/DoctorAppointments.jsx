@@ -190,6 +190,7 @@ export default function DoctorAppointments() {
 
                         <td className="da-mono">
                           {formatDate(appt.date)}
+
                         </td>
 
                         <td className="da-mono">
