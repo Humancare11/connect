@@ -77,6 +77,11 @@ export default function DoctorProfileForUser() {
   };
 
   const handleBook = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login", { state: { from: "/book-appointment", doctor } });
+      return;
+    }
     navigate("/book-appointment", { state: { doctor } });
   };
 

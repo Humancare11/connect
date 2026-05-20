@@ -1,5 +1,6 @@
 // src/pages/AskDoctor.jsx
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import "./AskDoctor.css";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -134,8 +135,13 @@ const IconChevRight = () => (
 );
 
 export default function AskDoctor() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const isLoggedIn = !!user;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) navigate("/login", { state: { from: "/ask-a-question" } });
+  }, [user, loading, navigate]);
 
   const [questions, setQuestions] = useState([]);
   const [text, setText] = useState("");
@@ -282,36 +288,6 @@ export default function AskDoctor() {
                     dashboard.
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* login gate */}
-            {!isLoggedIn && (
-              <div
-                style={{
-                  background: "#fef3c7",
-                  border: "1px solid #fcd34d",
-                  borderRadius: 10,
-                  padding: "12px 16px",
-                  marginBottom: 16,
-                  fontSize: 14,
-                  color: "#92400e",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <span style={{ fontSize: 18 }}>🔒</span>
-                <span>
-                  You must{" "}
-                  <a
-                    href="/login"
-                    style={{ color: "#b45309", fontWeight: 600 }}
-                  >
-                    log in
-                  </a>{" "}
-                  to ask a question.
-                </span>
               </div>
             )}
 

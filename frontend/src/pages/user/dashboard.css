@@ -732,28 +732,66 @@
 
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 768px) {
+  /* layout already gives 10px padding — zero out page's own padding */
+  .hc-dash__page { padding: 0; }
+
   .hc-dash__header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 22px;
-    padding: 28px 26px;
-    border-radius: 18px;
+    gap: 18px;
+    padding: 24px 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
   }
   .hc-dash__book-btn { width: 100%; justify-content: center; }
-  .hc-dash__title { font-size: 26px; }
-  .hc-dash__overview { grid-template-columns: 1fr; gap: 12px; }
+  .hc-dash__title    { font-size: 24px; }
+  .hc-dash__subtitle { font-size: 13px; }
+
+  .hc-dash__overview {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .hc-dash__ov-card { padding: 20px 18px; gap: 16px; }
+  .hc-dash__ov-sub  { white-space: normal; line-height: 1.5; }
+
   .hc-dash__records-grid { grid-template-columns: 1fr; }
-  .hc-dash__activity-item { padding: 14px 18px; gap: 10px; }
+  .hc-dash__record-card  { padding: 20px 18px 16px; }
+
+  .hc-dash__section        { margin-bottom: 24px; }
+  .hc-dash__section-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .hc-dash__section-title  { font-size: 18px; }
+
+  .hc-dash__activity-item {
+    padding: 13px 16px;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
   .hc-dash__activity-time { display: none; }
-  .hc-dash__section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .hc-dash__activity-body { min-width: 0; }
+  .hc-dash__activity-meta { flex-wrap: wrap; gap: 3px; }
 }
 
 @media (max-width: 480px) {
-  .hc-dash__header  { padding: 22px 20px; }
-  .hc-dash__title   { font-size: 22px; }
-  .hc-dash__ov-card { padding: 20px 20px; gap: 16px; }
-  .hc-dash__ov-num  { font-size: 28px; }
-  .hc-dash__ov-icon { width: 46px; height: 46px; border-radius: 13px; }
-  .hc-dash__record-card { padding: 20px 18px 16px; }
-  .hc-dash__pagination { flex-wrap: wrap; gap: 6px; }
+  .hc-dash__header  { padding: 20px 16px; gap: 14px; }
+  .hc-dash__title   { font-size: 20px; }
+  .hc-dash__eyebrow { font-size: 9px; letter-spacing: 2px; }
+
+  .hc-dash__ov-card { padding: 16px 14px; gap: 12px; }
+  .hc-dash__ov-num  { font-size: 26px; }
+  .hc-dash__ov-label { font-size: 12px; }
+  .hc-dash__ov-icon { width: 44px; height: 44px; font-size: 20px; border-radius: 12px; }
+
+  .hc-dash__activity-item  { padding: 11px 12px; gap: 8px; }
+  .hc-dash__activity-icon  { width: 32px; height: 32px; font-size: 14px; border-radius: 8px; }
+  .hc-dash__activity-dot   { display: none; }
+  .hc-dash__activity-title { font-size: 13px; }
+
+  .hc-dash__record-card { padding: 16px 14px 14px; }
+  .hc-dash__record-icon { width: 40px; height: 40px; font-size: 18px; border-radius: 11px; }
+
+  .hc-dash__pagination    { flex-wrap: wrap; gap: 6px; }
+  .hc-dash__page-btn      { padding: 7px 12px; font-size: 12px; }
+  .hc-dash__page-btn--num { padding: 7px 10px; min-width: 34px; }
 }
+

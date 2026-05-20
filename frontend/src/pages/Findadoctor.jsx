@@ -192,7 +192,7 @@ export default function DoctorFinder() {
     if (!user) {
       const token = localStorage.getItem("token");
       if (!token) {
-        navigate("/login");
+        navigate("/login", { state: { from: "/book-appointment", doctor: doc } });
         return;
       }
     }

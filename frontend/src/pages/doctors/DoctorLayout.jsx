@@ -197,8 +197,8 @@ export default function DoctorLayout({ children }) {
           </div>
 
           <div className="dl-topbar-right">
-            <Link to="/doctor-dashboard/appointments" className="dl-topbar-book">
-              <IconPlus /> New Appointment
+            <Link to="/" className="dl-topbar-book">
+              <IconPlus /> Home
             </Link>
           </div>
         </header>
