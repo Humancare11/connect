@@ -6,7 +6,7 @@ const STEPS = [
     num: "01",
     name: "Register",
     desc: "Sign up with your company code in under 2 minutes",
-    accent: "#0C8B7A",
+    accent: "#0B57E8",
     icon: (
       <svg
         width="16"
@@ -444,9 +444,9 @@ export default function ECGTimeline() {
       {/* Header */}
       <div className="hc-header">
         <p className="hc-header-eyebrow">
-          <span className="hc-header-line" />
+          {/* <span className="hc-header-line" /> */}
           How It Works
-          <span className="hc-header-line" />
+          {/* <span className="hc-header-line" /> */}
         </p>
         <h2 className="hc-header-title">From signup to care in minutes</h2>
         <p className="hc-header-desc">

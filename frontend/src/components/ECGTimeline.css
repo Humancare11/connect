@@ -15,6 +15,7 @@
   border-radius: 16px;
   overflow: hidden;
   padding: 48px 32px 0;
+  margin: 50px 120px;
 }
 
 /* Header Section */
@@ -28,7 +29,7 @@
   font-weight: 600;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: #0c8b7a;
+  color: #7CB7FF;
   margin: 0 0 10px;
   display: flex;
   align-items: center;
@@ -40,7 +41,7 @@
   display: block;
   width: 24px;
   height: 1.5px;
-  background: #0c8b7a;
+  background: #7CB7FF;
   opacity: 0.5;
 }
 

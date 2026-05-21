@@ -7,13 +7,22 @@ import {
   FaYoutube,
   FaPhoneAlt,
   FaEnvelope,
+  FaInstagram,
+
 } from "react-icons/fa";
+
+import { FaThreads } from "react-icons/fa6";
 
 import { FaLocationDot, FaXTwitter } from "react-icons/fa6";
 
 export default function Footer() {
   return (
     <footer className="footer">
+
+      <div className="footer-bg-text">
+        HUMANCARE CONNECT
+      </div>
+
       <div className="footer-container">
 
         {/* BRAND SECTION */}
@@ -41,7 +50,7 @@ export default function Footer() {
             <div className="contact-item">
               <FaLocationDot />
               <span>
-4 Peddlers Row #1091 Newark, DE 19702 USA              </span>
+                4 Peddlers Row #1091 Newark, DE 19702 USA              </span>
             </div>
 
           </div>
@@ -49,45 +58,70 @@ export default function Footer() {
           {/* SOCIAL ICONS */}
           <div className="footer-socials">
 
-            <a href="#" className="soc-btn">
+            <a href="https://x.com/HCCofficial_" className="soc-btn">
               <FaXTwitter />
             </a>
 
-            <a href="#" className="soc-btn">
+            <a href="https://www.linkedin.com/company/122144245 " className="soc-btn">
               <FaLinkedinIn />
             </a>
 
-            <a href="#" className="soc-btn">
+            <a href="https://www.youtube.com/@HumancareConncect " className="soc-btn">
               <FaYoutube />
             </a>
 
-            <a href="#" className="soc-btn">
+            <a href=" https://www.facebook.com/profile.php?id=61589783051065" className="soc-btn">
               <FaFacebookF />
+            </a>
+
+            <a href="https://www.instagram.com/humancareconnect/" className="soc-btn">
+              <FaInstagram />
+            </a>
+
+            <a href="https://www.threads.com/@humancareconnect " className="soc-btn">
+              <FaThreads />
             </a>
 
           </div>
         </div>
-
         {/* PLATFORM */}
         <div className="footer-col">
-          <h5>Platform</h5>
+          <h5>Navigation </h5>
 
-          <a href="/find-a-doctor">Find Doctors</a>
-          <a href="/book-appointment">Book Appointment</a>
-          <a href="/medical-services">Medical Services</a>
-          <a href="/ask-a-question">Ask a Question</a>
-          <a href="/blogs">Healthcare Blogs</a>
+          <a href="/find-a-doctor">About Us</a>
+          <a href="/book-appointment">Services</a>
+          <a href="/medical-services">Online Doctor</a>
+          <a href="/blogs">Refer a Friend</a>
+          <a href="/blogs">Blog</a>
+          <a href="/blogs">Partners</a>
+          {/* <a href="/blogs">Careers</a> */}
+          {/* <a href="/blogs">Contact Us</a> */}
+        </div>
+
+        {/* Services Quick Links */}
+        <div className="footer-col">
+          <h5>Services  </h5>
+
+          <a href="/find-a-doctor">Prescription Refill</a>
+          <a href="/book-appointment">Online Doctor Consultation</a>
+          <a href="/medical-services">Weight Loss</a>
+          <a href="/ask-a-question">Urgent Care</a>
+          <a href="/blogs">Sick Notes</a>
+          <a href="/blogs">Doctor’s Letter</a>
+          <a href="/blogs">Lab Orders</a>
+          <a href="/blogs">Medical Questions</a>
         </div>
 
         {/* COMPANY */}
         <div className="footer-col">
-          <h5>Company</h5>
+          <h5>Legal & Company Compliance </h5>
 
-          <a href="#">About Us</a>
-          <a href="#">Careers</a>
-          <a href="#">Press & Media</a>
           <a href="#">Privacy Policy</a>
+          <a href="#">Refund Policy</a>
           <a href="#">Terms & Conditions</a>
+          <a href="#">HIPAA Compliance</a>
+          <a href="#">GDPR Compliance</a>
+
         </div>
 
         {/* SUPPORT */}
@@ -95,10 +129,11 @@ export default function Footer() {
           <h5>Support</h5>
 
           <a href="/doctor-login">Doctor Login</a>
-          <a href="/contact">Contact Support</a>
           <a href="#">Help Center</a>
-          <a href="#">HIPAA Compliance</a>
           <a href="#">FAQs</a>
+          <a href="/blogs">Careers</a>
+          <a href="/blogs">Contact Us</a>
+
         </div>
 
       </div>

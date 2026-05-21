@@ -40,7 +40,7 @@ const CARDS = [
     title: "Access Global Licensed Doctor Network",
     short: "500+ verified specialists. Always available.",
     body: "Our network spans 40+ countries, covering 80+ medical specialties. Every doctor is licensed, credentialed, and vetted. Employees get access to the right specialist — regardless of geography, time zone, or language.",
-    photo: "https://images.unsplash.com/photo-1576669801945-3b7b2620ff95?auto=format&fit=crop&w=800&q=70",
+    photo: "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=800&q=70",
     stat: "500+",
     statLabel: "Verified Doctors",
   },
@@ -112,8 +112,8 @@ function Card({ card, onOpen }) {
         <div className="wcu-card__photo">
           <img src={card.photo} alt={card.title} loading="lazy" />
         </div>
-        <div className="wcu-card__glass" />
-        <div className="wcu-card__shine" />
+        {/* <div className="wcu-card__glass" /> */}
+        {/* <div className="wcu-card__shine" />  */}
         <div className="wcu-card__body">
           <div className="wcu-card__tag">
             <span className="wcu-card__tag-dot" />
@@ -189,9 +189,9 @@ export default function WhyChooseUs() {
       <div className="wcu-layout">
         <div className="wcu-left">
           <div className="wcu-eyebrow">
-            <span className="wcu-eyebrow__line" />
+            {/* <span className="wcu-eyebrow__line" /> */}
             <span className="wcu-eyebrow__text">Why Organizations Choose Us</span>
-            <span className="wcu-eyebrow__line" />
+            {/* <span className="wcu-eyebrow__line" /> */}
           </div>
 
           <h2 className="wcu-heading">

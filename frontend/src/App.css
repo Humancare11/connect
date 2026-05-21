@@ -52,6 +52,10 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ══════════════════════════════════════════════
+   BODY BACKGROUND
+══════════════════════════════════════════════ */
+
 body {
 
   font-family: "Satoshi", sans-serif;
@@ -60,39 +64,53 @@ body {
 
   overflow-x: hidden;
 
+  position: relative;
+
   background:
+
+    /* TOP CENTER LIGHT */
     radial-gradient(
-      circle at top left,
-      rgba(138, 178, 255, 0.38) 0%,
-      transparent 28%
+      circle at top center,
+      rgba(255,255,255,0.95) 0%,
+      rgba(255,255,255,0) 36%
     ),
 
+    /* LEFT SOFT BLUE */
     radial-gradient(
-      circle at top right,
-      rgba(174, 205, 255, 0.30) 0%,
-      transparent 30%
+      circle at left center,
+      rgba(122,170,255,0.14) 0%,
+      transparent 40%
     ),
 
+    /* RIGHT LIGHT */
+    radial-gradient(
+      circle at right top,
+      rgba(168,205,255,0.12) 0%,
+      transparent 34%
+    ),
+
+    /* BOTTOM FADE */
     radial-gradient(
       circle at bottom center,
-      rgba(122, 170, 255, 0.16) 0%,
-      transparent 32%
+      rgba(255,255,255,0.65) 0%,
+      transparent 42%
     ),
 
+    /* MAIN ATMOSPHERIC GRADIENT */
     linear-gradient(
-      180deg,
-      #eef4ff 0%,
-      #f7faff 45%,
-      #edf3ff 100%
+      135deg,
+      #f4f7fc 0%,
+      #edf2f9 22%,
+      #e4ebf5 48%,
+      #edf2f8 76%,
+      #f8fbff 100%
     );
 
   background-attachment: fixed;
 
-  position: relative;
+  min-height: 100vh;
 }
-
-/* SOFT GRID */
-
+REPLACE body::before
 body::before {
 
   content: "";
@@ -102,27 +120,32 @@ body::before {
 
   pointer-events: none;
 
-  background-image:
-    linear-gradient(
-      rgba(255,255,255,0.12) 1px,
-      transparent 1px
+  z-index: -2;
+
+  background:
+
+    radial-gradient(
+      circle at 18% 18%,
+      rgba(255,255,255,0.85),
+      transparent 28%
     ),
 
-    linear-gradient(
-      90deg,
-      rgba(255,255,255,0.12) 1px,
-      transparent 1px
+    radial-gradient(
+      circle at 82% 12%,
+      rgba(255,255,255,0.60),
+      transparent 22%
+    ),
+
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(255,255,255,0.40),
+      transparent 40%
     );
 
-  background-size: 80px 80px;
-
-  opacity: 0.18;
-
-  z-index: -2;
+  filter: blur(40px);
 }
 
 /* GLOW EFFECT */
-
 body::after {
 
   content: "";
@@ -136,25 +159,14 @@ body::after {
 
   background:
 
-    radial-gradient(
-      circle at 20% 15%,
-      rgba(90, 150, 255, 0.18),
-      transparent 20%
-    ),
-
-    radial-gradient(
-      circle at 82% 30%,
-      rgba(150, 200, 255, 0.16),
-      transparent 24%
-    ),
-
-    radial-gradient(
-      circle at 50% 100%,
-      rgba(80, 140, 255, 0.10),
-      transparent 30%
+    linear-gradient(
+      120deg,
+      rgba(255,255,255,0.10),
+      rgba(255,255,255,0.03)
     );
 
-  filter: blur(35px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 /* TYPOGRAPHY */
@@ -164,6 +176,11 @@ h2,
 h3,
 h4 {
   font-family: "Satoshi", sans-serif;
+}
+
+section {
+  position: relative;
+  z-index: 2;
 }
 
 /* ══════════════════════════════════════════════
@@ -178,7 +195,7 @@ h4 {
   z-index: 999;
 
   background:
-    rgba(255,255,255,0.50);
+    rgba(255,255,255,0.72);
 
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);

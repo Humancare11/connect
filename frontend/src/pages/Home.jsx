@@ -25,7 +25,7 @@ import {
 } from "react-icons/fi";
 
 // framer-motion not used in this file
-import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
@@ -33,32 +33,12 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 import AmbientBackdrop from "../components/AmbientBackdrop";
 
 // 
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 
 
 gsap.registerPlugin(ScrollTrigger);
 
-// SCROLL EFFECT
-const { scrollY } = useScroll();
-
-const heroY = useTransform(scrollY, [0, 800], [0, 180]);
-
-const heroOpacity = useTransform(
-  scrollY,
-  [0, 300],
-  [1, 0.2]
-);
-
-const heroScale = useTransform(
-  scrollY,
-  [0, 500],
-  [1, 0.96]
-);
-
-const leftY = useTransform(scrollY, [0, 500], [0, -40]);
-
-const rightY = useTransform(scrollY, [0, 500], [0, 60]);
 
 // ─── Scene data ───────────────────────────────────────────────────────────────
 const SCENES = [
@@ -169,210 +149,191 @@ const STEP_CIRCUMFERENCE = 2 * Math.PI * 20; // For step dots (radius 20)
 export default function HomePage() {
 
   // ============================================
-  // SEARCH DATA
-  // Add all searchable pages/sections here
-  // ============================================
+// SEARCH DATA
+// Add all searchable pages/sections here
+// ============================================
 
-  const SEARCH_DATA = [
-    {
-      id: 1,
-      title: "Cardiologist",
-      keywords: ["heart", "cardiac", "chest pain", "bp"],
-      route: "/findadoctor",
-      sectionId: "cardiology",
-      type: "Specialty",
-    },
-    {
-      id: 2,
-      title: "Dermatologist",
-      keywords: ["skin", "acne", "rash", "eczema"],
-      route: "/findadoctor",
-      sectionId: "dermatology",
-      type: "Specialty",
-    },
-    {
-      id: 3,
-      title: "Mental Health",
-      keywords: ["stress", "anxiety", "depression", "therapy"],
-      route: "/mental-health",
-      sectionId: "therapy-section",
-      type: "Condition",
-    },
-    {
-      id: 4,
-      title: "Pediatrics",
-      keywords: ["kids", "child", "baby", "children"],
-      route: "/findadoctor",
-      sectionId: "pediatrics",
-      type: "Department",
-    },
-    {
-      id: 5,
-      title: "Book Video Consultation",
-      keywords: ["video call", "online doctor", "consultation"],
-      route: "/consultation",
-      sectionId: "video-consult",
-      type: "Service",
-    },
-    {
-      id: 6,
-      title: "Prescriptions",
-      keywords: ["medicine", "rx", "drugs"],
-      route: "/prescriptions",
-      sectionId: "rx-section",
-      type: "Service",
-    },
-  ];
+const SEARCH_DATA = [
+  {
+    id: 1,
+    title: "Cardiologist",
+    keywords: ["heart", "cardiac", "chest pain", "bp"],
+    route: "/findadoctor",
+    sectionId: "cardiology",
+    type: "Specialty",
+  },
+  {
+    id: 2,
+    title: "Dermatologist",
+    keywords: ["skin", "acne", "rash", "eczema"],
+    route: "/findadoctor",
+    sectionId: "dermatology",
+    type: "Specialty",
+  },
+  {
+    id: 3,
+    title: "Mental Health",
+    keywords: ["stress", "anxiety", "depression", "therapy"],
+    route: "/mental-health",
+    sectionId: "therapy-section",
+    type: "Condition",
+  },
+  {
+    id: 4,
+    title: "Pediatrics",
+    keywords: ["kids", "child", "baby", "children"],
+    route: "/findadoctor",
+    sectionId: "pediatrics",
+    type: "Department",
+  },
+  {
+    id: 5,
+    title: "Book Video Consultation",
+    keywords: ["video call", "online doctor", "consultation"],
+    route: "/consultation",
+    sectionId: "video-consult",
+    type: "Service",
+  },
+  {
+    id: 6,
+    title: "Prescriptions",
+    keywords: ["medicine", "rx", "drugs"],
+    route: "/prescriptions",
+    sectionId: "rx-section",
+    type: "Service",
+  },
+];
 
-  // ============================================
-  // INSIDE COMPONENT
-  // ============================================
+// ============================================
+// INSIDE COMPONENT
+// ============================================
 
-  const navigate = useNavigate();
+const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
+const [searchQuery, setSearchQuery] = useState("");
+const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+const [showSuggestions, setShowSuggestions] = useState(false);
+const [activeIndex, setActiveIndex] = useState(-1);
 
-  const searchRef = useRef(null);
+const searchRef = useRef(null);
 
-  // ============================================
-  // FILTER SEARCH
-  // ============================================
+// ============================================
+// FILTER SEARCH
+// ============================================
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredSuggestions([]);
-      return;
-    }
+useEffect(() => {
+  if (!searchQuery.trim()) {
+    setFilteredSuggestions([]);
+    return;
+  }
 
-    const query = searchQuery.toLowerCase();
+  const query = searchQuery.toLowerCase();
 
-    const results = SEARCH_DATA.filter((item) => {
-      return (
-        item.title.toLowerCase().includes(query) ||
-        item.keywords.some((keyword) =>
-          keyword.toLowerCase().includes(query)
-        )
-      );
-    });
+  const results = SEARCH_DATA.filter((item) => {
+    return (
+      item.title.toLowerCase().includes(query) ||
+      item.keywords.some((keyword) =>
+        keyword.toLowerCase().includes(query)
+      )
+    );
+  });
 
-    setFilteredSuggestions(results);
-  }, [searchQuery]);
+  setFilteredSuggestions(results);
+}, [searchQuery]);
 
-  // ============================================
-  // CLOSE DROPDOWN ON OUTSIDE CLICK
-  // ============================================
+// ============================================
+// CLOSE DROPDOWN ON OUTSIDE CLICK
+// ============================================
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(event.target)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
-    };
-  }, []);
-
-  // ============================================
-  // SEARCH NAVIGATION
-  // ============================================
-
-  const handleSearch = (selectedItem = null) => {
-    const item =
-      selectedItem ||
-      filteredSuggestions[0];
-
-    if (!item) return;
-
-    navigate(item.route, {
-      state: {
-        scrollTo: item.sectionId,
-      },
-    });
-
-    setSearchQuery("");
-    setShowSuggestions(false);
-  };
-
-  // ============================================
-  // KEYBOARD NAVIGATION
-  // ============================================
-
-  const handleKeyDown = (e) => {
-    if (!filteredSuggestions.length) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setActiveIndex((prev) =>
-          prev < filteredSuggestions.length - 1
-            ? prev + 1
-            : 0
-        );
-        break;
-
-      case "ArrowUp":
-        e.preventDefault();
-        setActiveIndex((prev) =>
-          prev > 0
-            ? prev - 1
-            : filteredSuggestions.length - 1
-        );
-        break;
-
-      case "Enter":
-        e.preventDefault();
-
-        if (activeIndex >= 0) {
-          handleSearch(filteredSuggestions[activeIndex]);
-        } else {
-          handleSearch();
-        }
-        break;
-
-      case "Escape":
-        setShowSuggestions(false);
-        break;
-
-      default:
-        break;
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (
+      searchRef.current &&
+      !searchRef.current.contains(event.target)
+    ) {
+      setShowSuggestions(false);
     }
   };
 
-  //  scroll Landing support
-  const location = useLocation();
+  document.addEventListener("mousedown", handleClickOutside);
 
-  useEffect(() => {
-    if (location.state?.scrollTo) {
-      const element = document.getElementById(
-        location.state.scrollTo
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+  };
+}, []);
+
+// ============================================
+// SEARCH NAVIGATION
+// ============================================
+
+const handleSearch = (selectedItem = null) => {
+  const item =
+    selectedItem ||
+    filteredSuggestions[0];
+
+  if (!item) return;
+
+  navigate(item.route, {
+    state: {
+      scrollTo: item.sectionId,
+    },
+  });
+
+  setSearchQuery("");
+  setShowSuggestions(false);
+};
+
+// ============================================
+// KEYBOARD NAVIGATION
+// ============================================
+
+const handleKeyDown = (e) => {
+  if (!filteredSuggestions.length) return;
+
+  switch (e.key) {
+    case "ArrowDown":
+      e.preventDefault();
+      setActiveIndex((prev) =>
+        prev < filteredSuggestions.length - 1
+          ? prev + 1
+          : 0
       );
+      break;
 
-      if (element) {
-        setTimeout(() => {
-          element.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }, 200);
+    case "ArrowUp":
+      e.preventDefault();
+      setActiveIndex((prev) =>
+        prev > 0
+          ? prev - 1
+          : filteredSuggestions.length - 1
+      );
+      break;
+
+    case "Enter":
+      e.preventDefault();
+
+      if (activeIndex >= 0) {
+        handleSearch(filteredSuggestions[activeIndex]);
+      } else {
+        handleSearch();
       }
-    }
-  }, [location]);
+      break;
+
+    case "Escape":
+      setShowSuggestions(false);
+      break;
+
+    default:
+      break;
+  }
+};
 
 
-  // Testimonials data
+
+   // Testimonials data
   const testimonials = [
     {
       id: 1,
@@ -655,32 +616,32 @@ export default function HomePage() {
   //     }
   //   };
 
-  // const recalc = () => {
-  // 1) build a single set to measure width
-  // buildSet(1);
+    // const recalc = () => {
+      // 1) build a single set to measure width
+      // buildSet(1);
 
-  // requestAnimationFrame(() => {
-  // const singleWidth = track.scrollWidth || 0;  width of one set
-  // const containerWidth =
-  // track.parentElement?.clientWidth || window.innerWidth;
+      // requestAnimationFrame(() => {
+        // const singleWidth = track.scrollWidth || 0;  width of one set
+        // const containerWidth =
+          // track.parentElement?.clientWidth || window.innerWidth;
 
-  // Determine how many copies we need so the scrolling content always exceeds the viewport
-  // const minNeeded = Math.ceil(
-  // (containerWidth * 2) / Math.max(singleWidth, 1),
-  // );
-  // const copies = Math.max(2, minNeeded);
+        // Determine how many copies we need so the scrolling content always exceeds the viewport
+        // const minNeeded = Math.ceil(
+          // (containerWidth * 2) / Math.max(singleWidth, 1),
+        // );
+        // const copies = Math.max(2, minNeeded);
 
-  // buildSet(copies);
+        // buildSet(copies);
 
-  // expose width of one copy for the CSS animation to translate by
-  // track.style.setProperty("--scroll-width", `${singleWidth}px`);
-  // });
-  // };
+        // expose width of one copy for the CSS animation to translate by
+        // track.style.setProperty("--scroll-width", `${singleWidth}px`);
+      // });
+    // };
 
-  // recalc();
-  // window.addEventListener("resize", recalc);
+    // recalc();
+    // window.addEventListener("resize", recalc);
 
-  // return () => window.removeEventListener("resize", recalc);
+    // return () => window.removeEventListener("resize", recalc);
   // }, [items]);
 
   const wrapperRef = useRef(null);
@@ -778,7 +739,7 @@ export default function HomePage() {
     return () => ctx.revert();
   }, []);
 
-  // inside your component
+ // inside your component
   const testimonialsRef = useRef(null);
   const bgRef = useRef(null);
 
@@ -805,19 +766,11 @@ export default function HomePage() {
 
   return (
     <>
-      {/* <AmbientBackdrop /> */}
-      <div className="hero-light"></div>
-      <div className="hero-grid"></div>
+    {/* <AmbientBackdrop /> */}
+    <div className="hero-light"></div>
+     <div className="hero-grid"></div>
       {/* ════════════════════ HERO section ═════════════════════════════════════════════ */}
       <section className="hero">
-      {/* <motion.section
-        className="hero"
-        style={{
-          y: heroY,
-          opacity: heroOpacity,
-          scale: heroScale,
-        }} */}
-      >
         {/* hero canvas removed for production: decorative particles were disabled */}
         <div className="hero-left">
           <div className="hero-badge">
@@ -846,55 +799,56 @@ export default function HomePage() {
 
           {/* SEARCH BAR */}
           <div className="search-wrapper" ref={searchRef}>
-            <div className="search-bar">
-              <input
-                type="text"
-                value={searchQuery}
-                placeholder="Search doctors, specialties, conditions..."
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onKeyDown={handleKeyDown}
-              />
+  <div className="search-bar">
+    <input
+      type="text"
+      value={searchQuery}
+      placeholder="Search doctors, specialties, conditions..."
+      onChange={(e) => {
+        setSearchQuery(e.target.value);
+        setShowSuggestions(true);
+      }}
+      onFocus={() => setShowSuggestions(true)}
+      onKeyDown={handleKeyDown}
+    />
 
-              <button onClick={() => handleSearch()}>
-                Search
-              </button>
+    <button onClick={() => handleSearch()}>
+      Search
+    </button>
+  </div>
+
+  {/* SEARCH SUGGESTIONS */}
+  {showSuggestions &&
+    filteredSuggestions.length > 0 && (
+      <div className="search-suggestions">
+        {filteredSuggestions.map((item, index) => (
+          <div
+            key={item.id}
+            className={`suggestion-item ${
+              activeIndex === index
+                ? "active"
+                : ""
+            }`}
+            onClick={() => handleSearch(item)}
+          >
+            <div className="suggestion-left">
+              <span className="suggestion-title">
+                {item.title}
+              </span>
+
+              <span className="suggestion-type">
+                {item.type}
+              </span>
             </div>
 
-            {/* SEARCH SUGGESTIONS */}
-            {showSuggestions &&
-              filteredSuggestions.length > 0 && (
-                <div className="search-suggestions">
-                  {filteredSuggestions.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className={`suggestion-item ${activeIndex === index
-                          ? "active"
-                          : ""
-                        }`}
-                      onClick={() => handleSearch(item)}
-                    >
-                      <div className="suggestion-left">
-                        <span className="suggestion-title">
-                          {item.title}
-                        </span>
-
-                        <span className="suggestion-type">
-                          {item.type}
-                        </span>
-                      </div>
-
-                      <span className="suggestion-arrow">
-                        →
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <span className="suggestion-arrow">
+              →
+            </span>
           </div>
+        ))}
+      </div>
+    )}
+</div>
 
           <div className="trust">
             <span className="trust-chip">
@@ -1007,8 +961,9 @@ export default function HomePage() {
                   return (
                     <div
                       key={i}
-                      className={`scene-content-container${isActive ? " active" : ""
-                        }${isExitUp ? " exit-up" : ""}`}
+                      className={`scene-content-container${
+                        isActive ? " active" : ""
+                      }${isExitUp ? " exit-up" : ""}`}
                     >
                       <div className="scene-content">
                         <div className="scene-step-badge">
@@ -1048,7 +1003,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      {/* </motion.section> */}
       {/* <HeroNew /> */}
 
 
@@ -1057,9 +1011,9 @@ export default function HomePage() {
         <div className="sb-track" ref={trackRef} />
       </div> */}
       {/* ════════════════════ HERO section ═════════════════════════════════════════════ */}
-      {/* ---------------------------------------------------------------- */}
-      <LogoMarquee />
-      {/* -------------- SERVICE----------------------------- */}
+{/* ---------------------------------------------------------------- */}
+ <LogoMarquee />
+ {/* -------------- SERVICE----------------------------- */}
       <Sa />
 
       {/* ══════════════════════════════════════════════
@@ -1072,8 +1026,8 @@ export default function HomePage() {
       {/* <section ref={wrapperRef} className="pcp-section-wrapper">
         <div className="pcp-section">
           <div className="pcp-container"> */}
-      {/* HEADER */}
-      {/* <div className="pcp-header" ref={headerRef}>
+            {/* HEADER */}
+            {/* <div className="pcp-header" ref={headerRef}>
               <span className="pcp-eyebrow">— NO PCP? NO PROBLEM.</span>
               <h2 className="pcp-heading">
                 Don't have a primary care doctor?<span> We've got you.</span>
@@ -1085,8 +1039,8 @@ export default function HomePage() {
               </p>
             </div> */}
 
-      {/* LEFT — Features */}
-      {/* <div className="pcp-left">
+            {/* LEFT — Features */}
+            {/* <div className="pcp-left">
               <div className="pcp-features">
                 {features.map((f, i) => (
                   <div
@@ -1112,8 +1066,8 @@ export default function HomePage() {
               </button>
             </div> */}
 
-      {/* RIGHT — Steps */}
-      {/* <div className="pcp-right" ref={rightRef}>
+            {/* RIGHT — Steps */}
+            {/* <div className="pcp-right" ref={rightRef}>
               <h3 className="pcp-right-title">
                 Your first visit, step by step
               </h3>
@@ -1139,152 +1093,152 @@ export default function HomePage() {
 
 
       {/* ══════════════════════════════════════════════
-    HOW IT WORKS / PCP SECTION NEW
+    HOW IT WORKS / PCP SECTION
 ══════════════════════════════════════════════ */}
-      <section className="pcp-section">
-        <div className="pcp-container">
+<section className="pcp-section">
+  <div className="pcp-container">
 
-          {/* LEFT CONTENT */}
-          <div className="pcp-left">
-            <div className="pcp-badge">— NO PCP? NO PROBLEM.</div>
+    {/* LEFT CONTENT */}
+    <div className="pcp-left">
+      <div className="pcp-badge">— NO PCP? NO PROBLEM.</div>
 
-            <h2 className="pcp-title">
-              Don't have a primary care doctor?
-              <span>We've got you.</span>
-            </h2>
+      <h2 className="pcp-title">
+        Don't have a primary care doctor?
+        <span>We've got you.</span>
+      </h2>
 
-            <p className="pcp-desc">
-              Millions of Americans lack access to a regular physician.
-              MediLink bridges that gap — giving you instant access to
-              licensed providers who can serve as your primary care team.
+      <p className="pcp-desc">
+        Millions of Americans lack access to a regular physician.
+        MediLink bridges that gap — giving you instant access to
+        licensed providers who can serve as your primary care team.
+      </p>
+
+      <div className="pcp-features">
+
+        <div className="pcp-feature-card">
+          <div className="pcp-icon">01</div>
+          <div>
+            <h4>Acts as Your PCP</h4>
+            <p>
+              Our providers manage ongoing health, maintain your
+              records, and coordinate specialist referrals.
             </p>
-
-            <div className="pcp-features">
-
-              <div className="pcp-feature-card">
-                <div className="pcp-icon">01</div>
-                <div>
-                  <h4>Acts as Your PCP</h4>
-                  <p>
-                    Our providers manage ongoing health, maintain your
-                    records, and coordinate specialist referrals.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pcp-feature-card">
-                <div className="pcp-icon">02</div>
-                <div>
-                  <h4>Continuity of Care</h4>
-                  <p>
-                    Build a relationship with the same doctor across visits.
-                    Your health history stays in one secure place.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pcp-feature-card">
-                <div className="pcp-icon">03</div>
-                <div>
-                  <h4>365 Days a Year</h4>
-                  <p>
-                    No more 3-week waits. Connect the same day —
-                    including evenings and weekends.
-                  </p>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* RIGHT SIDE */}
-          <div className="pcp-right">
-
-            <div className="pcp-image-stack">
-              <img
-                src="https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=1200&auto=format&fit=crop"
-                alt=""
-                className="pcp-img-main"
-              />
-
-              <img
-                src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop"
-                alt=""
-                className="pcp-img-small"
-              />
-            </div>
-
-            <div className="pcp-steps-card">
-
-              <div className="pcp-step-head">
-                <span className="pcp-mini">Get a doctor today — free to start</span>
-                <h3>Your first visit, step by step</h3>
-              </div>
-
-              <div className="pcp-steps">
-
-                <div className="pcp-step">
-                  <div className="pcp-step-num">1</div>
-                  <div>
-                    <h4>Create your free account</h4>
-                    <p>Under 2 minutes. No credit card required.</p>
-                  </div>
-                </div>
-
-                <div className="pcp-step-line"></div>
-
-                <div className="pcp-step">
-                  <div className="pcp-step-num">2</div>
-                  <div>
-                    <h4>Complete a health intake</h4>
-                    <p>
-                      Share your medical history and current medications.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pcp-step-line"></div>
-
-                <div className="pcp-step">
-                  <div className="pcp-step-num">3</div>
-                  <div>
-                    <h4>Match with a provider</h4>
-                    <p>
-                      We surface the best-fit doctor for your needs and state.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pcp-step-line"></div>
-
-                <div className="pcp-step">
-                  <div className="pcp-step-num">4</div>
-                  <div>
-                    <h4>Start your video visit</h4>
-                    <p>
-                      Meet face-to-face from anywhere, on any device.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pcp-step-line"></div>
-
-                <div className="pcp-step">
-                  <div className="pcp-step-num">5</div>
-                  <div>
-                    <h4>Receive care instantly</h4>
-                    <p>
-                      Prescription sent to your pharmacy within minutes.
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
           </div>
         </div>
-      </section>
+
+        <div className="pcp-feature-card">
+          <div className="pcp-icon">02</div>
+          <div>
+            <h4>Continuity of Care</h4>
+            <p>
+              Build a relationship with the same doctor across visits.
+              Your health history stays in one secure place.
+            </p>
+          </div>
+        </div>
+
+        <div className="pcp-feature-card">
+          <div className="pcp-icon">03</div>
+          <div>
+            <h4>365 Days a Year</h4>
+            <p>
+              No more 3-week waits. Connect the same day —
+              including evenings and weekends.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {/* RIGHT SIDE */}
+    <div className="pcp-right">
+
+      <div className="pcp-image-stack">
+        <img
+          src="https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=1200&auto=format&fit=crop"
+          alt=""
+          className="pcp-img-main"
+        />
+
+        <img
+          src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop"
+          alt=""
+          className="pcp-img-small"
+        />
+      </div>
+
+      <div className="pcp-steps-card">
+
+        <div className="pcp-step-head">
+          <span className="pcp-mini">Get a doctor today — free to start</span>
+          <h3>Your first visit, step by step</h3>
+        </div>
+
+        <div className="pcp-steps">
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">1</div>
+            <div>
+              <h4>Create your free account</h4>
+              <p>Under 2 minutes. No credit card required.</p>
+            </div>
+          </div>
+
+          <div className="pcp-step-line"></div>
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">2</div>
+            <div>
+              <h4>Complete a health intake</h4>
+              <p>
+                Share your medical history and current medications.
+              </p>
+            </div>
+          </div>
+
+          <div className="pcp-step-line"></div>
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">3</div>
+            <div>
+              <h4>Match with a provider</h4>
+              <p>
+                We surface the best-fit doctor for your needs and state.
+              </p>
+            </div>
+          </div>
+
+          <div className="pcp-step-line"></div>
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">4</div>
+            <div>
+              <h4>Start your video visit</h4>
+              <p>
+                Meet face-to-face from anywhere, on any device.
+              </p>
+            </div>
+          </div>
+
+          <div className="pcp-step-line"></div>
+
+          <div className="pcp-step">
+            <div className="pcp-step-num">5</div>
+            <div>
+              <h4>Receive care instantly</h4>
+              <p>
+                Prescription sent to your pharmacy within minutes.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
 
       {/* ══════════════════════════════════════════════

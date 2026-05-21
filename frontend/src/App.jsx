@@ -79,8 +79,6 @@ import Test from "./pages/Test";
 
 
 
-// import MDemo from "./pages/MDemo";
-
 function ScrollToTop() {
   const { pathname } = useLocation();
   useLayoutEffect(() => {
@@ -190,12 +188,7 @@ function AppLayout() {
         <Route path="/test" element={<Test />} />
 
 
-<<<<<<< HEAD
 <Route path="/doctor/:id" element={<DoctorProfileForUser />} />
-
-=======
->>>>>>> c10b505 (Resolved App.jsx merge conflict)
-        {/* <Route path="/m" element={<MDemo />} /> */}
 
         <Route
           path="/user/dashboard"
