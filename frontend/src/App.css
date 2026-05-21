@@ -110,7 +110,6 @@ body {
 
   min-height: 100vh;
 }
-REPLACE body::before
 body::before {
 
   content: "";
