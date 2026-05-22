@@ -117,12 +117,12 @@ export default function AuthPage() {
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
-    name: "", email: "", mobile: "", dob: "", gender: "", password: "", terms: false,
+    name: "", email: "", mobile: "", dob: "", gender: "", country: "", password: "", terms: false,
   });
 
   /* Google profile completion for new users */
   const [googlePending, setGooglePending] = useState(null);
-  const [googleProfile, setGoogleProfile] = useState({ mobile: "", dob: "", gender: "" });
+  const [googleProfile, setGoogleProfile] = useState({ mobile: "", dob: "", gender: "", country: "" });
 
   /* OTP */
   const [otpValue, setOtpValue] = useState("");
@@ -140,6 +140,11 @@ export default function AuthPage() {
 
   /* ── helpers ─────────────────────────────────────────────── */
   const clrErr = () => setFormError("");
+  const saveUserToken = (token) => {
+    if (!token) return;
+    localStorage.setItem("userToken", token);
+    localStorage.setItem("token", token);
+  };
 
   const startTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -178,7 +183,7 @@ export default function AuthPage() {
           setIsRegister(true);
           return;
         }
-        if (res.data.token) localStorage.setItem("token", res.data.token);
+        saveUserToken(res.data.token);
         afterLogin(res.data.user);
       } catch (err) { setFormError(err.response?.data?.msg || "Google Sign-In failed."); }
     },
@@ -190,13 +195,15 @@ export default function AuthPage() {
     if (!googleProfile.mobile) return setFormError("Enter mobile number");
     if (!googleProfile.dob) return setFormError("Select Date of Birth");
     if (!googleProfile.gender) return setFormError("Select Gender");
+    if (!googleProfile.country) return setFormError("Select your country");
     setLoading(true); clrErr();
     try {
       const res = await api.post("/api/auth/google", {
         accessToken: googlePending.accessToken,
         mobile: googleProfile.mobile, dob: googleProfile.dob, gender: googleProfile.gender,
+        country: googleProfile.country,
       });
-      if (res.data.token) localStorage.setItem("token", res.data.token);
+      saveUserToken(res.data.token);
       afterLogin(res.data.user);
     } catch (err) { setFormError(err.response?.data?.msg || "Registration failed."); }
     finally { setLoading(false); }
@@ -208,7 +215,7 @@ export default function AuthPage() {
     setLoading(true); clrErr();
     try {
       const res = await api.post("/api/auth/login", loginForm);
-      if (res.data.token) localStorage.setItem("token", res.data.token);
+      saveUserToken(res.data.token);
       afterLogin(res.data.user);
     } catch (err) { setFormError(err.response?.data?.msg || "Login failed."); }
     finally { setLoading(false); }
@@ -222,6 +229,7 @@ export default function AuthPage() {
     if (!registerForm.mobile) return setFormError("Enter mobile number");
     if (!registerForm.dob) return setFormError("Select Date of Birth");
     if (!registerForm.gender) return setFormError("Select Gender");
+    if (!registerForm.country) return setFormError("Select your country");
     setLoading(true);
     try {
       await api.post("/api/auth/send-register-otp", { email: registerForm.email });
@@ -239,10 +247,10 @@ export default function AuthPage() {
     try {
       const { terms, ...data } = registerForm;
       const res = await api.post("/api/auth/register", { ...data, otp: otpValue });
-      if (res.data.token) localStorage.setItem("token", res.data.token);
+      saveUserToken(res.data.token);
       if (timerRef.current) clearInterval(timerRef.current);
       setView("auth"); setIsRegister(false); setOtpValue("");
-      setRegisterForm({ name: "", email: "", mobile: "", dob: "", gender: "", password: "", terms: false });
+      setRegisterForm({ name: "", email: "", mobile: "", dob: "", gender: "", country: "", password: "", terms: false });
       alert("Account created successfully! Please sign in. ✅");
     } catch (err) { setFormError(err.response?.data?.msg || "Registration failed."); }
     finally { setLoading(false); }
@@ -329,6 +337,99 @@ export default function AuthPage() {
                 <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
               </select>
             </div>
+            <select value={googleProfile.country}
+              onChange={(e) => setGoogleProfile((p) => ({ ...p, country: e.target.value }))} required>
+              <option value="">Select Country</option>
+              <option value="Afghanistan">Afghanistan</option>
+              <option value="Albania">Albania</option>
+              <option value="Algeria">Algeria</option>
+              <option value="Argentina">Argentina</option>
+              <option value="Australia">Australia</option>
+              <option value="Austria">Austria</option>
+              <option value="Azerbaijan">Azerbaijan</option>
+              <option value="Bahrain">Bahrain</option>
+              <option value="Bangladesh">Bangladesh</option>
+              <option value="Belgium">Belgium</option>
+              <option value="Bolivia">Bolivia</option>
+              <option value="Brazil">Brazil</option>
+              <option value="Canada">Canada</option>
+              <option value="Chile">Chile</option>
+              <option value="China">China</option>
+              <option value="Colombia">Colombia</option>
+              <option value="Croatia">Croatia</option>
+              <option value="Czech Republic">Czech Republic</option>
+              <option value="Denmark">Denmark</option>
+              <option value="Ecuador">Ecuador</option>
+              <option value="Egypt">Egypt</option>
+              <option value="Ethiopia">Ethiopia</option>
+              <option value="Finland">Finland</option>
+              <option value="France">France</option>
+              <option value="Germany">Germany</option>
+              <option value="Ghana">Ghana</option>
+              <option value="Greece">Greece</option>
+              <option value="Guatemala">Guatemala</option>
+              <option value="Hungary">Hungary</option>
+              <option value="India">India</option>
+              <option value="Indonesia">Indonesia</option>
+              <option value="Iran">Iran</option>
+              <option value="Iraq">Iraq</option>
+              <option value="Ireland">Ireland</option>
+              <option value="Israel">Israel</option>
+              <option value="Italy">Italy</option>
+              <option value="Japan">Japan</option>
+              <option value="Jordan">Jordan</option>
+              <option value="Kazakhstan">Kazakhstan</option>
+              <option value="Kenya">Kenya</option>
+              <option value="Kuwait">Kuwait</option>
+              <option value="Lebanon">Lebanon</option>
+              <option value="Libya">Libya</option>
+              <option value="Malaysia">Malaysia</option>
+              <option value="Mexico">Mexico</option>
+              <option value="Morocco">Morocco</option>
+              <option value="Myanmar">Myanmar</option>
+              <option value="Nepal">Nepal</option>
+              <option value="Netherlands">Netherlands</option>
+              <option value="New Zealand">New Zealand</option>
+              <option value="Nigeria">Nigeria</option>
+              <option value="Norway">Norway</option>
+              <option value="Oman">Oman</option>
+              <option value="Pakistan">Pakistan</option>
+              <option value="Peru">Peru</option>
+              <option value="Philippines">Philippines</option>
+              <option value="Poland">Poland</option>
+              <option value="Portugal">Portugal</option>
+              <option value="Qatar">Qatar</option>
+              <option value="Romania">Romania</option>
+              <option value="Russia">Russia</option>
+              <option value="Saudi Arabia">Saudi Arabia</option>
+              <option value="Serbia">Serbia</option>
+              <option value="Singapore">Singapore</option>
+              <option value="South Africa">South Africa</option>
+              <option value="South Korea">South Korea</option>
+              <option value="Spain">Spain</option>
+              <option value="Sri Lanka">Sri Lanka</option>
+              <option value="Sudan">Sudan</option>
+              <option value="Sweden">Sweden</option>
+              <option value="Switzerland">Switzerland</option>
+              <option value="Syria">Syria</option>
+              <option value="Taiwan">Taiwan</option>
+              <option value="Tanzania">Tanzania</option>
+              <option value="Thailand">Thailand</option>
+              <option value="Tunisia">Tunisia</option>
+              <option value="Turkey">Turkey</option>
+              <option value="Uganda">Uganda</option>
+              <option value="Ukraine">Ukraine</option>
+              <option value="United Arab Emirates">United Arab Emirates</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="United States">United States</option>
+              <option value="Uruguay">Uruguay</option>
+              <option value="Uzbekistan">Uzbekistan</option>
+              <option value="Venezuela">Venezuela</option>
+              <option value="Vietnam">Vietnam</option>
+              <option value="Yemen">Yemen</option>
+              <option value="Zambia">Zambia</option>
+              <option value="Zimbabwe">Zimbabwe</option>
+            </select>
             <button type="submit" disabled={loading} style={{ marginTop: 16, width: "100%" }}>
               {loading ? "Creating..." : "Create Account"}
             </button>
@@ -453,6 +554,100 @@ export default function AuthPage() {
                 <option value="Other">Other</option>
               </select>
             </div>
+
+            <select value={registerForm.country}
+              onChange={(e) => setRegisterForm((p) => ({ ...p, country: e.target.value }))} required>
+              <option value="">Select Country</option>
+              <option value="Afghanistan">Afghanistan</option>
+              <option value="Albania">Albania</option>
+              <option value="Algeria">Algeria</option>
+              <option value="Argentina">Argentina</option>
+              <option value="Australia">Australia</option>
+              <option value="Austria">Austria</option>
+              <option value="Azerbaijan">Azerbaijan</option>
+              <option value="Bahrain">Bahrain</option>
+              <option value="Bangladesh">Bangladesh</option>
+              <option value="Belgium">Belgium</option>
+              <option value="Bolivia">Bolivia</option>
+              <option value="Brazil">Brazil</option>
+              <option value="Canada">Canada</option>
+              <option value="Chile">Chile</option>
+              <option value="China">China</option>
+              <option value="Colombia">Colombia</option>
+              <option value="Croatia">Croatia</option>
+              <option value="Czech Republic">Czech Republic</option>
+              <option value="Denmark">Denmark</option>
+              <option value="Ecuador">Ecuador</option>
+              <option value="Egypt">Egypt</option>
+              <option value="Ethiopia">Ethiopia</option>
+              <option value="Finland">Finland</option>
+              <option value="France">France</option>
+              <option value="Germany">Germany</option>
+              <option value="Ghana">Ghana</option>
+              <option value="Greece">Greece</option>
+              <option value="Guatemala">Guatemala</option>
+              <option value="Hungary">Hungary</option>
+              <option value="India">India</option>
+              <option value="Indonesia">Indonesia</option>
+              <option value="Iran">Iran</option>
+              <option value="Iraq">Iraq</option>
+              <option value="Ireland">Ireland</option>
+              <option value="Israel">Israel</option>
+              <option value="Italy">Italy</option>
+              <option value="Japan">Japan</option>
+              <option value="Jordan">Jordan</option>
+              <option value="Kazakhstan">Kazakhstan</option>
+              <option value="Kenya">Kenya</option>
+              <option value="Kuwait">Kuwait</option>
+              <option value="Lebanon">Lebanon</option>
+              <option value="Libya">Libya</option>
+              <option value="Malaysia">Malaysia</option>
+              <option value="Mexico">Mexico</option>
+              <option value="Morocco">Morocco</option>
+              <option value="Myanmar">Myanmar</option>
+              <option value="Nepal">Nepal</option>
+              <option value="Netherlands">Netherlands</option>
+              <option value="New Zealand">New Zealand</option>
+              <option value="Nigeria">Nigeria</option>
+              <option value="Norway">Norway</option>
+              <option value="Oman">Oman</option>
+              <option value="Pakistan">Pakistan</option>
+              <option value="Peru">Peru</option>
+              <option value="Philippines">Philippines</option>
+              <option value="Poland">Poland</option>
+              <option value="Portugal">Portugal</option>
+              <option value="Qatar">Qatar</option>
+              <option value="Romania">Romania</option>
+              <option value="Russia">Russia</option>
+              <option value="Saudi Arabia">Saudi Arabia</option>
+              <option value="Serbia">Serbia</option>
+              <option value="Singapore">Singapore</option>
+              <option value="South Africa">South Africa</option>
+              <option value="South Korea">South Korea</option>
+              <option value="Spain">Spain</option>
+              <option value="Sri Lanka">Sri Lanka</option>
+              <option value="Sudan">Sudan</option>
+              <option value="Sweden">Sweden</option>
+              <option value="Switzerland">Switzerland</option>
+              <option value="Syria">Syria</option>
+              <option value="Taiwan">Taiwan</option>
+              <option value="Tanzania">Tanzania</option>
+              <option value="Thailand">Thailand</option>
+              <option value="Tunisia">Tunisia</option>
+              <option value="Turkey">Turkey</option>
+              <option value="Uganda">Uganda</option>
+              <option value="Ukraine">Ukraine</option>
+              <option value="United Arab Emirates">United Arab Emirates</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="United States">United States</option>
+              <option value="Uruguay">Uruguay</option>
+              <option value="Uzbekistan">Uzbekistan</option>
+              <option value="Venezuela">Venezuela</option>
+              <option value="Vietnam">Vietnam</option>
+              <option value="Yemen">Yemen</option>
+              <option value="Zambia">Zambia</option>
+              <option value="Zimbabwe">Zimbabwe</option>
+            </select>
 
             <input type="password" placeholder="Password (min 6 chars)" value={registerForm.password}
               onChange={(e) => setRegisterForm((p) => ({ ...p, password: e.target.value }))} required />

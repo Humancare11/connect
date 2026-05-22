@@ -1,40 +1,152 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
+import "./ManageUsers.css";
+
+function InfoSection({ title, children }) {
+  return (
+    <div style={{
+      background: "rgba(248,250,252,0.8)",
+      border: "1px solid rgba(255,255,255,0.75)",
+      borderRadius: 12,
+      padding: "14px 18px",
+      marginBottom: 12,
+    }}>
+      <div style={{
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        color: "#0e6ceb",
+        marginBottom: 12,
+      }}>
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function InfoRow({ icon, label, value, noBorder }) {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 12,
+      padding: "8px 0",
+      borderBottom: noBorder ? "none" : "1px solid rgba(255,255,255,0.6)",
+    }}>
+      <span style={{ fontSize: 15, width: 22, textAlign: "center", flexShrink: 0, marginTop: 1 }}>{icon}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#6b7ca3", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>
+          {label}
+        </div>
+        <div style={{ fontSize: 13.5, fontWeight: 500, color: value ? "#0b0443" : "#94a3b8" }}>
+          {value || "Not provided"}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function UserModal({ user, onClose, onDelete }) {
   if (!user) return null;
-  const row = (label, value) => value ? (
-    <div className="adp-detail-row">
-      <span className="adp-detail-label">{label}</span>
-      <span className="adp-detail-value">{value}</span>
-    </div>
-  ) : null;
+
+  const initials = user.name
+    ? user.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()
+    : "U";
+
+  const joinedDate = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })
+    : "—";
 
   return (
     <div className="adp-overlay" onClick={onClose}>
-      <div className="adp-modal" onClick={e => e.stopPropagation()}>
+      <div className="adp-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+
+        {/* Header */}
         <div className="adp-modal-header">
           <h3 className="adp-modal-title">User Profile</h3>
           <button className="adp-modal-close" onClick={onClose}>✕</button>
         </div>
-        <div className="adp-modal-body">
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "14px 18px", background: "#f8fafc", borderRadius: 12 }}>
-            <div className="adp-avatar" style={{ width: 52, height: 52, fontSize: 20, borderRadius: 14, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff" }}>
-              {user.name?.[0]?.toUpperCase() || "U"}
+
+        <div className="adp-modal-body" style={{ padding: "20px 22px" }}>
+
+          {/* Hero / Identity */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            padding: "18px 20px",
+            background: "linear-gradient(135deg, #0b0443 0%, #083ab0 100%)",
+            borderRadius: 14,
+            marginBottom: 14,
+            position: "relative",
+            overflow: "hidden",
+          }}>
+            <div style={{
+              position: "absolute", top: -30, right: -30,
+              width: 120, height: 120,
+              background: "rgba(255,255,255,0.06)",
+              borderRadius: "50%",
+              pointerEvents: "none",
+            }} />
+            <div style={{
+              width: 60, height: 60, borderRadius: 16, flexShrink: 0,
+              background: "rgba(255,255,255,0.15)",
+              border: "2px solid rgba(255,255,255,0.3)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 22, fontWeight: 800, color: "#fff",
+              backdropFilter: "blur(8px)",
+            }}>
+              {initials}
             </div>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{user.name}</div>
-              <div style={{ fontSize: 13, color: "#64748b" }}>{user.email}</div>
-              <span className="adp-badge adp-badge--approved" style={{ marginTop: 6 }}>User</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#fff", marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user.name}
+              </div>
+              <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.7)", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user.email}
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)",
+                  borderRadius: 20, padding: "3px 10px",
+                  fontSize: 11, fontWeight: 700, color: "#fff", textTransform: "capitalize",
+                }}>
+                  👤 {user.role || "User"}
+                </span>
+                {user.country && (
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 4,
+                    background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)",
+                    borderRadius: 20, padding: "3px 10px",
+                    fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)",
+                  }}>
+                    🌍 {user.country}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-          {row("Email",          user.email)}
-          {row("Mobile",         user.mobile)}
-          {row("Gender",         user.gender)}
-          {row("Date of Birth",  user.dob)}
-          {row("Role",           user.role)}
-          {row("Account Created", new Date(user.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }))}
+
+          {/* Personal Information */}
+          <InfoSection title="Personal Information">
+            <InfoRow icon="📱" label="Mobile" value={user.mobile} />
+            <InfoRow icon="⚧" label="Gender" value={user.gender} />
+            <InfoRow icon="🎂" label="Date of Birth" value={user.dob} />
+            <InfoRow icon="🌍" label="Country" value={user.country} noBorder />
+          </InfoSection>
+
+          {/* Account Information */}
+          <InfoSection title="Account Information">
+            <InfoRow icon="🔑" label="Role" value={user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : "User"} />
+            <InfoRow icon="📅" label="Member Since" value={joinedDate} />
+            <InfoRow icon="🌐" label="Registration IP" value={user.registrationIp || "—"} noBorder />
+          </InfoSection>
+
         </div>
+
         <div className="adp-modal-footer">
           <button className="adp-btn adp-btn--ghost" onClick={onClose}>Close</button>
           <button className="adp-btn adp-btn--reject" onClick={() => onDelete(user._id, user.name)}>Delete User</button>
@@ -67,7 +179,7 @@ export default function ManageUsers() {
       setUsers(prev => prev.filter(u => u._id !== userId));
       setSelected(null);
       showToast("User deleted.");
-    } catch (err) {
+    } catch {
       showToast("Failed to delete user.", false);
     }
   };
@@ -105,7 +217,10 @@ export default function ManageUsers() {
         </div>
         <div className="adp-stat adp-stat--purple">
           <div className="adp-stat-icon">🗓</div>
-          <div className="adp-stat-value">{users.filter(u => { const d = new Date(u.createdAt); const now = new Date(); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length}</div>
+          <div className="adp-stat-value">{users.filter(u => {
+            const d = new Date(u.createdAt); const now = new Date();
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          }).length}</div>
           <div className="adp-stat-label">Joined This Month</div>
         </div>
       </div>
@@ -135,7 +250,7 @@ export default function ManageUsers() {
                   <th>User</th>
                   <th>Mobile</th>
                   <th>Gender</th>
-                  <th>Joined</th>
+                  <th>Country</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -144,7 +259,9 @@ export default function ManageUsers() {
                   <tr key={u._id}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div className="adp-avatar" style={{ background: "#ede9fe", color: "#7c3aed" }}>{u.name?.[0]?.toUpperCase() || "U"}</div>
+                        <div className="adp-avatar" style={{ background: "#ede9fe", color: "#7c3aed" }}>
+                          {u.name ? u.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase() : "U"}
+                        </div>
                         <div>
                           <div style={{ fontWeight: 600, color: "#0f172a" }}>{u.name}</div>
                           <div style={{ fontSize: 12, color: "#94a3b8" }}>{u.email}</div>
@@ -153,7 +270,7 @@ export default function ManageUsers() {
                     </td>
                     <td>{u.mobile || "—"}</td>
                     <td style={{ textTransform: "capitalize" }}>{u.gender || "—"}</td>
-                    <td>{new Date(u.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                    <td>{u.country || "—"}</td>
                     <td>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button className="adp-btn adp-btn--view" onClick={() => setSelected(u)}>View</button>

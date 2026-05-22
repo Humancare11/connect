@@ -1,8 +1,29 @@
 const express = require("express");
 const router = express.Router();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const mongoose = require("mongoose");
 const Enrollment = require("../models/Enrollment");
+const Doctor = require("../models/Doctor");
 const { verifyUserToken, verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
+const { toPaise } = require("../utils/currency");
+
+async function resolveDoctorId(value) {
+  if (!value) return null;
+
+  const numericId = Number(value);
+  if (Number.isInteger(numericId)) {
+    const doctor = await Doctor.findOne({ doctorId: numericId }).select("_id").lean();
+    if (doctor?._id) return doctor._id;
+  }
+
+  if (mongoose.isValidObjectId(value)) {
+    const enrollment = await Enrollment.findById(value).select("doctorId").lean();
+    if (enrollment?.doctorId) return enrollment.doctorId;
+    return value;
+  }
+
+  return null;
+}
 
 /* POST /api/payments/create-intent
    Creates a Stripe PaymentIntent for card payments only.
@@ -11,20 +32,24 @@ router.post("/create-intent", verifyUserToken, async (req, res) => {
   try {
     const { doctorId } = req.body;
     if (!doctorId) return res.status(400).json({ msg: "doctorId is required." });
+    const resolvedDoctorId = await resolveDoctorId(doctorId);
+    if (!resolvedDoctorId) return res.status(404).json({ msg: "Doctor not found." });
 
     const enrollment = await Enrollment.findOne({
-      doctorId,
+      doctorId: resolvedDoctorId,
       approvalStatus: "approved",
     }).lean();
 
-    const feePaise = Math.round((enrollment?.consultantFees || 500) * 100);
+    const feeAmount = enrollment?.consultantFees || 500;
+    const feeCurrency = enrollment?.feeCurrency || "USD";
+    const feePaise = toPaise(feeAmount, feeCurrency);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: feePaise,
       currency: "inr",
       payment_method_types: ["card"],
       metadata: {
-        doctorId: doctorId.toString(),
+        doctorId: resolvedDoctorId.toString(),
         patientId: req.user.id,
       },
     });
@@ -43,13 +68,17 @@ router.get("/fee", verifyUserToken, async (req, res) => {
   try {
     const { doctorId } = req.query;
     if (!doctorId) return res.status(400).json({ msg: "doctorId is required." });
+    const resolvedDoctorId = await resolveDoctorId(doctorId);
+    if (!resolvedDoctorId) return res.status(404).json({ msg: "Doctor not found." });
 
     const enrollment = await Enrollment.findOne({
-      doctorId,
+      doctorId: resolvedDoctorId,
       approvalStatus: "approved",
     }).lean();
-    const feePaise = Math.round((enrollment?.consultantFees || 500) * 100);
-    res.json({ feePaise });
+    const feeAmount = enrollment?.consultantFees || 500;
+    const feeCurrency = enrollment?.feeCurrency || "USD";
+    const feePaise = toPaise(feeAmount, feeCurrency);
+    res.json({ feePaise, feeAmount, feeCurrency });
   } catch (err) {
     console.error("fee error:", err.message);
     res.status(500).json({ msg: "Failed to get fee." });

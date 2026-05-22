@@ -7,11 +7,23 @@ export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On mount: restore session from httpOnly cookie via /me endpoint
+  // On mount: restore session from httpOnly cookie via /me endpoint.
+  // The response now includes a fresh token so localStorage stays in sync
+  // with the cookie — axios interceptors rely on localStorage for Bearer auth.
   useEffect(() => {
     api.get("/api/auth/me")
-      .then(res => setUser(res.data.user))
-      .catch(() => setUser(null))
+      .then(res => {
+        if (res.data.token) {
+          localStorage.setItem("userToken", res.data.token);
+          localStorage.setItem("token", res.data.token);
+        }
+        setUser(res.data.user);
+      })
+      .catch(() => {
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("token");
+        setUser(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -19,6 +31,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/auth/logout"); } catch { /* ignore */ }
+    localStorage.removeItem("userToken");
     localStorage.removeItem("token");
     setUser(null);
   }, []);

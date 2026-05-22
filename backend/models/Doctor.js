@@ -16,9 +16,7 @@ const doctorSchema = new mongoose.Schema(
 
 // Mongoose 9: async pre-save — hash password and generate unique 5-digit doctorId
 doctorSchema.pre("save", async function () {
-  if (!this.isModified("password") || !this.password) {
-    // still need to check for doctorId generation
-  } else {
+  if (this.isModified("password") && this.password) {
     this.password = await bcrypt.hash(this.password, 12);
   }
 

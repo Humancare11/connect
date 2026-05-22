@@ -8,7 +8,7 @@ export function AdminProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("adminToken") || localStorage.getItem("token");
     let role = "";
     if (token) {
       try {
@@ -35,6 +35,7 @@ export function AdminProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/auth/admin-logout"); } catch { /* ignore */ }
+    localStorage.removeItem("adminToken");
     localStorage.removeItem("token");
     setAdmin(null);
   }, []);

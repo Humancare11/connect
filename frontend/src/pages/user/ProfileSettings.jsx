@@ -116,17 +116,18 @@ export default function ProfileSettings() {
   const [saved, setSaved]   = useState(false);
   const [error, setError]   = useState("");
   const [formData, setFormData] = useState({
-    name: "", email: "", mobile: "", gender: "", dob: "",
+    name: "", email: "", mobile: "", gender: "", dob: "", country: "",
   });
 
   useEffect(() => {
     if (user) {
       setFormData({
-        name:   user.name   || "",
-        email:  user.email  || "",
-        mobile: user.mobile || "",
-        gender: user.gender || "",
-        dob:    user.dob    || "",
+        name:    user.name    || "",
+        email:   user.email   || "",
+        mobile:  user.mobile  || "",
+        gender:  user.gender  || "",
+        dob:     user.dob     || "",
+        country: user.country || "",
       });
     }
   }, [user]);
@@ -141,11 +142,12 @@ export default function ProfileSettings() {
   const handleReset = () => {
     if (user) {
       setFormData({
-        name:   user.name   || "",
-        email:  user.email  || "",
-        mobile: user.mobile || "",
-        gender: user.gender || "",
-        dob:    user.dob    || "",
+        name:    user.name    || "",
+        email:   user.email   || "",
+        mobile:  user.mobile  || "",
+        gender:  user.gender  || "",
+        dob:     user.dob     || "",
+        country: user.country || "",
       });
     }
     setSaved(false);
@@ -312,6 +314,9 @@ export default function ProfileSettings() {
                 {formData.mobile && (
                   <MetaRow icon="📞" label="Mobile" value={formData.mobile} />
                 )}
+                {formData.country && (
+                  <MetaRow icon="🌍" label="Country" value={formData.country} />
+                )}
               </div>
             </div>
           </div>
@@ -426,12 +431,20 @@ export default function ProfileSettings() {
                 </Field>
               </div>
 
-              {/* Row 3: DOB (half width) */}
-              <div className="ps-form-row-half" style={{ maxWidth: "50%" }}>
+              {/* Row 3: DOB + Country */}
+              <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
                 <Field label="Date of Birth" icon="🎂">
                   <input
                     style={inputStyle} type="date" id="dob" name="dob"
                     value={formData.dob} onChange={handleChange}
+                    onFocus={onFocus} onBlur={onBlur}
+                  />
+                </Field>
+                <Field label="Country" icon="🌍">
+                  <input
+                    style={inputStyle} type="text" id="country" name="country"
+                    value={formData.country} onChange={handleChange}
+                    placeholder="e.g. India, USA"
                     onFocus={onFocus} onBlur={onBlur}
                   />
                 </Field>
