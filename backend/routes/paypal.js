@@ -1,8 +1,29 @@
 const express    = require("express");
 const router     = express.Router();
+const mongoose   = require("mongoose");
 const { verifyUserToken } = require("../middleware/verifyToken");
 const Enrollment = require("../models/Enrollment");
+const Doctor     = require("../models/Doctor");
 const { paypalFetch } = require("../utils/paypal");
+const { convertAmount } = require("../utils/currency");
+
+async function resolveDoctorId(value) {
+  if (!value) return null;
+
+  const numericId = Number(value);
+  if (Number.isInteger(numericId)) {
+    const doctor = await Doctor.findOne({ doctorId: numericId }).select("_id").lean();
+    if (doctor?._id) return doctor._id;
+  }
+
+  if (mongoose.isValidObjectId(value)) {
+    const enrollment = await Enrollment.findById(value).select("doctorId").lean();
+    if (enrollment?.doctorId) return enrollment.doctorId;
+    return value;
+  }
+
+  return null;
+}
 
 /* POST /api/paypal/create-order
    Creates a PayPal order for the doctor's consultation fee. Returns orderId. */
@@ -10,12 +31,16 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
   try {
     const { doctorId } = req.body;
     if (!doctorId) return res.status(400).json({ msg: "doctorId is required." });
+    const resolvedDoctorId = await resolveDoctorId(doctorId);
+    if (!resolvedDoctorId) return res.status(404).json({ msg: "Doctor not found." });
 
     const enrollment = await Enrollment.findOne({
-      doctorId,
+      doctorId: resolvedDoctorId,
       approvalStatus: "approved",
     }).lean();
-    const feeINR = (enrollment?.consultantFees || 500).toFixed(2);
+    const feeAmount = enrollment?.consultantFees || 500;
+    const feeCurrency = enrollment?.feeCurrency || "USD";
+    const feeINR = convertAmount(feeAmount, feeCurrency, "INR").toFixed(2);
 
     const order = await paypalFetch("POST", "/v2/checkout/orders", {
       intent: "CAPTURE",

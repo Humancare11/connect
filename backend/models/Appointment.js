@@ -45,6 +45,10 @@ const appointmentSchema = new mongoose.Schema(
     paymentAmount:   { type: Number, default: 0 },
     paymentStatus:   { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
     paymentGateway:  { type: String, enum: ["stripe", "paypal", ""], default: "" },
+    doctorPayoutStatus: { type: String, enum: ["pending", "paid"], default: "pending" },
+    doctorPayoutDate:   { type: Date },
+    doctorPayoutRef:    { type: String, default: "" },
+    doctorPayoutOverrideAmount: { type: Number, default: null },
   },
   { timestamps: true }
 );

@@ -3,6 +3,7 @@ const bcrypt     = require("bcryptjs");
 const jwt        = require("jsonwebtoken");
 const User       = require("../models/User");
 const Doctor     = require("../models/Doctor");
+const Enrollment = require("../models/Enrollment");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
 const { COOKIE_OPTS }                     = require("../middleware/verifyToken");
 
@@ -24,6 +25,7 @@ const safeUser = (user) => ({
   mobile:          user.mobile,
   dob:             user.dob,
   gender:          user.gender,
+  country:         user.country,
   specialty:       user.specialty,
   degree:          user.degree,
   experience:      user.experience,
@@ -35,6 +37,29 @@ const safeUser = (user) => ({
   isVerified:      user.isVerified,
   rating:          user.rating,
 });
+
+const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
+
+const ensureDoctorEnrollment = async (doctor) => {
+  const existingEnrollment = await Enrollment.findOne({ doctorId: doctor._id });
+  if (existingEnrollment) return existingEnrollment;
+
+  const nameParts = (doctor.name || "").trim().split(/\s+/);
+  return Enrollment.create({
+    doctorId: doctor._id,
+    firstName: nameParts[0] || "",
+    surname: nameParts.slice(1).join(" ") || "",
+    email: doctor.email,
+    approvalStatus: "pending",
+    formCompleted: false,
+    completedSteps: 0,
+    currentStep: 1,
+    currentStepLabel: STEP_LABELS[0],
+    applicationStatus: "in_progress",
+    pendingRequestType: "new_enrollment",
+    profileDeleteRequestStatus: "none",
+  });
+};
 
 // ════════════════════════════════════════════
 //  1. SEND OTP — user registration
@@ -61,7 +86,7 @@ const sendRegisterOTP = async (req, res) => {
 // ════════════════════════════════════════════
 const register = async (req, res) => {
   try {
-    const { name, email, password, mobile, dob, gender, otp } = req.body;
+    const { name, email, password, mobile, dob, gender, country, otp } = req.body;
 
     if (!name || !email || !password || !otp)
       return res.status(400).json({ msg: "Name, email, password and OTP are required." });
@@ -74,10 +99,16 @@ const register = async (req, res) => {
     const check = await verifyOTPCode(clean, otp, "register", "user");
     if (!check.valid) return res.status(400).json({ msg: check.msg });
 
+    const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim()
+      || req.socket?.remoteAddress
+      || req.ip
+      || "";
+
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
       name, email: clean, password: hashed, role: "user",
       mobile: mobile || "", dob: dob || "", gender: gender || "",
+      country: country || "", registrationIp: ip,
     });
 
     const token = generateToken(user);
@@ -216,19 +247,16 @@ const adminLogin = async (req, res) => {
 // ════════════════════════════════════════════
 const updateProfile = async (req, res) => {
   try {
-    const { name, email, mobile, dob, gender } = req.body;
+    const { name, email, mobile, dob, gender, country } = req.body;
     const userId = req.user.id;
     if (!name || !email) return res.status(400).json({ msg: "Name and email are required." });
-
-    if (!name || !email)
-      return res.status(400).json({ msg: "Name and email are required." });
 
     const existing = await User.findOne({ email, _id: { $ne: userId } });
     if (existing) return res.status(400).json({ msg: "Email is already in use by another account." });
 
     const updated = await User.findByIdAndUpdate(
       userId,
-      { name, email, mobile: mobile || "", dob: dob || "", gender: gender || "" },
+      { name, email, mobile: mobile || "", dob: dob || "", gender: gender || "", country: country || "" },
       { new: true, runValidators: true }
     );
     if (!updated) return res.status(404).json({ msg: "User not found." });
@@ -247,7 +275,7 @@ const updateProfile = async (req, res) => {
 // ════════════════════════════════════════════
 const googleAuthUser = async (req, res) => {
   try {
-    const { accessToken, mobile, dob, gender } = req.body;
+    const { accessToken, mobile, dob, gender, country } = req.body;
     if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
     // Verify token and fetch profile via Google's userinfo endpoint
@@ -266,10 +294,15 @@ const googleAuthUser = async (req, res) => {
       return res.json({ msg: "Login successful.", token, user: safeUser(user) });
     }
 
-    if (!mobile || !dob || !gender)
+    if (!mobile || !dob || !gender || !country)
       return res.status(200).json({ isNewUser: true, googleName: name, googleEmail: email });
 
-    user = await User.create({ name, email, googleId, role: "user", mobile, dob, gender });
+    const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim()
+      || req.socket?.remoteAddress
+      || req.ip
+      || "";
+
+    user = await User.create({ name, email, googleId, role: "user", mobile, dob, gender, country, registrationIp: ip });
     const newToken = generateToken(user);
     res.cookie("userToken", newToken, COOKIE_OPTS);
     return res.status(201).json({ msg: "Registration successful.", token: newToken, user: safeUser(user) });
@@ -302,6 +335,8 @@ const googleAuthDoctor = async (req, res) => {
       doctor = await Doctor.create({ name, email, googleId });
     }
 
+    await ensureDoctorEnrollment(doctor);
+
     const token = jwt.sign(
       { id: doctor._id, email: doctor.email, role: "doctor" },
       process.env.JWT_SECRET,
@@ -312,7 +347,7 @@ const googleAuthDoctor = async (req, res) => {
       message: isNewUser ? "Registration successful." : "Login successful.",
       token,
       isNewUser,
-      doctor: { id: doctor._id, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
+      doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
     });
   } catch (err) {
     console.error("googleAuthDoctor error:", err);
@@ -436,7 +471,9 @@ const me = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found." });
-    return res.json({ user: safeUser(user) });
+    const token = generateToken(user);
+    res.cookie("userToken", token, COOKIE_OPTS);
+    return res.json({ user: safeUser(user), token });
   } catch (err) {
     return res.status(500).json({ msg: "Server error." });
   }

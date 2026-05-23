@@ -38,6 +38,8 @@ const enrollmentSchema = new mongoose.Schema({
   idProofType: String,
   payoutEmail: String,
   paypalId: String,
+  stripeAccountId: String,
+
   accountHolderName: String,
   bankName: String,
   accountNumber: String,
@@ -55,6 +57,33 @@ const enrollmentSchema = new mongoose.Schema({
   hasCertification: { type: Boolean, default: false },
   verified: { type: Boolean, default: false },
   formCompleted: { type: Boolean, default: false },
+
+  // Live onboarding progress
+  completedSteps: { type: Number, default: 0, min: 0, max: 5 },
+  currentStep: { type: Number, default: 1, min: 1, max: 5 },
+  currentStepLabel: { type: String, default: "Identity" },
+  applicationStatus: {
+    type: String,
+    enum: ["in_progress", "pending_review", "submitted", "approved", "rejected"],
+    default: "in_progress",
+  },
+
+  // Active workflow request being handled by admin
+  pendingRequestType: {
+    type: String,
+    enum: ["none", "new_enrollment", "profile_update", "profile_delete"],
+    default: "new_enrollment",
+  },
+  profileUpdateRequestedAt: Date,
+  profileDeleteReason: String,
+  profileDeleteRequestedAt: Date,
+  profileDeleteApprovedAt: Date,
+  profileDeleteRejectedAt: Date,
+  profileDeleteRequestStatus: {
+    type: String,
+    enum: ["none", "pending", "approved", "rejected"],
+    default: "none",
+  },
 
   // Admin approval
   approvalStatus: {

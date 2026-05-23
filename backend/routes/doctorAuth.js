@@ -10,6 +10,31 @@ const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
 const signToken = (id, email) =>
   jwt.sign({ id, email, role: "doctor" }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
+const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const toStepNumber = (value, fallback) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.trunc(parsed);
+};
+
+const deriveApplicationStatus = (enrollment) => {
+  if (enrollment.approvalStatus === "approved") return "approved";
+  if (enrollment.approvalStatus === "rejected") return "rejected";
+  if (enrollment.formCompleted) return "submitted";
+  if ((enrollment.completedSteps || 0) >= 4) return "pending_review";
+  return "in_progress";
+};
+
+const applyProgress = (enrollment, nextCompletedSteps, nextCurrentStep) => {
+  const completedSteps = clamp(toStepNumber(nextCompletedSteps, enrollment.completedSteps || 0), 0, 5);
+  const currentStep = clamp(toStepNumber(nextCurrentStep, enrollment.currentStep || 1), 1, 5);
+  enrollment.completedSteps = completedSteps;
+  enrollment.currentStep = currentStep;
+  enrollment.currentStepLabel = STEP_LABELS[currentStep - 1] || "Identity";
+  enrollment.applicationStatus = deriveApplicationStatus(enrollment);
+};
+
 // ── POST /api/doctor/send-register-otp ───────────────────────────────────────
 router.post("/send-register-otp", async (req, res) => {
   try {
@@ -62,6 +87,12 @@ router.post("/register", async (req, res) => {
       email: cleanEmail,
       approvalStatus: "pending",
       formCompleted: false,
+      completedSteps: 0,
+      currentStep: 1,
+      currentStepLabel: STEP_LABELS[0],
+      applicationStatus: "in_progress",
+      pendingRequestType: "new_enrollment",
+      profileDeleteRequestStatus: "none",
     });
 
     const token = signToken(doctor._id, doctor.email);
@@ -96,10 +127,31 @@ router.post("/login", async (req, res) => {
 
     const token = signToken(doctor._id, doctor.email);
     res.cookie("doctorToken", token, COOKIE_OPTS);
+
+    // Ensure every doctor appears in Manage Doctors even if enrollment is missing.
+    const existingEnrollment = await Enrollment.findOne({ doctorId: doctor._id });
+    if (!existingEnrollment) {
+      const nameParts = doctor.name.trim().split(/\s+/);
+      await Enrollment.create({
+        doctorId: doctor._id,
+        firstName: nameParts[0] || "",
+        surname: nameParts.slice(1).join(" ") || "",
+        email: doctor.email,
+        approvalStatus: "pending",
+        formCompleted: false,
+        completedSteps: 0,
+        currentStep: 1,
+        currentStepLabel: STEP_LABELS[0],
+        applicationStatus: "in_progress",
+        pendingRequestType: "new_enrollment",
+        profileDeleteRequestStatus: "none",
+      });
+    }
+
     return res.status(200).json({
       message: "Login successful.",
       token,
-      doctor: { id: doctor._id, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
+      doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
     });
   } catch (err) {
     return res.status(500).json({ message: err.message || "Server error. Please try again." });
@@ -192,7 +244,7 @@ router.get("/me", verifyDoctorToken, async (req, res) => {
     const doctor = await Doctor.findById(req.user.id).select("-password");
     if (!doctor) return res.status(404).json({ message: "Doctor not found." });
     return res.status(200).json({
-      doctor: { id: doctor._id, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
+      doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
     });
   } catch {
     return res.status(401).json({ message: "Invalid or expired token." });
@@ -200,8 +252,11 @@ router.get("/me", verifyDoctorToken, async (req, res) => {
 });
 
 // ── GET /api/doctor/enrollment/:doctorId ──────────────────────────────────────
-router.get("/enrollment/:doctorId", async (req, res) => {
+router.get("/enrollment/:doctorId", verifyDoctorToken, async (req, res) => {
   try {
+    if (req.user.id !== req.params.doctorId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
     const enrollment = await Enrollment.findOne({ doctorId: req.params.doctorId });
     res.json(enrollment);
   } catch {
@@ -210,10 +265,13 @@ router.get("/enrollment/:doctorId", async (req, res) => {
 });
 
 // ── POST /api/doctor/enrollment ───────────────────────────────────────────────
-router.post("/enrollment", async (req, res) => {
+router.post("/enrollment", verifyDoctorToken, async (req, res) => {
   try {
     const { doctorId, ...enrollmentData } = req.body;
     if (!doctorId) return res.status(400).json({ message: "Doctor ID required" });
+    if (req.user.id !== doctorId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
 
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
@@ -226,15 +284,34 @@ router.post("/enrollment", async (req, res) => {
         enrollment.approvalStatus === "approved" || enrollment.approvalStatus === "rejected";
       Object.assign(enrollment, enrollmentData);
       enrollment.formCompleted = true;
+      enrollment.completedSteps = 5;
+      enrollment.currentStep = 5;
+      enrollment.currentStepLabel = STEP_LABELS[4];
       if (wasApprovedOrRejected) {
         enrollment.approvalStatus = "pending";
         enrollment.verified = false;
+        enrollment.pendingRequestType = "profile_update";
+        enrollment.profileUpdateRequestedAt = new Date();
         responseMessage = "Update request submitted and pending admin approval.";
+      } else {
+        enrollment.pendingRequestType = enrollment.pendingRequestType || "new_enrollment";
       }
+      enrollment.profileDeleteRequestStatus = "none";
+      enrollment.applicationStatus = deriveApplicationStatus(enrollment);
       enrollment.updatedAt = new Date();
       await enrollment.save();
     } else {
-      enrollment = new Enrollment({ doctorId, ...enrollmentData, formCompleted: true });
+      enrollment = new Enrollment({
+        doctorId,
+        ...enrollmentData,
+        formCompleted: true,
+        completedSteps: 5,
+        currentStep: 5,
+        currentStepLabel: STEP_LABELS[4],
+        applicationStatus: "submitted",
+        pendingRequestType: "new_enrollment",
+        profileDeleteRequestStatus: "none",
+      });
       await enrollment.save();
     }
 
@@ -249,8 +326,88 @@ router.post("/enrollment", async (req, res) => {
 });
 
 // ── PATCH /api/doctor/enrollment/:doctorId/consultation-fee ──────────────────
-router.patch("/enrollment/:doctorId/consultation-fee", async (req, res) => {
+
+router.patch("/enrollment/progress", verifyDoctorToken, async (req, res) => {
   try {
+    const { doctorId, completedSteps, currentStep } = req.body;
+    if (!doctorId) return res.status(400).json({ message: "Doctor ID required" });
+    if (req.user.id !== doctorId) return res.status(403).json({ message: "Access denied." });
+
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+
+    let enrollment = await Enrollment.findOne({ doctorId });
+    if (!enrollment) {
+      const nameParts = doctor.name.trim().split(/\s+/);
+      enrollment = new Enrollment({
+        doctorId,
+        firstName: nameParts[0] || "",
+        surname: nameParts.slice(1).join(" ") || "",
+        email: doctor.email,
+        approvalStatus: "pending",
+        formCompleted: false,
+        pendingRequestType: "new_enrollment",
+      });
+    }
+
+    applyProgress(enrollment, completedSteps, currentStep);
+    enrollment.updatedAt = new Date();
+    await enrollment.save();
+
+    return res.json({
+      message: "Progress saved",
+      enrollment: {
+        completedSteps: enrollment.completedSteps,
+        currentStep: enrollment.currentStep,
+        currentStepLabel: enrollment.currentStepLabel,
+        applicationStatus: enrollment.applicationStatus,
+      },
+    });
+  } catch (err) {
+    console.error("update enrollment progress error:", err);
+    return res.status(500).json({ message: "Server error." });
+  }
+});
+
+router.post("/profile-delete-request", verifyDoctorToken, async (req, res) => {
+  try {
+    const doctorId = req.user.id;
+    const { reason } = req.body || {};
+
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) return res.status(404).json({ message: "Doctor not found." });
+
+    const enrollment = await Enrollment.findOne({ doctorId });
+    if (!enrollment) return res.status(404).json({ message: "Enrollment not found." });
+
+    if (enrollment.profileDeleteRequestStatus === "pending") {
+      return res.status(400).json({ message: "A delete request is already pending admin approval." });
+    }
+
+    enrollment.profileDeleteReason = String(reason || "").trim();
+    enrollment.profileDeleteRequestedAt = new Date();
+    enrollment.profileDeleteRejectedAt = undefined;
+    enrollment.profileDeleteApprovedAt = undefined;
+    enrollment.profileDeleteRequestStatus = "pending";
+    enrollment.pendingRequestType = "profile_delete";
+    enrollment.applicationStatus = "pending_review";
+    enrollment.updatedAt = new Date();
+    await enrollment.save();
+
+    return res.status(201).json({
+      message: "Profile delete request sent to admin for approval.",
+      enrollment,
+    });
+  } catch (err) {
+    console.error("profile delete request error:", err);
+    return res.status(500).json({ message: "Server error." });
+  }
+});
+router.patch("/enrollment/:doctorId/consultation-fee", verifyDoctorToken, async (req, res) => {
+  try {
+    if (req.user.id !== req.params.doctorId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
     const { consultantFees } = req.body;
     const fee = Number(consultantFees);
     if (isNaN(fee) || fee < 0)
@@ -357,3 +514,4 @@ router.get("/:id", async (req, res) => {
 });
 
 module.exports = router;
+

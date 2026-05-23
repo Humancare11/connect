@@ -3,8 +3,15 @@
 ═══════════════════════════════════════════ */
 
 .ap-page {
+  --ap-primary: #223a5e;
+  --ap-primary-hover: #1b2f4b;
+  --ap-primary-soft: #eef4fb;
+  --ap-primary-border: #cbd9ea;
+  --ap-ink: #0b1f3a;
+  --ap-muted: #64748b;
+  --teal: var(--ap-primary);
   min-height: 100vh;
-  background: var(--bg, #f1f5f9);
+  background: linear-gradient(180deg, #f7faff 0%, #eef4fb 100%);
   padding: 40px 20px 80px;
 }
 
@@ -12,8 +19,9 @@
   max-width: 640px;
   margin: 0 auto;
   background: #fff;
-  border-radius: 22px;
-  box-shadow: 0 8px 48px rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(34, 58, 94, 0.1);
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(34, 58, 94, 0.12);
   overflow: hidden;
 }
 
@@ -24,8 +32,8 @@
   align-items: center;
   gap: 18px;
   padding: 28px 32px;
-  background: linear-gradient(135deg, #f0fdf4 0%, #e8faf5 100%);
-  border-bottom: 1px solid #d1fae5;
+  background: linear-gradient(135deg, #f8fbff 0%, #e9f1fb 100%);
+  border-bottom: 1px solid var(--ap-primary-border);
 }
 
 .ap-hero-avatar {
@@ -48,14 +56,14 @@
   font-weight: 600;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--teal, #0c8b7a);
+  color: var(--ap-primary);
   margin-bottom: 5px;
 }
 
 .ap-hero-name {
   font-size: 20px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--ap-ink);
   margin: 0 0 4px;
 }
 
@@ -87,7 +95,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--teal, #0c8b7a);
+  background: var(--ap-primary);
   color: #fff;
   font-size: 12px;
   font-weight: 700;
@@ -129,8 +137,8 @@
 }
 
 .ap-date-input:focus {
-  border-color: var(--teal, #0c8b7a);
-  box-shadow: 0 0 0 3px rgba(12, 139, 122, .1);
+  border-color: var(--ap-primary);
+  box-shadow: 0 0 0 3px rgba(34, 58, 94, .12);
   background: #fff;
 }
 
@@ -171,17 +179,17 @@
 }
 
 .ap-slot:hover:not(:disabled) {
-  border-color: var(--teal, #0c8b7a);
-  background: rgba(12, 139, 122, .05);
-  color: var(--teal, #0c8b7a);
+  border-color: var(--ap-primary);
+  background: var(--ap-primary-soft);
+  color: var(--ap-primary);
   transform: translateY(-1px);
 }
 
 .ap-slot--selected {
-  background: var(--teal, #0c8b7a) !important;
-  border-color: var(--teal, #0c8b7a) !important;
+  background: var(--ap-primary) !important;
+  border-color: var(--ap-primary) !important;
   color: #fff !important;
-  box-shadow: 0 4px 14px rgba(12, 139, 122, .35);
+  box-shadow: 0 4px 14px rgba(34, 58, 94, .28);
   transform: translateY(-1px);
 }
 
@@ -227,7 +235,7 @@
 }
 
 .ap-legend--avail::before { border-color: #cbd5e1; background: #fff; }
-.ap-legend--sel::before   { border-color: var(--teal, #0c8b7a); background: var(--teal, #0c8b7a); }
+.ap-legend--sel::before   { border-color: var(--ap-primary); background: var(--ap-primary); }
 .ap-legend--na::before    { border-color: #f1f5f9; background: #f8fafc; }
 
 /* ── Textarea ─────────────────────────── */
@@ -249,8 +257,8 @@
 }
 
 .ap-textarea:focus {
-  border-color: var(--teal, #0c8b7a);
-  box-shadow: 0 0 0 3px rgba(12, 139, 122, .1);
+  border-color: var(--ap-primary);
+  box-shadow: 0 0 0 3px rgba(34, 58, 94, .12);
   background: #fff;
 }
 
@@ -268,15 +276,15 @@
 
 .ap-upload-zone:hover,
 .ap-upload-zone--over {
-  border-color: var(--teal, #0c8b7a);
-  background: rgba(12, 139, 122, .03);
+  border-color: var(--ap-primary);
+  background: var(--ap-primary-soft);
 }
 
 .ap-upload-zone--busy { cursor: default; opacity: .8; }
 
 .ap-upload-icon { font-size: 26px; display: block; margin-bottom: 7px; }
 .ap-upload-text { font-size: 14px; color: #334155; margin: 0 0 4px; }
-.ap-upload-link { color: var(--teal, #0c8b7a); font-weight: 600; text-decoration: underline; }
+.ap-upload-link { color: var(--ap-primary); font-weight: 600; text-decoration: underline; }
 .ap-upload-sub  { font-size: 12px; color: #94a3b8; margin: 0; }
 
 .ap-upload-busy {
@@ -288,8 +296,8 @@
 
 .ap-spinner {
   display: inline-block; width: 16px; height: 16px;
-  border: 2px solid rgba(12, 139, 122, .2);
-  border-top-color: var(--teal, #0c8b7a);
+  border: 2px solid rgba(34, 58, 94, .18);
+  border-top-color: var(--ap-primary);
   border-radius: 50%; animation: ap-spin .7s linear infinite;
   flex-shrink: 0;
 }
@@ -337,8 +345,8 @@
 .ap-submit {
   padding: 15px 20px;
   border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #0c8b7a, #0a7a6b);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--ap-primary), #2d4f7a);
   color: #fff;
   font-family: inherit;
   font-size: 15px;
@@ -355,7 +363,7 @@
 .ap-submit:hover:not(:disabled) {
   opacity: .92;
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(12, 139, 122, .35);
+  box-shadow: 0 8px 24px rgba(34, 58, 94, .28);
 }
 
 .ap-submit:disabled {
@@ -379,8 +387,8 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: #ecfdf5;
-  border: 2px solid #6ee7b7;
+  background: var(--ap-primary-soft);
+  border: 2px solid var(--ap-primary-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -390,7 +398,7 @@
 .ap-success-icon svg {
   width: 30px;
   height: 30px;
-  stroke: var(--teal, #0c8b7a);
+  stroke: var(--ap-primary);
 }
 
 .ap-success-title {
@@ -446,8 +454,8 @@
 .ap-report-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ap-report-chip-sm {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: 12px; background: rgba(12, 139, 122, .08);
-  color: var(--teal, #0c8b7a); border: 1px solid rgba(12, 139, 122, .2);
+  font-size: 12px; background: var(--ap-primary-soft);
+  color: var(--ap-primary); border: 1px solid var(--ap-primary-border);
   border-radius: 20px; padding: 3px 10px;
 }
 
@@ -455,15 +463,15 @@
 .ap-btn-outline {
   display: block; width: 100%;
   padding: 13px; border-radius: 12px;
-  border: 1.5px solid var(--teal, #0c8b7a);
-  background: transparent; color: var(--teal, #0c8b7a);
+  border: 1.5px solid var(--ap-primary);
+  background: transparent; color: var(--ap-primary);
   font-family: inherit; font-size: 14px; font-weight: 700;
   text-align: center; text-decoration: none;
   transition: background .2s, color .2s;
   cursor: pointer;
 }
 
-.ap-btn-outline:hover { background: var(--teal, #0c8b7a); color: #fff; }
+.ap-btn-outline:hover { background: var(--ap-primary); color: #fff; }
 
 /* ── Hero fee badge ───────────────────── */
 
@@ -486,7 +494,7 @@
 .ap-hero-fee-amount {
   font-size: 20px;
   font-weight: 800;
-  color: var(--teal, #0c8b7a);
+  color: var(--ap-primary);
 }
 
 /* ── Progress bar ─────────────────────── */
@@ -511,7 +519,7 @@
 }
 
 .ap-progress-step--active { color: #0f172a; }
-.ap-progress-step--done   { color: var(--teal, #0c8b7a); }
+.ap-progress-step--done   { color: var(--ap-primary); }
 
 .ap-progress-dot {
   width: 24px;
@@ -528,14 +536,14 @@
 }
 
 .ap-progress-step--active .ap-progress-dot {
-  border-color: var(--teal, #0c8b7a);
-  background: var(--teal, #0c8b7a);
+  border-color: var(--ap-primary);
+  background: var(--ap-primary);
   color: #fff;
 }
 
 .ap-progress-step--done .ap-progress-dot {
-  border-color: var(--teal, #0c8b7a);
-  background: var(--teal, #0c8b7a);
+  border-color: var(--ap-primary);
+  background: var(--ap-primary);
   color: #fff;
   font-size: 12px;
 }
@@ -549,7 +557,7 @@
   transition: background .3s;
 }
 
-.ap-progress-line--done { background: var(--teal, #0c8b7a); }
+.ap-progress-line--done { background: var(--ap-primary); }
 
 /* ── Confirming (post-redirect loading) ─ */
 
@@ -631,13 +639,13 @@
 .ap-pay-summary-row strong { color: #0f172a; text-align: right; }
 
 .ap-pay-summary-row--fee {
-  background: #f0fdf4;
+  background: var(--ap-primary-soft);
 }
 
 .ap-pay-fee-amount {
   font-size: 18px;
   font-weight: 800;
-  color: var(--teal, #0c8b7a) !important;
+  color: var(--ap-primary) !important;
 }
 
 /* PaymentElement wrapper */
@@ -709,17 +717,17 @@
 }
 
 .ap-pay-method-btn:hover:not(:disabled) {
-  border-color: var(--teal, #0c8b7a);
-  background: rgba(12, 139, 122, .03);
+  border-color: var(--ap-primary);
+  background: var(--ap-primary-soft);
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(12, 139, 122, .12);
+  box-shadow: 0 4px 16px rgba(34, 58, 94, .12);
 }
 
 .ap-pay-method-btn--active {
-  border-color: var(--teal, #0c8b7a) !important;
-  background: #f0fdf4 !important;
+  border-color: var(--ap-primary) !important;
+  background: var(--ap-primary-soft) !important;
   color: #0f172a;
-  box-shadow: 0 0 0 3px rgba(12, 139, 122, .12);
+  box-shadow: 0 0 0 3px rgba(34, 58, 94, .12);
 }
 
 .ap-pay-method-btn--active::after {
@@ -730,7 +738,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--teal, #0c8b7a);
+  background: var(--ap-primary);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -780,7 +788,7 @@
 }
 
 /* ── Success extra ─────────────────────── */
-.ap-success-val--green { color: var(--teal, #0c8b7a); }
+.ap-success-val--green { color: var(--ap-primary); }
 
 /* ── Responsive ───────────────────────── */
 

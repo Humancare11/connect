@@ -1,11 +1,13 @@
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, Navigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import "./Appointment.css";
-import api from "../api";
+import api, { getUserAuthToken } from "../api";
 import { notifyUserActivityUpdated } from "../utils/activityEvents";
+import { useAuth } from "../context/AuthContext";
+import { useCurrency } from "../hooks/useCurrency";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
@@ -13,7 +15,7 @@ const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 const ELEMENTS_APPEARANCE = {
   theme: "stripe",
   variables: {
-    colorPrimary: "#0c8b7a",
+    colorPrimary: "#223a5e",
     colorBackground: "#ffffff",
     colorText: "#0f172a",
     colorDanger: "#dc2626",
@@ -24,11 +26,11 @@ const ELEMENTS_APPEARANCE = {
   },
   rules: {
     ".Input": { border: "1.5px solid #e2e8f0", boxShadow: "none", backgroundColor: "#f8fafc" },
-    ".Input:focus": { border: "1.5px solid #0c8b7a", boxShadow: "0 0 0 3px rgba(12,139,122,.12)", backgroundColor: "#fff" },
+    ".Input:focus": { border: "1.5px solid #223a5e", boxShadow: "0 0 0 3px rgba(34,58,94,.12)", backgroundColor: "#fff" },
     ".Label": { color: "#334155", fontWeight: "600", fontSize: "13px" },
     ".Tab": { border: "1.5px solid #e2e8f0", borderRadius: "10px" },
-    ".Tab:hover": { border: "1.5px solid #0c8b7a" },
-    ".Tab--selected": { border: "1.5px solid #0c8b7a", backgroundColor: "#f0fdf4" },
+    ".Tab:hover": { border: "1.5px solid #223a5e" },
+    ".Tab--selected": { border: "1.5px solid #223a5e", backgroundColor: "#eef4fb" },
   },
 };
 
@@ -38,6 +40,10 @@ const ALL_SLOTS = [];
 for (let h = 8; h < 20; h++) {
   ALL_SLOTS.push(`${String(h).padStart(2, "0")}:00`);
   ALL_SLOTS.push(`${String(h).padStart(2, "0")}:30`);
+}
+
+function getBookingDoctorId(doctor) {
+  return doctor?.mongoId || doctor?.doctorMongoId || doctor?.doctorIdMongo || doctor?.doctorId || doctor?.id;
 }
 
 function formatSlot(time) {
@@ -51,10 +57,6 @@ function formatDisplayDate(dateStr) {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-IN", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
-}
-
-function formatINR(paise) {
-  return (paise / 100).toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 }
 
 const FILE_ICONS = { pdf: "📄", image: "🖼️", doc: "📝", default: "📎" };
@@ -72,7 +74,7 @@ function formatBytes(b) {
 }
 
 /* ─── Stripe payment form (must be inside <Elements>) ─────── */
-function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess }) {
+function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess, formatFee }) {
   const stripe = useStripe();
   const elements = useElements();
   const [paying, setPaying] = useState(false);
@@ -109,7 +111,7 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess }) 
       <div className="ap-pay-element-wrap">
         <PaymentElement onReady={() => setReady(true)} options={{ layout: "tabs", paymentMethodOrder: ["card"] }} />
       </div>
-      <div className="ap-pay-notice" style={{ fontSize: "12px", padding: "12px", background: "#f0fdf4", border: "1px solid #d1fae5", borderRadius: "8px", color: "#065f46", marginTop: "12px" }}>
+      <div className="ap-pay-notice" style={{ fontSize: "12px", padding: "12px", background: "#eef4fb", border: "1px solid #cbd9ea", borderRadius: "8px", color: "#223a5e", marginTop: "12px" }}>
         <strong>Test Mode:</strong> Use card number <code style={{ background: "#fff", padding: "2px 4px", borderRadius: "4px" }}>4242 4242 4242 4242</code> with any future date and any CVC.
       </div>
 
@@ -131,14 +133,14 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess }) 
       <button className="ap-submit" type="submit" disabled={!stripe || !ready || paying}>
         {paying
           ? <><span className="ap-spinner ap-spinner--white" /> Processing payment…</>
-          : `Pay ${formatINR(amount)} →`}
+          : `Pay ${formatFee(amount)} →`}
       </button>
     </form>
   );
 }
 
 /* ─── Payment stage ───────────────────────────────────────── */
-function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
+function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, formatFee }) {
   const [method, setMethod] = useState(null); // null | "stripe" | "paypal"
   const [clientSecret, setClientSecret] = useState("");
   const [stripeCreating, setStripeCreating] = useState(false);
@@ -151,7 +153,7 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
     if (clientSecret) { setMethod("stripe"); return; }
     setStripeCreating(true);
     try {
-      const doctorId = doctor.doctorId || doctor.id;
+      const doctorId = getBookingDoctorId(doctor);
       const res = await api.post("/api/payments/create-intent", { doctorId });
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
@@ -163,7 +165,7 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
   };
 
   const createPaypalOrder = async () => {
-    const doctorId = doctor.doctorId || doctor.id;
+    const doctorId = getBookingDoctorId(doctor);
     const res = await api.post("/api/paypal/create-order", { doctorId });
     return res.data.orderId;
   };
@@ -202,7 +204,7 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
           <div className="ap-pay-summary-row"><span>Time</span><strong>{formatSlot(form.time)}</strong></div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">{formatINR(amount)}</strong>
+            <strong className="ap-pay-fee-amount">{formatFee(amount)}</strong>
           </div>
         </div>
 
@@ -257,6 +259,7 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
               form={form}
               reports={reports}
               onSuccess={(piId) => onComplete(piId, "stripe")}
+              formatFee={formatFee}
             />
           </Elements>
         )}
@@ -288,6 +291,22 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete }) {
 /* ─── Main component ──────────────────────────────────────── */
 export default function BookAppointment() {
   const { state } = useLocation();
+  const { user, loading: authLoading } = useAuth();
+  const { formatPrice } = useCurrency();
+  const userToken = getUserAuthToken();
+
+  const getDoctorFee = (doc = doctor) => {
+    const amount = typeof doc?.price === "number" ? doc.price : Number(doc?.price) || 0;
+    return {
+      amount,
+      currency: doc?.feeCurrency || "USD",
+    };
+  };
+  const formatDoctorPrice = (doc = doctor) => {
+    const fee = getDoctorFee(doc);
+    return formatPrice(fee.amount, fee.currency);
+  };
+  const formatFee = () => formatDoctorPrice();
 
   const [doctor, setDoctor] = useState(state?.doctor || null);
   const [form, setForm] = useState({ date: "", time: "", problem: "" });
@@ -334,14 +353,14 @@ export default function BookAppointment() {
 
   /* ── Fetch booked slots when date changes ── */
   useEffect(() => {
-    if (!form.date || !doctor) return;
+    if (!form.date || !doctor || !userToken) return;
     setLoadingSlots(true);
-    const doctorId = doctor.doctorId || doctor.id;
+    const doctorId = getBookingDoctorId(doctor);
     api.get(`/api/appointments/booked-slots?doctorId=${doctorId}&date=${form.date}`)
       .then((res) => setBookedSlots(res.data.slots || []))
       .catch(() => setBookedSlots([]))
       .finally(() => setLoadingSlots(false));
-  }, [form.date, doctor]);
+  }, [form.date, doctor, userToken]);
 
   /* ── Slot helpers ── */
   const getEarliestAllowed = () => {
@@ -383,10 +402,21 @@ export default function BookAppointment() {
   /* Fetch fee and move to payment stage */
   const handleProceedToPayment = async () => {
     setError("");
+    if (!userToken) {
+      setError("Please login again before booking your appointment.");
+      return;
+    }
     setFetchingFee(true);
     try {
-      const doctorId = doctor.doctorId || doctor.id;
+      const doctorId = getBookingDoctorId(doctor);
       const res = await api.get(`/api/payments/fee?doctorId=${doctorId}`);
+      if (res.data.feeAmount && res.data.feeCurrency) {
+        setDoctor((prev) => prev ? {
+          ...prev,
+          price: res.data.feeAmount,
+          feeCurrency: res.data.feeCurrency,
+        } : prev);
+      }
       setPaymentAmount(res.data.feePaise);
       setStage("payment");
     } catch (err) {
@@ -410,7 +440,7 @@ export default function BookAppointment() {
       const d = doc || doctor;
       const f = frm || form;
       const r = reps || reports;
-      const doctorId = d.doctorId || d.id;
+      const doctorId = getBookingDoctorId(d);
 
       const body = {
         doctorId, date: f.date, time: f.time,
@@ -434,6 +464,24 @@ export default function BookAppointment() {
   const availableCount = form.date ? ALL_SLOTS.filter(s => slotStatus(s) === "available").length : 0;
   const stepBase = form.date ? 0 : -1;
   const canProceed = form.date && form.time && form.problem.trim() && !uploading;
+
+  /* Auth guard — redirect to login (with return state) if not authenticated */
+  if (authLoading) {
+    return (
+      <div className="ap-page">
+        <div className="ap-card">
+          <div className="ap-confirming">
+            <span className="ap-spinner ap-spinner--lg" />
+            <p>Loading…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!user || !userToken) {
+    localStorage.removeItem("userToken");
+    return <Navigate to="/login" state={{ from: "/book-appointment", doctor: state?.doctor }} replace />;
+  }
 
   /* Confirming — spinner while booking is being created */
   if (stage === "confirming") {
@@ -459,7 +507,7 @@ export default function BookAppointment() {
 
         {/* ── Hero ── */}
         <div className="ap-hero">
-          <div className="ap-hero-avatar" style={{ background: doctor.color || "#0c8b7a" }}>{doctor.initials}</div>
+          <div className="ap-hero-avatar" style={{ background: doctor.color || "#223a5e" }}>{doctor.initials}</div>
           <div className="ap-hero-body">
             <span className="ap-hero-eyebrow">Book Appointment</span>
             <h2 className="ap-hero-name">{doctor.name}</h2>
@@ -469,7 +517,7 @@ export default function BookAppointment() {
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
-                {doctor.price.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })}
+                {formatDoctorPrice(doctor)}
               </span>
             </div>
           )}
@@ -598,7 +646,7 @@ export default function BookAppointment() {
             <button className="ap-submit" type="button" disabled={!canProceed || fetchingFee} onClick={handleProceedToPayment}>
               {fetchingFee
                 ? <><span className="ap-spinner ap-spinner--white" /> Loading…</>
-                : <>Proceed to Payment{doctor.price > 0 ? ` — ${doctor.price.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })}` : ""} →</>}
+                : <>Proceed to Payment{doctor.price > 0 ? ` — ${formatDoctorPrice(doctor)}` : ""} →</>}
             </button>
           </div>
         )}
@@ -612,6 +660,7 @@ export default function BookAppointment() {
             reports={reports}
             onBack={() => setStage("form")}
             onComplete={handlePaymentComplete}
+            formatFee={formatFee}
           />
         )}
 
@@ -630,7 +679,7 @@ export default function BookAppointment() {
                 <div className="ap-success-row"><span className="ap-success-key">Doctor</span><span className="ap-success-val">{doctor.name}</span></div>
                 <div className="ap-success-row"><span className="ap-success-key">Date</span><span className="ap-success-val">{formatDisplayDate(appointment.date)}</span></div>
                 <div className="ap-success-row"><span className="ap-success-key">Time</span><span className="ap-success-val">{formatSlot(appointment.time)}</span></div>
-                <div className="ap-success-row"><span className="ap-success-key">Amount Paid</span><span className="ap-success-val ap-success-val--green">{formatINR(paymentAmount)}</span></div>
+                <div className="ap-success-row"><span className="ap-success-key">Amount Paid</span><span className="ap-success-val ap-success-val--green">{formatFee(paymentAmount)}</span></div>
                 <div className="ap-success-row"><span className="ap-success-key">Status</span><span className="ap-badge ap-badge--pending">Pending Confirmation</span></div>
               </div>
             )}

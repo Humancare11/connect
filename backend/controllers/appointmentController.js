@@ -2,9 +2,28 @@ const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
+const mongoose = require("mongoose");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { paypalFetch } = require("../utils/paypal");
 const { sendEmail } = require("../utils/sendEmail");
+
+async function resolveDoctorId(value) {
+  if (!value) return null;
+
+  const numericId = Number(value);
+  if (Number.isInteger(numericId)) {
+    const doctor = await Doctor.findOne({ doctorId: numericId }).select("_id").lean();
+    if (doctor?._id) return doctor._id;
+  }
+
+  if (mongoose.isValidObjectId(value)) {
+    const enrollment = await Enrollment.findById(value).select("doctorId").lean();
+    if (enrollment?.doctorId) return enrollment.doctorId;
+    return value;
+  }
+
+  return null;
+}
 
 const createAppointment = async (req, res) => {
   try {
@@ -57,14 +76,15 @@ const createAppointment = async (req, res) => {
       paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
     }
 
-    const doctor = await Doctor.findById(doctorId);
+    const resolvedDoctorId = await resolveDoctorId(doctorId);
+    const doctor = resolvedDoctorId ? await Doctor.findById(resolvedDoctorId) : null;
     if (!doctor) {
       return res.status(404).json({ msg: "Doctor not found." });
     }
 
     // Slot conflict — reject if doctor already has an active booking at this date+time
     const conflict = await Appointment.findOne({
-      doctorId,
+      doctorId: resolvedDoctorId,
       date,
       time,
       status: { $in: ["pending", "confirmed"] },
@@ -75,7 +95,7 @@ const createAppointment = async (req, res) => {
 
     const appointment = await Appointment.create({
       patientId,
-      doctorId,
+      doctorId: resolvedDoctorId,
       date,
       time,
       problem,
@@ -88,10 +108,10 @@ const createAppointment = async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      io.to(`doctor_${doctorId}`).emit("new-appointment", {
+      io.to(`doctor_${resolvedDoctorId}`).emit("new-appointment", {
         appointmentId: appointment._id,
         patientId,
-        doctorId,
+        doctorId: resolvedDoctorId,
         status: appointment.status,
         date,
         time,
@@ -99,7 +119,7 @@ const createAppointment = async (req, res) => {
       io.to("admin_room").emit("new-appointment", {
         appointmentId: appointment._id,
         patientId,
-        doctorId,
+        doctorId: resolvedDoctorId,
         status: appointment.status,
         date,
         time,
@@ -470,8 +490,10 @@ const getBookedSlots = async (req, res) => {
     if (!doctorId || !date) {
       return res.status(400).json({ msg: "doctorId and date required." });
     }
+    const resolvedDoctorId = await resolveDoctorId(doctorId);
+    if (!resolvedDoctorId) return res.status(404).json({ msg: "Doctor not found." });
     const appointments = await Appointment.find({
-      doctorId,
+      doctorId: resolvedDoctorId,
       date,
       status: { $in: ["pending", "confirmed"] },
     }).select("time").lean();

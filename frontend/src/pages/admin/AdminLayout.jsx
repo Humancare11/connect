@@ -20,18 +20,46 @@ const NAV_ITEMS = [
     ],
   },
   {
-    section: "Management",
+    section: "Doctors",
     items: [
+      {
+        path: "/admin-dashboard/our-doctors",
+        label: "Our Doctors",
+        icon: (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+            <path d="M12 11v4M10 13h4"/>
+          </svg>
+        ),
+      },
       {
         path: "/admin-dashboard/manage-doctors",
         label: "Manage Doctors",
         icon: (
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
         ),
       },
+      {
+        path: "/admin-dashboard/doctor-payments",
+        label: "Doctor Payments",
+        icon: (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+            <path d="M12 14h.01"/>
+          </svg>
+        ),
+      },
+    ],
+  },
+  {
+    section: "Management",
+    items: [
       {
         path: "/admin-dashboard/manage-users",
         label: "Manage Users",
@@ -117,7 +145,8 @@ export default function AdminLayout({ children }) {
     ? user.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
     : "AD";
 
-  const pageTitle = NAV_ITEMS.flatMap(s => s.items).find(i => i.path === location.pathname)?.label || "Admin";
+  const pageTitle = NAV_ITEMS.flatMap(s => s.items).find(i => i.path === location.pathname)?.label
+    || (location.pathname === "/superadmin-dashboard" ? "Manage Admins" : "Admin");
 
   return (
     <div className="ad-root">

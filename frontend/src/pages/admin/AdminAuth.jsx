@@ -36,7 +36,10 @@ export default function AdminAuthPage() {
         return;
       }
 
-      if (token) localStorage.setItem("token", token);
+      if (token) {
+        localStorage.setItem("adminToken", token);
+        localStorage.setItem("token", token);
+      }
       login(user);
       navigate("/admin-dashboard");
     } catch (err) {
@@ -61,7 +64,10 @@ export default function AdminAuthPage() {
         return;
       }
 
-      if (token) localStorage.setItem("token", token);
+      if (token) {
+        localStorage.setItem("adminToken", token);
+        localStorage.setItem("token", token);
+      }
       login(user);
       navigate("/superadmin-dashboard");
     } catch (err) {

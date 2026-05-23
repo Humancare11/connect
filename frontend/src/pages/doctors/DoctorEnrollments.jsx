@@ -593,6 +593,8 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState({});
+  const lastProgressKeyRef = useRef("");
+  const progressSyncTimerRef = useRef(null);
 
   // Step 1
   const [s1, setS1] = useState({
@@ -694,9 +696,17 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       // Full form was already submitted — show status screen
       setStep(5);
     } else {
-      // Auto-created enrollment (just registered) — pre-fill basic info and start form
+      // Resume from saved in-progress step when available.
       loadFromData(initialData);
-      setStep(1);
+      const apiStep = Number(initialData.currentStep);
+      const apiCompleted = Number(initialData.completedSteps);
+      let nextStep = 1;
+      if (Number.isFinite(apiStep) && apiStep >= 1 && apiStep <= 4) {
+        nextStep = Math.trunc(apiStep);
+      } else if (Number.isFinite(apiCompleted)) {
+        nextStep = Math.max(1, Math.min(4, Math.trunc(apiCompleted) + 1));
+      }
+      setStep(nextStep);
     }
   }, [initialData, loadFromData]);
 
@@ -704,6 +714,37 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
     loadFromData(initialData);
     setStep(1);
   };
+
+  const persistProgress = useCallback((wizardStep) => {
+    if (!doctorId) return;
+    const normalizedStep = Math.max(1, Math.min(5, Number(wizardStep) || 1));
+    if (normalizedStep >= 5) return;
+
+    const completedSteps = Math.max(0, Math.min(4, normalizedStep - 1));
+    const currentStep = Math.max(1, Math.min(4, normalizedStep));
+    const progressKey = `${completedSteps}:${currentStep}`;
+    if (lastProgressKeyRef.current === progressKey) return;
+    lastProgressKeyRef.current = progressKey;
+
+    if (progressSyncTimerRef.current) clearTimeout(progressSyncTimerRef.current);
+    progressSyncTimerRef.current = setTimeout(() => {
+      api.patch("/api/doctor/enrollment/progress", {
+        doctorId,
+        completedSteps,
+        currentStep,
+      }).catch(() => {});
+    }, 250);
+  }, [doctorId]);
+
+  useEffect(() => {
+    persistProgress(step);
+  }, [step, persistProgress]);
+
+  useEffect(() => {
+    return () => {
+      if (progressSyncTimerRef.current) clearTimeout(progressSyncTimerRef.current);
+    };
+  }, []);
 
   // Validation
   const validateS1 = () => {

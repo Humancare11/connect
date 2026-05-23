@@ -2,6 +2,53 @@ const User = require("../models/User");
 const Enrollment = require("../models/Enrollment");
 const Doctor = require("../models/Doctor");
 const Appointment = require("../models/Appointment");
+const { paypalFetch } = require("../utils/paypal");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
+
+const inferProgressFromFields = (enrollment) => {
+  if (!enrollment) return { completedSteps: 0, currentStep: 1 };
+  if (enrollment.formCompleted) return { completedSteps: 5, currentStep: 5 };
+  const hasStep4 = !!(enrollment.accountNumber || enrollment.paypalId || enrollment.payoutEmail);
+  const hasStep3 = !!(enrollment.timezone || (enrollment.availability && Object.keys(enrollment.availability || {}).length > 0));
+  const hasStep2 = !!(enrollment.specialization || enrollment.qualification);
+  const hasStep1 = !!(enrollment.firstName || enrollment.phoneNumber);
+  if (hasStep4) return { completedSteps: 4, currentStep: 5 };
+  if (hasStep3) return { completedSteps: 3, currentStep: 4 };
+  if (hasStep2) return { completedSteps: 2, currentStep: 3 };
+  if (hasStep1) return { completedSteps: 1, currentStep: 2 };
+  return { completedSteps: 0, currentStep: 1 };
+};
+
+const deriveApplicationStatus = (enrollment) => {
+  if (enrollment.approvalStatus === "approved") return "approved";
+  if (enrollment.approvalStatus === "rejected") return "rejected";
+  if (enrollment.formCompleted) return "submitted";
+  const completed = Number(enrollment.completedSteps || 0);
+  if (completed >= 4) return "pending_review";
+  return "in_progress";
+};
+
+const normalizeEnrollmentWorkflow = (enrollment) => {
+  const fallbackProgress = inferProgressFromFields(enrollment);
+  const completedSteps = Number.isFinite(Number(enrollment.completedSteps))
+    ? Number(enrollment.completedSteps)
+    : fallbackProgress.completedSteps;
+  const currentStep = Number.isFinite(Number(enrollment.currentStep))
+    ? Number(enrollment.currentStep)
+    : fallbackProgress.currentStep;
+  const applicationStatus = enrollment.applicationStatus || deriveApplicationStatus({ ...enrollment, completedSteps });
+  return {
+    ...enrollment,
+    completedSteps,
+    currentStep,
+    currentStepLabel: enrollment.currentStepLabel || STEP_LABELS[Math.min(Math.max(currentStep - 1, 0), STEP_LABELS.length - 1)],
+    applicationStatus,
+    pendingRequestType: enrollment.pendingRequestType || "none",
+    profileDeleteRequestStatus: enrollment.profileDeleteRequestStatus || "none",
+  };
+};
 
 const getAdminStats = async (req, res) => {
   try {
@@ -21,11 +68,12 @@ const getAdminStats = async (req, res) => {
 const getAllDoctors = async (req, res) => {
   try {
     const enrollments = await Enrollment.find()
-      .populate("doctorId", "name email doctorId")
+      .populate("doctorId", "name email doctorId isEnrolled")
       .sort({ updatedAt: -1 })
       .lean();
 
-    res.status(200).json(enrollments);
+    const normalized = enrollments.map(normalizeEnrollmentWorkflow);
+    res.status(200).json(normalized);
   } catch (error) {
     console.error("getAllDoctors error:", error);
     res.status(500).json({ msg: "Failed to fetch doctors" });
@@ -35,18 +83,31 @@ const getAllDoctors = async (req, res) => {
 // PUT /api/admin/doctors/:id/approve
 const approveDoctor = async (req, res) => {
   try {
-    const enrollment = await Enrollment.findByIdAndUpdate(
-      req.params.id,
-      { approvalStatus: "approved", verified: true },
-      { new: true }
-    );
+    const enrollment = await Enrollment.findById(req.params.id);
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+
+    if (enrollment.profileDeleteRequestStatus === "pending") {
+      return res.status(400).json({ msg: "This record has a pending delete request. Use delete approval action instead." });
+    }
+
+    enrollment.approvalStatus = "approved";
+    enrollment.verified = true;
+    enrollment.formCompleted = true;
+    enrollment.completedSteps = 5;
+    enrollment.currentStep = 5;
+    enrollment.currentStepLabel = STEP_LABELS[4];
+    enrollment.applicationStatus = "approved";
+    enrollment.pendingRequestType = "none";
+    enrollment.profileUpdateRequestedAt = undefined;
+    enrollment.profileDeleteRequestStatus = "none";
+    enrollment.updatedAt = new Date();
+    await enrollment.save();
 
     if (enrollment.doctorId) {
       await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: true });
     }
 
-    res.status(200).json({ msg: "Doctor approved", enrollment });
+    res.status(200).json({ msg: "Doctor approved", enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()) });
   } catch (error) {
     console.error("approveDoctor error:", error);
     res.status(500).json({ msg: "Failed to approve doctor" });
@@ -56,21 +117,79 @@ const approveDoctor = async (req, res) => {
 // PUT /api/admin/doctors/:id/reject
 const rejectDoctor = async (req, res) => {
   try {
-    const enrollment = await Enrollment.findByIdAndUpdate(
-      req.params.id,
-      { approvalStatus: "rejected", verified: false },
-      { new: true }
-    );
+    const enrollment = await Enrollment.findById(req.params.id);
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+
+    enrollment.approvalStatus = "rejected";
+    enrollment.verified = false;
+    enrollment.applicationStatus = "rejected";
+    enrollment.updatedAt = new Date();
+    await enrollment.save();
 
     if (enrollment.doctorId) {
       await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: false });
     }
 
-    res.status(200).json({ msg: "Doctor rejected", enrollment });
+    res.status(200).json({ msg: "Doctor rejected", enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()) });
   } catch (error) {
     console.error("rejectDoctor error:", error);
     res.status(500).json({ msg: "Failed to reject doctor" });
+  }
+};
+
+// PUT /api/admin/doctors/:id/delete/approve
+const approveDoctorDeleteRequest = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id);
+    if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+
+    if (enrollment.profileDeleteRequestStatus !== "pending") {
+      return res.status(400).json({ msg: "No pending delete request for this doctor." });
+    }
+
+    const doctorId = enrollment.doctorId;
+    enrollment.profileDeleteRequestStatus = "approved";
+    enrollment.profileDeleteApprovedAt = new Date();
+    enrollment.pendingRequestType = "none";
+    enrollment.updatedAt = new Date();
+    await enrollment.save();
+
+    await Enrollment.deleteOne({ _id: enrollment._id });
+    if (doctorId) {
+      await Doctor.findByIdAndDelete(doctorId);
+    }
+
+    return res.status(200).json({ msg: "Doctor profile deleted successfully." });
+  } catch (error) {
+    console.error("approveDoctorDeleteRequest error:", error);
+    return res.status(500).json({ msg: "Failed to approve doctor delete request." });
+  }
+};
+
+// PUT /api/admin/doctors/:id/delete/reject
+const rejectDoctorDeleteRequest = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id);
+    if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+
+    enrollment.profileDeleteRequestStatus = "rejected";
+    enrollment.profileDeleteRejectedAt = new Date();
+    enrollment.pendingRequestType = "none";
+    enrollment.applicationStatus = enrollment.approvalStatus === "approved" ? "approved" : deriveApplicationStatus(enrollment);
+    enrollment.updatedAt = new Date();
+    await enrollment.save();
+
+    if (enrollment.doctorId && enrollment.approvalStatus === "approved") {
+      await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: true });
+    }
+
+    return res.status(200).json({
+      msg: "Doctor delete request rejected.",
+      enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()),
+    });
+  } catch (error) {
+    console.error("rejectDoctorDeleteRequest error:", error);
+    return res.status(500).json({ msg: "Failed to reject doctor delete request." });
   }
 };
 
@@ -139,4 +258,248 @@ const migrateDoctorIds = async (req, res) => {
   }
 };
 
-module.exports = { getAdminStats, getAllDoctors, approveDoctor, rejectDoctor, getAllUsers, deleteUser, getUserDetails, migrateDoctorIds };
+// GET /api/admin/approved-doctors — approved doctors with phone for "Our Doctors" table
+const getApprovedDoctors = async (req, res) => {
+  try {
+    const enrollments = await Enrollment.find({ approvalStatus: "approved" })
+      .populate("doctorId", "name email doctorId isEnrolled")
+      .sort({ updatedAt: -1 })
+      .lean();
+    res.status(200).json(enrollments);
+  } catch (error) {
+    console.error("getApprovedDoctors error:", error);
+    res.status(500).json({ msg: "Failed to fetch approved doctors" });
+  }
+};
+
+// GET /api/admin/doctor-workflow-stats â€” counters for doctors dashboard cards
+const getDoctorWorkflowStats = async (req, res) => {
+  try {
+    const [totalDoctors, updateRequests, deleteRequests] = await Promise.all([
+      Enrollment.countDocuments({ approvalStatus: "approved" }),
+      Enrollment.countDocuments({ pendingRequestType: "profile_update", approvalStatus: "pending" }),
+      Enrollment.countDocuments({ profileDeleteRequestStatus: "pending" }),
+    ]);
+
+    res.status(200).json({
+      totalDoctors,
+      profileUpdateRequests: updateRequests,
+      profileDeleteRequests: deleteRequests,
+    });
+  } catch (error) {
+    console.error("getDoctorWorkflowStats error:", error);
+    res.status(500).json({ msg: "Failed to fetch doctor workflow stats" });
+  }
+};
+
+// GET /api/admin/doctor-payments — all paid appointments grouped with payout info
+const getDoctorPayments = async (req, res) => {
+  try {
+    const appointments = await Appointment.find({
+      paymentStatus: "paid",
+    })
+      .populate("patientId", "name email")
+      .populate("doctorId", "name email doctorId")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const PLATFORM_RATE = 0.25;
+
+    const result = appointments.map(a => {
+      const consultationAmount = a.paymentAmount || 0;
+      const platformFee = Math.round(consultationAmount * PLATFORM_RATE);
+      const baseDoctorShare = Math.max(0, consultationAmount - platformFee);
+      const hasOverride = Number.isFinite(Number(a.doctorPayoutOverrideAmount));
+      const doctorShare = hasOverride
+        ? Math.max(0, Math.round(Number(a.doctorPayoutOverrideAmount)))
+        : baseDoctorShare;
+
+      return {
+        _id:               a._id,
+        appointmentId:     a._id,
+        doctorId:          a.doctorId,
+        patientId:         a.patientId,
+        date:              a.date,
+        time:              a.time,
+        consultationAmount,
+        platformFee,
+        baseDoctorPayable: baseDoctorShare,
+        doctorPayable:     doctorShare,
+        doctorPayoutOverrideAmount: hasOverride ? doctorShare : null,
+        paymentStatus:     a.paymentStatus,
+        doctorPayoutStatus: a.doctorPayoutStatus || "pending",
+        doctorPayoutDate:  a.doctorPayoutDate,
+        doctorPayoutRef:   a.doctorPayoutRef,
+        paymentGateway:    a.paymentGateway || "stripe",
+        paymentDate:       a.createdAt,
+        transactionReference: a.paymentIntentId || "",
+      };
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("getDoctorPayments error:", error);
+    res.status(500).json({ msg: "Failed to fetch doctor payments" });
+  }
+};
+
+// PUT /api/admin/doctor-payments/:id/mark-paid — superadmin marks a payout as paid
+const markDoctorPayout = async (req, res) => {
+  try {
+    const { payoutRef } = req.body;
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      {
+        doctorPayoutStatus: "paid",
+        doctorPayoutDate:   new Date(),
+        doctorPayoutRef:    payoutRef || "",
+      },
+      { new: true }
+    );
+    if (!appointment) return res.status(404).json({ msg: "Appointment not found" });
+    res.status(200).json({ msg: "Payout marked as paid", appointment });
+  } catch (error) {
+    console.error("markDoctorPayout error:", error);
+    res.status(500).json({ msg: "Failed to update payout" });
+  }
+};
+
+// PUT /api/admin/doctor-payments/:id — superadmin edits payout amount/ref
+const editDoctorPayout = async (req, res) => {
+  try {
+    const { doctorPayoutStatus, doctorPayoutDate, doctorPayoutRef, doctorPayoutOverrideAmount } = req.body;
+    const update = {};
+    if (doctorPayoutStatus !== undefined) update.doctorPayoutStatus = doctorPayoutStatus;
+    if (doctorPayoutDate   !== undefined) update.doctorPayoutDate   = doctorPayoutDate;
+    if (doctorPayoutRef    !== undefined) update.doctorPayoutRef    = doctorPayoutRef;
+    if (doctorPayoutOverrideAmount !== undefined) {
+      if (doctorPayoutOverrideAmount === null || doctorPayoutOverrideAmount === "") {
+        update.doctorPayoutOverrideAmount = null;
+      } else {
+        const parsed = Number(doctorPayoutOverrideAmount);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+          return res.status(400).json({ msg: "Invalid payout override amount." });
+        }
+        update.doctorPayoutOverrideAmount = Math.round(parsed);
+      }
+    }
+
+    const appointment = await Appointment.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!appointment) return res.status(404).json({ msg: "Appointment not found" });
+    res.status(200).json({ msg: "Payout updated", appointment });
+  } catch (error) {
+    console.error("editDoctorPayout error:", error);
+    res.status(500).json({ msg: "Failed to update payout" });
+  }
+};
+
+// POST /api/admin/doctor-payments/:id/process-payout — process real payout via PayPal/Stripe
+const processDoctorPayout = async (req, res) => {
+  try {
+    const { method } = req.body; // "paypal" or "stripe"
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) return res.status(404).json({ msg: "Appointment not found" });
+
+    // Calculate payable (including overrides) from the same amount used by the admin ledger.
+    const consultationAmount = Number(appointment.paymentAmount || 0);
+    const platformFee = Math.round(consultationAmount * 0.25);
+    const basePayable = consultationAmount - platformFee;
+    const finalPayable = Number.isFinite(Number(appointment.doctorPayoutOverrideAmount))
+      ? Number(appointment.doctorPayoutOverrideAmount)
+      : basePayable;
+
+    if (finalPayable <= 0) {
+      return res.status(400).json({ msg: "Invalid payout amount (zero or negative)" });
+    }
+
+    const enrollment = await Enrollment.findOne({ doctorId: appointment.doctorId });
+    if (!enrollment) return res.status(404).json({ msg: "Doctor enrollment not found" });
+
+    let payoutRef = "";
+    const amountVal = (finalPayable / 100).toFixed(2);
+
+    if (method === "paypal") {
+      const recipient = enrollment.paypalId || enrollment.payoutEmail;
+      if (!recipient) return res.status(400).json({ msg: "Doctor has no PayPal ID or Payout Email" });
+
+      const payload = {
+        sender_batch_header: {
+          sender_batch_id: `batch_${appointment._id}_${Date.now()}`,
+          email_subject: "Doctor Consultation Payout",
+          email_message: "You have received a payout for your consultation. Thank you!",
+        },
+        items: [{
+          recipient_type: "EMAIL",
+          amount: { value: amountVal, currency: enrollment.feeCurrency || "USD" },
+          note: `Consultation payout for appointment ${appointment._id}`,
+          sender_item_id: `item_${appointment._id}`,
+          receiver: recipient,
+        }],
+      };
+
+      const result = await paypalFetch("POST", "/v1/payments/payouts", payload);
+      
+      if (result.batch_header && result.batch_header.payout_batch_id) {
+        payoutRef = result.batch_header.payout_batch_id;
+      } else {
+        console.error("PayPal Payout Error:", result);
+        return res.status(500).json({ msg: "PayPal payout failed", error: result });
+      }
+    } 
+    else if (method === "stripe") {
+      const stripeId = enrollment.stripeAccountId;
+      if (!stripeId) return res.status(400).json({ msg: "Doctor has no Stripe Account ID" });
+
+      try {
+        const transfer = await stripe.transfers.create({
+          amount: finalPayable,
+          currency: (enrollment.feeCurrency || "USD").toLowerCase(),
+          destination: stripeId,
+          description: `Payout for appointment ${appointment._id}`,
+          metadata: { appointmentId: String(appointment._id) },
+        });
+        payoutRef = transfer.id;
+      } catch (stErr) {
+        console.error("Stripe Transfer Error:", stErr);
+        return res.status(500).json({ msg: "Stripe transfer failed", error: stErr.message });
+      }
+    } 
+    else {
+      return res.status(400).json({ msg: "Unsupported payout method" });
+    }
+
+    appointment.doctorPayoutStatus = "paid";
+    appointment.doctorPayoutDate = new Date();
+    appointment.doctorPayoutRef = payoutRef;
+    await appointment.save();
+
+    res.status(200).json({ 
+      msg: `Payout successfully processed via ${method.toUpperCase()}`, 
+      payoutRef,
+      appointment 
+    });
+
+  } catch (error) {
+    console.error("processDoctorPayout error:", error);
+    res.status(500).json({ msg: "Internal server error during payout processing" });
+  }
+};
+
+module.exports = {
+  getAdminStats,
+  getAllDoctors,
+  approveDoctor,
+  rejectDoctor,
+  approveDoctorDeleteRequest,
+  rejectDoctorDeleteRequest,
+  getAllUsers,
+  deleteUser,
+  getUserDetails,
+  migrateDoctorIds,
+  getApprovedDoctors,
+  getDoctorWorkflowStats,
+  getDoctorPayments,
+  markDoctorPayout,
+  editDoctorPayout,
+  processDoctorPayout,
+};

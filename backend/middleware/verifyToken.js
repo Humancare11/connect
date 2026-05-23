@@ -12,13 +12,10 @@ const COOKIE_OPTS = {
 };
 
 // ── low-level token extractor ─────────────────────────────────────────────────
-function extractToken(req, cookieName) {
-  return (
-    req.cookies?.[cookieName] ||
-    (req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.split(" ")[1]
-      : null)
-  );
+function extractBearerToken(req) {
+  return req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.split(" ")[1]
+    : null;
 }
 
 // ── middleware factory for role-specific cookies ──────────────────────────────
@@ -32,20 +29,29 @@ const roleMap = {
 function makeVerify(cookieName) {
   const expectedRole = roleMap[cookieName];
   return function (req, res, next) {
-    const token = extractToken(req, cookieName);
-    if (!token) return res.status(401).json({ msg: "No token provided. Please login." });
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      // Enforce the expected role so a stale user/doctor Bearer token can't
-      // slip through a role-specific middleware.
-      if (expectedRole && decoded.role !== expectedRole) {
-        return res.status(401).json({ msg: "No token provided. Please login." });
+    const candidates = [
+      req.cookies?.[cookieName],
+      extractBearerToken(req),
+    ].filter(Boolean);
+
+    if (candidates.length === 0)
+      return res.status(401).json({ msg: "No token provided. Please login." });
+
+    for (const token of candidates) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // Enforce the expected role so a stale user/doctor Bearer token can't
+        // slip through a role-specific middleware.
+        if (expectedRole && decoded.role !== expectedRole) continue;
+        req.user = decoded;
+        return next();
+      } catch {
+        // Try the next candidate; browsers can retain a stale role cookie while
+        // the SPA sends the current token in the Authorization header.
       }
-      req.user = decoded;
-      next();
-    } catch {
-      res.status(401).json({ msg: "Invalid or expired token. Please login again." });
     }
+
+    return res.status(401).json({ msg: "Invalid or expired token. Please login again." });
   };
 }
 
@@ -53,9 +59,7 @@ function makeVerify(cookieName) {
 // Use for routes accessible by any authenticated role (mixed routes).
 // Priority: userToken → doctorToken → adminToken → Authorization header.
 const verifyToken = (req, res, next) => {
-  const bearerToken = req.headers.authorization?.startsWith("Bearer ")
-    ? req.headers.authorization.split(" ")[1]
-    : null;
+  const bearerToken = extractBearerToken(req);
 
   const candidates = [
     req.cookies?.userToken,

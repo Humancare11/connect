@@ -1,0 +1,276 @@
+.adp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 15, 40, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.adp-modal {
+  width: 100%;
+  max-width: 560px;
+  background: #ffffff;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 25px 80px rgba(4, 25, 82, 0.22);
+  animation: adpFade 0.35s ease;
+  border: 1px solid rgba(11, 72, 170, 0.08);
+}
+
+@keyframes adpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.adp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px;
+  background: linear-gradient(135deg, #041c5c 0%, #0c49d8 100%);
+  position: relative;
+}
+
+.adp-modal-header::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+  top: -80px;
+  right: -50px;
+}
+
+.adp-modal-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  z-index: 1;
+}
+
+.adp-modal-close {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  transition: 0.3s ease;
+  z-index: 1;
+}
+
+.adp-modal-close:hover {
+  background: #fff;
+  color: #0a43c7;
+  transform: rotate(90deg);
+}
+
+.adp-modal-body {
+  padding: 24px;
+  background: #f7faff;
+}
+
+.adp-user-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(135deg, #07286e 0%, #0d57f2 100%);
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+
+.adp-user-hero::before {
+  content: "";
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  right: -60px;
+  top: -60px;
+}
+
+.adp-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.adp-user-info {
+  flex: 1;
+  min-width: 0;
+  z-index: 1;
+}
+
+.adp-user-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.adp-user-email {
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.adp-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adp-badge {
+  padding: 6px 14px;
+  border-radius: 30px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.adp-info-section {
+  background: #fff;
+  border-radius: 22px;
+  padding: 20px;
+  margin-bottom: 18px;
+  border: 1px solid #edf2ff;
+  box-shadow: 0 10px 30px rgba(13, 62, 156, 0.06);
+}
+
+.adp-section-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0b2e83;
+  margin-bottom: 18px;
+}
+
+.adp-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #edf2ff;
+  gap: 14px;
+}
+
+.adp-info-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.adp-info-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1743a8;
+}
+
+.adp-info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c344f;
+  text-align: right;
+  word-break: break-word;
+}
+
+.adp-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 22px 24px;
+  background: #fff;
+  border-top: 1px solid #edf2ff;
+}
+
+.adp-btn {
+  border: none;
+  outline: none;
+  padding: 12px 22px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.adp-btn--ghost {
+  background: #eef4ff;
+  color: #1143b7;
+}
+
+.adp-btn--ghost:hover {
+  background: #dce8ff;
+}
+
+.adp-btn--reject {
+  background: linear-gradient(135deg, #0a2f91 0%, #0d5cff 100%);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(13, 92, 255, 0.25);
+}
+
+.adp-btn--reject:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(13, 92, 255, 0.35);
+}
+
+@media (max-width: 600px) {
+  .adp-modal {
+    border-radius: 22px;
+  }
+
+  .adp-user-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .adp-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .adp-info-value {
+    text-align: left;
+  }
+
+  .adp-modal-footer {
+    flex-direction: column;
+  }
+
+  .adp-btn {
+    width: 100%;
+  }
+}

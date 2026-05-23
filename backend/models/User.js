@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema(
     dob: { type: String, default: "" },
 
     gender: { type: String, enum: ["Male", "Female", "Other", ""], default: "" },
+
+    country: { type: String, default: "" },
+
+    registrationIp: { type: String, default: "" },
   },
   { timestamps: true }
 );

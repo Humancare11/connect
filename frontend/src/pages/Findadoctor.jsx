@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import "./Findadoctor.css";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
+import { getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useCurrency } from "../hooks/useCurrency";
 
@@ -51,7 +52,7 @@ const StarIcon = () => (
 );
 const VerifiedIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="10" fill="#0C8B7A" />
+    <circle cx="12" cy="12" r="10" fill="#223a5e" />
     <path
       d="M9 12l2 2 4-4"
       stroke="white"
@@ -190,7 +191,7 @@ export default function DoctorFinder() {
   // ✅ handleBook is now a clean, simple function at component level
   const handleBook = (doc) => {
     if (!user) {
-      const token = localStorage.getItem("token");
+      const token = getUserAuthToken();
       if (!token) {
         navigate("/login", { state: { from: "/book-appointment", doctor: doc } });
         return;
