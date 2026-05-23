@@ -6,16 +6,7 @@
 
 /* ── Section Wrapper ── */
 .services-section-wrapper {
-  /* max-width: 1600px;
-  margin: 80px 150px;
-  padding: 200px 50px;
-  background: linear-gradient(-45deg, #223a5e, #1a2f47, #2c4a6b, #223a5e);
-  background-size: 400% 400%;
-  animation: gradShift 12s ease infinite;
-  border-top-left-radius: 40px;
-  border-top-right-radius: 40px;
-  border-bottom-left-radius: 40px;
-  border-bottom-right-radius: 40px; */
+
 
   position: relative;
   width: calc(100% - 100px);

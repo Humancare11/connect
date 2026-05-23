@@ -21,30 +21,25 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function SpecialtiesSection() {
   const [activeTab, setActiveTab] = useState("specialties");
-  const [direction, setDirection] = useState(0); // 1 for forward (L->R), -1 for backward (R->L)
-  const [hovered, setHovered] = useState(null);
+  const [direction, setDirection] = useState(0); // 1 for forward, -1 for backward
   const pillRef = useRef(null);
   const tabRefs = useRef([]);
 
   // Pill animation effect
   useEffect(() => {
     const pill = pillRef.current;
-    const currentIndex =
-      hovered !== null ? hovered : activeTab === "specialties" ? 0 : 1;
+    const currentIndex = activeTab === "specialties" ? 0 : 1;
     const currentTab = tabRefs.current[currentIndex];
 
     if (pill && currentTab) {
       pill.style.width = currentTab.offsetWidth + "px";
       pill.style.left = currentTab.offsetLeft + "px";
     }
-  }, [activeTab, hovered]);
+  }, [activeTab]);
 
   const handleTabChange = (tab) => {
-    if (tab === "symptoms" && activeTab === "specialties") {
-      setDirection(1); // Moving forward, slide left
-    } else if (tab === "specialties" && activeTab === "symptoms") {
-      setDirection(-1); // Moving backward, slide right
-    }
+    if (tab === activeTab) return;
+    setDirection(tab === "symptoms" ? 1 : -1);
     setActiveTab(tab);
   };
 
@@ -72,26 +67,26 @@ export default function SpecialtiesSection() {
 
   const data = activeTab === "specialties" ? specialties : symptoms;
 
-  // Framer Motion Variants - Mobile App Slide Effect
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 400 : -400,
+  // Slider transition variants
+  const variants = {
+    enter: (dir) => ({
+      x: dir > 0 ? "100%" : "-100%",
       opacity: 0,
     }),
     center: {
       x: 0,
       opacity: 1,
       transition: {
-        duration: 0.4,
-        ease: [0.22, 1, 0.36, 1],
+        x: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
+        opacity: { duration: 0.4 },
       },
     },
-    exit: (direction) => ({
-      x: direction > 0 ? -400 : 400,
+    exit: (dir) => ({
+      x: dir > 0 ? "-100%" : "100%",
       opacity: 0,
       transition: {
-        duration: 0.4,
-        ease: [0.22, 1, 0.36, 1],
+        x: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
+        opacity: { duration: 0.4 },
       },
     }),
   };
@@ -100,75 +95,52 @@ export default function SpecialtiesSection() {
     <section className="aa-section" id="specialties">
       <div className="aa-container">
         <div className="aa-header">
-          <div>
-            <div className="aa-eyebrow">SPECIALTIES</div>
+          <div className="aa-header-content">
+            <span className="aa-eyebrow">Discover Specialties</span>
             <h2 className="aa-title">Care for every part of you.</h2>
-            <div className="aa-tabs" onMouseLeave={() => setHovered(null)}>
-              <span className="aa-pill" ref={pillRef}></span>
-              <button
-                ref={(el) => (tabRefs.current[0] = el)}
-                className={`aa-tab ${
-                  activeTab === "specialties" ? "aa-tab-active" : ""
-                } ${hovered === 0 ? "aa-tab-hovered" : ""} ${
-                  hovered !== null && hovered !== 0 ? "aa-tab-inactive" : ""
-                }`}
-                onClick={() => handleTabChange("specialties")}
-                onMouseEnter={() => setHovered(0)}
-              >
-                Specialties
-              </button>
-              <button
-                ref={(el) => (tabRefs.current[1] = el)}
-                className={`aa-tab ${
-                  activeTab === "symptoms" ? "aa-tab-active" : ""
-                } ${hovered === 1 ? "aa-tab-hovered" : ""} ${
-                  hovered !== null && hovered !== 1 ? "aa-tab-inactive" : ""
-                }`}
-                onClick={() => handleTabChange("symptoms")}
-                onMouseEnter={() => setHovered(1)}
-              >
-                Symptoms
-              </button>
-            </div>
+          </div>
+          
+          <div className="aa-tabs">
+            <span className="aa-pill" ref={pillRef}></span>
+            <button
+              ref={(el) => (tabRefs.current[0] = el)}
+              className={`aa-tab ${activeTab === "specialties" ? "aa-tab-active" : ""}`}
+              onClick={() => handleTabChange("specialties")}
+            >
+              Specialties
+            </button>
+            <button
+              ref={(el) => (tabRefs.current[1] = el)}
+              className={`aa-tab ${activeTab === "symptoms" ? "aa-tab-active" : ""}`}
+              onClick={() => handleTabChange("symptoms")}
+            >
+              Symptoms
+            </button>
           </div>
         </div>
 
-        <div className="aa-grid-wrapper">
-          <AnimatePresence mode="sync" initial={false} custom={direction}>
+        <div className="aa-grid-wrapper" style={{ position: "relative" }}>
+          <AnimatePresence mode="popLayout" initial={false} custom={direction}>
             <motion.div
               key={activeTab}
-              className="aa-grid"
               custom={direction}
-              variants={slideVariants}
+              variants={variants}
               initial="enter"
               animate="center"
               exit="exit"
+              className="aa-grid"
+              style={{ position: "absolute", top: 0, left: 0, width: "100%" }}
             >
               {data.map((item, index) => {
                 const Icon = item.icon;
-
                 return (
-                  <motion.div
-                    className="aa-card"
-                    key={`${activeTab}-${index}`}
-                    whileHover={{
-                      y: -8,
-                      transition: { duration: 0.1, ease: "easeOut" },
-                    }}
-                  >
-                    <motion.span
-                      className="aa-icon"
-                      whileHover={{
-                        scale: 1.15,
-                        rotate: [0, -5, 5, 0],
-                        transition: { duration: 0.3 },
-                      }}
-                    >
+                  <div className="aa-card" key={`${activeTab}-${index}`}>
+                    <div className="aa-icon">
                       <Icon />
-                    </motion.span>
-                    <span className="aa-name">{item.name}</span>
-                    <span className="aa-count">{item.count}</span>
-                  </motion.div>
+                    </div>
+                    <h3 className="aa-name">{item.name}</h3>
+                    <p className="aa-count">{item.count}</p>
+                  </div>
                 );
               })}
             </motion.div>

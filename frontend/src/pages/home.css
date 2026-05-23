@@ -116,7 +116,7 @@ h4 {
 
 
 }
-
+/* 
 .hero::before {
   content: "";
   position: absolute;
@@ -136,7 +136,9 @@ h4 {
     linear-gradient(90deg, rgba(34, 58, 94, 0.03) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
-}
+} */
+
+
 
 /* ═══ HERO LEFT ═══ */
 .hero-left {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./header.css";
 import { Link, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
@@ -8,20 +8,22 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-/* Nav pill hover */
+  /* Nav pill hover */
+const pillRef = useRef(null);
+const navMenuRef = useRef(null);
 
-const pill = document.querySelector(".nav-pill");
+useEffect(() => {
+  const pill = pillRef.current;
+  const navMenu = navMenuRef.current;
 
-const navMenu = document.querySelector(".nav-menu");
+  if (!pill || !navMenu) return;
 
-const items = document.querySelectorAll(".nav-menu .nav-item");
+  const items = navMenu.querySelectorAll(".nav-item");
 
-items.forEach((item) => {
-  const onEnter = () => {
-    if (!pill || !navMenu) return;
+  const movePill = (e) => {
+    const item = e.currentTarget;
 
     const navRect = navMenu.getBoundingClientRect();
-
     const itemRect = item.getBoundingClientRect();
 
     pill.style.width = `${itemRect.width}px`;
@@ -29,28 +31,29 @@ items.forEach((item) => {
     pill.style.left = `${itemRect.left - navRect.left}px`;
 
     pill.style.opacity = "1";
+    pill.style.transform = "translateY(-50%) scale(1)";
   };
 
-  item.addEventListener("mouseenter", onEnter);
+  const hidePill = () => {
+    pill.style.opacity = "0";
+    pill.style.transform = "translateY(50%) scale(0.92)";
+    
+  };
 
-  item._onEnter = onEnter;
-});
+  items.forEach((item) => {
+    item.addEventListener("mouseenter", movePill);
+  });
 
-const onNavLeave = () => {
-  if (!pill) return;
+  navMenu.addEventListener("mouseleave", hidePill);
 
-  pill.style.width = "0px";
+  return () => {
+    items.forEach((item) => {
+      item.removeEventListener("mouseenter", movePill);
+    });
 
-  pill.style.opacity = "0";
-};
-
-navMenu?.addEventListener("mouseleave", onNavLeave);
-
-  // ✅ Check login
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-  }, []);
+    navMenu.removeEventListener("mouseleave", hidePill);
+  };
+}, []);
 
   const location = useLocation();
   const navItems = [
@@ -69,7 +72,15 @@ navMenu?.addEventListener("mouseleave", onNavLeave);
   //   const token = localStorage.getItem("token");
   //   setIsLoggedIn(!!token);
   // }, [location.pathname]);
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40);
+    };
 
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   // HELP SLIDER
   const helpItems = [
     "Lab Order",
@@ -80,7 +91,7 @@ navMenu?.addEventListener("mouseleave", onNavLeave);
   ];
 
   return (
-    <header className="glass-header" id="header">
+    <header className={`glass-header ${isScrolled ? "shrink" : ""}`}>
       <div className="nav-container">
 
         {/* ✅LOGO */}
@@ -112,20 +123,26 @@ navMenu?.addEventListener("mouseleave", onNavLeave);
             </div>
           </div>
         </div>
-        <nav className="nav-menu">
-          <span className="nav-pill"></span>
+        <nav className="nav-menu" ref={navMenuRef}>
+  <span className="nav-pill" ref={pillRef}></span>
 
-          {navItems.map((item, index) => (
-            <Link to={item.link} className="nav-item" key={index}>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+  {navItems.map((item, index) => (
+    <Link
+      to={item.link}
+      className={`nav-item ${
+        location.pathname === item.link ? "active" : ""
+      }`}
+      key={index}
+    >
+      {item.label}
+    </Link>
+  ))}
+</nav>
 
         {/* 🔥 AUTH BUTTONS */}
         <div className="auth-buttons">
           {!isLoggedIn ? (
-            <div className="auth-combined">
+            <div className="auth-combined magnetic">
               <Link to="/login" className="auth-link">
                 Login
               </Link>

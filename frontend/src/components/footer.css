@@ -59,9 +59,8 @@ footer {
 
   transform-origin: bottom center;
 
-  /* font-size: clamp(100px, 11vw, 120px); */
-  font-size:  clamp(80px, 114.66px, 280px);
-
+  font-size: clamp(80px, 18vw, 120px);
+  
   font-weight: 700;
 
   letter-spacing: -3px;

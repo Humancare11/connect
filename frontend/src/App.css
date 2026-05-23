@@ -51,101 +51,122 @@
 html {
   scroll-behavior: smooth;
 }
-
 /* ══════════════════════════════════════════════
-   BODY BACKGROUND
+   CLAUDE / LINEAR STYLE BACKGROUND
 ══════════════════════════════════════════════ */
 
 body {
 
-  font-family: "Satoshi", sans-serif;
-
-  color: var(--text);
-
+  margin: 0;
+  min-height: 100vh;
   overflow-x: hidden;
+
+  font-family: "Satoshi", sans-serif;
+  color: var(--text);
 
   position: relative;
 
-  background:
+  background-color: #f4f8ff;
 
-    /* TOP CENTER LIGHT */
-    radial-gradient(
-      circle at top center,
-      rgba(255,255,255,0.95) 0%,
-      rgba(255,255,255,0) 36%
-    ),
+  background-image:
 
-    /* LEFT SOFT BLUE */
+    /* LEFT BLUE */
     radial-gradient(
-      circle at left center,
-      rgba(122,170,255,0.14) 0%,
-      transparent 40%
-    ),
-
-    /* RIGHT LIGHT */
-    radial-gradient(
-      circle at right top,
-      rgba(168,205,255,0.12) 0%,
+      circle at 12% 18%,
+      rgba(77, 132, 255, 0.22) 0%,
       transparent 34%
     ),
 
-    /* BOTTOM FADE */
+    /* RIGHT BLUE */
     radial-gradient(
-      circle at bottom center,
-      rgba(255,255,255,0.65) 0%,
+      circle at 85% 12%,
+      rgba(124, 179, 255, 0.18) 0%,
+      transparent 30%
+    ),
+
+    /* CENTER WHITE */
+    radial-gradient(
+      circle at 50% 40%,
+      rgba(255,255,255,0.95) 0%,
       transparent 42%
     ),
 
-    /* MAIN ATMOSPHERIC GRADIENT */
+    /* BOTTOM GLOW */
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(164, 203, 255, 0.16) 0%,
+      transparent 34%
+    ),
+
+    /* MAIN BASE */
     linear-gradient(
-      135deg,
-      #f4f7fc 0%,
-      #edf2f9 22%,
-      #e4ebf5 48%,
-      #edf2f8 76%,
-      #f8fbff 100%
+      180deg,
+      #f8fbff 0%,
+      #f1f5fd 25%,
+      #edf3ff 50%,
+      #f3f7fd 75%,
+      #ffffff 100%
     );
 
   background-attachment: fixed;
-
-  min-height: 100vh;
 }
-REPLACE body::before
+
+
+/* ══════════════════════════════════════════════
+   HUGE ATMOSPHERIC BLOBS
+══════════════════════════════════════════════ */
+
 body::before {
 
   content: "";
 
   position: fixed;
-  inset: 0;
-
-  pointer-events: none;
+  inset: -20%;
 
   z-index: -2;
+
+  pointer-events: none;
 
   background:
 
     radial-gradient(
-      circle at 18% 18%,
-      rgba(255,255,255,0.85),
-      transparent 28%
+      circle at 20% 30%,
+      rgba(104, 155, 255, 0.20),
+      transparent 24%
     ),
 
     radial-gradient(
-      circle at 82% 12%,
-      rgba(255,255,255,0.60),
-      transparent 22%
+      circle at 80% 20%,
+      rgba(148, 196, 255, 0.18),
+      transparent 24%
+    ),
+
+    radial-gradient(
+      circle at 50% 55%,
+      rgba(255,255,255,0.90),
+      transparent 32%
     ),
 
     radial-gradient(
       circle at 50% 100%,
-      rgba(255,255,255,0.40),
-      transparent 40%
+      rgba(129, 176, 255, 0.14),
+      transparent 34%
     );
 
-  filter: blur(40px);
+  filter: blur(120px);
+
+  transform: scale(1.2);
+
+  opacity: .95;
+
+  animation: meshMove 22s ease-in-out infinite alternate;
 }
 
-/* GLOW EFFECT */
+
+/* ══════════════════════════════════════════════
+   GLASS ATMOSPHERE
+══════════════════════════════════════════════ */
+
 body::after {
 
   content: "";
@@ -153,20 +174,47 @@ body::after {
   position: fixed;
   inset: 0;
 
-  pointer-events: none;
-
   z-index: -1;
 
-  background:
+  pointer-events: none;
 
+  background:
     linear-gradient(
-      120deg,
+      135deg,
       rgba(255,255,255,0.10),
       rgba(255,255,255,0.03)
     );
 
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
+
+  opacity: .8;
+}
+
+
+/* ══════════════════════════════════════════════
+   FLOATING MOTION
+══════════════════════════════════════════════ */
+
+@keyframes meshMove {
+
+  0% {
+    transform:
+      translate3d(0,0,0)
+      scale(1.2);
+  }
+
+  50% {
+    transform:
+      translate3d(0,-30px,0)
+      scale(1.26);
+  }
+
+  100% {
+    transform:
+      translate3d(0,20px,0)
+      scale(1.2);
+  }
 }
 
 /* TYPOGRAPHY */

@@ -771,7 +771,7 @@ const handleKeyDown = (e) => {
      <div className="hero-grid"></div>
       {/* ════════════════════ HERO section ═════════════════════════════════════════════ */}
       <section className="hero">
-        {/* hero canvas removed for production: decorative particles were disabled */}
+       
         <div className="hero-left">
           <div className="hero-badge">
             <div className="badge-pulse"></div>
@@ -788,14 +788,6 @@ const handleKeyDown = (e) => {
             Book video consultations, get prescriptions, and receive follow-up
             care from board-certified physicians, without leaving home..
           </p>
-
-          {/* <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search doctors, specialties, conditions…"
-            />
-            <button>Search</button>
-          </div> */}
 
           {/* SEARCH BAR */}
           <div className="search-wrapper" ref={searchRef}>
