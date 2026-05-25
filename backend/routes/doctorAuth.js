@@ -428,6 +428,65 @@ router.patch("/enrollment/:doctorId/consultation-fee", verifyDoctorToken, async 
   }
 });
 
+// ── GET /api/doctor/profile/:doctorId (lookup by 5-digit doctorId) ───────────
+router.get("/profile/:doctorId", async (req, res) => {
+  try {
+    const numericId = parseInt(req.params.doctorId, 10);
+    if (isNaN(numericId) || numericId < 10000 || numericId > 99999) {
+      return res.status(400).json({ message: "Invalid doctor ID" });
+    }
+
+    const doctorDoc = await Doctor.findOne({ doctorId: numericId });
+    if (!doctorDoc) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    const enrollment = await Enrollment.findOne({ doctorId: doctorDoc._id })
+      .populate("doctorId", "name email doctorId")
+      .lean();
+
+    if (!enrollment || enrollment.approvalStatus !== "approved") {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    const e = enrollment;
+    return res.json({
+      id: e._id,
+      doctorId: e.doctorId?.doctorId,
+      mongoId: e.doctorId?._id,
+      name: `${e.firstName || ""} ${e.surname || ""}`.trim() || e.doctorId?.name || "Unknown",
+      email: e.email || e.doctorId?.email || "",
+      specialty: e.specialization || "",
+      subSpecialty: e.subSpecialization || "",
+      degree: e.qualification || "",
+      experience: e.experience || 0,
+      price: e.consultantFees || 0,
+      feeCurrency: e.feeCurrency || "USD",
+      city: e.city || "",
+      state: e.state || "",
+      country: e.country || "",
+      location: [e.city, e.state].filter(Boolean).join(", "),
+      languages: e.languagesKnown || [],
+      gender: e.gender || "",
+      about: e.aboutDoctor || "",
+      verified: e.verified || false,
+      rating: 4.8,
+      medicalSchool: e.medicalSchool || "",
+      registrationYear: e.registrationYear || "",
+      clinicName: e.clinicName || "",
+      clinicAddress: e.clinicAddress || "",
+      consultationMode: e.consultationMode || "",
+      medicalRegistrationNumber: e.medicalRegistrationNumber || "",
+      medicalCouncilName: e.medicalCouncilName || "",
+      availability: e.availability || null,
+      timezone: e.timezone || "",
+    });
+  } catch (err) {
+    console.error("getDoctorByNumericId error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 // ── GET /api/doctor/approved ──────────────────────────────────────────────────
 router.get("/approved", async (req, res) => {
   try {

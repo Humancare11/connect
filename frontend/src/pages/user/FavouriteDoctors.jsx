@@ -100,7 +100,12 @@ export default function FavouriteDoctors() {
                 </div>
 
                 <div className="doctor-actions">
-                  <Link to={`/doctor/${doctor._id}`} className="btn-outline">
+                  <Link
+                    to={doctor.doctorId
+                      ? `/doctors/${doctor.doctorId}-${(doctor.name || "").replace(/^Dr\.?\s*/i, "").toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || "doctor"}`
+                      : `/find-a-doctor`}
+                    className="btn-outline"
+                  >
                     View Profile
                   </Link>
                   <Link to={`/book-appointment?doctor=${doctor._id}`} className="btn-primary">

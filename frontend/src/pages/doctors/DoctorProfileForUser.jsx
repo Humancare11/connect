@@ -51,8 +51,15 @@ function getInitials(name) {
   return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? "").join("") || "DR";
 }
 
-export default function DoctorProfileForUser() {
-  const { id } = useParams();
+// Extract 5-digit doctorId from slug like "12345-john-smith" or fall back to raw id
+function extractDoctorId(raw) {
+  if (!raw) return null;
+  const match = raw.match(/^(\d{5})/);
+  return match ? match[1] : null;
+}
+
+export default function DoctorProfileForUser({ legacyId = false, adminView = false }) {
+  const { id, slug } = useParams();
   const navigate = useNavigate();
 
   const [doctor, setDoctor] = useState(null);
@@ -64,11 +71,25 @@ export default function DoctorProfileForUser() {
 
   useEffect(() => {
     setLoading(true);
-    api.get(`/api/doctor/${id}`)
-      .then(res => setDoctor(res.data))
-      .catch(() => setError("Could not load doctor profile. Please try again."))
-      .finally(() => setLoading(false));
-  }, [id]);
+    if (legacyId && id) {
+      // Old enrollment-ObjectId URL — keep working for any existing links
+      api.get(`/api/doctor/${id}`)
+        .then(res => setDoctor(res.data))
+        .catch(() => setError("Could not load doctor profile. Please try again."))
+        .finally(() => setLoading(false));
+    } else {
+      const numericId = extractDoctorId(slug);
+      if (!numericId) {
+        setError("Invalid profile URL.");
+        setLoading(false);
+        return;
+      }
+      api.get(`/api/doctor/profile/${numericId}`)
+        .then(res => setDoctor(res.data))
+        .catch(() => setError("Could not load doctor profile. Please try again."))
+        .finally(() => setLoading(false));
+    }
+  }, [id, slug, legacyId]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText("FIRSTCONSULT");
@@ -170,8 +191,11 @@ export default function DoctorProfileForUser() {
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 16px 56px" }}>
 
         {/* Back link */}
-        <button onClick={() => navigate(-1)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "#4a6fa5", fontSize: 13, fontWeight: 600, marginBottom: 18, padding: 0 }}>
-          {icons.back} Back to results
+        <button
+          onClick={() => adminView ? navigate("/admin-dashboard/our-doctors") : navigate(-1)}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: "#4a6fa5", fontSize: 13, fontWeight: 600, marginBottom: 18, padding: 0 }}
+        >
+          {icons.back} {adminView ? "Back to Our Doctors" : "Back to results"}
         </button>
 
         {/* ── HERO BANNER CARD ── */}
@@ -212,6 +236,12 @@ export default function DoctorProfileForUser() {
                 <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 700, color: "#fff", margin: 0, letterSpacing: "-0.2px" }}>
                   Dr. {doctor.name}
                 </h1>
+                {doctor.doctorId && (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 5, background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 8, padding: "3px 10px" }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.07em" }}>ID</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#cde3f7", letterSpacing: "0.05em" }}>{doctor.doctorId}</span>
+                  </div>
+                )}
                 {locationParts && (
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5, color: "#93b8e0", fontSize: 13 }}>
                     {icons.pin} {locationParts}

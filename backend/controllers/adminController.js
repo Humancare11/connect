@@ -485,9 +485,24 @@ const processDoctorPayout = async (req, res) => {
   }
 };
 
+const getDoctorById = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id)
+      .populate("doctorId", "name email doctorId isEnrolled")
+      .lean();
+    if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+    res.status(200).json(normalizeEnrollmentWorkflow(enrollment));
+  } catch (error) {
+    if (error.name === "CastError") return res.status(404).json({ msg: "Enrollment not found" });
+    console.error("getDoctorById error:", error);
+    res.status(500).json({ msg: "Failed to fetch doctor" });
+  }
+};
+
 module.exports = {
   getAdminStats,
   getAllDoctors,
+  getDoctorById,
   approveDoctor,
   rejectDoctor,
   approveDoctorDeleteRequest,

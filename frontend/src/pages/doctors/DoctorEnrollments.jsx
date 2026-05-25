@@ -115,7 +115,7 @@ const LANGUAGES = [
   "Chinese (Mandarin)","Chinese (Cantonese)","Japanese","Korean","Italian",
   "Russian","Dutch","Turkish","Urdu","Bengali","Tamil","Telugu","Swahili","Other"
 ];
-const GENDERS = ["Male","Female","Non-binary","Prefer not to say"];
+const GENDERS = ["Male","Female","Others"];
 const CONSULTATION_MODES = ["Video Call","In-Person","Both","Phone Call"];
 const STATUS_PIPELINE = [
   { key: "pending", label: "Pending Verification", icon: "⏳" },
@@ -131,7 +131,7 @@ const css = `
 
 :root {
   --navy: #223A5E;
-  --teal: #0C8B7A;
+  --teal: #13338e;
   --gold: #C97B1A;
   --bg: #F4F7FB;
   --section-tint: #DCE6F2;
@@ -204,7 +204,7 @@ h1,h2,h3,h4,h5,h6 {
 .progress-steps { display: flex; align-items: center; position: relative; }
 .progress-step {
   display: flex; flex-direction: column; align-items: center;
-  flex: 1; position: relative; z-index: 2;
+  flex: 1; position: relative; z-index: 2; padding: 0 20px;
 }
 .progress-circle {
   width: 36px; height: 36px; border-radius: 50%;
@@ -215,7 +215,7 @@ h1,h2,h3,h4,h5,h6 {
 }
 .progress-circle.active {
   border-color: var(--teal); background: var(--teal); color: var(--white);
-  box-shadow: 0 0 0 4px rgba(12,139,122,0.15);
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.15);
 }
 .progress-circle.done { border-color: var(--teal); background: var(--teal); color: var(--white); }
 .progress-label {
@@ -273,7 +273,7 @@ h1,h2,h3,h4,h5,h6 {
   transition: var(--transition); outline: none; width: 100%;
 }
 .field-input:focus, .field-select:focus, .field-textarea:focus {
-  border-color: var(--teal); box-shadow: 0 0 0 3px rgba(12,139,122,0.1);
+  border-color: var(--teal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
 }
 .field-input.error, .field-select.error {
   border-color: var(--red); box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
@@ -293,7 +293,7 @@ h1,h2,h3,h4,h5,h6 {
   transition: var(--transition); display: inline-flex; align-items: center; gap: 8px;
 }
 .btn-primary { background: var(--teal); color: var(--white); }
-.btn-primary:hover { background: #0a7a6b; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 .btn-secondary { background: var(--gray-100); color: var(--navy); }
 .btn-secondary:hover { background: var(--gray-200); }
@@ -323,8 +323,8 @@ h1,h2,h3,h4,h5,h6 {
   padding: 24px; text-align: center; cursor: pointer;
   transition: var(--transition); background: var(--gray-50);
 }
-.upload-zone:hover { border-color: var(--teal); background: rgba(12,139,122,0.03); }
-.upload-zone.has-file { border-color: var(--teal); border-style: solid; background: rgba(12,139,122,0.04); }
+.upload-zone:hover { border-color: var(--teal); background: rgba(37,99,235,0.03); }
+.upload-zone.has-file { border-color: var(--teal); border-style: solid; background: rgba(37,99,235,0.04); }
 .upload-icon { font-size: 28px; margin-bottom: 8px; }
 .upload-text { font-size: 13px; color: var(--gray-500); }
 .upload-text strong { color: var(--teal); }
@@ -349,11 +349,12 @@ h1,h2,h3,h4,h5,h6 {
   transition: var(--transition); background: var(--white);
 }
 .ms-trigger:hover { border-color: var(--gray-300); }
-.ms-trigger.open { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(12,139,122,0.1); }
+.ms-trigger.open { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.ms-trigger.error { border-color: var(--red); box-shadow: 0 0 0 3px rgba(220,38,38,0.08); }
 .ms-placeholder { font-size: 13px; color: var(--gray-400); }
 .ms-tag {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 10px; background: rgba(12,139,122,0.1);
+  padding: 3px 10px; background: rgba(37,99,235,0.1);
   color: var(--teal); border-radius: 6px; font-size: 12px; font-weight: 600;
 }
 .ms-tag button {
@@ -363,10 +364,10 @@ h1,h2,h3,h4,h5,h6 {
 .ms-tag button:hover { color: var(--red); }
 .ms-overflow {
   font-size: 11px; font-weight: 600; color: var(--teal);
-  background: rgba(12,139,122,0.08); padding: 3px 8px; border-radius: 50px;
+  background: rgba(37,99,235,0.08); padding: 3px 8px; border-radius: 50px;
 }
 .ms-dropdown {
-  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  position: relative; top: calc(100% + 4px); left: 0; right: 0;
   background: var(--white); border: 1.5px solid var(--gray-200);
   border-radius: var(--radius-sm); box-shadow: var(--shadow-lg);
   z-index: 50; max-height: 260px; overflow: hidden;
@@ -404,7 +405,7 @@ h1,h2,h3,h4,h5,h6 {
   display: flex; align-items: center; justify-content: center;
   font-size: 16px; flex-shrink: 0;
 }
-.ls-icon.state { background: rgba(12,139,122,0.1); }
+.ls-icon.state { background: rgba(37,99,235,0.1); }
 .ls-icon.intl { background: rgba(201,123,26,0.1); }
 .ls-desc { font-size: 13px; color: var(--gray-500); margin-bottom: 14px; line-height: 1.5; }
 .selected-licenses-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -440,7 +441,7 @@ h1,h2,h3,h4,h5,h6 {
   border-radius: var(--radius-xs); font-family: 'DM Sans', sans-serif;
   font-size: 13px; outline: none; transition: var(--transition); width: 120px;
 }
-.time-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(12,139,122,0.1); }
+.time-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 .time-sep { color: var(--gray-400); font-weight: 600; font-size: 13px; }
 
 /* ─── Status ─── */
@@ -453,8 +454,8 @@ h1,h2,h3,h4,h5,h6 {
   font-size: 18px; border: 2.5px solid var(--gray-300);
   background: var(--white); transition: var(--transition);
 }
-.status-dot.reached { border-color: var(--teal); background: rgba(12,139,122,0.08); }
-.status-dot.current { border-color: var(--teal); background: var(--teal); box-shadow: 0 0 0 4px rgba(12,139,122,0.15); }
+.status-dot.reached { border-color: var(--teal); background: rgba(37,99,235,0.08); }
+.status-dot.current { border-color: var(--teal); background: var(--teal); box-shadow: 0 0 0 4px rgba(37,99,235,0.15); }
 .status-dot.current .st-icon { filter: grayscale(1) brightness(10); }
 .status-name { margin-top: 8px; font-size: 10px; font-weight: 500; color: var(--gray-400); text-align: center; max-width: 80px; }
 .status-name.reached { color: var(--teal); }
@@ -499,7 +500,7 @@ h1,h2,h3,h4,h5,h6 {
 // HELPER COMPONENTS
 // ═══════════════════════════════════
 
-function MultiSelect({ items, selected, onChange, placeholder, searchPlaceholder }) {
+function MultiSelect({ items, selected, onChange, placeholder, searchPlaceholder, hasError }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef();
@@ -517,7 +518,7 @@ function MultiSelect({ items, selected, onChange, placeholder, searchPlaceholder
 
   return (
     <div className="ms-wrapper" ref={ref}>
-      <div className={`ms-trigger ${open ? "open" : ""}`} onClick={() => setOpen(!open)}>
+      <div className={`ms-trigger ${open ? "open" : ""} ${hasError ? "error" : ""}`} onClick={() => setOpen(!open)}>
         {selected.length === 0 ? (
           <span className="ms-placeholder">{placeholder}</span>
         ) : (
@@ -592,7 +593,8 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
 export default function DoctorOnboardingWizard({ doctorId, initialData, onComplete }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [draft, setDraft] = useState({});
+  const [draftSaved, setDraftSaved] = useState(false);
+  const draftTimerRef = useRef(null);
   const lastProgressKeyRef = useRef("");
   const progressSyncTimerRef = useRef(null);
 
@@ -611,7 +613,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
     consultationMode:"", consultantFees:"", feeCurrency:"USD",
     clinicName:"", clinicAddress:"", aboutDoctor:"", certifications:"",
   });
-  const [files, setFiles] = useState({ govId: null, degree: null, medicalLicense: null });
+  const [files, setFiles] = useState({ govId: null, degree: null, medicalLicense: null, malpractice: null });
   const [s2Errors, setS2Errors] = useState({});
   const [licensedStates, setLicensedStates] = useState([]);
   const [otherLicenseCountries, setOtherLicenseCountries] = useState([]);
@@ -655,7 +657,13 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       zip:         data.zip || "",
       address:     data.address || "",
     });
-    setLanguagesKnown(Array.isArray(data.languagesKnown) ? data.languagesKnown : []);
+    const rawLangs = data.languagesKnown;
+    setLanguagesKnown(
+      Array.isArray(rawLangs) ? rawLangs :
+      typeof rawLangs === "string" && rawLangs.trim()
+        ? rawLangs.split(",").map(l => l.trim()).filter(Boolean)
+        : []
+    );
     setS2({
       npi:               data.medicalRegistrationNumber || "",
       licenseNum:        data.medicalLicense || data.medicalRegistrationNumber || "",
@@ -684,6 +692,26 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
     });
     if (data.state) setLicensedStates([data.state]);
   }, []);
+
+  // Restore draft from localStorage when no backend data yet
+  useEffect(() => {
+    if (!doctorId || initialData) return;
+    const saved = localStorage.getItem(`hc_enroll_draft_${doctorId}`);
+    if (!saved) return;
+    try {
+      const d = JSON.parse(saved);
+      if (d.s1) setS1(prev => ({ ...prev, ...d.s1 }));
+      if (d.s2) setS2(prev => ({ ...prev, ...d.s2 }));
+      if (Array.isArray(d.languagesKnown)) setLanguagesKnown(d.languagesKnown);
+      if (d.availability) setAvailability(d.availability);
+      if (d.timezone) setTimezone(d.timezone);
+      if (d.s4) setS4(prev => ({ ...prev, ...d.s4 }));
+      if (d.payoutFreq) setPayoutFreq(d.payoutFreq);
+      if (Array.isArray(d.licensedStates)) setLicensedStates(d.licensedStates);
+      if (Array.isArray(d.otherLicenseCountries)) setOtherLicenseCountries(d.otherLicenseCountries);
+      if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
+    } catch {}
+  }, [doctorId, initialData]);
 
   useEffect(() => {
     if (!initialData) return;
@@ -754,6 +782,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
     if (!s1.email.trim()) e.email = "Required";
     else if (!/\S+@\S+\.\S+/.test(s1.email)) e.email = "Invalid email";
     if (!s1.country) e.country = "Required";
+    if (languagesKnown.length === 0) e.languages = "Required";
     setS1Errors(e);
     return Object.keys(e).length === 0;
   };
@@ -765,6 +794,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
     if (!s2.qualification) e.qualification = "Required";
     if (!s2.school.trim()) e.school = "Required";
     if (!s2.gradYear.trim()) e.gradYear = "Required";
+    if (!String(s2.experience).trim()) e.experience = "Required";
     if (!files.govId) e.govId = "Required";
     if (!files.degree) e.degree = "Required";
     if (!files.medicalLicense) e.medicalLicense = "Required";
@@ -772,18 +802,8 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
     return Object.keys(e).length === 0;
   };
   const validateS4 = () => {
-    const e = {};
-    if (isUS) {
-      if (!s4.bankName.trim()) e.bankName = "Required";
-      if (!s4.accountNum.trim()) e.accountNum = "Required";
-      if (!s4.swift.trim()) e.swift = "Required";
-    } else {
-      if (!s4.iban.trim()) e.iban = "Required";
-      if (!s4.swift.trim()) e.swift = "Required";
-      if (!s4.currency) e.currency = "Required";
-    }
-    setS4Errors(e);
-    return Object.keys(e).length === 0;
+    setS4Errors({});
+    return true;
   };
 
   const handleNext = () => {
@@ -794,7 +814,14 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
     else if (step === 4 && validateS4()) submitEnrollment();
   };
   const handleBack = () => { if (step > 1) setStep(step - 1); };
-  const saveDraft = () => setDraft({ s1, s2, languagesKnown, files, availability, timezone, s4, payoutFreq, licensedStates, otherLicenseCountries, step });
+  const saveDraft = useCallback(() => {
+    if (!doctorId) return;
+    const draftData = { s1, s2, languagesKnown, availability, timezone, s4, payoutFreq, licensedStates, otherLicenseCountries, step };
+    try { localStorage.setItem(`hc_enroll_draft_${doctorId}`, JSON.stringify(draftData)); } catch {}
+    setDraftSaved(true);
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = setTimeout(() => setDraftSaved(false), 2500);
+  }, [s1, s2, languagesKnown, availability, timezone, s4, payoutFreq, licensedStates, otherLicenseCountries, step, doctorId]);
 
   const submitEnrollment = async () => {
     if (!doctorId) {
@@ -834,6 +861,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       aboutDoctor:           s2.aboutDoctor.trim() || s2.certifications.trim(),
       idProof:               files.govId?.name || "",
       medicalLicenseFile:    files.medicalLicense?.name || "",
+      malpracticeInsuranceFile: files.malpractice?.name || "",
       accountHolderName:     `${s1.firstName} ${s1.surname}`.trim(),
       payoutEmail:           s1.email.trim(),
       bankName:              s4.bankName.trim(),
@@ -854,6 +882,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       const nextStatus = enrollment?.approvalStatus === "approved" ? "approved" : "pending";
       setRegStatus(nextStatus);
       setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
+      try { localStorage.removeItem(`hc_enroll_draft_${doctorId}`); } catch {}
       setStep(5);
       if (enrollment && typeof onComplete === "function") onComplete(enrollment);
     } catch (err) {
@@ -871,7 +900,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <p>Enter your details exactly as they appear on your official documents.</p>
       </div>
       <div className="de-card-body">
-        <h4 style={{fontSize:13,marginBottom:14,color:"var(--gray-600)"}}>Name</h4>
+        <h4 style={{fontSize:13,marginBottom:16,color:"var(--gray-600)"}}>Name</h4>
         <div className="form-grid">
           <div className="field-group">
             <label className="field-label">First Name <span className="req">*</span></label>
@@ -880,13 +909,13 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
             {s1Errors.firstName && <div className="field-error">{s1Errors.firstName}</div>}
           </div>
           <div className="field-group">
-            <label className="field-label">Surname / Last Name</label>
+            <label className="field-label">Last Name</label>
             <input className="field-input" placeholder="Surname"
               value={s1.surname} onChange={e => setS1({...s1, surname: e.target.value})} />
           </div>
         </div>
 
-        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Contact</h4>
+        <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Contact</h4>
         <div className="form-grid">
           <div className="field-group">
             <label className="field-label">Mobile Number <span className="req">*</span></label>
@@ -918,7 +947,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
           </div>
         </div>
 
-        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Location</h4>
+        <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Location</h4>
         <div className="form-grid">
           <div className="field-group full-width">
             <label className="field-label">Country of Practice <span className="req">*</span></label>
@@ -951,16 +980,18 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
           </div>
         </div>
 
-        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Languages</h4>
+        <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Languages</h4>
         <div className="field-group">
-          <label className="field-label">Languages Known</label>
+          <label className="field-label">Languages Known <span className="req">*</span></label>
           <MultiSelect
             items={LANGUAGES}
             selected={languagesKnown}
             onChange={setLanguagesKnown}
             placeholder="Select languages you speak..."
             searchPlaceholder="Search languages..."
+            hasError={!!s1Errors.languages}
           />
+          {s1Errors.languages && <div className="field-error">{s1Errors.languages}</div>}
         </div>
 
         <div className="btn-row">
@@ -979,7 +1010,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <p>Provide your medical credentials, licensing details, and upload required documents.</p>
       </div>
       <div className="de-card-body">
-        <h4 style={{fontSize:13,marginBottom:14,color:"var(--gray-600)"}}>Credentials &amp; Licensing</h4>
+        <h4 style={{fontSize:13,marginBottom:16,color:"var(--gray-600)"}}>Credentials &amp; Licensing</h4>
         <div className="form-grid">
           {isUS ? (
             <div className="field-group">
@@ -1025,9 +1056,10 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
             {s2Errors.qualification && <div className="field-error">{s2Errors.qualification}</div>}
           </div>
           <div className="field-group">
-            <label className="field-label">Years of Experience</label>
-            <input className="field-input" type="number" min="0" placeholder="e.g. 10"
+            <label className="field-label">Years of Experience <span className="req">*</span></label>
+            <input className={`field-input ${s2Errors.experience?"error":""}`} type="number" min="0" placeholder="e.g. 10"
               value={s2.experience} onChange={e => setS2({...s2, experience: e.target.value})} />
+            {s2Errors.experience && <div className="field-error">{s2Errors.experience}</div>}
           </div>
         </div>
 
@@ -1091,7 +1123,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
           )}
         </div>
 
-        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Education</h4>
+        <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Education</h4>
         <div className="form-grid">
           <div className="field-group">
             <label className="field-label">Medical School <span className="req">*</span></label>
@@ -1112,7 +1144,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
           </div>
         </div>
 
-        <h4 style={{fontSize:13,margin:"20px 0 14px",color:"var(--gray-600)"}}>Consultation &amp; Practice</h4>
+        <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Consultation &amp; Practice</h4>
         <div className="form-grid">
           <div className="field-group">
             <label className="field-label">Consultation Fee</label>
@@ -1147,7 +1179,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
           </div>
         </div>
 
-        <h4 style={{fontSize:14,margin:"24px 0 16px",color:"var(--gray-600)"}}>Required Documents</h4>
+        <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Required Documents</h4>
         <div className="form-grid">
           <FileUpload label="Government ID / Nationality Proof" required file={files.govId}
             onFile={f => setFiles({...files, govId: f})} onRemove={() => setFiles({...files, govId: null})} />
@@ -1155,6 +1187,8 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
             onFile={f => setFiles({...files, degree: f})} onRemove={() => setFiles({...files, degree: null})} />
           <FileUpload label="Medical License Document" required file={files.medicalLicense}
             onFile={f => setFiles({...files, medicalLicense: f})} onRemove={() => setFiles({...files, medicalLicense: null})} />
+          <FileUpload label="Malpractice Insurance License" file={files.malpractice}
+            onFile={f => setFiles({...files, malpractice: f})} onRemove={() => setFiles({...files, malpractice: null})} />
         </div>
         {(s2Errors.govId||s2Errors.degree||s2Errors.medicalLicense) && (
           <div className="field-error" style={{marginTop:8}}>Please upload all required documents.</div>
@@ -1163,7 +1197,10 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <div className="btn-row">
           <button className="btn btn-secondary" onClick={handleBack}>← Back</button>
           <div style={{display:"flex",gap:10}}>
-            <button className="btn btn-outline btn-sm" onClick={saveDraft}>Save Draft</button>
+            <button className="btn btn-sm" onClick={saveDraft}
+              style={draftSaved ? { background:"rgba(37,99,235,0.1)",color:"var(--teal)",border:"1.5px solid var(--teal)" } : { background:"transparent",border:"1.5px solid var(--gray-200)",color:"var(--navy)" }}>
+              {draftSaved ? "Saved ✓" : "Save Draft"}
+            </button>
             <button className="btn btn-primary" onClick={handleNext}>Continue →</button>
           </div>
         </div>
@@ -1222,7 +1259,10 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <div className="btn-row">
           <button className="btn btn-secondary" onClick={handleBack}>← Back</button>
           <div style={{display:"flex",gap:10}}>
-            <button className="btn btn-outline btn-sm" onClick={saveDraft}>Save Draft</button>
+            <button className="btn btn-sm" onClick={saveDraft}
+              style={draftSaved ? { background:"rgba(37,99,235,0.1)",color:"var(--teal)",border:"1.5px solid var(--teal)" } : { background:"transparent",border:"1.5px solid var(--gray-200)",color:"var(--navy)" }}>
+              {draftSaved ? "Saved ✓" : "Save Draft"}
+            </button>
             <button className="btn btn-primary" onClick={handleNext}>Continue →</button>
           </div>
         </div>
@@ -1247,22 +1287,19 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         {isUS ? (
           <div className="form-grid">
             <div className="field-group">
-              <label className="field-label">Bank Name <span className="req">*</span></label>
-              <input className={`field-input ${s4Errors.bankName?"error":""}`} placeholder="Bank name"
+              <label className="field-label">Bank Name</label>
+              <input className="field-input" placeholder="Bank name"
                 value={s4.bankName} onChange={e => setS4({...s4,bankName:e.target.value})} />
-              {s4Errors.bankName && <div className="field-error">{s4Errors.bankName}</div>}
             </div>
             <div className="field-group">
-              <label className="field-label">Account Number <span className="req">*</span></label>
-              <input className={`field-input ${s4Errors.accountNum?"error":""}`} placeholder="Account number"
+              <label className="field-label">Account Number</label>
+              <input className="field-input" placeholder="Account number"
                 value={s4.accountNum} onChange={e => setS4({...s4,accountNum:e.target.value})} />
-              {s4Errors.accountNum && <div className="field-error">{s4Errors.accountNum}</div>}
             </div>
             <div className="field-group">
-              <label className="field-label">SWIFT / BIC Code <span className="req">*</span></label>
-              <input className={`field-input ${s4Errors.swift?"error":""}`} placeholder="SWIFT code"
+              <label className="field-label">SWIFT / BIC Code</label>
+              <input className="field-input" placeholder="SWIFT code"
                 value={s4.swift} onChange={e => setS4({...s4,swift:e.target.value})} />
-              {s4Errors.swift && <div className="field-error">{s4Errors.swift}</div>}
             </div>
             <div className="field-group">
               <label className="field-label">PayPal ID</label>
@@ -1273,23 +1310,14 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         ) : (
           <div className="form-grid">
             <div className="field-group">
-              <label className="field-label">IBAN <span className="req">*</span></label>
-              <input className={`field-input ${s4Errors.iban?"error":""}`} placeholder="International Bank Account Number"
+              <label className="field-label">IBAN</label>
+              <input className="field-input" placeholder="International Bank Account Number"
                 value={s4.iban} onChange={e => setS4({...s4,iban:e.target.value})} />
-              {s4Errors.iban && <div className="field-error">{s4Errors.iban}</div>}
             </div>
             <div className="field-group">
-              <label className="field-label">SWIFT / BIC Code <span className="req">*</span></label>
-              <input className={`field-input ${s4Errors.swift?"error":""}`} placeholder="SWIFT code"
+              <label className="field-label">SWIFT / BIC Code</label>
+              <input className="field-input" placeholder="SWIFT code"
                 value={s4.swift} onChange={e => setS4({...s4,swift:e.target.value})} />
-              {s4Errors.swift && <div className="field-error">{s4Errors.swift}</div>}
-            </div>
-            <div className="field-group">
-              <label className="field-label">Preferred Currency <span className="req">*</span></label>
-              <select className={`field-select ${s4Errors.currency?"error":""}`}
-                value={s4.currency} onChange={e => setS4({...s4,currency:e.target.value})}>
-                {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
             </div>
             <div className="field-group">
               <label className="field-label">PayPal ID</label>
@@ -1303,7 +1331,10 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <div className="btn-row">
           <button className="btn btn-secondary" onClick={handleBack}>← Back</button>
           <div style={{display:"flex",gap:10}}>
-            <button className="btn btn-outline btn-sm" onClick={saveDraft}>Save Draft</button>
+            <button className="btn btn-sm" onClick={saveDraft}
+              style={draftSaved ? { background:"rgba(37,99,235,0.1)",color:"var(--teal)",border:"1.5px solid var(--teal)" } : { background:"transparent",border:"1.5px solid var(--gray-200)",color:"var(--navy)" }}>
+              {draftSaved ? "Saved ✓" : "Save Draft"}
+            </button>
             <button className="btn btn-primary" onClick={handleNext} disabled={submitBusy}>
               {submitBusy ? "Submitting..." : "Submit Application →"}
             </button>
@@ -1396,7 +1427,11 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       <div className="wizard-root">
         <div className="top-bar">
           <div className="top-bar-logo">Humancare<span>Connect</span></div>
-          {step < 5 && <div className="draft-badge"><div className="dot" /> Draft Saved</div>}
+          {step < 5 && (
+            <div className="draft-badge" style={draftSaved ? { background: "rgba(37,99,235,0.2)", color: "#93c5fd" } : {}}>
+              <div className="dot" /> {draftSaved ? "Draft Saved ✓" : "In Progress"}
+            </div>
+          )}
         </div>
 
         <div className="progress-section">

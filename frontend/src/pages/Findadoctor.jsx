@@ -136,6 +136,17 @@ const ChevronRight = () => (
   </svg>
 );
 
+function slugifyDoctorName(name) {
+  return (name || "")
+    .replace(/^Dr\.?\s*/i, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "doctor";
+}
+
 // Normalize a doctor object from the API so all fields are always defined
 const normalizeDoctor = (doc) => ({
   id: "",
@@ -613,7 +624,10 @@ export default function DoctorFinder() {
                       >
                         Book Appointment
                       </button>
-                      <button className="fd-profile-link" onClick={() => navigate(`/doctor/${doc.id}`)}>
+                      <button
+                        className="fd-profile-link"
+                        onClick={() => navigate(`/doctors/${doc.doctorId}-${slugifyDoctorName(doc.name)}`)}
+                      >
                         View Profile →
                       </button>
                     </div>

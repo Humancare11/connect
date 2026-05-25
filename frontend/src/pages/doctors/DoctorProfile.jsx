@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+
+function slugifyDoctorName(name) {
+  return (name || "")
+    .replace(/^Dr\.?\s*/i, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "doctor";
+}
 
 const STATUS_COLORS = {
   approved: { bg: "#dcfce7", color: "#166534", label: "Approved" },
@@ -226,6 +238,7 @@ function FeeSection({ doctorId, initialFee, onSaved }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function DoctorProfile() {
   const { doctor } = useDoctorAuth();
+  const navigate = useNavigate();
   const [enrollment, setEnrollment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [consultantFees, setConsultantFees] = useState(null);
@@ -351,7 +364,11 @@ export default function DoctorProfile() {
   const locationStr = [enrollment.city, enrollment.state, enrollment.country].filter(Boolean).join(", ");
   const langStr = Array.isArray(enrollment.languagesKnown) ? enrollment.languagesKnown.join(", ") : enrollment.languagesKnown;
   const doctorId = doctor._id || doctor.id;
+  const numericDoctorId = doctor.doctorId;
   const isApproved = enrollment.approvalStatus === "approved";
+  const publicProfileSlug = numericDoctorId
+    ? `${numericDoctorId}-${slugifyDoctorName(fullName)}`
+    : null;
 
   return (
     <>
@@ -385,6 +402,11 @@ export default function DoctorProfile() {
             )}
           </div>
           <div className="dp-header-right">
+            {numericDoctorId && (
+              <span style={{ background: "rgba(255,255,255,0.12)", color: "#cde3f7", padding: "4px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "1px solid rgba(255,255,255,0.22)", letterSpacing: "0.05em" }}>
+                ID: {numericDoctorId}
+              </span>
+            )}
             <span style={{ background: statusStyle.bg, color: statusStyle.color, padding: "5px 14px", borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
               {statusStyle.label}
             </span>
@@ -392,6 +414,15 @@ export default function DoctorProfile() {
               <span style={{ background: "rgba(255,255,255,0.15)", color: "#fff", padding: "5px 14px", borderRadius: 50, fontSize: 13, fontWeight: 700, border: "1.5px solid rgba(255,255,255,0.3)" }}>
                 ${consultantFees} / visit
               </span>
+            )}
+            {isApproved && publicProfileSlug && (
+              <button
+                onClick={() => navigate(`/doctors/${publicProfileSlug}`)}
+                style={{ background: "rgba(255,255,255,0.15)", color: "#fff", padding: "6px 14px", borderRadius: 50, fontSize: 12, fontWeight: 600, border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                View Public Profile
+              </button>
             )}
           </div>
         </div>
