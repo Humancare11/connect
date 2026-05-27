@@ -375,6 +375,25 @@
 .de-phone .react-tel-input .selected-flag:focus { background: transparent !important; }
 
 /* ── Toggle group ── */
+.de-phone-input {
+  --pif-bg: var(--de-surface);
+  --pif-active-bg: var(--de-surface);
+  --pif-border: var(--de-border);
+  --pif-focus: var(--de-border-focus);
+  --pif-glow: var(--de-teal-glow);
+  --pif-text: var(--de-text);
+  --pif-muted: var(--de-sub);
+  --pif-divider: var(--de-border);
+  --pif-hover: var(--de-teal-dim);
+  --pif-placeholder: var(--de-muted);
+  --pif-radius: var(--de-radius);
+}
+
+.de-phone-input.error > div {
+  border-color: var(--de-red) !important;
+  box-shadow: 0 0 0 2px rgba(240,92,92,0.15) !important;
+}
+
 .de-toggle-group {
   display: flex;
   gap: 8px;

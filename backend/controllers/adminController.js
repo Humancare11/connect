@@ -485,6 +485,60 @@ const processDoctorPayout = async (req, res) => {
   }
 };
 
+// PUT /api/admin/doctors/:id — admin edits a doctor's enrollment record
+const updateDoctorByAdmin = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id);
+    if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+
+    const {
+      firstName, surname, email, countryCode, phoneNumber, gender, dob,
+      country, state, city, zip, address,
+      specialization, subSpecialization, qualification, experience,
+      medicalSchool, registrationYear, medicalCouncilName, medicalRegistrationNumber,
+      medicalLicense, consultationMode, consultantFees, feeCurrency,
+      clinicName, clinicAddress, aboutDoctor, languagesKnown,
+      bankName, accountNumber, accountHolderName, ifscCode, paypalId, payoutEmail,
+    } = req.body;
+
+    const updates = {};
+
+    // Scalar string fields — only include when provided
+    const strings = { firstName, surname, email, countryCode, phoneNumber, gender, dob,
+      country, state, city, zip, address, specialization, subSpecialization,
+      qualification, medicalSchool, registrationYear, medicalCouncilName,
+      medicalRegistrationNumber, medicalLicense, consultationMode, feeCurrency,
+      clinicName, clinicAddress, aboutDoctor, bankName, accountNumber,
+      accountHolderName, ifscCode, paypalId, payoutEmail };
+    Object.entries(strings).forEach(([k, v]) => { if (v !== undefined) updates[k] = v; });
+
+    // Numeric fields
+    if (experience !== undefined) updates.experience = Number(experience) || 0;
+    if (consultantFees !== undefined) updates.consultantFees = Number(consultantFees) || 0;
+
+    // Languages — accept array or comma-separated string
+    if (languagesKnown !== undefined) {
+      updates.languagesKnown = Array.isArray(languagesKnown)
+        ? languagesKnown.filter(Boolean)
+        : String(languagesKnown).split(",").map(l => l.trim()).filter(Boolean);
+    }
+
+    updates.updatedAt = new Date();
+
+    enrollment.set(updates);
+    enrollment.markModified("languagesKnown");
+    await enrollment.save();
+
+    return res.status(200).json({
+      msg: "Doctor profile updated successfully.",
+      enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()),
+    });
+  } catch (error) {
+    console.error("updateDoctorByAdmin error:", error);
+    return res.status(500).json({ msg: "Failed to update doctor profile." });
+  }
+};
+
 const getDoctorById = async (req, res) => {
   try {
     const enrollment = await Enrollment.findById(req.params.id)
@@ -503,6 +557,7 @@ module.exports = {
   getAdminStats,
   getAllDoctors,
   getDoctorById,
+  updateDoctorByAdmin,
   approveDoctor,
   rejectDoctor,
   approveDoctorDeleteRequest,

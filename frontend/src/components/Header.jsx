@@ -149,7 +149,7 @@ useEffect(() => {
 
               <span className="divider">/</span>
 
-              <Link to="/register" className="auth-link">
+              <Link to="/login" className="auth-link">
                 Register
               </Link>
             </div>

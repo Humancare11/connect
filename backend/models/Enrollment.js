@@ -32,7 +32,9 @@ const enrollmentSchema = new mongoose.Schema({
   medicalRegistrationNumber: String,
   medicalLicense: String,
   idProof: String,
+  degreeFile: String,
   medicalLicenseFile: String,
+  malpracticeInsuranceFile: String,
   medicalCouncilName: String,
   registrationYear: String,
   idProofType: String,
@@ -51,6 +53,7 @@ const enrollmentSchema = new mongoose.Schema({
   // Availability
   availability: { type: mongoose.Schema.Types.Mixed },
   timezone: String,
+  profilePhoto: String,
 
   // Flags
   hasProfilePhoto: { type: Boolean, default: false },

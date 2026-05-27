@@ -282,7 +282,13 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
     if (enrollment) {
       const wasApprovedOrRejected =
         enrollment.approvalStatus === "approved" || enrollment.approvalStatus === "rejected";
-      Object.assign(enrollment, enrollmentData);
+      // Use Mongoose's .set() instead of Object.assign so all field types are
+      // properly tracked as modified. Then explicitly markModified for Mixed-type
+      // (availability) and Array-type (languagesKnown) which Mongoose cannot
+      // auto-detect when replaced wholesale.
+      enrollment.set(enrollmentData);
+      enrollment.markModified("availability");
+      enrollment.markModified("languagesKnown");
       enrollment.formCompleted = true;
       enrollment.completedSteps = 5;
       enrollment.currentStep = 5;

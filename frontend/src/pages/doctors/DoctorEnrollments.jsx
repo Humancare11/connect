@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
+import PhoneInputField from "../../components/PhoneInputField";
 
 // ─── Constants ───
 const COUNTRIES = [
@@ -16,6 +17,16 @@ const SPECIALTIES = [
 ];
 const QUALIFICATIONS = ["MD","DO","NP","PA","Other"];
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+const splitPhoneValue = (fullValue, countryMeta) => {
+  const digits = String(fullValue || "").replace(/\D/g, "");
+  const dial = String(countryMeta?.dial || countryMeta?.dialCode || "").replace(/\D/g, "");
+  if (!dial) return { countryCode: "", phone: digits };
+  return {
+    countryCode: `+${dial}`,
+    phone: digits.startsWith(dial) ? digits.slice(dial.length) : digits,
+  };
+};
 
 // Countries with state/province-level medical licensing
 const STATE_LICENSING_COUNTRIES = {
@@ -104,10 +115,41 @@ const STATE_LICENSING_COUNTRIES = {
 };
 
 const TIMEZONES = [
-  "America/New_York (EST)","America/Chicago (CST)","America/Denver (MST)",
-  "America/Los_Angeles (PST)","America/Anchorage (AKST)","Pacific/Honolulu (HST)",
-  "Europe/London (GMT)","Europe/Berlin (CET)","Asia/Kolkata (IST)","Asia/Dubai (GST)",
-  "Asia/Tokyo (JST)","Asia/Singapore (SGT)","Australia/Sydney (AEST)","Other"
+  // Americas
+  "America/New_York (EST/EDT)", "America/Chicago (CST/CDT)", "America/Denver (MST/MDT)",
+  "America/Los_Angeles (PST/PDT)", "America/Anchorage (AKST)", "Pacific/Honolulu (HST)",
+  "America/Toronto (EST/EDT)", "America/Vancouver (PST/PDT)",
+  "America/Sao_Paulo (BRT)", "America/Argentina/Buenos_Aires (ART)",
+  "America/Mexico_City (CST/CDT)", "America/Bogota (COT)", "America/Lima (PET)",
+  // Europe
+  "Europe/London (GMT/BST)", "Europe/Paris (CET/CEST)", "Europe/Berlin (CET/CEST)",
+  "Europe/Madrid (CET/CEST)", "Europe/Rome (CET/CEST)", "Europe/Amsterdam (CET/CEST)",
+  "Europe/Stockholm (CET/CEST)", "Europe/Moscow (MSK)", "Europe/Istanbul (TRT)",
+  "Europe/Athens (EET/EEST)", "Europe/Bucharest (EET/EEST)", "Europe/Warsaw (CET/CEST)",
+  // Africa
+  "Africa/Cairo (EET)", "Africa/Lagos (WAT)", "Africa/Nairobi (EAT)",
+  "Africa/Johannesburg (SAST)", "Africa/Casablanca (WET)", "Africa/Accra (GMT)",
+  "Africa/Abidjan (GMT)", "Africa/Addis_Ababa (EAT)", "Africa/Dar_es_Salaam (EAT)",
+  // Middle East
+  "Asia/Dubai (GST)", "Asia/Riyadh (AST)", "Asia/Baghdad (AST)",
+  "Asia/Tehran (IRST)", "Asia/Kuwait (AST)", "Asia/Muscat (GST)", "Asia/Bahrain (AST)",
+  // South Asia
+  "Asia/Kolkata (IST)", "Asia/Kathmandu (NPT)", "Asia/Dhaka (BST)",
+  "Asia/Karachi (PKT)", "Asia/Colombo (IST)", "Asia/Kabul (AFT)",
+  // Southeast Asia
+  "Asia/Bangkok (ICT)", "Asia/Jakarta (WIB)", "Asia/Yangon (MMT)",
+  "Asia/Singapore (SGT)", "Asia/Kuala_Lumpur (MYT)", "Asia/Manila (PHT)",
+  "Asia/Phnom_Penh (ICT)", "Asia/Ho_Chi_Minh (ICT)", "Asia/Vientiane (ICT)",
+  // East Asia
+  "Asia/Hong_Kong (HKT)", "Asia/Shanghai (CST)", "Asia/Taipei (CST)",
+  "Asia/Seoul (KST)", "Asia/Tokyo (JST)",
+  // Central Asia
+  "Asia/Tashkent (UZT)", "Asia/Almaty (ALMT)", "Asia/Yekaterinburg (YEKT)",
+  // Oceania
+  "Australia/Sydney (AEST/AEDT)", "Australia/Melbourne (AEST/AEDT)",
+  "Australia/Brisbane (AEST)", "Australia/Adelaide (ACST/ACDT)", "Australia/Perth (AWST)",
+  "Pacific/Auckland (NZST/NZDT)", "Pacific/Fiji (FJT)", "Pacific/Guam (ChST)",
+  "Other"
 ];
 const CURRENCIES = ["USD","GBP","EUR","INR","AED","SAR","AUD","CAD","SGD","JPY","Other"];
 const LANGUAGES = [
@@ -325,6 +367,7 @@ h1,h2,h3,h4,h5,h6 {
 }
 .upload-zone:hover { border-color: var(--teal); background: rgba(37,99,235,0.03); }
 .upload-zone.has-file { border-color: var(--teal); border-style: solid; background: rgba(37,99,235,0.04); }
+.upload-zone.error { border-color: var(--amber) !important; background: rgba(217,119,6,0.04) !important; }
 .upload-icon { font-size: 28px; margin-bottom: 8px; }
 .upload-text { font-size: 13px; color: var(--gray-500); }
 .upload-text strong { color: var(--teal); }
@@ -370,7 +413,7 @@ h1,h2,h3,h4,h5,h6 {
   position: relative; top: calc(100% + 4px); left: 0; right: 0;
   background: var(--white); border: 1.5px solid var(--gray-200);
   border-radius: var(--radius-sm); box-shadow: var(--shadow-lg);
-  z-index: 50; max-height: 260px; overflow: hidden;
+  z-index: 200; max-height: 260px; overflow: hidden;
   display: flex; flex-direction: column;
 }
 .ms-search {
@@ -476,17 +519,53 @@ h1,h2,h3,h4,h5,h6 {
 
 
 /* ─── Responsive ─── */
+@media (max-width: 900px) {
+  .de-step-card { padding: 0 16px; }
+  .progress-section { padding: 0 16px; }
+}
+
+@media (max-width: 720px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .de-card-body { padding: 22px 18px 28px; }
+  .de-card-header { padding: 20px 18px 16px; }
+  .de-card-header h2 { font-size: 19px; }
+  .progress-section { padding: 0 12px; }
+  .progress-step { padding: 0 10px; }
+  .progress-label { font-size: 10px; }
+  .btn { padding: 11px 20px; font-size: 13px; }
+}
+
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
-  .top-bar { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
-  .de-card-body { padding: 20px 16px 24px; }
-  .de-card-header { padding: 20px 16px 16px; }
+  .top-bar { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+  .top-bar-logo { font-size: 15px; }
+  .de-step-card { padding: 0 10px; }
+  .de-card-body { padding: 18px 14px 22px; }
+  .de-card-header { padding: 18px 14px 14px; }
+  .de-card-header h2 { font-size: 17px; }
+  .de-card-header p { font-size: 13px; }
   .de-card { max-height: none; }
-  .progress-label { font-size: 9px; }
+  .progress-section { margin-top: 16px; padding: 0 8px; }
+  .progress-step { padding: 0 6px; }
+  .progress-circle { width: 28px; height: 28px; font-size: 12px; }
+  .progress-label { font-size: 8px; white-space: normal; text-align: center; }
+  .progress-line-bg { top: 14px; }
+  .progress-line-fill { top: 14px; }
   .btn-row { flex-direction: column-reverse; gap: 10px; }
   .btn-row .btn { width: 100%; justify-content: center; }
+  .btn-row div { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .btn-row div .btn { width: 100%; }
   .time-block { flex-wrap: wrap; }
+  .time-input { width: 100px; }
   .ms-dropdown { max-height: 220px; }
+  .license-section { padding: 14px; }
+  .upload-zone { padding: 16px; }
+}
+
+@media (max-width: 420px) {
+  .progress-label { display: none; }
+  .de-card-header h2 { font-size: 16px; }
+  .btn { padding: 10px 16px; }
 }
 
 @keyframes fadeSlideIn {
@@ -538,7 +617,7 @@ function MultiSelect({ items, selected, onChange, placeholder, searchPlaceholder
           <input className="ms-search" placeholder={searchPlaceholder || "Search..."}
             value={search} onChange={e => setSearch(e.target.value)}
             onClick={e => e.stopPropagation()} autoFocus />
-          <div className="ms-list">
+          <div className="ms-list" onWheel={e => e.stopPropagation()}>
             {filtered.length === 0 ? (
               <div className="ms-empty">No results found</div>
             ) : filtered.map(item => (
@@ -556,31 +635,240 @@ function MultiSelect({ items, selected, onChange, placeholder, searchPlaceholder
   );
 }
 
+// ─── Single-select with search bar ───
+function SingleSelect({ items, value, onChange, placeholder, hasError }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef();
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = items.filter(i => i.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="ms-wrapper" ref={ref}>
+      <div
+        className={`field-input ${hasError ? "error" : ""}`}
+        style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", userSelect: "none" }}
+        onClick={() => setOpen(o => !o)}
+      >
+        <span style={{ color: value ? "var(--navy)" : "var(--gray-400)" }}>
+          {value || placeholder || "Select..."}
+        </span>
+        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style={{ flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
+          <path d="M1 1.5L6 6.5L11 1.5" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      {open && (
+        <div className="ms-dropdown animate-in">
+          <input className="ms-search" placeholder="Search specialty..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            onClick={e => e.stopPropagation()} autoFocus />
+          <div className="ms-list" onWheel={e => e.stopPropagation()}>
+            {filtered.length === 0 ? (
+              <div className="ms-empty">No results found</div>
+            ) : filtered.map(item => (
+              <div key={item} className="ms-option" onClick={e => {
+                e.stopPropagation();
+                onChange(item);
+                setOpen(false);
+                setSearch("");
+              }}>
+                <div className={`ms-check ${value === item ? "on" : ""}`}>
+                  {value === item && "✓"}
+                </div>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Profile Photo Upload (circular avatar with live preview) ───
+function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
+  const ref = useRef();
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState("");
+  const [localPreview, setLocalPreview] = useState(null);
+
+  // Revoke object URL on unmount to avoid memory leak
+  useEffect(() => () => { if (localPreview) URL.revokeObjectURL(localPreview); }, []); // eslint-disable-line
+
+  const handlePick = async (rawFile) => {
+    if (!rawFile) return;
+    if (!rawFile.type.startsWith("image/")) {
+      setUploadErr("Please select an image file (JPG, PNG, or WebP).");
+      return;
+    }
+    setUploadErr("");
+    // Show local preview immediately — don't wait for server
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    setLocalPreview(URL.createObjectURL(rawFile));
+    setUploading(true);
+    onFile({ name: rawFile.name, url: null });
+    try {
+      const fd = new FormData();
+      fd.append("file", rawFile);
+      const { data } = await api.post("/api/upload", fd);
+      onFile({ name: data.name || rawFile.name, url: data.url });
+    } catch {
+      setUploadErr("Upload failed — please remove and try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const imgSrc = localPreview || file?.url || null;
+  const isReady = !!file?.url;
+  const showValidationErr = hasError && !file && !uploadErr;
+
+  return (
+    <div className="field-group">
+      <label className="field-label">Profile Photo <span className="req">*</span></label>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 20, padding: "18px 20px",
+        background: "var(--gray-50)", borderRadius: "var(--radius-sm)",
+        border: `1.5px ${showValidationErr ? "solid var(--red)" : isReady ? "solid var(--teal)" : "solid var(--gray-200)"}`,
+        boxShadow: showValidationErr ? "0 0 0 3px rgba(220,38,38,0.08)" : isReady ? "0 0 0 3px rgba(37,99,235,0.08)" : "none",
+        flexWrap: "wrap", transition: "border-color 0.2s, box-shadow 0.2s",
+      }}>
+        {/* ── Avatar circle ── */}
+        <div
+          onClick={() => !uploading && ref.current?.click()}
+          style={{
+            width: 90, height: 90, borderRadius: "50%", flexShrink: 0,
+            border: `2.5px ${isReady ? "solid var(--teal)" : showValidationErr ? "dashed var(--red)" : "dashed var(--gray-300)"}`,
+            background: imgSrc ? "none" : "var(--gray-100)",
+            cursor: uploading ? "default" : "pointer",
+            overflow: "hidden", position: "relative",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "border-color 0.2s",
+          }}
+        >
+          {imgSrc ? (
+            <img src={imgSrc} alt="Profile preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            /* SVG person silhouette placeholder */
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="14" r="9" fill="#CBD5E1"/>
+              <path d="M2 40c0-9.941 8.059-18 18-18s18 8.059 18 18" fill="#CBD5E1"/>
+            </svg>
+          )}
+          {uploading && (
+            <div style={{ position:"absolute", inset:0, background:"rgba(255,255,255,0.88)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <span style={{ fontSize:24 }}>⏳</span>
+            </div>
+          )}
+        </div>
+
+        {/* ── Info + actions ── */}
+        <div style={{ flex: 1, minWidth: 160, display: "flex", flexDirection: "column", gap: 5 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, color: "var(--navy)" }}>
+            {isReady ? "✅ Photo uploaded" : uploading ? "⏳ Uploading…" : file ? file.name : "No photo selected"}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--gray-500)", lineHeight: 1.55 }}>
+            A professional headshot helps patients identify you.<br/>
+            Accepted: JPG, PNG, WebP · Max 5 MB
+          </div>
+          {(uploadErr || showValidationErr) && (
+            <div className="field-error">{uploadErr || errorMsg || "Profile photo is required"}</div>
+          )}
+          <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+            <button type="button" className="btn btn-outline btn-xs"
+              onClick={() => ref.current?.click()} disabled={uploading}>
+              {file ? "Change Photo" : "Choose Photo"}
+            </button>
+            {file && (
+              <button type="button" className="btn btn-danger btn-xs"
+                onClick={() => { setLocalPreview(null); setUploadErr(""); onRemove(); }}>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+        <input ref={ref} type="file" hidden accept="image/jpeg,image/jpg,image/png,image/webp"
+          onChange={e => handlePick(e.target.files[0])} />
+      </div>
+    </div>
+  );
+}
+
+// file prop shape: null | { name: string, url: string|null }
+// Uploads to /api/upload immediately when a file is picked, then calls onFile({ name, url })
 function FileUpload({ label, file, onFile, onRemove, required }) {
   const ref = useRef();
-  const handleDrop = e => { e.preventDefault(); if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]); };
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState("");
+
+  const handlePick = async (rawFile) => {
+    if (!rawFile) return;
+    setUploadErr("");
+    setUploading(true);
+    // Optimistically show the filename while uploading
+    onFile({ name: rawFile.name, url: null });
+    try {
+      const fd = new FormData();
+      fd.append("file", rawFile);
+      const { data } = await api.post("/api/upload", fd);
+      onFile({ name: data.name || rawFile.name, url: data.url });
+    } catch {
+      setUploadErr("Upload failed — please remove and try again.");
+      // Keep the { name, url: null } so the user sees the error state
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = e => { e.preventDefault(); handlePick(e.dataTransfer.files[0]); };
+
+  const hasUrl  = !!file?.url;
+  const hasFile = !!file;
+
   return (
     <div className="field-group">
       <div className="field-label">{label} {required && <span className="req">*</span>}</div>
-      {!file ? (
+
+      {!hasFile ? (
+        /* ── Empty drop zone ── */
         <div className="upload-zone" onClick={() => ref.current?.click()}
           onDragOver={e => e.preventDefault()} onDrop={handleDrop}>
           <div className="upload-icon">📁</div>
           <div className="upload-text"><strong>Click to upload</strong> or drag and drop</div>
           <div className="upload-text" style={{ fontSize: 11, marginTop: 4 }}>PDF, JPG, PNG up to 10MB</div>
           <input ref={ref} type="file" hidden accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-            onChange={e => { if (e.target.files[0]) onFile(e.target.files[0]); }} />
+            onChange={e => handlePick(e.target.files[0])} />
+        </div>
+      ) : uploading ? (
+        /* ── Uploading spinner ── */
+        <div className="upload-zone has-file" style={{ justifyContent:"center", flexDirection:"column", gap:6 }}>
+          <div style={{ fontSize:22 }}>⏳</div>
+          <div className="upload-text">Uploading <strong>{file.name}</strong>…</div>
         </div>
       ) : (
-        <div className="upload-zone has-file">
+        /* ── File ready / error state ── */
+        <div className={`upload-zone has-file ${uploadErr ? "error" : ""}`}
+          onClick={() => ref.current?.click()}
+          onDragOver={e => e.preventDefault()} onDrop={handleDrop}
+          title="Click to replace">
           <div className="file-preview">
-            <div className="file-icon">📄</div>
+            <div className="file-icon">{hasUrl ? "✅" : "⚠️"}</div>
             <div className="file-info">
               <div className="file-name">{file.name}</div>
-              <div className="file-size">{(file.size / 1024).toFixed(1)} KB</div>
+              <div className="file-size" style={{ color: hasUrl ? "var(--green)" : "var(--amber)", fontWeight: 600 }}>
+                {hasUrl ? "Uploaded ✓" : (uploadErr || "Not yet on server — click to retry")}
+              </div>
             </div>
-            <button className="file-remove" onClick={e => { e.stopPropagation(); onRemove(); }}>✕</button>
+            <button className="file-remove" onClick={e => { e.stopPropagation(); setUploadErr(""); onRemove(); }}>✕</button>
           </div>
+          <input ref={ref} type="file" hidden accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            onChange={e => handlePick(e.target.files[0])} />
         </div>
       )}
     </div>
@@ -608,12 +896,12 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
 
   // Step 2
   const [s2, setS2] = useState({
-    npi:"", licenseNum:"", specialty:"", subSpecialization:"", qualification:"",
+    npi:"", licenseNum:"", specialty:"", customSpecialty:"", subSpecialization:"", qualification:"",
     school:"", gradYear:"", experience:"", medicalCouncilName:"",
     consultationMode:"", consultantFees:"", feeCurrency:"USD",
     clinicName:"", clinicAddress:"", aboutDoctor:"", certifications:"",
   });
-  const [files, setFiles] = useState({ govId: null, degree: null, medicalLicense: null, malpractice: null });
+  const [files, setFiles] = useState({ profilePhoto: null, govId: null, degree: null, medicalLicense: null, malpractice: null });
   const [s2Errors, setS2Errors] = useState({});
   const [licensedStates, setLicensedStates] = useState([]);
   const [otherLicenseCountries, setOtherLicenseCountries] = useState([]);
@@ -638,6 +926,14 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
   const isUS = s1.country === "United States";
   const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
   const otherCountryOptions = COUNTRIES.filter(c => c !== s1.country && c !== "Other");
+  const mobileValue = `${s1.countryCode || ""}${s1.phone || ""}`;
+  const handleMobileChange = (value, countryMeta) => {
+    const nextPhone = splitPhoneValue(value, countryMeta);
+    setS1(prev => ({ ...prev, ...nextPhone }));
+  };
+  const handleMobileCountryChange = (countryMeta) => {
+    setS1(prev => ({ ...prev, countryCode: countryMeta.dialCode || prev.countryCode }));
+  };
   const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Status"];
 
   // Populate form states from saved enrollment data
@@ -668,6 +964,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       npi:               data.medicalRegistrationNumber || "",
       licenseNum:        data.medicalLicense || data.medicalRegistrationNumber || "",
       specialty:         data.specialization || "",
+      customSpecialty:   "",
       subSpecialization: data.subSpecialization || "",
       qualification:     data.qualification || "",
       school:            data.medicalSchool || "",
@@ -690,7 +987,23 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       currency:  "USD",
       paypalId:  data.paypalId || "",
     });
+    if (data.timezone) setTimezone(data.timezone);
     if (data.state) setLicensedStates([data.state]);
+
+    const makeFileRef = (nameOrUrl) => {
+      if (!nameOrUrl) return null;
+      const name = nameOrUrl.startsWith("http")
+        ? decodeURIComponent(nameOrUrl.split("/").pop())
+        : nameOrUrl;
+      return { name, url: nameOrUrl.startsWith("http") ? nameOrUrl : null };
+    };
+    setFiles({
+      profilePhoto:  makeFileRef(data.profilePhoto),
+      govId:         makeFileRef(data.idProof),
+      degree:        makeFileRef(data.degreeFile),
+      medicalLicense:makeFileRef(data.medicalLicenseFile),
+      malpractice:   makeFileRef(data.malpracticeInsuranceFile),
+    });
   }, []);
 
   // Restore draft from localStorage when no backend data yet
@@ -712,6 +1025,58 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
     } catch {}
   }, [doctorId, initialData]);
+
+  // Auto-detect timezone on mount.
+  // Strategy:
+  //   1. IMMEDIATELY set from browser's Intl API (synchronous, always works, no network needed).
+  //   2. THEN try IP-based geolocation APIs for refinement (e.g. accurate when on VPN).
+  //      Tries three free services in order; aborts after 5 s each.
+  //   Uses "prev => prev || value" so a value already restored from draft/backend is never clobbered.
+  useEffect(() => {
+    // IANA aliases that some OS/browsers still emit (map to our list entries)
+    const IANA_ALIASES = {
+      "Asia/Calcutta": "Asia/Kolkata",
+      "Asia/Saigon":   "Asia/Ho_Chi_Minh",
+      "Europe/Kiev":   "Europe/Bucharest",
+      "Asia/Ulaanbaatar": "Asia/Shanghai",
+    };
+
+    const matchTz = (iana) => {
+      const canonical = IANA_ALIASES[iana] || iana;
+      return (
+        TIMEZONES.find(t => t.startsWith(canonical)) ||
+        TIMEZONES.find(t => t.startsWith(iana)) ||
+        iana   // fallback: store raw IANA — the select will render it as an extra option
+      );
+    };
+
+    // ── Step 1: immediate synchronous detection (never fails) ──────────────
+    try {
+      const iana = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (iana) setTimezone(prev => prev || matchTz(iana));
+    } catch {}
+
+    // ── Step 2: async IP-based refinement (best-effort, 3 fallback APIs) ───
+    const fetchTz = async (url, extract) => {
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 5000);
+      try {
+        const res  = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(tid);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return extract(data) || null;
+      } catch { clearTimeout(tid); return null; }
+    };
+
+    (async () => {
+      const tz =
+        await fetchTz("https://ipapi.co/json/",           d => d.timezone) ||
+        await fetchTz("https://worldtimeapi.org/api/ip",  d => d.timezone) ||
+        await fetchTz("https://ipwho.is/",                d => d.timezone);
+      if (tz) setTimezone(prev => prev || matchTz(tz));
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!initialData) return;
@@ -777,11 +1142,16 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
   // Validation
   const validateS1 = () => {
     const e = {};
+    if (!files.profilePhoto) e.profilePhoto = "Profile photo is required";
+    else if (!files.profilePhoto.url) e.profilePhoto = "Please wait for the photo upload to complete";
     if (!s1.firstName.trim()) e.firstName = "Required";
     if (!s1.phone.trim()) e.phone = "Required";
     if (!s1.email.trim()) e.email = "Required";
     else if (!/\S+@\S+\.\S+/.test(s1.email)) e.email = "Invalid email";
+    if (!s1.gender) e.gender = "Required";
+    if (!s1.dob) e.dob = "Required";
     if (!s1.country) e.country = "Required";
+    if (s1.country === "United States" && !s1.state.trim()) e.state = "Required for US";
     if (languagesKnown.length === 0) e.languages = "Required";
     setS1Errors(e);
     return Object.keys(e).length === 0;
@@ -791,13 +1161,16 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
     if (isUS && !s2.npi.trim()) e.npi = "NPI required for US";
     if (!isUS && !s2.licenseNum.trim()) e.licenseNum = "License number required";
     if (!s2.specialty) e.specialty = "Required";
+    if (s2.specialty === "Other" && !s2.customSpecialty.trim()) e.customSpecialty = "Required";
     if (!s2.qualification) e.qualification = "Required";
     if (!s2.school.trim()) e.school = "Required";
     if (!s2.gradYear.trim()) e.gradYear = "Required";
     if (!String(s2.experience).trim()) e.experience = "Required";
-    if (!files.govId) e.govId = "Required";
+    if (!s2.consultantFees || Number(s2.consultantFees) <= 0) e.consultantFees = "Required";
     if (!files.degree) e.degree = "Required";
+    else if (!files.degree.url) e.degree = "Upload still in progress or failed — please wait or re-upload";
     if (!files.medicalLicense) e.medicalLicense = "Required";
+    else if (!files.medicalLicense.url) e.medicalLicense = "Upload still in progress or failed — please wait or re-upload";
     setS2Errors(e);
     return Object.keys(e).length === 0;
   };
@@ -829,6 +1202,12 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       return;
     }
 
+    setSubmitBusy(true);
+    setSubmitError("");
+    setSubmitSuccess("");
+
+    // Files are already uploaded to the server when the doctor selected them in Step 2.
+    // files[x] = { name: string, url: string } — use the stored URL directly.
     const payload = {
       doctorId,
       firstName:     s1.firstName.trim(),
@@ -844,7 +1223,9 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       zip:           s1.zip.trim(),
       address:       s1.address.trim(),
       languagesKnown,
-      specialization:        s2.specialty,
+      specialization:        s2.specialty === "Other"
+                               ? (s2.customSpecialty.trim() || "Other")
+                               : s2.specialty,
       subSpecialization:     s2.subSpecialization.trim(),
       qualification:         s2.qualification,
       experience:            s2.experience ? Number(s2.experience) : undefined,
@@ -859,9 +1240,12 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       clinicName:            s2.clinicName.trim(),
       clinicAddress:         s2.clinicAddress.trim(),
       aboutDoctor:           s2.aboutDoctor.trim() || s2.certifications.trim(),
-      idProof:               files.govId?.name || "",
-      medicalLicenseFile:    files.medicalLicense?.name || "",
-      malpracticeInsuranceFile: files.malpractice?.name || "",
+      profilePhoto:          files.profilePhoto?.url  || files.profilePhoto?.name || "",
+      hasProfilePhoto:       !!(files.profilePhoto?.url),
+      idProof:               files.govId?.url        || files.govId?.name        || "",
+      degreeFile:            files.degree?.url       || files.degree?.name       || "",
+      medicalLicenseFile:    files.medicalLicense?.url || files.medicalLicense?.name || "",
+      malpracticeInsuranceFile: files.malpractice?.url || files.malpractice?.name || "",
       accountHolderName:     `${s1.firstName} ${s1.surname}`.trim(),
       payoutEmail:           s1.email.trim(),
       bankName:              s4.bankName.trim(),
@@ -872,16 +1256,12 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
       timezone,
     };
 
-    setSubmitBusy(true);
-    setSubmitError("");
-    setSubmitSuccess("");
-
     try {
       const res = await api.post("/api/doctor/enrollment", payload);
       const enrollment = res.data?.enrollment || null;
       const nextStatus = enrollment?.approvalStatus === "approved" ? "approved" : "pending";
       setRegStatus(nextStatus);
-      setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
+      // setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
       try { localStorage.removeItem(`hc_enroll_draft_${doctorId}`); } catch {}
       setStep(5);
       if (enrollment && typeof onComplete === "function") onComplete(enrollment);
@@ -900,7 +1280,14 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <p>Enter your details exactly as they appear on your official documents.</p>
       </div>
       <div className="de-card-body">
-        <h4 style={{fontSize:13,marginBottom:16,color:"var(--gray-600)"}}>Name</h4>
+        <ProfilePhotoUpload
+          file={files.profilePhoto}
+          onFile={f => setFiles({...files, profilePhoto: f})}
+          onRemove={() => setFiles({...files, profilePhoto: null})}
+          hasError={!!s1Errors.profilePhoto}
+          errorMsg={s1Errors.profilePhoto}
+        />
+        <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Name</h4>
         <div className="form-grid">
           <div className="field-group">
             <label className="field-label">First Name <span className="req">*</span></label>
@@ -919,11 +1306,14 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <div className="form-grid">
           <div className="field-group">
             <label className="field-label">Mobile Number <span className="req">*</span></label>
-            <div style={{display:"flex",gap:8}}>
-              <input className="field-input" style={{width:80,flexShrink:0}} placeholder="+1"
-                value={s1.countryCode} onChange={e => setS1({...s1, countryCode: e.target.value})} />
-              <input className={`field-input ${s1Errors.phone?"error":""}`} placeholder="555-000-0000"
-                value={s1.phone} onChange={e => setS1({...s1, phone: e.target.value})} />
+            <div className={`de-phone-input ${s1Errors.phone ? "error" : ""}`}>
+              <PhoneInputField
+                value={mobileValue}
+                onChange={handleMobileChange}
+                onCountryChange={handleMobileCountryChange}
+                defaultCountry="auto"
+                placeholder="Mobile number"
+              />
             </div>
             {s1Errors.phone && <div className="field-error">{s1Errors.phone}</div>}
           </div>
@@ -934,23 +1324,25 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
             {s1Errors.email && <div className="field-error">{s1Errors.email}</div>}
           </div>
           <div className="field-group">
-            <label className="field-label">Gender</label>
-            <select className="field-select" value={s1.gender} onChange={e => setS1({...s1, gender: e.target.value})}>
+            <label className="field-label">Gender <span className="req">*</span></label>
+            <select className={`field-select ${s1Errors.gender ? "error" : ""}`} value={s1.gender} onChange={e => setS1({...s1, gender: e.target.value})}>
               <option value="">Select...</option>
               {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
+            {s1Errors.gender && <div className="field-error">{s1Errors.gender}</div>}
           </div>
           <div className="field-group">
-            <label className="field-label">Date of Birth</label>
-            <input className="field-input" type="date"
+            <label className="field-label">Date of Birth <span className="req">*</span></label>
+            <input className={`field-input ${s1Errors.dob ? "error" : ""}`} type="date"
               value={s1.dob} onChange={e => setS1({...s1, dob: e.target.value})} />
+            {s1Errors.dob && <div className="field-error">{s1Errors.dob}</div>}
           </div>
         </div>
 
         <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Location</h4>
         <div className="form-grid">
           <div className="field-group full-width">
-            <label className="field-label">Country of Practice <span className="req">*</span></label>
+            <label className="field-label">Country <span className="req">*</span></label>
             <select className={`field-select ${s1Errors.country?"error":""}`}
               value={s1.country} onChange={e => { setS1({...s1, country: e.target.value, state:""}); setLicensedStates([]); setOtherLicenseCountries([]); }}>
               <option value="">Select country...</option>
@@ -959,9 +1351,14 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
             {s1Errors.country && <div className="field-error">{s1Errors.country}</div>}
           </div>
           <div className="field-group">
-            <label className="field-label">State / Province / Region</label>
-            <input className="field-input" placeholder="e.g. California, Maharashtra"
+            <label className="field-label">
+              State / Province / Region
+              {s1.country === "United States" && <span className="req">*</span>}
+            </label>
+            <input className={`field-input ${s1Errors.state ? "error" : ""}`}
+              placeholder="e.g. California, Ontario"
               value={s1.state} onChange={e => setS1({...s1, state: e.target.value})} />
+            {s1Errors.state && <div className="field-error">{s1Errors.state}</div>}
           </div>
           <div className="field-group">
             <label className="field-label">City</label>
@@ -1034,13 +1431,28 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
           </div>
           <div className="field-group">
             <label className="field-label">Specialty <span className="req">*</span></label>
-            <select className={`field-select ${s2Errors.specialty?"error":""}`}
-              value={s2.specialty} onChange={e => setS2({...s2, specialty: e.target.value})}>
-              <option value="">Select specialty...</option>
-              {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <SingleSelect
+              items={SPECIALTIES}
+              value={s2.specialty}
+              onChange={v => setS2({...s2, specialty: v, customSpecialty: v !== "Other" ? "" : s2.customSpecialty})}
+              placeholder="Select specialty..."
+              hasError={!!s2Errors.specialty}
+            />
             {s2Errors.specialty && <div className="field-error">{s2Errors.specialty}</div>}
           </div>
+          {s2.specialty === "Other" && (
+            <div className="field-group">
+              <label className="field-label">Specify Your Specialty <span className="req">*</span></label>
+              <input
+                className={`field-input ${s2Errors.customSpecialty ? "error" : ""}`}
+                placeholder="e.g. Sports Medicine, Addiction Psychiatry..."
+                value={s2.customSpecialty}
+                onChange={e => setS2({...s2, customSpecialty: e.target.value})}
+                autoFocus
+              />
+              {s2Errors.customSpecialty && <div className="field-error">{s2Errors.customSpecialty}</div>}
+            </div>
+          )}
           <div className="field-group">
             <label className="field-label">Sub-Specialization</label>
             <input className="field-input" placeholder="e.g. Interventional Cardiology"
@@ -1057,8 +1469,16 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
           </div>
           <div className="field-group">
             <label className="field-label">Years of Experience <span className="req">*</span></label>
-            <input className={`field-input ${s2Errors.experience?"error":""}`} type="number" min="0" placeholder="e.g. 10"
-              value={s2.experience} onChange={e => setS2({...s2, experience: e.target.value})} />
+            <input
+              className={`field-input ${s2Errors.experience ? "error" : ""}`}
+              type="text" inputMode="numeric" pattern="[0-9]*" placeholder="e.g. 10"
+              value={s2.experience}
+              onChange={e => setS2({...s2, experience: e.target.value.replace(/[^0-9]/g, "")})}
+              onKeyDown={e => {
+                const allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Tab","Enter","Home","End"];
+                if (!allowed.includes(e.key) && !/^[0-9]$/.test(e.key)) e.preventDefault();
+              }}
+            />
             {s2Errors.experience && <div className="field-error">{s2Errors.experience}</div>}
           </div>
         </div>
@@ -1147,8 +1567,8 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
         <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Consultation &amp; Practice</h4>
         <div className="form-grid">
           <div className="field-group">
-            <label className="field-label">Consultation Fee</label>
-            <div style={{display:"flex",alignItems:"center",border:"1.5px solid var(--gray-200)",borderRadius:"var(--radius-sm)",overflow:"hidden",background:"var(--white)"}}>
+            <label className="field-label">Consultation Fee <span className="req">*</span></label>
+            <div style={{display:"flex",alignItems:"center",border:`1.5px solid ${s2Errors.consultantFees ? "var(--red)" : "var(--gray-200)"}`,borderRadius:"var(--radius-sm)",overflow:"hidden",background:"var(--white)",boxShadow:s2Errors.consultantFees?"0 0 0 3px rgba(220,38,38,0.08)":"none"}}>
               <select
                 value={s2.feeCurrency}
                 onChange={e => setS2({...s2, feeCurrency: e.target.value})}
@@ -1161,6 +1581,7 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
               <input className="field-input" style={{border:"none",borderRadius:0,boxShadow:"none"}} type="number" min="0" step="1" placeholder="e.g. 500"
                 value={s2.consultantFees} onChange={e => setS2({...s2, consultantFees: e.target.value})} />
             </div>
+            {s2Errors.consultantFees && <div className="field-error">{s2Errors.consultantFees}</div>}
           </div>
           <div className="field-group">
             <label className="field-label">Clinic / Practice Name</label>
@@ -1181,17 +1602,18 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
 
         <h4 style={{fontSize:13,margin:"24px 0 16px",color:"var(--gray-600)"}}>Required Documents</h4>
         <div className="form-grid">
-          <FileUpload label="Government ID / Nationality Proof" required file={files.govId}
-            onFile={f => setFiles({...files, govId: f})} onRemove={() => setFiles({...files, govId: null})} />
+          
           <FileUpload label="Medical Degree Certificate" required file={files.degree}
             onFile={f => setFiles({...files, degree: f})} onRemove={() => setFiles({...files, degree: null})} />
           <FileUpload label="Medical License Document" required file={files.medicalLicense}
             onFile={f => setFiles({...files, medicalLicense: f})} onRemove={() => setFiles({...files, medicalLicense: null})} />
+          <FileUpload label="Government ID / Nationality Proof" file={files.govId}
+            onFile={f => setFiles({...files, govId: f})} onRemove={() => setFiles({...files, govId: null})} />
           <FileUpload label="Malpractice Insurance License" file={files.malpractice}
             onFile={f => setFiles({...files, malpractice: f})} onRemove={() => setFiles({...files, malpractice: null})} />
         </div>
-        {(s2Errors.govId||s2Errors.degree||s2Errors.medicalLicense) && (
-          <div className="field-error" style={{marginTop:8}}>Please upload all required documents.</div>
+        {(s2Errors.degree || s2Errors.medicalLicense) && (
+          <div className="field-error" style={{marginTop:8}}>Please upload all required documents (Medical Degree &amp; License).</div>
         )}
 
         <div className="btn-row">
@@ -1231,8 +1653,18 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
           <label className="field-label">Timezone <span className="req">*</span></label>
           <select className="field-select" value={timezone} onChange={e => setTimezone(e.target.value)}>
             <option value="">Select timezone...</option>
+            {/* If the auto-detected IANA is not in our standard list, render it as an extra option
+                so the select always reflects the detected value rather than showing blank */}
+            {timezone && !TIMEZONES.includes(timezone) && (
+              <option value={timezone}>🌐 {timezone} (auto-detected)</option>
+            )}
             {TIMEZONES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
+          {timezone && (
+            <div style={{ fontSize:11, color:"var(--gray-500)", marginTop:4 }}>
+              🌐 Auto-detected: <strong>{timezone}</strong> — you can change this if needed.
+            </div>
+          )}
         </div>
         {DAYS.map(day => (
           <div key={day} className="avail-day">

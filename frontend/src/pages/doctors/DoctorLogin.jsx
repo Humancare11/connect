@@ -211,20 +211,21 @@ export default function DoctorAuthPage() {
     if (otpValue.length < 6) return setFormError("Enter the complete 6-digit OTP");
     setLoading(true); clrErr();
     try {
-      await api.post("/api/doctor/register", {
+      const res = await api.post("/api/doctor/register", {
         name:            registerForm.name.trim(),
         email:           registerForm.email.trim().toLowerCase(),
         password:        registerForm.password,
         confirmPassword: registerForm.confirmPassword,
         otp:             otpValue,
       });
-      setView("auth");
-      setIsRegister(false);
-      setFormError("");
-      setOtpValue("");
+      if (res.data.token) {
+        localStorage.setItem("doctorToken", res.data.token);
+        localStorage.setItem("token", res.data.token);
+      }
       if (timerRef.current) clearInterval(timerRef.current);
+      setOtpValue("");
       setRegisterForm({ name: "", email: "", password: "", confirmPassword: "" });
-      alert("Registration successful! Please login.");
+      afterLogin(res.data.doctor, true);
     } catch (err) {
       setFormError(err.response?.data?.msg || "Registration failed. Please try again.");
     } finally {

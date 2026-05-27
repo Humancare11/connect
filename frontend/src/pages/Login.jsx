@@ -2,13 +2,10 @@ import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import socket from "../socket";
-import PhoneInputLib from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 import "./log.css";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-
-const PhoneInput = PhoneInputLib.default ?? PhoneInputLib;
+import PhoneInputField from "../components/PhoneInputField";
 
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
@@ -249,9 +246,9 @@ export default function AuthPage() {
       const res = await api.post("/api/auth/register", { ...data, otp: otpValue });
       saveUserToken(res.data.token);
       if (timerRef.current) clearInterval(timerRef.current);
-      setView("auth"); setIsRegister(false); setOtpValue("");
+      setOtpValue("");
       setRegisterForm({ name: "", email: "", mobile: "", dob: "", gender: "", country: "", password: "", terms: false });
-      alert("Account created successfully! Please sign in. ✅");
+      afterLogin(res.data.user);
     } catch (err) { setFormError(err.response?.data?.msg || "Registration failed."); }
     finally { setLoading(false); }
   };
@@ -325,12 +322,22 @@ export default function AuthPage() {
             {formError && <p className="form-error">{formError}</p>}
             <input type="text" value={googlePending.name} disabled style={{ opacity: .55, cursor: "not-allowed" }} />
             <input type="email" value={googlePending.email} disabled style={{ opacity: .55, cursor: "not-allowed" }} />
-            <PhoneInput country="in" value={googleProfile.mobile}
+            <PhoneInputField
+              value={googleProfile.mobile}
               onChange={(ph) => setGoogleProfile((p) => ({ ...p, mobile: ph }))}
-              inputStyle={{ width: "100%", borderRadius: 12, border: "1.5px solid #d1fae5", background: "#f8fdfb", fontFamily: "DM Sans,sans-serif", fontSize: 14, height: 46 }} />
+              defaultCountry="auto"
+              placeholder="Mobile number"
+            />
             <div className="row">
-              <input type="date" value={googleProfile.dob}
-                onChange={(e) => setGoogleProfile((p) => ({ ...p, dob: e.target.value }))} required />
+              <div className="date-field">
+                <input
+                  type="date"
+                  className="date-input"
+                  value={googleProfile.dob}
+                  onChange={(e) => setGoogleProfile((p) => ({ ...p, dob: e.target.value }))}
+                  required
+                />
+              </div>
               <select value={googleProfile.gender}
                 onChange={(e) => setGoogleProfile((p) => ({ ...p, gender: e.target.value }))} required>
                 <option value="">Gender</option>
@@ -536,16 +543,33 @@ export default function AuthPage() {
 
             <input type="text" placeholder="Full Name" value={registerForm.name}
               onChange={(e) => setRegisterForm((p) => ({ ...p, name: e.target.value }))} required />
-            <input type="email" placeholder="Email Address" value={registerForm.email}
-              onChange={(e) => setRegisterForm((p) => ({ ...p, email: e.target.value }))} required />
-
-            <PhoneInput country="in" value={registerForm.mobile}
-              onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
-              inputStyle={{ width: "100%", borderRadius: 12, border: "1.5px solid #d1fae5", background: "#f8fdfb", fontFamily: "DM Sans,sans-serif", fontSize: 14, height: 46 }} />
 
             <div className="row">
-              <input type="date" value={registerForm.dob}
-                onChange={(e) => setRegisterForm((p) => ({ ...p, dob: e.target.value }))} required />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <input type="email" placeholder="Email Address" value={registerForm.email}
+                  onChange={(e) => setRegisterForm((p) => ({ ...p, email: e.target.value }))} required
+                  style={{ width: "100%" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <PhoneInputField
+                  value={registerForm.mobile}
+                  onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
+                  defaultCountry="auto"
+                  placeholder="Mobile number"
+                />
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="date-field">
+                <input
+                  type="date"
+                  className="date-input"
+                  value={registerForm.dob}
+                  onChange={(e) => setRegisterForm((p) => ({ ...p, dob: e.target.value }))}
+                  required
+                />
+              </div>
               <select value={registerForm.gender}
                 onChange={(e) => setRegisterForm((p) => ({ ...p, gender: e.target.value }))} required>
                 <option value="">Gender</option>
