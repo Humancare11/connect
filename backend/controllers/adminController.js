@@ -485,48 +485,85 @@ const processDoctorPayout = async (req, res) => {
   }
 };
 
-// PUT /api/admin/doctors/:id — admin edits a doctor's enrollment record
+// PUT /api/admin/doctors/:id — admin edits a doctor's enrollment record (all fields)
 const updateDoctorByAdmin = async (req, res) => {
   try {
     const enrollment = await Enrollment.findById(req.params.id);
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
 
     const {
+      // Personal
       firstName, surname, email, countryCode, phoneNumber, gender, dob,
+      // Location
       country, state, city, zip, address,
+      // Professional
       specialization, subSpecialization, qualification, experience,
-      medicalSchool, registrationYear, medicalCouncilName, medicalRegistrationNumber,
-      medicalLicense, consultationMode, consultantFees, feeCurrency,
-      clinicName, clinicAddress, aboutDoctor, languagesKnown,
-      bankName, accountNumber, accountHolderName, ifscCode, paypalId, payoutEmail,
+      medicalSchool, registrationYear, medicalCouncilName,
+      medicalRegistrationNumber, medicalLicense, idProofType,
+      consultationMode, consultantFees, feeCurrency,
+      clinicName, clinicAddress, aboutDoctor,
+      // Languages (array or CSV string)
+      languagesKnown,
+      // File URLs (uploaded separately by admin)
+      profilePhoto, idProof, degreeFile, medicalLicenseFile, malpracticeInsuranceFile,
+      // Payout
+      bankName, accountNumber, accountHolderName, ifscCode,
+      paypalId, payoutEmail, stripeAccountId,
+      // Availability
+      timezone, availability,
     } = req.body;
 
     const updates = {};
 
-    // Scalar string fields — only include when provided
-    const strings = { firstName, surname, email, countryCode, phoneNumber, gender, dob,
-      country, state, city, zip, address, specialization, subSpecialization,
-      qualification, medicalSchool, registrationYear, medicalCouncilName,
-      medicalRegistrationNumber, medicalLicense, consultationMode, feeCurrency,
-      clinicName, clinicAddress, aboutDoctor, bankName, accountNumber,
-      accountHolderName, ifscCode, paypalId, payoutEmail };
+    // ── Scalar string fields ──────────────────────────────────────────
+    const strings = {
+      firstName, surname, email, countryCode, phoneNumber, gender, dob,
+      country, state, city, zip, address,
+      specialization, subSpecialization, qualification,
+      medicalSchool, registrationYear, medicalCouncilName,
+      medicalRegistrationNumber, medicalLicense, idProofType,
+      consultationMode, feeCurrency,
+      clinicName, clinicAddress, aboutDoctor,
+      bankName, accountNumber, accountHolderName, ifscCode,
+      paypalId, payoutEmail, stripeAccountId,
+      // File URL strings
+      profilePhoto, idProof, degreeFile, medicalLicenseFile, malpracticeInsuranceFile,
+      // Availability
+      timezone,
+    };
     Object.entries(strings).forEach(([k, v]) => { if (v !== undefined) updates[k] = v; });
 
-    // Numeric fields
-    if (experience !== undefined) updates.experience = Number(experience) || 0;
+    // ── Numeric fields ────────────────────────────────────────────────
+    if (experience   !== undefined) updates.experience    = Number(experience)    || 0;
     if (consultantFees !== undefined) updates.consultantFees = Number(consultantFees) || 0;
 
-    // Languages — accept array or comma-separated string
+    // ── Languages — accept array or comma-separated string ────────────
     if (languagesKnown !== undefined) {
       updates.languagesKnown = Array.isArray(languagesKnown)
         ? languagesKnown.filter(Boolean)
         : String(languagesKnown).split(",").map(l => l.trim()).filter(Boolean);
     }
 
+    // ── Availability (Mixed) ──────────────────────────────────────────
+    if (availability !== undefined && typeof availability === "object") {
+      updates.availability = availability;
+    }
+
+    // ── Derived boolean flags ─────────────────────────────────────────
+    if (profilePhoto !== undefined) {
+      updates.hasProfilePhoto = !!(profilePhoto && profilePhoto.startsWith("http"));
+    }
+    if (degreeFile !== undefined || medicalLicenseFile !== undefined) {
+      const cert = (degreeFile   !== undefined ? degreeFile   : enrollment.degreeFile) ||
+                   (medicalLicenseFile !== undefined ? medicalLicenseFile : enrollment.medicalLicenseFile);
+      updates.hasCertification = !!(cert && cert.startsWith("http"));
+    }
+
     updates.updatedAt = new Date();
 
     enrollment.set(updates);
     enrollment.markModified("languagesKnown");
+    if (availability !== undefined) enrollment.markModified("availability");
     await enrollment.save();
 
     return res.status(200).json({

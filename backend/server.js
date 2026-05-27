@@ -1,10 +1,19 @@
-require("dotenv").config();
+// ── Load the correct .env file based on NODE_ENV ──
+// "npm run start:prod" sets NODE_ENV=production before this runs,
+// so we load .env.production; dev/nodemon falls back to .env.
+const path = require("path");
+require("dotenv").config({
+  path: path.resolve(
+    __dirname,
+    process.env.NODE_ENV === "production" ? ".env.production" : ".env"
+  ),
+});
+
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const http = require("http");
 const { Server } = require("socket.io");
-const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
@@ -13,6 +22,10 @@ const Doctor = require("./models/Doctor");
 const fs = require("fs");
 
 const app = express();
+
+// Trust the first reverse proxy (Nginx, Apache, Cloudflare).
+// Without this, req.protocol returns "http" even behind HTTPS termination.
+app.set("trust proxy", 1);
 
 // DB connect + auto-seed admin
 const startServer = async () => {

@@ -102,4 +102,62 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// ─────────────────────────────────────────────────────────────────
+// URL normalizer — rewrites any localhost / 127.0.0.1 file URLs
+// that were stored in the database during local development.
+// Runs transparently on every API response so no component changes
+// are needed.  In local dev (VITE_API_URL is localhost) it's a no-op.
+// ─────────────────────────────────────────────────────────────────
+const _apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+const _isProduction = _apiBase.length > 0 && !/localhost|127\.0\.0\.1/.test(_apiBase);
+
+function _deepNormalizeUrls(data) {
+  if (!data) return data;
+  if (typeof data === "string") {
+    // Only touch strings that look like an HTTP URL pointing at localhost
+    if (!data.startsWith("http://localhost") && !data.startsWith("http://127.")) {
+      return data;
+    }
+    try {
+      const u = new URL(data);
+      if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+        return _apiBase + u.pathname + u.search + u.hash;
+      }
+    } catch {
+      /* not a valid URL — leave as-is */
+    }
+    return data;
+  }
+  if (Array.isArray(data)) return data.map(_deepNormalizeUrls);
+  if (typeof data === "object") {
+    // Avoid mutating the original; build a fresh object
+    const out = {};
+    for (const [k, v] of Object.entries(data)) {
+      out[k] = _deepNormalizeUrls(v);
+    }
+    return out;
+  }
+  return data;
+}
+
+if (_isProduction) {
+  api.interceptors.response.use((response) => {
+    if (response.data) {
+      response.data = _deepNormalizeUrls(response.data);
+    }
+    return response;
+  });
+}
+
+/**
+ * Normalise a single file URL for use in <img src> or <a href>.
+ * Converts any http://localhost:PORT/... URL to the production base URL.
+ * Safe to call in components — returns the original string unchanged
+ * when already a production URL or when running locally.
+ */
+export function normalizeFileUrl(url) {
+  if (!url || !_isProduction) return url;
+  return _deepNormalizeUrls(url);
+}
+
 export default api;
