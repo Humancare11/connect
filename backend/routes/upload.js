@@ -27,10 +27,29 @@ const upload = multer({
   },
 });
 
+// Resolve the public base URL for uploaded files.
+// Priority:
+//   1. BACKEND_URL env var — but ONLY if it is not a localhost/127.x address.
+//      (Prevents dev .env leaking into production when the wrong .env is loaded.)
+//   2. X-Forwarded-Proto / X-Forwarded-Host headers set by Nginx / Apache / Cloudflare.
+//   3. req.protocol + req.get("host") for direct (non-proxied) connections.
+function resolveBaseUrl(req) {
+  const envUrl = (process.env.BACKEND_URL || "").replace(/\/+$/, "");
+  if (envUrl && !/localhost|127\.0\.0\.1/.test(envUrl)) {
+    return envUrl;
+  }
+  // Honour reverse-proxy forwarded headers (requires "trust proxy" in app)
+  const proto = (req.headers["x-forwarded-proto"] || req.protocol || "https")
+    .split(",")[0]
+    .trim();
+  const host = req.headers["x-forwarded-host"] || req.get("host");
+  return `${proto}://${host}`;
+}
+
 // POST /api/upload  — protected, any logged-in user or doctor
 router.post("/", verifyToken, upload.single("file"), (req, res) => {
   if (!req.file) return res.status(400).json({ msg: "No file uploaded." });
-  const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get("host")}`;
+  const baseUrl = resolveBaseUrl(req);
   return res.json({
     url:  `${baseUrl}/uploads/${req.file.filename}`,
     name: req.file.originalname,

@@ -3,6 +3,445 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 
+/* ─────────────────────────────────────────────────────────────
+   Satoshi font + global resets injected once
+───────────────────────────────────────────────────────────── */
+const GLOBAL_CSS = `
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,800,900&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body, html { font-family: 'Satoshi', sans-serif; }
+
+@keyframes spin   { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse  { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.hc-root {
+  min-height: 100vh;
+  background: #01164a;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(14, 165, 148, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 90% 90%,  rgba(29, 78, 216, 0.08) 0%, transparent 60%);
+  font-family: 'Satoshi', sans-serif;
+  display: flex;
+  flex-direction: column;
+  padding-top: 64px;
+}
+
+/* ── Top bar ── */
+.hc-topbar {
+  padding: 0 40px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(11, 22, 40, 0.85);
+}
+
+.hc-brand {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.04em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hc-brand-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0ea594 0%, #0d9488 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hc-brand span { color: #0ea594; }
+
+.hc-nav-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 100px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Satoshi', sans-serif;
+  letter-spacing: -0.01em;
+}
+.hc-nav-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255,255,255,0.15);
+}
+.hc-btn hc-btn--teal {
+  background: #0d9488;
+  color: #fff;
+}
+/* ── Main ── */
+.hc-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px 80px;
+}
+
+/* ── Card ── */
+.hc-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  padding: 52px 48px;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+  overflow: hidden;
+}
+
+.hc-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(14,165,148,0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Status icon */
+.hc-status-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.hc-status-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(from 0deg, transparent 30%, var(--ring-color, #0ea594) 70%, transparent 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spin 3s linear infinite;
+}
+.hc-status-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.hc-greeting {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0ea594;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+
+.hc-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+
+.hc-desc {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.75;
+  margin-bottom: 28px;
+  font-weight: 400;
+}
+
+/* Status badge */
+.hc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 32px;
+}
+.hc-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Steps */
+.hc-steps {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 20px 24px;
+  text-align: left;
+  margin-bottom: 32px;
+}
+.hc-steps-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.hc-steps-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.hc-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+}
+.hc-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.hc-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(14, 165, 148, 0.15);
+  border: 1px solid rgba(14, 165, 148, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0ea594;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.hc-step-text {
+  font-size: 13.5px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+/* Divider */
+.hc-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 0 -48px 32px;
+}
+
+/* Actions */
+.hc-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 100px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Satoshi', sans-serif;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.hc-btn--ghost {
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.hc-btn--ghost:hover:not(:disabled) {
+  background: rgba(255,255,255,0.09);
+  color: #fff;
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+.hc-btn--ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.hc-btn--teal {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border: 1px solid #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.hc-btn--teal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.hc-btn--teal:hover {
+  transform: translateY(-2px);
+}
+.hc-btn--teal:active { transform: translateY(0); }
+
+/* Spinner */
+.hc-spin {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: rgba(255,255,255,0.7);
+  animation: spin 0.7s linear infinite;
+}
+
+/* Footer note */
+.hc-footer {
+  margin-top: 32px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.25);
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+.hc-footer a {
+  color: #0ea594;
+  text-decoration: none;
+  font-weight: 600;
+}
+.hc-footer a:hover { text-decoration: underline; }
+
+/* Loading screen */
+.hc-loading {
+  min-height: 100vh;
+  background: #0b1628;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+.hc-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.08);
+  border-top-color: #0ea594;
+  animation: spin 0.8s linear infinite;
+}
+.hc-loading-text {
+  font-family: 'Satoshi', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 560px) {
+  .hc-card    { padding: 36px 24px; }
+  .hc-divider { margin: 0 -24px 28px; }
+  .hc-topbar  { padding: 0 20px; }
+  .hc-title   { font-size: 22px; }
+  .hc-actions { flex-direction: column; }
+  .hc-btn     { justify-content: center; }
+}
+`;
+
+/* ─────────────────────────────────────────────────────────────
+   Status configurations
+───────────────────────────────────────────────────────────── */
+const STATUS_CONFIG = {
+  pending: {
+    iconBg: "rgba(14, 165, 148, 0.1)",
+    iconBorder: "rgba(14, 165, 148, 0.2)",
+    ringColor: "#0ea594",
+    badgeBg: "rgba(14, 165, 148, 0.1)",
+    badgeColor: "#0ea594",
+    badgeBorder: "rgba(14, 165, 148, 0.2)",
+    badgeLabel: "Pending Admin Approval",
+    title: "Application Under Review",
+    message:
+      "Your enrollment request has been received and is currently under review by our administrative team. This typically takes 1–3 business days.",
+    icon: (
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#0ea594" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
+  },
+  rejected: {
+    iconBg: "rgba(239, 68, 68, 0.1)",
+    iconBorder: "rgba(239, 68, 68, 0.2)",
+    ringColor: "#ef4444",
+    badgeBg: "rgba(239, 68, 68, 0.1)",
+    badgeColor: "#ef4444",
+    badgeBorder: "rgba(239, 68, 68, 0.2)",
+    badgeLabel: "Action Required",
+    title: "Application Needs Attention",
+    message:
+      "Your enrollment application was not approved at this time. Please review your submitted details, make the necessary corrections, and resubmit for another review.",
+    icon: (
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    ),
+  },
+};
+
+const STEPS = [
+  "Our admin team verifies your credentials and supporting documents.",
+  "Once approved, you'll gain full access to the doctor dashboard.",
+  "Your profile becomes visible to patients on the platform.",
+];
+
+/* ─────────────────────────────────────────────────────────────
+   Component
+───────────────────────────────────────────────────────────── */
 export default function DoctorPendingApproval() {
   const navigate = useNavigate();
   const { doctor, loading, logout: contextLogout } = useDoctorAuth();
@@ -17,7 +456,6 @@ export default function DoctorPendingApproval() {
       const res = await api.get(`/api/doctor/enrollment/${doctor._id || doctor.id}`);
       const data = res.data;
       setEnrollment(data);
-
       if (data?.approvalStatus === "approved") {
         navigate("/doctor-dashboard", { replace: true });
       } else if (!data?.formCompleted) {
@@ -45,354 +483,144 @@ export default function DoctorPendingApproval() {
     navigate("/doctor-login");
   };
 
+  /* Loading state */
   if (loading || fetching) {
     return (
-      <div style={styles.loadingPage}>
-        <div style={styles.spinner} />
-        <style>{spinCss}</style>
-      </div>
+      <>
+        <style>{GLOBAL_CSS}</style>
+        <div className="hc-loading">
+          <div className="hc-loading-spinner" />
+          <p className="hc-loading-text">Loading your profile…</p>
+        </div>
+      </>
     );
   }
 
   const status = enrollment?.approvalStatus || "pending";
   const isRejected = status === "rejected";
   const firstName = doctor?.name?.split(" ")[0] || "Doctor";
-
-  const statusMap = {
-    pending:  { icon: "⏳", color: "#d97706", bg: "#fffbeb", border: "#fde68a", title: "Application Under Review",     msg: "Your enrollment request has been received and is currently being reviewed by our team. This usually takes 1–3 business days." },
-    rejected: { icon: "❌", color: "#dc2626", bg: "#fef2f2", border: "#fecaca", title: "Application Needs Attention",  msg: "Your enrollment request was not approved. Please review the information you submitted, make any necessary corrections, and resubmit." },
-  };
-  const info = statusMap[status] || statusMap.pending;
+  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
 
   return (
     <>
-      <style>{pageStyles}</style>
-      <div className="dp-root">
+      <style>{GLOBAL_CSS}</style>
+      <div className="hc-root">
 
-        {/* Top bar */}
-        <header className="dp-topbar">
-          <div className="dp-brand">Humancare<span>Connect</span></div>
-          <button className="dp-logout" onClick={handleLogout}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Sign Out
-          </button>
-        </header>
+        {/* ── Top bar ── */}
 
-        {/* Card */}
-        <main className="dp-main">
-          <div className="dp-card">
 
-            {/* Status icon circle */}
-            <div className="dp-icon-wrap" style={{ background: info.bg, border: `2px solid ${info.border}` }}>
-              <span className="dp-icon">{info.icon}</span>
+        {/* ── Main ── */}
+        <main className="hc-main">
+          <div className="hc-card">
+
+            {/* Status ring + icon */}
+            <div
+              className="hc-status-ring"
+              style={{ "--ring-color": cfg.ringColor }}
+            >
+              <div
+                className="hc-status-icon"
+                style={{
+                  background: cfg.iconBg,
+                  border: `1px solid ${cfg.iconBorder}`,
+                }}
+              >
+                {cfg.icon}
+              </div>
             </div>
 
-            <p className="dp-greeting">Hello, Dr. {firstName}</p>
-            <h1 className="dp-title">{info.title}</h1>
-            <p className="dp-desc">{info.msg}</p>
+            {/* Greeting & title */}
+            <p className="hc-greeting">Dr. {firstName}</p>
+            <h1 className="hc-title">{cfg.title}</h1>
+            <p className="hc-desc">{cfg.message}</p>
 
-            {/* Status badge */}
-            <div className="dp-badge" style={{ background: info.bg, color: info.color, border: `1px solid ${info.border}` }}>
-              <span className="dp-badge-dot" style={{ background: info.color }} />
-              {status === "pending" ? "Pending Admin Approval" : "Rejected — Action Required"}
+            {/* Badge */}
+            <div>
+              <span
+                className="hc-badge"
+                style={{
+                  background: cfg.badgeBg,
+                  color: cfg.badgeColor,
+                  border: `1px solid ${cfg.badgeBorder}`,
+                }}
+              >
+                <span className="hc-badge-dot" style={{ background: cfg.badgeColor }} />
+                {cfg.badgeLabel}
+              </span>
             </div>
 
-            {/* What happens next (pending only) */}
+            <div className="hc-divider" />
+
+            {/* Next steps — pending only */}
             {!isRejected && (
-              <div className="dp-steps">
-                <p className="dp-steps-title">What happens next?</p>
-                <ol className="dp-steps-list">
-                  <li>Our admin team reviews your credentials and documents.</li>
-                  <li>Once approved, you'll be able to access the full doctor dashboard.</li>
-                  <li>Your profile will become visible to patients on the platform.</li>
+              <div className="hc-steps">
+                <div className="hc-steps-header">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 11 12 14 22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                  </svg>
+                  <span className="hc-steps-title">What happens next</span>
+                </div>
+                <ol className="hc-steps-list">
+                  {STEPS.map((step, i) => (
+                    <li key={i} className="hc-step-item">
+                      <span className="hc-step-num">{i + 1}</span>
+                      <span className="hc-step-text">{step}</span>
+                    </li>
+                  ))}
                 </ol>
               </div>
             )}
 
             {/* Actions */}
-            <div className="dp-actions">
+            <div className="hc-actions">
               <button
-                className="dp-btn dp-btn--outline"
+                className="hc-btn hc-btn--ghost"
                 onClick={() => fetchEnrollment(true)}
                 disabled={checking}
+                aria-live="polite"
               >
                 {checking ? (
                   <>
-                    <span className="dp-btn-spinner" /> Checking…
+                    <span className="hc-spin" aria-hidden="true" />
+                    Checking…
                   </>
                 ) : (
                   <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                    Refresh Status
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="23 4 23 10 17 10" />
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                    </svg>
+                    Refresh status
                   </>
                 )}
               </button>
 
               {isRejected && (
                 <button
-                  className="dp-btn dp-btn--primary"
+                  className="hc-btn hc-btn--teal"
                   onClick={() => navigate("/doctor-dashboard/enrollments")}
                 >
-                  Edit &amp; Resubmit →
+                  Edit &amp; resubmit
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
                 </button>
               )}
             </div>
 
           </div>
 
-          <p className="dp-footer-note">
-            Questions? Contact us at{" "}
-            <a href="mailto:support@humancareworldwide.com">support@humancareworldwide.com</a>
+          {/* Footer note */}
+          <p className="hc-footer">
+            Questions? Reach us at{" "}
+            <a href="mailto:support@humancareworldwide.com">
+              support@humancareworldwide.com
+            </a>
           </p>
         </main>
       </div>
     </>
   );
 }
-
-const spinCss = `
-@keyframes dp-spin { to { transform: rotate(360deg); } }
-`;
-
-const pageStyles = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap');
-@keyframes dp-spin  { to { transform: rotate(360deg); } }
-@keyframes dp-fadein { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-.dp-root {
-  min-height: 100vh;
-  background: linear-gradient(160deg, #f4f7fb 0%, #e8f0f9 100%);
-  font-family: 'DM Sans', sans-serif;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── Top bar ── */
-.dp-topbar {
-  padding: 14px 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #223a5e;
-}
-.dp-brand {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  font-size: 18px;
-  color: #fff;
-  letter-spacing: -0.03em;
-}
-.dp-brand span { color: #0c8b7a; }
-.dp-logout {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 50px;
-  padding: 6px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-.dp-logout:hover { background: rgba(255,255,255,0.2); }
-
-/* ── Main ── */
-.dp-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-}
-
-/* ── Card ── */
-.dp-card {
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 8px 40px rgba(34,58,94,0.12);
-  border: 1px solid rgba(34,58,94,0.06);
-  padding: 48px 40px;
-  max-width: 520px;
-  width: 100%;
-  text-align: center;
-  animation: dp-fadein 0.4s ease forwards;
-}
-
-.dp-icon-wrap {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 24px;
-}
-.dp-icon { font-size: 36px; }
-
-.dp-greeting {
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.dp-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  color: #223a5e;
-  margin-bottom: 12px;
-  line-height: 1.2;
-}
-.dp-desc {
-  font-size: 14px;
-  color: #475569;
-  line-height: 1.7;
-  margin-bottom: 24px;
-}
-
-/* Badge */
-.dp-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  border-radius: 50px;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 28px;
-}
-.dp-badge-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-/* Steps */
-.dp-steps {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 16px 20px;
-  text-align: left;
-  margin-bottom: 28px;
-  border: 1px solid #e2e8f0;
-}
-.dp-steps-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 10px;
-}
-.dp-steps-list {
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.dp-steps-list li {
-  font-size: 13px;
-  color: #334155;
-  line-height: 1.5;
-}
-
-/* Actions */
-.dp-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.dp-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 11px 24px;
-  border-radius: 50px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-}
-.dp-btn--outline {
-  background: #fff;
-  color: #223a5e;
-  border: 1.5px solid #e2e8f0;
-}
-.dp-btn--outline:hover:not(:disabled) { border-color: #0c8b7a; color: #0c8b7a; }
-.dp-btn--outline:disabled { opacity: 0.55; cursor: not-allowed; }
-.dp-btn--primary {
-  background: #0c8b7a;
-  color: #fff;
-}
-.dp-btn--primary:hover { background: #0a7a6b; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(12,139,122,0.3); }
-
-.dp-btn-spinner {
-  display: inline-block;
-  width: 13px;
-  height: 13px;
-  border: 2px solid rgba(34,58,94,0.2);
-  border-top-color: #223a5e;
-  border-radius: 50%;
-  animation: dp-spin 0.75s linear infinite;
-}
-
-/* Footer note */
-.dp-footer-note {
-  margin-top: 28px;
-  font-size: 12px;
-  color: #94a3b8;
-  text-align: center;
-}
-.dp-footer-note a { color: #0c8b7a; text-decoration: none; font-weight: 600; }
-.dp-footer-note a:hover { text-decoration: underline; }
-
-/* Loading */
-.dp-loading-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f4f7fb;
-}
-
-@media (max-width: 540px) {
-  .dp-card { padding: 32px 20px; }
-  .dp-topbar { padding: 12px 16px; }
-  .dp-title { font-size: 20px; }
-}
-`;
-
-const styles = {
-  loadingPage: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#f4f7fb",
-  },
-  spinner: {
-    width: 38,
-    height: 38,
-    borderRadius: "50%",
-    border: "3px solid #e2e8f0",
-    borderTopColor: "#0c8b7a",
-    animation: "dp-spin 0.75s linear infinite",
-  },
-};

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../api";
 
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
@@ -113,129 +114,11 @@ function ProgressCell({ progress }) {
   );
 }
 
-function DetailRow({ label, value }) {
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "170px 1fr", gap: 10, marginBottom: 8 }}>
-      <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>{label}</span>
-      <span style={{ fontSize: 13, color: "#0f172a" }}>{value || "-"}</span>
-    </div>
-  );
-}
-
-function DoctorModal({ enrollment, onClose, onApprove, onReject, onApproveDelete, onRejectDelete }) {
-  if (!enrollment) return null;
-
-  const progress = getProgress(enrollment);
-  const statusMeta = STATUS_META[progress.status] || STATUS_META.in_progress;
-  const requestType = getRequestType(enrollment);
-  const requestMeta = REQUEST_META[requestType] || REQUEST_META.none;
-  const fullName = `Dr. ${enrollment.firstName || ""} ${enrollment.surname || ""}`.trim() || enrollment.doctorId?.name || "-";
-  const location = [enrollment.city, enrollment.state, enrollment.country].filter(Boolean).join(", ");
-  const canApprove =
-    enrollment.approvalStatus !== "approved" &&
-    (progress.completedSteps >= 4 || enrollment.approvalStatus === "rejected");
-
-  return (
-    <div className="adp-overlay" onClick={onClose}>
-      <div className="adp-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 840, width: "100%" }}>
-        <div className="adp-modal-header">
-          <h3 className="adp-modal-title">Doctor Application</h3>
-          <button className="adp-modal-close" onClick={onClose}>x</button>
-        </div>
-
-        <div className="adp-modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <div style={{ marginBottom: 14, padding: 14, borderRadius: 12, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 6 }}>ENROLLMENT PROGRESS</div>
-            <ProgressCell progress={progress} />
-            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-              <span style={{ background: statusMeta.bg, color: statusMeta.color, padding: "3px 10px", borderRadius: 50, fontSize: 11, fontWeight: 700 }}>
-                {statusMeta.label}
-              </span>
-              <span style={{ background: requestMeta.bg, color: requestMeta.color, padding: "3px 10px", borderRadius: 50, fontSize: 11, fontWeight: 700 }}>
-                {requestMeta.label}
-              </span>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 16, padding: 16, borderRadius: 12, background: "linear-gradient(135deg,#223a5e,#0c8b7a)", color: "#fff" }}>
-            <div style={{ fontSize: 20, fontWeight: 800 }}>{fullName}</div>
-            <div style={{ marginTop: 4, fontSize: 13, opacity: 0.9 }}>
-              {[enrollment.qualification, enrollment.specialization].filter(Boolean).join(" | ") || "Profile under review"}
-            </div>
-            <div style={{ marginTop: 4, fontSize: 12, opacity: 0.8 }}>{location || "Location not provided"}</div>
-          </div>
-
-          <div style={{ marginBottom: 14, border: "1px solid #e2e8f0", borderRadius: 12, padding: 14 }}>
-            <h4 style={{ margin: "0 0 10px", fontSize: 14 }}>Personal Details</h4>
-            <DetailRow label="Doctor ID" value={enrollment.doctorId?.doctorId?.toString()} />
-            <DetailRow label="Email" value={enrollment.email || enrollment.doctorId?.email} />
-            <DetailRow label="Mobile" value={[enrollment.countryCode, enrollment.phoneNumber].filter(Boolean).join(" ")} />
-            <DetailRow label="Gender" value={enrollment.gender} />
-            <DetailRow label="Date of Birth" value={enrollment.dob} />
-            <DetailRow label="Languages" value={Array.isArray(enrollment.languagesKnown) ? enrollment.languagesKnown.join(", ") : enrollment.languagesKnown} />
-            <DetailRow label="Address" value={[enrollment.address, enrollment.city, enrollment.state, enrollment.country, enrollment.zip].filter(Boolean).join(", ")} />
-          </div>
-
-          <div style={{ marginBottom: 14, border: "1px solid #e2e8f0", borderRadius: 12, padding: 14 }}>
-            <h4 style={{ margin: "0 0 10px", fontSize: 14 }}>Professional Details</h4>
-            <DetailRow label="Specialization" value={enrollment.specialization} />
-            <DetailRow label="Sub-Specialization" value={enrollment.subSpecialization} />
-            <DetailRow label="Qualification" value={enrollment.qualification} />
-            <DetailRow label="Experience" value={enrollment.experience ? `${enrollment.experience} years` : ""} />
-            <DetailRow label="Medical School" value={enrollment.medicalSchool} />
-            <DetailRow label="Medical Council" value={enrollment.medicalCouncilName} />
-            <DetailRow label="Registration Number" value={enrollment.medicalRegistrationNumber} />
-            <DetailRow label="Consultation Mode" value={enrollment.consultationMode} />
-            <DetailRow label="Consultation Fee" value={enrollment.consultantFees ? `$${enrollment.consultantFees}` : ""} />
-            <DetailRow label="About" value={enrollment.aboutDoctor} />
-          </div>
-
-          <div style={{ marginBottom: 14, border: "1px solid #e2e8f0", borderRadius: 12, padding: 14 }}>
-            <h4 style={{ margin: "0 0 10px", fontSize: 14 }}>Payout Details</h4>
-            <DetailRow label="Bank Name" value={enrollment.bankName} />
-            <DetailRow label="Account Holder" value={enrollment.accountHolderName} />
-            <DetailRow label="Account Number" value={enrollment.accountNumber ? `****${enrollment.accountNumber.slice(-4)}` : ""} />
-            <DetailRow label="SWIFT / IFSC" value={enrollment.ifscCode} />
-            <DetailRow label="PayPal ID" value={enrollment.paypalId} />
-            <DetailRow label="Payout Email" value={enrollment.payoutEmail} />
-          </div>
-
-          {requestType === "profile_delete" && (
-            <div style={{ border: "1px solid #fecaca", background: "#fff7f7", borderRadius: 12, padding: 14 }}>
-              <h4 style={{ margin: "0 0 8px", fontSize: 14, color: "#991b1b" }}>Profile Delete Request</h4>
-              <DetailRow label="Requested At" value={enrollment.profileDeleteRequestedAt ? new Date(enrollment.profileDeleteRequestedAt).toLocaleString() : ""} />
-              <DetailRow label="Reason" value={enrollment.profileDeleteReason} />
-            </div>
-          )}
-        </div>
-
-        <div className="adp-modal-footer">
-          <button className="adp-btn adp-btn--ghost" onClick={onClose}>Close</button>
-          {requestType === "profile_delete" ? (
-            <>
-              <button className="adp-btn adp-btn--approve" onClick={() => onApproveDelete(enrollment._id)}>Approve Delete</button>
-              <button className="adp-btn adp-btn--reject" onClick={() => onRejectDelete(enrollment._id)}>Reject Delete</button>
-            </>
-          ) : (
-            <>
-              {canApprove && (
-                <button className="adp-btn adp-btn--approve" onClick={() => onApprove(enrollment._id)}>Approve</button>
-              )}
-              {enrollment.approvalStatus !== "rejected" && (
-                <button className="adp-btn adp-btn--reject" onClick={() => onReject(enrollment._id)}>Reject</button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function ManageDoctors() {
+  const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [toast, setToast] = useState(null);
@@ -266,7 +149,6 @@ export default function ManageDoctors() {
   const upsertEnrollment = (enrollment) => {
     if (!enrollment) return;
     setEnrollments((prev) => prev.map((row) => (row._id === enrollment._id ? enrollment : row)));
-    setSelected((prev) => (prev?._id === enrollment._id ? enrollment : prev));
   };
 
   const approveDoctor = async (id) => {
@@ -357,17 +239,6 @@ export default function ManageDoctors() {
         <div className={`adp-toast ${toast.ok ? "adp-toast--ok" : "adp-toast--err"}`}>
           <span>{toast.ok ? "OK" : "!"}</span> {toast.msg}
         </div>
-      )}
-
-      {selected && (
-        <DoctorModal
-          enrollment={selected}
-          onClose={() => setSelected(null)}
-          onApprove={approveDoctor}
-          onReject={rejectDoctor}
-          onApproveDelete={approveDeleteRequest}
-          onRejectDelete={rejectDeleteRequest}
-        />
       )}
 
       <div className="adp-header">
@@ -526,7 +397,12 @@ export default function ManageDoctors() {
                       </td>
                       <td>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          <button className="adp-btn adp-btn--view" onClick={() => setSelected(row)}>View</button>
+                          <button
+                            className="adp-btn adp-btn--view"
+                            onClick={() => navigate(`/admin-dashboard/doctor-profile/${row._id}`, { state: { enrollment: row, from: "manage-doctors" } })}
+                          >
+                            View Profile
+                          </button>
 
                           {requestType === "profile_delete" ? (
                             <>

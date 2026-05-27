@@ -57,6 +57,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import OurDoctors from "./pages/admin/OurDoctors";
 import ManageDoctors from "./pages/admin/ManageDoctors";
+import AdminDoctorProfile from "./pages/admin/AdminDoctorProfile";
 import DoctorPayments from "./pages/admin/DoctorPayments";
 import ManageUsers from "./pages/admin/ManageUsers";
 import AdminAppointments from "./pages/admin/AdminAppointments";
@@ -194,7 +195,10 @@ function AppLayout() {
         <Route path="/test" element={<Test />} />
 
 
-<Route path="/doctor/:id" element={<DoctorProfileForUser />} />
+{/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
+        <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
+        {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
+        <Route path="/doctor/:id" element={<DoctorProfileForUser legacyId />} />
 
         <Route
           path="/user/dashboard"
@@ -379,11 +383,31 @@ function AppLayout() {
           }
         />
         <Route
+          path="/admin-dashboard/doctors/:slug"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <DoctorProfileForUser adminView />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/admin-dashboard/manage-doctors"
           element={
             <PrivateRoute allowedRoles={["admin", "superadmin"]}>
               <AdminLayout>
                 <ManageDoctors />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/doctor-profile/:id"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <AdminDoctorProfile />
               </AdminLayout>
             </PrivateRoute>
           }

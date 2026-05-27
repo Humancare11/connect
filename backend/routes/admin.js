@@ -1,7 +1,8 @@
 const express = require("express");
 const router  = express.Router();
 const {
-  getAdminStats, getAllDoctors, approveDoctor, rejectDoctor,
+  getAdminStats, getAllDoctors, getDoctorById, updateDoctorByAdmin,
+  approveDoctor, rejectDoctor,
   approveDoctorDeleteRequest, rejectDoctorDeleteRequest,
   getAllUsers, deleteUser, getUserDetails, migrateDoctorIds,
   getApprovedDoctors, getDoctorWorkflowStats, getDoctorPayments, markDoctorPayout, editDoctorPayout,
@@ -13,6 +14,8 @@ router.get("/stats", getAdminStats);
 
 router.get("/doctors",                verifyAdminToken, adminOnly, getAllDoctors);
 router.get("/approved-doctors",       verifyAdminToken, adminOnly, getApprovedDoctors);
+router.get("/doctors/:id",            verifyAdminToken, adminOnly, getDoctorById);
+router.put("/doctors/:id",            verifyAdminToken, adminOnly, updateDoctorByAdmin);
 router.get("/doctor-workflow-stats",  verifyAdminToken, adminOnly, getDoctorWorkflowStats);
 router.put("/doctors/:id/approve",    verifyAdminToken, adminOnly, approveDoctor);
 router.put("/doctors/:id/reject",     verifyAdminToken, adminOnly, rejectDoctor);

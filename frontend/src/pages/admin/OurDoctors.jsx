@@ -1,190 +1,26 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../api";
 
-/* ── Inline styles injected once ───────────────────────────────────────────── */
-const MODAL_CSS = `
-.od-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
-.od-modal{background:#fff;border-radius:18px;width:100%;max-width:800px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(15,23,42,0.22);}
-.od-modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid #f1f5f9;flex-shrink:0;}
-.od-modal-body{flex:1;overflow-y:auto;padding:24px 28px 16px;}
-.od-modal-foot{padding:14px 28px;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;flex-shrink:0;}
-.od-section{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:14px;}
-.od-section-head{padding:12px 18px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;}
-.od-section-head h4{margin:0;font-size:13px;font-weight:700;color:#223a5e;}
-.od-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px 18px;padding:14px 18px;}
-.od-row label{display:block;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
-.od-row span{font-size:13px;color:#1e293b;font-weight:500;word-break:break-word;}
-.od-row span.empty{color:#94a3b8;font-style:italic;}
-`;
-
-/* ── View Modal ─────────────────────────────────────────────────────────────── */
-function DoctorViewModal({ doctor, onClose }) {
-  if (!doctor) return null;
-  const d = doctor;
-  const fullName = `Dr. ${d.firstName || ""} ${d.surname || ""}`.trim() || d.doctorId?.name || "—";
-  const initials = `${(d.firstName || d.doctorId?.name || "D")[0]}${(d.surname || " ")[0]}`.toUpperCase();
-  const phone    = [d.countryCode, d.phoneNumber].filter(Boolean).join(" ");
-  const location = [d.city, d.state, d.country].filter(Boolean).join(", ");
-  const langs    = Array.isArray(d.languagesKnown) ? d.languagesKnown.join(", ") : d.languagesKnown;
-
-  return (
-    <div className="od-overlay" onClick={onClose}>
-      <style>{MODAL_CSS}</style>
-      <div className="od-modal" onClick={e => e.stopPropagation()}>
-
-        <div className="od-modal-head">
-          <span style={{ fontSize: 15, fontWeight: 700, color: "#223a5e" }}>Doctor Profile</span>
-          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#64748b" }}>✕</button>
-        </div>
-
-        <div className="od-modal-body">
-
-          {/* Hero */}
-          <div style={{ background: "linear-gradient(135deg,#223a5e 0%,#0c8b7a 100%)", borderRadius: 14, padding: "20px 24px", marginBottom: 14, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <div style={{ width: 62, height: 62, borderRadius: "50%", background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 700, color: "#fff", border: "2.5px solid rgba(255,255,255,0.4)", flexShrink: 0 }}>{initials}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 19, fontWeight: 800, color: "#fff", marginBottom: 3 }}>{fullName}</div>
-              {(d.qualification || d.specialization) && (
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginBottom: 3 }}>{[d.qualification, d.specialization].filter(Boolean).join(" · ")}</div>
-              )}
-              {d.experience && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>🏅 {d.experience} years experience</div>}
-              {location && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>📍 {location}</div>}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-              <span style={{ background: "#dcfce7", color: "#166534", padding: "4px 12px", borderRadius: 50, fontSize: 11, fontWeight: 700 }}>✓ Approved</span>
-              {d.consultantFees && (
-                <span style={{ background: "rgba(255,255,255,0.15)", color: "#fff", padding: "4px 12px", borderRadius: 50, fontSize: 12, fontWeight: 700, border: "1px solid rgba(255,255,255,0.3)" }}>
-                  ${d.consultantFees} / visit
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Personal */}
-          <div className="od-section">
-            <div className="od-section-head"><span>👤</span><h4>Personal Details</h4></div>
-            <div className="od-grid">
-              {[
-                ["Doctor ID",    d.doctorId?.doctorId],
-                ["First Name",   d.firstName],
-                ["Surname",      d.surname],
-                ["Email",        d.email || d.doctorId?.email],
-                ["Phone",        phone],
-                ["Gender",       d.gender],
-                ["Date of Birth",d.dob],
-                ["Languages",    langs],
-              ].map(([label, val]) => (
-                <div key={label} className="od-row">
-                  <label>{label}</label>
-                  <span className={val ? "" : "empty"}>{val || "—"}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Location */}
-          <div className="od-section">
-            <div className="od-section-head"><span>📍</span><h4>Location</h4></div>
-            <div className="od-grid">
-              {[["Country",d.country],["State",d.state],["City",d.city],["ZIP",d.zip],].map(([l,v]) => (
-                <div key={l} className="od-row"><label>{l}</label><span className={v?"":"empty"}>{v||"—"}</span></div>
-              ))}
-              <div className="od-row" style={{ gridColumn: "1/-1" }}>
-                <label>Address</label><span className={d.address ? "" : "empty"}>{d.address || "—"}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Professional */}
-          <div className="od-section">
-            <div className="od-section-head"><span>🩺</span><h4>Professional Details</h4></div>
-            <div className="od-grid">
-              {[
-                ["Specialization",     d.specialization],
-                ["Sub-Specialization", d.subSpecialization],
-                ["Qualification",      d.qualification],
-                ["Experience",         d.experience ? `${d.experience} years` : null],
-                ["Medical School",     d.medicalSchool],
-                ["Graduation Year",    d.registrationYear],
-                ["Medical Council",    d.medicalCouncilName],
-                ["Reg. Number",        d.medicalRegistrationNumber],
-                ["License No.",        d.medicalLicense],
-                ["Consultation Mode",  d.consultationMode],
-              ].map(([l, v]) => (
-                <div key={l} className="od-row"><label>{l}</label><span className={v?"":"empty"}>{v||"—"}</span></div>
-              ))}
-            </div>
-          </div>
-
-          {/* Fees */}
-          <div className="od-section">
-            <div className="od-section-head"><span>💲</span><h4>Consultation Fee</h4></div>
-            <div className="od-grid">
-              <div className="od-row"><label>Fee</label><span>{d.consultantFees ? `$${d.consultantFees}` : "—"}</span></div>
-              <div className="od-row"><label>Currency</label><span>{d.feeCurrency || "USD"}</span></div>
-            </div>
-          </div>
-
-          {/* Clinic */}
-          {(d.clinicName || d.clinicAddress) && (
-            <div className="od-section">
-              <div className="od-section-head"><span>🏥</span><h4>Clinic / Practice</h4></div>
-              <div className="od-grid">
-                <div className="od-row"><label>Clinic Name</label><span>{d.clinicName || "—"}</span></div>
-                <div className="od-row" style={{ gridColumn: "1/-1" }}><label>Address</label><span>{d.clinicAddress || "—"}</span></div>
-              </div>
-            </div>
-          )}
-
-          {/* About */}
-          {d.aboutDoctor && (
-            <div className="od-section">
-              <div className="od-section-head"><span>📝</span><h4>About</h4></div>
-              <div style={{ padding: "12px 18px" }}>
-                <p style={{ margin: 0, fontSize: 13, color: "#334155", lineHeight: 1.7 }}>{d.aboutDoctor}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Payout */}
-          <div className="od-section">
-            <div className="od-section-head"><span>💳</span><h4>Payout Information</h4></div>
-            <div className="od-grid">
-              {[
-                ["Bank Name",      d.bankName],
-                ["Account Holder", d.accountHolderName],
-                ["Account Number", d.accountNumber ? `****${d.accountNumber.slice(-4)}` : null],
-                ["SWIFT / BIC",    d.ifscCode],
-                ["Payout Email",   d.payoutEmail],
-                ["PayPal ID",      d.paypalId],
-              ].map(([l, v]) => (
-                <div key={l} className="od-row"><label>{l}</label><span className={v?"":"empty"}>{v||"—"}</span></div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-
-        <div className="od-modal-foot">
-          <button
-            onClick={onClose}
-            style={{ padding: "8px 22px", borderRadius: 8, border: "1.5px solid #e2e8f0", background: "#fff", color: "#64748b", fontWeight: 600, cursor: "pointer", fontSize: 13 }}
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+function slugifyDoctorName(name) {
+  return (name || "")
+    .replace(/^Dr\.?\s*/i, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "doctor";
 }
+
 
 /* ── Main Page ──────────────────────────────────────────────────────────────── */
 export default function OurDoctors() {
+  const navigate = useNavigate();
   const [doctors,  setDoctors]  = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
   const [filter,   setFilter]   = useState("all");
-  const [selected, setSelected] = useState(null);
   const [workflowStats, setWorkflowStats] = useState({
     totalDoctors: 0,
     profileUpdateRequests: 0,
@@ -222,8 +58,6 @@ export default function OurDoctors() {
 
   return (
     <div>
-      {selected && <DoctorViewModal doctor={selected} onClose={() => setSelected(null)} />}
-
       {/* Header */}
       <div className="adp-header">
         <span className="adp-eyebrow">Admin Panel</span>
@@ -334,7 +168,12 @@ export default function OurDoctors() {
                           : <span style={{ color: "#94a3b8" }}>—</span>}
                       </td>
                       <td>
-                        <button className="adp-btn adp-btn--view" onClick={() => setSelected(d)}>View</button>
+                        <button
+                          className="adp-btn adp-btn--view"
+                          onClick={() => navigate(`/admin-dashboard/doctor-profile/${d._id}`, { state: { enrollment: d, from: "our-doctors" } })}
+                        >
+                          View Profile
+                        </button>
                       </td>
                     </tr>
                   );
