@@ -13,6 +13,7 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const http = require("http");
+const https = require("https");
 const { Server } = require("socket.io");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -125,6 +126,89 @@ if (!fs.existsSync(uploadsDir)) {
 app.use("/uploads", express.static(uploadsDir));
 // Also serve under /api/uploads/ so nginx's /api/ proxy rule covers file requests
 app.use("/api/uploads", express.static(uploadsDir));
+
+function serveMissingUploadFromFallback(req, res, next) {
+  if (process.env.NODE_ENV === "production") return next();
+
+  const filename = path.basename(req.params.filename || "");
+  if (!filename || filename !== req.params.filename) {
+    return res.status(400).json({ msg: "Invalid upload filename." });
+  }
+
+  const fallbackBase = (
+    process.env.UPLOAD_FALLBACK_BASE_URL ||
+    process.env.PRODUCTION_BACKEND_URL ||
+    "https://humancareconnect.co"
+  ).replace(/\/+$/, "");
+
+  const targetPath = path.join(uploadsDir, filename);
+  const tempPath = `${targetPath}.download`;
+  const remoteUrl = `${fallbackBase}/api/uploads/${encodeURIComponent(filename)}`;
+  const client = remoteUrl.startsWith("https:") ? https : http;
+
+  const cleanupTemp = () => {
+    fs.rm(tempPath, { force: true }, () => {});
+  };
+
+  const request = client.get(remoteUrl, (upstream) => {
+    if (upstream.statusCode !== 200) {
+      upstream.resume();
+      cleanupTemp();
+      return res.status(404).json({
+        msg: "Uploaded file was not found in local storage or fallback storage.",
+        filename,
+      });
+    }
+
+    const file = fs.createWriteStream(tempPath);
+    upstream.pipe(file);
+
+    upstream.on("error", () => {
+      file.destroy();
+      cleanupTemp();
+      if (!res.headersSent) {
+        res.status(502).json({ msg: "Could not retrieve uploaded file from fallback storage." });
+      }
+    });
+
+    file.on("error", () => {
+      upstream.destroy();
+      cleanupTemp();
+      if (!res.headersSent) {
+        res.status(500).json({ msg: "Could not cache uploaded file locally." });
+      }
+    });
+
+    file.on("finish", () => {
+      file.close(() => {
+        fs.rename(tempPath, targetPath, (err) => {
+          if (err) {
+            cleanupTemp();
+            if (!res.headersSent) {
+              res.status(500).json({ msg: "Could not store uploaded file locally." });
+            }
+            return;
+          }
+          res.sendFile(targetPath);
+        });
+      });
+    });
+  });
+
+  request.setTimeout(15000, () => {
+    request.destroy(new Error("Fallback upload fetch timed out."));
+  });
+
+  request.on("error", () => {
+    cleanupTemp();
+    if (!res.headersSent) {
+      res.status(502).json({ msg: "Could not retrieve uploaded file from fallback storage." });
+    }
+  });
+}
+
+app.get("/uploads/:filename", serveMissingUploadFromFallback);
+app.get("/api/uploads/:filename", serveMissingUploadFromFallback);
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));

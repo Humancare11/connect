@@ -103,76 +103,49 @@ api.interceptors.request.use((config) => {
 });
 
 // ─────────────────────────────────────────────────────────────────
-// URL normalizer — rewrites any localhost / 127.0.0.1 file URLs
-// that were stored in the database during local development.
-// Runs transparently on every API response so no component changes
-// are needed.  In local dev (VITE_API_URL is localhost) it's a no-op.
+// File URL normalizer
+//
+// Local and production can share database records, so stored upload URLs may
+// contain either host. At render time, always use the current environment's API
+// base and the proxy-safe /api/uploads path.
 // ─────────────────────────────────────────────────────────────────
-const _apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
-const _isProduction = _apiBase.length > 0 && !/localhost|127\.0\.0\.1/.test(_apiBase);
+const _apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+
+// Captures:  m[1] = full origin (scheme+host+port)
+//            m[2] = uploads/filename  (with any leading /api/ stripped)
+const UPLOAD_URL_RE = /^(https?:\/\/[^/]+)\/(?:api\/)?(uploads\/.+)$/;
+const UPLOAD_PATH_RE = /^\/(?:api\/)?(uploads\/.+)$/;
 
 function _deepNormalizeUrls(data) {
   if (!data) return data;
   if (typeof data === "string") {
-    // Rewrite localhost file URLs to the production base
-    if (data.startsWith("http://localhost") || data.startsWith("http://127.")) {
-      try {
-        const u = new URL(data);
-        if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
-          // Also fix /uploads/ → /api/uploads/ so the nginx /api/ proxy rule applies
-          const pathname = u.pathname.startsWith("/uploads/")
-            ? "/api" + u.pathname
-            : u.pathname;
-          return _apiBase + pathname + u.search + u.hash;
-        }
-      } catch {
-        /* not a valid URL — leave as-is */
-      }
-      return data;
-    }
-    // Rewrite legacy /uploads/ → /api/uploads/ for URLs already stored in the database.
-    // Nginx proxies /api/ to the backend but not /uploads/, so old stored URLs 404 in prod.
-    if (_isProduction) {
-      try {
-        const u = new URL(data);
-        const base = new URL(_apiBase);
-        if (u.hostname === base.hostname && u.pathname.startsWith("/uploads/")) {
-          u.pathname = "/api" + u.pathname;
-          return u.toString();
-        }
-      } catch { /* not a valid URL */ }
+    const m = UPLOAD_URL_RE.exec(data) || UPLOAD_PATH_RE.exec(data);
+    if (m) {
+      const uploadPath = `/api/${m[m.length - 1]}`;
+      return _apiBase + uploadPath;
     }
     return data;
   }
   if (Array.isArray(data)) return data.map(_deepNormalizeUrls);
   if (typeof data === "object") {
-    // Avoid mutating the original; build a fresh object
     const out = {};
-    for (const [k, v] of Object.entries(data)) {
-      out[k] = _deepNormalizeUrls(v);
-    }
+    for (const [k, v] of Object.entries(data)) out[k] = _deepNormalizeUrls(v);
     return out;
   }
   return data;
 }
 
-if (_isProduction) {
-  api.interceptors.response.use((response) => {
-    if (response.data) {
-      response.data = _deepNormalizeUrls(response.data);
-    }
-    return response;
-  });
-}
+// Runs on every response in every environment.
+api.interceptors.response.use((response) => {
+  if (response.data) response.data = _deepNormalizeUrls(response.data);
+  return response;
+});
 
 /**
  * Normalise a single file URL for use in <img src> or <a href>.
- * Converts any http://localhost:PORT/... URL to the production base URL.
- * Safe to call in components — returns the original string unchanged
- * when already a production URL or when running locally.
  */
 export function normalizeFileUrl(url) {
-  if (!url || !_isProduction) return url;
+  if (!url) return url;
   return _deepNormalizeUrls(url);
 }
 

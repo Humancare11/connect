@@ -112,17 +112,33 @@ function Field({ label, value, full }) {
     </div>
   );
 }
+const IMAGE_EXTS = new Set(["jpg","jpeg","png","gif","webp","svg","bmp"]);
+function getFileType(url) {
+  if (!url) return "other";
+  const ext = url.split("?")[0].split(".").pop().toLowerCase();
+  if (IMAGE_EXTS.has(ext)) return "image";
+  if (ext === "pdf") return "pdf";
+  return "other";
+}
+
 function DocItem({ label, filename }) {
-  const isUrl = Boolean(filename && (filename.startsWith("http://") || filename.startsWith("https://")));
+  const [imgBroken, setImgBroken] = useState(false);
+  const isUrl    = Boolean(filename && (filename.startsWith("http://") || filename.startsWith("https://")));
+  const fileType = isUrl ? getFileType(filename) : "other";
+  const isImage  = fileType === "image";
+  const isPdf    = fileType === "pdf";
   const displayName = isUrl
     ? decodeURIComponent(filename.split("/").pop()).replace(/^\d{10,}-\d+-/, "") || "document"
     : filename;
+
+  const icon = isUrl ? (isImage ? "🖼️" : isPdf ? "📄" : "📎") : filename ? "📋" : "📂";
+
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:12, padding:"16px 18px",
       background: isUrl ? "#f0fdf4" : filename ? "#f8fafc" : "#fafafa",
       border:`1.5px solid ${isUrl ? "#86efac" : "#e2e8f0"}`, borderRadius:12 }}>
       <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
-        <span style={{ fontSize:24, lineHeight:1, flexShrink:0, marginTop:2 }}>{isUrl ? "📄" : filename ? "📋" : "📂"}</span>
+        <span style={{ fontSize:24, lineHeight:1, flexShrink:0, marginTop:2 }}>{icon}</span>
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:4 }}>{label}</div>
           <div style={{ fontSize:13, color: filename ? "#1e293b" : "#94a3b8", fontStyle: filename ? "normal" : "italic", wordBreak:"break-all", lineHeight:1.5 }}>
@@ -132,10 +148,37 @@ function DocItem({ label, filename }) {
         {isUrl  && <span style={{ fontSize:11, background:"#dcfce7", color:"#166534", padding:"3px 10px", borderRadius:50, fontWeight:700, flexShrink:0 }}>✓ Submitted</span>}
         {filename && !isUrl && <span style={{ fontSize:11, background:"#fef9c3", color:"#854d0e", padding:"3px 10px", borderRadius:50, fontWeight:700, flexShrink:0 }}>⚠ No link</span>}
       </div>
+
+      {/* Inline preview — image */}
+      {/* {isImage && !imgBroken && (
+        <div style={{ borderRadius:8, overflow:"hidden", background:"#f1f5f9", lineHeight:0 }}>
+          <img src={filename} alt={label}
+            style={{ width:"100%", maxHeight:220, objectFit:"contain", display:"block" }}
+            onError={() => setImgBroken(true)} />
+        </div>
+      )} */}
+      {isImage && imgBroken && (
+        <div style={{ fontSize:12, color:"#94a3b8", background:"#f8fafc", padding:"10px", borderRadius:8, textAlign:"center", fontStyle:"italic" }}>
+          Image preview unavailable — file may not be on this server yet.
+        </div>
+      )}
+
+      {/* Inline preview — PDF */}
+      {/* {isPdf && (
+        <div style={{ borderRadius:8, overflow:"hidden", border:"1px solid #e2e8f0", lineHeight:0, height:260 }}>
+          <iframe
+            key={filename}
+            src={filename}
+            title={label}
+            style={{ width:"100%", height:"100%", border:"none", display:"block" }}
+          />
+        </div>
+      )} */}
+
       {isUrl ? (
         <a href={filename} target="_blank" rel="noopener noreferrer"
           style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:7, padding:"9px 14px", background:"#2563eb", color:"#fff", borderRadius:8, fontSize:13, fontWeight:700, textDecoration:"none" }}>
-          View Document
+          {isImage ? "🖼️ Open Full Image" : isPdf ? "📄 Open PDF" : "📎 View Document"}
         </a>
       ) : filename ? (
         <div style={{ fontSize:12, color:"#92400e", background:"#fef3c7", padding:"8px 12px", borderRadius:7 }}>
@@ -257,7 +300,10 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
     finally { setUploading(false); }
   };
 
-  const isUrl = localUrl && (localUrl.startsWith("http://") || localUrl.startsWith("https://"));
+  const isUrl    = localUrl && (localUrl.startsWith("http://") || localUrl.startsWith("https://"));
+  const fileType = isUrl ? getFileType(localUrl) : "other";
+  const isImage  = fileType === "image";
+  const isPdf    = fileType === "pdf";
   const displayName = isUrl
     ? decodeURIComponent(localUrl.split("/").pop()).replace(/^\d{10,}-\d+-/, "") || "document"
     : localUrl;
@@ -265,9 +311,24 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:8, padding:14, background: isUrl ? "#f0fdf4" : "#fafafa", border:`1.5px solid ${isUrl ? "#86efac" : "#e2e8f0"}`, borderRadius:10 }}>
       <div style={{ fontSize:11, fontWeight:700, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.04em" }}>{label}</div>
+      {/* Inline preview — image */}
+      {isImage && (
+        <div style={{ borderRadius:6, overflow:"hidden", background:"#f1f5f9", lineHeight:0 }}>
+          <img src={localUrl} alt={label}
+            style={{ width:"100%", maxHeight:140, objectFit:"contain", display:"block" }}
+            onError={e => { e.currentTarget.style.display = "none"; }} />
+        </div>
+      )}
+      {/* Inline preview — PDF */}
+      {isPdf && (
+        <div style={{ borderRadius:6, overflow:"hidden", border:"1px solid #e2e8f0", lineHeight:0, height:180 }}>
+          <iframe key={localUrl} src={localUrl} title={label}
+            style={{ width:"100%", height:"100%", border:"none", display:"block" }} />
+        </div>
+      )}
       {localUrl ? (
         <div style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
-          <span style={{ fontSize:16 }}>{isUrl ? "✅" : "⚠️"}</span>
+          <span style={{ fontSize:16 }}>{isUrl ? (isImage ? "🖼️" : isPdf ? "📄" : "✅") : "⚠️"}</span>
           <span style={{ fontSize:12, color:"#1e293b", wordBreak:"break-all", flex:1, lineHeight:1.4 }}>{displayName}</span>
         </div>
       ) : (
@@ -278,7 +339,7 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
         {isUrl && (
           <a href={localUrl} target="_blank" rel="noopener noreferrer"
             style={{ padding:"6px 12px", borderRadius:6, border:"1.5px solid #2563eb", background:"#eff6ff", color:"#1d4ed8", fontSize:11, fontWeight:700, textDecoration:"none" }}>
-            📄 View
+            {isImage ? "🖼️ View" : "📄 Open"}
           </a>
         )}
         <button type="button" onClick={() => ref.current?.click()} disabled={uploading}
