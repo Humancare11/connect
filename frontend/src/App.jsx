@@ -80,6 +80,10 @@ import UserRaiseTicket from "./pages/user/RaiseTicket";
 import Home2 from "./pages/Home-2";
 import Test from "./pages/Test";
 
+// 
+import Specialties from "./pages/Specialties";
+import Symptoms from "./pages/Symptoms"
+
 
 
 function ScrollToTop() {
@@ -477,8 +481,18 @@ function AppLayout() {
           }
         />
         <Route path="/video-call/:appointmentId" element={<VideoCall />} />
+
+        {/* Specialties */}
+     <Route path="/specialty" element={<Specialties />} />
+     <Route path="/symptoms" element={<Symptoms />} />
+
+
+
       </Routes>
       {!hideLayout && <Footer />}
+
+
+      
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import "./Aa.css";
 import {
   FaHeartbeat,
@@ -99,7 +100,7 @@ export default function SpecialtiesSection() {
             <span className="aa-eyebrow">Discover Specialties</span>
             <h2 className="aa-title">Care for every part of you.</h2>
           </div>
-          
+
           <div className="aa-tabs">
             <span className="aa-pill" ref={pillRef}></span>
             <button
@@ -145,6 +146,16 @@ export default function SpecialtiesSection() {
               })}
             </motion.div>
           </AnimatePresence>
+        </div>
+        <div className="aa-bottom-btn-wrap">
+          <Link
+            to={activeTab === "specialties" ? "/specialty" : "/symptoms"}
+            className="aa-bottom-btn"
+          >
+            {activeTab === "specialties"
+              ? "View All Specialties"
+              : "View All Symptoms"}
+          </Link>
         </div>
       </div>
     </section>

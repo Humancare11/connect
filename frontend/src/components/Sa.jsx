@@ -185,12 +185,13 @@ export default function ServicesSection() {
             </div>
             <div className="services-content-split">
               <div className="services-content-left">
-                <h3 className="services-card-title">Prescription Refills</h3>
+                <h3 className="services-card-title"> Prescription Refills</h3>
                 <p className="services-card-description">
                   Running low on medication? Fast-track refill from a licensed
                   provider — often within the same day. No appointment required.
                   Works even if you're between doctors.
                 </p>
+                    
               </div>
               <div className="services-content-right">
                 <div className="services-stat-mini">
