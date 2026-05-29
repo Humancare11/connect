@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import api from "../../api";
+import api, { normalizeFileUrl } from "../../api";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
@@ -123,15 +123,20 @@ function getFileType(url) {
 
 function DocItem({ label, filename }) {
   const [imgBroken, setImgBroken] = useState(false);
-  const isUrl    = Boolean(filename && (filename.startsWith("http://") || filename.startsWith("https://")));
-  const fileType = isUrl ? getFileType(filename) : "other";
+  const fileUrl = normalizeFileUrl(filename);
+  const isUrl    = Boolean(fileUrl && (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")));
+  const fileType = isUrl ? getFileType(fileUrl) : "other";
   const isImage  = fileType === "image";
   const isPdf    = fileType === "pdf";
   const displayName = isUrl
-    ? decodeURIComponent(filename.split("/").pop()).replace(/^\d{10,}-\d+-/, "") || "document"
+    ? decodeURIComponent(fileUrl.split("/").pop()).replace(/^\d{10,}-\d+-/, "") || "document"
     : filename;
 
   const icon = isUrl ? (isImage ? "🖼️" : isPdf ? "📄" : "📎") : filename ? "📋" : "📂";
+
+  useEffect(() => {
+    setImgBroken(false);
+  }, [fileUrl]);
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:12, padding:"16px 18px",
@@ -150,13 +155,13 @@ function DocItem({ label, filename }) {
       </div>
 
       {/* Inline preview — image */}
-      {/* {isImage && !imgBroken && (
+      {isImage && !imgBroken && (
         <div style={{ borderRadius:8, overflow:"hidden", background:"#f1f5f9", lineHeight:0 }}>
-          <img src={filename} alt={label}
+          <img src={fileUrl} alt={label}
             style={{ width:"100%", maxHeight:220, objectFit:"contain", display:"block" }}
             onError={() => setImgBroken(true)} />
         </div>
-      )} */}
+      )}
       {isImage && imgBroken && (
         <div style={{ fontSize:12, color:"#94a3b8", background:"#f8fafc", padding:"10px", borderRadius:8, textAlign:"center", fontStyle:"italic" }}>
           Image preview unavailable — file may not be on this server yet.
@@ -164,19 +169,19 @@ function DocItem({ label, filename }) {
       )}
 
       {/* Inline preview — PDF */}
-      {/* {isPdf && (
+      {isPdf && (
         <div style={{ borderRadius:8, overflow:"hidden", border:"1px solid #e2e8f0", lineHeight:0, height:260 }}>
           <iframe
-            key={filename}
-            src={filename}
+            key={fileUrl}
+            src={fileUrl}
             title={label}
             style={{ width:"100%", height:"100%", border:"none", display:"block" }}
           />
         </div>
-      )} */}
+      )}
 
       {isUrl ? (
-        <a href={filename} target="_blank" rel="noopener noreferrer"
+        <a href={fileUrl} target="_blank" rel="noopener noreferrer"
           style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:7, padding:"9px 14px", background:"#2563eb", color:"#fff", borderRadius:8, fontSize:13, fontWeight:700, textDecoration:"none" }}>
           {isImage ? "🖼️ Open Full Image" : isPdf ? "📄 Open PDF" : "📎 View Document"}
         </a>
@@ -235,7 +240,8 @@ function AdminPhotoUpload({ currentUrl, onChange }) {
     finally { setUploading(false); }
   };
 
-  const imgSrc = preview || localUrl || null;
+  const imgSrc = preview || normalizeFileUrl(localUrl) || null;
+  const fullSizeUrl = normalizeFileUrl(localUrl);
 
   return (
     <div style={{ display:"flex", alignItems:"center", gap:20, padding:16, background:"#f8fafc", borderRadius:12, border:"1.5px solid #e2e8f0", flexWrap:"wrap" }}>
@@ -269,7 +275,7 @@ function AdminPhotoUpload({ currentUrl, onChange }) {
               style={{ padding:"7px 14px", borderRadius:7, border:"1.5px solid #fecdd3", background:"#fff1f2", color:"#be123c", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
               Remove
             </button>
-            <a href={localUrl} target="_blank" rel="noopener noreferrer"
+            <a href={fullSizeUrl} target="_blank" rel="noopener noreferrer"
               style={{ padding:"7px 14px", borderRadius:7, border:"1.5px solid #e2e8f0", background:"#f8fafc", color:"#64748b", fontSize:12, fontWeight:600, textDecoration:"none" }}>
               View full size →
             </a>
@@ -300,12 +306,13 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
     finally { setUploading(false); }
   };
 
-  const isUrl    = localUrl && (localUrl.startsWith("http://") || localUrl.startsWith("https://"));
-  const fileType = isUrl ? getFileType(localUrl) : "other";
+  const fileUrl = normalizeFileUrl(localUrl);
+  const isUrl    = fileUrl && (fileUrl.startsWith("http://") || fileUrl.startsWith("https://"));
+  const fileType = isUrl ? getFileType(fileUrl) : "other";
   const isImage  = fileType === "image";
   const isPdf    = fileType === "pdf";
   const displayName = isUrl
-    ? decodeURIComponent(localUrl.split("/").pop()).replace(/^\d{10,}-\d+-/, "") || "document"
+    ? decodeURIComponent(fileUrl.split("/").pop()).replace(/^\d{10,}-\d+-/, "") || "document"
     : localUrl;
 
   return (
@@ -314,7 +321,7 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
       {/* Inline preview — image */}
       {isImage && (
         <div style={{ borderRadius:6, overflow:"hidden", background:"#f1f5f9", lineHeight:0 }}>
-          <img src={localUrl} alt={label}
+          <img src={fileUrl} alt={label}
             style={{ width:"100%", maxHeight:140, objectFit:"contain", display:"block" }}
             onError={e => { e.currentTarget.style.display = "none"; }} />
         </div>
@@ -322,7 +329,7 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
       {/* Inline preview — PDF */}
       {isPdf && (
         <div style={{ borderRadius:6, overflow:"hidden", border:"1px solid #e2e8f0", lineHeight:0, height:180 }}>
-          <iframe key={localUrl} src={localUrl} title={label}
+          <iframe key={fileUrl} src={fileUrl} title={label}
             style={{ width:"100%", height:"100%", border:"none", display:"block" }} />
         </div>
       )}
@@ -337,7 +344,7 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
       {err && <div style={{ fontSize:11, color:"#dc2626" }}>{err}</div>}
       <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
         {isUrl && (
-          <a href={localUrl} target="_blank" rel="noopener noreferrer"
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer"
             style={{ padding:"6px 12px", borderRadius:6, border:"1.5px solid #2563eb", background:"#eff6ff", color:"#1d4ed8", fontSize:11, fontWeight:700, textDecoration:"none" }}>
             {isImage ? "🖼️ View" : "📄 Open"}
           </a>
@@ -925,7 +932,7 @@ export default function AdminDoctorProfile() {
       <div style={{ background:"linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 100%)", borderRadius:16, padding:"24px 28px", marginBottom:24, display:"flex", alignItems:"flex-start", gap:20, flexWrap:"wrap" }}>
         <div style={{ width:72, height:72, borderRadius:"50%", overflow:"hidden", border:"2.5px solid rgba(255,255,255,0.5)", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(255,255,255,0.18)" }}>
           {e.profilePhoto ? (
-            <img src={e.profilePhoto} alt={fullName} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            <img src={normalizeFileUrl(e.profilePhoto)} alt={fullName} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
           ) : (
             <span style={{ fontSize:26, fontWeight:800, color:"#fff" }}>{initials}</span>
           )}
@@ -1023,11 +1030,11 @@ export default function AdminDoctorProfile() {
           <Section icon="👤" title="Personal & Contact Details">
             {e.profilePhoto ? (
               <div style={{ display:"flex", alignItems:"center", gap:16, padding:"14px 18px", background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, marginBottom:18 }}>
-                <img src={e.profilePhoto} alt={fullName}
+                <img src={normalizeFileUrl(e.profilePhoto)} alt={fullName}
                   style={{ width:72, height:72, borderRadius:"50%", objectFit:"cover", border:"2.5px solid #16a34a", flexShrink:0 }} />
                 <div>
                   <div style={{ fontSize:13, fontWeight:700, color:"#166534" }}>✅ Profile Photo Uploaded</div>
-                  <a href={e.profilePhoto} target="_blank" rel="noopener noreferrer"
+                  <a href={normalizeFileUrl(e.profilePhoto)} target="_blank" rel="noopener noreferrer"
                     style={{ fontSize:12, color:"#2563eb", textDecoration:"none", marginTop:3, display:"inline-block" }}>
                     View full size →
                   </a>
