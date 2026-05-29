@@ -155,13 +155,13 @@ function DocItem({ label, filename }) {
       </div>
 
       {/* Inline preview — image */}
-      {isImage && !imgBroken && (
+      {/* {isImage && !imgBroken && (
         <div style={{ borderRadius:8, overflow:"hidden", background:"#f1f5f9", lineHeight:0 }}>
           <img src={fileUrl} alt={label}
             style={{ width:"100%", maxHeight:220, objectFit:"contain", display:"block" }}
             onError={() => setImgBroken(true)} />
         </div>
-      )}
+      )} */}
       {isImage && imgBroken && (
         <div style={{ fontSize:12, color:"#94a3b8", background:"#f8fafc", padding:"10px", borderRadius:8, textAlign:"center", fontStyle:"italic" }}>
           Image preview unavailable — file may not be on this server yet.
@@ -169,7 +169,7 @@ function DocItem({ label, filename }) {
       )}
 
       {/* Inline preview — PDF */}
-      {isPdf && (
+      {/* {isPdf && (
         <div style={{ borderRadius:8, overflow:"hidden", border:"1px solid #e2e8f0", lineHeight:0, height:260 }}>
           <iframe
             key={fileUrl}
@@ -178,7 +178,7 @@ function DocItem({ label, filename }) {
             style={{ width:"100%", height:"100%", border:"none", display:"block" }}
           />
         </div>
-      )}
+      )} */}
 
       {isUrl ? (
         <a href={fileUrl} target="_blank" rel="noopener noreferrer"

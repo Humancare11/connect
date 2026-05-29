@@ -3,6 +3,7 @@ const router   = express.Router();
 const multer   = require("multer");
 const path     = require("path");
 const { verifyToken } = require("../middleware/verifyToken");
+const { storeUploadInGridFS } = require("../utils/uploadStorage");
 
 const ALLOWED_TYPES = /jpeg|jpg|png|gif|webp|pdf|doc|docx|txt|xls|xlsx/;
 
@@ -51,15 +52,21 @@ function resolveBaseUrl(req) {
 }
 
 // POST /api/upload  — protected, any logged-in user or doctor
-router.post("/", verifyToken, upload.single("file"), (req, res) => {
+router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ msg: "No file uploaded." });
-  const baseUrl = resolveBaseUrl(req);
-  return res.json({
-    url:  `${baseUrl}/api/uploads/${req.file.filename}`,
-    name: req.file.originalname,
-    type: req.file.mimetype,
-    size: req.file.size,
-  });
+  try {
+    await storeUploadInGridFS(req.file);
+    const baseUrl = resolveBaseUrl(req);
+    return res.json({
+      url:  `${baseUrl}/api/uploads/${req.file.filename}`,
+      name: req.file.originalname,
+      type: req.file.mimetype,
+      size: req.file.size,
+    });
+  } catch (err) {
+    console.error("upload storage error:", err);
+    return res.status(500).json({ msg: "File uploaded locally, but could not be stored for shared access." });
+  }
 });
 
 // Multer error handler

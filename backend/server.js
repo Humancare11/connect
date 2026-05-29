@@ -21,6 +21,7 @@ const User = require("./models/User");
 const Appointment = require("./models/Appointment");
 const Doctor = require("./models/Doctor");
 const fs = require("fs");
+const { streamUploadFromGridFS } = require("./utils/uploadStorage");
 
 const app = express();
 
@@ -127,13 +128,24 @@ app.use("/uploads", express.static(uploadsDir));
 // Also serve under /api/uploads/ so nginx's /api/ proxy rule covers file requests
 app.use("/api/uploads", express.static(uploadsDir));
 
-function serveMissingUploadFromFallback(req, res, next) {
-  if (process.env.NODE_ENV === "production") return next();
-
+async function serveMissingUploadFromFallback(req, res, next) {
   const filename = path.basename(req.params.filename || "");
   if (!filename || filename !== req.params.filename) {
     return res.status(400).json({ msg: "Invalid upload filename." });
   }
+
+  try {
+    const streamed = await streamUploadFromGridFS(filename, res);
+    if (streamed) return;
+  } catch (err) {
+    console.error("GridFS upload fallback error:", err);
+    if (!res.headersSent) {
+      return res.status(500).json({ msg: "Could not read uploaded file from shared storage." });
+    }
+    return;
+  }
+
+  if (process.env.NODE_ENV === "production") return next();
 
   const fallbackBase = (
     process.env.UPLOAD_FALLBACK_BASE_URL ||
