@@ -123,6 +123,8 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 app.use("/uploads", express.static(uploadsDir));
+// Also serve under /api/uploads/ so nginx's /api/ proxy rule covers file requests
+app.use("/api/uploads", express.static(uploadsDir));
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));

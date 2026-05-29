@@ -114,17 +114,33 @@ const _isProduction = _apiBase.length > 0 && !/localhost|127\.0\.0\.1/.test(_api
 function _deepNormalizeUrls(data) {
   if (!data) return data;
   if (typeof data === "string") {
-    // Only touch strings that look like an HTTP URL pointing at localhost
-    if (!data.startsWith("http://localhost") && !data.startsWith("http://127.")) {
+    // Rewrite localhost file URLs to the production base
+    if (data.startsWith("http://localhost") || data.startsWith("http://127.")) {
+      try {
+        const u = new URL(data);
+        if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+          // Also fix /uploads/ → /api/uploads/ so the nginx /api/ proxy rule applies
+          const pathname = u.pathname.startsWith("/uploads/")
+            ? "/api" + u.pathname
+            : u.pathname;
+          return _apiBase + pathname + u.search + u.hash;
+        }
+      } catch {
+        /* not a valid URL — leave as-is */
+      }
       return data;
     }
-    try {
-      const u = new URL(data);
-      if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
-        return _apiBase + u.pathname + u.search + u.hash;
-      }
-    } catch {
-      /* not a valid URL — leave as-is */
+    // Rewrite legacy /uploads/ → /api/uploads/ for URLs already stored in the database.
+    // Nginx proxies /api/ to the backend but not /uploads/, so old stored URLs 404 in prod.
+    if (_isProduction) {
+      try {
+        const u = new URL(data);
+        const base = new URL(_apiBase);
+        if (u.hostname === base.hostname && u.pathname.startsWith("/uploads/")) {
+          u.pathname = "/api" + u.pathname;
+          return u.toString();
+        }
+      } catch { /* not a valid URL */ }
     }
     return data;
   }

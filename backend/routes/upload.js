@@ -51,7 +51,7 @@ router.post("/", verifyToken, upload.single("file"), (req, res) => {
   if (!req.file) return res.status(400).json({ msg: "No file uploaded." });
   const baseUrl = resolveBaseUrl(req);
   return res.json({
-    url:  `${baseUrl}/uploads/${req.file.filename}`,
+    url:  `${baseUrl}/api/uploads/${req.file.filename}`,
     name: req.file.originalname,
     type: req.file.mimetype,
     size: req.file.size,
