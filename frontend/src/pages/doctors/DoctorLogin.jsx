@@ -110,6 +110,7 @@ export default function DoctorAuthPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [loading,    setLoading]    = useState(false);
   const [formError,  setFormError]  = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
@@ -125,7 +126,7 @@ export default function DoctorAuthPage() {
   const [newPass,     setNewPass]     = useState("");
   const [confirmPass, setConfirmPass] = useState("");
 
-  const clrErr = () => setFormError("");
+  const clrErr = () => { setFormError(""); setFormSuccess(""); };
 
   const startTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -279,7 +280,7 @@ export default function DoctorAuthPage() {
       await api.post("/api/doctor/reset-password", { resetToken, newPassword: newPass });
       setView("auth"); setIsRegister(false);
       setForgotEmail(""); setResetToken(""); setNewPass(""); setConfirmPass("");
-      alert("Password reset successfully! Please login. ✅");
+      setFormSuccess("Password reset successfully! Please sign in.");
     } catch (err) { setFormError(err.response?.data?.message || "Reset failed."); }
     finally { setLoading(false); }
   };
@@ -418,6 +419,11 @@ export default function DoctorAuthPage() {
               </button>
             </div>
 
+            {formSuccess && (
+              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "10px 14px", marginBottom: 8, fontSize: 13, color: "#15803d", display: "flex", alignItems: "center", gap: 8 }}>
+                <span>&#10003;</span> {formSuccess}
+              </div>
+            )}
             {formError && <p className="form-error">{formError}</p>}
             <span>or use your email</span>
 

@@ -12,6 +12,7 @@ export default function SuperAdminDashboard() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [creating, setCreating] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,13 +48,15 @@ export default function SuperAdminDashboard() {
     setCreating(false);
   };
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Remove admin "${name}"? This cannot be undone.`)) return;
+  const handleDelete = async (id) => {
+    setDeleteConfirm(null);
     try {
       await api.delete(`/api/superadmin/admins/${id}`);
       setAdmins((prev) => prev.filter((a) => a._id !== id));
+      setFormSuccess("Admin removed successfully.");
+      setTimeout(() => setFormSuccess(""), 4000);
     } catch (err) {
-      alert(err.response?.data?.msg || "Failed to remove admin.");
+      setFormError(err.response?.data?.msg || "Failed to remove admin.");
     }
   };
 
@@ -66,6 +69,37 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="dash-wrapper">
+      {deleteConfirm && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "rgba(0,0,0,0.4)", display: "flex",
+          alignItems: "center", justifyContent: "center", padding: 16,
+        }} onClick={() => setDeleteConfirm(null)}>
+          <div style={{
+            background: "#fff", borderRadius: 14, padding: "28px 32px",
+            maxWidth: 400, width: "100%", textAlign: "center",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>⚠</div>
+            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#111827" }}>Remove Admin?</h3>
+            <p style={{ margin: "0 0 6px", fontSize: 14, color: "#374151" }}>
+              You are about to remove <strong>{deleteConfirm.name}</strong>.
+            </p>
+            <p style={{ margin: "0 0 24px", fontSize: 13, color: "#6b7280" }}>This action cannot be undone.</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                style={{ padding: "9px 20px", borderRadius: 8, border: "1.5px solid #d1d5db", background: "#fff", color: "#374151", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >Cancel</button>
+              <button
+                onClick={() => handleDelete(deleteConfirm.id)}
+                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#dc2626", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >Yes, Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="dash-sidebar" style={{ background: "#1e1b4b" }}>
         <div className="dash-sidebar-brand">
@@ -164,7 +198,7 @@ export default function SuperAdminDashboard() {
                         <td>
                           <button
                             className="btn-reject"
-                            onClick={() => handleDelete(a._id, a.name)}
+                            onClick={() => setDeleteConfirm({ id: a._id, name: a.name })}
                           >
                             Remove
                           </button>

@@ -276,6 +276,10 @@ export default function VideoCall() {
   const [camError, setCamError] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [peerLeft, setPeerLeft] = useState(false);
+  const [endCallConfirm, setEndCallConfirm] = useState(false);
+  const [leaveConfirm, setLeaveConfirm] = useState(false);
+  const [inlineError, setInlineError] = useState("");
+  const pendingLeaveRef = useRef(null);
 
   // ── Chat state ────────────────────────────────────────────────────
   const [chatOpen, setChatOpen] = useState(false);
@@ -311,10 +315,11 @@ export default function VideoCall() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // Auto-scroll chat
+  // Auto-scroll chat — runs on new messages AND when panel opens
   useEffect(() => {
+    if (!chatOpen) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, chatOpen]);
 
   // ── Fetch appointment ─────────────────────────────────────────────
   // Wait for auth contexts so we know the caller's role, then hit a
@@ -429,11 +434,8 @@ export default function VideoCall() {
     const handlePopstate = () => {
       window.history.pushState(null, "", window.location.href);
       if (!inCallRef.current) return;
-      const leave = window.confirm("Leaving will end your consultation. Continue?");
-      if (leave) {
-        performCleanup(true);
-        navigate(isDoctor ? "/doctor-dashboard" : "/user/dashboard", { replace: true });
-      }
+      pendingLeaveRef.current = isDoctor ? "/doctor-dashboard" : "/user/dashboard";
+      setLeaveConfirm(true);
     };
 
     window.addEventListener("popstate", handlePopstate);
@@ -571,11 +573,12 @@ export default function VideoCall() {
       if (!offer || !mounted) return;
       try {
         setConnectionState("connecting");
-        // Ensure local tracks are attached before creating answer, so the
-        // patient reliably receives doctor audio/video.
+        // Set remote description immediately so ICE gathering starts on both
+        // sides in parallel, rather than waiting for local camera first.
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        // Now wait for local tracks so the answer includes our video/audio.
         await localReadyPromise;
         if (!mounted) return;
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit("video-answer", { appointmentId, answer });
@@ -645,19 +648,28 @@ export default function VideoCall() {
     socket.on("new-prescription", handleNewPrescription);
     socket.on("room-access-denied", handleRoomDenied);
 
-    if (!socket.connected) socket.connect();
     const activeUserId = isDoctor ? doctorId : userId;
-    if (activeUserId) {
-      socket.emit("user-online", {
-        userId: activeUserId,
-        role: isDoctor ? "doctor" : "user",
-      });
+    const joinRoom = () => {
+      if (activeUserId) {
+        socket.emit("user-online", {
+          userId: activeUserId,
+          role: isDoctor ? "doctor" : "user",
+        });
+      }
+      socket.emit("join-appointment-room", { appointmentId });
+    };
+
+    if (socket.connected) {
+      joinRoom();
+    } else {
+      socket.once("connect", joinRoom);
+      socket.connect();
     }
-    socket.emit("join-appointment-room", { appointmentId });
 
     return () => {
       mounted = false;
       resolveLocalReady(false);
+      socket.off("connect", joinRoom);
       socket.off("video-offer", handleOffer);
       socket.off("video-answer", handleAnswer);
       socket.off("ice-candidate", handleIce);
@@ -788,14 +800,7 @@ export default function VideoCall() {
 
   const endCall = useCallback(async () => {
     if (completing) return;
-
-    const confirmed = window.confirm(
-      isDoctor
-        ? "End this call and mark the consultation as completed?"
-        : "End this call now?"
-    );
-    if (!confirmed) return;
-
+    setEndCallConfirm(false);
     setCompleting(true);
     try {
       if (isDoctor && appt?.status === "confirmed") {
@@ -805,7 +810,8 @@ export default function VideoCall() {
       navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", { replace: true });
     } catch (err) {
       setCompleting(false);
-      alert(err.response?.data?.msg || "Failed to complete consultation. Please try again.");
+      setInlineError(err.response?.data?.msg || "Failed to end call. Please try again.");
+      setTimeout(() => setInlineError(""), 5000);
     }
   }, [completing, isDoctor, appt?.status, appointmentId, performCleanup, navigate]);
 
@@ -874,7 +880,11 @@ export default function VideoCall() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    if (file.size > 10 * 1024 * 1024) { alert("File too large. Max 10 MB."); return; }
+    if (file.size > 10 * 1024 * 1024) {
+      setInlineError("File too large. Max 10 MB.");
+      setTimeout(() => setInlineError(""), 4000);
+      return;
+    }
     setUploadingFile(true);
     try {
       const form = new FormData();
@@ -890,7 +900,8 @@ export default function VideoCall() {
         fileType: res.data.type ?? file.type,
       });
     } catch (err) {
-      alert(err.response?.data?.msg || "File upload failed.");
+      setInlineError(err.response?.data?.msg || "File upload failed.");
+      setTimeout(() => setInlineError(""), 4000);
     } finally {
       setUploadingFile(false);
     }
@@ -989,7 +1000,7 @@ export default function VideoCall() {
           </div>
 
           <div className="hc-vc__meta-right">
-            {inCall && (
+            {inCall && isDoctor && (
               <div className="hc-vc__timer">
                 <FiClock />
                 <span>{fmtDuration(callDuration)}</span>
@@ -1009,6 +1020,93 @@ export default function VideoCall() {
             <span className="hc-vc__infobar-chip hc-vc__infobar-chip--green"><FiCheckCircle /> Confirmed</span> */}
           </div>
         </div>
+
+      {/* ── Inline error toast ──────────────────────────────────── */}
+      {inlineError && (
+        <div style={{
+          position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
+          zIndex: 10000, background: "#fef2f2", border: "1px solid #fca5a5",
+          color: "#dc2626", borderRadius: 10, padding: "12px 20px",
+          fontSize: 13, fontWeight: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+        }}>
+          <FiAlertTriangle /> {inlineError}
+        </div>
+      )}
+
+      {/* ── End Call confirm modal ───────────────────────────────── */}
+      {endCallConfirm && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9998,
+          background: "rgba(0,0,0,0.6)", display: "flex",
+          alignItems: "center", justifyContent: "center", padding: 16,
+        }} onClick={() => setEndCallConfirm(false)}>
+          <div style={{
+            background: "#0d1f35", borderRadius: 16, padding: "28px 32px",
+            maxWidth: 380, width: "100%", textAlign: "center",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>
+              <FiPhoneOff style={{ color: "#ef4444" }} />
+            </div>
+            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#f1f5f9" }}>
+              {isDoctor ? "End Consultation?" : "Leave Call?"}
+            </h3>
+            <p style={{ margin: "0 0 24px", fontSize: 13, color: "#94a3b8" }}>
+              {isDoctor
+                ? "This will end the call and mark the consultation as completed."
+                : "You will leave the video call. The doctor will be notified."}
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button
+                onClick={() => setEndCallConfirm(false)}
+                style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.07)", color: "#e2e8f0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >Stay</button>
+              <button
+                onClick={endCall}
+                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >{isDoctor ? "End & Complete" : "Leave Call"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Leave (back button) confirm modal ───────────────────── */}
+      {leaveConfirm && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9998,
+          background: "rgba(0,0,0,0.6)", display: "flex",
+          alignItems: "center", justifyContent: "center", padding: 16,
+        }} onClick={() => setLeaveConfirm(false)}>
+          <div style={{
+            background: "#0d1f35", borderRadius: 16, padding: "28px 32px",
+            maxWidth: 380, width: "100%", textAlign: "center",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>⚠</div>
+            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#f1f5f9" }}>Leave Consultation?</h3>
+            <p style={{ margin: "0 0 24px", fontSize: 13, color: "#94a3b8" }}>
+              Leaving will end your consultation session. Are you sure?
+            </p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button
+                onClick={() => setLeaveConfirm(false)}
+                style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.07)", color: "#e2e8f0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >Stay</button>
+              <button
+                onClick={() => {
+                  setLeaveConfirm(false);
+                  performCleanup(true);
+                  navigate(pendingLeaveRef.current || "/user/dashboard", { replace: true });
+                }}
+                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >Leave</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Consultation completed overlay (patient) ─────────────── */}
       {showCompletedOverlay && !isDoctor && (
@@ -1323,7 +1421,7 @@ export default function VideoCall() {
 
           <button
             className="hc-vc__btn hc-vc__btn--end"
-            onClick={endCall}
+            onClick={() => setEndCallConfirm(true)}
             disabled={completing}
             title={isDoctor ? "End call and complete consultation" : "End call"}
           >

@@ -18,6 +18,8 @@ export default function Register() {
     password: "",
     terms: false,
   });
+  const [formError, setFormError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -27,25 +29,28 @@ export default function Register() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    if (formError) setFormError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError("");
 
-    if (!form.terms) return alert("Accept Terms & Conditions");
-    if (form.password.length < 6) return alert("Password must be at least 6 characters");
-    if (!form.mobile) return alert("Enter mobile number");
-    if (!form.dob) return alert("Select Date of Birth");
-    if (!form.gender) return alert("Select Gender");
+    if (!form.terms) return setFormError("Please accept Terms & Conditions to continue.");
+    if (form.password.length < 6) return setFormError("Password must be at least 6 characters.");
+    if (!form.mobile) return setFormError("Please enter your mobile number.");
+    if (!form.dob) return setFormError("Please select your date of birth.");
+    if (!form.gender) return setFormError("Please select your gender.");
 
     const { terms, ...data } = form;
-
+    setLoading(true);
     try {
       await api.post("/api/auth/register", data);
-      alert("Registered Successfully ✅");
-      navigate("/login");
+      navigate("/login", { state: { registered: true } });
     } catch (err) {
-      alert(err?.response?.data?.msg || "Server Error ❌");
+      setFormError(err?.response?.data?.msg || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,6 +58,23 @@ export default function Register() {
     <div className="auth-container">
       <form onSubmit={handleSubmit} className="register-form">
         <h2>Create Account</h2>
+
+        {formError && (
+          <div style={{
+            background: "#fef2f2",
+            border: "1px solid #fca5a5",
+            borderRadius: 8,
+            padding: "10px 14px",
+            marginBottom: 16,
+            fontSize: 13,
+            color: "#dc2626",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            <span>&#9888;</span> {formError}
+          </div>
+        )}
 
         <input
           type="text"
@@ -79,7 +101,6 @@ export default function Register() {
           inputStyle={{ width: "100%" }}
         />
 
-        {/* ✅ DOB + Gender same line */}
         <div className="row">
           <input
             type="date"
@@ -107,10 +128,12 @@ export default function Register() {
 
         <label className="terms">
           <input type="checkbox" name="terms" onChange={handleChange} />
-          I accept Terms & Conditions
+          I accept Terms &amp; Conditions
         </label>
 
-        <button type="submit">Register</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Registering…" : "Register"}
+        </button>
 
         <p>
           Already have an account? <Link to="/login">Login</Link>

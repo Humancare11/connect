@@ -12,6 +12,7 @@ const CATEGORY_LABELS = {
 function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
   const [resolution, setResolution] = useState("");
   const [saving, setSaving] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   const submit = async () => {
     if (!resolution.trim()) return;
@@ -26,20 +27,110 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
     }
   };
 
+  const canSubmit = resolution.trim() && !saving;
+
   return (
-    <div className="adp-overlay" onClick={onClose}>
-      <div className="adp-modal" onClick={e => e.stopPropagation()}>
-        <div className="adp-modal-header">
-          <h3 className="adp-modal-title">Resolve Ticket</h3>
-          <button className="adp-modal-close" onClick={onClose}>✕</button>
-        </div>
-        <div className="adp-modal-body">
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 4 }}>Ticket</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{ticket.title}</div>
-            <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>{ticket.description}</div>
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(8, 30, 80, 0.55)",
+        backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "#ffffff",
+          borderRadius: 16,
+          width: "100%", maxWidth: 560,
+          boxShadow: "0 24px 60px rgba(8, 58, 176, 0.22), 0 4px 16px rgba(0,0,0,0.10)",
+          overflow: "hidden",
+          animation: "adp-scalein 0.2s ease",
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "18px 24px",
+          borderBottom: "1.5px solid #e2e8f0",
+          background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 8,
+              background: "rgba(255,255,255,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 16,
+            }}>✓</div>
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#ffffff" }}>Resolve Ticket</h3>
           </div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>
+          <button
+            onClick={onClose}
+            style={{
+              background: "rgba(255,255,255,0.15)",
+              border: "1.5px solid rgba(255,255,255,0.35)",
+              borderRadius: "50%",
+              width: 34, height: 34,
+              cursor: "pointer",
+              fontSize: 16, color: "#ffffff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontWeight: 700, lineHeight: 1,
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.28)"}
+            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "22px 24px" }}>
+          {/* Ticket info box */}
+          <div style={{
+            background: "#eff6ff",
+            border: "1.5px solid #bfdbfe",
+            borderRadius: 10,
+            padding: "14px 16px",
+            marginBottom: 20,
+          }}>
+            <div style={{
+              fontSize: 11, fontWeight: 700, color: "#1d4ed8",
+              textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 6,
+            }}>
+              Ticket Details
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#1e3a5f", marginBottom: 4 }}>
+              {ticket.title}
+            </div>
+            <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.55 }}>
+              {ticket.description}
+            </div>
+            {ticket.createdBy?.name && (
+              <div style={{ fontSize: 12, color: "#6b7280", marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{
+                  width: 20, height: 20, borderRadius: "50%",
+                  background: "#dbeafe", color: "#1d4ed8",
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 11, fontWeight: 700,
+                }}>
+                  {ticket.createdBy.name[0]?.toUpperCase()}
+                </span>
+                <span>{ticket.createdBy.name}</span>
+                {ticket.createdBy.email && <span style={{ color: "#9ca3af" }}>· {ticket.createdBy.email}</span>}
+              </div>
+            )}
+          </div>
+
+          {/* Resolution textarea */}
+          <label style={{
+            display: "block",
+            fontSize: 12, fontWeight: 700, color: "#374151",
+            textTransform: "uppercase", letterSpacing: ".07em",
+            marginBottom: 8,
+          }}>
             Resolution Message <span style={{ color: "#ef4444" }}>*</span>
           </label>
           <textarea
@@ -47,15 +138,78 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
             onChange={e => setResolution(e.target.value)}
             placeholder="Describe how the issue was resolved…"
             rows={5}
-            style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #e2e8f0", borderRadius: 10, fontSize: 14, fontFamily: "inherit", resize: "vertical", outline: "none", boxSizing: "border-box", transition: "border-color .2s" }}
-            onFocus={e => e.target.style.borderColor = "#19c9a3"}
-            onBlur={e => e.target.style.borderColor = "#e2e8f0"}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            style={{
+              width: "100%",
+              padding: "12px 14px",
+              border: focused ? "2px solid #2563eb" : "1.5px solid #d1d5db",
+              borderRadius: 10,
+              fontSize: 14, fontFamily: "inherit",
+              resize: "vertical",
+              outline: "none",
+              boxSizing: "border-box",
+              color: "#111827",
+              background: "#ffffff",
+              transition: "border-color .15s",
+              lineHeight: 1.6,
+            }}
           />
+          <p style={{ margin: "6px 0 0", fontSize: 12, color: "#6b7280" }}>
+            This message will be sent to the user when the ticket is marked resolved.
+          </p>
         </div>
-        <div className="adp-modal-footer">
-          <button className="adp-btn adp-btn--ghost" onClick={onClose}>Cancel</button>
-          <button className="adp-btn adp-btn--resolve" onClick={submit} disabled={!resolution.trim() || saving} style={{ opacity: (!resolution.trim() || saving) ? .6 : 1 }}>
-            {saving ? "Saving…" : "✓ Mark Resolved"}
+
+        {/* Footer */}
+        <div style={{
+          padding: "16px 24px",
+          borderTop: "1.5px solid #e2e8f0",
+          background: "#f8fafc",
+          display: "flex", gap: 10, justifyContent: "flex-end",
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "9px 20px",
+              borderRadius: 8,
+              border: "1.5px solid #d1d5db",
+              background: "#ffffff",
+              color: "#374151",
+              fontSize: 13, fontWeight: 600, fontFamily: "inherit",
+              cursor: "pointer",
+              transition: "background 0.15s, border-color 0.15s",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#9ca3af"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#d1d5db"; }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={!canSubmit}
+            style={{
+              padding: "9px 22px",
+              borderRadius: 8,
+              border: "none",
+              background: canSubmit ? "linear-gradient(135deg, #1d4ed8, #2563eb)" : "#93c5fd",
+              color: "#ffffff",
+              fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+              cursor: canSubmit ? "pointer" : "not-allowed",
+              boxShadow: canSubmit ? "0 3px 12px rgba(29,78,216,0.35)" : "none",
+              display: "flex", alignItems: "center", gap: 7,
+              transition: "opacity 0.15s, box-shadow 0.15s",
+            }}
+            onMouseEnter={e => { if (canSubmit) e.currentTarget.style.opacity = "0.88"; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+          >
+            {saving ? (
+              <>
+                <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "adp-spin 0.7s linear infinite" }} />
+                Saving…
+              </>
+            ) : (
+              <>✓ Mark Resolved</>
+            )}
           </button>
         </div>
       </div>

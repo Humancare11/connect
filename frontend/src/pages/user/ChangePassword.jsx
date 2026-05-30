@@ -164,6 +164,10 @@ export default function ChangePassword() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+    // Changing currentPassword may invalidate the "same as current" error on newPassword
+    if (name === "currentPassword" && errors.newPassword) {
+      setErrors(prev => ({ ...prev, newPassword: "" }));
+    }
     setSaved(false);
     setServerError("");
   };
@@ -176,6 +180,8 @@ export default function ChangePassword() {
     if (!formData.currentPassword) errs.currentPassword = "Current password is required";
     if (!formData.newPassword)     errs.newPassword = "New password is required";
     else if (formData.newPassword.length < 6) errs.newPassword = "Must be at least 6 characters";
+    else if (formData.currentPassword && formData.newPassword === formData.currentPassword)
+      errs.newPassword = "New password must be different from your current password";
     if (!formData.confirmPassword) errs.confirmPassword = "Please confirm your password";
     else if (formData.newPassword !== formData.confirmPassword) errs.confirmPassword = "Passwords do not match";
     setErrors(errs);

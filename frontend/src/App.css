@@ -805,3 +805,8 @@ section {
     gap: 16px;
   }
 }
+
+.adp-badge{
+  background: var(--primary)!important;
+
+}

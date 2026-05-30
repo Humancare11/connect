@@ -134,9 +134,12 @@ export default function AuthPage() {
 
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState(
+    location.state?.registered ? "Account created successfully! Please sign in." : ""
+  );
 
   /* ── helpers ─────────────────────────────────────────────── */
-  const clrErr = () => setFormError("");
+  const clrErr = () => { setFormError(""); setFormSuccess(""); };
   const saveUserToken = (token) => {
     if (!token) return;
     localStorage.setItem("userToken", token);
@@ -299,7 +302,7 @@ export default function AuthPage() {
       await api.post("/api/auth/reset-password", { resetToken, newPassword: newPass });
       setView("auth"); setIsRegister(false);
       setForgotEmail(""); setResetToken(""); setNewPass(""); setConfirmPass("");
-      alert("Password reset successfully! Please sign in. ✅");
+      setFormSuccess("Password reset successfully! Please sign in.");
     } catch (err) { setFormError(err.response?.data?.msg || "Reset failed."); }
     finally { setLoading(false); }
   };
@@ -322,27 +325,47 @@ export default function AuthPage() {
             {formError && <p className="form-error">{formError}</p>}
             <input type="text" value={googlePending.name} disabled style={{ opacity: .55, cursor: "not-allowed" }} />
             <input type="email" value={googlePending.email} disabled style={{ opacity: .55, cursor: "not-allowed" }} />
-            <PhoneInputField
-              value={googleProfile.mobile}
-              onChange={(ph) => setGoogleProfile((p) => ({ ...p, mobile: ph }))}
-              defaultCountry="auto"
-              placeholder="Mobile number"
-            />
-            <div className="row">
-              <div className="date-field">
-                <input
-                  type="date"
-                  className="date-input"
-                  value={googleProfile.dob}
-                  onChange={(e) => setGoogleProfile((p) => ({ ...p, dob: e.target.value }))}
-                  required
-                />
+            <div className="reg-field-block">
+              <label className="reg-label">Mobile Number</label>
+              <PhoneInputField
+                value={googleProfile.mobile}
+                onChange={(ph) => setGoogleProfile((p) => ({ ...p, mobile: ph }))}
+                defaultCountry="auto"
+                placeholder="Mobile number"
+              />
+            </div>
+            <div className="row reg-row">
+              <div className="reg-field-wrap">
+                <label className="reg-label">Date of Birth</label>
+                <div className="date-field">
+                  <input
+                    type="date"
+                    className="date-input"
+                    value={googleProfile.dob}
+                    onChange={(e) => setGoogleProfile((p) => ({ ...p, dob: e.target.value }))}
+                    required
+                  />
+                </div>
               </div>
-              <select value={googleProfile.gender}
-                onChange={(e) => setGoogleProfile((p) => ({ ...p, gender: e.target.value }))} required>
-                <option value="">Gender</option>
-                <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
-              </select>
+              <div className="reg-field-wrap">
+                <label className="reg-label">Gender</label>
+                <div className="reg-gender-wrap">
+                  <select
+                    value={googleProfile.gender}
+                    onChange={(e) => setGoogleProfile((p) => ({ ...p, gender: e.target.value }))}
+                    required
+                    className="reg-gender-select"
+                  >
+                    <option value="" disabled>Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <svg className="reg-gender-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
             </div>
             <select value={googleProfile.country}
               onChange={(e) => setGoogleProfile((p) => ({ ...p, country: e.target.value }))} required>
@@ -544,39 +567,49 @@ export default function AuthPage() {
             <input type="text" placeholder="Full Name" value={registerForm.name}
               onChange={(e) => setRegisterForm((p) => ({ ...p, name: e.target.value }))} required />
 
-            <div className="row">
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <input type="email" placeholder="Email Address" value={registerForm.email}
-                  onChange={(e) => setRegisterForm((p) => ({ ...p, email: e.target.value }))} required
-                  style={{ width: "100%" }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <PhoneInputField
-                  value={registerForm.mobile}
-                  onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
-                  defaultCountry="auto"
-                  placeholder="Mobile number"
-                />
-              </div>
+            <input type="email" placeholder="Email Address" value={registerForm.email}
+              onChange={(e) => setRegisterForm((p) => ({ ...p, email: e.target.value }))} required
+              style={{ width: "100%" }} />
+
+            <div className="reg-field-block">
+              {/* <label className="reg-label">Mobile Number</label> */}
+              <PhoneInputField
+                value={registerForm.mobile}
+                onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
+                defaultCountry="auto"
+                placeholder="Mobile number"
+              />
             </div>
 
-            <div className="row">
-              <div className="date-field">
-                <input
-                  type="date"
-                  className="date-input"
-                  value={registerForm.dob}
-                  onChange={(e) => setRegisterForm((p) => ({ ...p, dob: e.target.value }))}
-                  required
-                />
+            <div className="row reg-row">
+              <div className="reg-field-wrap">
+                {/* <label className="reg-label">Date of Birth</label> */}
+                <div className="date-field">
+                  <input
+                    type="date"
+                    className="date-input"
+                    value={registerForm.dob}
+                    onChange={(e) => setRegisterForm((p) => ({ ...p, dob: e.target.value }))}
+                    required
+                  />
+                </div>
               </div>
-              <select value={registerForm.gender}
-                onChange={(e) => setRegisterForm((p) => ({ ...p, gender: e.target.value }))} required>
-                <option value="">Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
+              <div className="reg-field-wrap">
+                {/* <label className="reg-label">Gender</label> */}
+                <div className="reg-gender-wrap">
+                  <select value={registerForm.gender}
+                    onChange={(e) => setRegisterForm((p) => ({ ...p, gender: e.target.value }))}
+                    required className="reg-gender-select">
+                    <option value="" disabled>Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <svg className="reg-gender-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <select value={registerForm.country}
@@ -705,6 +738,11 @@ export default function AuthPage() {
               </button>
             </div>
 
+            {formSuccess && (
+              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "10px 14px", marginBottom: 8, fontSize: 13, color: "#15803d", display: "flex", alignItems: "center", gap: 8 }}>
+                <span>&#10003;</span> {formSuccess}
+              </div>
+            )}
             {formError && <p className="form-error">{formError}</p>}
             <span>or use your email</span>
 
