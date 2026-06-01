@@ -4,7 +4,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import "./Appointment.css";
-import api, { getUserAuthToken } from "../api";
+import api from "../api";
 import { notifyUserActivityUpdated } from "../utils/activityEvents";
 import { useAuth } from "../context/AuthContext";
 import { useCurrency } from "../hooks/useCurrency";
@@ -293,7 +293,6 @@ export default function BookAppointment() {
   const { state } = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { formatPrice } = useCurrency();
-  const userToken = getUserAuthToken();
 
   const getDoctorFee = (doc = doctor) => {
     const amount = typeof doc?.price === "number" ? doc.price : Number(doc?.price) || 0;
@@ -353,14 +352,14 @@ export default function BookAppointment() {
 
   /* ── Fetch booked slots when date changes ── */
   useEffect(() => {
-    if (!form.date || !doctor || !userToken) return;
+    if (!form.date || !doctor || !user) return;
     setLoadingSlots(true);
     const doctorId = getBookingDoctorId(doctor);
     api.get(`/api/appointments/booked-slots?doctorId=${doctorId}&date=${form.date}`)
       .then((res) => setBookedSlots(res.data.slots || []))
       .catch(() => setBookedSlots([]))
       .finally(() => setLoadingSlots(false));
-  }, [form.date, doctor, userToken]);
+  }, [form.date, doctor, user]);
 
   /* ── Slot helpers ── */
   const getEarliestAllowed = () => {
@@ -402,7 +401,7 @@ export default function BookAppointment() {
   /* Fetch fee and move to payment stage */
   const handleProceedToPayment = async () => {
     setError("");
-    if (!userToken) {
+    if (!user) {
       setError("Please login again before booking your appointment.");
       return;
     }
@@ -478,8 +477,7 @@ export default function BookAppointment() {
       </div>
     );
   }
-  if (!user || !userToken) {
-    localStorage.removeItem("userToken");
+  if (!user) {
     return <Navigate to="/login" state={{ from: "/book-appointment", doctor: state?.doctor }} replace />;
   }
 

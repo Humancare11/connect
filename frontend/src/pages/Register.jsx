@@ -6,6 +6,34 @@ import "react-phone-input-2/lib/style.css";
 import "./register.css";
 
 const PhoneInput = PhoneInputLib.default ?? PhoneInputLib;
+const PASSWORD_REQUIREMENTS = "8+ chars with uppercase, lowercase, number, and symbol.";
+const COMMON_PASSWORDS = new Set([
+  "password", "password1", "password123", "12345678", "123456789", "qwerty123",
+  "admin123", "admin1234", "welcome1", "welcome123", "letmein1", "iloveyou1",
+  "humancare", "humancare123", "doctor123", "patient123",
+]);
+const DOB_MIN = "1900-01-01";
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+function getPasswordError(password) {
+  const value = String(password || "");
+  if (value.length < 8) return "Password must be at least 8 characters.";
+  if (!/[A-Z]/.test(value)) return "Password must include at least one uppercase letter.";
+  if (!/[a-z]/.test(value)) return "Password must include at least one lowercase letter.";
+  if (!/[0-9]/.test(value)) return "Password must include at least one number.";
+  if (!/[^A-Za-z0-9]/.test(value)) return "Password must include at least one special character.";
+  if (COMMON_PASSWORDS.has(value.toLowerCase())) return "Password is too common. Choose a stronger password.";
+  return "";
+}
+
+function getDobError(dob) {
+  if (!dob) return "Please select your date of birth.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return "Please enter a valid date of birth.";
+  if (Number.isNaN(new Date(`${dob}T00:00:00`).getTime())) return "Please enter a valid date of birth.";
+  if (dob > todayISO()) return "Date of birth cannot be in the future.";
+  if (dob < DOB_MIN) return "Date of birth must be in or after 1900.";
+  return "";
+}
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -17,6 +45,8 @@ export default function Register() {
     gender: "",
     password: "",
     terms: false,
+    privacyConsent: false,
+    hipaaConsent: false,
   });
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,10 +66,14 @@ export default function Register() {
     e.preventDefault();
     setFormError("");
 
-    if (!form.terms) return setFormError("Please accept Terms & Conditions to continue.");
-    if (form.password.length < 6) return setFormError("Password must be at least 6 characters.");
+    if (!form.terms || !form.privacyConsent || !form.hipaaConsent) {
+      return setFormError("Please accept Terms, Privacy Policy, and HIPAA consent requirements.");
+    }
+    const passwordError = getPasswordError(form.password);
+    if (passwordError) return setFormError(passwordError);
     if (!form.mobile) return setFormError("Please enter your mobile number.");
-    if (!form.dob) return setFormError("Please select your date of birth.");
+    const dobError = getDobError(form.dob);
+    if (dobError) return setFormError(dobError);
     if (!form.gender) return setFormError("Please select your gender.");
 
     const { terms, ...data } = form;
@@ -53,6 +87,8 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  const passwordError = form.password ? getPasswordError(form.password) : "";
 
   return (
     <div className="auth-container">
@@ -107,6 +143,8 @@ export default function Register() {
             name="dob"
             value={form.dob}
             onChange={handleChange}
+            min={DOB_MIN}
+            max={todayISO()}
             required
           />
 
@@ -121,14 +159,27 @@ export default function Register() {
         <input
           type="password"
           name="password"
-          placeholder="Password"
+          placeholder="Password (8+ chars, mixed case, number, symbol)"
           onChange={handleChange}
           required
         />
+        <p style={{ fontSize: 12, color: passwordError ? "#dc2626" : "#475569", margin: "-6px 0 8px" }}>
+          {passwordError || PASSWORD_REQUIREMENTS}
+        </p>
 
         <label className="terms">
-          <input type="checkbox" name="terms" onChange={handleChange} />
-          I accept Terms &amp; Conditions
+          <input
+            type="checkbox"
+            name="terms"
+            checked={form.terms && form.privacyConsent && form.hipaaConsent}
+            onChange={(e) => setForm((prev) => ({
+              ...prev,
+              terms: e.target.checked,
+              privacyConsent: e.target.checked,
+              hipaaConsent: e.target.checked,
+            }))}
+          />
+          I agree to the <Link to="/terms" target="_blank">Terms</Link>, <Link to="/privacy" target="_blank">Privacy Policy</Link>, and HIPAA consent requirements.
         </label>
 
         <button type="submit" disabled={loading}>

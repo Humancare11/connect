@@ -94,7 +94,9 @@
   background: #f8fdfb;
   border: 1.5px solid #d1fae5;
   border-radius: 12px;
-  padding: 13px 16px;
+  height: 40px;
+  min-height: 40px;
+  padding: 9px;
   margin: 6px 0;
   width: 100%;
   font-size: 14px;
@@ -429,6 +431,27 @@
   align-items: flex-start;
 }
 
+.country-mobile-row {
+  align-items: flex-end;
+}
+
+.country-mobile-row .reg-field-wrap {
+  flex: 0 0 calc(50% - 5px);
+  max-width: calc(50% - 5px);
+}
+
+.country-mobile-row .register-country-select,
+.country-mobile-row .pif-control {
+  height: 40px;
+  min-height: 40px;
+  margin: 0;
+  width: 100%;
+}
+
+.country-mobile-row .register-country-select {
+  cursor: pointer;
+}
+
 .reg-gender-wrap {
   position: relative;
   width: 100%;
@@ -471,6 +494,28 @@
   margin: 0;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+.consent-terms {
+  align-items: flex-start;
+  line-height: 1.35;
+}
+
+.consent-terms a {
+  font-weight: 700;
+}
+
+.password-requirements {
+  width: 100%;
+  margin: -2px 0 6px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.password-requirements.password-error {
+  color: #dc2626;
 }
 
 /* ── Form heading subtitle ───────────────────────────────── */
@@ -994,11 +1039,11 @@
 
 .auth-wrapper .pif-country-trigger {
   width: auto !important;
-  min-width: 92px !important;
+  min-width: 50px !important;
   height: 100% !important;
   min-height: 0 !important;
   margin: 0 !important;
-  padding: 0 12px !important;
+  padding: 0 8px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1155,4 +1200,20 @@
   .auth-wrapper .pif-country-trigger {
     min-width: 88px !important;
   }
+}
+
+.consent-terms {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.consent-terms input {
+  flex-shrink: 0;
+}
+
+.consent-terms a {
+  margin: 0 3px;
 }

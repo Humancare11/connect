@@ -19,12 +19,18 @@ export default function AppointmentChat({ appointmentId, userName, userId }) {
       if (msg.appointmentId !== appointmentId) return;
       setMessages((prev) => [...prev, msg]);
     };
+    const handleHistory = (payload) => {
+      if (payload.appointmentId !== appointmentId) return;
+      setMessages(Array.isArray(payload.messages) ? payload.messages : []);
+    };
 
     socket.on("appointment-message", handleMessage);
+    socket.on("appointment-chat-history", handleHistory);
 
     return () => {
       socket.emit("leave-appointment-room", { appointmentId });
       socket.off("appointment-message", handleMessage);
+      socket.off("appointment-chat-history", handleHistory);
       setJoined(false);
     };
   }, [appointmentId]);

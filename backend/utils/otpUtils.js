@@ -1,10 +1,21 @@
 const OTP          = require("../models/OTP");
 const { sendOTPEmail } = require("./sendEmail");
+const crypto       = require("crypto");
 
 const OTP_TTL_MINUTES = 10;
 
 const generateCode = () =>
-  Math.floor(100000 + Math.random() * 900000).toString();
+  crypto.randomInt(100000, 1000000).toString();
+
+const hashOTP = (code) =>
+  crypto.createHash("sha256").update(String(code).trim()).digest("hex");
+
+function hashesMatch(expectedHash, candidateCode) {
+  const actualHash = hashOTP(candidateCode);
+  const expected = Buffer.from(expectedHash, "hex");
+  const actual = Buffer.from(actualHash, "hex");
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
 
 // Delete any prior OTP for this email+type+role, generate a fresh one, persist and email it.
 const createAndSendOTP = async (email, type, role = "user") => {
@@ -14,7 +25,7 @@ const createAndSendOTP = async (email, type, role = "user") => {
   const code      = generateCode();
   const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
 
-  await OTP.create({ email: clean, otp: code, type, role, expiresAt });
+  await OTP.create({ email: clean, otpHash: hashOTP(code), type, role, expiresAt });
   await sendOTPEmail(clean, code, type);
 };
 
@@ -32,11 +43,11 @@ const verifyOTPCode = async (email, code, type, role = "user") => {
     return { valid: false, msg: "OTP has expired. Please request a new one." };
   }
 
-  if (record.otp !== code)
+  if (!hashesMatch(record.otpHash, code))
     return { valid: false, msg: "Invalid OTP. Please try again." };
 
   await OTP.deleteOne({ _id: record._id });
   return { valid: true };
 };
 
-module.exports = { createAndSendOTP, verifyOTPCode };
+module.exports = { createAndSendOTP, verifyOTPCode, hashOTP };

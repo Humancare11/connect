@@ -3,6 +3,35 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import socket from "../socket";
 import "./log.css";
+
+const PASSWORD_REQUIREMENTS = "8+ chars with uppercase, lowercase, number, and symbol.";
+const COMMON_PASSWORDS = new Set([
+  "password", "password1", "password123", "12345678", "123456789", "qwerty123",
+  "admin123", "admin1234", "welcome1", "welcome123", "letmein1", "iloveyou1",
+  "humancare", "humancare123", "doctor123", "patient123",
+]);
+const DOB_MIN = "1900-01-01";
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+function getPasswordError(password) {
+  const value = String(password || "");
+  if (value.length < 8) return "Password must be at least 8 characters.";
+  if (!/[A-Z]/.test(value)) return "Password must include at least one uppercase letter.";
+  if (!/[a-z]/.test(value)) return "Password must include at least one lowercase letter.";
+  if (!/[0-9]/.test(value)) return "Password must include at least one number.";
+  if (!/[^A-Za-z0-9]/.test(value)) return "Password must include at least one special character.";
+  if (COMMON_PASSWORDS.has(value.toLowerCase())) return "Password is too common. Choose a stronger password.";
+  return "";
+}
+
+function getDobError(dob) {
+  if (!dob) return "Select Date of Birth";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return "Enter a valid Date of Birth";
+  if (Number.isNaN(new Date(`${dob}T00:00:00`).getTime())) return "Enter a valid Date of Birth";
+  if (dob > todayISO()) return "Date of Birth cannot be in the future";
+  if (dob < DOB_MIN) return "Date of Birth must be in or after 1900";
+  return "";
+}
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import PhoneInputField from "../components/PhoneInputField";
@@ -114,12 +143,15 @@ export default function AuthPage() {
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
-    name: "", email: "", mobile: "", dob: "", gender: "", country: "", password: "", terms: false,
+    name: "", email: "", mobile: "", dob: "", gender: "", country: "", password: "",
+    terms: false, privacyConsent: false, hipaaConsent: false,
   });
 
   /* Google profile completion for new users */
   const [googlePending, setGooglePending] = useState(null);
-  const [googleProfile, setGoogleProfile] = useState({ mobile: "", dob: "", gender: "", country: "" });
+  const [googleProfile, setGoogleProfile] = useState({
+    mobile: "", dob: "", gender: "", country: "", privacyConsent: false, hipaaConsent: false,
+  });
 
   /* OTP */
   const [otpValue, setOtpValue] = useState("");
@@ -137,14 +169,11 @@ export default function AuthPage() {
   const [formSuccess, setFormSuccess] = useState(
     location.state?.registered ? "Account created successfully! Please sign in." : ""
   );
+  const registerPasswordError = registerForm.password ? getPasswordError(registerForm.password) : "";
 
   /* ── helpers ─────────────────────────────────────────────── */
   const clrErr = () => { setFormError(""); setFormSuccess(""); };
-  const saveUserToken = (token) => {
-    if (!token) return;
-    localStorage.setItem("userToken", token);
-    localStorage.setItem("token", token);
-  };
+  const saveUserToken = () => {};
 
   const startTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -193,15 +222,21 @@ export default function AuthPage() {
   const handleGoogleComplete = async (e) => {
     e.preventDefault();
     if (!googleProfile.mobile) return setFormError("Enter mobile number");
-    if (!googleProfile.dob) return setFormError("Select Date of Birth");
+    const googleDobError = getDobError(googleProfile.dob);
+    if (googleDobError) return setFormError(googleDobError);
     if (!googleProfile.gender) return setFormError("Select Gender");
     if (!googleProfile.country) return setFormError("Select your country");
+    if (!googleProfile.privacyConsent || !googleProfile.hipaaConsent) {
+      return setFormError("Accept Terms, Privacy Policy, and HIPAA consent requirements");
+    }
     setLoading(true); clrErr();
     try {
       const res = await api.post("/api/auth/google", {
         accessToken: googlePending.accessToken,
         mobile: googleProfile.mobile, dob: googleProfile.dob, gender: googleProfile.gender,
         country: googleProfile.country,
+        privacyConsent: googleProfile.privacyConsent,
+        hipaaConsent: googleProfile.hipaaConsent,
       });
       saveUserToken(res.data.token);
       afterLogin(res.data.user);
@@ -224,15 +259,25 @@ export default function AuthPage() {
   /* ── Register → send OTP ─────────────────────────────────── */
   const handleRegisterSubmit = async (e) => {
     e.preventDefault(); clrErr();
-    if (!registerForm.terms) return setFormError("Accept Terms & Conditions");
-    if (registerForm.password.length < 6) return setFormError("Password must be at least 6 characters");
+    if (!registerForm.terms || !registerForm.privacyConsent || !registerForm.hipaaConsent) {
+      return setFormError("Accept Terms, Privacy Policy, and HIPAA consent requirements");
+    }
+    const passwordError = getPasswordError(registerForm.password);
+    if (passwordError) return setFormError(passwordError);
     if (!registerForm.mobile) return setFormError("Enter mobile number");
-    if (!registerForm.dob) return setFormError("Select Date of Birth");
+    const dobError = getDobError(registerForm.dob);
+    if (dobError) return setFormError(dobError);
     if (!registerForm.gender) return setFormError("Select Gender");
     if (!registerForm.country) return setFormError("Select your country");
     setLoading(true);
     try {
-      await api.post("/api/auth/send-register-otp", { email: registerForm.email });
+      await api.post("/api/auth/send-register-otp", {
+        email: registerForm.email,
+        password: registerForm.password,
+        dob: registerForm.dob,
+        privacyConsent: registerForm.privacyConsent,
+        hipaaConsent: registerForm.hipaaConsent,
+      });
       goTo("register-otp");
       startTimer();
     } catch (err) { setFormError(err.response?.data?.msg || "Failed to send OTP."); }
@@ -250,7 +295,10 @@ export default function AuthPage() {
       saveUserToken(res.data.token);
       if (timerRef.current) clearInterval(timerRef.current);
       setOtpValue("");
-      setRegisterForm({ name: "", email: "", mobile: "", dob: "", gender: "", country: "", password: "", terms: false });
+      setRegisterForm({
+        name: "", email: "", mobile: "", dob: "", gender: "", country: "", password: "",
+        terms: false, privacyConsent: false, hipaaConsent: false,
+      });
       afterLogin(res.data.user);
     } catch (err) { setFormError(err.response?.data?.msg || "Registration failed."); }
     finally { setLoading(false); }
@@ -258,7 +306,16 @@ export default function AuthPage() {
 
   const handleResendRegisterOTP = async () => {
     clrErr();
-    try { await api.post("/api/auth/send-register-otp", { email: registerForm.email }); startTimer(); }
+    try {
+      await api.post("/api/auth/send-register-otp", {
+        email: registerForm.email,
+        password: registerForm.password,
+        dob: registerForm.dob,
+        privacyConsent: registerForm.privacyConsent,
+        hipaaConsent: registerForm.hipaaConsent,
+      });
+      startTimer();
+    }
     catch { setFormError("Could not resend OTP."); }
   };
 
@@ -295,7 +352,8 @@ export default function AuthPage() {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (newPass.length < 6) return setFormError("Password must be at least 6 characters");
+    const passwordError = getPasswordError(newPass);
+    if (passwordError) return setFormError(passwordError);
     if (newPass !== confirmPass) return setFormError("Passwords do not match");
     setLoading(true); clrErr();
     try {
@@ -325,15 +383,6 @@ export default function AuthPage() {
             {formError && <p className="form-error">{formError}</p>}
             <input type="text" value={googlePending.name} disabled style={{ opacity: .55, cursor: "not-allowed" }} />
             <input type="email" value={googlePending.email} disabled style={{ opacity: .55, cursor: "not-allowed" }} />
-            <div className="reg-field-block">
-              <label className="reg-label">Mobile Number</label>
-              <PhoneInputField
-                value={googleProfile.mobile}
-                onChange={(ph) => setGoogleProfile((p) => ({ ...p, mobile: ph }))}
-                defaultCountry="auto"
-                placeholder="Mobile number"
-              />
-            </div>
             <div className="row reg-row">
               <div className="reg-field-wrap">
                 <label className="reg-label">Date of Birth</label>
@@ -343,6 +392,8 @@ export default function AuthPage() {
                     className="date-input"
                     value={googleProfile.dob}
                     onChange={(e) => setGoogleProfile((p) => ({ ...p, dob: e.target.value }))}
+                    min={DOB_MIN}
+                    max={todayISO()}
                     required
                   />
                 </div>
@@ -367,8 +418,15 @@ export default function AuthPage() {
                 </div>
               </div>
             </div>
-            <select value={googleProfile.country}
-              onChange={(e) => setGoogleProfile((p) => ({ ...p, country: e.target.value }))} required>
+            <div className="row reg-row country-mobile-row">
+              <div className="reg-field-wrap">
+                <label className="reg-label">Country</label>
+                <select
+                  className="register-country-select"
+                  value={googleProfile.country}
+                  onChange={(e) => setGoogleProfile((p) => ({ ...p, country: e.target.value }))}
+                  required
+                >
               <option value="">Select Country</option>
               <option value="Afghanistan">Afghanistan</option>
               <option value="Albania">Albania</option>
@@ -459,7 +517,31 @@ export default function AuthPage() {
               <option value="Yemen">Yemen</option>
               <option value="Zambia">Zambia</option>
               <option value="Zimbabwe">Zimbabwe</option>
-            </select>
+                </select>
+              </div>
+              <div className="reg-field-wrap">
+                <label className="reg-label">Mobile Number</label>
+                <PhoneInputField
+                  value={googleProfile.mobile}
+                  onChange={(ph) => setGoogleProfile((p) => ({ ...p, mobile: ph }))}
+                  defaultCountry="auto"
+                  placeholder="Mobile number"
+                />
+              </div>
+            </div>
+            <label className="terms consent-terms">
+              <input
+                type="checkbox"
+                checked={googleProfile.privacyConsent && googleProfile.hipaaConsent}
+                onChange={(e) => setGoogleProfile((p) => ({
+                  ...p,
+                  privacyConsent: e.target.checked,
+                  hipaaConsent: e.target.checked,
+                }))}
+                required
+              />
+              I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms</a>, <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>, and HIPAA consent requirements.
+            </label>
             <button type="submit" disabled={loading} style={{ marginTop: 16, width: "100%" }}>
               {loading ? "Creating..." : "Create Account"}
             </button>
@@ -533,7 +615,7 @@ export default function AuthPage() {
       subtitle="Choose a strong password for your account."
       formError={formError} onBack={() => goTo("forgot-otp")}>
       <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
-        <input type="password" placeholder="New password (min 6 chars)" value={newPass}
+      <input type="password" placeholder="New password (8+ chars, mixed case, number, symbol)" value={newPass}
           onChange={(e) => { setNewPass(e.target.value); clrErr(); }} required />
         <input type="password" placeholder="Confirm new password" value={confirmPass}
           onChange={(e) => { setConfirmPass(e.target.value); clrErr(); }} required />
@@ -571,16 +653,6 @@ export default function AuthPage() {
               onChange={(e) => setRegisterForm((p) => ({ ...p, email: e.target.value }))} required
               style={{ width: "100%" }} />
 
-            <div className="reg-field-block">
-              {/* <label className="reg-label">Mobile Number</label> */}
-              <PhoneInputField
-                value={registerForm.mobile}
-                onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
-                defaultCountry="auto"
-                placeholder="Mobile number"
-              />
-            </div>
-
             <div className="row reg-row">
               <div className="reg-field-wrap">
                 {/* <label className="reg-label">Date of Birth</label> */}
@@ -590,6 +662,8 @@ export default function AuthPage() {
                     className="date-input"
                     value={registerForm.dob}
                     onChange={(e) => setRegisterForm((p) => ({ ...p, dob: e.target.value }))}
+                    min={DOB_MIN}
+                    max={todayISO()}
                     required
                   />
                 </div>
@@ -612,8 +686,14 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <select value={registerForm.country}
-              onChange={(e) => setRegisterForm((p) => ({ ...p, country: e.target.value }))} required>
+            <div className="row reg-row country-mobile-row">
+              <div className="reg-field-wrap">
+                <select
+                  className="register-country-select"
+                  value={registerForm.country}
+                  onChange={(e) => setRegisterForm((p) => ({ ...p, country: e.target.value }))}
+                  required
+                >
               <option value="">Select Country</option>
               <option value="Afghanistan">Afghanistan</option>
               <option value="Albania">Albania</option>
@@ -704,16 +784,42 @@ export default function AuthPage() {
               <option value="Yemen">Yemen</option>
               <option value="Zambia">Zambia</option>
               <option value="Zimbabwe">Zimbabwe</option>
-            </select>
+                </select>
+              </div>
+              <div className="reg-field-wrap">
+                <PhoneInputField
+                  value={registerForm.mobile}
+                  onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
+                  defaultCountry="auto"
+                  placeholder="Mobile number"
+                />
+              </div>
+            </div>
 
-            <input type="password" placeholder="Password (min 6 chars)" value={registerForm.password}
+            <input type="password" placeholder="Password (8+ chars, mixed case, number, symbol)" value={registerForm.password}
               onChange={(e) => setRegisterForm((p) => ({ ...p, password: e.target.value }))} required />
+            <p className={registerPasswordError ? "password-requirements password-error" : "password-requirements"}>
+              {registerPasswordError || PASSWORD_REQUIREMENTS}
+            </p>
 
-            <label className="terms">
-              <input type="checkbox" checked={registerForm.terms}
-                onChange={(e) => setRegisterForm((p) => ({ ...p, terms: e.target.checked }))} />
-              I accept Terms &amp; Conditions
-            </label>
+           <label className="terms consent-terms">
+  <input
+    type="checkbox"
+    checked={registerForm.terms && registerForm.privacyConsent && registerForm.hipaaConsent}
+    onChange={(e) =>
+      setRegisterForm((p) => ({
+        ...p,
+        terms: e.target.checked,
+        privacyConsent: e.target.checked,
+        hipaaConsent: e.target.checked,
+      }))
+    }
+    required
+  />
+  <span>
+I agree to <a href="/terms">Terms</a>, <a href="/privacy">Privacy Policy</a> & HIPAA Consent.
+  </span>
+</label>
 
             <button type="submit" disabled={loading}>
               {loading ? "Sending OTP…" : "Sign Up"}

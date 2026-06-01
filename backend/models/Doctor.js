@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const { randomInt } = require("crypto");
 
 const doctorSchema = new mongoose.Schema(
   {
@@ -10,6 +11,9 @@ const doctorSchema = new mongoose.Schema(
     googleId: { type: String, default: "" },
     appleId: { type: String, default: "" },
     isEnrolled: { type: Boolean, default: false },
+    accountDisabled: { type: Boolean, default: false, index: true },
+    disabledAt: { type: Date, default: null },
+    disabledReason: { type: String, default: "" },
   },
   { timestamps: true }
 );
@@ -25,7 +29,7 @@ doctorSchema.pre("save", async function () {
     let doctorId;
     let exists = true;
     while (exists) {
-      doctorId = Math.floor(10000 + Math.random() * 90000); // 5-digit number
+      doctorId = randomInt(10000, 100000);
       exists = await mongoose.models.Doctor.findOne({ doctorId });
     }
     this.doctorId = doctorId;

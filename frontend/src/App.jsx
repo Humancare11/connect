@@ -65,6 +65,8 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import QnAPage from "./pages/admin/QnAPage";
 import SupportTickets from "./pages/admin/SupportTickets";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
+import AuditLogs from "./pages/admin/AuditLogs";
+import SecurityIncidents from "./pages/admin/SecurityIncidents";
 
 import UserLayout from "./pages/user/UserLayout";
 import Dashboard from "./pages/user/Dashboard";
@@ -103,6 +105,89 @@ function PrivateRoute({ children, allowedRoles }) {
     return <Navigate to="/adminauth" replace />;
 
   return children;
+}
+
+function SessionTimeoutManager() {
+  const { user, logout: logoutUser } = useAuth();
+  const { doctor, logout: logoutDoctor } = useDoctorAuth();
+  const { admin, logout: logoutAdmin } = useAdmin();
+  const navigate = useNavigate();
+  const [warningOpen, setWarningOpen] = useState(false);
+  const [remaining, setRemaining] = useState(300);
+
+  const isAuthenticated = Boolean(user || doctor || admin);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    let lastActivity = Date.now();
+    let warningTimer;
+    let logoutTimer;
+    let countdownTimer;
+    let refreshTimer;
+
+    const logoutAll = async () => {
+      await Promise.allSettled([logoutUser(), logoutDoctor(), logoutAdmin()]);
+      setWarningOpen(false);
+      navigate("/login", { replace: true });
+    };
+
+    const schedule = () => {
+      clearTimeout(warningTimer);
+      clearTimeout(logoutTimer);
+      clearInterval(countdownTimer);
+      setWarningOpen(false);
+
+      warningTimer = setTimeout(() => {
+        setWarningOpen(true);
+        setRemaining(300);
+        countdownTimer = setInterval(() => {
+          const seconds = Math.max(0, Math.ceil((30 * 60 * 1000 - (Date.now() - lastActivity)) / 1000));
+          setRemaining(seconds);
+        }, 1000);
+      }, 25 * 60 * 1000);
+
+      logoutTimer = setTimeout(logoutAll, 30 * 60 * 1000);
+    };
+
+    const markActive = () => {
+      lastActivity = Date.now();
+      schedule();
+    };
+
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"];
+    events.forEach((event) => window.addEventListener(event, markActive, { passive: true }));
+    window.addEventListener("hc:session-expired", logoutAll);
+
+    refreshTimer = setInterval(() => {
+      api.post("/api/auth/refresh").catch(() => {});
+    }, 10 * 60 * 1000);
+
+    schedule();
+
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, markActive));
+      window.removeEventListener("hc:session-expired", logoutAll);
+      clearTimeout(warningTimer);
+      clearTimeout(logoutTimer);
+      clearInterval(countdownTimer);
+      clearInterval(refreshTimer);
+    };
+  }, [isAuthenticated, logoutUser, logoutDoctor, logoutAdmin, navigate]);
+
+  if (!warningOpen) return null;
+
+  return (
+    <div className="hc-session-warning" role="dialog" aria-modal="true">
+      <div className="hc-session-warning__panel">
+        <h2>Session expiring</h2>
+        <p>You will be logged out in {Math.ceil(remaining / 60)} minute(s) due to inactivity.</p>
+        <button type="button" onClick={() => api.post("/api/auth/refresh").then(() => setWarningOpen(false))}>
+          Stay signed in
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // Standalone wrapper — no DoctorLayout. The enrollment wizard has its own UI.
@@ -175,6 +260,7 @@ function AppLayout() {
   return (
     <>
       <ScrollToTop />
+      <SessionTimeoutManager />
       {!hideLayout && <Header />}
 
       <Routes>
@@ -477,6 +563,26 @@ function AppLayout() {
           element={
             <PrivateRoute allowedRoles={["superadmin"]}>
               <SuperAdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/audit-logs"
+          element={
+            <PrivateRoute allowedRoles={["superadmin"]}>
+              <AdminLayout>
+                <AuditLogs />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/security-incidents"
+          element={
+            <PrivateRoute allowedRoles={["superadmin"]}>
+              <AdminLayout>
+                <SecurityIncidents />
+              </AdminLayout>
             </PrivateRoute>
           }
         />

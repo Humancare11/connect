@@ -336,10 +336,6 @@ export default function VideoCall() {
       return;
     }
 
-    const doctorToken = localStorage.getItem("doctorToken");
-    const userToken = localStorage.getItem("token");
-    const userHeaders = userToken ? { Authorization: `Bearer ${userToken}` } : {};
-    const doctorHeaders = doctorToken ? { Authorization: `Bearer ${doctorToken}` } : {};
     const errMsg = (err) =>
       err?.response?.data?.msg ||
       err?.response?.data?.message ||
@@ -353,11 +349,9 @@ export default function VideoCall() {
       let lastError = null;
 
       // Prefer patient ownership when user session exists.
-      if (user || userToken) {
+      if (user) {
         try {
-          const res = await api.get(`/api/appointments/patient/${appointmentId}`, {
-            headers: userHeaders,
-          });
+          const res = await api.get(`/api/appointments/patient/${appointmentId}`);
           if (cancelled) return;
           setAppt(res.data);
           setActiveRole("user");
@@ -369,11 +363,9 @@ export default function VideoCall() {
       }
 
       // Fallback to doctor ownership.
-      if (doctor || doctorToken) {
+      if (doctor) {
         try {
-          const res = await api.get(`/api/appointments/doctor/${appointmentId}`, {
-            headers: doctorHeaders,
-          });
+          const res = await api.get(`/api/appointments/doctor/${appointmentId}`);
           if (cancelled) return;
           setAppt(res.data);
           setActiveRole("doctor");
@@ -385,7 +377,7 @@ export default function VideoCall() {
       }
 
       if (cancelled) return;
-      if (!user && !doctor && !userToken && !doctorToken) {
+      if (!user && !doctor) {
         setApptError("Please login to access this appointment.");
       } else {
         setApptError(errMsg(lastError));
@@ -410,7 +402,6 @@ export default function VideoCall() {
     pcRef.current?.close();
 
     if (markComplete && isDoctor) {
-      const token = localStorage.getItem("doctorToken") || localStorage.getItem("token");
       const base = import.meta.env.VITE_API_URL || "";
       fetch(`${base}/api/appointments/${appointmentId}/complete`, {
         method: "PUT",
@@ -418,7 +409,6 @@ export default function VideoCall() {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({}),
       }).catch(() => { });
@@ -618,6 +608,11 @@ export default function VideoCall() {
         if (!chatOpenRef.current) setUnreadCount((c) => c + 1);
       }
     };
+    const handleChatHistory = (payload) => {
+      if (mounted && payload?.appointmentId === appointmentId) {
+        setMessages(Array.isArray(payload.messages) ? payload.messages : []);
+      }
+    };
 
     const handleApptUpdated = ({ status }) => {
       if (!mounted) return;
@@ -644,6 +639,7 @@ export default function VideoCall() {
     socket.on("peer-joined", handlePeerJoined);
     socket.on("participant-left", handleParticipantLeft);
     socket.on("appointment-message", handleChatMessage);
+    socket.on("appointment-chat-history", handleChatHistory);
     socket.on("appointment-updated", handleApptUpdated);
     socket.on("new-prescription", handleNewPrescription);
     socket.on("room-access-denied", handleRoomDenied);
@@ -676,6 +672,7 @@ export default function VideoCall() {
       socket.off("peer-joined", handlePeerJoined);
       socket.off("participant-left", handleParticipantLeft);
       socket.off("appointment-message", handleChatMessage);
+      socket.off("appointment-chat-history", handleChatHistory);
       socket.off("appointment-updated", handleApptUpdated);
       socket.off("new-prescription", handleNewPrescription);
       socket.off("room-access-denied", handleRoomDenied);

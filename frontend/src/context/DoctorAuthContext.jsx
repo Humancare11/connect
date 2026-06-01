@@ -4,12 +4,12 @@ import api from "../api";
 const DoctorAuthContext = createContext(null);
 
 export function DoctorAuthProvider({ children }) {
-  const [doctor,  setDoctor]  = useState(null);
+  const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get("/api/doctor/me")
-      .then(res => setDoctor(res.data.doctor))
+      .then((res) => setDoctor(res.data.doctor))
       .catch(() => setDoctor(null))
       .finally(() => setLoading(false));
   }, []);
@@ -18,8 +18,6 @@ export function DoctorAuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/doctor/logout"); } catch { /* ignore */ }
-    localStorage.removeItem("token");
-    localStorage.removeItem("doctorToken");
     setDoctor(null);
   }, []);
 

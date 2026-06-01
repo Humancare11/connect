@@ -4,6 +4,10 @@ const Doctor = require("../models/Doctor");
 const Appointment = require("../models/Appointment");
 const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { logAudit } = require("../utils/auditLogger");
+const { randomInt } = require("crypto");
+const { recordSecurityIncident } = require("../utils/securityMonitor");
+const { revokeUserSessions } = require("../utils/tokenRevocation");
 
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
 
@@ -107,6 +111,13 @@ const approveDoctor = async (req, res) => {
       await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: true });
     }
 
+    await logAudit(req, {
+      action: "ADMIN_APPROVE_DOCTOR",
+      resource: "Enrollment",
+      resourceId: req.params.id,
+      details: { doctorId: enrollment.doctorId?.toString() },
+    });
+
     res.status(200).json({ msg: "Doctor approved", enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()) });
   } catch (error) {
     console.error("approveDoctor error:", error);
@@ -129,6 +140,13 @@ const rejectDoctor = async (req, res) => {
     if (enrollment.doctorId) {
       await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: false });
     }
+
+    await logAudit(req, {
+      action: "ADMIN_REJECT_DOCTOR",
+      resource: "Enrollment",
+      resourceId: req.params.id,
+      details: { doctorId: enrollment.doctorId?.toString() },
+    });
 
     res.status(200).json({ msg: "Doctor rejected", enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()) });
   } catch (error) {
@@ -158,6 +176,13 @@ const approveDoctorDeleteRequest = async (req, res) => {
     if (doctorId) {
       await Doctor.findByIdAndDelete(doctorId);
     }
+
+    await logAudit(req, {
+      action: "ADMIN_DELETE_DOCTOR",
+      resource: "Doctor",
+      resourceId: doctorId?.toString() || req.params.id,
+      details: { enrollmentId: req.params.id },
+    });
 
     return res.status(200).json({ msg: "Doctor profile deleted successfully." });
   } catch (error) {
@@ -201,6 +226,16 @@ const getAllUsers = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    if (users.length >= 100) {
+      await recordSecurityIncident(req, {
+        type: "large_data_export",
+        severity: "medium",
+        title: "Large user dataset accessed",
+        resource: "User",
+        metadata: { count: users.length, endpoint: req.originalUrl },
+      });
+    }
+
     res.status(200).json(users);
   } catch (error) {
     console.error("getAllUsers error:", error);
@@ -213,6 +248,14 @@ const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
+    await revokeUserSessions(user._id, "account_deleted");
+
+    await logAudit(req, {
+      action: "ADMIN_DELETE_USER",
+      resource: "User",
+      resourceId: req.params.id,
+      details: { deletedUserEmail: user.email, deletedUserName: user.name, deletedUserRole: user.role },
+    });
 
     res.status(200).json({ msg: "User deleted successfully" });
   } catch (error) {
@@ -227,10 +270,59 @@ const getUserDetails = async (req, res) => {
     const user = await User.findById(req.params.id).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found" });
 
+    await logAudit(req, {
+      action: "ADMIN_VIEW_USER",
+      resource: "User",
+      resourceId: req.params.id,
+      patientId: user.role === "user" ? req.params.id : null,
+      details: { viewedUserEmail: user.email, viewedUserRole: user.role },
+    });
+
     res.status(200).json(user);
   } catch (error) {
     console.error("getUserDetails error:", error);
     res.status(500).json({ msg: "Failed to fetch user details" });
+  }
+};
+
+const forceLogoutUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("email name role");
+    if (!user) return res.status(404).json({ msg: "User not found" });
+    const revokedCount = await revokeUserSessions(user._id, "forced_logout");
+    await logAudit(req, {
+      action: "ADMIN_FORCE_LOGOUT_USER",
+      resource: "User",
+      resourceId: user._id,
+      details: { email: user.email, revokedCount },
+    });
+    res.json({ msg: "Active sessions revoked.", revokedCount });
+  } catch (error) {
+    console.error("forceLogoutUser error:", error);
+    res.status(500).json({ msg: "Failed to force logout user" });
+  }
+};
+
+const disableUser = async (req, res) => {
+  try {
+    const { reason = "Administrative security action" } = req.body || {};
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { accountDisabled: true, disabledAt: new Date(), disabledReason: reason },
+      { new: true }
+    ).select("-password");
+    if (!user) return res.status(404).json({ msg: "User not found" });
+    const revokedCount = await revokeUserSessions(user._id, "account_disabled");
+    await logAudit(req, {
+      action: "ADMIN_DISABLE_USER",
+      resource: "User",
+      resourceId: user._id,
+      details: { email: user.email, reason, revokedCount },
+    });
+    res.json({ msg: "Account disabled and active sessions revoked.", user, revokedCount });
+  } catch (error) {
+    console.error("disableUser error:", error);
+    res.status(500).json({ msg: "Failed to disable user" });
   }
 };
 
@@ -244,7 +336,7 @@ const migrateDoctorIds = async (req, res) => {
       let id;
       let exists = true;
       while (exists) {
-        id = Math.floor(10000 + Math.random() * 90000);
+        id = randomInt(10000, 100000);
         exists = await Doctor.exists({ doctorId: id });
       }
       await Doctor.findByIdAndUpdate(doctor._id, { doctorId: id });
@@ -335,6 +427,16 @@ const getDoctorPayments = async (req, res) => {
         transactionReference: a.paymentIntentId || "",
       };
     });
+
+    if (result.length >= 100) {
+      await recordSecurityIncident(req, {
+        type: "large_data_export",
+        severity: "medium",
+        title: "Large doctor payment dataset accessed",
+        resource: "Appointment",
+        metadata: { count: result.length, endpoint: req.originalUrl },
+      });
+    }
 
     res.status(200).json(result);
   } catch (error) {
@@ -602,6 +704,8 @@ module.exports = {
   getAllUsers,
   deleteUser,
   getUserDetails,
+  forceLogoutUser,
+  disableUser,
   migrateDoctorIds,
   getApprovedDoctors,
   getDoctorWorkflowStats,

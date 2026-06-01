@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function AskQuestion() {
   const [question, setQuestion] = useState("");
@@ -9,6 +10,7 @@ export default function AskQuestion() {
   const [fetching, setFetching] = useState(true);
   const [formError, setFormError] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const fetchQuestions = async () => {
     try {
@@ -27,15 +29,12 @@ export default function AskQuestion() {
 
   const handlePostQuestion = async () => {
     setFormError("");
-    const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user"));
-
     if (!question.trim()) {
       setFormError("Please enter your question before submitting.");
       return;
     }
 
-    if (!token) {
+    if (!user) {
       navigate("/login");
       return;
     }
@@ -48,8 +47,7 @@ export default function AskQuestion() {
           question: question.trim(),
           name: user?.name || "User",
           category: "General",
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
       setQuestion("");
       navigate("/qna");

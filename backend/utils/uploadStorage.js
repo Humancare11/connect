@@ -11,7 +11,7 @@ function getBucket() {
   return new GridFSBucket(mongoose.connection.db, { bucketName: BUCKET_NAME });
 }
 
-async function storeUploadInGridFS(file) {
+async function storeUploadInGridFS(file, owner = {}) {
   if (!file?.path || !file?.filename) return;
 
   const bucket = getBucket();
@@ -26,6 +26,8 @@ async function storeUploadInGridFS(file) {
         originalName: file.originalname,
         contentType: file.mimetype,
         size: file.size,
+        uploadedBy: owner.userId ? String(owner.userId) : null,
+        uploadedByRole: owner.role || "",
         uploadedAt: new Date(),
       },
     });
@@ -46,7 +48,7 @@ async function streamUploadFromGridFS(filename, res) {
   const contentType = file.contentType || file.metadata?.contentType;
   if (contentType) res.setHeader("Content-Type", contentType);
   res.setHeader("Content-Length", file.length);
-  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  res.setHeader("Cache-Control", "private, no-store");
 
   await new Promise((resolve, reject) => {
     const stream = bucket.openDownloadStreamByName(filename);
@@ -58,7 +60,14 @@ async function streamUploadFromGridFS(filename, res) {
   return true;
 }
 
+async function findUploadInGridFS(filename) {
+  const bucket = getBucket();
+  const files = await bucket.find({ filename }).limit(1).toArray();
+  return files[0] || null;
+}
+
 module.exports = {
   storeUploadInGridFS,
+  findUploadInGridFS,
   streamUploadFromGridFS,
 };

@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import "./Findadoctor.css";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useCurrency } from "../hooks/useCurrency";
 
@@ -202,11 +201,8 @@ export default function DoctorFinder() {
   // ✅ handleBook is now a clean, simple function at component level
   const handleBook = (doc) => {
     if (!user) {
-      const token = getUserAuthToken();
-      if (!token) {
-        navigate("/login", { state: { from: "/book-appointment", doctor: doc } });
-        return;
-      }
+      navigate("/login", { state: { from: "/book-appointment", doctor: doc } });
+      return;
     }
     navigate("/book-appointment", { state: { doctor: doc } });
   };

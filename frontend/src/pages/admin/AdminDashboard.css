@@ -111,9 +111,15 @@
 .ad-nav {
   padding: 14px 15px; flex: 1;
   display: flex; flex-direction: column; gap: 2px;
-  overflow-y: auto; scrollbar-width: none;
+  overflow-y: auto; scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
 }
-.ad-nav::-webkit-scrollbar { display: none; }
+.ad-nav::-webkit-scrollbar { width: 4px; }
+.ad-nav::-webkit-scrollbar-track { background: transparent; }
+.ad-nav::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px;
+}
 
 .ad-nav-section-label {
   font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;

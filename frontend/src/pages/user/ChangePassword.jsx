@@ -16,10 +16,10 @@ const TIPS = [
 function getStrength(pwd) {
   if (!pwd) return 0;
   let s = 0;
-  if (pwd.length >= 6)           s++;
+  if (pwd.length >= 8)           s++;
   if (pwd.length >= 10)          s++;
   if (/[A-Z]/.test(pwd))         s++;
-  if (/[0-9]/.test(pwd))         s++;
+  if (/[a-z]/.test(pwd) && /[0-9]/.test(pwd)) s++;
   if (/[^A-Za-z0-9]/.test(pwd))  s++;
   return s;
 }
@@ -179,7 +179,11 @@ export default function ChangePassword() {
     const errs = {};
     if (!formData.currentPassword) errs.currentPassword = "Current password is required";
     if (!formData.newPassword)     errs.newPassword = "New password is required";
-    else if (formData.newPassword.length < 6) errs.newPassword = "Must be at least 6 characters";
+    else if (formData.newPassword.length < 8) errs.newPassword = "Must be at least 8 characters";
+    else if (!/[A-Z]/.test(formData.newPassword)) errs.newPassword = "Add at least one uppercase letter";
+    else if (!/[a-z]/.test(formData.newPassword)) errs.newPassword = "Add at least one lowercase letter";
+    else if (!/[0-9]/.test(formData.newPassword)) errs.newPassword = "Add at least one number";
+    else if (!/[^A-Za-z0-9]/.test(formData.newPassword)) errs.newPassword = "Add at least one special character";
     else if (formData.currentPassword && formData.newPassword === formData.currentPassword)
       errs.newPassword = "New password must be different from your current password";
     if (!formData.confirmPassword) errs.confirmPassword = "Please confirm your password";

@@ -68,10 +68,6 @@ useEffect(() => {
     { label: "Blogs", link: "/blogs" },
   ];
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem("token");
-  //   setIsLoggedIn(!!token);
-  // }, [location.pathname]);
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 40);

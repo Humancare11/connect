@@ -459,8 +459,8 @@ export default function PhoneInputField({
           display:flex;
           align-items:center;
           width:100%;
-          height:46px;
-          min-height:46px;
+          height:40px;
+          min-height:40px;
           border:1.5px solid var(--pif-border, #c7d7fe);
           border-radius:var(--pif-radius, 12px);
           background:var(--pif-bg, #f8fbff);
@@ -475,14 +475,14 @@ export default function PhoneInputField({
         }
         .pif-country-trigger {
           width:auto;
-          min-width:92px;
+          min-width:74px;
           height:100%;
           margin:0;
-          padding:0 12px;
+          padding:0 9px;
           display:inline-flex;
           align-items:center;
           justify-content:center;
-          gap:7px;
+          gap:6px;
           flex-shrink:0;
           border:none;
           border-radius:0;
@@ -496,7 +496,6 @@ export default function PhoneInputField({
         .pif-country-trigger:hover {
           background:var(--pif-hover, rgba(37,99,235,0.06));
         }
-        .pif-flag,
         .pif-dial {
           display:inline-flex;
           align-items:center;
@@ -505,10 +504,9 @@ export default function PhoneInputField({
           line-height:1;
           letter-spacing:0;
         }
-        .pif-flag { font-size:20px; }
         .pif-dial {
           color:var(--pif-text, #1f2937);
-          font-size:13.5px;
+          font-size:14px;
           font-weight:600;
         }
         .pif-chevron {
@@ -529,7 +527,7 @@ export default function PhoneInputField({
           height:100%;
           min-height:0;
           margin:0;
-          padding:0 14px;
+          padding:9px;
           border:none;
           border-radius:0;
           background:transparent;
@@ -537,7 +535,7 @@ export default function PhoneInputField({
           color:var(--pif-text, #1f2937);
           font:inherit;
           font-size:14px;
-          line-height:46px;
+          line-height:normal;
           outline:none;
         }
         .pif-input::placeholder { color:var(--pif-placeholder, #9ca3af); }
@@ -556,7 +554,6 @@ export default function PhoneInputField({
           aria-expanded={open}
           className="pif-country-trigger"
         >
-          <span className="pif-flag">{toFlag(country.code)}</span>
           <span className="pif-dial">+{country.dial}</span>
           <svg
             width="10" height="6" viewBox="0 0 10 6" fill="none"

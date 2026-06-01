@@ -28,6 +28,17 @@ const userSchema = new mongoose.Schema(
     country: { type: String, default: "" },
 
     registrationIp: { type: String, default: "" },
+
+    accountDisabled: { type: Boolean, default: false, index: true },
+    disabledAt: { type: Date, default: null },
+    disabledReason: { type: String, default: "" },
+
+    privacyConsent: {
+      accepted: { type: Boolean, default: false },
+      acceptedAt: { type: Date, default: null },
+      policyVersion: { type: String, default: "" },
+      ipAddress: { type: String, default: "" },
+    },
   },
   { timestamps: true }
 );

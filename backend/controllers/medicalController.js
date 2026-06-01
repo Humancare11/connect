@@ -2,6 +2,7 @@ const Prescription       = require("../models/Prescription");
 const MedicalCertificate = require("../models/MedicalCertificate");
 const Appointment        = require("../models/Appointment");
 const Enrollment         = require("../models/Enrollment");
+const { logAudit }       = require("../utils/auditLogger");
 
 // ── Doctor: get distinct patients from completed appointments ─────────────────
 const getDoctorPatients = async (req, res) => {
@@ -34,7 +35,15 @@ const getDoctorPatients = async (req, res) => {
       }
     }
 
-    res.status(200).json(Array.from(seen.values()));
+    const result = Array.from(seen.values());
+
+    await logAudit(req, {
+      action: "PHI_VIEW_PATIENT_LIST",
+      resource: "Appointment",
+      details: { patientCount: result.length },
+    });
+
+    res.status(200).json(result);
   } catch (err) {
     console.error("getDoctorPatients error:", err);
     res.status(500).json({ msg: "Failed to fetch patients." });
@@ -79,6 +88,17 @@ const getPatientHistory = async (req, res) => {
       .select("specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName")
       .lean();
 
+    await logAudit(req, {
+      action: "PHI_VIEW_PATIENT_HISTORY",
+      resource: "Appointment",
+      patientId,
+      details: {
+        appointmentCount: appointments.length,
+        prescriptionCount: prescriptions.length,
+        certificateCount: certificates.length,
+      },
+    });
+
     res.status(200).json({ appointments, prescriptions, certificates, doctorEnrollment: enrollment || null });
   } catch (err) {
     console.error("getPatientHistory error:", err);
@@ -118,6 +138,14 @@ const createPrescription = async (req, res) => {
         patientId,
       });
     }
+
+    await logAudit(req, {
+      action: "PHI_CREATE_PRESCRIPTION",
+      resource: "Prescription",
+      resourceId: prescription._id,
+      patientId,
+      details: { appointmentId, diagnosis },
+    });
 
     res.status(201).json({ msg: "Prescription created.", prescription });
   } catch (err) {
@@ -163,6 +191,14 @@ const createMedicalCertificate = async (req, res) => {
       });
     }
 
+    await logAudit(req, {
+      action: "PHI_CREATE_CERTIFICATE",
+      resource: "MedicalCertificate",
+      resourceId: certificate._id,
+      patientId,
+      details: { appointmentId, diagnosis },
+    });
+
     res.status(201).json({ msg: "Medical certificate issued.", certificate });
   } catch (err) {
     console.error("createMedicalCertificate error:", err);
@@ -178,6 +214,13 @@ const getMyPrescriptions = async (req, res) => {
       .populate("appointmentId", "date time problem")
       .sort({ createdAt: -1 })
       .lean();
+
+    await logAudit(req, {
+      action: "PHI_VIEW_PRESCRIPTIONS",
+      resource: "Prescription",
+      patientId: req.user.id,
+      details: { count: prescriptions.length },
+    });
 
     res.status(200).json(prescriptions);
   } catch (err) {
@@ -209,6 +252,13 @@ const getMyMedicalCertificates = async (req, res) => {
       ...cert,
       doctorEnrollment: enrollMap[cert.doctorId?._id?.toString()] || null,
     }));
+
+    await logAudit(req, {
+      action: "PHI_VIEW_CERTIFICATES",
+      resource: "MedicalCertificate",
+      patientId: req.user.id,
+      details: { count: enriched.length },
+    });
 
     res.status(200).json(enriched);
   } catch (err) {

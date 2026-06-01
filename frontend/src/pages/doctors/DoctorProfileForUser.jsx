@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useCurrency } from "../../hooks/useCurrency";
+import { useAuth } from "../../context/AuthContext";
 
 const StarIcon = ({ filled }) => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill={filled ? "#f59e0b" : "none"} stroke="#f59e0b" strokeWidth="2">
@@ -61,6 +62,7 @@ function extractDoctorId(raw) {
 export default function DoctorProfileForUser({ legacyId = false, adminView = false }) {
   const { id, slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -98,8 +100,7 @@ export default function DoctorProfileForUser({ legacyId = false, adminView = fal
   };
 
   const handleBook = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!user) {
       navigate("/login", { state: { from: "/book-appointment", doctor } });
       return;
     }

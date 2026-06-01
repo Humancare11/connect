@@ -160,7 +160,7 @@ export default function SuperAdminDashboard() {
                   <label>Password</label>
                   <input
                     type="password"
-                    placeholder="Min. 6 characters"
+                    placeholder="8+ chars, upper/lower, number, symbol"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     required

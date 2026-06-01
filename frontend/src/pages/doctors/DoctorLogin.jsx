@@ -5,6 +5,8 @@ import "../log.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 
+const PASSWORD_REQUIREMENTS = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
   return (
@@ -158,10 +160,6 @@ export default function DoctorAuthPage() {
         const res = await api.post("/api/auth/google-doctor", {
           accessToken: tokenResponse.access_token,
         });
-        if (res.data.token) {
-          localStorage.setItem("doctorToken", res.data.token);
-          localStorage.setItem("token", res.data.token);
-        }
         afterLogin(res.data.doctor, res.data.isNewUser);
       } catch (err) { setFormError(err.response?.data?.msg || "Google Sign-In failed."); }
       finally { setLoading(false); }
@@ -178,10 +176,6 @@ export default function DoctorAuthPage() {
         email: loginForm.email.trim().toLowerCase(),
         password: loginForm.password,
       });
-      if (res.data.token) {
-        localStorage.setItem("doctorToken", res.data.token);
-        localStorage.setItem("token", res.data.token);
-      }
       afterLogin(res.data.doctor);
     } catch (err) {
       setFormError(err.response?.data?.msg || "Invalid email or password.");
@@ -195,8 +189,8 @@ export default function DoctorAuthPage() {
     e.preventDefault(); clrErr();
     if (registerForm.password !== registerForm.confirmPassword)
       return setFormError("Passwords do not match.");
-    if (registerForm.password.length < 6)
-      return setFormError("Password must be at least 6 characters.");
+    if (registerForm.password.length < 8)
+      return setFormError(PASSWORD_REQUIREMENTS);
     setLoading(true);
     try {
       await api.post("/api/doctor/send-register-otp", { email: registerForm.email });
@@ -219,10 +213,6 @@ export default function DoctorAuthPage() {
         confirmPassword: registerForm.confirmPassword,
         otp:             otpValue,
       });
-      if (res.data.token) {
-        localStorage.setItem("doctorToken", res.data.token);
-        localStorage.setItem("token", res.data.token);
-      }
       if (timerRef.current) clearInterval(timerRef.current);
       setOtpValue("");
       setRegisterForm({ name: "", email: "", password: "", confirmPassword: "" });
@@ -273,7 +263,7 @@ export default function DoctorAuthPage() {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (newPass.length < 6)     return setFormError("Password must be at least 6 characters");
+    if (newPass.length < 8)     return setFormError(PASSWORD_REQUIREMENTS);
     if (newPass !== confirmPass) return setFormError("Passwords do not match");
     setLoading(true); clrErr();
     try {
@@ -349,7 +339,7 @@ export default function DoctorAuthPage() {
       subtitle="Choose a strong password for your account."
       formError={formError} onBack={() => goTo("forgot-otp")}>
       <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
-        <input type="password" placeholder="New password (min 6 chars)" value={newPass}
+        <input type="password" placeholder="New password (8+ chars, mixed case, number, symbol)" value={newPass}
           onChange={(e) => { setNewPass(e.target.value); clrErr(); }} required />
         <input type="password" placeholder="Confirm new password" value={confirmPass}
           onChange={(e) => { setConfirmPass(e.target.value); clrErr(); }} required />
@@ -388,9 +378,10 @@ export default function DoctorAuthPage() {
               value={registerForm.email}
               onChange={(e) => { setRegisterForm((p) => ({ ...p, email: e.target.value })); clrErr(); }} required />
 
-            <input type="password" placeholder="Create password (min 6 chars)"
+            <input type="password" placeholder="Create password (8+ chars, mixed case, number, symbol)"
               value={registerForm.password}
               onChange={(e) => { setRegisterForm((p) => ({ ...p, password: e.target.value })); clrErr(); }} required />
+            <p className="password-requirements">{PASSWORD_REQUIREMENTS}</p>
 
             <input type="password" placeholder="Confirm password"
               value={registerForm.confirmPassword}
@@ -477,3 +468,4 @@ export default function DoctorAuthPage() {
     </div>
   );
 }
+
