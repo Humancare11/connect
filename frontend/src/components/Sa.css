@@ -1,41 +1,47 @@
-/* ══════════════════════════════════════════════
-   Sa.css — ServicesSection
-   Scoped class names, no conflicts.
-   Layout preserved exactly as designed.
-══════════════════════════════════════════════ */
-
 /* ── Section Wrapper ── */
 .services-section-wrapper {
-
-
-  position: relative;
+   position: relative;
   width: calc(100% - 100px);
   max-width: 1600px;
   margin: 80px auto;
   padding: 70px 50px;
-  border-radius: 34px;
-  background:
-    linear-gradient(-45deg, #223a5e, #1a2f47, #2c4a6b, #223a5e);
-  border: 1px solid rgba(255,255,255,0.8);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.8),
-    0 20px 60px rgba(15, 23, 42, 0.06);
+
+  border-radius: 36px;
+
   overflow: hidden;
+  isolation: isolate;
+
+  background:
+    linear-gradient(
+      90deg,
+      #33486d 0%,
+      #1b3158 35%,
+      #10284e 70%,
+      #0a1d3b 100%
+    );
+
+  box-shadow:
+    0 35px 80px rgba(0,0,0,.30),
+    0 15px 35px rgba(8,22,50,.25);
+
+ 
 }
 
-@keyframes gradShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  75% {
-    background-position: 75% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+/* Very subtle top-left brightening — matches the faint lighter patch in reference */
+.services-section-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 18% 25%, rgba(60, 100, 160, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(15, 40, 80, 0.25) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* No grid overlay — reference image is clean flat dark, no grid texture */
+.services-section-wrapper::after {
+  display: none;
 }
 
 /* ── Inner Container ── */
@@ -56,7 +62,7 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
-  color: white;
+  color: rgba(255, 255, 255, 0.6);
   margin-bottom: 14px;
   text-transform: uppercase;
 }
@@ -69,18 +75,29 @@
   color: white;
   letter-spacing: -1px;
   line-height: 1.15;
+  margin: 0;
+}
+
+.services-heading-highlight {
+  color: white;
+  /* matches the reference: heading text is plain white, no gradient shimmer */
+  background: none;
+  -webkit-text-fill-color: unset;
 }
 
 /* ══════════════════════════════════════════════
    CARD BASE
 ══════════════════════════════════════════════ */
 .services-card-item {
-  background-color: rgba(221, 206, 206, 0.082);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: var(--radius, 16px);
-  padding: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 18px;
+
+  /* ✅ FIX: Unified generous padding — override per-size classes below */
+  padding: 22px;
+
   transition:
     border-color 0.3s ease,
     box-shadow 0.3s ease,
@@ -89,132 +106,136 @@
   position: relative;
   overflow: hidden;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 8px 32px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
 .services-card-item:hover {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 16px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: translateY(-4px);
-  background-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 /* ── Icon Box ── */
 .services-icon-box {
   position: relative;
-  overflow: visible;
-  width: 35px;
-  height: 35px;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  margin-bottom: 5px;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 20px;
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+  overflow: visible;
 }
 
 .services-icon-box svg {
-  width: 22px;
-  height: 22px;
-  color: rgba(255, 255, 255, 0.95);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.85);
+  filter: none;
 }
 
 /* ── Card Title ── */
 .services-card-title {
   font-family: "Satoshi", sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: white;
-  margin-bottom: 5px;
   line-height: 1.3;
+  margin: 0;
 }
 
 /* ── Card Description ── */
 .services-card-description {
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 3px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
   flex-grow: 1;
 }
 
 /* ── CTA Link ── */
 .services-card-cta-link {
-  display: inline-block;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
   font-weight: 600;
-  color: white;
+  color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   letter-spacing: 0.02em;
   margin-top: auto;
+  width: fit-content;
 }
 
 .services-card-cta-link:hover {
-  color: rgb(214, 204, 204);
-  transform: translateX(4px);
+  color: #ffffff;
+  gap: 8px;
 }
 
-/* ── Badge ── */
+/* ── Badge ──
+   ✅ FIX: removed `left: calc(100% + 10px)` which caused overflow.
+   Now flows inline beside the icon using a wrapper flex row.
+   See .services-icon-row below.
+*/
+.services-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .services-feature-badge {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 20px;
-  padding: 5px 12px;
+  padding: 4px 10px;
   text-transform: uppercase;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
-  /* sits beside icon on the same row */
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  transform: none;
 }
 
-/* ── Stats ── */
+/* ── Stats mini ── */
 .services-stat-mini {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  padding: 3px 24px;
+  padding: 10px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   flex: 1;
   text-align: center;
   transition: all 0.3s ease;
 }
 
 .services-stat-mini:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
   transform: translateY(-2px);
 }
 
 .services-stat-value-text {
   font-family: "Satoshi", sans-serif;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 900;
   color: #ffffff;
   line-height: 1;
@@ -222,18 +243,18 @@
 }
 
 .services-stat-label-text {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
   line-height: 1.4;
   font-weight: 500;
-  text-transform: capitalize;
-  margin-top: -1px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 /* ── Split layout inside large card ── */
 .services-content-split {
   display: flex;
-  gap: 32px;
+  gap: 20px;
   align-items: flex-start;
   flex: 1;
 }
@@ -241,102 +262,115 @@
 .services-content-left {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .services-content-right {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 129px;
+  gap: 8px;
+  width: 120px;
   flex-shrink: 0;
 }
 
 /* ── Weight Loss Stats ── */
 .services-weight-stat-block {
   margin-top: auto;
+  padding-top: 4px;
 }
 
 .services-weight-stat-eyebrow {
   display: block;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
   margin-bottom: 6px;
 }
 
 .services-weight-stat-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
   flex-wrap: wrap;
 }
 
 .services-weight-stat-number {
   font-family: "Satoshi", sans-serif;
-  font-weight: 800;
+  font-weight: 900;
+  font-size: 28px;
   color: white;
   line-height: 1;
+  letter-spacing: -1px;
 }
 
 .services-weight-stat-period {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
   font-weight: 400;
+}
+
+/* ✅ FIX: CTA for weight loss moved OUT of weight-stat-row to its own row
+   (see JSX changes — add a separate <a> below the stat row) */
+.services-weight-cta {
+  margin-top: 8px;
 }
 
 /* ══════════════════════════════════════════════
    BENTO GRID — Desktop default (6-col)
-   Layout: matches screenshot exactly
 ══════════════════════════════════════════════ */
 .services-bento-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-auto-rows: minmax(165px, auto);
-  gap: 8px;
+  gap: 10px;
 }
 
-/* Prescription Refills — 4 cols, 1 row */
+/* Prescription Refills — 4 cols */
 .services-bento-large {
   grid-column: span 4;
-  height: 167px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  min-height: 175px;
+  padding: 22px 24px;
 }
 
-/* Weight Loss — 2 cols, 1 row */
+/* Weight Loss — 2 cols */
 .services-bento-small-weightloss {
   grid-column: span 2;
-  height: 167px;
-  padding: 10px;
+  min-height: 175px;
+  padding: 22px;
 }
 
 /* Mental Health — 2 cols, 2 rows (tall) */
+/* ✅ NOTE: "smal-1" typo preserved to match existing JSX class */
 .services-bento-smal-1 {
   grid-column: span 2;
   grid-row: span 2;
-  height: 340px;
+  min-height: 360px;
+  padding: 24px;
 }
 
-/* General Consultation — 2 cols, 1 row */
+/* General Consultation — 2 cols */
 .services-bento-small {
   grid-column: span 2;
-  height: 165px;
+  min-height: 170px;
+  padding: 22px;
 }
 
-/* Sexual Health — 2 cols, 1 row */
+/* Sexual Health — 2 cols */
 .services-bento-small-0 {
   grid-column: span 2;
-  height: 165px;
+  min-height: 170px;
+  padding: 22px;
 }
 
-/* Chronic Care — 4 cols, 1 row */
+/* Chronic Care — 4 cols */
 .services-bento-wide {
   grid-column: span 4;
-  height: 165px;
+  min-height: 170px;
+  padding: 22px 24px;
 }
 
 /* ══════════════════════════════════════════════
@@ -348,13 +382,9 @@
   .services-section-wrapper {
     padding: 100px 48px;
   }
-  .services-bento-grid {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
-  }
 }
 
-/* ─── Medium Desktop 992px–1199px ─── */
+/* ─── Medium Desktop 992–1199px ─── */
 @media (max-width: 1199px) and (min-width: 992px) {
   .services-section-wrapper {
     padding: 80px 40px;
@@ -362,7 +392,6 @@
   .services-inner-container {
     padding: 0 20px;
   }
-  /* Switch to 4-col, everything reflows */
   .services-bento-grid {
     grid-template-columns: repeat(4, 1fr);
     grid-auto-rows: minmax(180px, auto);
@@ -371,41 +400,37 @@
   .services-bento-large {
     grid-column: span 2;
     grid-row: span 2;
-    height: auto;
+    min-height: auto;
   }
   .services-bento-small-weightloss {
     grid-column: span 2;
     grid-row: span 2;
-    height: auto;
+    min-height: auto;
   }
   .services-bento-smal-1 {
     grid-column: span 2;
     grid-row: span 2;
-    height: auto;
+    min-height: auto;
   }
-  .services-bento-small {
-    grid-column: span 2;
-    height: auto;
-  }
+  .services-bento-small,
   .services-bento-small-0 {
     grid-column: span 2;
-    height: auto;
+    min-height: auto;
   }
   .services-bento-wide {
     grid-column: span 4;
-    height: auto;
+    min-height: auto;
   }
   .services-content-right {
-    width: 160px;
+    width: 140px;
   }
 }
 
-/* ─── Tablet 768px–991px ─── */
+/* ─── Tablet 768–991px ─── */
 @media (max-width: 991px) and (min-width: 768px) {
   .services-section-wrapper {
     padding: 70px 32px;
-    border-top-left-radius: 32px;
-    border-top-right-radius: 32px;
+    width: calc(100% - 48px);
   }
   .services-inner-container {
     padding: 0 16px;
@@ -413,11 +438,10 @@
   .services-header-block {
     margin-bottom: 36px;
   }
-  /* 2-col grid, all cards full width */
   .services-bento-grid {
     grid-template-columns: repeat(2, 1fr);
     grid-auto-rows: auto;
-    gap: 11px;
+    gap: 10px;
   }
   .services-bento-large,
   .services-bento-small-weightloss,
@@ -427,39 +451,27 @@
   .services-bento-wide {
     grid-column: span 2;
     grid-row: span 1;
-    height: auto;
-    padding: 24px;
+    min-height: auto;
   }
   .services-content-split {
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
   }
   .services-content-right {
     flex-direction: row;
     width: 100%;
   }
-  .services-content-right .services-stat-mini {
-    flex: 1;
-  }
 }
 
-/* ─── Mobile Landscape 600px–767px ─── */
+/* ─── Mobile Landscape 600–767px ─── */
 @media (max-width: 767px) and (min-width: 600px) {
   .services-section-wrapper {
     padding: 60px 24px;
-    border-top-left-radius: 28px;
-    border-top-right-radius: 28px;
+    width: calc(100% - 32px);
   }
   .services-inner-container {
-    padding: 0 12px;
+    padding: 0;
   }
-  .services-header-block {
-    margin-bottom: 30px;
-  }
-  .services-eyebrow-label {
-    font-size: 10px;
-  }
-  /* 1-col stacked */
   .services-bento-grid {
     grid-template-columns: 1fr;
     gap: 9px;
@@ -472,203 +484,94 @@
   .services-bento-wide {
     grid-column: span 1;
     grid-row: span 1;
-    height: auto;
-    padding: 22px;
-  }
-  .services-content-split {
-    flex-direction: column;
-    gap: 18px;
-  }
-  .services-content-right {
-    flex-direction: row;
-    width: 100%;
-    gap: 10px;
-  }
-  .services-content-right .services-stat-mini {
-    flex: 1;
-    padding: 10px 16px;
-  }
-  .services-card-title {
-    font-size: 18px;
-  }
-  .services-card-description {
-    font-size: 13px;
-  }
-  .services-feature-badge {
-    font-size: 9px;
-    padding: 4px 10px;
-  }
-}
-
-/* ─── Mobile Portrait 400px–599px ─── */
-@media (max-width: 599px) and (min-width: 400px) {
-  .services-section-wrapper {
-    padding: 50px 16px;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
-  }
-  .services-inner-container {
-    padding: 0 8px;
-  }
-  .services-header-block {
-    margin-bottom: 28px;
-  }
-  .services-eyebrow-label {
-    font-size: 9px;
-    margin-bottom: 10px;
-  }
-  .services-bento-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .services-bento-large,
-  .services-bento-small-weightloss,
-  .services-bento-smal-1,
-  .services-bento-small,
-  .services-bento-small-0,
-  .services-bento-wide {
-    grid-column: span 1;
-    grid-row: span 1;
-    height: auto;
-    padding: 20px;
-  }
-  .services-card-item {
-    padding: 20px;
-  }
-  .services-icon-box {
-    width: 35px;
-    height: 35px;
-  }
-  .services-icon-box svg {
-    width: 20px;
-    height: 20px;
-  }
-  .services-card-title {
-    font-size: 17px;
-    margin-bottom: 8px;
-  }
-  .services-card-description {
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 14px;
-  }
-  .services-content-split {
-    flex-direction: column;
-    gap: 16px;
-  }
-  .services-content-right {
-    flex-direction: row;
-    width: 100%;
-    gap: 10px;
-  }
-  .services-content-right .services-stat-mini {
-    flex: 1;
-    padding: 12px;
-  }
-  .services-stat-value-text {
-    font-size: 18px;
-  }
-  .services-weight-stat-number {
-    font-size: 28px;
-  }
-  .services-weight-stat-period {
-    font-size: 13px;
-  }
-  .services-feature-badge {
-    font-size: 8px;
-    padding: 4px 9px;
-  }
-  .services-card-cta-link {
-    font-size: 13px;
-  }
-}
-
-/* ─── Small Mobile < 400px ─── */
-@media (max-width: 399px) {
-  .services-section-wrapper {
-    padding: 40px 14px;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-  }
-  .services-inner-container {
-    padding: 0 6px;
-  }
-  .services-header-block {
-    margin-bottom: 24px;
-  }
-  .services-eyebrow-label {
-    font-size: 9px;
-    margin-bottom: 8px;
-  }
-  .services-bento-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .services-bento-large,
-  .services-bento-small-weightloss,
-  .services-bento-smal-1,
-  .services-bento-small,
-  .services-bento-small-0,
-  .services-bento-wide {
-    grid-column: span 1;
-    grid-row: span 1;
-    height: auto;
-    padding: 18px;
-  }
-  .services-card-item {
-    padding: 18px;
-  }
-  .services-icon-box {
-    width: 32px;
-    height: 32px;
-    font-size: 18px;
-    margin-bottom: 10px;
-  }
-  .services-icon-box svg {
-    width: 18px;
-    height: 18px;
-  }
-  .services-card-title {
-    font-size: 16px;
-    margin-bottom: 6px;
-  }
-  .services-card-description {
-    font-size: 12px;
-    line-height: 1.5;
-    margin-bottom: 12px;
+    min-height: auto;
   }
   .services-content-split {
     flex-direction: column;
     gap: 14px;
   }
   .services-content-right {
-    flex-direction: column;
+    flex-direction: row;
     width: 100%;
-    gap: 8px;
   }
-  .services-content-right .services-stat-mini {
-    padding: 10px;
+}
+
+/* ─── Mobile Portrait 400–599px ─── */
+@media (max-width: 599px) and (min-width: 400px) {
+  .services-section-wrapper {
+    padding: 50px 16px;
+    width: calc(100% - 24px);
+    border-radius: 24px;
+  }
+  .services-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .services-bento-large,
+  .services-bento-small-weightloss,
+  .services-bento-smal-1,
+  .services-bento-small,
+  .services-bento-small-0,
+  .services-bento-wide {
+    grid-column: span 1;
+    grid-row: span 1;
+    min-height: auto;
+    padding: 18px;
+  }
+  .services-content-split {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .services-content-right {
+    flex-direction: row;
+    width: 100%;
   }
   .services-stat-value-text {
-    font-size: 16px;
-  }
-  .services-stat-label-text {
-    font-size: 10px;
+    font-size: 18px;
   }
   .services-weight-stat-number {
     font-size: 24px;
   }
-  .services-weight-stat-period {
-    font-size: 12px;
+}
+
+/* ─── Small Mobile <400px ─── */
+@media (max-width: 399px) {
+  .services-section-wrapper {
+    padding: 40px 14px;
+    width: calc(100% - 20px);
+    border-radius: 20px;
   }
-  .services-weight-stat-eyebrow {
-    font-size: 9px;
+  .services-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
-  .services-feature-badge {
-    font-size: 8px;
-    padding: 3px 8px;
+  .services-bento-large,
+  .services-bento-small-weightloss,
+  .services-bento-smal-1,
+  .services-bento-small,
+  .services-bento-small-0,
+  .services-bento-wide {
+    grid-column: span 1;
+    grid-row: span 1;
+    min-height: auto;
+    padding: 16px;
   }
-  .services-card-cta-link {
-    font-size: 12px;
+  .services-content-split {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .services-content-right {
+    flex-direction: column;
+    width: 100%;
+  }
+  .services-icon-box {
+    width: 34px;
+    height: 34px;
+  }
+  .services-stat-value-text {
+    font-size: 16px;
+  }
+  .services-weight-stat-number {
+    font-size: 22px;
   }
 }

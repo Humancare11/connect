@@ -82,7 +82,9 @@ import Test from "./pages/Test";
 
 // 
 import Specialties from "./pages/Specialties";
-import Symptoms from "./pages/Symptoms"
+import Symptoms from "./pages/Symptoms";
+
+import Specialty1 from "./pages/Specialty/SpecialtyDetail";
 
 
 
@@ -485,6 +487,7 @@ function AppLayout() {
         {/* Specialties */}
      <Route path="/specialty" element={<Specialties />} />
      <Route path="/symptoms" element={<Symptoms />} />
+     <Route path="/Specialty1" element={<Specialty1 />} />
 
 
 

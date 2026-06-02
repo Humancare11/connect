@@ -28,43 +28,6 @@ const fadeUp = (delay = 0) => ({
   },
 });
 
-const iconPop = (delay = 0) => ({
-  hidden: { opacity: 0, scale: 0.5 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { type: "spring", stiffness: 260, damping: 18, delay },
-  },
-});
-
-const statSlide = (delay = 0) => ({
-  hidden: { opacity: 0, scale: 0.88, y: 16 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { duration: 0.45, ease: "easeOut", delay },
-  },
-});
-
-const weightSlide = (delay = 0) => ({
-  hidden: { opacity: 0, x: -30 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.65, ease: [0.25, 0.46, 0.45, 0.94], delay },
-  },
-});
-
-const ctaFade = (delay = 0) => ({
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.35, ease: "easeOut", delay },
-  },
-});
-
 /* ─────────────────────────────────────────
    TiltCard — scroll reveal + mouse tilt
 ───────────────────────────────────────── */
@@ -111,30 +74,6 @@ function TiltCard({ children, className, delay = 0 }) {
   );
 }
 
-/* ─────────────────────────────────────────
-   AnimateOnView — generic scroll-triggered wrapper
-───────────────────────────────────────── */
-function AnimateOnView({ children, variants, as = "div", style, className }) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
-  const Tag = motion[as] || motion.div;
-  return (
-    <Tag
-      ref={ref}
-      className={className}
-      style={style}
-      variants={variants}
-      initial="hidden"
-      animate={isInView ? "visible" : "hidden"}
-    >
-      {children}
-    </Tag>
-  );
-}
-
-/* ─────────────────────────────────────────
-   Card stagger delays
-───────────────────────────────────────── */
 const D = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
 
 /* ─────────────────────────────────────────
@@ -147,6 +86,7 @@ export default function ServicesSection() {
   return (
     <section className="services-section-wrapper">
       <div className="services-inner-container">
+
         {/* ── Header ── */}
         <div className="services-header-block" ref={headerRef}>
           <motion.span
@@ -174,25 +114,36 @@ export default function ServicesSection() {
 
         {/* ── Bento Grid ── */}
         <div className="services-bento-grid">
-          {/* Prescription Refills */}
+
+          {/* ── Prescription Refills (4-col wide) ── */}
           <TiltCard
             className="services-card-item services-bento-large"
             delay={D[0]}
           >
-            <div className="services-icon-box">
-              <FaPills />
+            {/*
+              ✅ FIX: Badge is now a flex sibling of the icon box
+              inside .services-icon-row — no more absolute overflow.
+            */}
+            <div className="services-icon-row">
+              <div className="services-icon-box">
+                <FaPills />
+              </div>
               <span className="services-feature-badge">MOST REQUESTED</span>
             </div>
+
             <div className="services-content-split">
               <div className="services-content-left">
-                <h3 className="services-card-title"> Prescription Refills</h3>
+                <h3 className="services-card-title">Prescription Refills</h3>
                 <p className="services-card-description">
                   Running low on medication? Fast-track refill from a licensed
                   provider — often within the same day. No appointment required.
                   Works even if you're between doctors.
                 </p>
-                    
+                <a href="#" className="services-card-cta-link">
+                  Request refill →
+                </a>
               </div>
+
               <div className="services-content-right">
                 <div className="services-stat-mini">
                   <span className="services-stat-value-text">2 hrs</span>
@@ -204,12 +155,9 @@ export default function ServicesSection() {
                 </div>
               </div>
             </div>
-            <a href="#" className="services-card-cta-link">
-              Request refill →
-            </a>
           </TiltCard>
 
-          {/* Weight Loss */}
+          {/* ── Weight Loss (2-col) ── */}
           <TiltCard
             className="services-card-item services-bento-small-weightloss"
             delay={D[1]}
@@ -222,21 +170,28 @@ export default function ServicesSection() {
               Personalized plans including GLP-1 medications (Ozempic, Wegovy),
               lifestyle coaching, and monthly monitoring.
             </p>
+
+            {/*
+              ✅ FIX: CTA link is now BELOW the stat row, not inside it.
+              Prevents the number + period + link all fighting for space.
+            */}
             <div className="services-weight-stat-block">
-              <span className="services-weight-stat-eyebrow">
-                AVG. WEIGHT LOSS
-              </span>
+              <span className="services-weight-stat-eyebrow">AVG. WEIGHT LOSS</span>
               <div className="services-weight-stat-row">
                 <span className="services-weight-stat-number">15 lbs</span>
                 <span className="services-weight-stat-period">/ 3 months</span>
-                <a href="#" className="services-card-cta-link">
-                  Start program →
-                </a>
               </div>
+              <a href="#" className="services-card-cta-link services-weight-cta">
+                Start program →
+              </a>
             </div>
           </TiltCard>
 
-          {/* Mental Health */}
+          {/* ── Mental Health (2-col tall) ── */}
+          {/*
+            ✅ NOTE: class name "services-bento-smal-1" preserved intentionally
+            (matches existing CSS) — rename both together if cleaning up.
+          */}
           <TiltCard
             className="services-card-item services-bento-smal-1"
             delay={D[2]}
@@ -247,14 +202,15 @@ export default function ServicesSection() {
             <h3 className="services-card-title">Mental Health</h3>
             <p className="services-card-description">
               Professional therapy, psychiatry, and counseling for anxiety,
-              depression, and stress management.
+              depression, and stress management. Connect with a licensed
+              therapist on your schedule — no waitlists.
             </p>
             <a href="#" className="services-card-cta-link">
               Get support →
             </a>
           </TiltCard>
 
-          {/* General Consultation */}
+          {/* ── General Consultation (2-col) ── */}
           <TiltCard
             className="services-card-item services-bento-small"
             delay={D[3]}
@@ -264,15 +220,15 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title">General Consultation</h3>
             <p className="services-card-description">
-              Sick visits, wellness checks, infections, minor injuries. Same-day
-              access to a doctor.
+              Sick visits, wellness checks, infections, minor injuries.
+              Same-day access to a licensed doctor.
             </p>
             <a href="#" className="services-card-cta-link">
               See a doctor →
             </a>
           </TiltCard>
 
-          {/* Sexual Health */}
+          {/* ── Sexual Health (2-col) ── */}
           <TiltCard
             className="services-card-item services-bento-small-0"
             delay={D[4]}
@@ -290,7 +246,7 @@ export default function ServicesSection() {
             </a>
           </TiltCard>
 
-          {/* Chronic Care */}
+          {/* ── Chronic Care (4-col wide) ── */}
           <TiltCard
             className="services-card-item services-bento-wide"
             delay={D[5]}
@@ -301,12 +257,13 @@ export default function ServicesSection() {
             <h3 className="services-card-title">Chronic Care</h3>
             <p className="services-card-description">
               Ongoing support for diabetes, hypertension, thyroid, and asthma
-              with a dedicated care team.
+              with a dedicated care team that knows your history.
             </p>
             <a href="#" className="services-card-cta-link">
               Manage condition →
             </a>
           </TiltCard>
+
         </div>
       </div>
     </section>
