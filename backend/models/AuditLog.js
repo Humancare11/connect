@@ -6,7 +6,7 @@ const auditLogSchema = new mongoose.Schema({
   userEmail: { type: String, default: "" },
   userRole:  {
     type: String,
-    enum: ["user", "doctor", "admin", "superadmin", "anonymous"],
+    enum: ["user", "doctor", "admin", "superadmin", "paymentadmin", "anonymous"],
     default: "anonymous",
   },
   action:     { type: String, required: true },

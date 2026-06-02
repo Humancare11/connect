@@ -53,6 +53,7 @@ import DoctorProfileForUser from "./pages/doctors/DoctorProfileForUser";
 
 
 import AdminAuthPage from "./pages/admin/AdminAuth";
+import PaymentAdminLogin from "./pages/admin/PaymentAdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import OurDoctors from "./pages/admin/OurDoctors";
@@ -62,6 +63,8 @@ import DoctorPayments from "./pages/admin/DoctorPayments";
 import ManageUsers from "./pages/admin/ManageUsers";
 import AdminAppointments from "./pages/admin/AdminAppointments";
 import AdminPayments from "./pages/admin/AdminPayments";
+import PaymentLinks from "./pages/admin/PaymentLinks";
+import PaymentLinkHistory from "./pages/admin/PaymentLinkHistory";
 import QnAPage from "./pages/admin/QnAPage";
 import SupportTickets from "./pages/admin/SupportTickets";
 import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
@@ -81,6 +84,7 @@ import UserRaiseTicket from "./pages/user/RaiseTicket";
 
 import Home2 from "./pages/Home-2";
 import Test from "./pages/Test";
+import PaymentLinkCheckout from "./pages/PaymentLinkCheckout";
 
 // 
 import Specialties from "./pages/Specialties";
@@ -96,13 +100,13 @@ function ScrollToTop() {
   return null;
 }
 
-function PrivateRoute({ children, allowedRoles }) {
+function PrivateRoute({ children, allowedRoles, loginPath = "/adminauth" }) {
   const { admin, loading } = useAdmin();
 
   if (loading) return null;
-  if (!admin) return <Navigate to="/adminauth" replace />;
+  if (!admin) return <Navigate to={loginPath} replace />;
   if (!allowedRoles.includes(admin.role))
-    return <Navigate to="/adminauth" replace />;
+    return <Navigate to={loginPath} replace />;
 
   return children;
 }
@@ -235,8 +239,10 @@ function AppLayout() {
   const hideLayout =
     location.pathname.startsWith("/doctor-dashboard") ||
     location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/payment-admin") ||
     location.pathname.startsWith("/superadmin") ||
     location.pathname.startsWith("/user") ||
+    location.pathname.startsWith("/pay/") ||
     location.pathname.startsWith("/video-call");
 
   const { user } = useAuth();
@@ -279,6 +285,7 @@ function AppLayout() {
         <Route path="/book-appointment" element={<BookAppointment />} />
         <Route path="/home-demo" element={<Home2 />} />
         <Route path="/test" element={<Test />} />
+        <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
 
 
 {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
@@ -444,6 +451,28 @@ function AppLayout() {
         />
 
         <Route path="/adminauth" element={<AdminAuthPage />} />
+        <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
+        <Route path="/payment-admin" element={<Navigate to="/payment-admin/payment-links" replace />} />
+        <Route
+          path="/payment-admin/payment-links"
+          element={
+            <PrivateRoute allowedRoles={["paymentadmin"]} loginPath="/payment-admin-login">
+              <AdminLayout>
+                <PaymentLinks />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/payment-admin/payment-history"
+          element={
+            <PrivateRoute allowedRoles={["paymentadmin"]} loginPath="/payment-admin-login">
+              <AdminLayout>
+                <PaymentLinkHistory />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/admin-auth"
           element={<Navigate to="/adminauth" replace />}
@@ -454,6 +483,26 @@ function AppLayout() {
             <PrivateRoute allowedRoles={["admin", "superadmin"]}>
               <AdminLayout>
                 <AdminDashboard />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/payment-links"
+          element={
+            <PrivateRoute allowedRoles={["superadmin"]}>
+              <AdminLayout>
+                <PaymentLinks />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/payment-link-history"
+          element={
+            <PrivateRoute allowedRoles={["superadmin"]}>
+              <AdminLayout>
+                <PaymentLinkHistory />
               </AdminLayout>
             </PrivateRoute>
           }

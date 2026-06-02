@@ -90,7 +90,7 @@ const ensureDoctorEnrollment = async (doctor) => {
     completedSteps: 0,
     currentStep: 1,
     currentStepLabel: STEP_LABELS[0],
-    applicationStatus: "in_progress",
+    applicationStatus: "Pending",
     pendingRequestType: "new_enrollment",
     profileDeleteRequestStatus: "none",
   });
@@ -245,7 +245,7 @@ const login = async (req, res) => {
       });
       return res.status(403).json({ msg: "Please use the Doctor Login page." });
     }
-    if (user.role === "superadmin") {
+    if (["admin", "superadmin", "paymentadmin"].includes(user.role)) {
       await logAudit(req, {
         action: "LOGIN_FAILED",
         resource: "User",
@@ -254,18 +254,18 @@ const login = async (req, res) => {
         userEmail: user.email,
         userRole: user.role,
         success: false,
-        details: { reason: "Wrong portal — superadmin using patient login" },
+        details: { reason: "Wrong portal — admin using patient login" },
       });
       await recordSecurityIncident(req, {
         type: "privilege_escalation",
         severity: "high",
-        title: "Superadmin account used patient login portal",
+        title: "Admin account used patient login portal",
         userId: user._id,
         userEmail: user.email,
         userRole: user.role,
         metadata: { portal: "patient" },
       });
-      return res.status(403).json({ msg: "Please use the Super Admin login." });
+      return res.status(403).json({ msg: "Please use the Admin login." });
     }
 
     const match = await bcrypt.compare(password, user.password);
@@ -710,11 +710,78 @@ const me = async (req, res) => {
 const adminMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    if (!user || !["admin", "superadmin"].includes(user.role))
+    if (!user || !["admin", "superadmin", "paymentadmin"].includes(user.role))
       return res.status(404).json({ msg: "Admin not found." });
     return res.json({ user: safeUser(user) });
   } catch (err) {
     return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+const paymentAdminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ msg: "Email and password are required." });
+
+    const clean = email.toLowerCase().trim();
+    const user = await User.findOne({ email: clean });
+
+    if (!user || user.role !== "paymentadmin") {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "PaymentAdmin",
+        userEmail: clean,
+        success: false,
+        details: { reason: "Invalid payment admin credentials" },
+      });
+      await recordFailedLogin(req, { email: clean, portal: "paymentadmin" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    if (user.accountDisabled) {
+      await recordSecurityIncident(req, {
+        type: "unauthorized_access",
+        severity: "high",
+        title: "Disabled payment admin login attempt",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { portal: "paymentadmin", disabledAt: user.disabledAt },
+      });
+      return res.status(403).json({ msg: "This account is disabled. Contact support." });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "PaymentAdmin",
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: user.role,
+        success: false,
+        details: { reason: "Incorrect password" },
+      });
+      await recordFailedLogin(req, { email: clean, userId: user._id, userRole: user.role, portal: "paymentadmin" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    await issueAuthCookies(res, user);
+
+    await logAudit(req, {
+      action: "LOGIN_SUCCESS",
+      resource: "PaymentAdmin",
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+    });
+
+    return res.json({ msg: "Login successful.", user: safeUser(user) });
+  } catch (err) {
+    console.error("paymentAdminLogin error:", err);
+    return res.status(500).json({ msg: "Server error. Please try again." });
   }
 };
 
@@ -806,7 +873,7 @@ const adminLogout = async (req, res) => {
 };
 
 module.exports = {
-  register, login, doctorRegister, doctorLogin, adminLogin,
+  register, login, doctorRegister, doctorLogin, adminLogin, paymentAdminLogin,
   updateProfile, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,

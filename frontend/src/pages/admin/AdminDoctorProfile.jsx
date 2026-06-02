@@ -52,11 +52,9 @@ const TIMEZONES = [
 
 // ─── Status metadata ──────────────────────────────────────────────────────────
 const STATUS_META = {
+  pending:        { label: "Pending",        bg: "#fef3c7", color: "#92400e" },
   approved:       { label: "Approved",       bg: "#dcfce7", color: "#166534" },
   rejected:       { label: "Rejected",       bg: "#fee2e2", color: "#991b1b" },
-  submitted:      { label: "Submitted",      bg: "#ede9fe", color: "#5b21b6" },
-  pending_review: { label: "Pending Review", bg: "#fef3c7", color: "#92400e" },
-  in_progress:    { label: "In Progress",    bg: "#eff6ff", color: "#1d4ed8" },
 };
 const REQUEST_META = {
   none:           { label: "No Active Request",      bg: "#f8fafc", color: "#64748b" },
@@ -68,15 +66,17 @@ const STEP_LABELS = ["Identity","Professional","Availability","Payout","Submitte
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function getProgress(e) {
-  if (!e) return { completedSteps: 0, currentStep: 1, status: "in_progress" };
+  if (!e) return { completedSteps: 0, currentStep: 1, status: "pending" };
   const completedSteps = Math.max(0, Math.min(5, Number(e.completedSteps) || 0));
   const currentStep    = Math.max(1, Math.min(5, Number(e.currentStep)    || 1));
+  const applicationStatus = String(e.applicationStatus || "").trim().toLowerCase();
   const status =
-    e.applicationStatus ||
-    (e.approvalStatus === "approved" ? "approved" :
-     e.approvalStatus === "rejected" ? "rejected" :
-     e.formCompleted   ? "submitted" :
-     completedSteps >= 4 ? "pending_review" : "in_progress");
+    applicationStatus === "approved" ? "approved" :
+    applicationStatus === "rejected" ? "rejected" :
+    applicationStatus === "pending" ? "pending" :
+    e.approvalStatus === "approved" ? "approved" :
+    e.approvalStatus === "rejected" ? "rejected" :
+    "pending";
   return {
     completedSteps, currentStep, status,
     currentStepLabel: e.currentStepLabel || STEP_LABELS[Math.max(0, currentStep - 1)],
@@ -895,7 +895,7 @@ export default function AdminDoctorProfile() {
   const e           = enrollment;
   const progress    = getProgress(e);
   const requestType = getRequestType(e);
-  const statusMeta  = STATUS_META[progress.status] || STATUS_META.in_progress;
+  const statusMeta  = STATUS_META[progress.status] || STATUS_META.pending;
   const requestMeta = REQUEST_META[requestType] || REQUEST_META.none;
   const fullName    = `Dr. ${e.firstName || ""} ${e.surname || ""}`.trim() || e.doctorId?.name || "Unknown Doctor";
   const initials    = `${(e.firstName || e.doctorId?.name || "D")[0]}${(e.surname || " ")[0]}`.toUpperCase();

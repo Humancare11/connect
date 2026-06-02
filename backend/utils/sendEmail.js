@@ -1,26 +1,43 @@
 const nodemailer = require("nodemailer");
 
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_HOST = process.env.SMTP_HOST || "email-smtp.us-east-1.amazonaws.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_SECURE =
   process.env.SMTP_SECURE === undefined
     ? SMTP_PORT === 465
     : process.env.SMTP_SECURE === "true";
-const SMTP_USER = process.env.SMTP_USER || process.env.EMAIL_USER;
-const SMTP_PASS = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-const MAIL_FROM = process.env.MAIL_FROM || SMTP_USER;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const MAIL_FROM = process.env.EMAIL_USER || "alert@humancareconnect.co";
 
-const isGmailTransport = (host) => /(^|\.)gmail\.com$/i.test(host);
+const looksLikeAwsAccessKeyId = (value) => /^(A3T|AKIA|ASIA)[A-Z0-9]{16,}$/.test(String(value || "").trim());
+const looksLikeSesIamUserName = (value) => /^ses-smtp-user[.\w-]*$/i.test(String(value || "").trim());
+
+const validateSesSmtpCredentials = () => {
+  if (looksLikeSesIamUserName(SMTP_USER)) {
+    throw new Error(
+      "Invalid SES SMTP_USER. Use the SES SMTP username/access key ID, not the IAM user name shown in AWS."
+    );
+  }
+  if (looksLikeAwsAccessKeyId(SMTP_PASS)) {
+    throw new Error(
+      "Invalid SES SMTP_PASS. Use the generated SES SMTP password, not the AWS access key ID."
+    );
+  }
+};
 
 const createTransporter = (overrides = {}) => {
-  if (!SMTP_USER || !SMTP_PASS) {
-    throw new Error("Email service is not configured. Set SMTP_USER/SMTP_PASS or EMAIL_USER/EMAIL_PASS.");
+  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !MAIL_FROM) {
+    throw new Error("AWS SES SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and EMAIL_USER.");
   }
+  validateSesSmtpCredentials();
 
   return nodemailer.createTransport({
     host: overrides.host || SMTP_HOST,
     port: overrides.port || SMTP_PORT,
-    secure: overrides.secure ?? SMTP_SECURE,
+    secure: Object.prototype.hasOwnProperty.call(overrides, "secure")
+      ? overrides.secure
+      : SMTP_SECURE,
     auth: {
       user: SMTP_USER,
       pass: SMTP_PASS,
@@ -28,25 +45,20 @@ const createTransporter = (overrides = {}) => {
   });
 };
 
-const shouldRetryWithGmail587 = (err) =>
-  isGmailTransport(SMTP_HOST) &&
-  SMTP_PORT === 465 &&
-  ["ECONNECTION", "ETIMEDOUT", "ESOCKET", "ECONNRESET", "ECONNREFUSED"].includes(err?.code);
-
-const sendMailWithFallback = async (message) => {
+const sendSesMail = async (message) => {
   try {
     const transporter = createTransporter();
     return await transporter.sendMail(message);
   } catch (err) {
-    if (!shouldRetryWithGmail587(err)) throw err;
-
-    console.warn("Primary Gmail SMTP send failed on port 465; retrying with STARTTLS port 587.", {
+    console.error("AWS SES SMTP send failed:", {
       code: err.code,
       command: err.command,
+      responseCode: err.responseCode,
+      response: err.response,
+      to: message.to,
+      subject: message.subject,
     });
-
-    const fallbackTransporter = createTransporter({ port: 587, secure: false });
-    return fallbackTransporter.sendMail(message);
+    throw err;
   }
 };
 
@@ -191,7 +203,7 @@ const sendOTPEmail = async (to, otp, type = "register") => {
       ? "Humancare Connect — Email Verification OTP"
       : "Humancare Connect — Password Reset OTP";
 
-  await sendMailWithFallback({
+  await sendSesMail({
     from: `"HumanCare Connect" <${MAIL_FROM}>`,
     to,
     subject,
@@ -200,7 +212,7 @@ const sendOTPEmail = async (to, otp, type = "register") => {
 };
 
 const sendEmail = async ({ to, subject, text, html }) => {
-  await sendMailWithFallback({
+  await sendSesMail({
     from: `"HumanCare Connect" <${MAIL_FROM}>`,
     to,
     subject,

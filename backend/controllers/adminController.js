@@ -26,12 +26,25 @@ const inferProgressFromFields = (enrollment) => {
 };
 
 const deriveApplicationStatus = (enrollment) => {
-  if (enrollment.approvalStatus === "approved") return "approved";
-  if (enrollment.approvalStatus === "rejected") return "rejected";
-  if (enrollment.formCompleted) return "submitted";
-  const completed = Number(enrollment.completedSteps || 0);
-  if (completed >= 4) return "pending_review";
-  return "in_progress";
+  if (enrollment.approvalStatus === "approved") return "Approved";
+  if (enrollment.approvalStatus === "rejected") return "Rejected";
+  return "Pending";
+};
+
+const normalizeApplicationStatus = (value, enrollment) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "approved") return "Approved";
+  if (normalized === "rejected") return "Rejected";
+  if (normalized === "pending") return "Pending";
+  return deriveApplicationStatus(enrollment);
+};
+
+const approvalStatusFromApplicationStatus = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "approved") return "approved";
+  if (normalized === "rejected") return "rejected";
+  if (normalized === "pending") return "pending";
+  return null;
 };
 
 const normalizeEnrollmentWorkflow = (enrollment) => {
@@ -42,7 +55,10 @@ const normalizeEnrollmentWorkflow = (enrollment) => {
   const currentStep = Number.isFinite(Number(enrollment.currentStep))
     ? Number(enrollment.currentStep)
     : fallbackProgress.currentStep;
-  const applicationStatus = enrollment.applicationStatus || deriveApplicationStatus({ ...enrollment, completedSteps });
+  const applicationStatus = normalizeApplicationStatus(
+    enrollment.applicationStatus,
+    { ...enrollment, completedSteps }
+  );
   return {
     ...enrollment,
     completedSteps,
@@ -100,7 +116,7 @@ const approveDoctor = async (req, res) => {
     enrollment.completedSteps = 5;
     enrollment.currentStep = 5;
     enrollment.currentStepLabel = STEP_LABELS[4];
-    enrollment.applicationStatus = "approved";
+    enrollment.applicationStatus = "Approved";
     enrollment.pendingRequestType = "none";
     enrollment.profileUpdateRequestedAt = undefined;
     enrollment.profileDeleteRequestStatus = "none";
@@ -133,7 +149,7 @@ const rejectDoctor = async (req, res) => {
 
     enrollment.approvalStatus = "rejected";
     enrollment.verified = false;
-    enrollment.applicationStatus = "rejected";
+    enrollment.applicationStatus = "Rejected";
     enrollment.updatedAt = new Date();
     await enrollment.save();
 
@@ -169,6 +185,7 @@ const approveDoctorDeleteRequest = async (req, res) => {
     enrollment.profileDeleteRequestStatus = "approved";
     enrollment.profileDeleteApprovedAt = new Date();
     enrollment.pendingRequestType = "none";
+    enrollment.applicationStatus = deriveApplicationStatus(enrollment);
     enrollment.updatedAt = new Date();
     await enrollment.save();
 
@@ -200,7 +217,7 @@ const rejectDoctorDeleteRequest = async (req, res) => {
     enrollment.profileDeleteRequestStatus = "rejected";
     enrollment.profileDeleteRejectedAt = new Date();
     enrollment.pendingRequestType = "none";
-    enrollment.applicationStatus = enrollment.approvalStatus === "approved" ? "approved" : deriveApplicationStatus(enrollment);
+    enrollment.applicationStatus = deriveApplicationStatus(enrollment);
     enrollment.updatedAt = new Date();
     await enrollment.save();
 
@@ -666,7 +683,24 @@ const updateDoctorByAdmin = async (req, res) => {
     enrollment.set(updates);
     enrollment.markModified("languagesKnown");
     if (availability !== undefined) enrollment.markModified("availability");
+    const syncedApprovalStatus = approvalStatusFromApplicationStatus(enrollment.applicationStatus);
+    if (syncedApprovalStatus) {
+      enrollment.approvalStatus = syncedApprovalStatus;
+      enrollment.verified = syncedApprovalStatus === "approved";
+      if (syncedApprovalStatus === "approved") {
+        enrollment.formCompleted = true;
+        enrollment.completedSteps = 5;
+        enrollment.currentStep = 5;
+        enrollment.currentStepLabel = STEP_LABELS[4];
+        enrollment.pendingRequestType = "none";
+      }
+    }
+    enrollment.applicationStatus = deriveApplicationStatus(enrollment);
     await enrollment.save();
+
+    if (enrollment.doctorId && ["approved", "rejected"].includes(enrollment.approvalStatus)) {
+      await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: enrollment.approvalStatus === "approved" });
+    }
 
     return res.status(200).json({
       msg: "Doctor profile updated successfully.",

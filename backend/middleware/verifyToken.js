@@ -24,6 +24,7 @@ const ACCESS_COOKIE_BY_ROLE = {
   doctor: "doctorToken",
   admin: "adminToken",
   superadmin: "adminToken",
+  paymentadmin: "adminToken",
 };
 
 const REFRESH_COOKIE_BY_ROLE = {
@@ -31,6 +32,7 @@ const REFRESH_COOKIE_BY_ROLE = {
   doctor: "doctorRefreshToken",
   admin: "adminRefreshToken",
   superadmin: "adminRefreshToken",
+  paymentadmin: "adminRefreshToken",
 };
 
 function extractBearerToken(req) {
@@ -91,7 +93,7 @@ async function validateDecodedSession(decoded) {
   const revoked = await RevokedToken.exists({ sessionId: String(decoded.sid), userId: String(decoded.id) });
   if (revoked) return false;
 
-  if (["user", "admin", "superadmin"].includes(decoded.role)) {
+  if (["user", "admin", "superadmin", "paymentadmin"].includes(decoded.role)) {
     const user = await User.findById(decoded.id).select("accountDisabled disabledAt role").lean();
     if (!user || user.accountDisabled) return false;
   }
@@ -225,6 +227,20 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
+const paymentAdminOnly = (req, res, next) => {
+  if (!["superadmin", "paymentadmin"].includes(req.user?.role)) {
+    recordSecurityIncident(req, {
+      type: "unauthorized_access",
+      severity: "high",
+      title: "Non-payment-admin attempted payment-link access",
+      resource: req.originalUrl,
+      metadata: { requiredRole: "paymentadmin", actualRole: req.user?.role || "anonymous" },
+    });
+    return res.status(403).json({ msg: "Access denied. Payment admins only." });
+  }
+  next();
+};
+
 const superAdminOnly = (req, res, next) => {
   if (req.user?.role !== "superadmin") {
     recordSecurityIncident(req, {
@@ -257,5 +273,6 @@ module.exports = {
   verifyAdminToken,
   doctorOnly,
   adminOnly,
+  paymentAdminOnly,
   superAdminOnly,
 };

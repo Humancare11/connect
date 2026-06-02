@@ -3,7 +3,7 @@ const express = require("express");
 const router  = express.Router();
 
 const {
-  register, login, doctorRegister, doctorLogin, adminLogin,
+  register, login, doctorRegister, doctorLogin, adminLogin, paymentAdminLogin,
   updateProfile, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
@@ -37,6 +37,7 @@ router.post("/google-doctor",     googleAuthDoctor);
 
 // ── Admin auth ────────────────────────────────────────────────────────────────
 router.post("/admin-login",  loginLimiter, adminLogin);
+router.post("/payment-admin-login", loginLimiter, paymentAdminLogin);
 router.post("/admin-logout", adminLogout);
 router.get ("/admin-me",     verifyAdminToken, adminMe);
 

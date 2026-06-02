@@ -6,10 +6,12 @@ const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken"
 const { assertPasswordAllowed, rememberPassword } = require("../utils/passwordPolicy");
 const { revokeUserSessions } = require("../utils/tokenRevocation");
 
+const MANAGED_ADMIN_ROLES = ["admin", "paymentadmin"];
+
 // GET /api/superadmin/admins — list all admins
 router.get("/admins", verifyAdminToken, superAdminOnly, async (req, res) => {
   try {
-    const admins = await User.find({ role: "admin" })
+    const admins = await User.find({ role: { $in: MANAGED_ADMIN_ROLES } })
       .select("-password")
       .sort({ createdAt: -1 });
     res.json(admins);
@@ -21,10 +23,12 @@ router.get("/admins", verifyAdminToken, superAdminOnly, async (req, res) => {
 // POST /api/superadmin/admins — create a new admin
 router.post("/admins", verifyAdminToken, superAdminOnly, async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role = "admin" } = req.body;
 
     if (!name || !email || !password)
       return res.status(400).json({ msg: "Name, email and password are required." });
+    if (!MANAGED_ADMIN_ROLES.includes(role))
+      return res.status(400).json({ msg: "Invalid admin role." });
 
     const passwordCheck = await assertPasswordAllowed({ userType: "user", password });
     if (!passwordCheck.valid)
@@ -39,7 +43,7 @@ router.post("/admins", verifyAdminToken, superAdminOnly, async (req, res) => {
       name,
       email: email.toLowerCase().trim(),
       password: hashed,
-      role: "admin",
+      role,
     });
     await rememberPassword({ userId: admin._id, userType: "user", passwordHash: hashed });
 
@@ -57,7 +61,7 @@ router.post("/admins", verifyAdminToken, superAdminOnly, async (req, res) => {
 // DELETE /api/superadmin/admins/:id — remove an admin
 router.delete("/admins/:id", verifyAdminToken, superAdminOnly, async (req, res) => {
   try {
-    const admin = await User.findOneAndDelete({ _id: req.params.id, role: "admin" });
+    const admin = await User.findOneAndDelete({ _id: req.params.id, role: { $in: MANAGED_ADMIN_ROLES } });
     if (!admin) return res.status(404).json({ msg: "Admin not found." });
     await revokeUserSessions(admin._id, "account_disabled");
     res.json({ msg: "Admin removed." });

@@ -8,7 +8,7 @@ export default function SuperAdminDashboard() {
   const { admin: user, loading: authLoading, logout: contextLogout } = useAdmin();
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "admin" });
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [creating, setCreating] = useState(false);
@@ -39,8 +39,8 @@ export default function SuperAdminDashboard() {
     try {
       const res = await api.post("/api/superadmin/admins", form);
       setAdmins((prev) => [res.data.admin, ...prev]);
-      setForm({ name: "", email: "", password: "" });
-      setFormSuccess("Admin created successfully!");
+      setForm({ name: "", email: "", password: "", role: "admin" });
+      setFormSuccess(form.role === "paymentadmin" ? "Payment Admin created successfully!" : "Admin created successfully!");
       setTimeout(() => setFormSuccess(""), 4000);
     } catch (err) {
       setFormError(err.response?.data?.msg || "Failed to create admin.");
@@ -167,6 +167,17 @@ export default function SuperAdminDashboard() {
                     disabled={creating}
                   />
                 </div>
+                <div className="sa-field">
+                  <label>Role</label>
+                  <select
+                    value={form.role}
+                    onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    disabled={creating}
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="paymentadmin">Payment Admin</option>
+                  </select>
+                </div>
               </div>
               <button type="submit" className="sa-create-btn" disabled={creating}>
                 {creating ? "Creating…" : "+ Create Admin"}
@@ -186,7 +197,7 @@ export default function SuperAdminDashboard() {
                 <table className="dash-table">
                   <thead>
                     <tr>
-                      {["Name", "Email", "Created On", "Action"].map((h) => <th key={h}>{h}</th>)}
+                      {["Name", "Email", "Role", "Created On", "Action"].map((h) => <th key={h}>{h}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -194,6 +205,7 @@ export default function SuperAdminDashboard() {
                       <tr key={a._id} className={i % 2 === 0 ? "" : "alt"}>
                         <td className="bold">{a.name}</td>
                         <td className="muted">{a.email}</td>
+                        <td className="muted">{a.role === "paymentadmin" ? "Payment Admin" : "Admin"}</td>
                         <td className="muted">{new Date(a.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</td>
                         <td>
                           <button
