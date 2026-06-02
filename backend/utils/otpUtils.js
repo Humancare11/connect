@@ -25,8 +25,13 @@ const createAndSendOTP = async (email, type, role = "user") => {
   const code      = generateCode();
   const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
 
-  await OTP.create({ email: clean, otpHash: hashOTP(code), type, role, expiresAt });
-  await sendOTPEmail(clean, code, type);
+  const record = await OTP.create({ email: clean, otpHash: hashOTP(code), type, role, expiresAt });
+  try {
+    await sendOTPEmail(clean, code, type);
+  } catch (err) {
+    await OTP.deleteOne({ _id: record._id });
+    throw err;
+  }
 };
 
 // Returns { valid: true } on success or { valid: false, msg: "..." } on failure.
