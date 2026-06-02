@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { paypalFetch } = require("../utils/paypal");
 const { sendEmail } = require("../utils/sendEmail");
+const { recordSecurityIncident } = require("../utils/securityMonitor");
 
 async function resolveDoctorId(value) {
   if (!value) return null;
@@ -394,6 +395,16 @@ const getAllAppointments = async (req, res) => {
         },
       };
     });
+
+    if (enhancedAppointments.length >= 100) {
+      await recordSecurityIncident(req, {
+        type: "large_data_export",
+        severity: "medium",
+        title: "Large appointment dataset accessed",
+        resource: "Appointment",
+        metadata: { count: enhancedAppointments.length, endpoint: req.originalUrl },
+      });
+    }
 
     res.status(200).json(enhancedAppointments);
   } catch (error) {

@@ -27,6 +27,12 @@ export default function AdminAppointments() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAppt, setModalAppt] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, ok = true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   useEffect(() => {
     api.get("/api/appointments/admin/all")
@@ -77,11 +83,11 @@ export default function AdminAppointments() {
         setModalAppt(null);
       }
 
-      alert("Doctor reassigned successfully. The patient has been notified by email.");
+      showToast("Doctor reassigned successfully. The patient has been notified by email.");
     } catch (error) {
       console.error(error);
       const message = error?.response?.data?.msg || "Could not change doctor.";
-      alert(message);
+      showToast(message, false);
     } finally {
       setReassigningId(null);
     }
@@ -113,6 +119,11 @@ export default function AdminAppointments() {
 
   return (
     <div>
+      {toast && (
+        <div className={`adp-toast ${toast.ok ? "adp-toast--ok" : "adp-toast--err"}`}>
+          <span>{toast.ok ? "✓" : "!"}</span> {toast.msg}
+        </div>
+      )}
       <div className="adp-header">
         <span className="adp-eyebrow">Admin Panel</span>
         <h1 className="adp-title">Appointments</h1>

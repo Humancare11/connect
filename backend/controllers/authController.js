@@ -4,19 +4,54 @@ const jwt        = require("jsonwebtoken");
 const User       = require("../models/User");
 const Doctor     = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
+const Consent    = require("../models/Consent");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
-const { COOKIE_OPTS }                     = require("../middleware/verifyToken");
+const Session    = require("../models/Session");
+const {
+  COOKIE_OPTS,
+  REFRESH_COOKIE_OPTS,
+  REFRESH_COOKIE_BY_ROLE,
+  ACCESS_COOKIE_BY_ROLE,
+  issueAuthCookies,
+  clearAuthCookies,
+  signAccessToken,
+  signRefreshToken,
+  INACTIVITY_TIMEOUT_MS,
+  REFRESH_TOKEN_MS,
+} = require("../middleware/verifyToken");
+const { logAudit, getIp }                 = require("../utils/auditLogger");
+const { assertPasswordAllowed, rememberPassword, validatePasswordStrength } = require("../utils/passwordPolicy");
+const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
+const { recordFailedLogin, recordSecurityIncident } = require("../utils/securityMonitor");
 
-// ── helpers ───────────────────────────────────────────
-const generateToken = (user) =>
-  jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
+const passwordError = (res, result) => res.status(400).json({ msg: result.errors.join(" ") });
+const DOB_MIN_YEAR = 1900;
 
-const cookieName = (role) => {
-  if (role === "admin" || role === "superadmin") return "adminToken";
-  if (role === "doctor") return "doctorToken";
-  return "userToken";
+const validateDob = (dob) => {
+  if (!dob) return { valid: false, msg: "Date of Birth is required." };
+
+  const value = String(dob).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return { valid: false, msg: "Date of Birth must be a valid date." };
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+    return { valid: false, msg: "Date of Birth must be a valid date." };
+  }
+
+  const today = new Date();
+  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  if (date > todayUtc) return { valid: false, msg: "Date of Birth cannot be in the future." };
+  if (date.getUTCFullYear() < DOB_MIN_YEAR) {
+    return { valid: false, msg: `Date of Birth must be in or after ${DOB_MIN_YEAR}.` };
+  }
+
+  return { valid: true };
 };
 
+// ── helpers ───────────────────────────────────────────
 const safeUser = (user) => ({
   _id:             user._id,
   name:            user.name,
@@ -66,8 +101,21 @@ const ensureDoctorEnrollment = async (doctor) => {
 // ════════════════════════════════════════════
 const sendRegisterOTP = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, password, dob, privacyConsent, hipaaConsent } = req.body;
     if (!email) return res.status(400).json({ msg: "Email is required." });
+    if (password !== undefined) {
+      const passwordCheck = validatePasswordStrength(password);
+      if (!passwordCheck.valid) return passwordError(res, passwordCheck);
+    }
+    if (dob !== undefined) {
+      const dobCheck = validateDob(dob);
+      if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
+    }
+    if (privacyConsent !== undefined || hipaaConsent !== undefined) {
+      if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent)) {
+        return res.status(400).json({ msg: "Terms, Privacy Policy, and HIPAA consent must be accepted to register." });
+      }
+    }
 
     const clean = email.toLowerCase().trim();
     const exists = await User.findOne({ email: clean });
@@ -86,23 +134,27 @@ const sendRegisterOTP = async (req, res) => {
 // ════════════════════════════════════════════
 const register = async (req, res) => {
   try {
-    const { name, email, password, mobile, dob, gender, country, otp } = req.body;
+    const { name, email, password, mobile, dob, gender, country, otp, privacyConsent, hipaaConsent } = req.body;
 
     if (!name || !email || !password || !otp)
       return res.status(400).json({ msg: "Name, email, password and OTP are required." });
+    if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent))
+      return res.status(400).json({ msg: "Terms, Privacy Policy, and HIPAA consent must be accepted to register." });
+    const dobCheck = validateDob(dob);
+    if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
 
     const clean = email.toLowerCase().trim();
 
     const exists = await User.findOne({ email: clean });
     if (exists) return res.status(409).json({ msg: "Email already registered." });
 
+    const passwordCheck = await assertPasswordAllowed({ userType: "user", password });
+    if (!passwordCheck.valid) return passwordError(res, passwordCheck);
+
     const check = await verifyOTPCode(clean, otp, "register", "user");
     if (!check.valid) return res.status(400).json({ msg: check.msg });
 
-    const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim()
-      || req.socket?.remoteAddress
-      || req.ip
-      || "";
+    const ip = getIp(req);
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
@@ -110,10 +162,24 @@ const register = async (req, res) => {
       mobile: mobile || "", dob: dob || "", gender: gender || "",
       country: country || "", registrationIp: ip,
     });
+    await rememberPassword({ userId: user._id, userType: "user", passwordHash: hashed });
 
-    const token = generateToken(user);
-    res.cookie("userToken", token, COOKIE_OPTS);
-    return res.status(201).json({ msg: "Registration successful.", token, user: safeUser(user) });
+    await recordConsent(req, user);
+
+    await issueAuthCookies(res, user);
+
+    await logAudit(req, {
+      action: "REGISTER",
+      resource: "User",
+      resourceId: user._id,
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: "user",
+      details: { gender: user.gender, country: user.country },
+    });
+
+    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user) });
   } catch (err) {
     console.error("register error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -129,20 +195,107 @@ const login = async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ msg: "Email and password are required." });
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) return res.status(400).json({ msg: "Invalid email or password." });
+    const clean = email.toLowerCase().trim();
+    const user  = await User.findOne({ email: clean });
 
-    if (user.role === "doctor")
+    if (!user) {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "User",
+        userEmail: clean,
+        success: false,
+        details: { reason: "Email not found" },
+      });
+      await recordFailedLogin(req, { email: clean, portal: "patient" });
+      return res.status(400).json({ msg: "Invalid email or password." });
+    }
+
+    if (user.accountDisabled) {
+      await recordSecurityIncident(req, {
+        type: "unauthorized_access",
+        severity: "high",
+        title: "Disabled account login attempt",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { portal: "patient", disabledAt: user.disabledAt },
+      });
+      return res.status(403).json({ msg: "This account is disabled. Contact support." });
+    }
+
+    if (user.role === "doctor") {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "User",
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: user.role,
+        success: false,
+        details: { reason: "Wrong portal — doctor using patient login" },
+      });
+      await recordSecurityIncident(req, {
+        type: "privilege_escalation",
+        severity: "high",
+        title: "Doctor account used patient login portal",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { portal: "patient" },
+      });
       return res.status(403).json({ msg: "Please use the Doctor Login page." });
-    if (user.role === "superadmin")
+    }
+    if (user.role === "superadmin") {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "User",
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: user.role,
+        success: false,
+        details: { reason: "Wrong portal — superadmin using patient login" },
+      });
+      await recordSecurityIncident(req, {
+        type: "privilege_escalation",
+        severity: "high",
+        title: "Superadmin account used patient login portal",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { portal: "patient" },
+      });
       return res.status(403).json({ msg: "Please use the Super Admin login." });
+    }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ msg: "Invalid email or password." });
+    if (!match) {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "User",
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: user.role,
+        success: false,
+        details: { reason: "Incorrect password" },
+      });
+      await recordFailedLogin(req, { email: clean, userId: user._id, userRole: user.role, portal: "patient" });
+      return res.status(400).json({ msg: "Invalid email or password." });
+    }
 
-    const token = generateToken(user);
-    res.cookie("userToken", token, COOKIE_OPTS);
-    return res.json({ msg: "Login successful.", token, user: safeUser(user) });
+    await issueAuthCookies(res, user);
+
+    await logAudit(req, {
+      action: "LOGIN_SUCCESS",
+      resource: "User",
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+    });
+
+    return res.json({ msg: "Login successful.", user: safeUser(user) });
   } catch (err) {
     console.error("login error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -160,7 +313,8 @@ const doctorRegister = async (req, res) => {
     if (!specialty)     return res.status(400).json({ msg: "Specialization is required." });
     if (!degree)        return res.status(400).json({ msg: "Degree / qualification is required." });
     if (!licenseNumber) return res.status(400).json({ msg: "Medical license number is required." });
-    if (password.length < 6) return res.status(400).json({ msg: "Password must be at least 6 characters." });
+    const passwordCheck = await assertPasswordAllowed({ userType: "user", password });
+    if (!passwordCheck.valid) return passwordError(res, passwordCheck);
 
     const clean = email.toLowerCase().trim();
     const exists = await User.findOne({ email: clean });
@@ -175,6 +329,7 @@ const doctorRegister = async (req, res) => {
       consultationFee: consultationFee ? Number(consultationFee) : 0,
       bio: bio || "", isVerified: false,
     });
+    await rememberPassword({ userId: doctor._id, userType: "user", passwordHash: hashed });
 
     return res.status(201).json({ msg: "Doctor registration successful. Please login.", user: safeUser(doctor) });
   } catch (err) {
@@ -195,22 +350,25 @@ const doctorLogin = async (req, res) => {
       return res.status(400).json({ msg: "Email and password are required." });
 
     const doctor = await User.findOne({ email });
-    if (!doctor)
+    if (!doctor) {
+      await recordFailedLogin(req, { email, portal: "legacy-doctor" });
       return res.status(400).json({ msg: "Invalid email or password." });
+    }
 
     if (doctor.role !== "doctor")
       return res.status(403).json({ msg: "This account is not registered as a doctor." });
 
     const match = await bcrypt.compare(password, doctor.password);
-    if (!match) return res.status(400).json({ msg: "Invalid email or password." });
+    if (!match) {
+      await recordFailedLogin(req, { email, userId: doctor._id, userRole: doctor.role, portal: "legacy-doctor" });
+      return res.status(400).json({ msg: "Invalid email or password." });
+    }
 
-    const token = generateToken(doctor);
-    res.cookie("doctorToken", token, COOKIE_OPTS);
+    await issueAuthCookies(res, doctor);
 
     return res.json({
       msg: "Login successful.",
-      token,              // ✅ frontend saves this to localStorage
-      user: safeUser(doctor), // ✅ key is "user" (safeUser returns user object)
+      user: safeUser(doctor),
     });
   } catch (err) {
     console.error("doctorLogin error:", err);
@@ -226,16 +384,62 @@ const adminLogin = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ msg: "Email and password are required." });
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user || !["admin", "superadmin"].includes(user.role))
+    const clean = email.toLowerCase().trim();
+    const user  = await User.findOne({ email: clean });
+
+    if (!user || !["admin", "superadmin"].includes(user.role)) {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "Admin",
+        userEmail: clean,
+        success: false,
+        details: { reason: "Invalid admin credentials or not an admin" },
+      });
+      await recordFailedLogin(req, { email: clean, portal: "admin" });
       return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    if (user.accountDisabled) {
+      await recordSecurityIncident(req, {
+        type: "unauthorized_access",
+        severity: "high",
+        title: "Disabled admin login attempt",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { portal: "admin", disabledAt: user.disabledAt },
+      });
+      return res.status(403).json({ msg: "This account is disabled. Contact support." });
+    }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ msg: "Invalid email or password." });
+    if (!match) {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "Admin",
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: user.role,
+        success: false,
+        details: { reason: "Incorrect password" },
+      });
+      await recordFailedLogin(req, { email: clean, userId: user._id, userRole: user.role, portal: "admin" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
 
-    const token = generateToken(user);
-    res.cookie("adminToken", token, COOKIE_OPTS);
-    return res.json({ msg: "Login successful.", token, user: safeUser(user) });
+    await issueAuthCookies(res, user);
+
+    await logAudit(req, {
+      action: "LOGIN_SUCCESS",
+      resource: "Admin",
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+    });
+
+    return res.json({ msg: "Login successful.", user: safeUser(user) });
   } catch (err) {
     console.error("adminLogin error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -261,8 +465,17 @@ const updateProfile = async (req, res) => {
     );
     if (!updated) return res.status(404).json({ msg: "User not found." });
 
-    const token = generateToken(updated);
-    res.cookie("userToken", token, COOKIE_OPTS);
+    await logAudit(req, {
+      action: "PROFILE_UPDATE",
+      resource: "User",
+      resourceId: updated._id,
+      userId: updated._id,
+      userName: updated.name,
+      userEmail: updated.email,
+      userRole: updated.role,
+      details: { updatedFields: ["name", "email", "mobile", "dob", "gender", "country"] },
+    });
+
     return res.json({ msg: "Profile updated successfully.", user: safeUser(updated) });
   } catch (err) {
     console.error("updateProfile error:", err);
@@ -275,7 +488,7 @@ const updateProfile = async (req, res) => {
 // ════════════════════════════════════════════
 const googleAuthUser = async (req, res) => {
   try {
-    const { accessToken, mobile, dob, gender, country } = req.body;
+    const { accessToken, mobile, dob, gender, country, privacyConsent, hipaaConsent } = req.body;
     if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
     // Verify token and fetch profile via Google's userinfo endpoint
@@ -289,23 +502,23 @@ const googleAuthUser = async (req, res) => {
     if (user) {
       if (user.role === "doctor") return res.status(403).json({ msg: "Please use the Doctor Login page." });
       if (!user.googleId) { user.googleId = googleId; await user.save(); }
-      const token = generateToken(user);
-      res.cookie("userToken", token, COOKIE_OPTS);
-      return res.json({ msg: "Login successful.", token, user: safeUser(user) });
+      await issueAuthCookies(res, user);
+      return res.json({ msg: "Login successful.", user: safeUser(user) });
     }
 
     if (!mobile || !dob || !gender || !country)
       return res.status(200).json({ isNewUser: true, googleName: name, googleEmail: email });
+    if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent))
+      return res.status(400).json({ msg: "Terms, Privacy Policy, and HIPAA consent must be accepted to register." });
+    const dobCheck = validateDob(dob);
+    if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
 
-    const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim()
-      || req.socket?.remoteAddress
-      || req.ip
-      || "";
+    const ip = getIp(req);
 
     user = await User.create({ name, email, googleId, role: "user", mobile, dob, gender, country, registrationIp: ip });
-    const newToken = generateToken(user);
-    res.cookie("userToken", newToken, COOKIE_OPTS);
-    return res.status(201).json({ msg: "Registration successful.", token: newToken, user: safeUser(user) });
+    await recordConsent(req, user);
+    await issueAuthCookies(res, user);
+    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user) });
   } catch (err) {
     console.error("googleAuthUser error:", err);
     return res.status(500).json({ msg: "Google Sign-In failed. Please try again." });
@@ -337,15 +550,9 @@ const googleAuthDoctor = async (req, res) => {
 
     await ensureDoctorEnrollment(doctor);
 
-    const token = jwt.sign(
-      { id: doctor._id, email: doctor.email, role: "doctor" },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-    res.cookie("doctorToken", token, COOKIE_OPTS);
+    await issueAuthCookies(res, { ...doctor.toObject(), role: "doctor" });
     return res.status(isNewUser ? 201 : 200).json({
       message: isNewUser ? "Registration successful." : "Login successful.",
-      token,
       isNewUser,
       doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
     });
@@ -410,8 +617,6 @@ const resetPasswordHandler = async (req, res) => {
     const { resetToken, newPassword } = req.body;
     if (!resetToken || !newPassword)
       return res.status(400).json({ msg: "Reset token and new password are required." });
-    if (newPassword.length < 6)
-      return res.status(400).json({ msg: "Password must be at least 6 characters." });
 
     let decoded;
     try {
@@ -425,8 +630,18 @@ const resetPasswordHandler = async (req, res) => {
     const user = await User.findOne({ email: decoded.email });
     if (!user) return res.status(404).json({ msg: "Account not found." });
 
+    const passwordCheck = await assertPasswordAllowed({
+      userId: user._id,
+      userType: "user",
+      password: newPassword,
+      currentHash: user.password,
+    });
+    if (!passwordCheck.valid) return passwordError(res, passwordCheck);
+
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
+    await rememberPassword({ userId: user._id, userType: "user", passwordHash: user.password });
+    await revokeUserSessions(user._id, "password_reset");
     return res.json({ msg: "Password reset successfully." });
   } catch (err) {
     console.error("resetPasswordHandler error:", err);
@@ -444,8 +659,6 @@ const changePassword = async (req, res) => {
 
     if (!currentPassword || !newPassword)
       return res.status(400).json({ msg: "Current password and new password are required." });
-    if (newPassword.length < 6)
-      return res.status(400).json({ msg: "New password must be at least 6 characters." });
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ msg: "User not found." });
@@ -455,8 +668,25 @@ const changePassword = async (req, res) => {
     const match = await bcrypt.compare(currentPassword, user.password);
     if (!match) return res.status(400).json({ msg: "Current password is incorrect." });
 
+    const passwordCheck = await assertPasswordAllowed({
+      userId: user._id,
+      userType: "user",
+      password: newPassword,
+      currentHash: user.password,
+    });
+    if (!passwordCheck.valid) return passwordError(res, passwordCheck);
+
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
+    await rememberPassword({ userId: user._id, userType: "user", passwordHash: user.password });
+    await revokeUserSessions(user._id, "password_change");
+
+    await logAudit(req, {
+      action: "PASSWORD_CHANGE",
+      resource: "User",
+      resourceId: user._id,
+    });
+
     return res.json({ msg: "Password changed successfully." });
   } catch (err) {
     console.error("changePassword error:", err);
@@ -471,9 +701,7 @@ const me = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found." });
-    const token = generateToken(user);
-    res.cookie("userToken", token, COOKIE_OPTS);
-    return res.json({ user: safeUser(user), token });
+    return res.json({ user: safeUser(user) });
   } catch (err) {
     return res.status(500).json({ msg: "Server error." });
   }
@@ -490,13 +718,90 @@ const adminMe = async (req, res) => {
   }
 };
 
-const logout = (req, res) => {
-  res.clearCookie("userToken", COOKIE_OPTS);
+const hasAcceptedConsent = (value) => value === true || value === "true" || value === "accepted";
+
+const recordConsent = async (req, user) => {
+  const ipAddress = getIp(req);
+  const acceptedAt = new Date();
+
+  await Consent.create({
+    userId: user._id,
+    status: "accepted",
+    policyVersion: CONSENT_POLICY_VERSION,
+    acceptedAt,
+    ipAddress,
+    userAgent: req.headers["user-agent"] || "",
+  });
+
+  user.privacyConsent = {
+    accepted: true,
+    acceptedAt,
+    policyVersion: CONSENT_POLICY_VERSION,
+    ipAddress,
+  };
+  await user.save();
+
+  await logAudit(req, {
+    action: "PATIENT_CONSENT_ACCEPTED",
+    resource: "Consent",
+    resourceId: user._id,
+    userId: user._id,
+    userName: user.name,
+    userEmail: user.email,
+    userRole: user.role,
+    patientId: user._id,
+    details: { policyVersion: CONSENT_POLICY_VERSION },
+  });
+};
+
+const refresh = async (req, res) => {
+  const candidates = Object.entries(REFRESH_COOKIE_BY_ROLE)
+    .map(([role, name]) => ({ role, token: req.cookies?.[name] }))
+    .filter((item) => item.token);
+
+  for (const { role, token } of candidates) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.type !== "refresh" || decoded.role !== role) continue;
+
+      const session = await Session.findById(decoded.sid);
+      if (!session || session.revokedAt) continue;
+      if (session.userId !== String(decoded.id) || session.role !== decoded.role) continue;
+
+      if (Date.now() - session.lastActivityAt.getTime() > INACTIVITY_TIMEOUT_MS) {
+        session.revokedAt = new Date();
+        await session.save();
+        clearAuthCookies(res, decoded.role);
+        return res.status(401).json({ msg: "Session timed out." });
+      }
+
+      session.lastActivityAt = new Date();
+      session.expiresAt = new Date(Date.now() + REFRESH_TOKEN_MS);
+      await session.save();
+
+      const identity = { id: decoded.id, _id: decoded.id, email: decoded.email, role: decoded.role };
+      res.cookie(ACCESS_COOKIE_BY_ROLE[decoded.role], signAccessToken(identity, session._id), COOKIE_OPTS);
+      res.cookie(REFRESH_COOKIE_BY_ROLE[decoded.role], signRefreshToken(identity, session._id), REFRESH_COOKIE_OPTS);
+      return res.json({ msg: "Session refreshed." });
+    } catch {
+      // Try the next refresh cookie.
+    }
+  }
+
+  return res.status(401).json({ msg: "No valid refresh session." });
+};
+
+const logout = async (req, res) => {
+  await logAudit(req, { action: "LOGOUT", resource: "User" });
+  if (req.user?.sid) await revokeSession(req.user.sid, "logout");
+  clearAuthCookies(res, "user");
   res.json({ msg: "Logged out." });
 };
 
-const adminLogout = (req, res) => {
-  res.clearCookie("adminToken", COOKIE_OPTS);
+const adminLogout = async (req, res) => {
+  await logAudit(req, { action: "LOGOUT", resource: "Admin" });
+  if (req.user?.sid) await revokeSession(req.user.sid, "logout");
+  clearAuthCookies(res, req.user?.role === "superadmin" ? "superadmin" : "admin");
   res.json({ msg: "Logged out." });
 };
 
@@ -504,5 +809,6 @@ module.exports = {
   register, login, doctorRegister, doctorLogin, adminLogin,
   updateProfile, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
-  changePassword, me, adminMe, logout, adminLogout,
+  changePassword, me, adminMe, refresh, logout, adminLogout,
 };
+

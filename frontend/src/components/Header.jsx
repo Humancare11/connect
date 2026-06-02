@@ -23,6 +23,11 @@ export default function Header() {
     { label: "Blogs", link: "/blogs" },
   ];
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40);
+    };
+
 
   /* ==================== NAV PILL LOGIC ==================== */
 useEffect(() => {

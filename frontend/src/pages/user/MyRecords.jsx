@@ -5,6 +5,7 @@ import api from "../../api";
 import socket from "../../socket";
 import { useAuth } from "../../context/AuthContext";
 import { PrescriptionSlip, downloadPrescriptionPDF } from "../../components/PrescriptionSlip";
+import { MedicalCertificateSlip, downloadCertificatePDF } from "../../components/MedicalCertificateSlip";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -64,12 +65,29 @@ function PrescriptionCard({ rx, patient }) {
   );
 }
 
-// ── Certificate Card (unchanged from original) ────────────────────────────────
+// ── Certificate Card with letterhead view ─────────────────────────────────────
 
-function CertificateCard({ cert }) {
-  const [open, setOpen] = useState(false);
+function CertificateCard({ cert, patient }) {
+  const [open,        setOpen]        = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const slipRef = useRef(null);
+
+  const handleDownload = async (e) => {
+    e.stopPropagation();
+    if (!slipRef.current) return;
+    setDownloading(true);
+    try {
+      const name = patient?.name?.replace(/\s+/g, "_") || "patient";
+      const date = cert.issuedDate || (cert.createdAt ? new Date(cert.createdAt).toISOString().split("T")[0] : "cert");
+      await downloadCertificatePDF(slipRef.current, `certificate_${name}_${date}.pdf`);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="mr-card mr-card--cert">
+      {/* ── Collapsed header ── */}
       <div className="mr-card-top" onClick={() => setOpen((p) => !p)}>
         <div className="mr-card-icon">📄</div>
         <div className="mr-card-meta">
@@ -78,40 +96,21 @@ function CertificateCard({ cert }) {
             Dr. {cert.doctorId?.name || "—"} &nbsp;·&nbsp; Issued: {formatDate(cert.issuedDate)}
           </p>
         </div>
+        <button
+          className="mr-download-btn"
+          onClick={handleDownload}
+          disabled={downloading}
+          title="Download PDF"
+        >
+          {downloading ? "…" : "⬇ PDF"}
+        </button>
         <span className={`mr-chevron ${open ? "mr-chevron--open" : ""}`}>›</span>
       </div>
 
-      {open && (
-        <div className="mr-card-body">
-          {cert.recommendation && (
-            <div className="mr-info-block">
-              <span className="mr-info-label">Recommendation</span>
-              <p className="mr-info-value">{cert.recommendation}</p>
-            </div>
-          )}
-          {(cert.restFromDate || cert.restToDate) && (
-            <div className="mr-info-block">
-              <span className="mr-info-label">Rest Period</span>
-              <p className="mr-info-value">
-                {formatDate(cert.restFromDate)} → {formatDate(cert.restToDate)}
-              </p>
-            </div>
-          )}
-          {cert.notes && (
-            <div className="mr-info-block">
-              <span className="mr-info-label">Notes</span>
-              <p className="mr-info-value">{cert.notes}</p>
-            </div>
-          )}
-          <div className="mr-info-block">
-            <span className="mr-info-label">Issued by</span>
-            <p className="mr-info-value">
-              Dr. {cert.doctorId?.name || "—"}
-              {cert.doctorId?.email && ` · ${cert.doctorId.email}`}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Slip — always in DOM so ref is valid for PDF download */}
+      <div className={open ? "mr-slip-wrap" : "mr-slip-offscreen"}>
+        <MedicalCertificateSlip cert={cert} patient={patient} slipRef={slipRef} />
+      </div>
     </div>
   );
 }
@@ -259,7 +258,7 @@ export default function MyRecords() {
           </div>
         ) : (
           <div className="mr-list">
-            {certificates.map((cert) => <CertificateCard key={cert._id} cert={cert} />)}
+            {certificates.map((cert) => <CertificateCard key={cert._id} cert={cert} patient={user} />)}
           </div>
         )
       )}

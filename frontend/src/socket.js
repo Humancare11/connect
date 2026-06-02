@@ -7,13 +7,7 @@ const socket = io(import.meta.env.VITE_SOCKET_URL, {
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
   reconnectionAttempts: 5,
-  auth: (cb) => {
-    const token =
-      localStorage.getItem("doctorToken") ||
-      localStorage.getItem("token") ||
-      "";
-    cb({ token });
-  },
+  withCredentials: true,
 });
 
 export default socket;

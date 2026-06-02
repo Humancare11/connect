@@ -5,158 +5,60 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export function getTokenRole(token) {
-  try {
-    return JSON.parse(atob(token.split(".")[1]))?.role || "";
-  } catch {
-    return "";
-  }
-}
+let refreshPromise = null;
 
-function getTokenPayload(token) {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch {
-    return null;
-  }
-}
+api.interceptors.response.use(
+  (response) => {
+    if (response.data) response.data = _deepNormalizeUrls(response.data);
+    return response;
+  },
+  async (error) => {
+    const original = error.config;
+    const status = error.response?.status;
+    const url = original?.url || "";
 
-function isExpired(payload) {
-  return payload?.exp && payload.exp * 1000 <= Date.now();
-}
-
-function getToken(...keys) {
-  for (const key of keys) {
-    const token = localStorage.getItem(key);
-    if (!token) continue;
-
-    const payload = getTokenPayload(token);
-    if (!payload || isExpired(payload)) {
-      localStorage.removeItem(key);
-      continue;
+    if (status === 401 && original && !original._retry && !url.includes("/api/auth/refresh")) {
+      original._retry = true;
+      refreshPromise ||= api.post("/api/auth/refresh").finally(() => {
+        refreshPromise = null;
+      });
+      try {
+        await refreshPromise;
+        return api(original);
+      } catch {
+        window.dispatchEvent(new CustomEvent("hc:session-expired"));
+      }
     }
 
-    return token;
+    return Promise.reject(error);
   }
-  return "";
-}
-
-function getTokenForRole(role, ...keys) {
-  for (const key of keys) {
-    const token = localStorage.getItem(key);
-    if (!token) continue;
-
-    const payload = getTokenPayload(token);
-    if (!payload || isExpired(payload) || payload.role !== role) {
-      localStorage.removeItem(key);
-      continue;
-    }
-
-    return token;
-  }
-  return "";
-}
+);
 
 export function getUserAuthToken() {
-  return getTokenForRole("user", "userToken", "token");
+  return "";
 }
 
-function tokenForUrl(url = "") {
-  const path = url.startsWith("http") ? new URL(url).pathname : url;
-
-  if (
-    path.startsWith("/api/payments") ||
-    path.startsWith("/api/paypal") ||
-    path.startsWith("/api/appointments") ||
-    path.startsWith("/api/auth/me") ||
-    path.startsWith("/api/auth/logout") ||
-    path.startsWith("/api/auth/update-profile") ||
-    path.startsWith("/api/auth/change-password")
-  ) {
-    return getUserAuthToken();
-  }
-
-  if (path.startsWith("/api/doctor")) {
-    return getTokenForRole("doctor", "doctorToken", "token");
-  }
-
-  if (
-    path.startsWith("/api/admin") ||
-    path.startsWith("/api/superadmin") ||
-    path.startsWith("/api/auth/admin")
-  ) {
-    return getTokenForRole("admin", "adminToken", "token") || getTokenForRole("superadmin", "adminToken", "token");
-  }
-
-  return getToken("userToken", "doctorToken", "adminToken", "token");
-}
-
-// Auto-attach token to every request.
-// Do NOT override an Authorization header that was explicitly set by the caller
-// (e.g. VideoCall sends doctorToken directly to avoid a stale userToken taking over).
-api.interceptors.request.use((config) => {
-  if (!config.headers?.Authorization) {
-    const token = tokenForUrl(config.url);
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// ─────────────────────────────────────────────────────────────────
-// URL normalizer — rewrites any localhost / 127.0.0.1 file URLs
-// that were stored in the database during local development.
-// Runs transparently on every API response so no component changes
-// are needed.  In local dev (VITE_API_URL is localhost) it's a no-op.
-// ─────────────────────────────────────────────────────────────────
-const _apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
-const _isProduction = _apiBase.length > 0 && !/localhost|127\.0\.0\.1/.test(_apiBase);
+const _apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const UPLOAD_URL_RE = /^(https?:\/\/[^/]+)\/(?:api\/)?(uploads\/.+)$/;
+const UPLOAD_PATH_RE = /^\/(?:api\/)?(uploads\/.+)$/;
 
 function _deepNormalizeUrls(data) {
   if (!data) return data;
   if (typeof data === "string") {
-    // Only touch strings that look like an HTTP URL pointing at localhost
-    if (!data.startsWith("http://localhost") && !data.startsWith("http://127.")) {
-      return data;
-    }
-    try {
-      const u = new URL(data);
-      if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
-        return _apiBase + u.pathname + u.search + u.hash;
-      }
-    } catch {
-      /* not a valid URL — leave as-is */
-    }
+    const m = UPLOAD_URL_RE.exec(data) || UPLOAD_PATH_RE.exec(data);
+    if (m) return `${_apiBase}/api/${m[m.length - 1]}`;
     return data;
   }
   if (Array.isArray(data)) return data.map(_deepNormalizeUrls);
   if (typeof data === "object") {
-    // Avoid mutating the original; build a fresh object
     const out = {};
-    for (const [k, v] of Object.entries(data)) {
-      out[k] = _deepNormalizeUrls(v);
-    }
+    for (const [k, v] of Object.entries(data)) out[k] = _deepNormalizeUrls(v);
     return out;
   }
   return data;
 }
 
-if (_isProduction) {
-  api.interceptors.response.use((response) => {
-    if (response.data) {
-      response.data = _deepNormalizeUrls(response.data);
-    }
-    return response;
-  });
-}
-
-/**
- * Normalise a single file URL for use in <img src> or <a href>.
- * Converts any http://localhost:PORT/... URL to the production base URL.
- * Safe to call in components — returns the original string unchanged
- * when already a production URL or when running locally.
- */
 export function normalizeFileUrl(url) {
-  if (!url || !_isProduction) return url;
   return _deepNormalizeUrls(url);
 }
 

@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function AskQuestion() {
   const [question, setQuestion] = useState("");
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [formError, setFormError] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const fetchQuestions = async () => {
     try {
@@ -25,42 +28,32 @@ export default function AskQuestion() {
   }, []);
 
   const handlePostQuestion = async () => {
-    const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user"));
-
+    setFormError("");
     if (!question.trim()) {
-      alert("Please enter your question");
+      setFormError("Please enter your question before submitting.");
       return;
     }
 
-    if (!token) {
-      alert("Pehle login kariye");
+    if (!user) {
       navigate("/login");
       return;
     }
 
     try {
       setLoading(true);
-
       await api.post(
         "/api/qna/ask",
         {
           question: question.trim(),
           name: user?.name || "User",
           category: "General",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
-
       setQuestion("");
       navigate("/qna");
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.msg || "Question post failed");
+      setFormError(error.response?.data?.msg || "Failed to post question. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -70,17 +63,35 @@ export default function AskQuestion() {
     <div style={{ padding: "20px" }}>
       <h2>Ask Question</h2>
 
+      {formError && (
+        <div style={{
+          background: "#fef2f2",
+          border: "1px solid #fca5a5",
+          borderRadius: 8,
+          padding: "10px 14px",
+          marginBottom: 12,
+          fontSize: 13,
+          color: "#dc2626",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          maxWidth: 700,
+        }}>
+          <span>&#9888;</span> {formError}
+        </div>
+      )}
+
       <textarea
         value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="Apna question likhiye..."
+        onChange={(e) => { setQuestion(e.target.value); if (formError) setFormError(""); }}
+        placeholder="Type your question here..."
         rows={5}
         style={{
           width: "100%",
           maxWidth: "700px",
           padding: "10px",
           borderRadius: "8px",
-          border: "1px solid #ccc",
+          border: formError ? "1.5px solid #fca5a5" : "1px solid #ccc",
         }}
       />
       <br />
@@ -102,7 +113,7 @@ export default function AskQuestion() {
 
       <hr style={{ margin: "30px 0" }} />
 
-      <h3>Recent Questions & Answers</h3>
+      <h3>Recent Questions &amp; Answers</h3>
 
       {fetching ? (
         <p>Loading...</p>

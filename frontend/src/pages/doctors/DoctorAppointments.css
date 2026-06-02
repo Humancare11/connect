@@ -360,6 +360,15 @@
 .da-btn--confirm:hover    { background: rgba(245, 158, 11, 0.18); }
 .da-btn--confirm:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.da-btn--complete {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #6ee7b7;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.da-btn--complete:hover    { background: rgba(5, 150, 105, 0.12); }
+.da-btn--complete:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .da-btn--ghost {
     background: #f1f5f9;
     color: var(--text-2);

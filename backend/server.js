@@ -11,15 +11,27 @@ require("dotenv").config({
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const connectDB = require("./config/db");
 const http = require("http");
+const https = require("https");
 const { Server } = require("socket.io");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { randomInt } = require("crypto");
 const User = require("./models/User");
 const Appointment = require("./models/Appointment");
 const Doctor = require("./models/Doctor");
+const Session = require("./models/Session");
+const ChatMessage = require("./models/ChatMessage");
 const fs = require("fs");
+const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
+const { logAudit } = require("./utils/auditLogger");
+const { findUploadInGridFS, streamUploadFromGridFS } = require("./utils/uploadStorage");
+const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
+const { recordSecurityIncident } = require("./utils/securityMonitor");
+const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
+const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 
 const app = express();
 
@@ -73,7 +85,7 @@ const startServer = async () => {
     let newId;
     let taken = true;
     while (taken) {
-      newId = Math.floor(10000 + Math.random() * 90000);
+      newId = randomInt(10000, 100000);
       taken = await Doctor.exists({ doctorId: newId });
     }
     await Doctor.findByIdAndUpdate(doc._id, { doctorId: newId });
@@ -82,6 +94,9 @@ const startServer = async () => {
   if (doctorsWithoutId.length > 0) {
     console.log(`✅ Backfilled doctorId for ${doctorsWithoutId.length} doctor(s).`);
   }
+
+  await ensureRetentionDefaults();
+  scheduleRetentionCleanup();
 };
 
 // Allowed Origins
@@ -90,6 +105,33 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
 ].filter(Boolean);
+
+app.use(
+  helmet({
+    frameguard: { action: "deny" },
+    noSniff: true,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'none'"],
+        objectSrc: ["'none'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", ...allowedOrigins],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null,
+      },
+    },
+  })
+);
 
 // CORS Config
 const corsOptions = {
@@ -122,7 +164,217 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-app.use("/uploads", express.static(uploadsDir));
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function requestIdentities(req) {
+  const identities = [];
+  const seen = new Set();
+  const add = async (identity) => {
+    if (!identity?.id || !identity?.role) return;
+    if (identity.sid) {
+      const session = await Session.findById(identity.sid).select("userId role revokedAt").lean();
+      if (!session || session.revokedAt) return;
+      if (session.userId !== String(identity.id) || session.role !== identity.role) return;
+    }
+    const key = `${identity.role}:${identity.id}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    identities.push(identity);
+  };
+
+  await add(req.user);
+
+  for (const cookieName of ["userToken", "doctorToken", "adminToken"]) {
+    const token = req.cookies?.[cookieName];
+    if (!token) continue;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.type !== "refresh") await add(decoded);
+    } catch {
+      // Ignore stale cookies.
+    }
+  }
+
+  return identities;
+}
+
+async function canAccessUpload(req, filename) {
+  const identities = await requestIdentities(req);
+
+  const superadmin = identities.find((identity) => identity.role === "superadmin");
+  if (superadmin) return { allowed: true, reason: "superadmin", identity: superadmin };
+
+  const upload = await findUploadInGridFS(filename);
+  if (upload?.metadata?.uploadedBy) {
+    const uploader = identities.find((identity) => String(identity.id) === String(upload.metadata.uploadedBy));
+    if (uploader) return { allowed: true, reason: "uploader", identity: uploader };
+  }
+
+  const fileUrlPattern = new RegExp(`(?:^|/)${escapeRegExp(filename)}$`);
+  const appointment = await Appointment.findOne({
+    "medicalReports.url": fileUrlPattern,
+  })
+    .select("patientId doctorId medicalReports")
+    .lean();
+
+  if (!appointment) return { allowed: false, reason: "unassigned" };
+
+  const matched = identities.find((identity) => {
+    const identityId = String(identity.id);
+    return (
+      (identity.role === "user" && String(appointment.patientId) === identityId) ||
+      (identity.role === "doctor" && String(appointment.doctorId) === identityId)
+    );
+  });
+
+  return {
+    allowed: Boolean(matched),
+    reason: matched?.role === "user" ? "patient" : matched?.role === "doctor" ? "doctor" : "not_assigned",
+    identity: matched,
+    appointmentId: appointment._id,
+    patientId: appointment.patientId,
+  };
+}
+
+async function serveProtectedUpload(req, res, next) {
+  const filename = path.basename(req.params.filename || "");
+  if (!filename || filename !== req.params.filename) {
+    await logAudit(req, {
+      action: "MEDICAL_FILE_ACCESS_DENIED",
+      resource: "MedicalFile",
+      resourceId: filename || null,
+      success: false,
+      details: { reason: "invalid_filename" },
+    });
+    return res.status(400).json({ msg: "Invalid upload filename." });
+  }
+
+  try {
+    const access = await canAccessUpload(req, filename);
+    await logAudit(req, {
+      action: access.allowed ? "MEDICAL_FILE_ACCESS" : "MEDICAL_FILE_ACCESS_DENIED",
+      resource: "MedicalFile",
+      resourceId: filename,
+      patientId: access.patientId || null,
+      success: access.allowed,
+      userId: access.identity?.id || req.user?.id,
+      userEmail: access.identity?.email || req.user?.email || "",
+      userRole: access.identity?.role || req.user?.role || "anonymous",
+      details: {
+        appointmentId: access.appointmentId || null,
+        reason: access.reason,
+      },
+    });
+
+    if (!access.allowed) {
+      return res.status(403).json({ msg: "Access denied." });
+    }
+
+    const hour = new Date().getHours();
+    if (hour < 6 || hour >= 22) {
+      await recordSecurityIncident(req, {
+        type: "phi_after_hours",
+        severity: "medium",
+        title: "Medical file accessed outside normal hours",
+        resource: "MedicalFile",
+        resourceId: filename,
+        userId: access.identity?.id || req.user?.id,
+        userRole: access.identity?.role || req.user?.role,
+        metadata: { appointmentId: access.appointmentId || null, hour },
+      });
+    }
+
+    const streamed = await streamUploadFromGridFS(filename, res);
+    if (streamed) return;
+  } catch (err) {
+    console.error("GridFS upload fallback error:", err);
+    if (!res.headersSent) {
+      return res.status(500).json({ msg: "Could not read uploaded file from shared storage." });
+    }
+    return;
+  }
+
+  if (process.env.NODE_ENV === "production") return next();
+
+  const fallbackBase = (
+    process.env.UPLOAD_FALLBACK_BASE_URL ||
+    process.env.PRODUCTION_BACKEND_URL ||
+    "https://humancareconnect.co"
+  ).replace(/\/+$/, "");
+
+  const targetPath = path.join(uploadsDir, filename);
+  const tempPath = `${targetPath}.download`;
+  const remoteUrl = `${fallbackBase}/api/uploads/${encodeURIComponent(filename)}`;
+  const client = remoteUrl.startsWith("https:") ? https : http;
+
+  const cleanupTemp = () => {
+    fs.rm(tempPath, { force: true }, () => {});
+  };
+
+  const request = client.get(remoteUrl, (upstream) => {
+    if (upstream.statusCode !== 200) {
+      upstream.resume();
+      cleanupTemp();
+      return res.status(404).json({
+        msg: "Uploaded file was not found in local storage or fallback storage.",
+        filename,
+      });
+    }
+
+    const file = fs.createWriteStream(tempPath);
+    upstream.pipe(file);
+
+    upstream.on("error", () => {
+      file.destroy();
+      cleanupTemp();
+      if (!res.headersSent) {
+        res.status(502).json({ msg: "Could not retrieve uploaded file from fallback storage." });
+      }
+    });
+
+    file.on("error", () => {
+      upstream.destroy();
+      cleanupTemp();
+      if (!res.headersSent) {
+        res.status(500).json({ msg: "Could not cache uploaded file locally." });
+      }
+    });
+
+    file.on("finish", () => {
+      file.close(() => {
+        fs.rename(tempPath, targetPath, (err) => {
+          if (err) {
+            cleanupTemp();
+            if (!res.headersSent) {
+              res.status(500).json({ msg: "Could not store uploaded file locally." });
+            }
+            return;
+          }
+          res.setHeader("Cache-Control", "private, no-store");
+          res.sendFile(targetPath);
+        });
+      });
+    });
+  });
+
+  request.setTimeout(15000, () => {
+    request.destroy(new Error("Fallback upload fetch timed out."));
+  });
+
+  request.on("error", () => {
+    cleanupTemp();
+    if (!res.headersSent) {
+      res.status(502).json({ msg: "Could not retrieve uploaded file from fallback storage." });
+    }
+  });
+}
+
+app.get("/uploads/:filename", (_req, res) => {
+  res.status(404).json({ msg: "Direct upload URLs are disabled. Use the authenticated API path." });
+});
+app.get("/api/uploads/:filename", verifyToken, serveProtectedUpload);
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
@@ -136,6 +388,9 @@ app.use("/api/tickets", require("./routes/tickets"));
 app.use("/api/medical", require("./routes/medical"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/paypal", require("./routes/paypal"));
+app.use("/api/audit-logs", require("./routes/auditLogs"));
+app.use("/api/security-incidents", require("./routes/securityIncidents"));
+app.use("/api/retention-policies", require("./routes/retention"));
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -151,7 +406,7 @@ const socketRooms = new Map(); // socketId -> appointmentId
 // Track authenticated identity per socket
 const socketUsers = new Map(); // socketId -> { userId, role }
 
-app.get("/api/admin/active-users", (req, res) => {
+app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
   res.json({ activeUsers: onlineUsers.size });
 });
 
@@ -171,16 +426,29 @@ const io = new Server(server, {
 
 app.set("io", io);
 
-// Authenticate socket connections via JWT when token is provided
+function parseCookieHeader(header = "") {
+  return Object.fromEntries(
+    header
+      .split(";")
+      .map((part) => part.trim().split("="))
+      .filter(([key, value]) => key && value)
+      .map(([key, value]) => [key, decodeURIComponent(value)])
+  );
+}
+
+// Authenticate socket connections via HttpOnly cookies.
 io.use((socket, next) => {
-  const token = socket.handshake.auth?.token;
-  if (token) {
+  const cookies = parseCookieHeader(socket.handshake.headers.cookie || "");
+  const tokens = [cookies.userToken, cookies.doctorToken, cookies.adminToken].filter(Boolean);
+  for (const token of tokens) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded.type === "refresh") continue;
       socket.userId = decoded.id;
       socket.userRole = decoded.role;
+      break;
     } catch (_) {
-      // Invalid token — socket proceeds unauthenticated
+      // Try next cookie.
     }
   }
   next();
@@ -262,6 +530,26 @@ io.on("connection", (socket) => {
     socket.join(room);
     socketRooms.set(socket.id, appointmentId);
 
+    ChatMessage.find({ appointmentId })
+      .sort({ createdAt: 1 })
+      .limit(100)
+      .lean()
+      .then((storedMessages) => {
+        const history = storedMessages.map((message) => ({
+          appointmentId: String(message.appointmentId),
+          senderId: message.senderId,
+          senderName: message.senderName,
+          senderRole: message.senderRole,
+          text: decryptChatText(message),
+          fileUrl: message.fileUrl || null,
+          fileName: message.fileName || null,
+          fileType: message.fileType || null,
+          createdAt: message.createdAt,
+        }));
+        socket.emit("appointment-chat-history", { appointmentId, messages: history });
+      })
+      .catch((err) => console.error("chat history load error:", err));
+
     socket.to(room).emit("peer-joined");
     if (currentSize > 0) socket.emit("peer-joined");
   });
@@ -287,6 +575,49 @@ io.on("connection", (socket) => {
       fileType,
     }) => {
       if (!appointmentId || (!text && !fileUrl)) return;
+
+      const liveIdentity = socketUsers.get(socket.id);
+      const senderRole = liveIdentity?.role || socket.userRole || "user";
+      const senderUserId = liveIdentity?.userId || socket.userId || senderId;
+      const encrypted = encryptChatText(text || "");
+      const hour = new Date().getHours();
+
+      ChatMessage.create({
+        appointmentId,
+        senderId: String(senderUserId || senderId || ""),
+        senderName: senderName || "",
+        senderRole: senderRole === "doctor" ? "doctor" : "user",
+        ...encrypted,
+        fileUrl: fileUrl || "",
+        fileName: fileName || "",
+        fileType: fileType || "",
+        deliveredAt: new Date(),
+      })
+        .then((message) => logAudit(
+          { user: { id: senderUserId, role: senderRole }, headers: socket.handshake.headers, socket },
+          {
+            action: "CHAT_MESSAGE_DELIVERED",
+            resource: "ChatMessage",
+            resourceId: message._id,
+            patientId: null,
+            details: { appointmentId, hasAttachment: Boolean(fileUrl), encrypted: true, keyVersion: encrypted.keyVersion },
+          }
+        ))
+        .catch((err) => console.error("chat message persist error:", err));
+
+      if (hour < 6 || hour >= 22) {
+        recordSecurityIncident(
+          { user: { id: senderUserId, role: senderRole }, headers: socket.handshake.headers, socket },
+          {
+            type: "phi_after_hours",
+            severity: "medium",
+            title: "Clinical chat message sent outside normal hours",
+            resource: "ChatMessage",
+            resourceId: appointmentId,
+            metadata: { appointmentId, hour },
+          }
+        );
+      }
 
       io.to(`appointment_${appointmentId}`).emit(
         "appointment-message",
@@ -363,3 +694,4 @@ startServer()
     console.error("Startup error:", err);
     process.exit(1);
   });
+

@@ -26,8 +26,7 @@ export default function Header() {
 
   // ✅ Check login
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
+    setIsLoggedIn(false);
   }, [location]);
 
   // ✅ AUTO ACTIVE BASED ON URL
@@ -54,7 +53,6 @@ export default function Header() {
 
   // ✅ Logout function
   const handleLogout = () => {
-    localStorage.removeItem("token");
     setIsLoggedIn(false);
     navigate("/");
   };

@@ -1,15 +1,54 @@
 const nodemailer = require("nodemailer");
 
-const createTransporter = () =>
-  nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_SECURE =
+  process.env.SMTP_SECURE === undefined
+    ? SMTP_PORT === 465
+    : process.env.SMTP_SECURE === "true";
+const SMTP_USER = process.env.SMTP_USER || process.env.EMAIL_USER;
+const SMTP_PASS = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+const MAIL_FROM = process.env.MAIL_FROM || SMTP_USER;
+
+const isGmailTransport = (host) => /(^|\.)gmail\.com$/i.test(host);
+
+const createTransporter = (overrides = {}) => {
+  if (!SMTP_USER || !SMTP_PASS) {
+    throw new Error("Email service is not configured. Set SMTP_USER/SMTP_PASS or EMAIL_USER/EMAIL_PASS.");
+  }
+
+  return nodemailer.createTransport({
+    host: overrides.host || SMTP_HOST,
+    port: overrides.port || SMTP_PORT,
+    secure: overrides.secure ?? SMTP_SECURE,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: SMTP_USER,
+      pass: SMTP_PASS,
     },
   });
+};
+
+const shouldRetryWithGmail587 = (err) =>
+  isGmailTransport(SMTP_HOST) &&
+  SMTP_PORT === 465 &&
+  ["ECONNECTION", "ETIMEDOUT", "ESOCKET", "ECONNRESET", "ECONNREFUSED"].includes(err?.code);
+
+const sendMailWithFallback = async (message) => {
+  try {
+    const transporter = createTransporter();
+    return await transporter.sendMail(message);
+  } catch (err) {
+    if (!shouldRetryWithGmail587(err)) throw err;
+
+    console.warn("Primary Gmail SMTP send failed on port 465; retrying with STARTTLS port 587.", {
+      code: err.code,
+      command: err.command,
+    });
+
+    const fallbackTransporter = createTransporter({ port: 587, secure: false });
+    return fallbackTransporter.sendMail(message);
+  }
+};
 
 const buildEmailHTML = (otp, type) => `
 <!DOCTYPE html>
@@ -152,10 +191,8 @@ const sendOTPEmail = async (to, otp, type = "register") => {
       ? "Humancare Connect — Email Verification OTP"
       : "Humancare Connect — Password Reset OTP";
 
-  const transporter = createTransporter();
-
-  await transporter.sendMail({
-    from: `"HumanCare Connect" <${process.env.EMAIL_USER}>`,
+  await sendMailWithFallback({
+    from: `"HumanCare Connect" <${MAIL_FROM}>`,
     to,
     subject,
     html: buildEmailHTML(otp, type),
@@ -163,9 +200,8 @@ const sendOTPEmail = async (to, otp, type = "register") => {
 };
 
 const sendEmail = async ({ to, subject, text, html }) => {
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"HumanCare Connect" <${process.env.EMAIL_USER}>`,
+  await sendMailWithFallback({
+    from: `"HumanCare Connect" <${MAIL_FROM}>`,
     to,
     subject,
     text,

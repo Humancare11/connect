@@ -4,11 +4,19 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
-const { COOKIE_OPTS, verifyDoctorToken } = require("../middleware/verifyToken");
+const Session = require("../models/Session");
+const { issueAuthCookies, clearAuthCookies, verifyDoctorToken } = require("../middleware/verifyToken");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
+const {
+  loginLimiter,
+  otpGenerationLimiter,
+  otpVerificationLimiter,
+} = require("../middleware/rateLimiters");
+const { assertPasswordAllowed, rememberPassword } = require("../utils/passwordPolicy");
+const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
+const { recordFailedLogin } = require("../utils/securityMonitor");
 
-const signToken = (id, email) =>
-  jwt.sign({ id, email, role: "doctor" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const withDoctorRole = (doctor) => ({ ...doctor.toObject(), role: "doctor" });
 
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -36,7 +44,7 @@ const applyProgress = (enrollment, nextCompletedSteps, nextCurrentStep) => {
 };
 
 // ── POST /api/doctor/send-register-otp ───────────────────────────────────────
-router.post("/send-register-otp", async (req, res) => {
+router.post("/send-register-otp", otpGenerationLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email is required." });
@@ -55,7 +63,7 @@ router.post("/send-register-otp", async (req, res) => {
 });
 
 // ── POST /api/doctor/register ─────────────────────────────────────────────────
-router.post("/register", async (req, res) => {
+router.post("/register", otpVerificationLimiter, async (req, res) => {
   try {
     const { name, email, password, confirmPassword, otp } = req.body;
 
@@ -63,8 +71,9 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     if (!/\S+@\S+\.\S+/.test(email))
       return res.status(400).json({ message: "Enter a valid email." });
-    if (password.length < 6)
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    const passwordCheck = await assertPasswordAllowed({ userType: "doctor", password });
+    if (!passwordCheck.valid)
+      return res.status(400).json({ message: passwordCheck.errors.join(" ") });
     if (password !== confirmPassword)
       return res.status(400).json({ message: "Passwords do not match." });
 
@@ -77,6 +86,7 @@ router.post("/register", async (req, res) => {
     if (!check.valid) return res.status(400).json({ message: check.msg });
 
     const doctor = await Doctor.create({ name, email: cleanEmail, password });
+    await rememberPassword({ userId: doctor._id, userType: "doctor", passwordHash: doctor.password });
 
     // Auto-create a minimal enrollment so the doctor can be tracked immediately
     const nameParts = name.trim().split(/\s+/);
@@ -95,11 +105,9 @@ router.post("/register", async (req, res) => {
       profileDeleteRequestStatus: "none",
     });
 
-    const token = signToken(doctor._id, doctor.email);
-    res.cookie("doctorToken", token, COOKIE_OPTS);
+    await issueAuthCookies(res, withDoctorRole(doctor));
     return res.status(201).json({
       message: "Doctor registered successfully.",
-      token,
       doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
     });
   } catch (err) {
@@ -110,7 +118,7 @@ router.post("/register", async (req, res) => {
 });
 
 // ── POST /api/doctor/login ────────────────────────────────────────────────────
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
@@ -118,15 +126,21 @@ router.post("/login", async (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
     const doctor = await Doctor.findOne({ email: cleanEmail });
-    if (!doctor)
+    if (!doctor) {
+      await recordFailedLogin(req, { email: cleanEmail, portal: "doctor" });
       return res.status(401).json({ message: "Login credentials are incorrect." });
+    }
+    if (doctor.accountDisabled) {
+      return res.status(403).json({ message: "This account is disabled. Contact support." });
+    }
 
     const isMatch = await doctor.comparePassword(password);
-    if (!isMatch)
+    if (!isMatch) {
+      await recordFailedLogin(req, { email: cleanEmail, userId: doctor._id, userRole: "doctor", portal: "doctor" });
       return res.status(401).json({ message: "Login credentials are incorrect." });
+    }
 
-    const token = signToken(doctor._id, doctor.email);
-    res.cookie("doctorToken", token, COOKIE_OPTS);
+    await issueAuthCookies(res, withDoctorRole(doctor));
 
     // Ensure every doctor appears in Manage Doctors even if enrollment is missing.
     const existingEnrollment = await Enrollment.findOne({ doctorId: doctor._id });
@@ -150,7 +164,6 @@ router.post("/login", async (req, res) => {
 
     return res.status(200).json({
       message: "Login successful.",
-      token,
       doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
     });
   } catch (err) {
@@ -159,7 +172,7 @@ router.post("/login", async (req, res) => {
 });
 
 // ── POST /api/doctor/send-forgot-otp ─────────────────────────────────────────
-router.post("/send-forgot-otp", async (req, res) => {
+router.post("/send-forgot-otp", otpGenerationLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email is required." });
@@ -178,7 +191,7 @@ router.post("/send-forgot-otp", async (req, res) => {
 });
 
 // ── POST /api/doctor/verify-forgot-otp ───────────────────────────────────────
-router.post("/verify-forgot-otp", async (req, res) => {
+router.post("/verify-forgot-otp", otpVerificationLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required." });
@@ -201,13 +214,11 @@ router.post("/verify-forgot-otp", async (req, res) => {
 });
 
 // ── POST /api/doctor/reset-password ──────────────────────────────────────────
-router.post("/reset-password", async (req, res) => {
+router.post("/reset-password", loginLimiter, async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
     if (!resetToken || !newPassword)
       return res.status(400).json({ message: "Reset token and new password are required." });
-    if (newPassword.length < 6)
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
 
     let decoded;
     try {
@@ -221,9 +232,20 @@ router.post("/reset-password", async (req, res) => {
     const doctor = await Doctor.findOne({ email: decoded.email });
     if (!doctor) return res.status(404).json({ message: "Doctor account not found." });
 
+    const passwordCheck = await assertPasswordAllowed({
+      userId: doctor._id,
+      userType: "doctor",
+      password: newPassword,
+      currentHash: doctor.password,
+    });
+    if (!passwordCheck.valid)
+      return res.status(400).json({ message: passwordCheck.errors.join(" ") });
+
     // Pre-save hook in Doctor model handles hashing
     doctor.password = newPassword;
     await doctor.save();
+    await rememberPassword({ userId: doctor._id, userType: "doctor", passwordHash: doctor.password });
+    await revokeUserSessions(doctor._id, "password_reset");
 
     return res.json({ message: "Password reset successfully." });
   } catch (err) {
@@ -233,8 +255,9 @@ router.post("/reset-password", async (req, res) => {
 });
 
 // ── POST /api/doctor/logout ───────────────────────────────────────────────────
-router.post("/logout", (req, res) => {
-  res.clearCookie("doctorToken", COOKIE_OPTS);
+router.post("/logout", verifyDoctorToken, async (req, res) => {
+  if (req.user?.sid) await revokeSession(req.user.sid, "logout");
+  clearAuthCookies(res, "doctor");
   res.json({ message: "Logged out." });
 });
 

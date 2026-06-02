@@ -1,6 +1,8 @@
-const Prescription      = require("../models/Prescription");
+const Prescription       = require("../models/Prescription");
 const MedicalCertificate = require("../models/MedicalCertificate");
 const Appointment        = require("../models/Appointment");
+const Enrollment         = require("../models/Enrollment");
+const { logAudit }       = require("../utils/auditLogger");
 
 // ── Doctor: get distinct patients from completed appointments ─────────────────
 const getDoctorPatients = async (req, res) => {
@@ -33,7 +35,15 @@ const getDoctorPatients = async (req, res) => {
       }
     }
 
-    res.status(200).json(Array.from(seen.values()));
+    const result = Array.from(seen.values());
+
+    await logAudit(req, {
+      action: "PHI_VIEW_PATIENT_LIST",
+      resource: "Appointment",
+      details: { patientCount: result.length },
+    });
+
+    res.status(200).json(result);
   } catch (err) {
     console.error("getDoctorPatients error:", err);
     res.status(500).json({ msg: "Failed to fetch patients." });
@@ -73,7 +83,23 @@ const getPatientHistory = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    res.status(200).json({ appointments, prescriptions, certificates });
+    // Attach the doctor's own enrollment for certificate slip rendering
+    const enrollment = await Enrollment.findOne({ doctorId: req.user.id })
+      .select("specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName")
+      .lean();
+
+    await logAudit(req, {
+      action: "PHI_VIEW_PATIENT_HISTORY",
+      resource: "Appointment",
+      patientId,
+      details: {
+        appointmentCount: appointments.length,
+        prescriptionCount: prescriptions.length,
+        certificateCount: certificates.length,
+      },
+    });
+
+    res.status(200).json({ appointments, prescriptions, certificates, doctorEnrollment: enrollment || null });
   } catch (err) {
     console.error("getPatientHistory error:", err);
     res.status(500).json({ msg: "Failed to fetch patient history." });
@@ -112,6 +138,14 @@ const createPrescription = async (req, res) => {
         patientId,
       });
     }
+
+    await logAudit(req, {
+      action: "PHI_CREATE_PRESCRIPTION",
+      resource: "Prescription",
+      resourceId: prescription._id,
+      patientId,
+      details: { appointmentId, diagnosis },
+    });
 
     res.status(201).json({ msg: "Prescription created.", prescription });
   } catch (err) {
@@ -157,6 +191,14 @@ const createMedicalCertificate = async (req, res) => {
       });
     }
 
+    await logAudit(req, {
+      action: "PHI_CREATE_CERTIFICATE",
+      resource: "MedicalCertificate",
+      resourceId: certificate._id,
+      patientId,
+      details: { appointmentId, diagnosis },
+    });
+
     res.status(201).json({ msg: "Medical certificate issued.", certificate });
   } catch (err) {
     console.error("createMedicalCertificate error:", err);
@@ -173,6 +215,13 @@ const getMyPrescriptions = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    await logAudit(req, {
+      action: "PHI_VIEW_PRESCRIPTIONS",
+      resource: "Prescription",
+      patientId: req.user.id,
+      details: { count: prescriptions.length },
+    });
+
     res.status(200).json(prescriptions);
   } catch (err) {
     console.error("getMyPrescriptions error:", err);
@@ -184,12 +233,34 @@ const getMyPrescriptions = async (req, res) => {
 const getMyMedicalCertificates = async (req, res) => {
   try {
     const certificates = await MedicalCertificate.find({ patientId: req.user.id })
-      .populate("doctorId",      "name email")
+      .populate("doctorId",      "name email doctorId")
       .populate("appointmentId", "date time problem")
       .sort({ createdAt: -1 })
       .lean();
 
-    res.status(200).json(certificates);
+    // Enrich each certificate with the issuing doctor's enrollment details
+    const doctorMongoIds = [...new Set(
+      certificates.map((c) => c.doctorId?._id?.toString()).filter(Boolean)
+    )];
+    const enrollments = await Enrollment.find({ doctorId: { $in: doctorMongoIds } })
+      .select("doctorId specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName")
+      .lean();
+    const enrollMap = {};
+    for (const e of enrollments) enrollMap[e.doctorId.toString()] = e;
+
+    const enriched = certificates.map((cert) => ({
+      ...cert,
+      doctorEnrollment: enrollMap[cert.doctorId?._id?.toString()] || null,
+    }));
+
+    await logAudit(req, {
+      action: "PHI_VIEW_CERTIFICATES",
+      resource: "MedicalCertificate",
+      patientId: req.user.id,
+      details: { count: enriched.length },
+    });
+
+    res.status(200).json(enriched);
   } catch (err) {
     console.error("getMyMedicalCertificates error:", err);
     res.status(500).json({ msg: "Failed to fetch medical certificates." });

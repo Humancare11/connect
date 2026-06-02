@@ -3,6 +3,8 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
+const { assertPasswordAllowed, rememberPassword } = require("../utils/passwordPolicy");
+const { revokeUserSessions } = require("../utils/tokenRevocation");
 
 // GET /api/superadmin/admins — list all admins
 router.get("/admins", verifyAdminToken, superAdminOnly, async (req, res) => {
@@ -24,8 +26,9 @@ router.post("/admins", verifyAdminToken, superAdminOnly, async (req, res) => {
     if (!name || !email || !password)
       return res.status(400).json({ msg: "Name, email and password are required." });
 
-    if (password.length < 6)
-      return res.status(400).json({ msg: "Password must be at least 6 characters." });
+    const passwordCheck = await assertPasswordAllowed({ userType: "user", password });
+    if (!passwordCheck.valid)
+      return res.status(400).json({ msg: passwordCheck.errors.join(" ") });
 
     const exists = await User.findOne({ email: email.toLowerCase().trim() });
     if (exists)
@@ -38,6 +41,7 @@ router.post("/admins", verifyAdminToken, superAdminOnly, async (req, res) => {
       password: hashed,
       role: "admin",
     });
+    await rememberPassword({ userId: admin._id, userType: "user", passwordHash: hashed });
 
     res.status(201).json({
       msg: "Admin created successfully.",
@@ -55,6 +59,7 @@ router.delete("/admins/:id", verifyAdminToken, superAdminOnly, async (req, res) 
   try {
     const admin = await User.findOneAndDelete({ _id: req.params.id, role: "admin" });
     if (!admin) return res.status(404).json({ msg: "Admin not found." });
+    await revokeUserSessions(admin._id, "account_disabled");
     res.json({ msg: "Admin removed." });
   } catch (err) {
     res.status(500).json({ msg: "Server error" });
