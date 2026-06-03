@@ -325,7 +325,7 @@ router.post("/payment-links/:token/create-intent", async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: paymentLink.amountPaise,
       currency: paymentLink.currency,
-      payment_method_types: ["card", "link"],
+      payment_method_types: ["card"],
       metadata: {
         paymentLinkId: paymentLink._id.toString(),
         paymentLinkToken: paymentLink.token,

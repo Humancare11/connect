@@ -6,7 +6,9 @@ import api from "../api";
 import "./PaymentLinkCheckout.css";
 import { FiInfo } from "react-icons/fi";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+const stripeMode = stripePublishableKey.startsWith("pk_live_") ? "Live" : "Sandbox";
 
 const ELEMENTS_APPEARANCE = {
   theme: "stripe",
@@ -87,7 +89,11 @@ function CheckoutForm({ amountPaise, currency, token, email, onPaid }) {
 
   return (
     <form className="plc-form" onSubmit={submit}>
-      <PaymentElement onReady={() => setReady(true)} options={{ layout: "tabs", paymentMethodOrder: ["link", "card"] }} />
+      <PaymentElement
+        onReady={() => setReady(true)}
+        onLoadError={({ error: loadError }) => setError(loadError?.message || "Unable to load the card form. Please refresh and try again.")}
+        options={{ layout: "tabs", paymentMethodOrder: ["card"] }}
+      />
       {error && <div className="plc-error">{error}</div>}
       <button type="submit" disabled={!stripe || !ready || paying}>
         {paying ? "Processing..." : `Pay ${formatMoney(amountPaise, currency)}`}
@@ -186,7 +192,7 @@ export default function PaymentLinkCheckout() {
             <span className="plc-brand-icon">🩺</span>
             <strong>Humancare Connect</strong>
           </div>
-          <span className="plc-badge">Sandbox</span>
+          <span className="plc-badge">{stripeMode}</span>
         </div>
 
         {loading ? (
@@ -261,7 +267,9 @@ export default function PaymentLinkCheckout() {
                 />
               </label>
 
-              {!clientSecret ? (
+              {!stripePromise ? (
+                <div className="plc-error">Stripe publishable key is not configured.</div>
+              ) : !clientSecret ? (
                 <>
                   {error ? (
                     <div className="plc-error">{error}</div>
