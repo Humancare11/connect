@@ -4,7 +4,7 @@ const paymentLinkSchema = new mongoose.Schema(
   {
     token: { type: String, required: true, unique: true, index: true },
     amountPaise: { type: Number, required: true, min: 1 },
-    currency: { type: String, default: "inr", lowercase: true },
+    currency: { type: String, default: "usd", lowercase: true },
     note: { type: String, default: "", trim: true },
     status: { type: String, enum: ["pending", "paid", "expired"], default: "pending", index: true },
     paymentIntentId: { type: String, default: "" },

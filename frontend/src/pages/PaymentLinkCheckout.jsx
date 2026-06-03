@@ -4,6 +4,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import api from "../api";
 import "./PaymentLinkCheckout.css";
+import { FiInfo } from "react-icons/fi";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -44,7 +45,8 @@ function formatDate(value) {
   });
 }
 
-function CheckoutForm({ amountPaise, currency, token, onPaid }) {
+
+function CheckoutForm({ amountPaise, currency, token, email, onPaid }) {
   const stripe = useStripe();
   const elements = useElements();
   const [ready, setReady] = useState(false);
@@ -59,6 +61,13 @@ function CheckoutForm({ amountPaise, currency, token, onPaid }) {
     try {
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
+        confirmParams: {
+          payment_method_data: {
+            billing_details: {
+              email,
+            },
+          },
+        },
         redirect: "if_required",
       });
       if (confirmError) {
@@ -78,7 +87,7 @@ function CheckoutForm({ amountPaise, currency, token, onPaid }) {
 
   return (
     <form className="plc-form" onSubmit={submit}>
-      <PaymentElement onReady={() => setReady(true)} options={{ layout: "tabs", paymentMethodOrder: ["card"] }} />
+      <PaymentElement onReady={() => setReady(true)} options={{ layout: "tabs", paymentMethodOrder: ["link", "card"] }} />
       {error && <div className="plc-error">{error}</div>}
       <button type="submit" disabled={!stripe || !ready || paying}>
         {paying ? "Processing..." : `Pay ${formatMoney(amountPaise, currency)}`}
@@ -96,6 +105,7 @@ export default function PaymentLinkCheckout() {
   const [paidRef, setPaidRef] = useState("");
   const [receipt, setReceipt] = useState(null);
   const [error, setError] = useState("");
+  const [billingEmail, setBillingEmail] = useState("");
 
   const amountLabel = useMemo(() => link ? formatMoney(link.amountPaise, link.currency) : "", [link]);
 
@@ -107,7 +117,7 @@ export default function PaymentLinkCheckout() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const startPayment = async () => {
+  async function startPayment() {
     setError("");
     setCreating(true);
     try {
@@ -118,7 +128,13 @@ export default function PaymentLinkCheckout() {
     } finally {
       setCreating(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (link && !clientSecret && link.status !== "paid" && !error) {
+      startPayment();
+    }
+  }, [link, clientSecret, error, token]);
 
   const handlePaid = (payment) => {
     const paidAt = payment.paidAt || new Date().toISOString();
@@ -165,52 +181,103 @@ export default function PaymentLinkCheckout() {
   return (
     <main className="plc-page">
       <section className="plc-card">
+        <div className="plc-topbar">
+          <div className="plc-brand">
+            <span className="plc-brand-icon">🩺</span>
+            <strong>Humancare Connect</strong>
+          </div>
+          <span className="plc-badge">Sandbox</span>
+        </div>
+
         {loading ? (
           <div className="plc-state">Loading payment...</div>
         ) : error && !link ? (
           <div className="plc-error">{error}</div>
         ) : paidRef || link?.status === "paid" ? (
-          <div className="plc-success plc-receipt">
-            <div className="plc-success-mark">✓</div>
-            <span>Payment Successful</span>
-            <h1>{amountLabel}</h1>
-            <div className="plc-receipt-box">
-              <div><span>Transaction ID</span><strong>{paidRef || link?.paymentIntentId || "-"}</strong></div>
-              <div><span>Amount Paid</span><strong>{amountLabel}</strong></div>
-              <div><span>Currency</span><strong>{String(link?.currency || "").toUpperCase()}</strong></div>
-              <div><span>Payment Date</span><strong>{formatDate(receipt?.paidAt || link?.paidAt || new Date())}</strong></div>
+          <div className="plc-grid plc-success-grid">
+            <div className="plc-summary-panel">
+              <span>Pay Humancare Connect</span>
+              <h1>{amountLabel}</h1>
+              <div className="plc-order-lines">
+                <div><span>Online consultation</span><strong>{amountLabel}</strong></div>
+                <div><span>Subtotal</span><strong>{amountLabel}</strong></div>
+                <div><span>Tax</span><strong>{formatMoney(0, link.currency)}</strong></div>
+                <div className="plc-total-line"><span>Total paid</span><strong>{amountLabel}</strong></div>
+              </div>
             </div>
-            <div className="plc-actions">
-              <button type="button" onClick={downloadReceipt}>Download Receipt</button>
-              <button type="button" className="plc-print" onClick={printReceipt}>Print Receipt</button>
+
+            <div className="plc-right-panel plc-success-panel">
+              <div className="plc-success-mark">✓</div>
+              <h2>Thanks for your payment</h2>
+              <p>A payment to Humancare Connect, Inc will appear on your statement.</p>
+              <div className="plc-receipt-box">
+                <div><span>Transaction ID</span><strong>{paidRef || link?.paymentIntentId || "-"}</strong></div>
+                <div><span>Amount Paid</span><strong>{amountLabel}</strong></div>
+                <div><span>Currency</span><strong>{String(link?.currency || "").toUpperCase()}</strong></div>
+                <div><span>Payment Date</span><strong>{formatDate(receipt?.paidAt || link?.paidAt || new Date())}</strong></div>
+              </div>
+              <div className="plc-actions">
+                <button type="button" onClick={downloadReceipt}>Download Receipt</button>
+                <button type="button" className="plc-print" onClick={printReceipt}>Print Receipt</button>
+              </div>
+              <div className="plc-powered">Powered by stripe</div>
             </div>
           </div>
         ) : (
-          <>
-            <div className="plc-header">
-              <span>Secure Card Payment</span>
+          <div className="plc-grid">
+            <div className="plc-summary-panel">
               <h1>{amountLabel}</h1>
-              <div className="plc-summary">
-                <div><span>Amount</span><strong>{amountLabel}</strong></div>
-                <div><span>Currency</span><strong>{String(link?.currency || "").toUpperCase()}</strong></div>
-                <div><span>Status</span><strong>Awaiting Payment</strong></div>
+              <div className="plc-order-lines">
+                <div><span>Online consultation</span><strong>{amountLabel}</strong></div>
+                <div><span>Subtotal</span><strong>{amountLabel}</strong></div>
+                <div className="plc-order-line plc-tax-line">
+                  <span className="plc-tax-label">
+                    Tax
+                    <span className="plc-info-icon" aria-label="Tax information">
+                      <FiInfo />
+                      <span className="plc-tooltip">
+                        Tax is determined by billing information.
+                      </span>
+                    </span>
+                  </span>
+                  <strong>{formatMoney(0, link.currency)}</strong>
+                </div>
+                <div className="plc-total-line"><span>Total due</span><strong>{amountLabel}</strong></div>
               </div>
-              {link?.note && <small>{link.note}</small>}
             </div>
 
-            {!clientSecret ? (
-              <>
-                {error && <div className="plc-error">{error}</div>}
-                <button className="plc-start" type="button" onClick={startPayment} disabled={creating}>
-                  {creating ? "Preparing..." : "Continue to Payment"}
-                </button>
-              </>
-            ) : (
-              <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
-                <CheckoutForm amountPaise={link.amountPaise} currency={link.currency} token={token} onPaid={handlePaid} />
-              </Elements>
-            )}
-          </>
+            <div className="plc-right-panel">
+              <div className="plc-payment-header">
+                <span>Contact information</span>
+              </div>
+              <label className="plc-field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={billingEmail}
+                  onChange={(e) => setBillingEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  required
+                />
+              </label>
+
+              {!clientSecret ? (
+                <>
+                  {error ? (
+                    <div className="plc-error">{error}</div>
+                  ) : (
+                    <div className="plc-state">Preparing payment...</div>
+                  )}
+                </>
+              ) : (
+                <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
+                  <CheckoutForm amountPaise={link.amountPaise} currency={link.currency} token={token} email={billingEmail} onPaid={handlePaid} />
+                </Elements>
+              )}
+
+              <div className="plc-powered">Powered by stripe</div>
+            </div>
+          </div>
         )}
       </section>
     </main>

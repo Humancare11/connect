@@ -3,16 +3,16 @@ import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
 import "./PaymentLinks.css";
 
-const SUPPORTED_CURRENCIES = ["USD", "INR", "EUR", "GBP", "CAD", "AUD", "AED", "SAR", "SGD", "JPY"];
+const SUPPORTED_CURRENCIES = ["USD"];
 const ZERO_DECIMAL_CURRENCIES = new Set(["JPY"]);
 
 function currencyFactor(currency) {
   return ZERO_DECIMAL_CURRENCIES.has(String(currency).toUpperCase()) ? 1 : 100;
 }
 
-function formatMoney(amountMinor, currency = "INR") {
-  const code = String(currency || "INR").toUpperCase();
-  return (amountMinor / currencyFactor(code)).toLocaleString("en-IN", {
+function formatMoney(amountMinor, currency = "USD") {
+  const code = String(currency || "USD").toUpperCase();
+  return (amountMinor / currencyFactor(code)).toLocaleString("en-US", {
     style: "currency",
     currency: code,
     maximumFractionDigits: ZERO_DECIMAL_CURRENCIES.has(code) ? 0 : 2,

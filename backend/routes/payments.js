@@ -9,7 +9,7 @@ const PaymentLink = require("../models/PaymentLink");
 const { verifyUserToken, verifyAdminToken, adminOnly, paymentAdminOnly } = require("../middleware/verifyToken");
 const { toPaise } = require("../utils/currency");
 
-const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd", "inr", "eur", "gbp", "cad", "aud", "aed", "sar", "sgd", "jpy"];
+const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd"];
 const ZERO_DECIMAL_CURRENCIES = new Set(["jpy"]);
 
 function currencyFactor(currency) {
@@ -32,11 +32,11 @@ function paymentLinkUrl(req, token) {
 function serializePaymentLink(req, paymentLink) {
   const createdBy = paymentLink.createdBy && typeof paymentLink.createdBy === "object"
     ? {
-        _id: paymentLink.createdBy._id,
-        name: paymentLink.createdBy.name,
-        email: paymentLink.createdBy.email,
-        role: paymentLink.createdBy.role,
-      }
+      _id: paymentLink.createdBy._id,
+      name: paymentLink.createdBy.name,
+      email: paymentLink.createdBy.email,
+      role: paymentLink.createdBy.role,
+    }
     : paymentLink.createdBy;
 
   return {
@@ -167,7 +167,7 @@ router.get("/admin/intent/:id", verifyAdminToken, adminOnly, async (req, res) =>
 router.post("/admin/payment-links", verifyAdminToken, paymentAdminOnly, async (req, res) => {
   try {
     const amount = Number(req.body.amount);
-    const currency = String(req.body.currency || "INR").trim().toLowerCase();
+    const currency = String(req.body.currency || "USD").trim().toLowerCase();
     if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ msg: "Enter a valid amount." });
     }
@@ -325,7 +325,7 @@ router.post("/payment-links/:token/create-intent", async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: paymentLink.amountPaise,
       currency: paymentLink.currency,
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "link"],
       metadata: {
         paymentLinkId: paymentLink._id.toString(),
         paymentLinkToken: paymentLink.token,

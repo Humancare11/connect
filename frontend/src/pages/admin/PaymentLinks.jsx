@@ -2,27 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import "./PaymentLinks.css";
 
-const SUPPORTED_CURRENCIES = [
-  { code: "USD", name: "US Dollar" },
-  { code: "INR", name: "Indian Rupee" },
-  { code: "EUR", name: "Euro" },
-  { code: "GBP", name: "British Pound" },
-  { code: "CAD", name: "Canadian Dollar" },
-  { code: "AUD", name: "Australian Dollar" },
-  { code: "AED", name: "UAE Dirham" },
-  { code: "SAR", name: "Saudi Riyal" },
-  { code: "SGD", name: "Singapore Dollar" },
-  { code: "JPY", name: "Japanese Yen" },
-];
 const ZERO_DECIMAL_CURRENCIES = new Set(["JPY"]);
 
 function currencyFactor(currency) {
   return ZERO_DECIMAL_CURRENCIES.has(String(currency).toUpperCase()) ? 1 : 100;
 }
 
-function formatMoney(amountMinor, currency = "INR") {
-  const code = String(currency || "INR").toUpperCase();
-  return (amountMinor / currencyFactor(code)).toLocaleString("en-IN", {
+function formatMoney(amountMinor, currency = "USD") {
+  const code = String(currency || "USD").toUpperCase();
+  return (amountMinor / currencyFactor(code)).toLocaleString("en-US", {
     style: "currency",
     currency: code,
     maximumFractionDigits: ZERO_DECIMAL_CURRENCIES.has(code) ? 0 : 2,
@@ -46,7 +34,7 @@ function statusLabel(status) {
 
 export default function PaymentLinks() {
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState("INR");
+  const [currency] = useState("USD");
   const [note, setNote] = useState("");
   const [created, setCreated] = useState(null);
   const [error, setError] = useState("");
@@ -122,7 +110,7 @@ export default function PaymentLinks() {
         <form className="pl-card pl-form" onSubmit={createLink}>
           <div className="pl-form__title">
             <h2>Payment Details</h2>
-            <p>Choose the currency and amount exactly as the customer should pay.</p>
+            <p>Enter the USD amount exactly as the customer should pay.</p>
           </div>
 
           <div className="pl-form-grid">
@@ -136,24 +124,12 @@ export default function PaymentLinks() {
                   step={ZERO_DECIMAL_CURRENCIES.has(currency) ? "1" : "0.01"}
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
-                  placeholder={currency === "JPY" ? "12000" : "500.00"}
+                  placeholder="500.00"
                   required
                 />
               </div>
             </label>
 
-            <label className="pl-field">
-              <span>Currency</span>
-              <select
-                className="pl-select"
-                value={currency}
-                onChange={(event) => setCurrency(event.target.value)}
-              >
-                {SUPPORTED_CURRENCIES.map((item) => (
-                  <option key={item.code} value={item.code}>{item.code} - {item.name}</option>
-                ))}
-              </select>
-            </label>
           </div>
 
           <label className="pl-field">

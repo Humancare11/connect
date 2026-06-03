@@ -73,6 +73,11 @@ const safeUser = (user) => ({
   rating:          user.rating,
 });
 
+const buildTokenPayload = (user, session) => ({
+  accessToken: signAccessToken(user, session._id),
+  refreshToken: signRefreshToken(user, session._id),
+});
+
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
 
 const ensureDoctorEnrollment = async (doctor) => {
@@ -166,7 +171,8 @@ const register = async (req, res) => {
 
     await recordConsent(req, user);
 
-    await issueAuthCookies(res, user);
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
 
     await logAudit(req, {
       action: "REGISTER",
@@ -179,7 +185,7 @@ const register = async (req, res) => {
       details: { gender: user.gender, country: user.country },
     });
 
-    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user) });
+    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("register error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -284,7 +290,8 @@ const login = async (req, res) => {
       return res.status(400).json({ msg: "Invalid email or password." });
     }
 
-    await issueAuthCookies(res, user);
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
 
     await logAudit(req, {
       action: "LOGIN_SUCCESS",
@@ -295,7 +302,7 @@ const login = async (req, res) => {
       userRole: user.role,
     });
 
-    return res.json({ msg: "Login successful.", user: safeUser(user) });
+    return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("login error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -502,8 +509,9 @@ const googleAuthUser = async (req, res) => {
     if (user) {
       if (user.role === "doctor") return res.status(403).json({ msg: "Please use the Doctor Login page." });
       if (!user.googleId) { user.googleId = googleId; await user.save(); }
-      await issueAuthCookies(res, user);
-      return res.json({ msg: "Login successful.", user: safeUser(user) });
+      const session = await issueAuthCookies(res, user);
+      const tokens = buildTokenPayload(user, session);
+      return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
     }
 
     if (!mobile || !dob || !gender || !country)
@@ -517,8 +525,9 @@ const googleAuthUser = async (req, res) => {
 
     user = await User.create({ name, email, googleId, role: "user", mobile, dob, gender, country, registrationIp: ip });
     await recordConsent(req, user);
-    await issueAuthCookies(res, user);
-    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user) });
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
+    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("googleAuthUser error:", err);
     return res.status(500).json({ msg: "Google Sign-In failed. Please try again." });
@@ -550,11 +559,14 @@ const googleAuthDoctor = async (req, res) => {
 
     await ensureDoctorEnrollment(doctor);
 
-    await issueAuthCookies(res, { ...doctor.toObject(), role: "doctor" });
+    const authUser = { ...doctor.toObject(), role: "doctor" };
+    const session = await issueAuthCookies(res, authUser);
+    const tokens = buildTokenPayload(authUser, session);
     return res.status(isNewUser ? 201 : 200).json({
       message: isNewUser ? "Registration successful." : "Login successful.",
       isNewUser,
       doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
+      ...tokens,
     });
   } catch (err) {
     console.error("googleAuthDoctor error:", err);
@@ -767,7 +779,8 @@ const paymentAdminLogin = async (req, res) => {
       return res.status(401).json({ msg: "Invalid email or password." });
     }
 
-    await issueAuthCookies(res, user);
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
 
     await logAudit(req, {
       action: "LOGIN_SUCCESS",
@@ -778,7 +791,7 @@ const paymentAdminLogin = async (req, res) => {
       userRole: user.role,
     });
 
-    return res.json({ msg: "Login successful.", user: safeUser(user) });
+    return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("paymentAdminLogin error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -825,11 +838,18 @@ const refresh = async (req, res) => {
   const candidates = Object.entries(REFRESH_COOKIE_BY_ROLE)
     .map(([role, name]) => ({ role, token: req.cookies?.[name] }))
     .filter((item) => item.token);
+  const bearerToken = req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.split(" ")[1]
+    : null;
+  if (bearerToken) candidates.push({ role: null, token: bearerToken });
 
-  for (const { role, token } of candidates) {
+  for (const candidate of candidates) {
+    const { role, token } = candidate;
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      if (decoded.type !== "refresh" || decoded.role !== role) continue;
+      if (decoded.type !== "refresh") continue;
+      const refreshRole = role || decoded.role;
+      if (decoded.role !== refreshRole) continue;
 
       const session = await Session.findById(decoded.sid);
       if (!session || session.revokedAt) continue;
@@ -849,9 +869,10 @@ const refresh = async (req, res) => {
       const identity = { id: decoded.id, _id: decoded.id, email: decoded.email, role: decoded.role };
       res.cookie(ACCESS_COOKIE_BY_ROLE[decoded.role], signAccessToken(identity, session._id), COOKIE_OPTS);
       res.cookie(REFRESH_COOKIE_BY_ROLE[decoded.role], signRefreshToken(identity, session._id), REFRESH_COOKIE_OPTS);
-      return res.json({ msg: "Session refreshed." });
+      const tokens = buildTokenPayload(identity, session);
+      return res.json({ msg: "Session refreshed.", ...tokens });
     } catch {
-      // Try the next refresh cookie.
+      // Try the next refresh token.
     }
   }
 
