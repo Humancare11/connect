@@ -5,11 +5,9 @@ import api from "../../api";
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
 
 const STATUS_META = {
+  pending: { label: "Pending", bg: "#fef3c7", color: "#92400e" },
   approved: { label: "Approved", bg: "#dcfce7", color: "#166534" },
   rejected: { label: "Rejected", bg: "#fee2e2", color: "#991b1b" },
-  submitted: { label: "Submitted", bg: "#ede9fe", color: "#5b21b6" },
-  pending_review: { label: "Pending Review", bg: "#fef3c7", color: "#92400e" },
-  in_progress: { label: "In Progress", bg: "#eff6ff", color: "#1d4ed8" },
 };
 
 const REQUEST_META = {
@@ -38,9 +36,15 @@ function inferProgress(enrollment) {
 function deriveStatus(enrollment, completedSteps) {
   if (enrollment?.approvalStatus === "approved") return "approved";
   if (enrollment?.approvalStatus === "rejected") return "rejected";
-  if (enrollment?.formCompleted) return "submitted";
-  if (completedSteps >= 4) return "pending_review";
-  return "in_progress";
+  return "pending";
+}
+
+function normalizeStatus(status, enrollment, completedSteps) {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (normalized === "approved") return "approved";
+  if (normalized === "rejected") return "rejected";
+  if (normalized === "pending") return "pending";
+  return deriveStatus(enrollment, completedSteps);
 }
 
 function getProgress(enrollment) {
@@ -55,7 +59,7 @@ function getProgress(enrollment) {
     ? Number(enrollment.currentStep)
     : fallback.currentStep);
     
-  const status = enrollment?.applicationStatus || deriveStatus(enrollment, completedSteps);
+  const status = normalizeStatus(enrollment?.applicationStatus, enrollment, completedSteps);
 
   const safeCompleted = Math.max(0, Math.min(5, completedSteps));
   const safeCurrent = Math.max(1, Math.min(5, currentStep));
@@ -104,7 +108,7 @@ function ProgressCell({ progress }) {
         <span style={{ fontSize: 10, fontWeight: 700, color: "#64748b" }}>
           {progress.completedSteps}/5 COMPLETED
         </span>
-        {progress.status === "in_progress" && (
+        {progress.status === "pending" && (
            <span style={{ fontSize: 9, color: "#94a3b8", fontWeight: 600 }}>
              @{progress.currentStepLabel}
            </span>
@@ -196,9 +200,7 @@ export default function ManageDoctors() {
     const statusOf = (row) => getProgress(row).status;
     return {
       all: enrollments.length,
-      in_progress: enrollments.filter((row) => statusOf(row) === "in_progress").length,
-      pending_review: enrollments.filter((row) => statusOf(row) === "pending_review").length,
-      submitted: enrollments.filter((row) => statusOf(row) === "submitted").length,
+      pending: enrollments.filter((row) => statusOf(row) === "pending").length,
       approved: enrollments.filter((row) => row.approvalStatus === "approved").length,
       rejected: enrollments.filter((row) => row.approvalStatus === "rejected").length,
       update_requests: enrollments.filter((row) => getRequestType(row) === "profile_update").length,
@@ -222,9 +224,7 @@ export default function ManageDoctors() {
 
       const status = getProgress(row).status;
       const requestType = getRequestType(row);
-      if (filter === "in_progress") return status === "in_progress";
-      if (filter === "pending_review") return status === "pending_review";
-      if (filter === "submitted") return status === "submitted";
+      if (filter === "pending") return status === "pending";
       if (filter === "approved") return row.approvalStatus === "approved";
       if (filter === "rejected") return row.approvalStatus === "rejected";
       if (filter === "update_requests") return requestType === "profile_update";
@@ -250,10 +250,10 @@ export default function ManageDoctors() {
       <div className="adp-stats" style={{ gridTemplateColumns: "repeat(5,1fr)" }}>
         {[
           { label: "Total", value: counts.all, cls: "" },
-          { label: "In Progress", value: counts.in_progress, cls: "" },
-          { label: "Pending Review", value: counts.pending_review, cls: "adp-stat--amber" },
+          { label: "Pending", value: counts.pending, cls: "adp-stat--amber" },
+          { label: "Approved", value: counts.approved, cls: "adp-stat--green" },
+          { label: "Rejected", value: counts.rejected, cls: "" },
           { label: "Update Requests", value: counts.update_requests, cls: "" },
-          { label: "Delete Requests", value: counts.delete_requests, cls: "" },
         ].map((card) => (
           <div key={card.label} className={`adp-stat ${card.cls}`}>
             <div className="adp-stat-value">{card.value}</div>
@@ -267,9 +267,7 @@ export default function ManageDoctors() {
           <div className="adp-tabs">
             {[
               { key: "all", label: "All", count: counts.all },
-              { key: "in_progress", label: "In Progress", count: counts.in_progress },
-              { key: "pending_review", label: "Pending Review", count: counts.pending_review },
-              { key: "submitted", label: "Submitted", count: counts.submitted },
+              { key: "pending", label: "Pending", count: counts.pending },
               { key: "approved", label: "Approved", count: counts.approved },
               { key: "rejected", label: "Rejected", count: counts.rejected },
               { key: "update_requests", label: "Update Requests", count: counts.update_requests },
@@ -328,7 +326,7 @@ export default function ManageDoctors() {
               <tbody>
                 {displayed.map((row, idx) => {
                   const progress = getProgress(row);
-                  const statusMeta = STATUS_META[progress.status] || STATUS_META.in_progress;
+                  const statusMeta = STATUS_META[progress.status] || STATUS_META.pending;
                   const requestType = getRequestType(row);
                   const requestMeta = REQUEST_META[requestType] || REQUEST_META.none;
                   const name = `${row.firstName || ""} ${row.surname || ""}`.trim() || row.doctorId?.name || "-";

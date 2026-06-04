@@ -93,6 +93,30 @@ const NAV_ITEMS = [
           </svg>
         ),
       },
+      {
+        path: "/admin-dashboard/payment-links",
+        paymentAdminPath: "/payment-admin/payment-links",
+        label: "Payment Links",
+        roles: ["superadmin", "paymentadmin"],
+        icon: (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93"/>
+            <path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L13 19.07"/>
+          </svg>
+        ),
+      },
+      {
+        path: "/admin-dashboard/payment-link-history",
+        paymentAdminPath: "/payment-admin/payment-history",
+        label: "Payment History",
+        roles: ["superadmin", "paymentadmin"],
+        icon: (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 3v18h18"/>
+            <path d="M7 14l3-3 3 2 5-6"/>
+          </svg>
+        ),
+      },
     ],
   },
   {
@@ -129,14 +153,14 @@ export default function AdminLayout({ children }) {
   const location  = useLocation();
 
   useEffect(() => {
-    if (!loading && (!user || !["admin", "superadmin"].includes(user.role))) {
+    if (!loading && (!user || !["admin", "superadmin", "paymentadmin"].includes(user.role))) {
       navigate("/adminauth");
     }
   }, [user, loading, navigate]);
 
   const logout = async () => {
     await contextLogout();
-    navigate("/adminauth");
+    navigate(user?.role === "paymentadmin" ? "/payment-admin-login" : "/adminauth");
   };
 
   if (loading || !user) return null;
@@ -149,10 +173,28 @@ export default function AdminLayout({ children }) {
     "/superadmin-dashboard":    "Manage Admins",
     "/admin-dashboard/audit-logs": "Audit Logs",
     "/admin-dashboard/security-incidents": "Security Incidents",
+    "/payment-admin/payment-links": "Payment Links",
   };
-  const pageTitle = NAV_ITEMS.flatMap(s => s.items).find(i => i.path === location.pathname)?.label
+  const pageTitle = NAV_ITEMS.flatMap(s => s.items)
+    .find(i => i.path === location.pathname || i.paymentAdminPath === location.pathname)?.label
     || EXTRA_TITLES[location.pathname]
     || "Admin";
+
+  const visibleNavSections = (user.role === "paymentadmin"
+    ? NAV_ITEMS.map(section => ({
+        section: "Payment Links",
+        items: section.items.filter(item => item.roles?.includes("paymentadmin")),
+      })).filter(section => section.items.length > 0)
+    : NAV_ITEMS
+  )
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => {
+        if (item.roles) return item.roles.includes(user.role);
+        return !item.superadminOnly || user.role === "superadmin";
+      }),
+    }))
+    .filter(section => section.items.length > 0);
 
   return (
     <div className="ad-root">
@@ -175,23 +217,22 @@ export default function AdminLayout({ children }) {
           <div className="ad-profile-info">
             <div className="ad-profile-name">{user.name}</div>
             <div className="ad-profile-role">
-              {user.role === "superadmin" ? "Super Admin" : "Admin"}
+              {user.role === "superadmin" ? "Super Admin" : user.role === "paymentadmin" ? "Payment Admin" : "Admin"}
             </div>
           </div>
         </div>
 
         <nav className="ad-nav">
-          {NAV_ITEMS.map(section => (
+          {visibleNavSections.map(section => (
             <div key={section.section}>
               <div className="ad-nav-section-label">{section.section}</div>
-              {section.items
-                .filter(item => !item.superadminOnly || user.role === "superadmin")
-                .map(item => {
-                  const active = location.pathname === item.path;
+              {section.items.map(item => {
+                  const target = user.role === "paymentadmin" && item.paymentAdminPath ? item.paymentAdminPath : item.path;
+                  const active = location.pathname === target;
                   return (
                     <Link
-                      key={item.path}
-                      to={item.path}
+                      key={target}
+                      to={target}
                       className={`ad-nav-item${active ? " active" : ""}`}
                       onClick={() => setSideOpen(false)}
                     >

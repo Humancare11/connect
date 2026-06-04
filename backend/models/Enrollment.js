@@ -1,5 +1,13 @@
 const mongoose = require("mongoose");
 
+const APPLICATION_STATUSES = ["Pending", "Approved", "Rejected"];
+const normalizeApplicationStatus = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "approved") return "Approved";
+  if (normalized === "rejected") return "Rejected";
+  return "Pending";
+};
+
 const enrollmentSchema = new mongoose.Schema({
   doctorId: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true, unique: true },
   
@@ -67,8 +75,9 @@ const enrollmentSchema = new mongoose.Schema({
   currentStepLabel: { type: String, default: "Identity" },
   applicationStatus: {
     type: String,
-    enum: ["in_progress", "pending_review", "submitted", "approved", "rejected"],
-    default: "in_progress",
+    enum: APPLICATION_STATUSES,
+    default: "Pending",
+    set: normalizeApplicationStatus,
   },
 
   // Active workflow request being handled by admin

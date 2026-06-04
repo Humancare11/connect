@@ -311,7 +311,8 @@
   margin-bottom: 6px;
 }
 
-.sa-field input {
+.sa-field input,
+.sa-field select {
   width: 100%;
   padding: 10px 13px;
   border: 1.5px solid #e5e7eb;
@@ -322,8 +323,10 @@
   transition: border-color 0.2s;
 }
 
-.sa-field input:focus { border-color: #6d28d9; }
-.sa-field input:disabled { opacity: 0.6; }
+.sa-field input:focus,
+.sa-field select:focus { border-color: #6d28d9; }
+.sa-field input:disabled,
+.sa-field select:disabled { opacity: 0.6; }
 
 .sa-create-btn {
   align-self: flex-start;

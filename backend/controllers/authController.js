@@ -73,6 +73,11 @@ const safeUser = (user) => ({
   rating:          user.rating,
 });
 
+const buildTokenPayload = (user, session) => ({
+  accessToken: signAccessToken(user, session._id),
+  refreshToken: signRefreshToken(user, session._id),
+});
+
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
 
 const ensureDoctorEnrollment = async (doctor) => {
@@ -90,7 +95,7 @@ const ensureDoctorEnrollment = async (doctor) => {
     completedSteps: 0,
     currentStep: 1,
     currentStepLabel: STEP_LABELS[0],
-    applicationStatus: "in_progress",
+    applicationStatus: "Pending",
     pendingRequestType: "new_enrollment",
     profileDeleteRequestStatus: "none",
   });
@@ -166,7 +171,8 @@ const register = async (req, res) => {
 
     await recordConsent(req, user);
 
-    await issueAuthCookies(res, user);
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
 
     await logAudit(req, {
       action: "REGISTER",
@@ -179,7 +185,7 @@ const register = async (req, res) => {
       details: { gender: user.gender, country: user.country },
     });
 
-    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user) });
+    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("register error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -245,7 +251,7 @@ const login = async (req, res) => {
       });
       return res.status(403).json({ msg: "Please use the Doctor Login page." });
     }
-    if (user.role === "superadmin") {
+    if (["admin", "superadmin", "paymentadmin"].includes(user.role)) {
       await logAudit(req, {
         action: "LOGIN_FAILED",
         resource: "User",
@@ -254,18 +260,18 @@ const login = async (req, res) => {
         userEmail: user.email,
         userRole: user.role,
         success: false,
-        details: { reason: "Wrong portal — superadmin using patient login" },
+        details: { reason: "Wrong portal — admin using patient login" },
       });
       await recordSecurityIncident(req, {
         type: "privilege_escalation",
         severity: "high",
-        title: "Superadmin account used patient login portal",
+        title: "Admin account used patient login portal",
         userId: user._id,
         userEmail: user.email,
         userRole: user.role,
         metadata: { portal: "patient" },
       });
-      return res.status(403).json({ msg: "Please use the Super Admin login." });
+      return res.status(403).json({ msg: "Please use the Admin login." });
     }
 
     const match = await bcrypt.compare(password, user.password);
@@ -284,7 +290,8 @@ const login = async (req, res) => {
       return res.status(400).json({ msg: "Invalid email or password." });
     }
 
-    await issueAuthCookies(res, user);
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
 
     await logAudit(req, {
       action: "LOGIN_SUCCESS",
@@ -295,7 +302,7 @@ const login = async (req, res) => {
       userRole: user.role,
     });
 
-    return res.json({ msg: "Login successful.", user: safeUser(user) });
+    return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("login error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -502,8 +509,9 @@ const googleAuthUser = async (req, res) => {
     if (user) {
       if (user.role === "doctor") return res.status(403).json({ msg: "Please use the Doctor Login page." });
       if (!user.googleId) { user.googleId = googleId; await user.save(); }
-      await issueAuthCookies(res, user);
-      return res.json({ msg: "Login successful.", user: safeUser(user) });
+      const session = await issueAuthCookies(res, user);
+      const tokens = buildTokenPayload(user, session);
+      return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
     }
 
     if (!mobile || !dob || !gender || !country)
@@ -517,8 +525,9 @@ const googleAuthUser = async (req, res) => {
 
     user = await User.create({ name, email, googleId, role: "user", mobile, dob, gender, country, registrationIp: ip });
     await recordConsent(req, user);
-    await issueAuthCookies(res, user);
-    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user) });
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
+    return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("googleAuthUser error:", err);
     return res.status(500).json({ msg: "Google Sign-In failed. Please try again." });
@@ -550,11 +559,14 @@ const googleAuthDoctor = async (req, res) => {
 
     await ensureDoctorEnrollment(doctor);
 
-    await issueAuthCookies(res, { ...doctor.toObject(), role: "doctor" });
+    const authUser = { ...doctor.toObject(), role: "doctor" };
+    const session = await issueAuthCookies(res, authUser);
+    const tokens = buildTokenPayload(authUser, session);
     return res.status(isNewUser ? 201 : 200).json({
       message: isNewUser ? "Registration successful." : "Login successful.",
       isNewUser,
       doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
+      ...tokens,
     });
   } catch (err) {
     console.error("googleAuthDoctor error:", err);
@@ -710,11 +722,79 @@ const me = async (req, res) => {
 const adminMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    if (!user || !["admin", "superadmin"].includes(user.role))
+    if (!user || !["admin", "superadmin", "paymentadmin"].includes(user.role))
       return res.status(404).json({ msg: "Admin not found." });
     return res.json({ user: safeUser(user) });
   } catch (err) {
     return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+const paymentAdminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ msg: "Email and password are required." });
+
+    const clean = email.toLowerCase().trim();
+    const user = await User.findOne({ email: clean });
+
+    if (!user || user.role !== "paymentadmin") {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "PaymentAdmin",
+        userEmail: clean,
+        success: false,
+        details: { reason: "Invalid payment admin credentials" },
+      });
+      await recordFailedLogin(req, { email: clean, portal: "paymentadmin" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    if (user.accountDisabled) {
+      await recordSecurityIncident(req, {
+        type: "unauthorized_access",
+        severity: "high",
+        title: "Disabled payment admin login attempt",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { portal: "paymentadmin", disabledAt: user.disabledAt },
+      });
+      return res.status(403).json({ msg: "This account is disabled. Contact support." });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "PaymentAdmin",
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: user.role,
+        success: false,
+        details: { reason: "Incorrect password" },
+      });
+      await recordFailedLogin(req, { email: clean, userId: user._id, userRole: user.role, portal: "paymentadmin" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
+
+    await logAudit(req, {
+      action: "LOGIN_SUCCESS",
+      resource: "PaymentAdmin",
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+    });
+
+    return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
+  } catch (err) {
+    console.error("paymentAdminLogin error:", err);
+    return res.status(500).json({ msg: "Server error. Please try again." });
   }
 };
 
@@ -758,11 +838,18 @@ const refresh = async (req, res) => {
   const candidates = Object.entries(REFRESH_COOKIE_BY_ROLE)
     .map(([role, name]) => ({ role, token: req.cookies?.[name] }))
     .filter((item) => item.token);
+  const bearerToken = req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.split(" ")[1]
+    : null;
+  if (bearerToken) candidates.push({ role: null, token: bearerToken });
 
-  for (const { role, token } of candidates) {
+  for (const candidate of candidates) {
+    const { role, token } = candidate;
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      if (decoded.type !== "refresh" || decoded.role !== role) continue;
+      if (decoded.type !== "refresh") continue;
+      const refreshRole = role || decoded.role;
+      if (decoded.role !== refreshRole) continue;
 
       const session = await Session.findById(decoded.sid);
       if (!session || session.revokedAt) continue;
@@ -782,9 +869,10 @@ const refresh = async (req, res) => {
       const identity = { id: decoded.id, _id: decoded.id, email: decoded.email, role: decoded.role };
       res.cookie(ACCESS_COOKIE_BY_ROLE[decoded.role], signAccessToken(identity, session._id), COOKIE_OPTS);
       res.cookie(REFRESH_COOKIE_BY_ROLE[decoded.role], signRefreshToken(identity, session._id), REFRESH_COOKIE_OPTS);
-      return res.json({ msg: "Session refreshed." });
+      const tokens = buildTokenPayload(identity, session);
+      return res.json({ msg: "Session refreshed.", ...tokens });
     } catch {
-      // Try the next refresh cookie.
+      // Try the next refresh token.
     }
   }
 
@@ -806,7 +894,7 @@ const adminLogout = async (req, res) => {
 };
 
 module.exports = {
-  register, login, doctorRegister, doctorLogin, adminLogin,
+  register, login, doctorRegister, doctorLogin, adminLogin, paymentAdminLogin,
   updateProfile, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,

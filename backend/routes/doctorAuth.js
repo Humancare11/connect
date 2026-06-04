@@ -27,11 +27,9 @@ const toStepNumber = (value, fallback) => {
 };
 
 const deriveApplicationStatus = (enrollment) => {
-  if (enrollment.approvalStatus === "approved") return "approved";
-  if (enrollment.approvalStatus === "rejected") return "rejected";
-  if (enrollment.formCompleted) return "submitted";
-  if ((enrollment.completedSteps || 0) >= 4) return "pending_review";
-  return "in_progress";
+  if (enrollment.approvalStatus === "approved") return "Approved";
+  if (enrollment.approvalStatus === "rejected") return "Rejected";
+  return "Pending";
 };
 
 const applyProgress = (enrollment, nextCompletedSteps, nextCurrentStep) => {
@@ -100,7 +98,7 @@ router.post("/register", otpVerificationLimiter, async (req, res) => {
       completedSteps: 0,
       currentStep: 1,
       currentStepLabel: STEP_LABELS[0],
-      applicationStatus: "in_progress",
+      applicationStatus: "Pending",
       pendingRequestType: "new_enrollment",
       profileDeleteRequestStatus: "none",
     });
@@ -156,7 +154,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         completedSteps: 0,
         currentStep: 1,
         currentStepLabel: STEP_LABELS[0],
-        applicationStatus: "in_progress",
+        applicationStatus: "Pending",
         pendingRequestType: "new_enrollment",
         profileDeleteRequestStatus: "none",
       });
@@ -337,7 +335,7 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
         completedSteps: 5,
         currentStep: 5,
         currentStepLabel: STEP_LABELS[4],
-        applicationStatus: "submitted",
+        applicationStatus: "Pending",
         pendingRequestType: "new_enrollment",
         profileDeleteRequestStatus: "none",
       });
@@ -419,7 +417,7 @@ router.post("/profile-delete-request", verifyDoctorToken, async (req, res) => {
     enrollment.profileDeleteApprovedAt = undefined;
     enrollment.profileDeleteRequestStatus = "pending";
     enrollment.pendingRequestType = "profile_delete";
-    enrollment.applicationStatus = "pending_review";
+    enrollment.applicationStatus = "Pending";
     enrollment.updatedAt = new Date();
     await enrollment.save();
 

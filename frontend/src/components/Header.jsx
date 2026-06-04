@@ -30,6 +30,13 @@ export default function Header() {
   }
   )
 
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   /* ==================== NAV PILL LOGIC ==================== */
 useEffect(() => {
