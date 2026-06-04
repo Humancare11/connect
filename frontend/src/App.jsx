@@ -85,9 +85,9 @@ import Test from "./pages/Test";
 // 
 import Specialties from "./pages/Specialties";
 import Symptoms from "./pages/Symptoms";
-
+// Specialty pages
 import Specialty1 from "./pages/Specialty/SpecialtyDetail";
-
+import Specialty2 from "./pages/Specialty/PrimaryCare";
 
 
 function ScrollToTop() {
@@ -594,6 +594,8 @@ function AppLayout() {
      <Route path="/specialty" element={<Specialties />} />
      <Route path="/symptoms" element={<Symptoms />} />
      <Route path="/Specialty1" element={<Specialty1 />} />
+     <Route path="/Specialty2" element={<Specialty2 />} />
+
 
 
 

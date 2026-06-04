@@ -27,6 +27,8 @@ export default function Header() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 40);
     };
+  }
+  )
 
 
   /* ==================== NAV PILL LOGIC ==================== */
