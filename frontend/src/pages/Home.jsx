@@ -7,8 +7,6 @@ import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
 import LogoMarquee from "../components/LogoMarquee";
 
-// import HeroNew from "./hero-new";
-
 // Swiper imports
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
@@ -24,7 +22,6 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
-// framer-motion not used in this file
 import { motion, useInView } from "framer-motion";
 
 import gsap from "gsap";
@@ -32,13 +29,9 @@ import ScrollTrigger from "gsap/ScrollTrigger";
 
 import AmbientBackdrop from "../components/AmbientBackdrop";
 
-// 
 import { useNavigate } from "react-router-dom";
 
-
-
 gsap.registerPlugin(ScrollTrigger);
-
 
 // ─── Scene data ───────────────────────────────────────────────────────────────
 const SCENES = [
@@ -125,12 +118,12 @@ const SCENES = [
 ];
 
 const STEP_ICONS = [
-  <FiSmartphone />, // Mobile device
-  <FiUserCheck />, // User + verification
-  <FiClock />, // Time / process
-  <FiVideo />, // Video call
-  <FiFileText />, // Document/report
-  <FiCheckCircle />, // Success/complete
+  <FiSmartphone />,
+  <FiUserCheck />,
+  <FiClock />,
+  <FiVideo />,
+  <FiFileText />,
+  <FiCheckCircle />,
 ];
 
 const DOT_LABELS = [
@@ -143,197 +136,177 @@ const DOT_LABELS = [
 ];
 const TOTAL_STEPS = 6;
 const STEP_DURATION = 4000;
-const CIRCUMFERENCE = 2 * Math.PI * 10; // For auto-timer (radius 10)
-const STEP_CIRCUMFERENCE = 2 * Math.PI * 20; // For step dots (radius 20)
+const CIRCUMFERENCE = 2 * Math.PI * 10;
+const STEP_CIRCUMFERENCE = 2 * Math.PI * 20;
 
 export default function HomePage() {
 
   // ============================================
-// SEARCH DATA
-// Add all searchable pages/sections here
-// ============================================
+  // SEARCH DATA
+  // ============================================
+  const SEARCH_DATA = [
+    {
+      id: 1,
+      title: "Cardiologist",
+      keywords: ["heart", "cardiac", "chest pain", "bp"],
+      route: "/findadoctor",
+      sectionId: "cardiology",
+      type: "Specialty",
+    },
+    {
+      id: 2,
+      title: "Dermatologist",
+      keywords: ["skin", "acne", "rash", "eczema"],
+      route: "/findadoctor",
+      sectionId: "dermatology",
+      type: "Specialty",
+    },
+    {
+      id: 3,
+      title: "Mental Health",
+      keywords: ["stress", "anxiety", "depression", "therapy"],
+      route: "/mental-health",
+      sectionId: "therapy-section",
+      type: "Condition",
+    },
+    {
+      id: 4,
+      title: "Pediatrics",
+      keywords: ["kids", "child", "baby", "children"],
+      route: "/findadoctor",
+      sectionId: "pediatrics",
+      type: "Department",
+    },
+    {
+      id: 5,
+      title: "Book Video Consultation",
+      keywords: ["video call", "online doctor", "consultation"],
+      route: "/consultation",
+      sectionId: "video-consult",
+      type: "Service",
+    },
+    {
+      id: 6,
+      title: "Prescriptions",
+      keywords: ["medicine", "rx", "drugs"],
+      route: "/prescriptions",
+      sectionId: "rx-section",
+      type: "Service",
+    },
+  ];
 
-const SEARCH_DATA = [
-  {
-    id: 1,
-    title: "Cardiologist",
-    keywords: ["heart", "cardiac", "chest pain", "bp"],
-    route: "/findadoctor",
-    sectionId: "cardiology",
-    type: "Specialty",
-  },
-  {
-    id: 2,
-    title: "Dermatologist",
-    keywords: ["skin", "acne", "rash", "eczema"],
-    route: "/findadoctor",
-    sectionId: "dermatology",
-    type: "Specialty",
-  },
-  {
-    id: 3,
-    title: "Mental Health",
-    keywords: ["stress", "anxiety", "depression", "therapy"],
-    route: "/mental-health",
-    sectionId: "therapy-section",
-    type: "Condition",
-  },
-  {
-    id: 4,
-    title: "Pediatrics",
-    keywords: ["kids", "child", "baby", "children"],
-    route: "/findadoctor",
-    sectionId: "pediatrics",
-    type: "Department",
-  },
-  {
-    id: 5,
-    title: "Book Video Consultation",
-    keywords: ["video call", "online doctor", "consultation"],
-    route: "/consultation",
-    sectionId: "video-consult",
-    type: "Service",
-  },
-  {
-    id: 6,
-    title: "Prescriptions",
-    keywords: ["medicine", "rx", "drugs"],
-    route: "/prescriptions",
-    sectionId: "rx-section",
-    type: "Service",
-  },
-];
+  const navigate = useNavigate();
 
-// ============================================
-// INSIDE COMPONENT
-// ============================================
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
-const navigate = useNavigate();
+  const searchRef = useRef(null);
 
-const [searchQuery, setSearchQuery] = useState("");
-const [filteredSuggestions, setFilteredSuggestions] = useState([]);
-const [showSuggestions, setShowSuggestions] = useState(false);
-const [activeIndex, setActiveIndex] = useState(-1);
+  // ============================================
+  // FILTER SEARCH
+  // ============================================
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredSuggestions([]);
+      return;
+    }
 
-const searchRef = useRef(null);
+    const query = searchQuery.toLowerCase();
 
-// ============================================
-// FILTER SEARCH
-// ============================================
+    const results = SEARCH_DATA.filter((item) => {
+      return (
+        item.title.toLowerCase().includes(query) ||
+        item.keywords.some((keyword) =>
+          keyword.toLowerCase().includes(query)
+        )
+      );
+    });
 
-useEffect(() => {
-  if (!searchQuery.trim()) {
-    setFilteredSuggestions([]);
-    return;
-  }
+    setFilteredSuggestions(results);
+  }, [searchQuery]);
 
-  const query = searchQuery.toLowerCase();
+  // ============================================
+  // CLOSE DROPDOWN ON OUTSIDE CLICK
+  // ============================================
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
 
-  const results = SEARCH_DATA.filter((item) => {
-    return (
-      item.title.toLowerCase().includes(query) ||
-      item.keywords.some((keyword) =>
-        keyword.toLowerCase().includes(query)
-      )
-    );
-  });
+    document.addEventListener("mousedown", handleClickOutside);
 
-  setFilteredSuggestions(results);
-}, [searchQuery]);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-// ============================================
-// CLOSE DROPDOWN ON OUTSIDE CLICK
-// ============================================
+  // ============================================
+  // SEARCH NAVIGATION
+  // ============================================
+  const handleSearch = (selectedItem = null) => {
+    const item = selectedItem || filteredSuggestions[0];
 
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    if (
-      searchRef.current &&
-      !searchRef.current.contains(event.target)
-    ) {
-      setShowSuggestions(false);
+    if (!item) return;
+
+    navigate(item.route, {
+      state: {
+        scrollTo: item.sectionId,
+      },
+    });
+
+    setSearchQuery("");
+    setShowSuggestions(false);
+  };
+
+  // ============================================
+  // KEYBOARD NAVIGATION
+  // ============================================
+  const handleKeyDown = (e) => {
+    if (!filteredSuggestions.length) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setActiveIndex((prev) =>
+          prev < filteredSuggestions.length - 1 ? prev + 1 : 0
+        );
+        break;
+
+      case "ArrowUp":
+        e.preventDefault();
+        setActiveIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredSuggestions.length - 1
+        );
+        break;
+
+      case "Enter":
+        e.preventDefault();
+        if (activeIndex >= 0) {
+          handleSearch(filteredSuggestions[activeIndex]);
+        } else {
+          handleSearch();
+        }
+        break;
+
+      case "Escape":
+        setShowSuggestions(false);
+        break;
+
+      default:
+        break;
     }
   };
 
-  document.addEventListener("mousedown", handleClickOutside);
-
-  return () => {
-    document.removeEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-  };
-}, []);
-
-// ============================================
-// SEARCH NAVIGATION
-// ============================================
-
-const handleSearch = (selectedItem = null) => {
-  const item =
-    selectedItem ||
-    filteredSuggestions[0];
-
-  if (!item) return;
-
-  navigate(item.route, {
-    state: {
-      scrollTo: item.sectionId,
-    },
-  });
-
-  setSearchQuery("");
-  setShowSuggestions(false);
-};
-
-// ============================================
-// KEYBOARD NAVIGATION
-// ============================================
-
-const handleKeyDown = (e) => {
-  if (!filteredSuggestions.length) return;
-
-  switch (e.key) {
-    case "ArrowDown":
-      e.preventDefault();
-      setActiveIndex((prev) =>
-        prev < filteredSuggestions.length - 1
-          ? prev + 1
-          : 0
-      );
-      break;
-
-    case "ArrowUp":
-      e.preventDefault();
-      setActiveIndex((prev) =>
-        prev > 0
-          ? prev - 1
-          : filteredSuggestions.length - 1
-      );
-      break;
-
-    case "Enter":
-      e.preventDefault();
-
-      if (activeIndex >= 0) {
-        handleSearch(filteredSuggestions[activeIndex]);
-      } else {
-        handleSearch();
-      }
-      break;
-
-    case "Escape":
-      setShowSuggestions(false);
-      break;
-
-    default:
-      break;
-  }
-};
-
-
-
-   // Testimonials data
+  // ============================================
+  // TESTIMONIALS DATA
+  // ============================================
   const testimonials = [
     {
       id: 1,
@@ -433,7 +406,6 @@ const handleKeyDown = (e) => {
   ];
 
   useEffect(() => {
-    // Scroll reveal
     const ro = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -451,7 +423,6 @@ const handleKeyDown = (e) => {
 
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
-  // Replace per-frame state for timerOffset with a ref to avoid re-renders
   const timerOffsetRef = useRef(CIRCUMFERENCE);
   const elapsedRef = useRef(0);
   const lastTickRef = useRef(Date.now());
@@ -459,32 +430,28 @@ const handleKeyDown = (e) => {
   const pausedRef = useRef(false);
   const currentRef = useRef(0);
 
-  // Refs for direct DOM updates to avoid re-rendering the whole page each animation frame
   const progressFillRef = useRef(null);
   const ringFillRefs = useRef([]);
 
-  // Keep refs in sync
   useEffect(() => {
     pausedRef.current = paused;
   }, [paused]);
+
   useEffect(() => {
     currentRef.current = current;
   }, [current]);
 
-  // External progress handler for StepProgress (fraction 0..1)
   const handleProgress = useCallback((progress) => {
     const frac = Math.min(Math.max(progress, 0), 1);
-    const pct = Math.round(frac * 10000) / 100; // keep 2 decimals
+    const pct = Math.round(frac * 10000) / 100;
     if (progressFillRef.current) {
       progressFillRef.current.style.width = `${pct}%`;
     }
 
-    // Derive current step and intra-step progress from the total fraction
     const total = frac * TOTAL_STEPS;
     const idx = Math.min(Math.floor(total), TOTAL_STEPS - 1);
-    const inStep = total - idx; // 0..1 progress inside the step
+    const inStep = total - idx;
 
-    // Sync Home's timing refs so scene cards match the StepProgress component
     if (currentRef.current !== idx) {
       setCurrent(idx);
       currentRef.current = idx;
@@ -494,19 +461,16 @@ const handleKeyDown = (e) => {
   }, []);
 
   const updateVisuals = useCallback(() => {
-    // update continuous track and rings from refs
     const currentIdx = currentRef.current;
     const timerOffset = timerOffsetRef.current;
     const currentStepProgress = 1 - timerOffset / CIRCUMFERENCE;
     let progressPct = ((currentIdx + currentStepProgress) / TOTAL_STEPS) * 100;
     progressPct = Math.min(progressPct, 100);
 
-    // update continuous progress via shared handler (expects 0..1)
     if (typeof handleProgress === "function") {
       handleProgress(progressPct / 100);
     }
 
-    // update ring fills (small number of rings, fine to update each frame)
     ringFillRefs.current.forEach((el, i) => {
       if (!el) return;
       const isActive = i === currentIdx;
@@ -517,7 +481,6 @@ const handleKeyDown = (e) => {
           ? 0
           : 1;
       const progressOffset = progress * STEP_CIRCUMFERENCE;
-      // set attribute for SVG stroke dashoffset
       try {
         el.setAttribute("stroke-dashoffset", String(progressOffset));
       } catch (e) {
@@ -535,14 +498,12 @@ const handleKeyDown = (e) => {
     const pct = Math.min(elapsedRef.current / STEP_DURATION, 1);
     timerOffsetRef.current = CIRCUMFERENCE * (1 - pct);
 
-    // update visuals directly
     updateVisuals();
 
     if (elapsedRef.current >= STEP_DURATION) {
       elapsedRef.current = 0;
       setCurrent((prev) => {
         const next = (prev + 1) % TOTAL_STEPS;
-        // keep currentRef in sync
         currentRef.current = next;
         return next;
       });
@@ -551,13 +512,8 @@ const handleKeyDown = (e) => {
   }, [updateVisuals]);
 
   useEffect(() => {
-    // initialize refs and start RAF
-    // ensure ringFillRefs current array has proper length
     ringFillRefs.current = ringFillRefs.current.slice(0, TOTAL_STEPS);
-
-    // set initial visuals
     updateVisuals();
-
     lastTickRef.current = Date.now();
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
@@ -568,7 +524,6 @@ const handleKeyDown = (e) => {
     lastTickRef.current = Date.now();
     setCurrent(step);
     currentRef.current = step;
-    // update visuals instantly
     updateVisuals();
   };
 
@@ -583,66 +538,10 @@ const handleKeyDown = (e) => {
     });
   };
 
-  // Continuous progress: includes completed steps + progress within current step
-  // Progress should reach 100% only when the last step completes
   const currentStepProgress =
     1 - (timerOffsetRef.current ?? CIRCUMFERENCE) / CIRCUMFERENCE;
-  // Divide by TOTAL_STEPS so progress continues during the last step
   let progressPct = ((current + currentStepProgress) / TOTAL_STEPS) * 100;
-  progressPct = Math.min(progressPct, 100); // Cap at 100%
-
-  // const items = ["figma", "framer", "webflow", "raycast", "supabase", "clerk"];
-
-  // const trackRef = useRef(null);
-
-  // useEffect(() => {
-  //   const track = trackRef.current;
-  //   if (!track) return;
-
-  //   const buildSet = (copies) => {
-  //     track.innerHTML = "";
-  //     for (let c = 0; c < copies; c++) {
-  //       items.forEach((item) => {
-  //         const tag = document.createElement("span");
-  //         tag.className = "sb-tag";
-  //         tag.textContent = item;
-  //         track.appendChild(tag);
-  //       });
-  //       // optional separator
-  //       const sep = document.createElement("span");
-  //       sep.className = "sb-sep";
-  //       sep.textContent = "\u00A0"; 
-  //       track.appendChild(sep);
-  //     }
-  //   };
-
-    // const recalc = () => {
-      // 1) build a single set to measure width
-      // buildSet(1);
-
-      // requestAnimationFrame(() => {
-        // const singleWidth = track.scrollWidth || 0;  width of one set
-        // const containerWidth =
-          // track.parentElement?.clientWidth || window.innerWidth;
-
-        // Determine how many copies we need so the scrolling content always exceeds the viewport
-        // const minNeeded = Math.ceil(
-          // (containerWidth * 2) / Math.max(singleWidth, 1),
-        // );
-        // const copies = Math.max(2, minNeeded);
-
-        // buildSet(copies);
-
-        // expose width of one copy for the CSS animation to translate by
-        // track.style.setProperty("--scroll-width", `${singleWidth}px`);
-      // });
-    // };
-
-    // recalc();
-    // window.addEventListener("resize", recalc);
-
-    // return () => window.removeEventListener("resize", recalc);
-  // }, [items]);
+  progressPct = Math.min(progressPct, 100);
 
   const wrapperRef = useRef(null);
   const headerRef = useRef(null);
@@ -686,14 +585,12 @@ const handleKeyDown = (e) => {
         },
       });
 
-      // 1. Header
       tl.fromTo(
         headerRef.current,
         { opacity: 0, y: 60 },
         { opacity: 1, y: 0, duration: 1.2 },
       );
 
-      // 2. Feature card 1
       tl.fromTo(
         featuresRef.current[0],
         { opacity: 0, x: -70 },
@@ -701,7 +598,6 @@ const handleKeyDown = (e) => {
         "+=0.2",
       );
 
-      // 3. Feature card 2
       tl.fromTo(
         featuresRef.current[1],
         { opacity: 0, x: -70 },
@@ -709,7 +605,6 @@ const handleKeyDown = (e) => {
         "+=0.1",
       );
 
-      // 4. Feature card 3
       tl.fromTo(
         featuresRef.current[2],
         { opacity: 0, x: -70 },
@@ -717,7 +612,6 @@ const handleKeyDown = (e) => {
         "+=0.1",
       );
 
-      // 5. Button
       tl.fromTo(
         btnRef.current,
         { opacity: 0, y: 30 },
@@ -725,21 +619,17 @@ const handleKeyDown = (e) => {
         "+=0.1",
       );
 
-      // 6. Entire right panel as one whole box — steps visible inside it
       tl.fromTo(
         rightRef.current,
         { opacity: 0, y: 80, scale: 0.95 },
         { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
         "+=0.3",
       );
-
-      // ✅ No stepsRef animation — they're visible inside rightRef
     }, wrapperRef);
 
     return () => ctx.revert();
   }, []);
 
- // inside your component
   const testimonialsRef = useRef(null);
   const bgRef = useRef(null);
 
@@ -766,12 +656,13 @@ const handleKeyDown = (e) => {
 
   return (
     <>
-    {/* <AmbientBackdrop /> */}
-    <div className="hero-light"></div>
-     <div className="hero-grid"></div>
-      {/* ════════════════════ HERO section ═════════════════════════════════════════════ */}
+      <div className="hero-light"></div>
+      <div className="hero-grid"></div>
+
+      {/* ════════════════════ HERO ═════════════════════════════════════════════ */}
       <section className="hero">
-       
+
+        {/* ── LEFT ── */}
         <div className="hero-left">
           <div className="hero-badge">
             <div className="badge-pulse"></div>
@@ -786,111 +677,67 @@ const handleKeyDown = (e) => {
 
           <p>
             Book video consultations, get prescriptions, and receive follow-up
-            care from board-certified physicians, without leaving home..
+            care from board-certified physicians, without leaving home.
           </p>
 
           {/* SEARCH BAR */}
           <div className="search-wrapper" ref={searchRef}>
-  <div className="search-bar">
-    <input
-      type="text"
-      value={searchQuery}
-      placeholder="Search doctors, specialties, conditions..."
-      onChange={(e) => {
-        setSearchQuery(e.target.value);
-        setShowSuggestions(true);
-      }}
-      onFocus={() => setShowSuggestions(true)}
-      onKeyDown={handleKeyDown}
-    />
-
-    <button onClick={() => handleSearch()}>
-      Search
-    </button>
-  </div>
-
-  {/* SEARCH SUGGESTIONS */}
-  {showSuggestions &&
-    filteredSuggestions.length > 0 && (
-      <div className="search-suggestions">
-        {filteredSuggestions.map((item, index) => (
-          <div
-            key={item.id}
-            className={`suggestion-item ${
-              activeIndex === index
-                ? "active"
-                : ""
-            }`}
-            onClick={() => handleSearch(item)}
-          >
-            <div className="suggestion-left">
-              <span className="suggestion-title">
-                {item.title}
-              </span>
-
-              <span className="suggestion-type">
-                {item.type}
-              </span>
+            <div className="search-bar">
+              <input
+                type="text"
+                value={searchQuery}
+                placeholder="Search doctors, specialties, conditions..."
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onKeyDown={handleKeyDown}
+              />
+              <button onClick={() => handleSearch()}>Search</button>
             </div>
 
-            <span className="suggestion-arrow">
-              →
-            </span>
+            {/* SUGGESTIONS */}
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="search-suggestions">
+                {filteredSuggestions.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className={`suggestion-item ${activeIndex === index ? "active" : ""}`}
+                    onClick={() => handleSearch(item)}
+                  >
+                    <div className="suggestion-left">
+                      <span className="suggestion-title">{item.title}</span>
+                      <span className="suggestion-type">{item.type}</span>
+                    </div>
+                    <span className="suggestion-arrow">→</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
-      </div>
-    )}
-</div>
 
           <div className="trust">
             <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#6B89B8"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="#6B89B8" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA Compliant
             </span>
             <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#6B89B8"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="#6B89B8" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               GDPR Ready
             </span>
             <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#6B89B8"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="#6B89B8" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               500+ Verified Doctors
             </span>
-            < span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#6B89B8"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+            <span className="trust-chip">
+              <svg width="12" height="12" fill="none" stroke="#6B89B8" strokeWidth="2.5" viewBox="0 0 24 24">
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
@@ -899,7 +746,24 @@ const handleKeyDown = (e) => {
           </div>
         </div>
 
+        {/* ── RIGHT ── video is now the full card background */}
         <div className="hero-right">
+
+          {/* ✅ VIDEO — fills entire hero-right card */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="hero-right-video-bg"
+          >
+            <source src={sceneVideo} type="video/mp4" />
+          </video>
+
+          {/* ✅ Frosted glass overlay sits between video and content */}
+          <div className="hero-right-overlay" />
+
+          {/* Timeline content sits above video + overlay */}
           <div className="timeline-container">
             <div className="t-orb t-orb-1" />
             <div className="t-orb t-orb-2" />
@@ -934,16 +798,7 @@ const handleKeyDown = (e) => {
             {/* Scene Cards */}
             <div className="scene-viewport">
               <div className="scene-card">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="scene-video-bg"
-                >
-                  <source src={sceneVideo} type="video/mp4" />
-                </video>
-
+                {/* ✅ No video here — it's now on hero-right */}
                 {SCENES.map((scene, i) => {
                   const isActive = i === current;
                   const isExitUp =
@@ -953,9 +808,7 @@ const handleKeyDown = (e) => {
                   return (
                     <div
                       key={i}
-                      className={`scene-content-container${
-                        isActive ? " active" : ""
-                      }${isExitUp ? " exit-up" : ""}`}
+                      className={`scene-content-container${isActive ? " active" : ""}${isExitUp ? " exit-up" : ""}`}
                     >
                       <div className="scene-content">
                         <div className="scene-step-badge">
@@ -978,12 +831,8 @@ const handleKeyDown = (e) => {
                         <div className="scene-metric">
                           <div className="metric-icon">{scene.metricIcon}</div>
                           <div className="metric-text">
-                            <span className="metric-value">
-                              {scene.metricValue}
-                            </span>
-                            <span className="metric-label">
-                              {scene.metricLabel}
-                            </span>
+                            <span className="metric-value">{scene.metricValue}</span>
+                            <span className="metric-label">{scene.metricLabel}</span>
                           </div>
                         </div>
                       </div>
@@ -995,247 +844,143 @@ const handleKeyDown = (e) => {
           </div>
         </div>
       </section>
-      {/* <HeroNew /> */}
 
+      {/* ════════════════════ LOGO MARQUEE ═════════════════════════════════════ */}
+      <LogoMarquee />
 
-      {/* ✅ sb-bar is now OUTSIDE <section className="hero"> */}
-      {/* <div className="sb-bar">
-        <div className="sb-track" ref={trackRef} />
-      </div> */}
-      {/* ════════════════════ HERO section ═════════════════════════════════════════════ */}
-{/* ---------------------------------------------------------------- */}
- <LogoMarquee />
- {/* -------------- SERVICE----------------------------- */}
+      {/* ════════════════════ SERVICES ═════════════════════════════════════════ */}
       <Sa />
 
-      {/* ══════════════════════════════════════════════
-          SPECIALTIES
-      ══════════════════════════════════════════════ */}
+      {/* ════════════════════ SPECIALTIES ══════════════════════════════════════ */}
       <Aa />
-      {/* ══════════════════════════════════════════════
-          DOCTORS
-      ══════════════════════════════════════════════ */}
-      {/* <section ref={wrapperRef} className="pcp-section-wrapper">
-        <div className="pcp-section">
-          <div className="pcp-container"> */}
-            {/* HEADER */}
-            {/* <div className="pcp-header" ref={headerRef}>
-              <span className="pcp-eyebrow">— NO PCP? NO PROBLEM.</span>
-              <h2 className="pcp-heading">
-                Don't have a primary care doctor?<span> We've got you.</span>
-              </h2>
-              <p className="pcp-desc">
-                Millions of Americans lack access to a regular physician.
-                MediLink bridges that gap — giving you instant access to
-                licensed providers who can serve as your primary care team.
-              </p>
-            </div> */}
 
-            {/* LEFT — Features */}
-            {/* <div className="pcp-left">
-              <div className="pcp-features">
-                {features.map((f, i) => (
-                  <div
-                    className="pcp-feature"
-                    key={i}
-                    ref={(el) => (featuresRef.current[i] = el)}
-                  >
-                    <div className="pcp-icon">{f.icon}</div>
-                    <div>
-                      <h4>{f.title}</h4>
-                      <p>{f.desc}</p>
-                    </div>
-                  </div>
-                ))}
+      {/* ════════════════════ HOW IT WORKS / PCP ═══════════════════════════════ */}
+      <section className="pcp-section">
+        <div className="pcp-container">
+
+          {/* LEFT CONTENT */}
+          <div className="pcp-left">
+            <div className="pcp-badge">— NO PCP? NO PROBLEM.</div>
+
+            <h2 className="pcp-title">
+              Don't have a primary care doctor?
+              <span>We've got you.</span>
+            </h2>
+
+            <p className="pcp-desc">
+              Millions of Americans lack access to a regular physician.
+              MediLink bridges that gap — giving you instant access to
+              licensed providers who can serve as your primary care team.
+            </p>
+
+            <div className="pcp-features">
+
+              <div className="pcp-feature-card">
+                <div className="pcp-icon">01</div>
+                <div>
+                  <h4>Acts as Your PCP</h4>
+                  <p>
+                    Our providers manage ongoing health, maintain your
+                    records, and coordinate specialist referrals.
+                  </p>
+                </div>
               </div>
 
-              <button className="pcp-btn" ref={btnRef}>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                Get a doctor today — free to start
-              </button>
-            </div> */}
+              <div className="pcp-feature-card">
+                <div className="pcp-icon">02</div>
+                <div>
+                  <h4>Continuity of Care</h4>
+                  <p>
+                    Build a relationship with the same doctor across visits.
+                    Your health history stays in one secure place.
+                  </p>
+                </div>
+              </div>
 
-            {/* RIGHT — Steps */}
-            {/* <div className="pcp-right" ref={rightRef}>
-              <h3 className="pcp-right-title">
-                Your first visit, step by step
-              </h3>
+              <div className="pcp-feature-card">
+                <div className="pcp-icon">03</div>
+                <div>
+                  <h4>365 Days a Year</h4>
+                  <p>
+                    No more 3-week waits. Connect the same day —
+                    including evenings and weekends.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="pcp-right">
+
+            <div className="pcp-image-stack">
+              <img
+                src="https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=1200&auto=format&fit=crop"
+                alt=""
+                className="pcp-img-main"
+              />
+              <img
+                src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop"
+                alt=""
+                className="pcp-img-small"
+              />
+            </div>
+
+            <div className="pcp-steps-card">
+              <div className="pcp-step-head">
+                <span className="pcp-mini">Get a doctor today — free to start</span>
+                <h3>Your first visit, step by step</h3>
+              </div>
+
               <div className="pcp-steps">
-                {steps.map((step, i) => (
-                  <div
-                    className="pcp-step"
-                    key={i}
-                    // ✅ no ref here anymore
-                  >
-                    <div className="pcp-step-circle">{i + 1}</div>
-                    <div>
-                      <h4>{step.title}</h4>
-                      <p>{step.desc}</p>
-                    </div>
+                <div className="pcp-step">
+                  <div className="pcp-step-num">1</div>
+                  <div>
+                    <h4>Create your free account</h4>
+                    <p>Under 2 minutes. No credit card required.</p>
                   </div>
-                ))}
+                </div>
+                <div className="pcp-step-line"></div>
+                <div className="pcp-step">
+                  <div className="pcp-step-num">2</div>
+                  <div>
+                    <h4>Complete a health intake</h4>
+                    <p>Share your medical history and current medications.</p>
+                  </div>
+                </div>
+                <div className="pcp-step-line"></div>
+                <div className="pcp-step">
+                  <div className="pcp-step-num">3</div>
+                  <div>
+                    <h4>Match with a provider</h4>
+                    <p>We surface the best-fit doctor for your needs and state.</p>
+                  </div>
+                </div>
+                <div className="pcp-step-line"></div>
+                <div className="pcp-step">
+                  <div className="pcp-step-num">4</div>
+                  <div>
+                    <h4>Start your video visit</h4>
+                    <p>Meet face-to-face from anywhere, on any device.</p>
+                  </div>
+                </div>
+                <div className="pcp-step-line"></div>
+                <div className="pcp-step">
+                  <div className="pcp-step-num">5</div>
+                  <div>
+                    <h4>Receive care instantly</h4>
+                    <p>Prescription sent to your pharmacy within minutes.</p>
+                  </div>
+                </div>
               </div>
             </div>
+
           </div>
         </div>
-      </section> */}
+      </section>
 
-
-      {/* ══════════════════════════════════════════════
-    HOW IT WORKS / PCP SECTION
-══════════════════════════════════════════════ */}
-<section className="pcp-section">
-  <div className="pcp-container">
-
-    {/* LEFT CONTENT */}
-    <div className="pcp-left">
-      <div className="pcp-badge">— NO PCP? NO PROBLEM.</div>
-
-      <h2 className="pcp-title">
-        Don't have a primary care doctor?
-        <span>We've got you.</span>
-      </h2>
-
-      <p className="pcp-desc">
-        Millions of Americans lack access to a regular physician.
-        MediLink bridges that gap — giving you instant access to
-        licensed providers who can serve as your primary care team.
-      </p>
-
-      <div className="pcp-features">
-
-        <div className="pcp-feature-card">
-          <div className="pcp-icon">01</div>
-          <div>
-            <h4>Acts as Your PCP</h4>
-            <p>
-              Our providers manage ongoing health, maintain your
-              records, and coordinate specialist referrals.
-            </p>
-          </div>
-        </div>
-
-        <div className="pcp-feature-card">
-          <div className="pcp-icon">02</div>
-          <div>
-            <h4>Continuity of Care</h4>
-            <p>
-              Build a relationship with the same doctor across visits.
-              Your health history stays in one secure place.
-            </p>
-          </div>
-        </div>
-
-        <div className="pcp-feature-card">
-          <div className="pcp-icon">03</div>
-          <div>
-            <h4>365 Days a Year</h4>
-            <p>
-              No more 3-week waits. Connect the same day —
-              including evenings and weekends.
-            </p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    {/* RIGHT SIDE */}
-    <div className="pcp-right">
-
-      <div className="pcp-image-stack">
-        <img
-          src="https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=1200&auto=format&fit=crop"
-          alt=""
-          className="pcp-img-main"
-        />
-
-        <img
-          src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop"
-          alt=""
-          className="pcp-img-small"
-        />
-      </div>
-
-      <div className="pcp-steps-card">
-
-        <div className="pcp-step-head">
-          <span className="pcp-mini">Get a doctor today — free to start</span>
-          <h3>Your first visit, step by step</h3>
-        </div>
-
-        <div className="pcp-steps">
-
-          <div className="pcp-step">
-            <div className="pcp-step-num">1</div>
-            <div>
-              <h4>Create your free account</h4>
-              <p>Under 2 minutes. No credit card required.</p>
-            </div>
-          </div>
-
-          <div className="pcp-step-line"></div>
-
-          <div className="pcp-step">
-            <div className="pcp-step-num">2</div>
-            <div>
-              <h4>Complete a health intake</h4>
-              <p>
-                Share your medical history and current medications.
-              </p>
-            </div>
-          </div>
-
-          <div className="pcp-step-line"></div>
-
-          <div className="pcp-step">
-            <div className="pcp-step-num">3</div>
-            <div>
-              <h4>Match with a provider</h4>
-              <p>
-                We surface the best-fit doctor for your needs and state.
-              </p>
-            </div>
-          </div>
-
-          <div className="pcp-step-line"></div>
-
-          <div className="pcp-step">
-            <div className="pcp-step-num">4</div>
-            <div>
-              <h4>Start your video visit</h4>
-              <p>
-                Meet face-to-face from anywhere, on any device.
-              </p>
-            </div>
-          </div>
-
-          <div className="pcp-step-line"></div>
-
-          <div className="pcp-step">
-            <div className="pcp-step-num">5</div>
-            <div>
-              <h4>Receive care instantly</h4>
-              <p>
-                Prescription sent to your pharmacy within minutes.
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-
-      {/* ══════════════════════════════════════════════
-          WHY HUMANCARE
-      ══════════════════════════════════════════════ */}
+      {/* ════════════════════ WHY HUMANCARE ════════════════════════════════════ */}
       <section className="why-section-container">
         <div className="why-section" id="why">
           <div className="why-grid">
@@ -1291,37 +1036,28 @@ const handleKeyDown = (e) => {
               >
                 <motion.div className="why-item" variants={whyItemVariants}>
                   <div>
-                    <div className="why-item-title">
-                      HIPAA &amp; SOC 2 Certified
-                    </div>
+                    <div className="why-item-title">HIPAA &amp; SOC 2 Certified</div>
                     <div className="why-item-desc">
                       End-to-end encryption on every visit, message, and record.
-                      Your health data never leaves our secure, audited
-                      infrastructure.
+                      Your health data never leaves our secure, audited infrastructure.
                     </div>
                   </div>
                 </motion.div>
                 <motion.div className="why-item" variants={whyItemVariants}>
                   <div>
-                    <div className="why-item-title">
-                      Board-Certified Physicians Only
-                    </div>
+                    <div className="why-item-title">Board-Certified Physicians Only</div>
                     <div className="why-item-desc">
-                      Every doctor clears a rigorous 9-step credentialing
-                      process — state licensure, malpractice history, peer
-                      reviews, and ongoing audits.
+                      Every doctor clears a rigorous 9-step credentialing process —
+                      state licensure, malpractice history, peer reviews, and ongoing audits.
                     </div>
                   </div>
                 </motion.div>
                 <motion.div className="why-item" variants={whyItemVariants}>
                   <div>
-                    <div className="why-item-title">
-                      Transparent, Flat-Fee Pricing
-                    </div>
+                    <div className="why-item-title">Transparent, Flat-Fee Pricing</div>
                     <div className="why-item-desc">
-                      No surprise bills. See the exact cost before booking. Most
-                      major insurance plans accepted, or a flat $49 uninsured
-                      rate.
+                      No surprise bills. See the exact cost before booking. Most major
+                      insurance plans accepted, or a flat $49 uninsured rate.
                     </div>
                   </div>
                 </motion.div>
@@ -1329,9 +1065,8 @@ const handleKeyDown = (e) => {
                   <div>
                     <div className="why-item-title">24 / 7 Human Support</div>
                     <div className="why-item-desc">
-                      Real people — by chat, phone, or video — available around
-                      the clock for urgent questions, escalations, and care
-                      coordination.
+                      Real people — by chat, phone, or video — available around the clock
+                      for urgent questions, escalations, and care coordination.
                     </div>
                   </div>
                 </motion.div>
@@ -1341,17 +1076,10 @@ const handleKeyDown = (e) => {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════
-          TESTIMONIALS NEW
-      ══════════════════════════════════════════════ */}
+      {/* ════════════════════ TESTIMONIALS ═════════════════════════════════════ */}
       <section className="testimonials-section reveal reveal-stagger">
         <div className="testi-header">
-          <div className="testi-eyebrow">
-            {/* <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg> */}
-            Testimonials
-          </div>
+          <div className="testi-eyebrow">Testimonials</div>
           <h2 className="testi-title">What Our Patients Are Saying</h2>
           <p className="testi-desc">
             We take pride in delivering exceptional care that delivers great results.
@@ -1380,13 +1108,9 @@ const handleKeyDown = (e) => {
             ))}
           </div>
         </div>
-
       </section>
 
-
-      {/* ══════════════════════════════════════════════
-          CTA BAND
-      ══════════════════════════════════════════════ */}
+      {/* ════════════════════ CTA BAND ══════════════════════════════════════════ */}
       <section className="cta-band">
         <div className="cta-inner">
           <div className="section-eyebrow">Get Started</div>
@@ -1404,54 +1128,26 @@ const handleKeyDown = (e) => {
           </div>
           <div className="cta-pills">
             <span className="cta-pill">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA Compliant
             </span>
             <span className="cta-pill">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Board-Certified Doctors
             </span>
             <span className="cta-pill">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               24/7 Available
             </span>
             <span className="cta-pill">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
@@ -1460,10 +1156,6 @@ const handleKeyDown = (e) => {
           </div>
         </div>
       </section>
-
-      {/* ══════════════════════════════════════════════
-          FOOTER
-      ══════════════════════════════════════════════ */}
     </>
   );
 }

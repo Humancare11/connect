@@ -96,9 +96,9 @@ import PaymentLinkCheckout from "./pages/PaymentLinkCheckout";
 // 
 import Specialties from "./pages/Specialties";
 import Symptoms from "./pages/Symptoms";
+
 // Specialty pages
-import Specialty1 from "./pages/Specialty/SpecialtyDetail";
-import Specialty2 from "./pages/Specialty/PrimaryCare";
+import PrimaryCare from "./pages/Specialty/PrimaryCare";
 
 
 function ScrollToTop() {
@@ -670,8 +670,8 @@ function AppLayout() {
         {/* Specialties */}
      <Route path="/specialty" element={<Specialties />} />
      <Route path="/symptoms" element={<Symptoms />} />
-     <Route path="/Specialty1" element={<Specialty1 />} />
-     <Route path="/Specialty2" element={<Specialty2 />} />
+     
+     <Route path="/primary-care" element={<PrimaryCare />} />
 
 
 
