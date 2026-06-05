@@ -2,10 +2,12 @@ const express  = require("express");
 const router   = express.Router();
 const multer   = require("multer");
 const path     = require("path");
-const fs       = require("fs/promises");
 const { randomBytes } = require("crypto");
 const { verifyToken } = require("../middleware/verifyToken");
-const { storeUploadInGridFS } = require("../utils/uploadStorage");
+const { storeUploadInS3 } = require("../utils/uploadStorage");
+const User = require("../models/User");
+const Doctor = require("../models/Doctor");
+const Enrollment = require("../models/Enrollment");
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const BLOCKED_EXTENSIONS = new Set([
@@ -32,16 +34,7 @@ const ALLOWED_TYPES = {
   ],
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads"));
-  },
-  filename: (req, file, cb) => {
-    const ext  = path.extname(file.originalname).toLowerCase();
-    const name = Date.now() + "-" + randomBytes(8).toString("hex") + ext;
-    cb(null, name);
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -54,8 +47,65 @@ const upload = multer({
   },
 });
 
-async function removeLocalFile(file) {
-  if (file?.path) await fs.rm(file.path, { force: true });
+function generateStoredFilename(originalname) {
+  const ext = path.extname(originalname).toLowerCase();
+  const base = path.basename(originalname, ext)
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "document";
+  return `${base}-${Date.now()}-${randomBytes(4).toString("hex")}${ext}`;
+}
+
+function slugFolderName(name, fallback) {
+  const slug = String(name || fallback || "Unknown")
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return slug || "Unknown";
+}
+
+function fullNameFromEnrollment(enrollment) {
+  return [enrollment?.firstName, enrollment?.surname].filter(Boolean).join(" ").trim();
+}
+
+async function resolveUploadFolder(req) {
+  const role = req.user?.role;
+
+  if (role === "doctor") {
+    const doctor = await Doctor.findById(req.user.id).select("name email").lean();
+    return `doctors/${slugFolderName(doctor?.name || doctor?.email, req.user.id)}`;
+  }
+
+  if (role === "user") {
+    const user = await User.findById(req.user.id).select("name email").lean();
+    return `patients/${slugFolderName(user?.name || user?.email, req.user.id)}`;
+  }
+
+  if (["admin", "superadmin", "paymentadmin"].includes(role)) {
+    const ownerType = String(req.body.ownerType || "").toLowerCase();
+    const ownerId = req.body.ownerId;
+
+    if (ownerType === "doctor" && ownerId) {
+      const enrollment = await Enrollment.findById(ownerId)
+        .populate("doctorId", "name email")
+        .select("firstName surname email doctorId")
+        .lean();
+      if (!enrollment) throw new Error("Target doctor enrollment was not found.");
+
+      const doctorName = fullNameFromEnrollment(enrollment) || enrollment.doctorId?.name || enrollment.email || enrollment.doctorId?.email;
+      return `doctors/${slugFolderName(doctorName, ownerId)}`;
+    }
+
+    if (ownerType === "patient" && ownerId) {
+      const user = await User.findById(ownerId).select("name email").lean();
+      if (!user) throw new Error("Target patient was not found.");
+      return `patients/${slugFolderName(user.name || user.email, ownerId)}`;
+    }
+  }
+
+  return "";
 }
 
 function hasExecutableSignature(buffer) {
@@ -96,11 +146,11 @@ async function validateUploadedFile(file) {
     throw new Error("Executable files are not allowed.");
   }
 
-  const sample = await fs.readFile(file.path);
+  const sample = file.buffer;
   if (hasExecutableSignature(sample)) throw new Error("Executable files are not allowed.");
 
-  const { fileTypeFromFile } = await import("file-type");
-  const detected = await fileTypeFromFile(file.path);
+  const { fileTypeFromBuffer } = await import("file-type");
+  const detected = await fileTypeFromBuffer(file.buffer);
   const detectedMime = detected?.mime || null;
 
   if (ext === ".txt" && !isTextFile(sample)) {
@@ -113,45 +163,23 @@ async function validateUploadedFile(file) {
   return detectedMime || file.mimetype;
 }
 
-// Resolve the public base URL for uploaded files.
-// Local requests should always get a local URL; production requests use the
-// configured production URL or reverse-proxy headers.
-function resolveBaseUrl(req) {
-  const requestHost = req.get("host");
-  const requestIsLocal = /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestHost || "");
-  if (requestIsLocal) {
-    return `${req.protocol}://${requestHost}`;
-  }
-
-  const envUrl = (process.env.BACKEND_URL || "").replace(/\/+$/, "");
-  if (envUrl) {
-    return envUrl;
-  }
-
-  // Honour reverse-proxy forwarded headers (requires "trust proxy" in app)
-  const proto = (req.headers["x-forwarded-proto"] || req.protocol || "https")
-    .split(",")[0]
-    .trim();
-  const host = req.headers["x-forwarded-host"] || req.get("host");
-  return `${proto}://${host}`;
-}
-
 // POST /api/upload  — protected, any logged-in user or doctor
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ msg: "No file uploaded." });
   try {
     const verifiedMime = await validateUploadedFile(req.file);
     req.file.mimetype = verifiedMime;
-    await storeUploadInGridFS(req.file, { userId: req.user.id, role: req.user.role });
-    const baseUrl = resolveBaseUrl(req);
+    req.file.filename = generateStoredFilename(req.file.originalname);
+    const folderKey = await resolveUploadFolder(req);
+    const uploaded = await storeUploadInS3(req.file, { userId: req.user.id, role: req.user.role, folderKey });
     return res.json({
-      url:  `${baseUrl}/api/uploads/${req.file.filename}`,
+      url:  uploaded.key,
+      key:  uploaded.key,
       name: req.file.originalname,
       type: req.file.mimetype,
       size: req.file.size,
     });
   } catch (err) {
-    await removeLocalFile(req.file);
     console.error("upload validation/storage error:", err);
     const status = /not allowed|Executable|does not match|plain text/i.test(err.message) ? 400 : 500;
     return res.status(status).json({ msg: status === 400 ? err.message : "File could not be stored for shared access." });

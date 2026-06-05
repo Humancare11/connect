@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import api from "../api";
+import { clearClientSession } from "../utils/session";
 
 const DoctorAuthContext = createContext(null);
 
@@ -18,6 +19,7 @@ export function DoctorAuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/doctor/logout"); } catch { /* ignore */ }
+    clearClientSession();
     setDoctor(null);
   }, []);
 

@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const SMTP_HOST = process.env.SMTP_HOST || "email-smtp.us-east-1.amazonaws.com";
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_SECURE =
   process.env.SMTP_SECURE === undefined
@@ -10,27 +10,10 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const MAIL_FROM = process.env.EMAIL_USER || "alert@humancareconnect.co";
 
-const looksLikeAwsAccessKeyId = (value) => /^(A3T|AKIA|ASIA)[A-Z0-9]{16,}$/.test(String(value || "").trim());
-const looksLikeSesIamUserName = (value) => /^ses-smtp-user[.\w-]*$/i.test(String(value || "").trim());
-
-const validateSesSmtpCredentials = () => {
-  if (looksLikeSesIamUserName(SMTP_USER)) {
-    throw new Error(
-      "Invalid SES SMTP_USER. Use the SES SMTP username/access key ID, not the IAM user name shown in AWS."
-    );
-  }
-  if (looksLikeAwsAccessKeyId(SMTP_PASS)) {
-    throw new Error(
-      "Invalid SES SMTP_PASS. Use the generated SES SMTP password, not the AWS access key ID."
-    );
-  }
-};
-
 const createTransporter = (overrides = {}) => {
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !MAIL_FROM) {
-    throw new Error("AWS SES SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and EMAIL_USER.");
+  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !MAIL_FROM) {
+    throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, and EMAIL_USER.");
   }
-  validateSesSmtpCredentials();
 
   return nodemailer.createTransport({
     host: overrides.host || SMTP_HOST,
@@ -45,12 +28,12 @@ const createTransporter = (overrides = {}) => {
   });
 };
 
-const sendSesMail = async (message) => {
+const sendMail = async (message) => {
   try {
     const transporter = createTransporter();
     return await transporter.sendMail(message);
   } catch (err) {
-    console.error("AWS SES SMTP send failed:", {
+    console.error("SMTP send failed:", {
       code: err.code,
       command: err.command,
       responseCode: err.responseCode,
@@ -203,7 +186,7 @@ const sendOTPEmail = async (to, otp, type = "register") => {
       ? "Humancare Connect — Email Verification OTP"
       : "Humancare Connect — Password Reset OTP";
 
-  await sendSesMail({
+  await sendMail({
     from: `"HumanCare Connect" <${MAIL_FROM}>`,
     to,
     subject,
@@ -212,7 +195,7 @@ const sendOTPEmail = async (to, otp, type = "register") => {
 };
 
 const sendEmail = async ({ to, subject, text, html }) => {
-  await sendSesMail({
+  await sendMail({
     from: `"HumanCare Connect" <${MAIL_FROM}>`,
     to,
     subject,

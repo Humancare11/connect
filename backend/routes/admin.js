@@ -2,6 +2,7 @@ const express = require("express");
 const router  = express.Router();
 const {
   getAdminStats, getAllDoctors, getDoctorById, updateDoctorByAdmin,
+  getDoctorDocumentAccessUrl,
   approveDoctor, rejectDoctor,
   approveDoctorDeleteRequest, rejectDoctorDeleteRequest,
   getAllUsers, deleteUser, getUserDetails, forceLogoutUser, disableUser, migrateDoctorIds,
@@ -14,6 +15,7 @@ router.get("/stats", verifyAdminToken, adminOnly, getAdminStats);
 
 router.get("/doctors",                verifyAdminToken, adminOnly, getAllDoctors);
 router.get("/approved-doctors",       verifyAdminToken, adminOnly, getApprovedDoctors);
+router.get("/doctors/:id/documents/:field/access-url", verifyAdminToken, adminOnly, getDoctorDocumentAccessUrl);
 router.get("/doctors/:id",            verifyAdminToken, adminOnly, getDoctorById);
 router.put("/doctors/:id",            verifyAdminToken, adminOnly, updateDoctorByAdmin);
 router.get("/doctor-workflow-stats",  verifyAdminToken, adminOnly, getDoctorWorkflowStats);

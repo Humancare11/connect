@@ -8,8 +8,17 @@ const { logAudit } = require("../utils/auditLogger");
 const { randomInt } = require("crypto");
 const { recordSecurityIncident } = require("../utils/securityMonitor");
 const { revokeUserSessions } = require("../utils/tokenRevocation");
+const { keyFromStoredValue } = require("../utils/uploadStorage");
+const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
+const DOCTOR_DOCUMENT_FIELDS = new Set([
+  "profilePhoto",
+  "idProof",
+  "degreeFile",
+  "medicalLicenseFile",
+  "malpracticeInsuranceFile",
+]);
 
 const inferProgressFromFields = (enrollment) => {
   if (!enrollment) return { completedSteps: 0, currentStep: 1 };
@@ -633,6 +642,13 @@ const updateDoctorByAdmin = async (req, res) => {
     } = req.body;
 
     const updates = {};
+    const normalizedFileFields = {
+      profilePhoto: profilePhoto === undefined || profilePhoto === "" ? profilePhoto : keyFromStoredValue(profilePhoto),
+      idProof: idProof === undefined || idProof === "" ? idProof : keyFromStoredValue(idProof),
+      degreeFile: degreeFile === undefined || degreeFile === "" ? degreeFile : keyFromStoredValue(degreeFile),
+      medicalLicenseFile: medicalLicenseFile === undefined || medicalLicenseFile === "" ? medicalLicenseFile : keyFromStoredValue(medicalLicenseFile),
+      malpracticeInsuranceFile: malpracticeInsuranceFile === undefined || malpracticeInsuranceFile === "" ? malpracticeInsuranceFile : keyFromStoredValue(malpracticeInsuranceFile),
+    };
 
     // ── Scalar string fields ──────────────────────────────────────────
     const strings = {
@@ -646,7 +662,7 @@ const updateDoctorByAdmin = async (req, res) => {
       bankName, accountNumber, accountHolderName, ifscCode,
       paypalId, payoutEmail, stripeAccountId,
       // File URL strings
-      profilePhoto, idProof, degreeFile, medicalLicenseFile, malpracticeInsuranceFile,
+      ...normalizedFileFields,
       // Availability
       timezone,
     };
@@ -670,12 +686,12 @@ const updateDoctorByAdmin = async (req, res) => {
 
     // ── Derived boolean flags ─────────────────────────────────────────
     if (profilePhoto !== undefined) {
-      updates.hasProfilePhoto = !!(profilePhoto && profilePhoto.startsWith("http"));
+      updates.hasProfilePhoto = !!normalizedFileFields.profilePhoto;
     }
     if (degreeFile !== undefined || medicalLicenseFile !== undefined) {
-      const cert = (degreeFile   !== undefined ? degreeFile   : enrollment.degreeFile) ||
-                   (medicalLicenseFile !== undefined ? medicalLicenseFile : enrollment.medicalLicenseFile);
-      updates.hasCertification = !!(cert && cert.startsWith("http"));
+      const cert = (degreeFile !== undefined ? normalizedFileFields.degreeFile : enrollment.degreeFile) ||
+                   (medicalLicenseFile !== undefined ? normalizedFileFields.medicalLicenseFile : enrollment.medicalLicenseFile);
+      updates.hasCertification = !!cert;
     }
 
     updates.updatedAt = new Date();
@@ -712,6 +728,44 @@ const updateDoctorByAdmin = async (req, res) => {
   }
 };
 
+const getDoctorDocumentAccessUrl = async (req, res) => {
+  try {
+    const { id, field } = req.params;
+    if (!DOCTOR_DOCUMENT_FIELDS.has(field)) {
+      return res.status(400).json({ msg: "Invalid document field." });
+    }
+
+    const enrollment = await Enrollment.findById(id).select(`${field} doctorId email firstName surname`).lean();
+    if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+
+    const key = keyFromStoredValue(enrollment[field]);
+    if (!key) return res.status(404).json({ msg: "Document not uploaded." });
+
+    const signed = await createS3PresignedGetUrl(key, { expiresIn: DEFAULT_EXPIRY_SECONDS });
+    await logAudit(req, {
+      action: "ADMIN_DOCUMENT_ACCESS_URL_CREATED",
+      resource: "DoctorDocument",
+      resourceId: id,
+      userId: req.user?.id,
+      userEmail: req.user?.email || "",
+      userRole: req.user?.role || "admin",
+      details: { field, key, expiresIn: signed.expiresIn },
+    });
+
+    return res.json({
+      field,
+      key,
+      url: signed.url,
+      expiresIn: signed.expiresIn,
+      expiresAt: signed.expiresAt,
+    });
+  } catch (error) {
+    if (error.name === "CastError") return res.status(404).json({ msg: "Enrollment not found" });
+    console.error("getDoctorDocumentAccessUrl error:", error);
+    return res.status(500).json({ msg: "Could not generate document access URL." });
+  }
+};
+
 const getDoctorById = async (req, res) => {
   try {
     const enrollment = await Enrollment.findById(req.params.id)
@@ -730,6 +784,7 @@ module.exports = {
   getAdminStats,
   getAllDoctors,
   getDoctorById,
+  getDoctorDocumentAccessUrl,
   updateDoctorByAdmin,
   approveDoctor,
   rejectDoctor,

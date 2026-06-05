@@ -33,6 +33,13 @@ import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import useLenis from "./hooks/useLenis";
 import api from "./api";
+import {
+  ROLE_TIMEOUT_MS,
+  SESSION_ACTIVITY_EVENT,
+  clearClientSession,
+  getActiveSessionRole,
+  getLogoutRedirectPath,
+} from "./utils/session";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 import DoctorLogin from "./pages/doctors/DoctorLogin";
@@ -118,8 +125,14 @@ function SessionTimeoutManager() {
   const { doctor, logout: logoutDoctor } = useDoctorAuth();
   const { admin, logout: logoutAdmin } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
   const [warningOpen, setWarningOpen] = useState(false);
   const [remaining, setRemaining] = useState(300);
+
+  const role = getActiveSessionRole({ admin, doctor, user });
+  const timeoutMs = role ? ROLE_TIMEOUT_MS[role] : ROLE_TIMEOUT_MS.user;
+  const warningCountdownMs = 5 * 60 * 1000;
+  const warningDelayMs = Math.max(0, timeoutMs - warningCountdownMs);
 
   const isAuthenticated = Boolean(user || doctor || admin);
 
@@ -133,9 +146,10 @@ function SessionTimeoutManager() {
     let refreshTimer;
 
     const logoutAll = async () => {
+      clearClientSession();
       await Promise.allSettled([logoutUser(), logoutDoctor(), logoutAdmin()]);
       setWarningOpen(false);
-      navigate("/login", { replace: true });
+      navigate(getLogoutRedirectPath(role), { replace: true });
     };
 
     const schedule = () => {
@@ -146,14 +160,14 @@ function SessionTimeoutManager() {
 
       warningTimer = setTimeout(() => {
         setWarningOpen(true);
-        setRemaining(300);
+        setRemaining(Math.ceil(warningCountdownMs / 1000));
         countdownTimer = setInterval(() => {
-          const seconds = Math.max(0, Math.ceil((30 * 60 * 1000 - (Date.now() - lastActivity)) / 1000));
+          const seconds = Math.max(0, Math.ceil((timeoutMs - (Date.now() - lastActivity)) / 1000));
           setRemaining(seconds);
         }, 1000);
-      }, 25 * 60 * 1000);
+      }, warningDelayMs);
 
-      logoutTimer = setTimeout(logoutAll, 30 * 60 * 1000);
+      logoutTimer = setTimeout(logoutAll, timeoutMs);
     };
 
     const markActive = () => {
@@ -163,6 +177,7 @@ function SessionTimeoutManager() {
 
     const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"];
     events.forEach((event) => window.addEventListener(event, markActive, { passive: true }));
+    window.addEventListener(SESSION_ACTIVITY_EVENT, markActive);
     window.addEventListener("hc:session-expired", logoutAll);
 
     refreshTimer = setInterval(() => {
@@ -173,13 +188,20 @@ function SessionTimeoutManager() {
 
     return () => {
       events.forEach((event) => window.removeEventListener(event, markActive));
+      window.removeEventListener(SESSION_ACTIVITY_EVENT, markActive);
       window.removeEventListener("hc:session-expired", logoutAll);
       clearTimeout(warningTimer);
       clearTimeout(logoutTimer);
       clearInterval(countdownTimer);
       clearInterval(refreshTimer);
     };
-  }, [isAuthenticated, logoutUser, logoutDoctor, logoutAdmin, navigate]);
+  }, [isAuthenticated, logoutUser, logoutDoctor, logoutAdmin, navigate, role, timeoutMs, warningDelayMs]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    window.dispatchEvent(new Event(SESSION_ACTIVITY_EVENT));
+    return undefined;
+  }, [location.pathname, isAuthenticated]);
 
   if (!warningOpen) return null;
 
@@ -188,7 +210,13 @@ function SessionTimeoutManager() {
       <div className="hc-session-warning__panel">
         <h2>Session expiring</h2>
         <p>You will be logged out in {Math.ceil(remaining / 60)} minute(s) due to inactivity.</p>
-        <button type="button" onClick={() => api.post("/api/auth/refresh").then(() => setWarningOpen(false))}>
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new Event(SESSION_ACTIVITY_EVENT));
+            setWarningOpen(false);
+          }}
+        >
           Stay signed in
         </button>
       </div>

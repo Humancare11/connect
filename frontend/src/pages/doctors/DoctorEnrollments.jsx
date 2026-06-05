@@ -725,7 +725,9 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
     }
   };
 
-  const imgSrc = localPreview || file?.url || null;
+  const fileUrl = file?.url || "";
+  const canPreviewStoredUrl = fileUrl.startsWith("http://") || fileUrl.startsWith("https://") || fileUrl.startsWith("blob:");
+  const imgSrc = localPreview || (canPreviewStoredUrl ? fileUrl : null);
   const isReady = !!file?.url;
   const showValidationErr = hasError && !file && !uploadErr;
 
@@ -992,10 +994,8 @@ export default function DoctorOnboardingWizard({ doctorId, initialData, onComple
 
     const makeFileRef = (nameOrUrl) => {
       if (!nameOrUrl) return null;
-      const name = nameOrUrl.startsWith("http")
-        ? decodeURIComponent(nameOrUrl.split("/").pop())
-        : nameOrUrl;
-      return { name, url: nameOrUrl.startsWith("http") ? nameOrUrl : null };
+      const name = decodeURIComponent(String(nameOrUrl).split("?")[0].split("/").pop() || "document");
+      return { name, url: nameOrUrl };
     };
     setFiles({
       profilePhoto:  makeFileRef(data.profilePhoto),

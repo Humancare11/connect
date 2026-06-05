@@ -113,6 +113,7 @@ function Field({ label, value, full }) {
   );
 }
 const IMAGE_EXTS = new Set(["jpg","jpeg","png","gif","webp","svg","bmp"]);
+const DOCUMENT_FIELDS = new Set(["profilePhoto", "idProof", "degreeFile", "medicalLicenseFile", "malpracticeInsuranceFile"]);
 function getFileType(url) {
   if (!url) return "other";
   const ext = url.split("?")[0].split(".").pop().toLowerCase();
@@ -121,81 +122,119 @@ function getFileType(url) {
   return "other";
 }
 
-function DocItem({ label, filename }) {
-  const [imgBroken, setImgBroken] = useState(false);
-  const fileUrl = normalizeFileUrl(filename);
-  const isUrl    = Boolean(fileUrl && (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")));
-  const fileType = isUrl ? getFileType(fileUrl) : "other";
-  const isImage  = fileType === "image";
-  const isPdf    = fileType === "pdf";
-  const displayName = isUrl
-    ? decodeURIComponent(fileUrl.split("/").pop()).replace(/^\d{10,}-\d+-/, "") || "document"
-    : filename;
+function displayFileName(value) {
+  if (!value) return "";
+  const raw = String(value);
+  try {
+    const url = new URL(raw);
+    return decodeURIComponent(url.pathname.split("/").pop() || "document").replace(/^\d{10,}-[a-f0-9]+-/, "") || "document";
+  } catch {
+    return decodeURIComponent(raw.split("?")[0].split("/").pop() || "document").replace(/^\d{10,}-[a-f0-9]+-/, "") || "document";
+  }
+}
 
-  const icon = isUrl ? (isImage ? "🖼️" : isPdf ? "📄" : "📎") : filename ? "📋" : "📂";
+async function getAdminDocumentAccessUrl(enrollmentId, field) {
+  const { data } = await api.get(`/api/admin/doctors/${enrollmentId}/documents/${field}/access-url`);
+  return data.url;
+}
+
+function SignedDocumentButton({ enrollmentId, field, label, style }) {
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState("");
+
+  const openDocument = async () => {
+    if (!enrollmentId || !DOCUMENT_FIELDS.has(field)) return;
+    setOpening(true);
+    setError("");
+    const opened = window.open("", "_blank");
+    if (opened) {
+      opened.opener = null;
+      opened.document.write("<!doctype html><title>Opening document</title><body style=\"font-family:system-ui;padding:24px;color:#334155\">Opening document...</body>");
+    }
+    try {
+      const signedUrl = await getAdminDocumentAccessUrl(enrollmentId, field);
+      if (opened) opened.location.href = signedUrl;
+      else {
+        throw new Error("Popup blocked. Please allow popups and try again.");
+      }
+    } catch (err) {
+      const message = err?.response?.data?.msg || err?.message || "Could not open document.";
+      if (opened) {
+        opened.document.open();
+        opened.document.write(`<!doctype html><title>Document error</title><body style="font-family:system-ui;padding:24px;color:#991b1b">${message}</body>`);
+        opened.document.close();
+      }
+      setError(message);
+    } finally {
+      setOpening(false);
+    }
+  };
+
+  return (
+    <>
+      <button type="button" onClick={openDocument} disabled={opening}
+        style={style || { display:"flex", alignItems:"center", justifyContent:"center", gap:7, padding:"9px 14px", background:"#2563eb", color:"#fff", border:"none", borderRadius:8, fontSize:13, fontWeight:700, cursor: opening ? "wait" : "pointer", fontFamily:"inherit" }}>
+        {opening ? "Opening..." : label}
+      </button>
+      {error && <div style={{ fontSize:12, color:"#dc2626", marginTop:6 }}>{error}</div>}
+    </>
+  );
+}
+
+function SignedImage({ enrollmentId, field, alt, style, fallback }) {
+  const [src, setSrc] = useState("");
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    setImgBroken(false);
-  }, [fileUrl]);
+    let alive = true;
+    setSrc("");
+    setFailed(false);
+    if (!enrollmentId || !DOCUMENT_FIELDS.has(field)) return undefined;
+    getAdminDocumentAccessUrl(enrollmentId, field)
+      .then((url) => { if (alive) setSrc(url); })
+      .catch(() => { if (alive) setFailed(true); });
+    return () => { alive = false; };
+  }, [enrollmentId, field]);
+
+  if (failed) return fallback || null;
+  if (!src) return fallback || null;
+  return <img src={src} alt={alt} style={style} onError={() => setFailed(true)} />;
+}
+
+function DocItem({ label, filename, enrollmentId, field }) {
+  const fileType = filename ? getFileType(filename) : "other";
+  const isImage  = fileType === "image";
+  const isPdf    = fileType === "pdf";
+  const displayName = filename ? displayFileName(filename) : "";
+  const icon = filename ? (isImage ? "IMG" : isPdf ? "PDF" : "DOC") : "-";
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:12, padding:"16px 18px",
-      background: isUrl ? "#f0fdf4" : filename ? "#f8fafc" : "#fafafa",
-      border:`1.5px solid ${isUrl ? "#86efac" : "#e2e8f0"}`, borderRadius:12 }}>
+      background: filename ? "#f0fdf4" : "#fafafa",
+      border:`1.5px solid ${filename ? "#86efac" : "#e2e8f0"}`, borderRadius:12 }}>
       <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
-        <span style={{ fontSize:24, lineHeight:1, flexShrink:0, marginTop:2 }}>{icon}</span>
+        <span style={{ fontSize:13, lineHeight:1, flexShrink:0, marginTop:2, fontWeight:800, color:"#2563eb" }}>{icon}</span>
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ fontSize:11, fontWeight:700, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:4 }}>{label}</div>
           <div style={{ fontSize:13, color: filename ? "#1e293b" : "#94a3b8", fontStyle: filename ? "normal" : "italic", wordBreak:"break-all", lineHeight:1.5 }}>
             {filename ? displayName : "Not uploaded"}
           </div>
         </div>
-        {isUrl  && <span style={{ fontSize:11, background:"#dcfce7", color:"#166534", padding:"3px 10px", borderRadius:50, fontWeight:700, flexShrink:0 }}>✓ Submitted</span>}
-        {filename && !isUrl && <span style={{ fontSize:11, background:"#fef9c3", color:"#854d0e", padding:"3px 10px", borderRadius:50, fontWeight:700, flexShrink:0 }}>⚠ No link</span>}
+        {filename && <span style={{ fontSize:11, background:"#dcfce7", color:"#166534", padding:"3px 10px", borderRadius:50, fontWeight:700, flexShrink:0 }}>Submitted</span>}
       </div>
 
-      {/* Inline preview — image */}
-      {/* {isImage && !imgBroken && (
-        <div style={{ borderRadius:8, overflow:"hidden", background:"#f1f5f9", lineHeight:0 }}>
-          <img src={fileUrl} alt={label}
-            style={{ width:"100%", maxHeight:220, objectFit:"contain", display:"block" }}
-            onError={() => setImgBroken(true)} />
-        </div>
-      )} */}
-      {isImage && imgBroken && (
-        <div style={{ fontSize:12, color:"#94a3b8", background:"#f8fafc", padding:"10px", borderRadius:8, textAlign:"center", fontStyle:"italic" }}>
-          Image preview unavailable — file may not be on this server yet.
-        </div>
-      )}
-
-      {/* Inline preview — PDF */}
-      {/* {isPdf && (
-        <div style={{ borderRadius:8, overflow:"hidden", border:"1px solid #e2e8f0", lineHeight:0, height:260 }}>
-          <iframe
-            key={fileUrl}
-            src={fileUrl}
-            title={label}
-            style={{ width:"100%", height:"100%", border:"none", display:"block" }}
-          />
-        </div>
-      )} */}
-
-      {isUrl ? (
-        <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-          style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:7, padding:"9px 14px", background:"#2563eb", color:"#fff", borderRadius:8, fontSize:13, fontWeight:700, textDecoration:"none" }}>
-          {isImage ? "🖼️ Open Full Image" : isPdf ? "📄 Open PDF" : "📎 View Document"}
-        </a>
-      ) : filename ? (
-        <div style={{ fontSize:12, color:"#92400e", background:"#fef3c7", padding:"8px 12px", borderRadius:7 }}>
-          File name recorded but not uploaded to server.
-        </div>
+      {filename ? (
+        <SignedDocumentButton
+          enrollmentId={enrollmentId}
+          field={field}
+          label={isImage ? "Open Full Image" : isPdf ? "Open PDF" : "View Document"}
+        />
       ) : (
-        <div style={{ fontSize:12, color:"#94a3b8", padding:"6px 0", textAlign:"center", fontStyle:"italic" }}>— no document provided —</div>
+        <div style={{ fontSize:12, color:"#94a3b8", padding:"6px 0", textAlign:"center", fontStyle:"italic" }}>no document provided</div>
       )}
     </div>
   );
-}
-function ProgressBar({ progress }) {
+}function ProgressBar({ progress }) {
   const color = progress.status === "approved" ? "#16a34a" : progress.status === "rejected" ? "#ef4444" : "#2563eb";
   return (
     <div>
@@ -216,7 +255,7 @@ function ProgressBar({ progress }) {
 }
 
 // ─── AdminPhotoUpload ─────────────────────────────────────────────────────────
-function AdminPhotoUpload({ currentUrl, onChange }) {
+function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
   const ref        = useRef();
   const [uploading, setUploading] = useState(false);
   const [preview,   setPreview]   = useState(null);
@@ -234,14 +273,19 @@ function AdminPhotoUpload({ currentUrl, onChange }) {
     setUploading(true);
     try {
       const fd = new FormData(); fd.append("file", raw);
+      if (enrollmentId) {
+        fd.append("ownerType", "doctor");
+        fd.append("ownerId", enrollmentId);
+      }
       const { data } = await api.post("/api/upload", fd);
       setLocalUrl(data.url); onChange(data.url);
     } catch { setErr("Upload failed — please try again."); }
     finally { setUploading(false); }
   };
 
-  const imgSrc = preview || normalizeFileUrl(localUrl) || null;
-  const fullSizeUrl = normalizeFileUrl(localUrl);
+  const normalizedLocalUrl = normalizeFileUrl(localUrl);
+  const isDirectUrl = normalizedLocalUrl && (normalizedLocalUrl.startsWith("http://") || normalizedLocalUrl.startsWith("https://"));
+  const imgSrc = preview || (isDirectUrl ? normalizedLocalUrl : null);
 
   return (
     <div style={{ display:"flex", alignItems:"center", gap:20, padding:16, background:"#f8fafc", borderRadius:12, border:"1.5px solid #e2e8f0", flexWrap:"wrap" }}>
@@ -249,6 +293,13 @@ function AdminPhotoUpload({ currentUrl, onChange }) {
         onClick={() => !uploading && ref.current?.click()}>
         {imgSrc ? (
           <img src={imgSrc} alt="Profile" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+        ) : localUrl && enrollmentId ? (
+          <SignedImage
+            enrollmentId={enrollmentId}
+            field="profilePhoto"
+            alt="Profile"
+            style={{ width:"100%", height:"100%", objectFit:"cover" }}
+          />
         ) : (
           <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
             <circle cx="20" cy="14" r="9" fill="#CBD5E1"/>
@@ -275,10 +326,14 @@ function AdminPhotoUpload({ currentUrl, onChange }) {
               style={{ padding:"7px 14px", borderRadius:7, border:"1.5px solid #fecdd3", background:"#fff1f2", color:"#be123c", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
               Remove
             </button>
-            <a href={fullSizeUrl} target="_blank" rel="noopener noreferrer"
-              style={{ padding:"7px 14px", borderRadius:7, border:"1.5px solid #e2e8f0", background:"#f8fafc", color:"#64748b", fontSize:12, fontWeight:600, textDecoration:"none" }}>
-              View full size →
-            </a>
+            {enrollmentId && (
+              <SignedDocumentButton
+                enrollmentId={enrollmentId}
+                field="profilePhoto"
+                label="View full size"
+                style={{ padding:"7px 14px", borderRadius:7, border:"1.5px solid #e2e8f0", background:"#f8fafc", color:"#64748b", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}
+              />
+            )}
           </>}
         </div>
       </div>
@@ -289,7 +344,7 @@ function AdminPhotoUpload({ currentUrl, onChange }) {
 }
 
 // ─── AdminDocUpload ───────────────────────────────────────────────────────────
-function AdminDocUpload({ label, currentUrl, onChange, accept }) {
+function AdminDocUpload({ label, currentUrl, onChange, accept, enrollmentId, field }) {
   const ref        = useRef();
   const [uploading, setUploading] = useState(false);
   const [localUrl,  setLocalUrl]  = useState(currentUrl || "");
@@ -300,6 +355,10 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
     setErr(""); setUploading(true);
     try {
       const fd = new FormData(); fd.append("file", raw);
+      if (enrollmentId) {
+        fd.append("ownerType", "doctor");
+        fd.append("ownerId", enrollmentId);
+      }
       const { data } = await api.post("/api/upload", fd);
       setLocalUrl(data.url); onChange(data.url);
     } catch { setErr("Upload failed — please try again."); }
@@ -307,27 +366,27 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
   };
 
   const fileUrl = normalizeFileUrl(localUrl);
+  const hasFile  = Boolean(localUrl);
   const isUrl    = fileUrl && (fileUrl.startsWith("http://") || fileUrl.startsWith("https://"));
-  const fileType = isUrl ? getFileType(fileUrl) : "other";
+  const fileType = hasFile ? getFileType(localUrl) : "other";
   const isImage  = fileType === "image";
   const isPdf    = fileType === "pdf";
-  const displayName = isUrl
-    ? decodeURIComponent(fileUrl.split("/").pop()).replace(/^\d{10,}-\d+-/, "") || "document"
-    : localUrl;
+  const displayName = hasFile ? displayFileName(localUrl) : "";
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:8, padding:14, background: isUrl ? "#f0fdf4" : "#fafafa", border:`1.5px solid ${isUrl ? "#86efac" : "#e2e8f0"}`, borderRadius:10 }}>
+    <div style={{ display:"flex", flexDirection:"column", gap:8, padding:14, background: hasFile ? "#f0fdf4" : "#fafafa", border:`1.5px solid ${hasFile ? "#86efac" : "#e2e8f0"}`, borderRadius:10 }}>
       <div style={{ fontSize:11, fontWeight:700, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.04em" }}>{label}</div>
       {/* Inline preview — image */}
-      {isImage && (
+      {isUrl && isImage && (
         <div style={{ borderRadius:6, overflow:"hidden", background:"#f1f5f9", lineHeight:0 }}>
           <img src={fileUrl} alt={label}
+            crossOrigin="use-credentials"
             style={{ width:"100%", maxHeight:140, objectFit:"contain", display:"block" }}
             onError={e => { e.currentTarget.style.display = "none"; }} />
         </div>
       )}
       {/* Inline preview — PDF */}
-      {isPdf && (
+      {isUrl && isPdf && (
         <div style={{ borderRadius:6, overflow:"hidden", border:"1px solid #e2e8f0", lineHeight:0, height:180 }}>
           <iframe key={fileUrl} src={fileUrl} title={label}
             style={{ width:"100%", height:"100%", border:"none", display:"block" }} />
@@ -343,11 +402,13 @@ function AdminDocUpload({ label, currentUrl, onChange, accept }) {
       )}
       {err && <div style={{ fontSize:11, color:"#dc2626" }}>{err}</div>}
       <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-        {isUrl && (
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-            style={{ padding:"6px 12px", borderRadius:6, border:"1.5px solid #2563eb", background:"#eff6ff", color:"#1d4ed8", fontSize:11, fontWeight:700, textDecoration:"none" }}>
-            {isImage ? "🖼️ View" : "📄 Open"}
-          </a>
+        {localUrl && enrollmentId && field && (
+          <SignedDocumentButton
+            enrollmentId={enrollmentId}
+            field={field}
+            label={isImage ? "View" : "Open"}
+            style={{ padding:"6px 12px", borderRadius:6, border:"1.5px solid #2563eb", background:"#eff6ff", color:"#1d4ed8", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}
+          />
         )}
         <button type="button" onClick={() => ref.current?.click()} disabled={uploading}
           style={{ padding:"6px 12px", borderRadius:6, border:"1.5px solid #e2e8f0", background:"#fff", color:"#334155", fontSize:11, fontWeight:700, cursor: uploading ? "not-allowed" : "pointer", fontFamily:"inherit" }}>
@@ -520,7 +581,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
 
       {/* ── 1. Profile Photo ── */}
       <Section icon="📷" title="Profile Photo" accent>
-        <AdminPhotoUpload currentUrl={urls.profilePhoto} onChange={setUrl("profilePhoto")} />
+        <AdminPhotoUpload currentUrl={urls.profilePhoto} onChange={setUrl("profilePhoto")} enrollmentId={e._id} />
       </Section>
 
       {/* ── 2. Personal Information ── */}
@@ -681,13 +742,13 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))", gap:14 }}>
           <AdminDocUpload label="Government ID / Nationality Proof"
-            currentUrl={urls.idProof} onChange={setUrl("idProof")} />
+            currentUrl={urls.idProof} onChange={setUrl("idProof")} enrollmentId={e._id} field="idProof" />
           <AdminDocUpload label="Medical Degree Certificate"
-            currentUrl={urls.degreeFile} onChange={setUrl("degreeFile")} />
+            currentUrl={urls.degreeFile} onChange={setUrl("degreeFile")} enrollmentId={e._id} field="degreeFile" />
           <AdminDocUpload label="Medical License Document"
-            currentUrl={urls.medicalLicenseFile} onChange={setUrl("medicalLicenseFile")} />
+            currentUrl={urls.medicalLicenseFile} onChange={setUrl("medicalLicenseFile")} enrollmentId={e._id} field="medicalLicenseFile" />
           <AdminDocUpload label="Malpractice Insurance License"
-            currentUrl={urls.malpracticeInsuranceFile} onChange={setUrl("malpracticeInsuranceFile")} />
+            currentUrl={urls.malpracticeInsuranceFile} onChange={setUrl("malpracticeInsuranceFile")} enrollmentId={e._id} field="malpracticeInsuranceFile" />
         </div>
       </Section>
 
@@ -932,7 +993,13 @@ export default function AdminDoctorProfile() {
       <div style={{ background:"linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 100%)", borderRadius:16, padding:"24px 28px", marginBottom:24, display:"flex", alignItems:"flex-start", gap:20, flexWrap:"wrap" }}>
         <div style={{ width:72, height:72, borderRadius:"50%", overflow:"hidden", border:"2.5px solid rgba(255,255,255,0.5)", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(255,255,255,0.18)" }}>
           {e.profilePhoto ? (
-            <img src={normalizeFileUrl(e.profilePhoto)} alt={fullName} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            <SignedImage
+              enrollmentId={e._id}
+              field="profilePhoto"
+              alt={fullName}
+              style={{ width:"100%", height:"100%", objectFit:"cover" }}
+              fallback={<span style={{ fontSize:26, fontWeight:800, color:"#fff" }}>{initials}</span>}
+            />
           ) : (
             <span style={{ fontSize:26, fontWeight:800, color:"#fff" }}>{initials}</span>
           )}
@@ -1030,14 +1097,20 @@ export default function AdminDoctorProfile() {
           <Section icon="👤" title="Personal & Contact Details">
             {e.profilePhoto ? (
               <div style={{ display:"flex", alignItems:"center", gap:16, padding:"14px 18px", background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10, marginBottom:18 }}>
-                <img src={normalizeFileUrl(e.profilePhoto)} alt={fullName}
-                  style={{ width:72, height:72, borderRadius:"50%", objectFit:"cover", border:"2.5px solid #16a34a", flexShrink:0 }} />
+                <SignedImage
+                  enrollmentId={e._id}
+                  field="profilePhoto"
+                  alt={fullName}
+                  style={{ width:72, height:72, borderRadius:"50%", objectFit:"cover", border:"2.5px solid #16a34a", flexShrink:0 }}
+                />
                 <div>
                   <div style={{ fontSize:13, fontWeight:700, color:"#166534" }}>✅ Profile Photo Uploaded</div>
-                  <a href={normalizeFileUrl(e.profilePhoto)} target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize:12, color:"#2563eb", textDecoration:"none", marginTop:3, display:"inline-block" }}>
-                    View full size →
-                  </a>
+                  <SignedDocumentButton
+                    enrollmentId={e._id}
+                    field="profilePhoto"
+                    label="View full size"
+                    style={{ padding:0, border:"none", background:"transparent", color:"#2563eb", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}
+                  />
                 </div>
               </div>
             ) : (
@@ -1103,10 +1176,10 @@ export default function AdminDoctorProfile() {
           {/* ── Documents ── */}
           <Section icon="📋" title="Submitted Documents">
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:14 }}>
-              <DocItem label="Government ID / Nationality Proof"  filename={e.idProof} />
-              <DocItem label="Medical Degree Certificate"         filename={e.degreeFile} />
-              <DocItem label="Medical License Document"           filename={e.medicalLicenseFile} />
-              <DocItem label="Malpractice Insurance License"      filename={e.malpracticeInsuranceFile} />
+              <DocItem label="Government ID / Nationality Proof"  filename={e.idProof} enrollmentId={e._id} field="idProof" />
+              <DocItem label="Medical Degree Certificate"         filename={e.degreeFile} enrollmentId={e._id} field="degreeFile" />
+              <DocItem label="Medical License Document"           filename={e.medicalLicenseFile} enrollmentId={e._id} field="medicalLicenseFile" />
+              <DocItem label="Malpractice Insurance License"      filename={e.malpracticeInsuranceFile} enrollmentId={e._id} field="malpracticeInsuranceFile" />
             </div>
           </Section>
 

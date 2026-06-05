@@ -5,8 +5,7 @@ const Prescription = require("../models/Prescription");
 const MedicalCertificate = require("../models/MedicalCertificate");
 const RetentionPolicy = require("../models/RetentionPolicy");
 const { logAudit } = require("../utils/auditLogger");
-const mongoose = require("mongoose");
-const { GridFSBucket } = require("mongodb");
+const { deleteUploadsOlderThan } = require("../utils/uploadStorage");
 
 function cutoff(days) {
   return new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
@@ -47,16 +46,9 @@ async function runRetentionCleanup(req = null) {
     result.medicalRecords = (prescriptions.deletedCount || 0) + (certificates.deletedCount || 0);
   }
 
-  if (byKey.uploadedFiles && mongoose.connection.db) {
+  if (byKey.uploadedFiles) {
     const olderThan = cutoff(byKey.uploadedFiles.retentionDays);
-    const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: "uploads" });
-    const oldFiles = await bucket.find({ uploadDate: { $lt: olderThan } }).toArray();
-    let deletedFiles = 0;
-    for (const file of oldFiles) {
-      await bucket.delete(file._id);
-      deletedFiles++;
-    }
-    result.uploadedFiles = deletedFiles;
+    result.uploadedFiles = await deleteUploadsOlderThan(olderThan);
   }
 
   if (byKey.securityIncidents) {

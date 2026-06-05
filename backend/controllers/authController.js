@@ -78,6 +78,37 @@ const buildTokenPayload = (user, session) => ({
   refreshToken: signRefreshToken(user, session._id),
 });
 
+const getGoogleProfile = async (accessToken) => {
+  const infoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!infoRes.ok) {
+    const err = new Error("Invalid Google token. Please try signing in again.");
+    err.statusCode = 401;
+    throw err;
+  }
+
+  const profile = await infoRes.json();
+  const googleId = String(profile.sub || "").trim();
+  const email = String(profile.email || "").trim().toLowerCase();
+  const name = String(profile.name || email.split("@")[0] || "Google User").trim();
+
+  if (!googleId || !email) {
+    const err = new Error("Google account did not return a valid profile.");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (profile.email_verified === false || profile.email_verified === "false") {
+    const err = new Error("Please verify your Google email before signing in.");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  return { googleId, email, name };
+};
+
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
 
 const ensureDoctorEnrollment = async (doctor) => {
@@ -498,21 +529,22 @@ const googleAuthUser = async (req, res) => {
     const { accessToken, mobile, dob, gender, country, privacyConsent, hipaaConsent } = req.body;
     if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
-    // Verify token and fetch profile via Google's userinfo endpoint
-    const infoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!infoRes.ok) return res.status(401).json({ msg: "Invalid Google token. Please try signing in again." });
-    const { sub: googleId, email, name } = await infoRes.json();
+    const { googleId, email, name } = await getGoogleProfile(accessToken);
 
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
     if (user) {
       if (user.role === "doctor") return res.status(403).json({ msg: "Please use the Doctor Login page." });
+      if (user.accountDisabled) {
+        return res.status(403).json({ msg: "This account is disabled. Please contact support." });
+      }
       if (!user.googleId) { user.googleId = googleId; await user.save(); }
       const session = await issueAuthCookies(res, user);
       const tokens = buildTokenPayload(user, session);
       return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
     }
+
+    const doctor = await Doctor.findOne({ email });
+    if (doctor) return res.status(403).json({ msg: "Please use the Doctor Login page." });
 
     if (!mobile || !dob || !gender || !country)
       return res.status(200).json({ isNewUser: true, googleName: name, googleEmail: email });
@@ -530,7 +562,7 @@ const googleAuthUser = async (req, res) => {
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("googleAuthUser error:", err);
-    return res.status(500).json({ msg: "Google Sign-In failed. Please try again." });
+    return res.status(err.statusCode || 500).json({ msg: err.message || "Google Sign-In failed. Please try again." });
   }
 };
 
@@ -542,16 +574,20 @@ const googleAuthDoctor = async (req, res) => {
     const { accessToken } = req.body;
     if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
-    const infoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!infoRes.ok) return res.status(401).json({ msg: "Invalid Google token. Please try signing in again." });
-    const { sub: googleId, email, name } = await infoRes.json();
+    const { googleId, email, name } = await getGoogleProfile(accessToken);
+
+    const patient = await User.findOne({ email });
+    if (patient && patient.role !== "doctor") {
+      return res.status(403).json({ msg: "Please use the Patient Login page." });
+    }
 
     let doctor = await Doctor.findOne({ $or: [{ googleId }, { email }] });
     const isNewUser = !doctor;
 
     if (doctor) {
+      if (doctor.accountDisabled) {
+        return res.status(403).json({ msg: "This account is disabled. Please contact support." });
+      }
       if (!doctor.googleId) { doctor.googleId = googleId; await doctor.save(); }
     } else {
       doctor = await Doctor.create({ name, email, googleId });
@@ -570,7 +606,7 @@ const googleAuthDoctor = async (req, res) => {
     });
   } catch (err) {
     console.error("googleAuthDoctor error:", err);
-    return res.status(500).json({ msg: "Google Sign-In failed. Please try again." });
+    return res.status(err.statusCode || 500).json({ msg: err.message || "Google Sign-In failed. Please try again." });
   }
 };
 
@@ -899,4 +935,3 @@ module.exports = {
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
 };
-

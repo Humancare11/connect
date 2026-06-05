@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import api from "../api";
+import { clearClientSession } from "../utils/session";
 
 const AuthContext = createContext(null);
 
@@ -18,6 +19,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/auth/logout"); } catch { /* ignore */ }
+    clearClientSession();
     setUser(null);
   }, []);
 

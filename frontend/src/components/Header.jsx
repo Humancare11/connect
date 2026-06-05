@@ -27,8 +27,6 @@ export default function Header() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 40);
     };
-  }
-  )
 
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });

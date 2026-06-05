@@ -12,7 +12,7 @@ const isSecureCookie = process.env.NODE_ENV === "production" || process.env.HTTP
 
 const BASE_COOKIE_OPTS = {
   httpOnly: true,
-  sameSite: "strict",
+  sameSite: isSecureCookie ? "none" : "lax",
   secure: isSecureCookie,
 };
 

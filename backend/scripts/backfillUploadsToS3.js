@@ -1,7 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-const mongoose = require("mongoose");
-const { storeUploadInGridFS } = require("../utils/uploadStorage");
 
 require("dotenv").config({
   path: path.resolve(
@@ -10,6 +8,8 @@ require("dotenv").config({
     process.env.NODE_ENV === "production" ? ".env.production" : ".env"
   ),
 });
+
+const { storeUploadInS3 } = require("../utils/uploadStorage");
 
 const MIME_BY_EXT = {
   ".jpg": "image/jpeg",
@@ -27,7 +27,10 @@ const MIME_BY_EXT = {
 
 async function main() {
   const uploadsDir = path.resolve(__dirname, "..", "uploads");
-  await mongoose.connect(process.env.MONGO_URI);
+  if (!fs.existsSync(uploadsDir)) {
+    console.log("No local uploads directory found.");
+    return;
+  }
 
   const files = fs
     .readdirSync(uploadsDir, { withFileTypes: true })
@@ -36,23 +39,21 @@ async function main() {
 
   for (const filename of files) {
     const filePath = path.join(uploadsDir, filename);
-    const stat = fs.statSync(filePath);
-    await storeUploadInGridFS({
-      path: filePath,
+    const buffer = fs.readFileSync(filePath);
+    await storeUploadInS3({
+      buffer,
       filename,
       originalname: filename,
       mimetype: MIME_BY_EXT[path.extname(filename).toLowerCase()] || "application/octet-stream",
-      size: stat.size,
+      size: buffer.length,
     });
     console.log(`Backfilled ${filename}`);
   }
 
-  await mongoose.disconnect();
-  console.log(`Backfilled ${files.length} upload file(s).`);
+  console.log(`Backfilled ${files.length} upload file(s) to S3.`);
 }
 
-main().catch(async (err) => {
+main().catch((err) => {
   console.error(err);
-  await mongoose.disconnect().catch(() => {});
   process.exit(1);
 });

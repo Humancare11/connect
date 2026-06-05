@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -12,7 +14,12 @@ class AuthProvider with ChangeNotifier {
   String? refreshToken;
   bool isLoading = true;
   String? errorMessage;
+  bool warningActive = false;
+  int warningSecondsRemaining = 0;
 
+  Timer? _warningTimer;
+  Timer? _logoutTimer;
+  Timer? _countdownTimer;
   final _client = http.Client();
 
   bool get isAuthenticated => user != null && accessToken != null;
@@ -27,10 +34,14 @@ class AuthProvider with ChangeNotifier {
     if (accessToken != null) {
       final success = await _fetchCurrentUser();
       if (!success && refreshToken != null) {
-        await refreshSession();
+        final refreshed = await refreshSession();
+        if (refreshed) resetActivityTimer();
+      } else if (success) {
+        resetActivityTimer();
       }
     } else if (refreshToken != null) {
-      await refreshSession();
+      final refreshed = await refreshSession();
+      if (refreshed) resetActivityTimer();
     }
     isLoading = false;
     notifyListeners();
@@ -65,12 +76,65 @@ class AuthProvider with ChangeNotifier {
     await SecureStorage.saveTokens(access, refresh);
   }
 
+  Future<void> _clearTimers() async {
+    _warningTimer?.cancel();
+    _logoutTimer?.cancel();
+    _countdownTimer?.cancel();
+    warningActive = false;
+    warningSecondsRemaining = 0;
+  }
+
   Future<void> _clearSession() async {
+    await _clearTimers();
     user = null;
     accessToken = null;
     refreshToken = null;
     await SecureStorage.deleteTokens();
     notifyListeners();
+  }
+
+  int get _sessionTimeoutMs {
+    final role = user?.role?.toLowerCase() ?? 'user';
+    if (role == 'admin') return 30 * 60 * 1000;
+    if (role == 'superadmin') return 60 * 60 * 1000;
+    if (role == 'doctor') return 60 * 60 * 1000;
+    return 45 * 60 * 1000;
+  }
+
+  void _startWarningCountdown() {
+    warningActive = true;
+    warningSecondsRemaining = 5 * 60;
+    notifyListeners();
+
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      warningSecondsRemaining = math.max(0, warningSecondsRemaining - 1);
+      notifyListeners();
+      if (warningSecondsRemaining <= 0) {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _scheduleTimers() {
+    _warningTimer?.cancel();
+    _logoutTimer?.cancel();
+    _countdownTimer?.cancel();
+    warningActive = false;
+    warningSecondsRemaining = 0;
+
+    final timeoutMs = _sessionTimeoutMs;
+    final warningDelay = math.max(0, timeoutMs - 5 * 60 * 1000);
+
+    _warningTimer = Timer(Duration(milliseconds: warningDelay), _startWarningCountdown);
+    _logoutTimer = Timer(Duration(milliseconds: timeoutMs), () async {
+      await logout();
+    });
+  }
+
+  void resetActivityTimer() {
+    if (!isAuthenticated) return;
+    _scheduleTimers();
   }
 
   Future<bool> refreshSession() async {
@@ -89,7 +153,9 @@ class AuthProvider with ChangeNotifier {
         final refresh = data['refreshToken'] as String?;
         if (access != null && refresh != null) {
           await _saveTokens(access, refresh);
-          return await _fetchCurrentUser();
+          final fetched = await _fetchCurrentUser();
+          if (fetched) resetActivityTimer();
+          return fetched;
         }
       }
     } catch (_) {}
@@ -103,6 +169,9 @@ class AuthProvider with ChangeNotifier {
     Map<String, dynamic>? body,
     bool allowRetry = true,
   }) async {
+    if (path != '/api/auth/logout') {
+      resetActivityTimer();
+    }
     final uri = _uri(path);
     final headers = _headers();
     http.Response res;
@@ -142,7 +211,6 @@ class AuthProvider with ChangeNotifier {
     try {
       final body = {'email': email.trim(), 'password': password};
       final data = await _sendRequest('POST', '/api/auth/login', body: body, allowRetry: false);
-      final tokens = data;
       final userData = data['user'] as Map<String, dynamic>;
       final access = data['accessToken'] as String?;
       final refresh = data['refreshToken'] as String?;
@@ -151,6 +219,7 @@ class AuthProvider with ChangeNotifier {
       }
       await _saveTokens(access, refresh);
       user = UserModel.fromJson(userData);
+      resetActivityTimer();
     } catch (err) {
       user = null;
       errorMessage = err.toString();

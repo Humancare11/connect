@@ -14,7 +14,6 @@ const cors = require("cors");
 const helmet = require("helmet");
 const connectDB = require("./config/db");
 const http = require("http");
-const https = require("https");
 const { Server } = require("socket.io");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -24,10 +23,9 @@ const Appointment = require("./models/Appointment");
 const Doctor = require("./models/Doctor");
 const Session = require("./models/Session");
 const ChatMessage = require("./models/ChatMessage");
-const fs = require("fs");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
 const { logAudit } = require("./utils/auditLogger");
-const { findUploadInGridFS, streamUploadFromGridFS } = require("./utils/uploadStorage");
+const { findUploadInS3, streamUploadFromS3 } = require("./utils/uploadStorage");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityIncident } = require("./utils/securityMonitor");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -106,6 +104,16 @@ const allowedOrigins = [
   "http://localhost:3000",
 ].filter(Boolean);
 
+const awsS3Region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "us-east-1";
+const s3AssetSources = [
+  process.env.AWS_S3_PUBLIC_BASE_URL,
+  process.env.S3_PUBLIC_BASE_URL,
+  process.env.AWS_S3_BUCKET
+    ? `https://${process.env.AWS_S3_BUCKET}.s3.${awsS3Region}.amazonaws.com`
+    : null,
+  "https://*.s3.amazonaws.com",
+].filter(Boolean);
+
 app.use(
   helmet({
     frameguard: { action: "deny" },
@@ -123,8 +131,8 @@ app.use(
         baseUri: ["'self'"],
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
-        imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'", ...allowedOrigins],
+        imgSrc: ["'self'", "data:", "blob:", ...s3AssetSources],
+        connectSrc: ["'self'", ...allowedOrigins, ...s3AssetSources],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null,
@@ -132,6 +140,11 @@ app.use(
     },
   })
 );
+
+app.use((req, res, next) => {
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
 
 // CORS Config
 const corsOptions = {
@@ -156,13 +169,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(require("cookie-parser")());
-
-// Serve uploaded files
-const uploadsDir = path.join(__dirname, "uploads");
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -206,7 +212,10 @@ async function canAccessUpload(req, filename) {
   const superadmin = identities.find((identity) => identity.role === "superadmin");
   if (superadmin) return { allowed: true, reason: "superadmin", identity: superadmin };
 
-  const upload = await findUploadInGridFS(filename);
+  const admin = identities.find((identity) => ["admin", "paymentadmin"].includes(identity.role));
+  if (admin) return { allowed: true, reason: "admin", identity: admin };
+
+  const upload = await findUploadInS3(filename);
   if (upload?.metadata?.uploadedBy) {
     const uploader = identities.find((identity) => String(identity.id) === String(upload.metadata.uploadedBy));
     if (uploader) return { allowed: true, reason: "uploader", identity: uploader };
@@ -286,89 +295,17 @@ async function serveProtectedUpload(req, res, next) {
       });
     }
 
-    const streamed = await streamUploadFromGridFS(filename, res);
+    const streamed = await streamUploadFromS3(filename, res);
     if (streamed) return;
   } catch (err) {
-    console.error("GridFS upload fallback error:", err);
+    console.error("S3 upload read error:", err);
     if (!res.headersSent) {
       return res.status(500).json({ msg: "Could not read uploaded file from shared storage." });
     }
     return;
   }
 
-  if (process.env.NODE_ENV === "production") return next();
-
-  const fallbackBase = (
-    process.env.UPLOAD_FALLBACK_BASE_URL ||
-    process.env.PRODUCTION_BACKEND_URL ||
-    "https://humancareconnect.co"
-  ).replace(/\/+$/, "");
-
-  const targetPath = path.join(uploadsDir, filename);
-  const tempPath = `${targetPath}.download`;
-  const remoteUrl = `${fallbackBase}/api/uploads/${encodeURIComponent(filename)}`;
-  const client = remoteUrl.startsWith("https:") ? https : http;
-
-  const cleanupTemp = () => {
-    fs.rm(tempPath, { force: true }, () => {});
-  };
-
-  const request = client.get(remoteUrl, (upstream) => {
-    if (upstream.statusCode !== 200) {
-      upstream.resume();
-      cleanupTemp();
-      return res.status(404).json({
-        msg: "Uploaded file was not found in local storage or fallback storage.",
-        filename,
-      });
-    }
-
-    const file = fs.createWriteStream(tempPath);
-    upstream.pipe(file);
-
-    upstream.on("error", () => {
-      file.destroy();
-      cleanupTemp();
-      if (!res.headersSent) {
-        res.status(502).json({ msg: "Could not retrieve uploaded file from fallback storage." });
-      }
-    });
-
-    file.on("error", () => {
-      upstream.destroy();
-      cleanupTemp();
-      if (!res.headersSent) {
-        res.status(500).json({ msg: "Could not cache uploaded file locally." });
-      }
-    });
-
-    file.on("finish", () => {
-      file.close(() => {
-        fs.rename(tempPath, targetPath, (err) => {
-          if (err) {
-            cleanupTemp();
-            if (!res.headersSent) {
-              res.status(500).json({ msg: "Could not store uploaded file locally." });
-            }
-            return;
-          }
-          res.setHeader("Cache-Control", "private, no-store");
-          res.sendFile(targetPath);
-        });
-      });
-    });
-  });
-
-  request.setTimeout(15000, () => {
-    request.destroy(new Error("Fallback upload fetch timed out."));
-  });
-
-  request.on("error", () => {
-    cleanupTemp();
-    if (!res.headersSent) {
-      res.status(502).json({ msg: "Could not retrieve uploaded file from fallback storage." });
-    }
-  });
+  return next();
 }
 
 app.get("/uploads/:filename", (_req, res) => {

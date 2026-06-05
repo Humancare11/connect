@@ -1,8 +1,14 @@
 import axios from "axios";
+import { dispatchSessionActivity } from "./utils/session";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
   withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  dispatchSessionActivity();
+  return config;
 });
 
 let refreshPromise = null;
@@ -41,12 +47,22 @@ export function getUserAuthToken() {
 const _apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
 const UPLOAD_URL_RE = /^(https?:\/\/[^/]+)\/(?:api\/)?(uploads\/.+)$/;
 const UPLOAD_PATH_RE = /^\/(?:api\/)?(uploads\/.+)$/;
+const _apiOrigin = (() => {
+  try { return new URL(_apiBase).origin; } catch { return ""; }
+})();
 
 function _deepNormalizeUrls(data) {
   if (!data) return data;
   if (typeof data === "string") {
-    const m = UPLOAD_URL_RE.exec(data) || UPLOAD_PATH_RE.exec(data);
-    if (m) return `${_apiBase}/api/${m[m.length - 1]}`;
+    const pathMatch = UPLOAD_PATH_RE.exec(data);
+    if (pathMatch) return `${_apiBase}/api/${pathMatch[pathMatch.length - 1]}`;
+
+    const urlMatch = UPLOAD_URL_RE.exec(data);
+    if (urlMatch) {
+      try {
+        if (new URL(data).origin === _apiOrigin) return `${_apiBase}/api/${urlMatch[urlMatch.length - 1]}`;
+      } catch { /* keep original value */ }
+    }
     return data;
   }
   if (Array.isArray(data)) return data.map(_deepNormalizeUrls);
