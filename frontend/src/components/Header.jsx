@@ -23,91 +23,82 @@ export default function Header() {
     { label: "Blogs", link: "/blogs" },
   ];
 
+  // FIX: handleScroll, the listener, and the cleanup are all inside the effect.
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 40);
     };
-  }
-  )
 
-    handleScroll();
+    handleScroll(); // Run once on mount to set initial state
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, []); // Empty dep array: register once, clean up on unmount
 
   /* ==================== NAV PILL LOGIC ==================== */
-useEffect(() => {
-  const pill = pillRef.current;
-  const navMenu = navMenuRef.current;
-  if (!pill || !navMenu) return;
+  useEffect(() => {
+    const pill = pillRef.current;
+    const navMenu = navMenuRef.current;
+    if (!pill || !navMenu) return;
 
-  const items = Array.from(navMenu.querySelectorAll(".nav-item"));
+    const items = Array.from(navMenu.querySelectorAll(".nav-item"));
 
-  const updatePill = (item, isHover = false) => {
-    const navRect = navMenu.getBoundingClientRect();
-    const itemRect = item.getBoundingClientRect();
+    const updatePill = (item, isHover = false) => {
+      const navRect = navMenu.getBoundingClientRect();
+      const itemRect = item.getBoundingClientRect();
 
-    pill.style.left = `${itemRect.left - navRect.left}px`;
-    pill.style.opacity = "1";
+      pill.style.left = `${itemRect.left - navRect.left}px`;
+      pill.style.opacity = "1";
 
-    if (isHover) {
-      pill.classList.add("hover");
-      pill.classList.remove("active");
-      pill.style.width = `${itemRect.width}px`;
-    } else {
-      pill.classList.remove("hover");
-      pill.classList.add("active");
-      pill.style.width = "4px";
-    }
-  };
+      if (isHover) {
+        pill.classList.add("hover");
+        pill.classList.remove("active");
+        pill.style.width = `${itemRect.width}px`;
+      } else {
+        pill.classList.remove("hover");
+        pill.classList.add("active");
+        pill.style.width = "4px";
+      }
+    };
 
-  const handleMouseEnter = (e) => updatePill(e.currentTarget, true);
-  const handleMouseLeave = () => {
-    const activeItem = navMenu.querySelector(".nav-item.active");
-    if (activeItem) updatePill(activeItem, false);
-  };
+    const handleMouseEnter = (e) => updatePill(e.currentTarget, true);
+    const handleMouseLeave = () => {
+      const activeItem = navMenu.querySelector(".nav-item.active");
+      if (activeItem) updatePill(activeItem, false);
+    };
 
-  items.forEach(item => item.addEventListener("mouseenter", handleMouseEnter));
-  navMenu.addEventListener("mouseleave", handleMouseLeave);
+    items.forEach((item) => item.addEventListener("mouseenter", handleMouseEnter));
+    navMenu.addEventListener("mouseleave", handleMouseLeave);
 
-  const initialActive = navMenu.querySelector(".nav-item.active");
-  if (initialActive) updatePill(initialActive, false);
+    const initialActive = navMenu.querySelector(".nav-item.active");
+    if (initialActive) updatePill(initialActive, false);
 
-  return () => {
-    items.forEach(item => item.removeEventListener("mouseenter", handleMouseEnter));
-    navMenu.removeEventListener("mouseleave", handleMouseLeave);
-  };
-}, [location.pathname]);
-
+    return () => {
+      items.forEach((item) =>
+        item.removeEventListener("mouseenter", handleMouseEnter)
+      );
+      navMenu.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [location.pathname]);
 
   const helpItems = [
-  "Lab Order",
-  "Doctor Consultation",
-  "Medical Reports",
-  "Emergency Care",
-  "Health Insurance",
-];
-
+    "Lab Order",
+    "Doctor Consultation",
+    "Medical Reports",
+    "Emergency Care",
+    "Health Insurance",
+  ];
 
   return (
     <header className={`glass-header ${isScrolled ? "shrink" : ""}`}>
       <div className="nav-container">
         {/* LOGO */}
         <Link to="/" className={`logo ${isScrolled ? "scrolled" : ""}`}>
-  <img
-    src={logo}
-    alt="Humancare Logo"
-    className="logo-full"
-  />
-  <img 
-    src={miniLogo} 
-    alt="Humancare Mini Logo"
-    className="logo-mini"
-  />
-</Link>
+          <img src={logo} alt="Humancare Logo" className="logo-full" />
+          <img src={miniLogo} alt="Humancare Mini Logo" className="logo-mini" />
+        </Link>
 
         {/* HELP SLIDER */}
         <div className="help-slider magnetic">
@@ -164,7 +155,7 @@ useEffect(() => {
           )}
         </div>
 
-        {/* Hamburger & Mobile Menu (unchanged) */}
+        {/* Hamburger & Mobile Menu */}
         <div className="hamburger" id="hamburger">
           <span></span>
           <span></span>

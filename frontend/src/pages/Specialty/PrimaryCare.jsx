@@ -7,7 +7,14 @@ import {
   HeartPulse, Syringe, Eye, Bone, CircleDot, Smile, TrendingUp,
   MessageCircle, X
 } from "lucide-react";
+import "./primarycare.css";
 import Bghero from "../../assets/primary-care-hero.jpg";
+
+// ────────────────────────────────────────────────────────────
+// DESIGN TOKENS  (matches brand CSS variables)
+// ────────────────────────────────────────────────────────────
+// --ink: #0A1F44  --blue: #0B57E8  --blue-3: #7CB7FF
+// --blue-4: #C8DFFF  --navy: #061333  --muted: #5C7099
 
 // ────────────────────────────────────────────────────────────
 // DATA
@@ -17,13 +24,7 @@ const specialty = {
   badge: "Primary Care",
   heading: "Comprehensive Care For Every Stage Of Life",
   description:
-    "Personalized healthcare focused on prevention, diagnosis, treatment and long-term wellness. Connect with experienced physicians dedicated to keeping you and your family healthy through every stage of life.",
-  stats: [
-    { value: "15K+", label: "Patients Served" },
-    { value: "250+", label: "Specialists" },
-    { value: "98%", label: "Patient Satisfaction" },
-    { value: "24/7", label: "Support Available" },
-  ],
+    "Personalized healthcare focused on prevention, diagnosis, treatment and long-term wellness. Connect with experienced physicians dedicated to keeping you and your family healthy.",
   trustItems: [
     "Same Day Visits",
     "Insurance Accepted",
@@ -36,13 +37,30 @@ const relatedSpecialties = [
   { icon: Zap, name: "Urgent Care", color: "#FFF0EE", accent: "#DC2626" },
   { icon: Heart, name: "Women's Health", color: "#FFF0F3", accent: "#DB2777" },
   { icon: Smile, name: "Pediatrics", color: "#EDFCF2", accent: "#059669" },
+  { icon: Brain, name: "Mental Health", color: "#F4F0FF", accent: "#7C3AED" },
+  { icon: Zap, name: "Urgent Care", color: "#FFF0EE", accent: "#DC2626" },
+  { icon: Heart, name: "Women's Health", color: "#FFF0F3", accent: "#DB2777" },
+  { icon: Smile, name: "Pediatrics", color: "#EDFCF2", accent: "#059669" },
 ];
 
-const symptoms = [
-  "Fever", "Headache", "Fatigue", "Nausea", "Dizziness",
-  "Cough", "Anxiety", "Back Pain", "Shortness of Breath",
-  "Sore Throat", "Chest Pain", "Joint Pain", "Loss of Appetite",
-  "Insomnia", "Skin Rash",
+
+// Rich symptom data for expanded cards
+const symptomData = [
+  { title: "Fever",               desc: "Elevated body temperature often signals infection. See a doctor if it exceeds 103°F or lasts more than 3 days." },
+  { title: "Headache",            desc: "Can range from tension headaches to migraines. Sudden, severe headaches need immediate evaluation." },
+  { title: "Fatigue",             desc: "Persistent tiredness may indicate anaemia, thyroid issues, or other conditions. Don't dismiss chronic fatigue." },
+  { title: "Nausea",              desc: "Often tied to GI issues, medications, or infections. Prolonged nausea warrants a medical review." },
+  { title: "Dizziness",           desc: "Vertigo or lightheadedness can stem from inner ear, blood pressure, or neurological causes." },
+  { title: "Cough",               desc: "A cough lasting more than 3 weeks, or producing blood or thick mucus, should be evaluated promptly." },
+  { title: "Anxiety",             desc: "Persistent worry, racing thoughts, or panic attacks benefit from professional mental health support." },
+  { title: "Back Pain",           desc: "Acute or chronic back pain can affect posture and mobility. Early treatment prevents long-term damage." },
+  { title: "Shortness of Breath", desc: "Difficulty breathing can signal respiratory or cardiac conditions. Seek urgent care if sudden or severe." },
+  { title: "Sore Throat",         desc: "Often viral, but strep throat requires antibiotics. Difficulty swallowing needs prompt attention." },
+  { title: "Chest Pain",          desc: "Always take chest pain seriously. It may indicate cardiac, muscular, or gastrointestinal causes." },
+  { title: "Joint Pain",          desc: "Swollen or stiff joints may indicate arthritis or injury. Early diagnosis preserves joint function." },
+  { title: "Loss of Appetite",    desc: "Unexplained appetite loss can be linked to digestive, mental, or systemic health conditions." },
+  { title: "Insomnia",            desc: "Chronic sleep difficulty affects mood, cognition, and immunity. CBT and medical review can help." },
+  { title: "Skin Rash",           desc: "Rashes can signal allergies, infections, or autoimmune conditions. Sudden rashes need evaluation." },
 ];
 
 const whyUs = [
@@ -76,258 +94,200 @@ const SectionLabel = ({ children, variant = "light" }) => (
   </span>
 );
 
-const Stars = ({ rating }) => (
-  <span style={{ display: "flex", gap: 2 }}>
-    {[...Array(5)].map((_, i) => (
-      <Star key={i} size={14} style={{ fill: i < rating ? "#F59E0B" : "none", color: i < rating ? "#F59E0B" : "#D1D5DB" }} />
-    ))}
-  </span>
-);
-
 // ────────────────────────────────────────────────────────────
-// HERO SECTION
+// HERO SECTION  
 // ────────────────────────────────────────────────────────────
 function HeroSection() {
   return (
     <>
+     
       <section
-        className="hero-section"
+        className="hs-root"
         style={{
-          position: "relative",
-          height: "clamp(520px, 70vh, 680px)",
-          padding: "40px 0 30px",
-          overflow: "hidden",
           backgroundImage: `
             linear-gradient(
-              90deg,
-              rgba(6,19,51,.95) 0%,
-              rgba(10,31,68,.88) 35%,
-              rgba(10,31,68,.70) 65%,
-              rgba(10,31,68,.55) 100%
+              105deg,
+              rgba(6,19,51,.97)  0%,
+              rgba(10,31,68,.90) 30%,
+              rgba(10,31,68,.72) 62%,
+              rgba(10,31,68,.48) 100%
             ),
             url(${Bghero})
           `,
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
-          display: "flex",
-          alignItems: "center",
         }}
       >
-        <div style={{
-          position: "absolute", top: "8%", right: "8%",
-          width: "clamp(180px, 25vw, 320px)", height: "clamp(180px, 25vw, 320px)",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(11,87,232,.35) 0%, transparent 70%)",
-          filter: "blur(50px)",
-          animation: "floatGlow 8s ease-in-out infinite",
-          pointerEvents: "none",
-        }} />
-        <div style={{
-          position: "absolute", bottom: "0%", left: "5%",
-          width: "clamp(150px, 22vw, 280px)", height: "clamp(150px, 22vw, 280px)",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(124,183,255,.20) 0%, transparent 70%)",
-          filter: "blur(50px)",
-          animation: "floatGlow 10s ease-in-out infinite",
-          pointerEvents: "none",
-        }} />
+        {/* ── decorative ambient glows ── */}
+        <div className="hs-glow hs-glow--tr" />
+        <div className="hs-glow hs-glow--bl" />
 
-        <div style={{ position: "absolute", top: "18%", right: "18%", animation: "floatIcon 5s ease-in-out infinite", opacity: 0.15 }}>
-          <HeartPulse size={46} color="#ffffff" />
+        {/* ── floating background icons (decorative only) ── */}
+        <div className="hs-float-icon hs-float-icon--1">
+          <HeartPulse size={44} color="#ffffff" />
         </div>
-        <div style={{ position: "absolute", bottom: "22%", right: "10%", animation: "floatIcon 7s ease-in-out infinite", opacity: 0.12 }}>
-          <ShieldCheck size={54} color="#ffffff" />
+        <div className="hs-float-icon hs-float-icon--2">
+          <ShieldCheck size={52} color="#ffffff" />
         </div>
-        <div style={{ position: "absolute", top: "50%", right: "30%", animation: "floatIcon 6s ease-in-out infinite", opacity: 0.1 }}>
-          <Stethoscope size={46} color="#ffffff" />
+        <div className="hs-float-icon hs-float-icon--3">
+          <Stethoscope size={40} color="#ffffff" />
         </div>
 
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "40px 24px", width: "100%", position: "relative", zIndex: 5 }}>
-          <div style={{ maxWidth: "680px", animation: "fadeUp .85s cubic-bezier(.22,.68,0,1.2) both" }}>
+        {/* ── content wrapper ── */}
+        <div className="hs-container">
+          <div className="hs-content">
 
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: "8px",
-              padding: "7px 14px", borderRadius: "999px",
-              background: "rgba(255,255,255,.08)", backdropFilter: "blur(15px)",
-              border: "1px solid rgba(255,255,255,.15)", color: "#7CB7FF",
-              fontSize: "12px", fontWeight: 700, marginBottom: "16px", letterSpacing: ".04em",
-            }}>
+            {/* badge — always at very top of content */}
+            <span className="hs-badge" style={{ animation: "fadeUp .75s .00s cubic-bezier(.22,.68,0,1.2) both" }}>
               ✦ Trusted {specialty.badge}
             </span>
 
-            <h1 style={{
-              fontSize: "clamp(28px, 3.8vw, 48px)", lineHeight: 1.08, fontWeight: 900,
-              color: "#ffffff", marginBottom: "16px", letterSpacing: "-1.5px",
-              textShadow: "0 2px 24px rgba(11,87,232,.25)",
-              animation: "fadeUp .85s .1s cubic-bezier(.22,.68,0,1.2) both",
-            }}>
+            <h1 className="hs-heading" style={{ animation: "fadeUp .85s .10s cubic-bezier(.22,.68,0,1.2) both" }}>
               {specialty.heading}
             </h1>
 
-            <p style={{
-              fontSize: "clamp(13px, 1.4vw, 15px)", lineHeight: 1.65, color: "#D8E6FF",
-              maxWidth: "560px", marginBottom: "28px",
-              animation: "fadeUp .85s .18s cubic-bezier(.22,.68,0,1.2) both",
-            }}>
+            <p className="hs-desc" style={{ animation: "fadeUp .85s .18s cubic-bezier(.22,.68,0,1.2) both" }}>
               {specialty.description}
             </p>
 
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "28px", animation: "fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both" }}>
-              <button style={{
-                background: "linear-gradient(135deg,#0B57E8,#256DFF)", color: "#fff",
-                border: "none", borderRadius: "12px", padding: "13px 24px",
-                fontSize: "13px", fontWeight: 700, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: "8px",
-                boxShadow: "0 12px 28px rgba(11,87,232,.40)", transition: "transform .2s, box-shadow .2s",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 18px 36px rgba(11,87,232,.55)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 12px 28px rgba(11,87,232,.40)"; }}
+            {/* CTA buttons */}
+            <div className="hs-btns" style={{ animation: "fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both" }}>
+              <button
+                className="hs-btn hs-btn--primary"
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 20px 40px rgba(11,87,232,.60)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
               >
                 <Calendar size={15} /> Book Appointment
               </button>
-              <button style={{
-                background: "rgba(255,255,255,.08)", backdropFilter: "blur(15px)",
-                color: "#fff", border: "1px solid rgba(255,255,255,.15)",
-                borderRadius: "12px", padding: "13px 24px", fontSize: "13px",
-                fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "8px",
-                transition: "background .2s, border-color .2s",
-              }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.14)"; e.currentTarget.style.borderColor = "rgba(255,255,255,.28)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,.15)"; }}
+              <button
+                className="hs-btn hs-btn--ghost"
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.16)"; e.currentTarget.style.borderColor = "rgba(255,255,255,.30)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = ""; e.currentTarget.style.borderColor = ""; }}
               >
-                <Users size={15} /> Find Doctors
+                <Users size={15} /> Know More
               </button>
             </div>
 
-            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "32px", animation: "fadeUp .85s .34s cubic-bezier(.22,.68,0,1.2) both" }}>
+            {/* trust items */}
+            <div className="hs-trust" style={{ animation: "fadeUp .85s .34s cubic-bezier(.22,.68,0,1.2) both" }}>
               {specialty.trustItems.map((item) => (
-                <div key={item} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <CheckCircle size={14} style={{ color: "#38D39F" }} />
-                  <span style={{ color: "#D8E6FF", fontSize: "12px", fontWeight: 500 }}>{item}</span>
+                <div key={item} className="hs-trust-item">
+                  <CheckCircle size={13} className="hs-trust-check" />
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
 
-            <div style={{
-              display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
-              gap: "12px", maxWidth: "720px",
-              animation: "fadeUp .85s .42s cubic-bezier(.22,.68,0,1.2) both",
-            }}>
-              {specialty.stats.map((item) => (
-                <div key={item.label} style={{
-                  background: "rgba(255,255,255,.08)", backdropFilter: "blur(18px)",
-                  border: "1px solid rgba(255,255,255,.12)", borderRadius: "16px",
-                  padding: "16px 18px", transition: "transform .25s, background .25s",
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.background = "rgba(255,255,255,.13)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = "rgba(255,255,255,.08)"; }}
-                >
-                  <h3 style={{ fontSize: "clamp(22px, 2.4vw, 28px)", fontWeight: 800, color: "#ffffff", margin: "0 0 4px 0" }}>{item.value}</h3>
-                  <p style={{ color: "#C8DFFF", fontSize: "11px", margin: 0, lineHeight: 1.4 }}>{item.label}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
 
-      <style>{`
-        @keyframes floatGlow {
-          0%   { transform: translateY(0px) scale(1); }
-          50%  { transform: translateY(-28px) scale(1.06); }
-          100% { transform: translateY(0px) scale(1); }
-        }
-        @keyframes floatIcon {
-          0%   { transform: translateY(0px) rotate(0deg); }
-          50%  { transform: translateY(-14px) rotate(4deg); }
-          100% { transform: translateY(0px) rotate(0deg); }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(28px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 768px) {
-          .hero-section {
-            height: auto !important;
-            min-height: 520px !important;
-          }
-        }
-        @media (max-width: 480px) {
-          .hero-section {
-            min-height: 480px !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
 
 // ────────────────────────────────────────────────────────────
-// ABOUT SPECIALTY
+// ABOUT SPECIALTY  
 // ────────────────────────────────────────────────────────────
 
 function AboutSpecialty() {
   return (
+    <>
+      {/* ── Glassmorphism outer card ── */}
+      <div className="about-glass-card">
 
-    <div>
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
-        gap: "clamp(32px, 5vw, 64px)",
-        alignItems: "start",
-      }}>
-        <div>
-          <SectionLabel>About This Specialty</SectionLabel>
-          <h2 style={{ fontSize: "clamp(24px, 3vw, 36px)", fontWeight: 800, color: "#0A1F44", lineHeight: 1.2, fontFamily: "'Georgia', serif" }}>
-            Your Health, Our Priority
-          </h2>
-          <div style={{ marginTop: 24, background: "linear-gradient(135deg, #0A1F44 0%, #08308E 100%)", borderRadius: 16, padding: 28 }}>
-            <p style={{ color: "#7CB7FF", fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Quick Access</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {["Routine Wellness", "Acute Illness", "Chronic Conditions", "Mental Wellbeing"].map((item) => (
-                <div key={item} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                  <ChevronRight size={14} style={{ color: "#0B57E8" }} />
-                  <span style={{ color: "#C8DFFF", fontSize: 14 }}>{item}</span>
-                </div>
-              ))}
+        {/* subtle inner grid noise/shine layer */}
+        <div className="about-glass-shine" />
+
+        <div
+          className="about-grid"
+        >
+          {/* ── LEFT: compact quick-access panel ── */}
+          <div className="about-left">
+            <SectionLabel>About This Specialty</SectionLabel>
+            <h2 className="about-left-heading">
+              Your Health,<br />Our Priority
+            </h2>
+
+            {/* Quick Access nav card – kept dark, now feels embedded */}
+            <div className="about-nav-card">
+              <p className="about-nav-label">Quick Access</p>
+              <div className="about-nav-list">
+                {["Routine Wellness", "Acute Illness", "Chronic Conditions", "Mental Wellbeing"].map((item) => (
+                  <div key={item} className="about-nav-item">
+                    <ChevronRight size={13} className="about-nav-chevron" />
+                    <span className="about-nav-text">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* small decorative stat pills */}
+            <div className="about-stat-row">
+              <div className="about-stat-pill">
+                <HeartPulse size={13} />
+                <span>15 K+ Patients</span>
+              </div>
+              <div className="about-stat-pill">
+                <ShieldCheck size={13} />
+                <span>98% Satisfaction</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <div style={{ marginBottom: 28 }}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0A1F44", marginBottom: 10 }}>What Is Primary Care?</h3>
-            <p style={{ color: "#5C7099", lineHeight: 1.8, fontSize: 15 }}>
-              Primary care is the foundation of the healthcare system — providing comprehensive, continuous medical care across all ages, genders, and conditions. Your primary care physician acts as a personal health advocate, coordinating specialist care and managing preventive health goals.
-            </p>
-          </div>
-          <div style={{ marginBottom: 28 }}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0A1F44", marginBottom: 10 }}>Who Should Visit?</h3>
-            <p style={{ color: "#5C7099", lineHeight: 1.8, fontSize: 15 }}>
-              Everyone benefits from a primary care relationship — from newborns and children to adults and seniors. Whether you're managing a chronic condition, recovering from illness, or simply maintaining your health, primary care is your starting point.
-            </p>
-          </div>
-          <div>
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0A1F44", marginBottom: 12 }}>Benefits of Regular Primary Care</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 10 }}>
-              {["Earlier disease detection", "Lower healthcare costs", "Coordinated specialist care", "Better long-term outcomes", "Personalised health plans", "Medication management"].map((b) => (
-                <div key={b} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <CheckCircle size={15} style={{ color: "#0F9A88", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: "#2A3F66" }}>{b}</span>
-                </div>
-              ))}
+          {/* ── RIGHT: wide content area ── */}
+          <div className="about-right">
+
+            <div className="about-block">
+              <h3 className="about-block-title">What Is Primary Care?</h3>
+              <p className="about-block-body">
+                Primary care is the foundation of the healthcare system — providing comprehensive,
+                continuous medical care across all ages, genders, and conditions. Your primary care
+                physician acts as a personal health advocate, coordinating specialist care and managing
+                preventive health goals.
+              </p>
             </div>
+
+            <div className="about-block">
+              <h3 className="about-block-title">Who Should Visit?</h3>
+              <p className="about-block-body">
+                Everyone benefits from a primary care relationship — from newborns and children to
+                adults and seniors. Whether you're managing a chronic condition, recovering from illness,
+                or simply maintaining your health, primary care is your starting point.
+              </p>
+            </div>
+
+            <div className="about-block">
+              <h3 className="about-block-title">Benefits of Regular Primary Care</h3>
+              <div className="about-benefits-grid">
+                {[
+                  "Earlier disease detection",
+                  "Lower healthcare costs",
+                  "Coordinated specialist care",
+                  "Better long-term outcomes",
+                  "Personalised health plans",
+                  "Medication management",
+                ].map((b) => (
+                  <div key={b} className="about-benefit-item">
+                    <CheckCircle size={14} className="about-benefit-check" />
+                    <span>{b}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
+
+     
+    </>
   );
 }
 
 // ────────────────────────────────────────────────────────────
-// STICKY BOOKING CARD
+// STICKY BOOKING CARD  (unchanged)
 // ────────────────────────────────────────────────────────────
 function StickyBookingCard() {
   return (
@@ -370,149 +330,60 @@ function StickyBookingCard() {
         </p>
       </div>
 
-      <style>{`
-        .sbc-card {
-          position: sticky;
-          top: 120px;
-          border: 1px solid #D8E6FF;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,1) 0%,
-      rgba(248,251,255,1) 100%
-    );
-          border-radius: 22px;
-          padding: clamp(20px, 3.5vw, 28px);
-          box-shadow: 0 4px 6px rgba(11,40,100,.04), 0 20px 50px -12px rgba(11,40,100,.14);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          animation: sbcFadeUp .65s cubic-bezier(.22,.68,0,1.2) both;
-          max-width: 360px;
-          width: 100%;
-          margin: 0 auto;
-        }
-        .sbc-badge {
-          display: inline-flex; align-items: center; gap: 7px;
-          background: #EEF4FF;
-  color: #0B57E8;
-  border: 1px solid #C5DEFF;
-          border-radius: 999px; padding: 5px 13px; font-size: 12px;
-          font-weight: 700; margin-bottom: 18px; letter-spacing: .02em;
-          animation: sbcFadeUp .6s .05s cubic-bezier(.22,.68,0,1.2) both;
-        }
-        .sbc-badge-dot {
-          width: 7px; height: 7px; border-radius: 50%;  background: #0B57E8;
-  box-shadow: 0 0 12px rgba(11, 87, 232, 0.5);
-          animation: sbcPulse 2s ease-in-out infinite; flex-shrink: 0;
-        }
-        .sbc-price-block { margin-bottom: 16px; animation: sbcFadeUp .6s .1s cubic-bezier(.22,.68,0,1.2) both; }
-        .sbc-price {
-          font-size: clamp(48px, 10vw, 64px); font-weight: 900; color: #0A1F44;
-          line-height: 1; letter-spacing: -2px; font-family: 'Georgia', serif;
-        }
-        .sbc-price-sub { font-size: 12.5px; color: #7A90B8; margin: 8px 0 0; line-height: 1.5; }
-        .sbc-info-box {
-          display: flex; align-items: flex-start; gap: 10px;
-          background: #EEF6FF; border: 1px solid #C5DEFF; border-radius: 12px;
-          padding: 13px 14px; margin-bottom: 20px; text-align: left;
-          animation: sbcFadeUp .6s .16s cubic-bezier(.22,.68,0,1.2) both;
-        }
-        .sbc-info-icon { color: #0B57E8; flex-shrink: 0; margin-top: 1px; }
-        .sbc-info-text { font-size: 12.5px; color: #2255AA; line-height: 1.6; margin: 0; }
-        .sbc-info-text strong { color: #0A1F44; font-weight: 700; }
-        .sbc-features { width: 100%; display: flex; flex-direction: column; gap: 0; margin-bottom: 22px; }
-        .sbc-feature-row {
-          display: flex; align-items: center; gap: 10px; padding: 9px 0;
-          border-bottom: 1px solid #F0F5FD;
-          animation: sbcFadeUp .55s cubic-bezier(.22,.68,0,1.2) both;
-          transition: background .18s;
-        }
-        .sbc-feature-row:last-child { border-bottom: none; }
-        .sbc-feature-row:hover { background: #F8FAFF; border-radius: 8px; padding-left: 6px; }
-        .sbc-check-wrap { flex-shrink: 0; }
-        .sbc-check-icon { color: #1E6BFF; display: block; }
-        .sbc-feature-text { font-size: 13px; color: #2A3F66; font-weight: 500; text-align: left; }
-        .sbc-cta-btn {
-          width: 100%;
-          background: linear-gradient(
-  135deg,
-  #0B57E8 0%,
-  #1E6BFF 50%,
-  #4D8DFF 100%
-);
-
-box-shadow:
-  0 8px 24px rgba(11, 87, 232, 0.30),
-  0 2px 4px rgba(11, 87, 232, 0.15);
-          color: #fff; border: none; border-radius: 50px; padding: 16px 24px;
-          font-size: clamp(14px, 2.5vw, 15px); font-weight: 700; cursor: pointer;
-          margin-bottom: 12px;
-          transition: transform .2s, box-shadow .2s, filter .2s; letter-spacing: .02em;
-          animation: sbcFadeUp .6s .55s cubic-bezier(.22,.68,0,1.2) both;
-        }
-        .sbc-cta-btn:hover {transform: translateY(-2px);  box-shadow: 0 14px 32px rgba(11, 87, 232, 0.38),  0 4px 8px rgba(11, 87, 232, 0.18);  filter: brightness(1.05);
-}
-        .sbc-cta-btn:active {
-  box-shadow: 0 6px 16px rgba(11, 87, 232, 0.25);
-}
-        .sbc-terms { font-size: 11.5px; color: #9AAAC5; text-align: center; line-height: 1.6; margin: 0; animation: sbcFadeUp .6s .62s cubic-bezier(.22,.68,0,1.2) both; }
-        .sbc-link { color: #0B57E8; text-decoration: underline; text-underline-offset: 2px; }
-        .sbc-link:hover { color: #0A2FA0; }
-        @keyframes sbcFadeUp {
-          from { opacity: 0; transform: translateY(18px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes sbcPulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50%       { transform: scale(1.4); opacity: .7; }
-        }
-        @media (max-width: 1024px) {
-          .sbc-card { position: relative; top: auto; max-width: 100%; }
-        }
-        @media (max-width: 480px) {
-          .sbc-card { border-radius: 18px; padding: 20px 18px; }
-          .sbc-price { font-size: 52px; }
-        }
-      `}</style>
+     
     </>
   );
 }
 
 // ────────────────────────────────────────────────────────────
-// SYMPTOMS CHIPS
+// SYMPTOMS CHIPS — expand-on-hover cards
 // ────────────────────────────────────────────────────────────
 function SymptomsChips() {
   return (
-    <section style={{ background: "#fff", padding: "64px 0" }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
-        <div style={{ marginBottom: 32 }}>
-          <SectionLabel>Common Symptoms</SectionLabel>
-          <h2 style={{ fontSize: 30, fontWeight: 800, color: "#0A1F44", fontFamily: "'Georgia', serif", marginTop: 8 }}>Recognise Your Symptoms</h2>
-          <p style={{ color: "#5C7099", marginTop: 10, fontSize: 15 }}>Click a symptom to learn more and find the right care.</p>
+    <>
+      <section className="sc-section">
+        <div className="sc-container">
+
+          {/* ── header ── */}
+          <div className="sc-header">
+            <SectionLabel>Common Symptoms</SectionLabel>
+            <h2 className="sc-heading">Recognise Your Symptoms</h2>
+            <p className="sc-subtext">Hover a symptom card to learn more and find the right care.</p>
+          </div>
+
+          {/* ── cards grid ── */}
+          <div className="sc-grid">
+            {symptomData.map((item, i) => (
+              <div
+                key={item.title}
+                className="sc-card"
+                style={{ animationDelay: `${i * 0.04}s` }}
+              >
+                {/* collapsed row — always visible */}
+                <div className="sc-card-top">
+                  <span className="sc-icon">{item.icon}</span>
+                  <span className="sc-title">{item.title}</span>
+                  <span className="sc-arrow">→</span>
+                </div>
+
+                {/* expanded content — revealed on hover */}
+                <div className="sc-card-body">
+                  <p className="sc-desc">{item.desc}</p>
+                  <span className="sc-cta">Find care →</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-          {symptoms.map((s) => (
-            <button key={s} style={{
-              background: "#F0F5FF", border: "1px solid #C8DFFF", borderRadius: 24,
-              padding: "10px 20px", fontSize: 14, fontWeight: 500, color: "#2A3F66",
-              cursor: "pointer", transition: "all 0.2s",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#0B57E8"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#0B57E8"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "#F0F5FF"; e.currentTarget.style.color = "#2A3F66"; e.currentTarget.style.borderColor = "#C8DFFF"; }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
-    </section>
+      </section>
+
+    </>
   );
 }
 
 // ────────────────────────────────────────────────────────────
-// RELATED SPECIALTIES
+// RELATED SPECIALTIES 
 // ────────────────────────────────────────────────────────────
 function RelatedSpecialties() {
   return (
@@ -554,11 +425,11 @@ function RelatedSpecialties() {
 }
 
 // ────────────────────────────────────────────────────────────
-// WHY CHOOSE US
+// WHY CHOOSE US  
 // ────────────────────────────────────────────────────────────
 function WhyChooseUs() {
   return (
-    <section style={{ background: "linear-gradient(135deg, #0A1F44 0%, #08308E 100%)", padding: "80px 0" }}>
+    <section style={{ background: "#0A1F44", padding: "80px 0" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <SectionLabel variant="dark">Why HumanCare Connect</SectionLabel>
@@ -592,6 +463,248 @@ function WhyChooseUs() {
   );
 }
 
+
+// ────────────────────────────────────────────────────────────
+// FAQ DATA
+// ────────────────────────────────────────────────────────────
+const faqData = [
+  {
+    category: "Appointments",
+    items: [
+      {
+        q: "How do I book a primary care appointment?",
+        a: "You can book online in under 60 seconds — just click \"Book Appointment\" at the top of the page, choose a date and time that works for you, and confirm. Same-day slots are often available. You can also call us directly or use our mobile app.",
+      },
+      {
+        q: "Can I see a doctor the same day?",
+        a: "Yes. We reserve same-day slots every morning for acute concerns. If you log in before 10 AM, you'll typically find availability for that day. For non-urgent visits, booking 1–2 days ahead gives you the widest choice of physicians.",
+      },
+      {
+        q: "What should I bring to my first visit?",
+        a: "Bring a valid photo ID, your insurance card, a list of any current medications (including supplements), and any recent lab results or specialist notes if you have them. Arriving 10 minutes early lets us complete intake paperwork before your appointment time.",
+      },
+    ],
+  },
+  {
+    category: "Virtual Care",
+    items: [
+      {
+        q: "How does an online consultation work?",
+        a: "After booking, you'll receive a secure video link by email and SMS. At your appointment time, click the link — no app download required. Your doctor will join within minutes, review your concerns, and can issue prescriptions, referrals, or lab orders directly from the session.",
+      },
+      {
+        q: "What conditions can be treated virtually?",
+        a: "Most common illnesses and follow-ups are well-suited to video care — colds, infections, skin concerns, mental health check-ins, prescription renewals, and chronic disease management. Conditions requiring a physical exam (suspected fractures, chest pain, etc.) will be directed to in-person or urgent care.",
+      },
+    ],
+  },
+  {
+    category: "Costs & Insurance",
+    items: [
+      {
+        q: "Do you accept my insurance?",
+        a: "We work with most major insurance plans including Aetna, Cigna, UnitedHealth, BlueCross BlueShield, Humana, and Medicare. Our billing team will verify your coverage before your appointment and let you know your estimated out-of-pocket costs upfront — no surprises.",
+      },
+      {
+        q: "What is the consultation fee if I'm uninsured?",
+        a: "Our self-pay consultation fee is $49 for a standard visit — this covers the appointment, any prescriptions written, a doctor's note if needed, and 24-hour follow-up support. There are no hidden add-on fees.",
+      },
+      {
+        q: "Are referrals and lab orders included in the fee?",
+        a: "Yes. Specialist referrals and lab test orders issued during your visit are included at no extra charge. The cost of the lab tests themselves depends on your insurance or the lab's self-pay rate, but we'll always let you know before ordering.",
+      },
+    ],
+  },
+  {
+    category: "Your Health & Records",
+    items: [
+      {
+        q: "How do I access my medical records?",
+        a: "All visit notes, lab results, and prescription history are available in your secure patient portal within 24 hours of your appointment. You can download, share, or print records at any time. For records from before joining us, our team can assist with transfer requests.",
+      },
+      {
+        q: "Can my primary care doctor manage chronic conditions like diabetes or hypertension?",
+        a: "Absolutely. Chronic disease management is one of our core services. Your physician will create a personalised care plan, schedule regular monitoring visits, coordinate with any specialists you see, and adjust medications as needed — all in one continuous relationship.",
+      },
+    ],
+  },
+];
+ 
+// ────────────────────────────────────────────────────────────
+// FAQ ITEM (accordion row)
+// ────────────────────────────────────────────────────────────
+function FaqItem({ q, a, isOpen, onToggle, isLast }) {
+  return (
+    <div
+      className={`border-b transition-colors duration-200 ${isLast ? "border-transparent" : "border-[#E8EFFE]"}`}
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-start justify-between gap-4 py-5 text-left group focus:outline-none"
+      >
+        {/* question */}
+        <span
+          className={`text-[15px] font-semibold leading-snug transition-colors duration-200 pr-2
+            ${isOpen ? "text-[#0B57E8]" : "text-[#0A1F44] group-hover:text-[#0B57E8]"}`}
+        >
+          {q}
+        </span>
+ 
+        {/* +/− icon */}
+        <span
+          className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center border transition-all duration-300
+            ${isOpen
+              ? "bg-[#0B57E8] border-[#0B57E8] text-white rotate-45"
+              : "bg-[#EEF4FF] border-[#C8DFFF] text-[#0B57E8] group-hover:bg-[#D8E9FF]"
+            }`}
+          style={{ fontSize: 18, lineHeight: 1, fontWeight: 300 }}
+        >
+          +
+        </span>
+      </button>
+ 
+      {/* answer — max-height transition */}
+      <div
+        className="overflow-hidden transition-all"
+        style={{
+          maxHeight:      isOpen ? "320px"  : "0px",
+          opacity:        isOpen ? 1        : 0,
+          transitionDuration:      "360ms",
+          transitionTimingFunction: isOpen
+            ? "cubic-bezier(0.34, 1.10, 0.64, 1)"
+            : "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+          transitionProperty: "max-height, opacity",
+        }}
+      >
+        <p className="pb-5 text-[14.5px] text-[#5C7099] leading-[1.78]">
+          {a}
+        </p>
+      </div>
+    </div>
+  );
+}
+ 
+// ────────────────────────────────────────────────────────────
+// FAQ SECTION
+// ────────────────────────────────────────────────────────────
+function FaqSection() {
+  const [openId, setOpenId] = useState("0-0");
+
+  const toggle = (id) => {
+    setOpenId((prev) => (prev === id ? null : id));
+  };
+
+  return (
+    <section
+      style={{
+        background: "#F7FAFF",
+        padding: "90px 0",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1240px",
+          margin: "0 auto",
+          padding: "0 24px",
+        }}
+      >
+        <div className="faq-layout">
+          {/* LEFT SIDE */}
+          <div className="faq-sidebar">
+            <SectionLabel>FAQ</SectionLabel>
+
+            <h2 className="faq-title">
+              Frequently Asked
+              <br />
+              Questions
+            </h2>
+
+            <p className="faq-description">
+              Everything you need to know about primary care at HumanCare
+              Connect. Can't find an answer?
+            </p>
+
+            <button className="faq-chat-btn">
+              <MessageCircle size={18} />
+              Chat with our team
+            </button>
+
+            <div className="faq-stat">
+              ⚡ Avg. response in 2 min
+            </div>
+
+            <div className="faq-stat">
+              🔒 HIPAA secure & private
+            </div>
+
+            <div className="faq-stat">
+              🌍 Available in all 50 states
+            </div>
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="faq-content">
+            {faqData.map((cat, ci) => (
+              <div key={cat.category} className="faq-card">
+                <div className="faq-category">
+                  <span className="faq-dot" />
+                  {cat.category}
+                </div>
+
+                {cat.items.map((item, ii) => {
+                  const id = `${ci}-${ii}`;
+
+                  return (
+                    <div key={id} className="faq-item">
+                      <button
+                        className="faq-question"
+                        onClick={() => toggle(id)}
+                      >
+                        <span>{item.q}</span>
+
+                        <div
+                          className={`faq-icon ${
+                            openId === id ? "active" : ""
+                          }`}
+                        >
+                          +
+                        </div>
+                      </button>
+
+                      <div
+                        className={`faq-answer ${
+                          openId === id ? "open" : ""
+                        }`}
+                      >
+                        <p>{item.a}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+
+            <div className="faq-bottom-cta">
+              <div>
+                <h3>Still have questions?</h3>
+                <p>
+                  Our care team is available every day,
+                  8 AM – 10 PM.
+                </p>
+              </div>
+
+              <button>
+                Book a Free Call
+                <ArrowRight size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ────────────────────────────────────────────────────────────
 // MAIN APP
 // ────────────────────────────────────────────────────────────
@@ -607,14 +720,31 @@ export default function PrimaryCare() {
           display: grid;
           grid-template-columns: 1fr 320px;
           gap: 48px;
-          align-items: start;
+          align-items: stretch;   /* main col + aside grow to same height */
+        }
+        /* main needs to be a flex container so AboutSpecialty fills it */
+        .pc-layout > main {
+          display: flex;
+          flex-direction: column;
+        }
+        .pc-layout > main > * {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
         }
         @media (max-width: 1024px) {
           .pc-layout {
             grid-template-columns: 1fr;
+            align-items: start;
           }
           .pc-aside {
             padding-top: 0 !important;
+          }
+          /* reset flex stretch on mobile — cards size naturally */
+          .pc-layout > main,
+          .pc-layout > main > * {
+            flex: unset;
+            display: block;
           }
         }
       `}</style>
@@ -622,18 +752,24 @@ export default function PrimaryCare() {
       <div style={{ fontFamily: "Satoshi, sans-serif", color: "#0A1F44", background: "#fff" }}>
         <HeroSection />
 
-        <div className="pc-layout" style={{ padding: "80px 24px" }}>
-          <main>
-            <AboutSpecialty />
-          </main>
-          <aside className="pc-aside" style={{ paddingTop: 0 }}>
-            <StickyBookingCard />
-          </aside>
+        {/* ── page background gets a subtle blue-tinted gradient so glass reads well ── */}
+        <div style={{
+          background: "linear-gradient(180deg, #EEF4FF 0%, #F6F9FF 60%, #ffffff 100%)",
+        }}>
+          <div className="pc-layout" style={{ padding: "72px 24px" }}>
+            <main>
+              <AboutSpecialty />
+            </main>
+            <aside className="pc-aside" style={{ paddingTop: 0 }}>
+              <StickyBookingCard />
+            </aside>
+          </div>
         </div>
 
         <SymptomsChips />
         <RelatedSpecialties />
         <WhyChooseUs />
+        <FaqSection />
       </div>
     </>
   );
