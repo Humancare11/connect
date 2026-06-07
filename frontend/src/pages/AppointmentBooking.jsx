@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import "./AppointmentBooking.css";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -536,366 +537,6 @@ function formatDisplayDate(dateStr) {
   });
 }
 
-// ─── Booking Modal ─────────────────────────────────────────────────────────────
-function BookingModal({ selection, onClose }) {
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    dob: "",
-    gender: "",
-    notes: "",
-    date: "",
-    time: "",
-    files: [],
-  });
-  const [errors, setErrors] = useState({});
-  const fileInputRef = useRef(null);
-
-  const today = new Date().toISOString().split("T")[0];
-
-  const availableCount = useMemo(
-    () => ALL_TIME_SLOTS.filter((t) => !isSlotPassed(form.date, t)).length,
-    [form.date],
-  );
-
-  const validate = () => {
-    const e = {};
-    if (!form.firstName.trim()) e.firstName = "Required";
-    if (!form.lastName.trim()) e.lastName = "Required";
-    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))
-      e.email = "Valid email required";
-    if (!form.phone.match(/^\+?[\d\s\-()]{7,}$/))
-      e.phone = "Valid phone required";
-    if (!form.dob) e.dob = "Required";
-    if (!form.gender) e.gender = "Required";
-    if (!form.date) e.date = "Required";
-    if (!form.time) e.time = "Required";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleChange = (field, value) => {
-    setForm((f) => ({ ...f, [field]: value }));
-    if (errors[field])
-      setErrors((e) => {
-        const n = { ...e };
-        delete n[field];
-        return n;
-      });
-  };
-
-  const handleDateChange = (val) => {
-    setForm((f) => ({ ...f, date: val, time: "" }));
-    if (errors.date)
-      setErrors((e) => {
-        const n = { ...e };
-        delete n.date;
-        return n;
-      });
-  };
-
-  const handleFiles = (fileList) => {
-    const incoming = Array.from(fileList).filter(
-      (f) => f.size <= 10 * 1024 * 1024,
-    );
-    setForm((prev) => ({
-      ...prev,
-      files: [
-        ...prev.files,
-        ...incoming.filter((f) => !prev.files.find((x) => x.name === f.name)),
-      ],
-    }));
-  };
-
-  const removeFile = (i) => {
-    setForm((prev) => ({
-      ...prev,
-      files: prev.files.filter((_, idx) => idx !== i),
-    }));
-  };
-
-  return (
-    <div
-      className="bm-overlay"
-      onClick={(e) => e.target.classList.contains("bm-overlay") && onClose()}
-    >
-      <div className="bm-modal">
-        <button className="bm-close" onClick={onClose}>
-          ×
-        </button>
-
-        {/* Selection summary pill */}
-        <div className="bm-spec-badge">
-          <span className="bm-badge-ico">{selection.specIco}</span>
-          <div>
-            <div className="bm-badge-title">{selection.specName}</div>
-            <div className="bm-badge-sub">
-              {selection.condIco} {selection.condName}
-            </div>
-            <div className="bm-badge-cat">{selection.catLabel}</div>
-          </div>
-          <span className="bm-cost-pill">
-            {selection.cost
-              ? `₹${selection.cost.toLocaleString("en-IN")}`
-              : "₹—"}
-          </span>
-        </div>
-
-        {step === 1 ? (
-          <>
-            <h3 className="bm-title">Book your appointment</h3>
-            <p className="bm-subtitle">
-              Fill in your details and we'll confirm within 15 minutes.
-            </p>
-
-            <div className="bm-form">
-              {/* ── Step 1: Select a Date ── */}
-              <div className="bm-appt-step">
-                <div className="bm-appt-step-header">
-                  <span className="bm-appt-num">1</span>
-                  <div>
-                    <div className="bm-appt-step-title">Select a Date</div>
-                    {form.date && (
-                      <div className="bm-appt-step-sub">
-                        {formatDisplayDate(form.date)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <input
-                  type="date"
-                  min={today}
-                  value={form.date}
-                  onChange={(e) => handleDateChange(e.target.value)}
-                  className={`bm-date-full${errors.date ? " err" : ""}`}
-                />
-                {errors.date && <span className="bm-err">{errors.date}</span>}
-              </div>
-
-              {/* ── Step 2: Choose a Time Slot ── */}
-              <div className="bm-appt-step">
-                <div className="bm-appt-step-header">
-                  <span className="bm-appt-num">2</span>
-                  <div>
-                    <div className="bm-appt-step-title">Choose a Time Slot</div>
-                    <div className="bm-appt-step-sub">
-                      {form.date ? (
-                        `${availableCount} of ${ALL_TIME_SLOTS.length} slots available`
-                      ) : (
-                        <span style={{ color: "#f59e0b", fontWeight: 500 }}>
-                          ⚠ Select a date first
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Wrapper: blurred + locked until date is chosen */}
-                <div style={{ position: "relative" }}>
-                  <div
-                    className="bm-slot-grid"
-                    style={
-                      !form.date
-                        ? {
-                            filter: "blur(3px)",
-                            opacity: 0.3,
-                            pointerEvents: "none",
-                            userSelect: "none",
-                          }
-                        : {}
-                    }
-                  >
-                    {ALL_TIME_SLOTS.map((t) => {
-                      const passed = form.date
-                        ? isSlotPassed(form.date, t)
-                        : false;
-                      const selected = form.time === t;
-                      const available = form.date && !passed;
-
-                      return (
-                        <div
-                          key={t}
-                          className={`bm-slot${
-                            !form.date
-                              ? " bm-slot--disabled"
-                              : passed
-                                ? " bm-slot--passed"
-                                : selected
-                                  ? " bm-slot--selected"
-                                  : " bm-slot--available"
-                          }`}
-                          onClick={() => available && handleChange("time", t)}
-                        >
-                          <div className="bm-slot-time">{t}</div>
-                          {passed && (
-                            <div className="bm-slot-label">Passed</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Overlay prompt shown when no date selected */}
-                  {!form.date && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "0.9rem",
-                        fontWeight: 600,
-                        color: "#f59e0b",
-                        letterSpacing: "0.02em",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      📅 Please select a date to view available slots
-                    </div>
-                  )}
-                </div>
-
-                <div className="bm-slot-legend">
-                  <span className="bm-legend-item">
-                    <span className="bm-legend-box" />
-                    Available
-                  </span>
-                  <span className="bm-legend-item">
-                    <span className="bm-legend-box bm-legend-box--selected" />
-                    Selected
-                  </span>
-                  <span className="bm-legend-item">
-                    <span className="bm-legend-box bm-legend-box--passed" />
-                    Unavailable
-                  </span>
-                </div>
-                {errors.time && <span className="bm-err">{errors.time}</span>}
-              </div>
-
-              {/* ── Step 4: Medical Reports ── */}
-              <div className="bm-appt-step">
-                <div className="bm-appt-step-header">
-                  <span className="bm-appt-num">4</span>
-                  <div>
-                    <div className="bm-appt-step-title">Medical Reports</div>
-                    <div className="bm-appt-step-sub">
-                      Optional — PDF, Images, Word, Excel · max 10 MB each
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className="bm-upload-zone"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    handleFiles(e.dataTransfer.files);
-                  }}
-                  onClick={() =>
-                    fileInputRef.current && fileInputRef.current.click()
-                  }
-                >
-                  <span className="bm-upload-icon">📁</span>
-                  <div className="bm-upload-text">
-                    Drag &amp; drop or{" "}
-                    <span className="bm-upload-link">browse files</span>
-                  </div>
-                  <div className="bm-upload-hint">Max 10 MB per file</div>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
-                  style={{ display: "none" }}
-                  onChange={(e) => handleFiles(e.target.files)}
-                />
-                {form.files.length > 0 && (
-                  <div className="bm-files-list">
-                    {form.files.map((f, i) => (
-                      <div key={i} className="bm-file-chip">
-                        <span className="bm-file-ico">📄</span>
-                        <span className="bm-file-name">{f.name}</span>
-                        <span className="bm-file-size">
-                          {(f.size / 1024 / 1024).toFixed(1)} MB
-                        </span>
-                        <button
-                          className="bm-file-remove"
-                          onClick={() => removeFile(i)}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <button
-                className="bm-submit"
-                onClick={() => {
-                  if (validate()) setStep(2);
-                }}
-              >
-                Confirm Appointment →
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="bm-confirm">
-            <div className="bm-confirm-icon">✅</div>
-            <h3>Appointment Requested!</h3>
-            <p>
-              Thanks, <strong>{form.firstName}</strong>. We've received your
-              request and will confirm within 15 minutes.
-            </p>
-            <div className="bm-summary">
-              <div className="bm-summary-row">
-                <span>Specialty</span>
-                <strong>{selection.specName}</strong>
-              </div>
-              <div className="bm-summary-row">
-                <span>Condition</span>
-                <strong>
-                  {selection.condIco} {selection.condName}
-                </strong>
-              </div>
-              <div className="bm-summary-row">
-                <span>Date</span>
-                <strong>{formatDisplayDate(form.date)}</strong>
-              </div>
-              <div className="bm-summary-row">
-                <span>Time</span>
-                <strong>{form.time}</strong>
-              </div>
-              <div className="bm-summary-row">
-                <span>Email</span>
-                <strong>{form.email}</strong>
-              </div>
-              <div className="bm-summary-row">
-                <span>Phone</span>
-                <strong>{form.phone}</strong>
-              </div>
-              {form.files.length > 0 && (
-                <div className="bm-summary-row">
-                  <span>Files</span>
-                  <strong>{form.files.length} attached</strong>
-                </div>
-              )}
-            </div>
-            <button className="bm-submit" onClick={onClose}>
-              Done
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ─── Breadcrumb ───────────────────────────────────────────────────────────────
 function Breadcrumb({ items, onNavigate }) {
   return (
@@ -918,12 +559,12 @@ function Breadcrumb({ items, onNavigate }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AppointmentBooking() {
+  const navigate = useNavigate();
   const [drillLevel, setDrillLevel] = useState("cat");
   const [activeCat, setActiveCat] = useState(null);
   const [activeSpec, setActiveSpec] = useState(null);
   const [browseTab, setBrowseTab] = useState(null);
   const [query, setQuery] = useState("");
-  const [booking, setBooking] = useState(null);
 
   const switchRef = useRef(null);
   const gliderRef = useRef(null);
@@ -1008,14 +649,18 @@ export default function AppointmentBooking() {
   };
 
   const handleSelectCond = (condName, condIco, spec) => {
-    setBooking({
-      specName: spec.name,
-      specIco: spec.ico,
-      live: spec.live,
-      catLabel: spec.catLabel,
-      cost: spec.cost, // ← add this
-      condName,
-      condIco,
+    navigate("/appointment-booking/form", {
+      state: {
+        selection: {
+          specName: spec.name,
+          specIco: spec.ico,
+          live: spec.live,
+          catLabel: spec.catLabel,
+          cost: spec.cost,
+          condName,
+          condIco,
+        },
+      },
     });
   };
 
@@ -1296,9 +941,6 @@ export default function AppointmentBooking() {
         </div>
       </div>
 
-      {booking && (
-        <BookingModal selection={booking} onClose={() => setBooking(null)} />
-      )}
     </section>
   );
 }

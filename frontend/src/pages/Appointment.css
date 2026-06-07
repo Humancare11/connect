@@ -106,6 +106,15 @@
   margin-top: 1px;
 }
 
+.ap-step-num--inactive {
+  background: #e2e8f0;
+  color: #94a3b8;
+}
+
+.ap-step--locked {
+  opacity: 0.55;
+}
+
 .ap-step-title {
   font-size: 15px;
   font-weight: 700;
@@ -140,6 +149,10 @@
   border-color: var(--ap-primary);
   box-shadow: 0 0 0 3px rgba(34, 58, 94, .12);
   background: #fff;
+}
+
+.ap-date-input--err {
+  border-color: #dc2626 !important;
 }
 
 /* ── Slots ────────────────────────────── */

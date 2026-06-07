@@ -100,6 +100,7 @@ import Symptoms from "./pages/Symptoms";
 import PrimaryCare from "./pages/Specialty/PrimaryCare";
 
 import AppointmentBooking from "./pages/AppointmentBooking";
+import AppointmentBookingForm from "./pages/AppointmentBookingForm";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -710,6 +711,7 @@ function AppLayout() {
 
         <Route path="/primary-care" element={<PrimaryCare />} />
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
+        <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
       </Routes>
       {!hideLayout && <Footer />}
     </>

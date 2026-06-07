@@ -10,7 +10,19 @@ const appointmentSchema = new mongoose.Schema(
     doctorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
-      required: true,
+      default: null,
+    },
+    category: { type: String, default: "" },
+    specialty: { type: String, default: "" },
+    condition: { type: String, default: "" },
+    consultationPrice: { type: Number, default: 0 },
+    patientDetails: {
+      firstName: { type: String, default: "" },
+      lastName: { type: String, default: "" },
+      email: { type: String, default: "" },
+      phone: { type: String, default: "" },
+      dob: { type: String, default: "" },
+      gender: { type: String, default: "" },
     },
     date: {
       type: String,
@@ -26,8 +38,8 @@ const appointmentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "completed", "cancelled"],
-      default: "pending",
+      enum: ["requested", "pending", "confirmed", "completed", "cancelled"],
+      default: "requested",
     },
     sessionStarted: {
       type: Boolean,

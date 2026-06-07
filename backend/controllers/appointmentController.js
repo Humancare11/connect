@@ -26,72 +26,142 @@ async function resolveDoctorId(value) {
   return null;
 }
 
+function timeToMinutes(value) {
+  if (!value || typeof value !== "string") return null;
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
+  if (!match) return null;
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const meridiem = match[3]?.toUpperCase();
+
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  if (meridiem === "PM" && hours !== 12) hours += 12;
+  if (meridiem === "AM" && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+}
+
 const createAppointment = async (req, res) => {
   try {
-    const { doctorId, date, time, problem, medicalReports, paymentIntentId, paypalOrderId } = req.body;
+    const {
+      doctorId,
+      date,
+      time,
+      problem,
+      medicalReports,
+      paymentIntentId,
+      paypalOrderId,
+      category,
+      specialty,
+      condition,
+      consultationPrice,
+      patientDetails,
+    } = req.body;
     const patientId = req.user.id;
 
-    if (!doctorId || !date || !time) {
-      return res.status(400).json({ msg: "Doctor, date, and time are required." });
+    if (!date || !time) {
+      return res.status(400).json({ msg: "Date and time are required." });
     }
 
-    // Past date/time guard — compare as strings (YYYY-MM-DD / HH:MM), timezone-safe
+    if (!doctorId && (!category || !specialty || !condition)) {
+      return res.status(400).json({ msg: "Category, specialty, and condition are required." });
+    }
+
     const today = new Date().toISOString().slice(0, 10);
     if (date < today) {
       return res.status(400).json({ msg: "Cannot book an appointment in the past." });
     }
     if (date === today) {
-      const nowTime = new Date().toTimeString().slice(0, 5); // "HH:MM"
-      if (time <= nowTime) {
+      const now = new Date();
+      const selectedMinutes = timeToMinutes(time);
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      if (selectedMinutes !== null && selectedMinutes <= nowMinutes) {
         return res.status(400).json({ msg: "Please choose a future time for today's appointment." });
       }
     }
 
-    // Payment verification — accept either Stripe PaymentIntent or PayPal order
-    if (!paymentIntentId && !paypalOrderId) {
-      return res.status(400).json({ msg: "Payment is required to book an appointment." });
-    }
+    let paymentRef = "";
+    let paymentGateway = "";
+    let paymentAmountFinal = 0;
+    let paymentStatus = "unpaid";
+    let resolvedDoctorId = null;
 
-    let paymentRef, paymentGateway, paymentAmountFinal;
-
-    if (paymentIntentId) {
-      let pi;
-      try { pi = await stripe.paymentIntents.retrieve(paymentIntentId); }
-      catch { return res.status(400).json({ msg: "Invalid Stripe payment reference." }); }
-      if (pi.status !== "succeeded") {
-        return res.status(402).json({ msg: "Stripe payment not completed. Please complete payment first." });
+    if (doctorId) {
+      if (!paymentIntentId && !paypalOrderId) {
+        return res.status(400).json({ msg: "Payment is required to book an appointment." });
       }
-      paymentRef = paymentIntentId;
-      paymentGateway = "stripe";
-      paymentAmountFinal = pi.amount;
-    } else {
-      let order;
-      try { order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`); }
-      catch { return res.status(400).json({ msg: "Invalid PayPal payment reference." }); }
-      if (order.status !== "COMPLETED") {
-        return res.status(402).json({ msg: "PayPal payment not completed." });
+
+      if (paymentIntentId) {
+        let pi;
+        try { pi = await stripe.paymentIntents.retrieve(paymentIntentId); }
+        catch { return res.status(400).json({ msg: "Invalid Stripe payment reference." }); }
+        if (pi.status !== "succeeded") {
+          return res.status(402).json({ msg: "Stripe payment not completed. Please complete payment first." });
+        }
+        paymentRef = paymentIntentId;
+        paymentGateway = "stripe";
+        paymentAmountFinal = pi.amount;
+      } else {
+        let order;
+        try { order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`); }
+        catch { return res.status(400).json({ msg: "Invalid PayPal payment reference." }); }
+        if (order.status !== "COMPLETED") {
+          return res.status(402).json({ msg: "PayPal payment not completed." });
+        }
+        const captureData = order.purchase_units[0].payments.captures[0];
+        paymentRef = paypalOrderId;
+        paymentGateway = "paypal";
+        paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
       }
-      const captureData = order.purchase_units[0].payments.captures[0];
-      paymentRef = paypalOrderId;
-      paymentGateway = "paypal";
-      paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
+
+      paymentStatus = "paid";
+      resolvedDoctorId = await resolveDoctorId(doctorId);
+      const doctor = resolvedDoctorId ? await Doctor.findById(resolvedDoctorId) : null;
+      if (!doctor) {
+        return res.status(404).json({ msg: "Doctor not found." });
+      }
+
+      const conflict = await Appointment.findOne({
+        doctorId: resolvedDoctorId,
+        date,
+        time,
+        status: { $in: ["pending", "confirmed"] },
+      });
+      if (conflict) {
+        return res.status(409).json({ msg: "This time slot is already booked. Please choose a different time." });
+      }
     }
 
-    const resolvedDoctorId = await resolveDoctorId(doctorId);
-    const doctor = resolvedDoctorId ? await Doctor.findById(resolvedDoctorId) : null;
-    if (!doctor) {
-      return res.status(404).json({ msg: "Doctor not found." });
-    }
+    // Category-based booking (no specific doctor) — payment required
+    if (!resolvedDoctorId) {
+      if (!paymentIntentId && !paypalOrderId) {
+        return res.status(400).json({ msg: "Payment is required to submit an appointment request." });
+      }
 
-    // Slot conflict — reject if doctor already has an active booking at this date+time
-    const conflict = await Appointment.findOne({
-      doctorId: resolvedDoctorId,
-      date,
-      time,
-      status: { $in: ["pending", "confirmed"] },
-    });
-    if (conflict) {
-      return res.status(409).json({ msg: "This time slot is already booked. Please choose a different time." });
+      if (paymentIntentId) {
+        let pi;
+        try { pi = await stripe.paymentIntents.retrieve(paymentIntentId); }
+        catch { return res.status(400).json({ msg: "Invalid Stripe payment reference." }); }
+        if (pi.status !== "succeeded") {
+          return res.status(402).json({ msg: "Stripe payment not completed. Please complete payment first." });
+        }
+        paymentRef = paymentIntentId;
+        paymentGateway = "stripe";
+        paymentAmountFinal = pi.amount;
+      } else {
+        let order;
+        try { order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`); }
+        catch { return res.status(400).json({ msg: "Invalid PayPal payment reference." }); }
+        if (order.status !== "COMPLETED") {
+          return res.status(402).json({ msg: "PayPal payment not completed." });
+        }
+        const captureData = order.purchase_units[0].payments.captures[0];
+        paymentRef = paypalOrderId;
+        paymentGateway = "paypal";
+        paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
+      }
+      paymentStatus = "paid";
     }
 
     const appointment = await Appointment.create({
@@ -100,23 +170,31 @@ const createAppointment = async (req, res) => {
       date,
       time,
       problem,
+      category,
+      specialty,
+      condition,
+      consultationPrice: Number(consultationPrice) || 0,
+      patientDetails: patientDetails || {},
       medicalReports: Array.isArray(medicalReports) ? medicalReports : [],
+      status: resolvedDoctorId ? "pending" : "requested",
       paymentIntentId: paymentRef,
       paymentAmount: paymentAmountFinal,
-      paymentStatus: "paid",
-      paymentGateway: paymentGateway,
+      paymentStatus,
+      paymentGateway,
     });
 
     const io = req.app.get("io");
     if (io) {
-      io.to(`doctor_${resolvedDoctorId}`).emit("new-appointment", {
-        appointmentId: appointment._id,
-        patientId,
-        doctorId: resolvedDoctorId,
-        status: appointment.status,
-        date,
-        time,
-      });
+      if (resolvedDoctorId) {
+        io.to(`doctor_${resolvedDoctorId}`).emit("new-appointment", {
+          appointmentId: appointment._id,
+          patientId,
+          doctorId: resolvedDoctorId,
+          status: appointment.status,
+          date,
+          time,
+        });
+      }
       io.to("admin_room").emit("new-appointment", {
         appointmentId: appointment._id,
         patientId,
@@ -134,7 +212,7 @@ const createAppointment = async (req, res) => {
     }
 
     res.status(201).json({
-      msg: "Appointment booked successfully.",
+      msg: resolvedDoctorId ? "Appointment booked successfully." : "Appointment request submitted successfully.",
       appointment,
     });
   } catch (error) {
@@ -142,7 +220,6 @@ const createAppointment = async (req, res) => {
     res.status(500).json({ msg: "Failed to book appointment." });
   }
 };
-
 const getPatientAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find({ patientId: req.user.id })
@@ -301,7 +378,7 @@ const reassignAppointmentDoctor = async (req, res) => {
       return res.status(404).json({ msg: "Alternate doctor not found." });
     }
 
-    if (appointment.doctorId.toString() === newDoctor._id.toString()) {
+    if (appointment.doctorId?.toString() === newDoctor._id.toString()) {
       return res.status(200).json({ msg: "Appointment already assigned to this doctor.", appointment });
     }
 
@@ -316,16 +393,22 @@ const reassignAppointmentDoctor = async (req, res) => {
       return res.status(409).json({ msg: "The selected doctor is already booked for this slot." });
     }
 
+    const wasRequested = appointment.status === "requested" || !appointment.doctorId;
     appointment.doctorId = newDoctor._id;
+    if (wasRequested) appointment.status = "pending";
     await appointment.save();
 
     const patient = await User.findById(appointment.patientId).select("name email");
     if (patient?.email) {
       await sendEmail({
         to: patient.email,
-        subject: "Doctor reassigned for your appointment",
-        text: "Your doctor has been changed due to the doctor's unavailability. Your appointment time will remain the same, but we are assigning a different doctor.",
-        html: `<p>Hello ${patient.name || "Patient"},</p><p>Your doctor has been changed due to the doctor's unavailability. Your appointment time will remain the same, but we are assigning a different doctor.</p><p>Thank you,<br/>Humancare Connect</p>`,
+        subject: wasRequested ? "Doctor assigned for your appointment" : "Doctor reassigned for your appointment",
+        text: wasRequested
+          ? "Your appointment request has been accepted and assigned to a doctor."
+          : "Your doctor has been changed due to the doctor's unavailability. Your appointment time will remain the same, but we are assigning a different doctor.",
+        html: wasRequested
+          ? `<p>Hello ${patient.name || "Patient"},</p><p>Your appointment request has been accepted and assigned to a doctor.</p><p>Thank you,<br/>Humancare Connect</p>`
+          : `<p>Hello ${patient.name || "Patient"},</p><p>Your doctor has been changed due to the doctor's unavailability. Your appointment time will remain the same, but we are assigning a different doctor.</p><p>Thank you,<br/>Humancare Connect</p>`,
       });
     }
 
@@ -355,7 +438,10 @@ const reassignAppointmentDoctor = async (req, res) => {
       });
     }
 
-    res.status(200).json({ msg: "Doctor reassigned successfully.", appointment: populatedAppointment });
+    res.status(200).json({
+      msg: wasRequested ? "Appointment accepted and doctor assigned successfully." : "Doctor reassigned successfully.",
+      appointment: populatedAppointment,
+    });
   } catch (error) {
     console.error("reassignAppointmentDoctor error:", error);
     res.status(500).json({ msg: "Failed to reassign doctor." });

@@ -226,7 +226,7 @@ export default function Dashboard() {
           </h1>
           <p className="hc-dash__subtitle">Here's your health overview for today</p>
         </div>
-        <Link to="/find-a-doctor" className="hc-dash__book-btn">
+        <Link to="/appointment-booking" className="hc-dash__book-btn">
           <span>+</span> Book Appointment
         </Link>
       </div>
@@ -353,7 +353,7 @@ export default function Dashboard() {
             <div className="hc-dash__empty-icon">📋</div>
             <h3>No activity yet</h3>
             <p>Your actions will appear here once you start using the platform.</p>
-            <Link to="/find-a-doctor" className="hc-dash__empty-cta">Find a Doctor</Link>
+            <Link to="/appointment-booking" className="hc-dash__empty-cta">Book Appointment</Link>
           </div>
         ) : (
           <ul className="hc-dash__activity-list">

@@ -1085,6 +1085,205 @@
   font-weight: 600;
 }
 
+/* ─── Submit disabled state ──────────────────────────────── */
+.bm-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ─── Notes textarea ─────────────────────────────────────── */
+.bm-textarea {
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #e8eef7;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.bm-textarea::placeholder {
+  color: #4a5f7a;
+}
+.bm-textarea:focus {
+  outline: none;
+  border-color: rgba(12, 139, 122, 0.5);
+}
+
+/* ─── Fee summary panel ──────────────────────────────────── */
+.bm-fee-summary {
+  background: rgba(12, 139, 122, 0.08);
+  border: 1px solid rgba(12, 139, 122, 0.25);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-top: 4px;
+}
+.bm-fee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.bm-fee-row span {
+  color: #9fb2cf;
+}
+.bm-fee-amount {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0c8b7a;
+}
+.bm-fee-note {
+  font-size: 12.5px;
+  color: #6a8097;
+  line-height: 1.5;
+}
+
+/* ─── Stripe payment form ────────────────────────────────── */
+.bm-stripe-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bm-pay-back {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #9fb2cf;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 13.5px;
+  padding: 7px 14px;
+  width: fit-content;
+  transition: border-color 0.2s, color 0.2s;
+}
+.bm-pay-back:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #e8eef7;
+}
+
+.bm-pay-summary {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.bm-pay-summary-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #4a5f7a;
+  margin-bottom: 10px;
+}
+.bm-pay-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.bm-pay-summary-row:last-child {
+  border-bottom: none;
+}
+.bm-pay-summary-row span {
+  color: #9fb2cf;
+}
+.bm-pay-summary-row strong {
+  color: #e8eef7;
+  font-weight: 600;
+}
+.bm-pay-summary-row--fee {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none !important;
+}
+.bm-pay-fee-amount {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0c8b7a !important;
+}
+
+.bm-pay-element-wrap {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.bm-pay-notice {
+  background: #eef4fb;
+  border: 1px solid #cbd9ea;
+  border-radius: 8px;
+  color: #223a5e;
+  font-size: 12px;
+  padding: 10px 14px;
+  line-height: 1.5;
+}
+.bm-pay-notice code {
+  background: #fff;
+  border-radius: 4px;
+  font-family: monospace;
+  padding: 1px 5px;
+}
+
+.bm-pay-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9fb2cf;
+  font-size: 13.5px;
+}
+
+.bm-pay-security {
+  font-size: 12px;
+  color: #4a5f7a;
+  text-align: center;
+}
+
+/* ─── Spinner ────────────────────────────────────────────── */
+.bm-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #0c8b7a;
+  border-radius: 50%;
+  animation: bmSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ─── Confirming stage ───────────────────────────────────── */
+.bm-confirming {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 48px 0;
+  color: #9fb2cf;
+  font-size: 15px;
+}
+.bm-spinner-lg {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(12, 139, 122, 0.2);
+  border-top-color: #0c8b7a;
+  border-radius: 50%;
+  animation: bmSpin 0.8s linear infinite;
+}
+
+@keyframes bmSpin {
+  to { transform: rotate(360deg); }
+}
+
 /* ─── Modal responsive ───────────────────────────────────── */
 @media (max-width: 560px) {
   .bm-modal {

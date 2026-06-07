@@ -58,6 +58,30 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
   }
 });
 
+/* POST /api/paypal/create-order-by-amount
+   Creates a PayPal order for a fixed INR amount (category-based bookings). */
+router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
+  try {
+    const amountInr = Number(req.body.amountInr);
+    if (!Number.isFinite(amountInr) || amountInr < 1)
+      return res.status(400).json({ msg: "Valid amountInr (in INR) is required." });
+
+    const order = await paypalFetch("POST", "/v2/checkout/orders", {
+      intent: "CAPTURE",
+      purchase_units: [{
+        amount: { currency_code: "INR", value: amountInr.toFixed(2) },
+        description: "Consultation Booking Fee",
+      }],
+    });
+
+    if (!order.id) throw new Error(order.message || "PayPal order creation failed");
+    res.json({ orderId: order.id });
+  } catch (err) {
+    console.error("paypal/create-order-by-amount:", err.message);
+    res.status(500).json({ msg: err.message || "Failed to create PayPal order." });
+  }
+});
+
 /* POST /api/paypal/capture-order
    Captures an approved PayPal order. Returns orderId, status, amountPaise. */
 router.post("/capture-order", verifyUserToken, async (req, res) => {
