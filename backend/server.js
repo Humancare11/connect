@@ -248,24 +248,29 @@ async function canAccessUpload(req, filename) {
 }
 
 async function serveProtectedUpload(req, res, next) {
-  const filename = path.basename(req.params.filename || "");
-  if (!filename || filename !== req.params.filename) {
+  // Extract the full key/path for the requested upload. Support both
+  // single-segment param routes and multi-segment keys embedded in the URL.
+  const maybeParam = req.params && req.params.filename;
+  const fromPath = String(req.path || "").replace(/^\/api\/uploads\//, "");
+  const key = decodeURIComponent((maybeParam || fromPath || "").replace(/^\/+|\/+$/g, ""));
+
+  if (!key) {
     await logAudit(req, {
       action: "MEDICAL_FILE_ACCESS_DENIED",
       resource: "MedicalFile",
-      resourceId: filename || null,
+      resourceId: null,
       success: false,
-      details: { reason: "invalid_filename" },
+      details: { reason: "invalid_key" },
     });
-    return res.status(400).json({ msg: "Invalid upload filename." });
+    return res.status(400).json({ msg: "Invalid upload key." });
   }
 
   try {
-    const access = await canAccessUpload(req, filename);
+    const access = await canAccessUpload(req, key);
     await logAudit(req, {
       action: access.allowed ? "MEDICAL_FILE_ACCESS" : "MEDICAL_FILE_ACCESS_DENIED",
       resource: "MedicalFile",
-      resourceId: filename,
+      resourceId: key,
       patientId: access.patientId || null,
       success: access.allowed,
       userId: access.identity?.id || req.user?.id,
@@ -288,14 +293,14 @@ async function serveProtectedUpload(req, res, next) {
         severity: "medium",
         title: "Medical file accessed outside normal hours",
         resource: "MedicalFile",
-        resourceId: filename,
+        resourceId: key,
         userId: access.identity?.id || req.user?.id,
         userRole: access.identity?.role || req.user?.role,
         metadata: { appointmentId: access.appointmentId || null, hour },
       });
     }
 
-    const streamed = await streamUploadFromS3(filename, res);
+    const streamed = await streamUploadFromS3(key, res);
     if (streamed) return;
   } catch (err) {
     console.error("S3 upload read error:", err);

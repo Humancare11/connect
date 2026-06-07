@@ -430,6 +430,7 @@ router.post("/profile-delete-request", verifyDoctorToken, async (req, res) => {
     return res.status(500).json({ message: "Server error." });
   }
 });
+
 router.patch("/enrollment/:doctorId/consultation-fee", verifyDoctorToken, async (req, res) => {
   try {
     if (req.user.id !== req.params.doctorId) {
