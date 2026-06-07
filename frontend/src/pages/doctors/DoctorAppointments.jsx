@@ -31,17 +31,17 @@ function getGreeting() {
 
 export default function DoctorAppointments() {
   const { doctor } = useDoctorAuth();
-  const location   = useLocation();
+  const location = useLocation();
   const doctorName = doctor?.name || "Doctor";
 
   const [appointments, setAppointments] = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [filter,       setFilter]       = useState("all");
-  const [selectedId,   setSelectedId]   = useState(null);
-  const [focusedId,    setFocusedId]    = useState("");
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [selectedId, setSelectedId] = useState(null);
+  const [focusedId, setFocusedId] = useState("");
   const [confirmingId, setConfirmingId] = useState(null);
   const [completingId, setCompletingId] = useState(null);
-  const [toast,        setToast]        = useState(null);
+  const [toast, setToast] = useState(null);
   const [completeConfirmId, setCompleteConfirmId] = useState(null);
 
   const showToast = (msg, ok = true) => {
@@ -50,7 +50,8 @@ export default function DoctorAppointments() {
   };
 
   useEffect(() => {
-    api.get("/api/appointments/doctor")
+    api
+      .get("/api/appointments/doctor")
       .then((res) => setAppointments(res.data))
       .catch((err) => console.error("Failed to load appointments", err))
       .finally(() => setLoading(false));
@@ -59,17 +60,25 @@ export default function DoctorAppointments() {
   /* Deep-link: ?activityId=<id> — expand and scroll to that row */
   useEffect(() => {
     const activityId = new URLSearchParams(location.search).get("activityId");
-    if (!activityId || appointments.length === 0) { setFocusedId(""); return; }
+    if (!activityId || appointments.length === 0) {
+      setFocusedId("");
+      return;
+    }
 
     const target = appointments.find((a) => a._id === activityId);
-    if (!target) { setFocusedId(""); return; }
+    if (!target) {
+      setFocusedId("");
+      return;
+    }
 
     setFocusedId(activityId);
     setSelectedId(activityId);
     setFilter("all");
 
     setTimeout(() => {
-      document.getElementById(`appt-row-${activityId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById(`appt-row-${activityId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 60);
   }, [appointments, location.search]);
 
@@ -79,8 +88,10 @@ export default function DoctorAppointments() {
       await api.put(`/api/appointments/${id}/confirm`, {});
       setAppointments((prev) =>
         prev.map((a) =>
-          a._id === id ? { ...a, status: "confirmed", sessionStarted: true } : a
-        )
+          a._id === id
+            ? { ...a, status: "confirmed", sessionStarted: true }
+            : a,
+        ),
       );
     } catch {
       showToast("Could not confirm appointment.", false);
@@ -95,9 +106,7 @@ export default function DoctorAppointments() {
     try {
       await api.put(`/api/appointments/${id}/complete`, {});
       setAppointments((prev) =>
-        prev.map((a) =>
-          a._id === id ? { ...a, status: "completed" } : a
-        )
+        prev.map((a) => (a._id === id ? { ...a, status: "completed" } : a)),
       );
       showToast("Consultation marked as completed.");
     } catch {
@@ -124,45 +133,95 @@ export default function DoctorAppointments() {
   return (
     <div className="da-root">
       {toast && (
-        <div style={{
-          position: "fixed", top: 20, right: 20, zIndex: 9999,
-          background: toast.ok ? "#f0fdf4" : "#fef2f2",
-          border: `1px solid ${toast.ok ? "#86efac" : "#fca5a5"}`,
-          color: toast.ok ? "#15803d" : "#dc2626",
-          borderRadius: 10, padding: "12px 18px", fontSize: 13, fontWeight: 600,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-          display: "flex", alignItems: "center", gap: 8,
-          animation: "adp-fadein 0.2s ease",
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 20,
+            right: 20,
+            zIndex: 9999,
+            background: toast.ok ? "#f0fdf4" : "#fef2f2",
+            border: `1px solid ${toast.ok ? "#86efac" : "#fca5a5"}`,
+            color: toast.ok ? "#15803d" : "#dc2626",
+            borderRadius: 10,
+            padding: "12px 18px",
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            animation: "adp-fadein 0.2s ease",
+          }}
+        >
           {toast.ok ? "✓" : "!"} {toast.msg}
         </div>
       )}
 
       {completeConfirmId && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 9998,
-          background: "rgba(0,0,0,0.35)", display: "flex",
-          alignItems: "center", justifyContent: "center", padding: 16,
-        }} onClick={() => setCompleteConfirmId(null)}>
-          <div style={{
-            background: "#fff", borderRadius: 14, padding: "28px 32px",
-            maxWidth: 400, width: "100%", textAlign: "center",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
-          }} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9998,
+            background: "rgba(0,0,0,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+          onClick={() => setCompleteConfirmId(null)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 14,
+              padding: "28px 32px",
+              maxWidth: 400,
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#111827" }}>Mark as Completed?</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#111827" }}>
+              Mark as Completed?
+            </h3>
             <p style={{ margin: "0 0 24px", fontSize: 14, color: "#6b7280" }}>
-              This will mark the consultation as completed. This action cannot be undone.
+              This will mark the consultation as completed. This action cannot
+              be undone.
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
               <button
                 onClick={() => setCompleteConfirmId(null)}
-                style={{ padding: "9px 20px", borderRadius: 8, border: "1.5px solid #d1d5db", background: "#fff", color: "#374151", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >Cancel</button>
+                style={{
+                  padding: "9px 20px",
+                  borderRadius: 8,
+                  border: "1.5px solid #d1d5db",
+                  background: "#fff",
+                  color: "#374151",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
               <button
                 onClick={() => completeAppointment(completeConfirmId)}
-                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#059669", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >Yes, Complete</button>
+                style={{
+                  padding: "9px 22px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#059669",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Yes, Complete
+              </button>
             </div>
           </div>
         </div>
@@ -228,12 +287,11 @@ export default function DoctorAppointments() {
 
               <tbody>
                 {filtered.map((appt, idx) => {
-                  const meta =
-                    STATUS_META[appt.status] || {
-                      label: appt.status,
-                      color: "slate",
-                      icon: "•",
-                    };
+                  const meta = STATUS_META[appt.status] || {
+                    label: appt.status,
+                    color: "slate",
+                    icon: "•",
+                  };
 
                   const isOpen = selectedId === appt._id;
 
@@ -258,23 +316,14 @@ export default function DoctorAppointments() {
                           </div>
                         </td>
 
-                        <td className="da-mono">
-                          {formatDate(appt.date)}
+                        <td className="da-mono">{formatDate(appt.date)}</td>
 
-                        </td>
+                        <td className="da-mono">{appt.time || "—"}</td>
 
-                        <td className="da-mono">
-                          {appt.time || "—"}
-                        </td>
-
-                        <td className="da-problem">
-                          {appt.problem || "—"}
-                        </td>
+                        <td className="da-problem">{appt.problem || "—"}</td>
 
                         <td>
-                          <span
-                            className={`da-badge da-badge--${meta.color}`}
-                          >
+                          <span className={`da-badge da-badge--${meta.color}`}>
                             {meta.icon} {meta.label}
                           </span>
                         </td>
@@ -289,9 +338,7 @@ export default function DoctorAppointments() {
                                   e.stopPropagation();
                                   confirmAppointment(appt._id);
                                 }}
-                                disabled={
-                                  confirmingId === appt._id
-                                }
+                                disabled={confirmingId === appt._id}
                               >
                                 {confirmingId === appt._id ? (
                                   <span className="da-spinner" />
@@ -306,9 +353,7 @@ export default function DoctorAppointments() {
                               <Link
                                 className="da-btn da-btn--join"
                                 to={`/video-call/${appt._id}`}
-                                onClick={(e) =>
-                                  e.stopPropagation()
-                                }
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 Join
                               </Link>
@@ -335,15 +380,11 @@ export default function DoctorAppointments() {
                             {/* 🔽 ONLY THIS OPENS DATA */}
                             <button
                               className={`da-btn da-btn--ghost ${
-                                isOpen
-                                  ? "da-btn--ghost-on"
-                                  : ""
+                                isOpen ? "da-btn--ghost-on" : ""
                               }`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedId(
-                                  isOpen ? null : appt._id
-                                );
+                                setSelectedId(isOpen ? null : appt._id);
                               }}
                             >
                               <svg
@@ -354,11 +395,8 @@ export default function DoctorAppointments() {
                                 stroke="currentColor"
                                 strokeWidth="2.5"
                                 style={{
-                                  transform: isOpen
-                                    ? "rotate(180deg)"
-                                    : "none",
-                                  transition:
-                                    "transform 0.22s",
+                                  transform: isOpen ? "rotate(180deg)" : "none",
+                                  transition: "transform 0.22s",
                                 }}
                               >
                                 <polyline points="6 9 12 15 18 9" />
@@ -376,26 +414,36 @@ export default function DoctorAppointments() {
                               <div className="da-expand-grid">
                                 <div className="da-exp-item">
                                   <span className="da-exp-label">Patient</span>
-                                  <span className="da-exp-value">{appt.patientId?.name || "—"}</span>
+                                  <span className="da-exp-value">
+                                    {appt.patientId?.name || "—"}
+                                  </span>
                                 </div>
                                 <div className="da-exp-item">
                                   <span className="da-exp-label">Email</span>
-                                  <span className="da-exp-value">{appt.patientId?.email || "—"}</span>
+                                  <span className="da-exp-value">
+                                    {appt.patientId?.email || "—"}
+                                  </span>
                                 </div>
                                 {appt.patientId?.mobile && (
                                   <div className="da-exp-item">
                                     <span className="da-exp-label">Mobile</span>
-                                    <span className="da-exp-value">{appt.patientId.mobile}</span>
+                                    <span className="da-exp-value">
+                                      {appt.patientId.mobile}
+                                    </span>
                                   </div>
                                 )}
                                 <div className="da-exp-item da-exp-item--full">
                                   <span className="da-exp-label">Problem</span>
-                                  <span className="da-exp-value">{appt.problem || "—"}</span>
+                                  <span className="da-exp-value">
+                                    {appt.problem || "—"}
+                                  </span>
                                 </div>
                               </div>
 
                               <div className="da-reports">
-                                <p className="da-reports-label">Medical Reports</p>
+                                <p className="da-reports-label">
+                                  Medical Reports
+                                </p>
                                 {appt.medicalReports?.length > 0 ? (
                                   <div className="da-reports-list">
                                     {appt.medicalReports.map((r, i) => (
@@ -408,15 +456,25 @@ export default function DoctorAppointments() {
                                         title={r.name}
                                       >
                                         <span>
-                                          {r.type?.includes("pdf") ? "📄" : r.type?.startsWith("image/") ? "🖼️" : "📎"}
+                                          {r.type?.includes("pdf")
+                                            ? "📄"
+                                            : r.type?.startsWith("image/")
+                                              ? "🖼️"
+                                              : "📎"}
                                         </span>
-                                        <span className="da-report-chip-name">{r.name}</span>
-                                        <span className="da-report-chip-arrow">↗</span>
+                                        <span className="da-report-chip-name">
+                                          {r.name}
+                                        </span>
+                                        <span className="da-report-chip-arrow">
+                                          ↗
+                                        </span>
                                       </a>
                                     ))}
                                   </div>
                                 ) : (
-                                  <p className="da-no-reports">No medical reports attached</p>
+                                  <p className="da-no-reports">
+                                    No medical reports attached
+                                  </p>
                                 )}
                               </div>
                             </div>
