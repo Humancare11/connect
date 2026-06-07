@@ -48,7 +48,7 @@ import Dashbord from "./pages/doctors/Dashbord";
 import DoctorEnrollments from "./pages/doctors/DoctorEnrollments";
 import { useDoctorAuth } from "./context/DoctorAuthContext";
 import DoctorProfile from "./pages/doctors/DoctorProfile";
-import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
+// import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
 import DoctorAppointments from "./pages/doctors/DoctorAppointments";
 import DoctorPatients from "./pages/doctors/DoctorPatients";
 import DoctorMessages from "./pages/doctors/DoctorMessages";
@@ -57,7 +57,6 @@ import DoctorQnA from "./pages/doctors/DoctorQnA";
 import DoctorAnalytics from "./pages/doctors/DoctorAnalytics";
 import DoctorSettings from "./pages/doctors/DoctorSettings";
 import DoctorProfileForUser from "./pages/doctors/DoctorProfileForUser";
-
 
 import AdminAuthPage from "./pages/admin/AdminAuth";
 import PaymentAdminLogin from "./pages/admin/PaymentAdminLogin";
@@ -93,13 +92,14 @@ import Home2 from "./pages/Home-2";
 import Test from "./pages/Test";
 import PaymentLinkCheckout from "./pages/PaymentLinkCheckout";
 
-// 
+//
 import Specialties from "./pages/Specialties";
 import Symptoms from "./pages/Symptoms";
 
 // Specialty pages
 import PrimaryCare from "./pages/Specialty/PrimaryCare";
 
+import AppointmentBooking from "./pages/AppointmentBooking";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -162,7 +162,10 @@ function SessionTimeoutManager() {
         setWarningOpen(true);
         setRemaining(Math.ceil(warningCountdownMs / 1000));
         countdownTimer = setInterval(() => {
-          const seconds = Math.max(0, Math.ceil((timeoutMs - (Date.now() - lastActivity)) / 1000));
+          const seconds = Math.max(
+            0,
+            Math.ceil((timeoutMs - (Date.now() - lastActivity)) / 1000),
+          );
           setRemaining(seconds);
         }, 1000);
       }, warningDelayMs);
@@ -175,14 +178,25 @@ function SessionTimeoutManager() {
       schedule();
     };
 
-    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"];
-    events.forEach((event) => window.addEventListener(event, markActive, { passive: true }));
+    const events = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "touchstart",
+      "scroll",
+    ];
+    events.forEach((event) =>
+      window.addEventListener(event, markActive, { passive: true }),
+    );
     window.addEventListener(SESSION_ACTIVITY_EVENT, markActive);
     window.addEventListener("hc:session-expired", logoutAll);
 
-    refreshTimer = setInterval(() => {
-      api.post("/api/auth/refresh").catch(() => {});
-    }, 10 * 60 * 1000);
+    refreshTimer = setInterval(
+      () => {
+        api.post("/api/auth/refresh").catch(() => {});
+      },
+      10 * 60 * 1000,
+    );
 
     schedule();
 
@@ -195,7 +209,16 @@ function SessionTimeoutManager() {
       clearInterval(countdownTimer);
       clearInterval(refreshTimer);
     };
-  }, [isAuthenticated, logoutUser, logoutDoctor, logoutAdmin, navigate, role, timeoutMs, warningDelayMs]);
+  }, [
+    isAuthenticated,
+    logoutUser,
+    logoutDoctor,
+    logoutAdmin,
+    navigate,
+    role,
+    timeoutMs,
+    warningDelayMs,
+  ]);
 
   useEffect(() => {
     if (!isAuthenticated) return undefined;
@@ -209,7 +232,10 @@ function SessionTimeoutManager() {
     <div className="hc-session-warning" role="dialog" aria-modal="true">
       <div className="hc-session-warning__panel">
         <h2>Session expiring</h2>
-        <p>You will be logged out in {Math.ceil(remaining / 60)} minute(s) due to inactivity.</p>
+        <p>
+          You will be logged out in {Math.ceil(remaining / 60)} minute(s) due to
+          inactivity.
+        </p>
         <button
           type="button"
           onClick={() => {
@@ -238,8 +264,9 @@ function DoctorEnrollmentsWrapper() {
       return;
     }
     const doctorId = doctor._id || doctor.id;
-    api.get(`/api/doctor/enrollment/${doctorId}`)
-      .then(res => setEnrollmentData(res.data || null))
+    api
+      .get(`/api/doctor/enrollment/${doctorId}`)
+      .then((res) => setEnrollmentData(res.data || null))
       .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
@@ -317,8 +344,7 @@ function AppLayout() {
         <Route path="/test" element={<Test />} />
         <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
 
-
-{/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
+        {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
         <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
         {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
         <Route path="/doctor/:id" element={<DoctorProfileForUser legacyId />} />
@@ -403,7 +429,6 @@ function AppLayout() {
 
         {/* <Route path="/doctor-register" element={<DoctorRegister />} /> */}
         <Route path="/doctor-login" element={<DoctorLogin />} />
-        <Route path="/doctor-pending" element={<DoctorPendingApproval />} />
 
         <Route
           path="/doctor-dashboard"
@@ -422,7 +447,10 @@ function AppLayout() {
           }
         />
         {/* Enrollment is standalone — no sidebar/header until approved */}
-        <Route path="/doctor-dashboard/enrollments" element={<DoctorEnrollmentsWrapper />} />
+        <Route
+          path="/doctor-dashboard/enrollments"
+          element={<DoctorEnrollmentsWrapper />}
+        />
         <Route
           path="/doctor-dashboard/appointments"
           element={
@@ -482,11 +510,17 @@ function AppLayout() {
 
         <Route path="/adminauth" element={<AdminAuthPage />} />
         <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-        <Route path="/payment-admin" element={<Navigate to="/payment-admin/payment-links" replace />} />
+        <Route
+          path="/payment-admin"
+          element={<Navigate to="/payment-admin/payment-links" replace />}
+        />
         <Route
           path="/payment-admin/payment-links"
           element={
-            <PrivateRoute allowedRoles={["paymentadmin"]} loginPath="/payment-admin-login">
+            <PrivateRoute
+              allowedRoles={["paymentadmin"]}
+              loginPath="/payment-admin-login"
+            >
               <AdminLayout>
                 <PaymentLinks />
               </AdminLayout>
@@ -496,7 +530,10 @@ function AppLayout() {
         <Route
           path="/payment-admin/payment-history"
           element={
-            <PrivateRoute allowedRoles={["paymentadmin"]} loginPath="/payment-admin-login">
+            <PrivateRoute
+              allowedRoles={["paymentadmin"]}
+              loginPath="/payment-admin-login"
+            >
               <AdminLayout>
                 <PaymentLinkHistory />
               </AdminLayout>
@@ -668,19 +705,13 @@ function AppLayout() {
         <Route path="/video-call/:appointmentId" element={<VideoCall />} />
 
         {/* Specialties */}
-     <Route path="/specialty" element={<Specialties />} />
-     <Route path="/symptoms" element={<Symptoms />} />
-     
-     <Route path="/primary-care" element={<PrimaryCare />} />
+        <Route path="/specialty" element={<Specialties />} />
+        <Route path="/symptoms" element={<Symptoms />} />
 
-
-
-
+        <Route path="/primary-care" element={<PrimaryCare />} />
+        <Route path="/appointment-booking" element={<AppointmentBooking />} />
       </Routes>
       {!hideLayout && <Footer />}
-
-
-      
     </>
   );
 }
