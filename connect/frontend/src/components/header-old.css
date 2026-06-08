@@ -1,0 +1,246 @@
+
+
+/* ══════════════════════════════════════════════
+   SCROLL PROGRESS BAR
+══════════════════════════════════════════════ */
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--primary), var(--teal));
+  z-index: 2000;
+  transition: width 0.1s linear;
+}
+
+/* ══════════════════════════════════════════════
+   GLASS HEADER
+══════════════════════════════════════════════ */
+.glass-header {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1200px;
+  z-index: 1000;
+  transition: 0.3s;
+}
+
+.glass-header.shrink {
+  top: 10px;
+  transform: translateX(-50%) scale(0.95);
+}
+
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Logo */
+.logo {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* Nav Menu */
+.nav-menu {
+  display: flex;
+  gap: 10px;
+  position: relative;
+}
+
+.nav-item {
+  padding: 10px 18px;
+  text-decoration: none;
+  color: var(--text);
+  transition: 0.3s;
+  z-index: 2;
+}
+
+.nav-item:hover {
+  transform: scale(1.1);
+  color: white;
+}
+
+/* Pill Indicator */
+.pill {
+  position: absolute;
+  height: 40px;
+  background: var(--primary);
+  border-radius: 25px;
+  transition: 0.3s;
+  z-index: 1;
+}
+
+/* Register Button */
+.auth-combined{
+  padding: 10px 22px;
+  border-radius: 25px;
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+  transition: 0.3s;
+  font-weight: 500;
+}
+
+.register:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+.auth-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+
+}
+
+.auth-link:hover {
+  text-decoration: none;
+}
+.logout-link {
+  color: white;
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 500;
+  background-color: transparent;
+  border: none;
+}
+.divider {
+  color: white;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.user-menu{
+    padding: 10px 22px;
+  border-radius: 25px;
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+  transition: 0.3s;
+  font-weight: 500;
+}
+.profile-icon {
+  font-size: 28px;
+  color: var(--teal);
+  display: flex;
+  align-items: center;
+  transition: 0.3s;
+}
+
+.profile-icon:hover {
+  color: var(--gold);
+  transform: scale(1.1);
+}
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════ */
+@media (max-width: 960px) {
+  .glass-header {
+    width: 95%;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav-item:nth-child(n+4) {
+    display: none;
+  }
+}
+.nav-menu {
+  display: flex;
+  gap: 10px;
+  position: relative;
+}
+
+.nav-item {
+  padding: 10px 18px;
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.3s var(--ease);
+  z-index: 2;
+  position: relative;
+  border-radius: 20px;
+}
+
+.nav-item:hover {
+  transform: scale(1.05);
+}
+
+.nav-item.active {
+  color: #fff;
+}
+
+.pill {
+  position: absolute;
+  height: 40px;
+  background: var(--primary);
+  border-radius: 25px;
+  transition: all 0.35s var(--ease);
+  z-index: 1;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Register Button */
+.register {
+  padding: 10px 22px;
+  border-radius: 25px;
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s var(--ease);
+  font-weight: 500;
+}
+
+.register:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .glass-header {
+    width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 12px 18px;
+  }
+
+  .nav-menu {
+    gap: 6px;
+  }
+
+  .nav-item {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .pill {
+    height: 34px;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav-menu {
+    display: none;
+  }
+
+  .register {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}
+a{
+  text-decoration: none;
+}
