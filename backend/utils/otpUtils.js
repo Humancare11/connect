@@ -5,7 +5,7 @@ const crypto       = require("crypto");
 const OTP_TTL_MINUTES = 10;
 // OTP resend policy:
 // Allow up to 5 immediate resends per (email + type + role), then require a short cooldown (60s).
-const RESEND_MAX = 5;
+const RESEND_MAX = 9999;
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
 
 // In-memory resend tracker keyed by "email:type:role". Structure: { count, firstAttemptAt }
