@@ -428,11 +428,11 @@
 }
 
 .reg-row {
-  align-items: flex-start;
+  align-items: center;
 }
 
 .country-mobile-row {
-  align-items: flex-end;
+  align-items: center;
 }
 
 .country-mobile-row .reg-field-wrap {
@@ -442,8 +442,8 @@
 
 .country-mobile-row .register-country-select,
 .country-mobile-row .pif-control {
-  height: 40px;
-  min-height: 40px;
+  height: 46px;
+  min-height: 46px;
   margin: 0;
   width: 100%;
 }
@@ -1004,7 +1004,6 @@
 
 .auth-wrapper form {
   justify-content: flex-start;
-  overflow-y: auto;
 }
 
 /* Unified phone + date controls */

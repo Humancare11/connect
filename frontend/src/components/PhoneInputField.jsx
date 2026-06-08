@@ -2,13 +2,13 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 // ─── Flag emoji from ISO-3166-1 alpha-2 code ─────────────────────────────────
-const toFlag = (iso2) =>
+export const toFlag = (iso2) =>
   [...iso2.toUpperCase()].map(c =>
     String.fromCodePoint(c.charCodeAt(0) + 127397)
   ).join("");
 
 // ─── Comprehensive country data ───────────────────────────────────────────────
-const COUNTRIES = [
+export const COUNTRIES = [
   { code: "AC", dial: "247",  name: "Ascension Island" },
   { code: "AD", dial: "376",  name: "Andorra" },
   { code: "AE", dial: "971",  name: "United Arab Emirates" },
@@ -252,7 +252,7 @@ const COUNTRIES = [
   { code: "ZW", dial: "263",  name: "Zimbabwe" },
 ];
 
-function parseValue(val, defaultCode) {
+export function parseValue(val, defaultCode) {
   const fallbackCode = defaultCode && defaultCode !== "auto" ? defaultCode : "IN";
   const def = COUNTRIES.find(c => c.code === fallbackCode.toUpperCase())
     || COUNTRIES.find(c => c.code === "IN");
@@ -266,6 +266,9 @@ function parseValue(val, defaultCode) {
 
 const findCountry = (code) =>
   COUNTRIES.find(c => c.code === String(code || "").toUpperCase());
+
+export const findCountryByName = (name) =>
+  COUNTRIES.find(c => c.name === String(name || "").trim());
 
 const browserLocaleCountry = () => {
   const candidates = [
