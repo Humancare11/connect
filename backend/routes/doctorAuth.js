@@ -51,7 +51,11 @@ router.post("/send-register-otp", async (req, res) => {
     return res.json({ message: "OTP sent to your email." });
   } catch (err) {
     console.error("sendDoctorRegisterOTP error:", err);
-    return res.status(500).json({ message: `Failed to send OTP: ${err.message}` });
+    const status = err.statusCode || 500;
+    return res.status(status).json({
+      message: `Failed to send OTP: ${err.message}`,
+      ...(err.retryAfterMs != null && { retryAfterMs: err.retryAfterMs }),
+    });
   }
 });
 
@@ -179,7 +183,11 @@ router.post("/send-forgot-otp", async (req, res) => {
     return res.json({ message: "Password reset OTP sent to your email." });
   } catch (err) {
     console.error("sendDoctorForgotOTP error:", err);
-    return res.status(500).json({ message: "Failed to send OTP. Please try again." });
+    const status = err.statusCode || 500;
+    return res.status(status).json({
+      message: err.statusCode ? err.message : "Failed to send OTP. Please try again.",
+      ...(err.retryAfterMs != null && { retryAfterMs: err.retryAfterMs }),
+    });
   }
 });
 

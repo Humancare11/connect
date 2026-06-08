@@ -161,7 +161,11 @@ const sendRegisterOTP = async (req, res) => {
     return res.json({ msg: "OTP sent to your email." });
   } catch (err) {
     console.error("sendRegisterOTP error:", err);
-    return res.status(500).json({ msg: `Failed to send OTP: ${err.message}` });
+    const status = err.statusCode || 500;
+    return res.status(status).json({
+      msg: `Failed to send OTP: ${err.message}`,
+      ...(err.retryAfterMs != null && { retryAfterMs: err.retryAfterMs }),
+    });
   }
 };
 
@@ -628,7 +632,11 @@ const sendForgotOTP = async (req, res) => {
     return res.json({ msg: "Password reset OTP sent to your email." });
   } catch (err) {
     console.error("sendForgotOTP error:", err);
-    return res.status(500).json({ msg: `Failed to send OTP: ${err.message}` });
+    const status = err.statusCode || 500;
+    return res.status(status).json({
+      msg: `Failed to send OTP: ${err.message}`,
+      ...(err.retryAfterMs != null && { retryAfterMs: err.retryAfterMs }),
+    });
   }
 };
 
