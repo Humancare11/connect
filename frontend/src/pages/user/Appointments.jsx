@@ -74,7 +74,9 @@ export default function Appointments() {
     if (!target) { setFocusedAppointmentId(""); return; }
 
     setFocusedAppointmentId(activityId);
-    if (["pending", "confirmed", "completed"].includes(target.status)) {
+    if (target.status === "requested") {
+      setActiveTab("pending");
+    } else if (["pending", "confirmed", "completed"].includes(target.status)) {
       setActiveTab(target.status);
     }
 
@@ -83,7 +85,7 @@ export default function Appointments() {
     }, 40);
   }, [appointments, location.search]);
 
-  const pendingAppointments   = appointments.filter((a) => a.status === "pending");
+  const pendingAppointments   = appointments.filter((a) => ["requested", "pending"].includes(a.status));
   const confirmedAppointments = appointments.filter((a) => a.status === "confirmed");
   const completedAppointments = appointments.filter((a) => a.status === "completed");
 
@@ -106,7 +108,7 @@ export default function Appointments() {
           <h1 className="appt-title">My Appointments</h1>
           <p className="appt-subtitle">Track, manage and connect with your doctors</p>
         </div>
-        <Link to="/find-a-doctor" className="appt-book-btn">
+        <Link to="/appointment-booking" className="appt-book-btn">
           <span className="appt-book-icon">+</span>
           Book Appointment
         </Link>
@@ -168,7 +170,7 @@ export default function Appointments() {
                   : "Your completed consultations will appear here."}
             </p>
             {activeTab !== "completed" && (
-              <Link to="/find-a-doctor" className="appt-empty-cta">Find a Doctor</Link>
+              <Link to="/appointment-booking" className="appt-empty-cta">Book Appointment</Link>
             )}
             {activeTab === "completed" && (
               <Link to="/user/my-records" className="appt-empty-cta">View Medical Records</Link>
@@ -196,8 +198,10 @@ export default function Appointments() {
                 <div className="appt-card-body">
                   <div className="appt-card-top">
                     <div className="appt-doctor-info">
-                      <h4 className="appt-doctor-name">Dr. {appt.doctorId?.name || "Unknown Doctor"}</h4>
-                      <p className="appt-doctor-email">{appt.doctorId?.email || ""}</p>
+                      <h4 className="appt-doctor-name">
+                        {appt.doctorId?.name ? `Dr. ${appt.doctorId.name}` : "Doctor assignment pending"}
+                      </h4>
+                      <p className="appt-doctor-email">{appt.doctorId?.email || appt.specialty || ""}</p>
                     </div>
                     <span className={`appt-badge appt-badge--${activeTab}`}>
                       {activeTab === "pending"   && "⏳ Pending"}
@@ -246,7 +250,9 @@ export default function Appointments() {
 
                   <div className="appt-card-actions">
                     {activeTab === "pending" && (
-                      <span className="appt-waiting-text">⏳ Awaiting doctor confirmation</span>
+                      <span className="appt-waiting-text">
+                        {appt.status === "requested" ? "Awaiting admin review and doctor assignment" : "Awaiting doctor confirmation"}
+                      </span>
                     )}
 
                     {activeTab === "confirmed" && (

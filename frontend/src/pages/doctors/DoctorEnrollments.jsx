@@ -3130,12 +3130,12 @@ export default function DoctorOnboardingWizard({
               >
                 Edit Application
               </button>
-              <button
+              {/* <button
                 className="btn btn-primary btn-sm"
                 onClick={() => navigate("/doctor-pending")}
               >
                 View Application Status →
-              </button>
+              </button> */}
             </div>
           )}
           {regStatus === "rejected" && (

@@ -3,6 +3,7 @@ import api from "../../api";
 import "./AdminAppointments.css";
 
 const STATUS_COLORS = {
+  requested: { bg: "#f5f3ff", color: "#7c3aed", border: "#ddd6fe" },
   pending:   { bg: "#fef3c7", color: "#d97706", border: "#fcd34d" },
   confirmed: { bg: "#ecfdf5", color: "#059669", border: "#6ee7b7" },
   completed: { bg: "#eff6ff", color: "#2563eb", border: "#bfdbfe" },
@@ -65,11 +66,13 @@ export default function AdminAppointments() {
             ? {
                 ...appt,
                 doctorId: updated?.doctorId || appt.doctorId,
+                status: updated?.status || appt.status,
                 doctorMeta: chosenDoctor
                   ? {
                       specialty: chosenDoctor.specialty || "—",
                       city: chosenDoctor.city || "—",
                       country: chosenDoctor.country || "—",
+                      price: chosenDoctor.price || appt.doctorMeta?.price || null,
                     }
                   : appt.doctorMeta,
               }
@@ -83,7 +86,7 @@ export default function AdminAppointments() {
         setModalAppt(null);
       }
 
-      showToast("Doctor reassigned successfully. The patient has been notified by email.");
+      showToast(res.data?.msg || "Doctor assigned successfully. The patient has been notified by email.");
     } catch (error) {
       console.error(error);
       const message = error?.response?.data?.msg || "Could not change doctor.";
@@ -103,6 +106,7 @@ export default function AdminAppointments() {
 
   const counts = {
     all:       appointments.length,
+    requested: appointments.filter(a => a.status === "requested").length,
     pending:   appointments.filter(a => a.status === "pending").length,
     confirmed: appointments.filter(a => a.status === "confirmed").length,
     completed: appointments.filter(a => a.status === "completed").length,
@@ -134,7 +138,7 @@ export default function AdminAppointments() {
         <div className="adp-modal-backdrop" onClick={() => { setModalOpen(false); setModalAppt(null); }}>
           <div className="adp-modal" onClick={(e) => e.stopPropagation()}>
             <div className="adp-modal-header">
-              <h3>Alternate Doctor — {modalAppt.patientId?.name || "Patient"}</h3>
+              <h3>{modalAppt.status === "requested" || !modalAppt.doctorId ? "Assign Doctor" : "Alternate Doctor"} — {modalAppt.patientId?.name || "Patient"}</h3>
               <button className="adp-modal-close" onClick={() => { setModalOpen(false); setModalAppt(null); }}>Close</button>
             </div>
 
@@ -159,7 +163,7 @@ export default function AdminAppointments() {
 
               {/* Search + results */}
               <div className="adp-search-doctor">
-                <h4>Alternate Doctor</h4>
+                <h4>{modalAppt.status === "requested" || !modalAppt.doctorId ? "Assign Doctor" : "Alternate Doctor"}</h4>
                 <input
                   className="adp-search-input"
                   placeholder="Search by name or Doctor ID"
@@ -202,6 +206,7 @@ export default function AdminAppointments() {
       <div className="adp-stats">
         {[
           { label: "Total",     value: counts.all,       cls: "" },
+          { label: "Requested", value: counts.requested, cls: "" },
           { label: "Pending",   value: counts.pending,   cls: "adp-stat--amber" },
           { label: "Confirmed", value: counts.confirmed, cls: "adp-stat--green" },
           { label: "Completed", value: counts.completed, cls: "adp-stat--blue" },
@@ -217,7 +222,7 @@ export default function AdminAppointments() {
       <div className="adp-card">
         <div className="adp-card-header">
           <div className="adp-tabs">
-            {["all","pending","confirmed","completed","cancelled"].map(f => (
+            {["all","requested","pending","confirmed","completed","cancelled"].map(f => (
               <button key={f} className={`adp-tab ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
                 {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
                 <span className="adp-tab-count">{counts[f]}</span>
@@ -306,7 +311,7 @@ export default function AdminAppointments() {
                               setModalOpen(true);
                             }}
                           >
-                            Alternate Doctor
+                            {a.status === "requested" || !a.doctorId ? "Assign Doctor" : "Alternate Doctor"}
                           </button>
                         </td>
                         <td>
@@ -351,7 +356,19 @@ export default function AdminAppointments() {
                                 </div>
                                 <div className="adp-exp-item">
                                   <span className="adp-exp-label">Specialty</span>
-                                  <span className="adp-exp-value">{renderDoctorSpecialty(a)}</span>
+                                  <span className="adp-exp-value">{a.specialty || renderDoctorSpecialty(a)}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Category</span>
+                                  <span className="adp-exp-value">{a.category || "—"}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Condition</span>
+                                  <span className="adp-exp-value">{a.condition || "—"}</span>
+                                </div>
+                                <div className="adp-exp-item">
+                                  <span className="adp-exp-label">Consultation Price</span>
+                                  <span className="adp-exp-value">{a.consultationPrice ? `₹${a.consultationPrice}` : "—"}</span>
                                 </div>
                                 <div className="adp-exp-item">
                                   <span className="adp-exp-label">Doctor city & country</span>

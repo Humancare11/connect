@@ -1,53 +1,64 @@
-const rateLimit = require("express-rate-limit");
 const { recordSecurityIncident } = require("../utils/securityMonitor");
 
-const buildLimiter = ({ windowMs, max, message, skipSuccessfulRequests = false }) =>
-  rateLimit({
-    windowMs,
-    max,
-    skipSuccessfulRequests,
-    standardHeaders: true,
-    legacyHeaders: false,
-    handler: (req, res) => {
+const registrationStore = new Map();
+
+function getEntry(store, key) {
+  return store.get(key) || { count: 0, firstAttemptAt: Date.now() };
+}
+
+function pruneExpired(store, windowMs) {
+  const cutoff = Date.now() - windowMs;
+  for (const [key, entry] of store) {
+    if (entry.firstAttemptAt < cutoff) store.delete(key);
+  }
+}
+
+function buildEmailLimiter({ windowMs, max, message, store }) {
+  return (req, res, next) => {
+    pruneExpired(store, windowMs);
+
+    const email = (req.body?.email || "").toLowerCase().trim();
+    const key   = email || req.ip;
+
+    const entry       = getEntry(store, key);
+    const windowReset = Date.now() - entry.firstAttemptAt >= windowMs;
+
+    if (windowReset) {
+      store.set(key, { count: 1, firstAttemptAt: Date.now() });
+      return next();
+    }
+
+    if (entry.count >= max) {
+      const retryAfterSec = Math.ceil((entry.firstAttemptAt + windowMs - Date.now()) / 1000);
+      const retryMin      = Math.ceil(retryAfterSec / 60);
+
       recordSecurityIncident(req, {
-        type: message.includes("login") ? "failed_login" : "suspicious_activity",
+        type: "suspicious_activity",
         severity: "high",
-        title: message.includes("login") ? "Multiple failed login attempts" : "Rate limit exceeded",
+        title: "Rate limit exceeded",
         resource: req.originalUrl,
-        metadata: { limitMessage: message },
+        metadata: { email: email || "(no email)", limitMessage: message },
       });
-      res.status(429).json({ msg: message, message });
-    },
-  });
 
-const loginLimiter = buildLimiter({
+      res.set("Retry-After", String(retryAfterSec));
+      return res.status(429).json({
+        msg: message.replace("{min}", retryMin),
+        message: message.replace("{min}", retryMin),
+        retryAfterSeconds: retryAfterSec,
+      });
+    }
+
+    entry.count += 1;
+    store.set(key, entry);
+    next();
+  };
+}
+
+const registrationLimiter = buildEmailLimiter({
+  store:    registrationStore,
   windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: "Too many login attempts. Please wait 15 minutes and try again.",
+  max:      5,
+  message:  "Too many registration attempts. Please wait {min} minutes and try again.",
 });
 
-const registrationLimiter = buildLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: "Too many registration attempts. Please wait 15 minutes and try again.",
-});
-
-const otpGenerationLimiter = buildLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 3,
-  message: "Too many OTP requests. Please wait 1 hour before requesting another code.",
-});
-
-const otpVerificationLimiter = buildLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 3,
-  skipSuccessfulRequests: true,
-  message: "Too many OTP verification attempts. Please wait 1 hour and try again.",
-});
-
-module.exports = {
-  loginLimiter,
-  registrationLimiter,
-  otpGenerationLimiter,
-  otpVerificationLimiter,
-};
+module.exports = { registrationLimiter };

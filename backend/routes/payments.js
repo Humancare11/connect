@@ -294,6 +294,34 @@ router.get("/admin/payment-link-creators", verifyAdminToken, paymentAdminOnly, a
   }
 });
 
+/* POST /api/payments/create-intent-by-amount
+   Creates a Stripe PaymentIntent for a fixed INR amount (specialty preset fee).
+   Used for category-based appointment bookings where no specific doctor is chosen yet. */
+router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
+  try {
+    const amountInr = Number(req.body.amountInr);
+    if (!Number.isFinite(amountInr) || amountInr < 1) {
+      return res.status(400).json({ msg: "Valid amountInr (in INR) is required." });
+    }
+    const amountPaise = Math.round(amountInr * 100);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountPaise,
+      currency: "inr",
+      payment_method_types: ["card"],
+      metadata: {
+        patientId: req.user.id,
+        bookingType: "category-based",
+      },
+    });
+
+    res.json({ clientSecret: paymentIntent.client_secret, amountPaise });
+  } catch (err) {
+    console.error("create-intent-by-amount error:", err.message);
+    res.status(500).json({ msg: err.message || "Failed to create payment intent." });
+  }
+});
+
 router.get("/payment-links/:token", async (req, res) => {
   try {
     const paymentLink = await PaymentLink.findOne({ token: req.params.token }).lean();
