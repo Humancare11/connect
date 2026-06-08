@@ -4,37 +4,44 @@ const crypto       = require("crypto");
 
 const OTP_TTL_MINUTES = 10;
 // OTP resend policy:
-// Allow up to 3 immediate resends per email, then require a short cooldown (60s).
-const RESEND_MAX = 3;
+// Allow up to 5 immediate resends per (email + type + role), then require a short cooldown (60s).
+const RESEND_MAX = 5;
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
 
-// In-memory per-email resend tracker. Structure: { count, firstAttemptAt }
+// In-memory resend tracker keyed by "email:type:role". Structure: { count, firstAttemptAt }
 const resendStore = new Map();
 
-function _getResendEntry(email) {
+function _resendKey(email, type, role) {
+  return `${String(email).toLowerCase().trim()}:${type}:${role}`;
+}
+
+function _getResendEntry(key) {
   const now = Date.now();
-  const entry = resendStore.get(email) || { count: 0, firstAttemptAt: now };
-  // If cooldown window has passed since firstAttemptAt, reset.
+  const entry = resendStore.get(key) || { count: 0, firstAttemptAt: now };
   if (now - entry.firstAttemptAt > RESEND_COOLDOWN_MS) {
     const fresh = { count: 0, firstAttemptAt: now };
-    resendStore.set(email, fresh);
+    resendStore.set(key, fresh);
     return fresh;
   }
   return entry;
 }
 
-function registerResendAttempt(email) {
-  const clean = String(email || "").toLowerCase().trim();
-  const entry = _getResendEntry(clean);
+function registerResendAttempt(email, type, role) {
+  const key = _resendKey(email, type, role);
+  const entry = _getResendEntry(key);
   entry.count += 1;
-  resendStore.set(clean, entry);
+  resendStore.set(key, entry);
   return entry;
 }
 
-function canResend(email) {
-  const clean = String(email || "").toLowerCase().trim();
-  const entry = _getResendEntry(clean);
-  return entry.count < RESEND_MAX;
+function canResend(email, type, role) {
+  const key = _resendKey(email, type, role);
+  const entry = _getResendEntry(key);
+  const allowed = entry.count < RESEND_MAX;
+  if (!allowed) {
+    console.warn("OTP rate-limited check FAILED", { key, count: entry.count, firstAttemptAt: new Date(entry.firstAttemptAt).toISOString(), ageMs: Date.now() - entry.firstAttemptAt, RESEND_MAX, RESEND_COOLDOWN_MS });
+  }
+  return allowed;
 }
 
 const generateCode = () =>
@@ -54,11 +61,13 @@ function hashesMatch(expectedHash, candidateCode) {
 const createAndSendOTP = async (email, type, role = "user") => {
   const clean = email.toLowerCase().trim();
 
-  // Resend limiter: enforce per-email policy.
-  const allowed = canResend(clean);
+  // Resend limiter: enforce per-(email + type + role) policy.
+  const allowed = canResend(clean, type, role);
   if (!allowed) {
-    const entry = _getResendEntry(clean);
+    const key = _resendKey(clean, type, role);
+    const entry = _getResendEntry(key);
     const retryAfterMs = Math.max(0, RESEND_COOLDOWN_MS - (Date.now() - entry.firstAttemptAt));
+    console.warn("OTP rate limited", { email: clean, type, role, retryAfterMs });
     const err = new Error("Too many OTP requests. Please wait before requesting another code.");
     err.statusCode = 429;
     err.retryAfterMs = retryAfterMs;
@@ -66,7 +75,7 @@ const createAndSendOTP = async (email, type, role = "user") => {
   }
 
   // Register this attempt before sending so even failed sends count.
-  registerResendAttempt(clean);
+  registerResendAttempt(clean, type, role);
 
   await OTP.deleteMany({ email: clean, type, role });
 
