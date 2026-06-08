@@ -9,14 +9,27 @@ import App from "./App.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <DoctorAuthProvider>
-          <AdminProvider>
-            <App />
-          </AdminProvider>
-        </DoctorAuthProvider>
-      </AuthProvider>
-    </GoogleOAuthProvider>
+    {import.meta.env.VITE_GOOGLE_CLIENT_ID
+      ? (
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+          <AuthProvider>
+            <DoctorAuthProvider>
+              <AdminProvider>
+                <App />
+              </AdminProvider>
+            </DoctorAuthProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
+      ) : (
+        // If no Google client ID is configured, render the app without the
+        // GoogleOAuthProvider to avoid runtime errors from the provider.
+        <AuthProvider>
+          <DoctorAuthProvider>
+            <AdminProvider>
+              <App />
+            </AdminProvider>
+          </DoctorAuthProvider>
+        </AuthProvider>
+      )}
   </StrictMode>
 );
