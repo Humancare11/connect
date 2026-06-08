@@ -34,7 +34,12 @@ function getDobError(dob) {
 }
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
-import PhoneInputField from "../components/PhoneInputField";
+import PhoneInputField, {
+  COUNTRIES as PHONE_COUNTRIES,
+  parseValue as parsePhoneValue,
+  findCountryByName,
+  toFlag,
+} from "../components/PhoneInputField";
 
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
@@ -140,6 +145,7 @@ export default function AuthPage() {
   /* view: 'auth' | 'register-otp' | 'forgot-email' | 'forgot-otp' | 'forgot-reset' */
   const [view, setView] = useState("auth");
   const [isRegister, setIsRegister] = useState(false);
+  const [countryOpen, setCountryOpen] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
@@ -187,6 +193,22 @@ export default function AuthPage() {
   };
 
   const goTo = (v) => { setView(v); setFormError(""); setOtpValue(""); };
+
+  const handleCountrySelect = (e) => {
+    const countryName = e.target.value;
+    const selected = findCountryByName(countryName);
+    if (!selected) {
+      return setRegisterForm((p) => ({ ...p, country: countryName }));
+    }
+    const { local } = parsePhoneValue(registerForm.mobile, selected.code);
+    setRegisterForm((p) => ({
+      ...p,
+      country: selected.name,
+      mobile: `+${selected.dial}${local}`,
+    }));
+  };
+
+  const selectedPhoneCountry = findCountryByName(registerForm.country);
 
   function afterLogin(user) {
     login(user);
@@ -688,109 +710,82 @@ export default function AuthPage() {
 
             <div className="row reg-row country-mobile-row">
               <div className="reg-field-wrap">
-                <select
-                  className="register-country-select"
-                  value={registerForm.country}
-                  onChange={(e) => setRegisterForm((p) => ({ ...p, country: e.target.value }))}
-                  required
-                >
-              <option value="">Select Country</option>
-              <option value="Afghanistan">Afghanistan</option>
-              <option value="Albania">Albania</option>
-              <option value="Algeria">Algeria</option>
-              <option value="Argentina">Argentina</option>
-              <option value="Australia">Australia</option>
-              <option value="Austria">Austria</option>
-              <option value="Azerbaijan">Azerbaijan</option>
-              <option value="Bahrain">Bahrain</option>
-              <option value="Bangladesh">Bangladesh</option>
-              <option value="Belgium">Belgium</option>
-              <option value="Bolivia">Bolivia</option>
-              <option value="Brazil">Brazil</option>
-              <option value="Canada">Canada</option>
-              <option value="Chile">Chile</option>
-              <option value="China">China</option>
-              <option value="Colombia">Colombia</option>
-              <option value="Croatia">Croatia</option>
-              <option value="Czech Republic">Czech Republic</option>
-              <option value="Denmark">Denmark</option>
-              <option value="Ecuador">Ecuador</option>
-              <option value="Egypt">Egypt</option>
-              <option value="Ethiopia">Ethiopia</option>
-              <option value="Finland">Finland</option>
-              <option value="France">France</option>
-              <option value="Germany">Germany</option>
-              <option value="Ghana">Ghana</option>
-              <option value="Greece">Greece</option>
-              <option value="Guatemala">Guatemala</option>
-              <option value="Hungary">Hungary</option>
-              <option value="India">India</option>
-              <option value="Indonesia">Indonesia</option>
-              <option value="Iran">Iran</option>
-              <option value="Iraq">Iraq</option>
-              <option value="Ireland">Ireland</option>
-              <option value="Israel">Israel</option>
-              <option value="Italy">Italy</option>
-              <option value="Japan">Japan</option>
-              <option value="Jordan">Jordan</option>
-              <option value="Kazakhstan">Kazakhstan</option>
-              <option value="Kenya">Kenya</option>
-              <option value="Kuwait">Kuwait</option>
-              <option value="Lebanon">Lebanon</option>
-              <option value="Libya">Libya</option>
-              <option value="Malaysia">Malaysia</option>
-              <option value="Mexico">Mexico</option>
-              <option value="Morocco">Morocco</option>
-              <option value="Myanmar">Myanmar</option>
-              <option value="Nepal">Nepal</option>
-              <option value="Netherlands">Netherlands</option>
-              <option value="New Zealand">New Zealand</option>
-              <option value="Nigeria">Nigeria</option>
-              <option value="Norway">Norway</option>
-              <option value="Oman">Oman</option>
-              <option value="Pakistan">Pakistan</option>
-              <option value="Peru">Peru</option>
-              <option value="Philippines">Philippines</option>
-              <option value="Poland">Poland</option>
-              <option value="Portugal">Portugal</option>
-              <option value="Qatar">Qatar</option>
-              <option value="Romania">Romania</option>
-              <option value="Russia">Russia</option>
-              <option value="Saudi Arabia">Saudi Arabia</option>
-              <option value="Serbia">Serbia</option>
-              <option value="Singapore">Singapore</option>
-              <option value="South Africa">South Africa</option>
-              <option value="South Korea">South Korea</option>
-              <option value="Spain">Spain</option>
-              <option value="Sri Lanka">Sri Lanka</option>
-              <option value="Sudan">Sudan</option>
-              <option value="Sweden">Sweden</option>
-              <option value="Switzerland">Switzerland</option>
-              <option value="Syria">Syria</option>
-              <option value="Taiwan">Taiwan</option>
-              <option value="Tanzania">Tanzania</option>
-              <option value="Thailand">Thailand</option>
-              <option value="Tunisia">Tunisia</option>
-              <option value="Turkey">Turkey</option>
-              <option value="Uganda">Uganda</option>
-              <option value="Ukraine">Ukraine</option>
-              <option value="United Arab Emirates">United Arab Emirates</option>
-              <option value="United Kingdom">United Kingdom</option>
-              <option value="United States">United States</option>
-              <option value="Uruguay">Uruguay</option>
-              <option value="Uzbekistan">Uzbekistan</option>
-              <option value="Venezuela">Venezuela</option>
-              <option value="Vietnam">Vietnam</option>
-              <option value="Yemen">Yemen</option>
-              <option value="Zambia">Zambia</option>
-              <option value="Zimbabwe">Zimbabwe</option>
-                </select>
+                <div className="custom-country-dropdown">
+ <button
+  type="button"
+  className="country-trigger"
+  onClick={() => setCountryOpen((v) => !v)}
+>
+  {selectedPhoneCountry ? (
+    <>
+      <img
+        src={`https://flagcdn.com/w40/${selectedPhoneCountry.code.toLowerCase()}.png`}
+        alt={selectedPhoneCountry.name}
+        style={{
+          width: 20,
+          height: 15,
+          objectFit: "cover",
+          borderRadius: 2,
+        }}
+      />
+
+      <span>{selectedPhoneCountry.name}</span>
+    </>
+  ) : (
+    <span>Select Country</span>
+  )}
+</button>
+
+  {countryOpen && (
+    <div className="country-dropdown-menu">
+      {PHONE_COUNTRIES.map((c) => (
+        <button
+          key={c.code}
+          type="button"
+          className="country-option"
+          onClick={() => {
+  const { local } = parsePhoneValue(
+    registerForm.mobile,
+    c.code
+  );
+
+  setRegisterForm((p) => ({
+    ...p,
+    country: c.name,
+    mobile: `+${c.dial}${local}`,
+  }));
+
+  setCountryOpen(false);
+}}
+        >
+          <img
+            src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
+            alt={c.name}
+            style={{
+              width: 20,
+              height: 15,
+              objectFit: "cover",
+              borderRadius: 2,
+            }}
+          />
+
+          <span>{c.name}</span>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
               </div>
               <div className="reg-field-wrap">
                 <PhoneInputField
                   value={registerForm.mobile}
-                  onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
-                  defaultCountry="auto"
+                  onChange={(ph, meta) => setRegisterForm((p) => ({
+                    ...p,
+                    mobile: ph,
+                    country: meta?.name || p.country,
+                  }))}
+                  onCountryChange={(meta) => meta?.name && setRegisterForm((p) => ({ ...p, country: meta.name }))}
+                  defaultCountry={selectedPhoneCountry?.code || "auto"}
                   placeholder="Mobile number"
                 />
               </div>
