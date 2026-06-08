@@ -557,8 +557,16 @@ export default function PhoneInputField({
           aria-expanded={open}
           className="pif-country-trigger"
         >
-          <span className="pif-dial">+{country.dial}</span>
-          <svg
+<img
+  src={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
+  alt={country.code}
+  style={{
+    width: 20,
+    height: 15,
+    objectFit: "cover",
+    borderRadius: 2,
+  }}
+/>          <svg
             width="10" height="6" viewBox="0 0 10 6" fill="none"
             className="pif-chevron"
             style={{ transform: open ? "rotate(180deg)" : "none" }}
@@ -593,7 +601,7 @@ export default function PhoneInputField({
             position: "absolute",
             top: dropPos.top,
             left: dropPos.left,
-            width: Math.max(wrapRef.current?.offsetWidth || 0, 280),
+            width: 220,
             background: "#fff",
             border: "1.5px solid #e2e8f0",
             borderRadius: 14,
@@ -618,7 +626,7 @@ export default function PhoneInputField({
               <input
                 ref={searchRef}
                 type="text"
-                placeholder="Search country or code…"
+                placeholder="Search country"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{
@@ -637,7 +645,7 @@ export default function PhoneInputField({
           </div>
 
           {/* List */}
-          <div style={{ maxHeight: 240, overflowY: "auto" }}>
+          <div style={{ maxHeight: 280, overflowY: "auto" }}>
             {filtered.length === 0 ? (
               <div style={{ padding: "18px 16px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
                 No countries found
@@ -651,9 +659,17 @@ export default function PhoneInputField({
                 onClick={() => handleSelect(c)}
                 className={`pif-item${country.code === c.code ? " sel" : ""}`}
               >
-                <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{toFlag(c.code)}</span>
-                <span style={{ fontSize: 13, color: "#334155", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {c.name}
+<img
+  src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
+  alt={c.code}
+  style={{
+    width: 20,
+    height: 15,
+    objectFit: "cover",
+    borderRadius: 2,
+    flexShrink: 0,
+  }}
+/>                <span style={{ fontSize: 13, color: "#334155", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 </span>
                 <span style={{ fontSize: 12, color: "#059669", fontWeight: 700, flexShrink: 0 }}>
                   +{c.dial}

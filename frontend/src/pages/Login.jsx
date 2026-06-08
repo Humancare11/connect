@@ -145,6 +145,7 @@ export default function AuthPage() {
   /* view: 'auth' | 'register-otp' | 'forgot-email' | 'forgot-otp' | 'forgot-reset' */
   const [view, setView] = useState("auth");
   const [isRegister, setIsRegister] = useState(false);
+  const [countryOpen, setCountryOpen] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
@@ -709,19 +710,71 @@ export default function AuthPage() {
 
             <div className="row reg-row country-mobile-row">
               <div className="reg-field-wrap">
-                <select
-                  className="register-country-select"
-                  value={registerForm.country}
-                  onChange={handleCountrySelect}
-                  required
-                >
-                  <option value="">Select Country</option>
-                  {PHONE_COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.name}>
-                      {`${toFlag(c.code)} +${c.dial} ${c.name}`}
-                    </option>
-                  ))}
-                </select>
+                <div className="custom-country-dropdown">
+ <button
+  type="button"
+  className="country-trigger"
+  onClick={() => setCountryOpen((v) => !v)}
+>
+  {selectedPhoneCountry ? (
+    <>
+      <img
+        src={`https://flagcdn.com/w40/${selectedPhoneCountry.code.toLowerCase()}.png`}
+        alt={selectedPhoneCountry.name}
+        style={{
+          width: 20,
+          height: 15,
+          objectFit: "cover",
+          borderRadius: 2,
+        }}
+      />
+
+      <span>{selectedPhoneCountry.name}</span>
+    </>
+  ) : (
+    <span>Select Country</span>
+  )}
+</button>
+
+  {countryOpen && (
+    <div className="country-dropdown-menu">
+      {PHONE_COUNTRIES.map((c) => (
+        <button
+          key={c.code}
+          type="button"
+          className="country-option"
+          onClick={() => {
+  const { local } = parsePhoneValue(
+    registerForm.mobile,
+    c.code
+  );
+
+  setRegisterForm((p) => ({
+    ...p,
+    country: c.name,
+    mobile: `+${c.dial}${local}`,
+  }));
+
+  setCountryOpen(false);
+}}
+        >
+          <img
+            src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
+            alt={c.name}
+            style={{
+              width: 20,
+              height: 15,
+              objectFit: "cover",
+              borderRadius: 2,
+            }}
+          />
+
+          <span>{c.name}</span>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
               </div>
               <div className="reg-field-wrap">
                 <PhoneInputField
