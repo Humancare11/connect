@@ -1,10 +1,6 @@
 const { recordSecurityIncident } = require("../utils/securityMonitor");
 
-// ── Per-email store declarations (shared across all email-keyed limiters) ─────
-// store: Map<email, { count: number, firstAttemptAt: number }>
 const registrationStore = new Map();
-const otpSendStore      = new Map();
-const otpVerifyStore    = new Map();
 
 function getEntry(store, key) {
   return store.get(key) || { count: 0, firstAttemptAt: Date.now() };
@@ -17,13 +13,7 @@ function pruneExpired(store, windowMs) {
   }
 }
 
-/**
- * Returns Express middleware that rate-limits by req.body.email.
- * Falls back to IP only when no email is present (e.g. bots sending empty bodies).
- * When skipSuccessful is true, a 2xx response rolls back the increment so only
- * failed attempts count toward the limit.
- */
-function buildEmailLimiter({ windowMs, max, skipSuccessful = false, message, store, incidentType = "suspicious_activity" }) {
+function buildEmailLimiter({ windowMs, max, message, store }) {
   return (req, res, next) => {
     pruneExpired(store, windowMs);
 
@@ -43,9 +33,9 @@ function buildEmailLimiter({ windowMs, max, skipSuccessful = false, message, sto
       const retryMin      = Math.ceil(retryAfterSec / 60);
 
       recordSecurityIncident(req, {
-        type: incidentType,
+        type: "suspicious_activity",
         severity: "high",
-        title: incidentType === "failed_login" ? "Multiple failed login attempts" : "Rate limit exceeded",
+        title: "Rate limit exceeded",
         resource: req.originalUrl,
         metadata: { email: email || "(no email)", limitMessage: message },
       });
@@ -60,22 +50,6 @@ function buildEmailLimiter({ windowMs, max, skipSuccessful = false, message, sto
 
     entry.count += 1;
     store.set(key, entry);
-
-    if (skipSuccessful) {
-      const origJson = res.json.bind(res);
-      res.json = function (body) {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          const cur = store.get(key);
-          if (cur && cur.count > 0) {
-            cur.count -= 1;
-            if (cur.count === 0) store.delete(key);
-            else store.set(key, cur);
-          }
-        }
-        return origJson(body);
-      };
-    }
-
     next();
   };
 }
@@ -87,23 +61,4 @@ const registrationLimiter = buildEmailLimiter({
   message:  "Too many registration attempts. Please wait {min} minutes and try again.",
 });
 
-const otpGenerationLimiter = buildEmailLimiter({
-  store:    otpSendStore,
-  windowMs: 10 * 60 * 1000, // 10-minute cooldown, 3 sends max
-  max:      3,
-  message:  "Too many OTP requests. Please wait {min} minutes before requesting another code.",
-});
-
-const otpVerificationLimiter = buildEmailLimiter({
-  store:          otpVerifyStore,
-  windowMs:       15 * 60 * 1000, // 15-minute cooldown, 5 failed attempts max
-  max:            5,
-  skipSuccessful: true,
-  message:        "Too many incorrect OTP attempts. Please wait {min} minutes and try again.",
-});
-
-module.exports = {
-  registrationLimiter,
-  otpGenerationLimiter,
-  otpVerificationLimiter,
-};
+module.exports = { registrationLimiter };

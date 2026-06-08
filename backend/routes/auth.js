@@ -13,21 +13,19 @@ const authMiddleware                        = require("../middleware/authMiddlew
 const { verifyUserToken, verifyAdminToken } = require("../middleware/verifyToken");
 const {
   registrationLimiter,
-  otpGenerationLimiter,
-  otpVerificationLimiter,
 } = require("../middleware/rateLimiters");
 
 // ── User auth ─────────────────────────────────────────────────────────────────
-router.post("/send-register-otp", otpGenerationLimiter, sendRegisterOTP);
-router.post("/register",          otpVerificationLimiter, register);
+router.post("/send-register-otp", sendRegisterOTP);
+router.post("/register",          register);
 router.post("/login",             login);
 router.post("/refresh",           refresh);
 router.post("/logout",            logout);
 router.get ("/me",                verifyUserToken, me);
 
 // ── Forgot password ───────────────────────────────────────────────────────────
-router.post("/send-forgot-otp",   otpGenerationLimiter, sendForgotOTP);
-router.post("/verify-forgot-otp", otpVerificationLimiter, verifyForgotOTP);
+router.post("/send-forgot-otp",   sendForgotOTP);
+router.post("/verify-forgot-otp", verifyForgotOTP);
 router.post("/reset-password",    resetPasswordHandler);
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────

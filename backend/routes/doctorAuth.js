@@ -7,10 +7,6 @@ const Enrollment = require("../models/Enrollment");
 const Session = require("../models/Session");
 const { issueAuthCookies, clearAuthCookies, verifyDoctorToken } = require("../middleware/verifyToken");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
-const {
-  otpGenerationLimiter,
-  otpVerificationLimiter,
-} = require("../middleware/rateLimiters");
 const { assertPasswordAllowed, rememberPassword } = require("../utils/passwordPolicy");
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
 const { recordFailedLogin } = require("../utils/securityMonitor");
@@ -41,7 +37,7 @@ const applyProgress = (enrollment, nextCompletedSteps, nextCurrentStep) => {
 };
 
 // ── POST /api/doctor/send-register-otp ───────────────────────────────────────
-router.post("/send-register-otp", otpGenerationLimiter, async (req, res) => {
+router.post("/send-register-otp", async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email is required." });
@@ -60,7 +56,7 @@ router.post("/send-register-otp", otpGenerationLimiter, async (req, res) => {
 });
 
 // ── POST /api/doctor/register ─────────────────────────────────────────────────
-router.post("/register", otpVerificationLimiter, async (req, res) => {
+router.post("/register", async (req, res) => {
   try {
     const { name, email, password, confirmPassword, otp } = req.body;
 
@@ -169,7 +165,7 @@ router.post("/login", async (req, res) => {
 });
 
 // ── POST /api/doctor/send-forgot-otp ─────────────────────────────────────────
-router.post("/send-forgot-otp", otpGenerationLimiter, async (req, res) => {
+router.post("/send-forgot-otp", async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email is required." });
@@ -188,7 +184,7 @@ router.post("/send-forgot-otp", otpGenerationLimiter, async (req, res) => {
 });
 
 // ── POST /api/doctor/verify-forgot-otp ───────────────────────────────────────
-router.post("/verify-forgot-otp", otpVerificationLimiter, async (req, res) => {
+router.post("/verify-forgot-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required." });
