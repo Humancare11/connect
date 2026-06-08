@@ -8,7 +8,6 @@ const Session = require("../models/Session");
 const { issueAuthCookies, clearAuthCookies, verifyDoctorToken } = require("../middleware/verifyToken");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
 const {
-  loginLimiter,
   otpGenerationLimiter,
   otpVerificationLimiter,
 } = require("../middleware/rateLimiters");
@@ -116,7 +115,7 @@ router.post("/register", otpVerificationLimiter, async (req, res) => {
 });
 
 // ── POST /api/doctor/login ────────────────────────────────────────────────────
-router.post("/login", loginLimiter, async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
@@ -212,7 +211,7 @@ router.post("/verify-forgot-otp", otpVerificationLimiter, async (req, res) => {
 });
 
 // ── POST /api/doctor/reset-password ──────────────────────────────────────────
-router.post("/reset-password", loginLimiter, async (req, res) => {
+router.post("/reset-password", async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
     if (!resetToken || !newPassword)
