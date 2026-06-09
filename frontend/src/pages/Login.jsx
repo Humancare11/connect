@@ -322,8 +322,10 @@ export default function AuthPage() {
         terms: false, privacyConsent: false, hipaaConsent: false,
       });
       afterLogin(res.data.user);
-    } catch (err) { setFormError(err.response?.data?.msg || "Registration failed."); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setOtpValue("");
+      setFormError(err.response?.data?.msg || "Invalid OTP. Please try again.");
+    } finally { setLoading(false); }
   };
 
   const handleResendRegisterOTP = async () => {
@@ -362,8 +364,10 @@ export default function AuthPage() {
       setResetToken(res.data.resetToken);
       goTo("forgot-reset");
       if (timerRef.current) clearInterval(timerRef.current);
-    } catch (err) { setFormError(err.response?.data?.msg || "Invalid OTP."); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setOtpValue("");
+      setFormError(err.response?.data?.msg || "Invalid OTP. Please try again.");
+    } finally { setLoading(false); }
   };
 
   const handleForgotResend = async () => {

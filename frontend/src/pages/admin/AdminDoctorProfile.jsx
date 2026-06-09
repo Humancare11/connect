@@ -1165,6 +1165,20 @@ export default function AdminDoctorProfile() {
                 </div>
               </div>
             )}
+            {Array.isArray(e.internationalLicenses) && e.internationalLicenses.length > 0 && (
+              <div style={{ marginTop:16, paddingTop:16, borderTop:"1px solid #f1f5f9" }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>
+                  🌍 International Medical Licenses
+                </div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                  {e.internationalLicenses.map((country) => (
+                    <span key={country} style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"4px 12px", background:"#eff6ff", border:"1px solid #bfdbfe", borderRadius:20, fontSize:13, color:"#1d4ed8", fontWeight:500 }}>
+                      {country}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             {e.aboutDoctor && (
               <div style={{ marginTop:16, paddingTop:16, borderTop:"1px solid #f1f5f9" }}>
                 <div style={{ fontSize:11, fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>About Doctor</div>

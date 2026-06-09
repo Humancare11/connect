@@ -4,9 +4,10 @@ import { Link, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import logo from "../assets/Logo.png";
 import miniLogo from "../assets/single-logo.png";
+import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -19,11 +20,11 @@ export default function Header() {
 
   const navItems = [
     ...(location.pathname !== "/" ? [{ label: "Home", link: "/" }] : []),
-    { label: "Find a Doctor",    link: "/find-a-doctor"    },
-    { label: "Ask a Question",   link: "/ask-a-question"   },
-    { label: "Medical Services", link: "/medical-services" },
-    { label: "Corporates",       link: "/corporates"       },
-    { label: "Blogs",            link: "/blogs"            },
+    { label: "Book Appointment", link: "/appointment-booking" },
+    { label: "Ask a Question",   link: "/ask-a-question"      },
+    { label: "Medical Services", link: "/medical-services"    },
+    { label: "Corporates",       link: "/corporates"          },
+    { label: "Blogs",            link: "/blogs"               },
   ];
 
   /* ==================== SCROLL ==================== */
@@ -151,16 +152,16 @@ export default function Header() {
 
           {/* AUTH */}
           <div className="auth-buttons">
-            {!isLoggedIn ? (
+            {user ? (
+              <Link to="/user/dashboard" className="profile-icon">
+                <FaUserCircle />
+              </Link>
+            ) : (
               <div className="auth-combined magnetic">
                 <Link to="/login" className="auth-link">Login</Link>
                 <span className="divider">/</span>
                 <Link to="/login" className="auth-link">Register</Link>
               </div>
-            ) : (
-              <Link to="/profile" className="profile-icon">
-                <FaUserCircle />
-              </Link>
             )}
           </div>
 
@@ -189,8 +190,16 @@ export default function Header() {
             </Link>
           ))}
           <div className="mobile-auth">
-            <Link to="/login"    className="mobile-auth-link"                  onClick={() => setMobileOpen(false)}>Login</Link>
-            <Link to="/register" className="mobile-auth-link mobile-auth-cta"  onClick={() => setMobileOpen(false)}>Register</Link>
+            {user ? (
+              <Link to="/user/dashboard" className="mobile-auth-link mobile-auth-cta" onClick={() => setMobileOpen(false)}>
+                My Account
+              </Link>
+            ) : (
+              <>
+                <Link to="/login"    className="mobile-auth-link"                 onClick={() => setMobileOpen(false)}>Login</Link>
+                <Link to="/login"    className="mobile-auth-link mobile-auth-cta" onClick={() => setMobileOpen(false)}>Register</Link>
+              </>
+            )}
           </div>
         </div>
       </header>

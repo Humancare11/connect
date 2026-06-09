@@ -178,7 +178,7 @@ export default function DoctorAuthPage() {
       });
       afterLogin(res.data.doctor);
     } catch (err) {
-      setFormError(err.response?.data?.msg || "Invalid email or password.");
+      setFormError(err.response?.data?.message || err.response?.data?.msg || "Invalid email or password.");
     } finally {
       setLoading(false);
     }
@@ -187,10 +187,19 @@ export default function DoctorAuthPage() {
   /* ── Register → send OTP ─────────────────────────────────── */
   const handleRegisterSubmit = async (e) => {
     e.preventDefault(); clrErr();
-    if (registerForm.password !== registerForm.confirmPassword)
+    const pwd = registerForm.password;
+    if (pwd !== registerForm.confirmPassword)
       return setFormError("Passwords do not match.");
-    if (registerForm.password.length < 8)
-      return setFormError(PASSWORD_REQUIREMENTS);
+    if (pwd.length < 8)
+      return setFormError("Password must be at least 8 characters.");
+    if (!/[A-Z]/.test(pwd))
+      return setFormError("Password must include at least one uppercase letter.");
+    if (!/[a-z]/.test(pwd))
+      return setFormError("Password must include at least one lowercase letter.");
+    if (!/[0-9]/.test(pwd))
+      return setFormError("Password must include at least one number.");
+    if (!/[^A-Za-z0-9]/.test(pwd))
+      return setFormError("Password must include at least one special character.");
     setLoading(true);
     try {
       await api.post("/api/doctor/send-register-otp", { email: registerForm.email });
@@ -218,7 +227,8 @@ export default function DoctorAuthPage() {
       setRegisterForm({ name: "", email: "", password: "", confirmPassword: "" });
       afterLogin(res.data.doctor, true);
     } catch (err) {
-      setFormError(err.response?.data?.msg || "Registration failed. Please try again.");
+      setOtpValue("");
+      setFormError(err.response?.data?.message || err.response?.data?.msg || "Invalid OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -251,8 +261,10 @@ export default function DoctorAuthPage() {
       setResetToken(res.data.resetToken);
       goTo("forgot-reset");
       if (timerRef.current) clearInterval(timerRef.current);
-    } catch (err) { setFormError(err.response?.data?.message || "Invalid OTP."); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setOtpValue("");
+      setFormError(err.response?.data?.message || "Invalid OTP. Please try again.");
+    } finally { setLoading(false); }
   };
 
   const handleForgotResend = async () => {
