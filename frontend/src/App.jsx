@@ -15,7 +15,6 @@ import Footer from "./components/Footer";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
-import Findadoctor from "./pages/Findadoctor";
 import AskDoctor from "./pages/AskDoctor";
 import Services from "./pages/Services";
 import Blogs from "./pages/Blogs/Blogs";
@@ -330,7 +329,6 @@ function AppLayout() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/find-a-doctor" element={<Findadoctor />} />
         <Route path="/ask-a-question" element={<AskDoctor />} />
         <Route path="/medical-services" element={<Services />} />
         <Route path="/blogs" element={<Blogs />} />

@@ -353,8 +353,10 @@ export default function AuthPage() {
         terms: false, privacyConsent: false, hipaaConsent: false,
       });
       afterLogin(res.data.user);
-    } catch (err) { setFormError(err.response?.data?.msg || "Registration failed."); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setOtpValue("");
+      setFormError(err.response?.data?.msg || "Invalid OTP. Please try again.");
+    } finally { setLoading(false); }
   };
 
   const handleResendRegisterOTP = async () => {
@@ -394,8 +396,10 @@ export default function AuthPage() {
       setResetToken(res.data.resetToken);
       goTo("forgot-reset");
       if (timerRef.current) clearInterval(timerRef.current);
-    } catch (err) { setFormError(err.response?.data?.msg || "Invalid OTP."); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setOtpValue("");
+      setFormError(err.response?.data?.msg || "Invalid OTP. Please try again.");
+    } finally { setLoading(false); }
   };
 
   const handleForgotResend = async () => {
@@ -695,7 +699,7 @@ export default function AuthPage() {
         <div className="auth-form-box register-form-box">
           <form onSubmit={handleRegisterSubmit} className="register-form">
             <h1>Create Account</h1>
-            <p className="form-subtitle">Join HumaniCare and take charge of your health</p>
+            <p className="form-subtitle">Join Humancare and take charge of your health</p>
 
             <div className="social-links">
               <button type="button" className="google-btn" onClick={() => initiateGoogleLogin()}>

@@ -33,6 +33,7 @@ const enrollmentSchema = new mongoose.Schema({
   aboutDoctor: String,
   consultationMode: String,
   languagesKnown: [String],
+  internationalLicenses: [String],
   clinicName: String,
   clinicAddress: String,
 

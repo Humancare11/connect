@@ -1557,7 +1557,6 @@ export default function DoctorOnboardingWizard({
     experience: "",
     medicalCouncilName: "",
     consultationMode: "",
-    consultantFees: "",
     feeCurrency: "USD",
     clinicName: "",
     clinicAddress: "",
@@ -1673,7 +1672,6 @@ export default function DoctorOnboardingWizard({
       experience: data.experience ? String(data.experience) : "",
       medicalCouncilName: data.medicalCouncilName || "",
       consultationMode: data.consultationMode || "",
-      consultantFees: data.consultantFees ? String(data.consultantFees) : "",
       feeCurrency: data.feeCurrency || "USD",
       clinicName: data.clinicName || "",
       clinicAddress: data.clinicAddress || "",
@@ -1690,6 +1688,8 @@ export default function DoctorOnboardingWizard({
     });
     if (data.timezone) setTimezone(data.timezone);
     if (data.state) setLicensedStates([data.state]);
+    if (Array.isArray(data.internationalLicenses))
+      setOtherLicenseCountries(data.internationalLicenses);
 
     const makeFileRef = (nameOrUrl) => {
       if (!nameOrUrl) return null;
@@ -1886,8 +1886,6 @@ export default function DoctorOnboardingWizard({
     if (!s2.school.trim()) e.school = "Required";
     if (!s2.gradYear.trim()) e.gradYear = "Required";
     if (!String(s2.experience).trim()) e.experience = "Required";
-    if (!s2.consultantFees || Number(s2.consultantFees) <= 0)
-      e.consultantFees = "Required";
     if (!files.degree) e.degree = "Required";
     else if (!files.degree.url)
       e.degree =
@@ -1991,7 +1989,6 @@ export default function DoctorOnboardingWizard({
       medicalRegistrationNumber: isUS ? s2.npi.trim() : s2.licenseNum.trim(),
       medicalLicense: s2.licenseNum.trim(),
       consultationMode: s2.consultationMode,
-      consultantFees: s2.consultantFees ? Number(s2.consultantFees) : 0,
       feeCurrency: s2.feeCurrency || "USD",
       clinicName: s2.clinicName.trim(),
       clinicAddress: s2.clinicAddress.trim(),
@@ -2012,6 +2009,7 @@ export default function DoctorOnboardingWizard({
       paypalId: s4.paypalId.trim(),
       availability,
       timezone,
+      internationalLicenses: otherLicenseCountries,
     };
 
     try {
@@ -2604,73 +2602,6 @@ export default function DoctorOnboardingWizard({
           Consultation &amp; Practice
         </h4>
         <div className="form-grid">
-          <div className="field-group">
-            <label className="field-label">
-              Consultation Fee <span className="req">*</span>
-            </label>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                border: `1.5px solid ${s2Errors.consultantFees ? "var(--red)" : "var(--gray-200)"}`,
-                borderRadius: "var(--radius-sm)",
-                overflow: "hidden",
-                background: "var(--white)",
-                boxShadow: s2Errors.consultantFees
-                  ? "0 0 0 3px rgba(220,38,38,0.08)"
-                  : "none",
-              }}
-            >
-              <select
-                value={s2.feeCurrency}
-                onChange={(e) => setS2({ ...s2, feeCurrency: e.target.value })}
-                style={{
-                  padding: "11px 10px",
-                  background: "var(--gray-100)",
-                  color: "var(--gray-700)",
-                  fontWeight: 700,
-                  borderRight: "1.5px solid var(--gray-200)",
-                  fontSize: 13,
-                  border: "none",
-                  outline: "none",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                {[
-                  "USD",
-                  "INR",
-                  "GBP",
-                  "EUR",
-                  "AUD",
-                  "CAD",
-                  "AED",
-                  "SAR",
-                  "SGD",
-                  "JPY",
-                ].map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="field-input"
-                style={{ border: "none", borderRadius: 0, boxShadow: "none" }}
-                type="number"
-                min="0"
-                step="1"
-                placeholder="e.g. 500"
-                value={s2.consultantFees}
-                onChange={(e) =>
-                  setS2({ ...s2, consultantFees: e.target.value })
-                }
-              />
-            </div>
-            {s2Errors.consultantFees && (
-              <div className="field-error">{s2Errors.consultantFees}</div>
-            )}
-          </div>
           <div className="field-group">
             <label className="field-label">Clinic / Practice Name</label>
             <input
