@@ -9,9 +9,9 @@ import {
   FaBalanceScale,
 } from "react-icons/fa";
 import {
-  motion,
+  motion as Motion,
   useInView,
-  useMotionValue,
+  useScroll,
   useTransform,
   useSpring,
 } from "framer-motion";
@@ -20,85 +20,82 @@ import {
    Variants
 ───────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 36 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.65, ease: [0.25, 0.46, 0.45, 0.94], delay },
+    transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94], delay },
   },
 });
 
 /* ─────────────────────────────────────────
-   TiltCard — scroll reveal + mouse tilt
+   RevealCard — scroll-triggered fade-up only (no tilt)
 ───────────────────────────────────────── */
-function TiltCard({ children, className, delay = 0 }) {
+function RevealCard({ children, className, delay = 0 }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
-
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-
-  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [4, -4]), {
-    stiffness: 200,
-    damping: 20,
-  });
-  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [-4, 4]), {
-    stiffness: 200,
-    damping: 20,
-  });
-
-  const handleMouseMove = (e) => {
-    const rect = ref.current.getBoundingClientRect();
-    mx.set((e.clientX - rect.left) / rect.width - 0.5);
-    my.set((e.clientY - rect.top) / rect.height - 0.5);
-  };
-
-  const handleMouseLeave = () => {
-    mx.set(0);
-    my.set(0);
-  };
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
-    <motion.div
+    <Motion.div
       ref={ref}
       className={className}
       variants={fadeUp(delay)}
       initial="hidden"
       animate={isInView ? "visible" : "hidden"}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ rotateX, rotateY, transformPerspective: 800 }}
     >
       {children}
-    </motion.div>
+    </Motion.div>
   );
 }
 
-const D = [0, 0.1, 0.2, 0.3, 0.4, 0.5];
+const D = [0, 0.08, 0.16, 0.24, 0.32, 0.40];
 
 /* ─────────────────────────────────────────
    Component
 ───────────────────────────────────────── */
 export default function ServicesSection() {
+  /* ── Header reveal ── */
   const headerRef = useRef(null);
   const headerInView = useInView(headerRef, { once: true, margin: "-60px" });
 
+  /* ── Container "card pop-up" scroll effect ── */
+  const wrapperRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: wrapperRef,
+    offset: ["start end", "start 0.55"],   // fires as top of section crosses 55% of viewport
+  });
+
+  // Smooth spring on the raw progress
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 80,
+    damping: 20,
+    restDelta: 0.001,
+  });
+
+  const scale   = useTransform(smoothProgress, [0, 1], [0.88, 1]);
+  const opacity = useTransform(smoothProgress, [0, 0.4, 1], [0, 0.6, 1]);
+  const y       = useTransform(smoothProgress, [0, 1], [48, 0]);
+
   return (
-    <section className="services-section-wrapper">
+    <Motion.section
+      ref={wrapperRef}
+      className="services-section-wrapper"
+      style={{ scale, opacity, y }}
+    >
       <div className="services-inner-container">
 
         {/* ── Header ── */}
         <div className="services-header-block" ref={headerRef}>
-          <motion.span
+          <Motion.span
             className="services-eyebrow-label"
             variants={fadeUp(0)}
             initial="hidden"
             animate={headerInView ? "visible" : "hidden"}
           >
-            — SERVICES
-          </motion.span>
+            SERVICES
+          </Motion.span>
 
-          <motion.h2
+          <Motion.h2
             className="services-main-heading"
             variants={fadeUp(0.15)}
             initial="hidden"
@@ -109,21 +106,17 @@ export default function ServicesSection() {
             <span className="services-heading-highlight">
               all in one place.
             </span>
-          </motion.h2>
+          </Motion.h2>
         </div>
 
         {/* ── Bento Grid ── */}
         <div className="services-bento-grid">
 
           {/* ── Prescription Refills (4-col wide) ── */}
-          <TiltCard
+          <RevealCard
             className="services-card-item services-bento-large"
             delay={D[0]}
           >
-            {/*
-              ✅ FIX: Badge is now a flex sibling of the icon box
-              inside .services-icon-row — no more absolute overflow.
-            */}
             <div className="services-icon-row">
               <div className="services-icon-box">
                 <FaPills />
@@ -155,10 +148,10 @@ export default function ServicesSection() {
                 </div>
               </div>
             </div>
-          </TiltCard>
+          </RevealCard>
 
           {/* ── Weight Loss (2-col) ── */}
-          <TiltCard
+          <RevealCard
             className="services-card-item services-bento-small-weightloss"
             delay={D[1]}
           >
@@ -171,10 +164,6 @@ export default function ServicesSection() {
               lifestyle coaching, and monthly monitoring.
             </p>
 
-            {/*
-              ✅ FIX: CTA link is now BELOW the stat row, not inside it.
-              Prevents the number + period + link all fighting for space.
-            */}
             <div className="services-weight-stat-block">
               <span className="services-weight-stat-eyebrow">AVG. WEIGHT LOSS</span>
               <div className="services-weight-stat-row">
@@ -185,14 +174,10 @@ export default function ServicesSection() {
                 Start program →
               </a>
             </div>
-          </TiltCard>
+          </RevealCard>
 
           {/* ── Mental Health (2-col tall) ── */}
-          {/*
-            ✅ NOTE: class name "services-bento-smal-1" preserved intentionally
-            (matches existing CSS) — rename both together if cleaning up.
-          */}
-          <TiltCard
+          <RevealCard
             className="services-card-item services-bento-smal-1"
             delay={D[2]}
           >
@@ -208,10 +193,10 @@ export default function ServicesSection() {
             <a href="#" className="services-card-cta-link">
               Get support →
             </a>
-          </TiltCard>
+          </RevealCard>
 
           {/* ── General Consultation (2-col) ── */}
-          <TiltCard
+          <RevealCard
             className="services-card-item services-bento-small"
             delay={D[3]}
           >
@@ -226,10 +211,10 @@ export default function ServicesSection() {
             <a href="#" className="services-card-cta-link">
               See a doctor →
             </a>
-          </TiltCard>
+          </RevealCard>
 
           {/* ── Sexual Health (2-col) ── */}
-          <TiltCard
+          <RevealCard
             className="services-card-item services-bento-small-0"
             delay={D[4]}
           >
@@ -244,10 +229,10 @@ export default function ServicesSection() {
             <a href="#" className="services-card-cta-link">
               Learn more →
             </a>
-          </TiltCard>
+          </RevealCard>
 
           {/* ── Chronic Care (4-col wide) ── */}
-          <TiltCard
+          <RevealCard
             className="services-card-item services-bento-wide"
             delay={D[5]}
           >
@@ -262,10 +247,10 @@ export default function ServicesSection() {
             <a href="#" className="services-card-cta-link">
               Manage condition →
             </a>
-          </TiltCard>
+          </RevealCard>
 
         </div>
       </div>
-    </section>
+    </Motion.section>
   );
 }

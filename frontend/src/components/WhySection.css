@@ -1,0 +1,313 @@
+/* ══════════════════════════════════════════════
+   WHY HUMANCARE SECTION
+══════════════════════════════════════════════ */
+
+.why-section-container {
+  margin: 80px auto;
+  max-width: 1500px;
+  width: calc(100% - 48px);
+}
+
+/* ── Section card ── */
+.why-section {
+  position: relative;
+  width: 100%;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 70px 52px;
+  border-radius: 34px;
+
+  background: var(--bg, #ffffff);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 20px 60px rgba(15, 23, 42, 0.06);
+
+  /* ✅ visible — overflow:hidden clips Framer Motion scale() */
+  overflow: visible;
+  z-index: 1;
+
+  /* Framer Motion drives scale/opacity/y */
+  will-change: transform, opacity;
+  transform-origin: center center;
+}
+
+/* Decorative orbs */
+.why-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 80% 15%, rgba(12, 139, 122, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 85%, rgba(34, 58, 94, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Grid: LEFT = text, RIGHT = visual ── */
+.why-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+/* ════════════════════════════════════════
+   LEFT COLUMN — eyebrow + title + list
+════════════════════════════════════════ */
+.why-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.why-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.why-item {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 18px 22px;
+  border: 1px solid rgba(67, 109, 186, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 4px 16px rgba(15, 23, 42, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+  cursor: default;
+}
+
+/* Shimmer sweep on hover */
+.why-item::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  transition: left 0.45s ease;
+  pointer-events: none;
+}
+.why-item:hover::after { left: 100%; }
+
+.why-item:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 12px 36px rgba(15, 23, 42, 0.10),
+    inset 0 1px 1px rgba(255, 255, 255, 1);
+  border-color: rgba(67, 109, 186, 0.18);
+}
+
+.why-item-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var(--text, #0f1f3d);
+  position: relative;
+  z-index: 1;
+}
+.why-item-desc {
+  font-size: 13px;
+  color: var(--muted, #6e7d96);
+  line-height: 1.65;
+  position: relative;
+  z-index: 1;
+}
+
+/* ════════════════════════════════════════
+   RIGHT COLUMN — visual / stat cards
+════════════════════════════════════════ */
+.why-visual {
+  position: relative;
+  height: 520px;
+}
+
+/* ── Centre stat card ── */
+.stat-card-main {
+  position: absolute;
+  top: 25%;
+  left: 30%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  background: white;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 20px 70px rgba(34, 58, 94, 0.13);
+  border: 1px solid var(--border, rgba(67, 109, 186, 0.1));
+  z-index: 2;
+}
+
+.sc-label  { font-size: 11.5px; color: var(--muted, #6e7d96); margin-bottom: 6px; }
+.sc-big    {
+  font-family: var(--font-heading, "Satoshi", sans-serif);
+  font-size: 48px;
+  font-weight: 800;
+  color: #223a5e;
+  line-height: 1;
+}
+.sc-percent { font-size: 24px; font-weight: 700; }
+.sc-sub     { font-size: 11.5px; color: var(--muted, #6e7d96); margin-top: 4px; margin-bottom: 16px; }
+.sc-divider { height: 1px; background: var(--border, rgba(67,109,186,0.1)); margin-bottom: 14px; }
+.sc-row     { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted, #6e7d96); margin-bottom: 6px; }
+.sc-row strong { color: var(--text, #0f1f3d); font-weight: 700; }
+.sc-prog    { height: 5px; background: rgba(67,109,186,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.sc-fill    {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #436dba, #0c8b7a);
+}
+
+/* ── Float cards base ── */
+.stat-float {
+  position: absolute;
+  background: white;
+  border-radius: 14px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 28px rgba(34, 58, 94, 0.1);
+  border: 1px solid var(--border, rgba(67, 109, 186, 0.1));
+  min-width: 118px;
+  z-index: 3;
+}
+
+.sf-label { font-size: 10.5px; color: var(--muted, #6e7d96); text-transform: uppercase; letter-spacing: 0.05em; }
+.sf-val   {
+  font-family: var(--font-heading, "Satoshi", sans-serif);
+  font-size: 19px;
+  font-weight: 800;
+  margin-top: 4px;
+  line-height: 1.1;
+}
+
+/* ── Float positions — 5 cards distributed around the centre card ── */
+
+/* sf1 — top-right corner */
+.sf1 {
+  top: 4%;
+  right: 2%;
+  animation: floatA 4.2s ease-in-out infinite;
+}
+
+/* sf2 — bottom-left corner */
+.sf2 {
+  bottom: 4%;
+  left: 2%;
+  animation: floatB 3.8s ease-in-out infinite;
+}
+
+/* sf3 — middle-left, vertically centred */
+.sf3 {
+  top: 50%;
+  left: -4%;
+  transform: translateY(-50%);
+  animation: floatA 5s ease-in-out infinite;
+}
+
+/* sf4 — top-left (new) */
+.sf4 {
+  top: 6%;
+  left: 4%;
+  animation: floatB 4.6s ease-in-out 0.4s infinite;
+}
+
+/* sf5 — bottom-right (new) */
+.sf5 {
+  bottom: 6%;
+  right: 2%;
+  animation: floatA 3.6s ease-in-out 0.8s infinite;
+}
+.sf6 {
+  top: 50%;
+  right: -4%;
+  transform: translateY(-50%);
+  animation: floatB 4.4s ease-in-out 0.2s infinite;
+}
+
+/* Float keyframes */
+@keyframes floatA {
+  0%, 100% { transform: translateY(0px);     }
+  50%       { transform: translateY(-10px);   }
+}
+@keyframes floatB {
+  0%, 100% { transform: translateY(0px);     }
+  50%       { transform: translateY(-13px);  }
+}
+
+/* sf3 floats while staying Y-centred */
+.sf3 {
+  animation: floatC 5s ease-in-out infinite;
+}
+@keyframes floatC {
+  0%, 100% { transform: translateY(calc(-50% + 0px));   }
+  50%       { transform: translateY(calc(-50% - 10px)); }
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════ */
+
+@media (min-width: 1200px) {
+  .why-section { padding: 80px 60px; }
+}
+
+@media (max-width: 1100px) {
+  .why-grid { gap: 48px; }
+  .why-visual { height: 480px; }
+  .stat-card-main { width: 250px; padding: 20px; }
+  .sc-big { font-size: 42px; }
+}
+
+@media (max-width: 900px) {
+  .why-section-container { width: calc(100% - 32px); }
+  .why-section {
+    padding: 60px 32px;
+    border-radius: 28px;
+    min-height: unset;
+  }
+}
+
+/* Tablet — single column, hide visual */
+@media (max-width: 768px) {
+  .why-section { padding: 50px 24px; }
+  .why-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .why-visual { display: none; }
+}
+
+@media (max-width: 520px) {
+  .why-section-container { width: calc(100% - 16px); }
+  .why-section {
+    padding: 40px 18px;
+    border-radius: 22px;
+  }
+  .why-item { padding: 16px 18px; }
+  .why-item-title { font-size: 14px; }
+  .why-item-desc  { font-size: 12px; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .stat-float { animation: none; }
+  .why-item   { transition: none; }
+}
