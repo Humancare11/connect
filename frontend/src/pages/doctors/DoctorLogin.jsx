@@ -227,7 +227,8 @@ export default function DoctorAuthPage() {
       setRegisterForm({ name: "", email: "", password: "", confirmPassword: "" });
       afterLogin(res.data.doctor, true);
     } catch (err) {
-      setFormError(err.response?.data?.message || err.response?.data?.msg || "Registration failed. Please try again.");
+      setOtpValue("");
+      setFormError(err.response?.data?.message || err.response?.data?.msg || "Invalid OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -260,8 +261,10 @@ export default function DoctorAuthPage() {
       setResetToken(res.data.resetToken);
       goTo("forgot-reset");
       if (timerRef.current) clearInterval(timerRef.current);
-    } catch (err) { setFormError(err.response?.data?.message || "Invalid OTP."); }
-    finally { setLoading(false); }
+    } catch (err) {
+      setOtpValue("");
+      setFormError(err.response?.data?.message || "Invalid OTP. Please try again.");
+    } finally { setLoading(false); }
   };
 
   const handleForgotResend = async () => {
