@@ -657,7 +657,7 @@ export default function AuthPage() {
         <div className="auth-form-box register-form-box">
           <form onSubmit={handleRegisterSubmit} className="register-form">
             <h1>Create Account</h1>
-            <p className="form-subtitle">Join HumaniCare and take charge of your health</p>
+            <p className="form-subtitle">Join Humancare and take charge of your health</p>
 
             <div className="social-links">
               <button type="button" className="google-btn" onClick={() => initiateGoogleLogin()}>
