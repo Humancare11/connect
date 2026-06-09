@@ -137,7 +137,7 @@ const ensureDoctorEnrollment = async (doctor) => {
 // ════════════════════════════════════════════
 const sendRegisterOTP = async (req, res) => {
   try {
-    const { email, password, dob, privacyConsent, hipaaConsent } = req.body;
+    const { email, password, dob, privacyConsent, hipaaConsent, name } = req.body;
     if (!email) return res.status(400).json({ msg: "Email is required." });
     if (password !== undefined) {
       const passwordCheck = validatePasswordStrength(password);
@@ -157,7 +157,7 @@ const sendRegisterOTP = async (req, res) => {
     const exists = await User.findOne({ email: clean });
     if (exists) return res.status(409).json({ msg: "This email is already registered. Please sign in." });
 
-    await createAndSendOTP(clean, "register", "user");
+    await createAndSendOTP(clean, "register", "user", name);
     return res.json({ msg: "OTP sent to your email." });
   } catch (err) {
     console.error("sendRegisterOTP error:", err);

@@ -58,8 +58,14 @@ function hashesMatch(expectedHash, candidateCode) {
 }
 
 // Delete any prior OTP for this email+type+role, generate a fresh one, persist and email it.
-const createAndSendOTP = async (email, type, role = "user") => {
+const createAndSendOTP = async (email, type, role = "user", name) => {
   const clean = email.toLowerCase().trim();
+
+  // Build greeting name based on role
+  let greetingName;
+  if (name) {
+    greetingName = role === "doctor" ? `Dr. ${name}` : name;
+  }
 
   // Resend limiter: enforce per-(email + type + role) policy.
   const allowed = canResend(clean, type, role);
@@ -84,7 +90,7 @@ const createAndSendOTP = async (email, type, role = "user") => {
 
   const record = await OTP.create({ email: clean, otpHash: hashOTP(code), type, role, expiresAt });
   try {
-    await sendOTPEmail(clean, code, type);
+    await sendOTPEmail(clean, code, type, greetingName);
   } catch (err) {
     await OTP.deleteOne({ _id: record._id });
     throw err;

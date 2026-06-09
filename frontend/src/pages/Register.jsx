@@ -4,9 +4,25 @@ import api from "../api";
 import PhoneInputLib from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import "./register.css";
+import DatePickerField from "../components/DatePickerField";
 
 const PhoneInput = PhoneInputLib.default ?? PhoneInputLib;
-const PASSWORD_REQUIREMENTS = "8+ chars with uppercase, lowercase, number, and symbol.";
+
+function EyeIcon({ open }) {
+  return open ? (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  ) : (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+const PASSWORD_REQUIREMENTS = "8+ chars, uppercase, lowercase, number & symbol.";
 const COMMON_PASSWORDS = new Set([
   "password", "password1", "password123", "12345678", "123456789", "qwerty123",
   "admin123", "admin1234", "welcome1", "welcome123", "letmein1", "iloveyou1",
@@ -30,6 +46,7 @@ function getDobError(dob) {
   if (!dob) return "Please select your date of birth.";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return "Please enter a valid date of birth.";
   if (Number.isNaN(new Date(`${dob}T00:00:00`).getTime())) return "Please enter a valid date of birth.";
+  if (dob.startsWith("0000")) return "Please enter a valid year of birth.";
   if (dob > todayISO()) return "Date of birth cannot be in the future.";
   if (dob < DOB_MIN) return "Date of birth must be in or after 1900.";
   return "";
@@ -50,6 +67,7 @@ export default function Register() {
   });
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
@@ -137,18 +155,17 @@ export default function Register() {
           inputStyle={{ width: "100%" }}
         />
 
-        <div className="row">
-          <input
-            type="date"
-            name="dob"
-            value={form.dob}
-            onChange={handleChange}
-            min={DOB_MIN}
-            max={todayISO()}
-            required
-          />
-
-          <select name="gender" onChange={handleChange} required>
+        <div className="row" style={{ alignItems: "flex-start" }}>
+          <div style={{ flex: 1 }}>
+            <DatePickerField
+              value={form.dob}
+              onChange={(v) => setForm((prev) => ({ ...prev, dob: v }))}
+              min={DOB_MIN}
+              max={todayISO()}
+              placeholder="Date of Birth"
+            />
+          </div>
+          <select name="gender" onChange={handleChange} required style={{ flex: 1, height: 46, marginTop: 0 }}>
             <option value="">Gender</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
@@ -156,13 +173,18 @@ export default function Register() {
           </select>
         </div>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password (8+ chars, mixed case, number, symbol)"
-          onChange={handleChange}
-          required
-        />
+        <div className="register-password-wrap">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Example: MySecurePass@123!"
+            onChange={handleChange}
+            required
+          />
+          <button type="button" className="register-password-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+            <EyeIcon open={showPassword} />
+          </button>
+        </div>
         <p style={{ fontSize: 12, color: passwordError ? "#dc2626" : "#475569", margin: "-6px 0 8px" }}>
           {passwordError || PASSWORD_REQUIREMENTS}
         </p>

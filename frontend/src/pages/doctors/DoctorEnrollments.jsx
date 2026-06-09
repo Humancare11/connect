@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
-import PhoneInputField from "../../components/PhoneInputField";
+import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES } from "../../components/PhoneInputField";
+import useLocationData from "../../hooks/useLocationData";
+import DatePickerField from "../../components/DatePickerField";
 
 // ─── Constants ───
 const COUNTRIES = [
@@ -75,6 +77,14 @@ const splitPhoneValue = (fullValue, countryMeta) => {
     countryCode: `+${dial}`,
     phone: digits.startsWith(dial) ? digits.slice(dial.length) : digits,
   };
+};
+
+// Helper to find country code from dial code
+const getCountryCodeFromDialCode = (dialCode) => {
+  if (!dialCode) return "auto";
+  const cleanDial = String(dialCode).replace(/\D/g, "");
+  const country = PHONE_COUNTRIES.find(c => c.dial === cleanDial);
+  return country?.code || "auto";
 };
 
 // Countries with state/province-level medical licensing
@@ -614,10 +624,13 @@ h1,h2,h3,h4,h5,h6 {
 /* ─── Form ─── */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow: visible;  }
 .form-grid .full-width { grid-column: 1 / -1; }
+.location-row { display: -webkit-inline-box; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; }
+.location-row .field-group { width: 64.5%; min-width: 0; }
 .field-group {
   display: flex; flex-direction: column; gap: 6px;
-  position: relative;          /* ← add this, needed for absolute child */
-  overflow: visible;           /* ← add this */
+  position: relative;
+  overflow: visible;
+  min-width: 0;
 }
 .field-label { font-size: 13px; font-weight: 600; color: var(--navy); display: flex; align-items: center; gap: 4px; }
 .field-label .req { color: var(--red); font-size: 14px; }
@@ -626,6 +639,7 @@ h1,h2,h3,h4,h5,h6 {
   border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
   font-size: 14px; color: var(--navy); background: var(--white);
   transition: var(--transition); outline: none; width: 100%;
+  box-sizing: border-box; min-width: 0;
 }
 .field-input:focus, .field-select:focus, .field-textarea:focus {
   border-color: var(--teal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
@@ -633,12 +647,18 @@ h1,h2,h3,h4,h5,h6 {
 .field-input.error, .field-select.error {
   border-color: var(--red); box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
 }
+.field-input:disabled, .field-select:disabled {
+  background: #f3f4f6; color: #9ca3af; cursor: not-allowed; opacity: 0.6; border-color: #e5e7eb;
+}
 .field-error { font-size: 12px; color: var(--red); font-weight: 500; }
 .field-textarea { resize: vertical; min-height: 80px; }
 .field-select {
   cursor: pointer; appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+}
+.field-select:disabled {
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 /* ─── Buttons ─── */
@@ -834,10 +854,12 @@ h1,h2,h3,h4,h5,h6 {
 @media (max-width: 900px) {
   .de-step-card { padding: 0 16px; }
   .progress-section { padding: 0 16px; }
+  .location-row { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 720px) {
   .form-grid { grid-template-columns: 1fr; }
+  .location-row { grid-template-columns: 1fr; }
   .de-card-body { padding: 22px 18px 28px; }
   .de-card-header { padding: 20px 18px 16px; }
   .de-card-header h2 { font-size: 19px; }
@@ -1186,8 +1208,12 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
 
   const handlePick = async (rawFile) => {
     if (!rawFile) return;
-    if (!rawFile.type.startsWith("image/")) {
-      setUploadErr("Please select an image file (JPG, PNG, or WebP).");
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    const fileExtension = rawFile.name.toLowerCase().slice(rawFile.name.lastIndexOf("."));
+
+    if (!allowedTypes.includes(rawFile.type) || !allowedExtensions.includes(fileExtension)) {
+      setUploadErr("Only JPG, JPEG, PNG, and WebP images are allowed.");
       return;
     }
     setUploadErr("");
@@ -1515,6 +1541,8 @@ export default function DoctorOnboardingWizard({
   });
   const [languagesKnown, setLanguagesKnown] = useState([]);
   const [s1Errors, setS1Errors] = useState({});
+  const [phoneCountryCode, setPhoneCountryCode] = useState("auto");
+  const { states, cities, loadingStates, loadingCities } = useLocationData(s1.country, s1.state);
 
   // Step 2
   const [s2, setS2] = useState({
@@ -1588,6 +1616,7 @@ export default function DoctorOnboardingWizard({
     setS1((prev) => ({ ...prev, ...nextPhone }));
   };
   const handleMobileCountryChange = (countryMeta) => {
+    setPhoneCountryCode(countryMeta.code || "auto");
     setS1((prev) => ({
       ...prev,
       countryCode: countryMeta.dialCode || prev.countryCode,
@@ -1618,6 +1647,9 @@ export default function DoctorOnboardingWizard({
       zip: data.zip || "",
       address: data.address || "",
     });
+    if (data.countryCode) {
+      setPhoneCountryCode(getCountryCodeFromDialCode(data.countryCode));
+    }
     const rawLangs = data.languagesKnown;
     setLanguagesKnown(
       Array.isArray(rawLangs)
@@ -1776,6 +1808,7 @@ export default function DoctorOnboardingWizard({
       }
       setStep(nextStep);
     }
+    window.scrollTo(0, 0);
   }, [initialData, loadFromData]);
 
   const handleEditResubmit = () => {
@@ -1812,6 +1845,7 @@ export default function DoctorOnboardingWizard({
 
   useEffect(() => {
     persistProgress(step);
+    window.scrollTo(0, 0);
   }, [step, persistProgress]);
 
   useEffect(() => {
@@ -2048,7 +2082,7 @@ export default function DoctorOnboardingWizard({
             <label className="field-label">Last Name</label>
             <input
               className="field-input"
-              placeholder="Surname"
+              placeholder="Last name"
               value={s1.surname}
               onChange={(e) => setS1({ ...s1, surname: e.target.value })}
             />
@@ -2074,7 +2108,7 @@ export default function DoctorOnboardingWizard({
                 value={mobileValue}
                 onChange={handleMobileChange}
                 onCountryChange={handleMobileCountryChange}
-                defaultCountry="auto"
+                defaultCountry={phoneCountryCode}
                 placeholder="Mobile number"
               />
             </div>
@@ -2121,11 +2155,12 @@ export default function DoctorOnboardingWizard({
             <label className="field-label">
               Date of Birth <span className="req">*</span>
             </label>
-            <input
-              className={`field-input ${s1Errors.dob ? "error" : ""}`}
-              type="date"
+            <DatePickerField
               value={s1.dob}
-              onChange={(e) => setS1({ ...s1, dob: e.target.value })}
+              onChange={(v) => setS1({ ...s1, dob: v })}
+              min="1900-01-01"
+              max={new Date().toISOString().slice(0, 10)}
+              placeholder="Select date of birth"
             />
             {s1Errors.dob && <div className="field-error">{s1Errors.dob}</div>}
           </div>
@@ -2149,7 +2184,7 @@ export default function DoctorOnboardingWizard({
               className={`field-select ${s1Errors.country ? "error" : ""}`}
               value={s1.country}
               onChange={(e) => {
-                setS1({ ...s1, country: e.target.value, state: "" });
+                setS1({ ...s1, country: e.target.value, state: "", city: "" });
                 setLicensedStates([]);
                 setOtherLicenseCountries([]);
               }}
@@ -2165,29 +2200,42 @@ export default function DoctorOnboardingWizard({
               <div className="field-error">{s1Errors.country}</div>
             )}
           </div>
-          <div className="field-group">
+            <div className="location-row">
+            <div className="field-group">
             <label className="field-label">
-              State / Province / Region
+              State / Province
               {s1.country === "United States" && <span className="req">*</span>}
+              {!s1.country && <span style={{ fontSize: "12px", fontWeight: "600", color: "red", marginLeft: "auto" }}>ⓘ Select country first</span>}
             </label>
-            <input
-              className={`field-input ${s1Errors.state ? "error" : ""}`}
-              placeholder="e.g. California, Ontario"
+            <select
+              className={`field-select ${s1Errors.state ? "error" : ""}`}
               value={s1.state}
-              onChange={(e) => setS1({ ...s1, state: e.target.value })}
-            />
+              onChange={(e) => setS1({ ...s1, state: e.target.value, city: "" })}
+              disabled={!s1.country}
+              title={!s1.country ? "Please select a country first" : ""}
+            >
+              <option value="">{loadingStates ? "Loading..." : s1.country ? "Select state / province" : "Select country first"}</option>
+              {states.map((s) => <option key={s.isoCode} value={s.name}>{s.name}</option>)}
+            </select>
             {s1Errors.state && (
               <div className="field-error">{s1Errors.state}</div>
             )}
           </div>
           <div className="field-group">
-            <label className="field-label">City</label>
-            <input
-              className="field-input"
-              placeholder="City"
+            <label className="field-label">
+              City
+              {!s1.state && <span style={{ fontSize: "12px", fontWeight: "600", color: "red", marginLeft: "auto" }}>ⓘ Select state first</span>}
+            </label>
+            <select
+              className="field-select"
               value={s1.city}
               onChange={(e) => setS1({ ...s1, city: e.target.value })}
-            />
+              disabled={!s1.state}
+              title={!s1.state ? "Please select a state first" : ""}
+            >
+              <option value="">{loadingCities ? "Loading..." : s1.state ? "Select city" : "Select state first"}</option>
+              {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
           <div className="field-group">
             <label className="field-label">ZIP / Postal Code</label>
@@ -2198,6 +2246,8 @@ export default function DoctorOnboardingWizard({
               onChange={(e) => setS1({ ...s1, zip: e.target.value })}
             />
           </div>
+            </div>
+          
           <div className="field-group full-width">
             <label className="field-label">Street Address</label>
             <input

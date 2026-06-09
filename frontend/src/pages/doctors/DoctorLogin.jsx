@@ -5,7 +5,22 @@ import "../log.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 
-const PASSWORD_REQUIREMENTS = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+function EyeIcon({ open }) {
+  return open ? (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  ) : (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+
+const PASSWORD_REQUIREMENTS = "8+ chars, uppercase, lowercase, number & symbol.";
 
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
@@ -127,6 +142,7 @@ export default function DoctorAuthPage() {
   const [resetToken,  setResetToken]  = useState("");
   const [newPass,     setNewPass]     = useState("");
   const [confirmPass, setConfirmPass] = useState("");
+  const [showPasswords, setShowPasswords] = useState({ register: false, confirm: false, login: false, newPass: false, confirmPass: false });
 
   const clrErr = () => { setFormError(""); setFormSuccess(""); };
 
@@ -193,7 +209,7 @@ export default function DoctorAuthPage() {
       return setFormError(PASSWORD_REQUIREMENTS);
     setLoading(true);
     try {
-      await api.post("/api/doctor/send-register-otp", { email: registerForm.email });
+      await api.post("/api/doctor/send-register-otp", { email: registerForm.email, name: registerForm.name });
       goTo("register-otp");
       startTimer();
     } catch (err) { setFormError(err.response?.data?.message || "Failed to send OTP."); }
@@ -226,7 +242,7 @@ export default function DoctorAuthPage() {
 
   const handleResendRegisterOTP = async () => {
     clrErr();
-    try { await api.post("/api/doctor/send-register-otp", { email: registerForm.email }); startTimer(); }
+    try { await api.post("/api/doctor/send-register-otp", { email: registerForm.email, name: registerForm.name }); startTimer(); }
     catch { setFormError("Could not resend OTP."); }
   };
 
@@ -282,7 +298,7 @@ export default function DoctorAuthPage() {
   /* Registration OTP */
   if (view === "register-otp") return (
     <FlowCard icon="📧" title="Verify Your Email"
-      subtitle={<>We sent a 6-digit OTP to <strong style={{ color: "#059669" }}>{registerForm.email}</strong></>}
+      subtitle={<>We sent a 6-digit security code to <strong style={{ color: "#059669" }}>{registerForm.email}</strong></>}
       formError={formError} onBack={() => { goTo("auth"); setIsRegister(true); }}>
       <form onSubmit={handleOTPSubmit} style={{ width: "100%" }}>
         <OTPInput value={otpValue} onChange={(v) => { setOtpValue(v); clrErr(); }} />
@@ -339,10 +355,20 @@ export default function DoctorAuthPage() {
       subtitle="Choose a strong password for your account."
       formError={formError} onBack={() => goTo("forgot-otp")}>
       <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
-        <input type="password" placeholder="New password (8+ chars, mixed case, number, symbol)" value={newPass}
-          onChange={(e) => { setNewPass(e.target.value); clrErr(); }} required />
-        <input type="password" placeholder="Confirm new password" value={confirmPass}
-          onChange={(e) => { setConfirmPass(e.target.value); clrErr(); }} required />
+        <div className="password-wrapper">
+          <input type={showPasswords.newPass ? "text" : "password"} placeholder="Example: MySecurePass@123!" value={newPass}
+            onChange={(e) => { setNewPass(e.target.value); clrErr(); }} required />
+          <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, newPass: !p.newPass }))} tabIndex={-1}>
+            <EyeIcon open={showPasswords.newPass} />
+          </button>
+        </div>
+        <div className="password-wrapper">
+          <input type={showPasswords.confirmPass ? "text" : "password"} placeholder="Example: MySecurePass@123!" value={confirmPass}
+            onChange={(e) => { setConfirmPass(e.target.value); clrErr(); }} required />
+          <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, confirmPass: !p.confirmPass }))} tabIndex={-1}>
+            <EyeIcon open={showPasswords.confirmPass} />
+          </button>
+        </div>
         <button type="submit" disabled={loading} style={{ width: "100%", marginTop: 8 }}>
           {loading ? "Resetting..." : "Reset Password"}
         </button>
@@ -378,14 +404,24 @@ export default function DoctorAuthPage() {
               value={registerForm.email}
               onChange={(e) => { setRegisterForm((p) => ({ ...p, email: e.target.value })); clrErr(); }} required />
 
-            <input type="password" placeholder="Create password (8+ chars, mixed case, number, symbol)"
-              value={registerForm.password}
-              onChange={(e) => { setRegisterForm((p) => ({ ...p, password: e.target.value })); clrErr(); }} required />
+            <div className="password-wrapper">
+              <input type={showPasswords.register ? "text" : "password"} placeholder="Example: MySecurePass@123!"
+                value={registerForm.password}
+                onChange={(e) => { setRegisterForm((p) => ({ ...p, password: e.target.value })); clrErr(); }} required />
+              <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, register: !p.register }))} tabIndex={-1}>
+                <EyeIcon open={showPasswords.register} />
+              </button>
+            </div>
             <p className="password-requirements">{PASSWORD_REQUIREMENTS}</p>
 
-            <input type="password" placeholder="Confirm password"
-              value={registerForm.confirmPassword}
-              onChange={(e) => { setRegisterForm((p) => ({ ...p, confirmPassword: e.target.value })); clrErr(); }} required />
+            <div className="password-wrapper">
+              <input type={showPasswords.confirm ? "text" : "password"} placeholder="Example: MySecurePass@123!"
+                value={registerForm.confirmPassword}
+                onChange={(e) => { setRegisterForm((p) => ({ ...p, confirmPassword: e.target.value })); clrErr(); }} required />
+              <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, confirm: !p.confirm }))} tabIndex={-1}>
+                <EyeIcon open={showPasswords.confirm} />
+              </button>
+            </div>
 
             <button type="submit" disabled={loading}>
               {loading ? "Sending OTP…" : "Register"}
@@ -422,9 +458,14 @@ export default function DoctorAuthPage() {
               value={loginForm.email}
               onChange={(e) => { setLoginForm((p) => ({ ...p, email: e.target.value })); clrErr(); }} required />
 
-            <input type="password" placeholder="Password"
-              value={loginForm.password}
-              onChange={(e) => { setLoginForm((p) => ({ ...p, password: e.target.value })); clrErr(); }} required />
+            <div className="password-wrapper">
+              <input type={showPasswords.login ? "text" : "password"} placeholder="Password"
+                value={loginForm.password}
+                onChange={(e) => { setLoginForm((p) => ({ ...p, password: e.target.value })); clrErr(); }} required />
+              <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, login: !p.login }))} tabIndex={-1}>
+                <EyeIcon open={showPasswords.login} />
+              </button>
+            </div>
 
             <button type="button" className="forgot-link"
               onClick={() => { setView("forgot-email"); clrErr(); }}>
