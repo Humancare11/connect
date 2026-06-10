@@ -1,6 +1,6 @@
 /* ── Section Wrapper ── */
 .services-section-wrapper {
-   position: relative;
+  position: relative;
   width: calc(100% - 100px);
   max-width: 1500px;
   margin: 80px auto;
@@ -21,13 +21,15 @@
     );
 
   box-shadow:
-    0 35px 80px rgba(0,0,0,.30),
-    0 15px 35px rgba(8,22,50,.25);
+    0 35px 80px rgba(0, 0, 0, 0.30),
+    0 15px 35px rgba(8, 22, 50, 0.25);
 
- 
+  /* GPU-composited — keeps scroll animation smooth */
+  will-change: transform, opacity;
+  transform-origin: center bottom;
 }
 
-/* Very subtle top-left brightening — matches the faint lighter patch in reference */
+/* Subtle top-left brightening */
 .services-section-wrapper::before {
   content: "";
   position: absolute;
@@ -39,7 +41,6 @@
   pointer-events: none;
 }
 
-/* No grid overlay — reference image is clean flat dark, no grid texture */
 .services-section-wrapper::after {
   display: none;
 }
@@ -65,7 +66,18 @@
   color: rgba(255, 255, 255, 0.6);
   margin-bottom: 14px;
   text-transform: uppercase;
+  gap: 18px;
 }
+/* 
+.services-eyebrow-label::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+} */
+
 
 .services-main-heading,
 .services-heading-highlight {
@@ -80,7 +92,6 @@
 
 .services-heading-highlight {
   color: white;
-  /* matches the reference: heading text is plain white, no gradient shimmer */
   background: none;
   -webkit-text-fill-color: unset;
 }
@@ -94,15 +105,14 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 18px;
-
-  /* ✅ FIX: Unified generous padding — override per-size classes below */
   padding: 22px;
 
   transition:
     border-color 0.3s ease,
     box-shadow 0.3s ease,
-    transform 0.25s ease,
+    transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     background 0.3s ease;
+
   position: relative;
   overflow: hidden;
   box-shadow:
@@ -116,35 +126,52 @@
 .services-card-item:hover {
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.07);
+    0 20px 48px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.075);
+}
+
+/* ── Badge row ── */
+.services-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 /* ── Icon Box ── */
 .services-icon-box {
-  position: relative;
   width: 38px;
   height: 38px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.13);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   color: rgba(255, 255, 255, 0.85);
-  overflow: visible;
 }
 
 .services-icon-box svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   color: rgba(255, 255, 255, 0.85);
-  filter: none;
+}
+
+.services-feature-badge {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  padding: 4px 10px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* ── Card Title ── */
@@ -175,7 +202,9 @@
   font-weight: 600;
   color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
-  transition: all 0.25s ease;
+  transition:
+    color 0.25s ease,
+    gap 0.25s ease;
   letter-spacing: 0.02em;
   margin-top: auto;
   width: fit-content;
@@ -184,33 +213,6 @@
 .services-card-cta-link:hover {
   color: #ffffff;
   gap: 8px;
-}
-
-/* ── Badge ──
-   ✅ FIX: removed `left: calc(100% + 10px)` which caused overflow.
-   Now flows inline beside the icon using a wrapper flex row.
-   See .services-icon-row below.
-*/
-.services-icon-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.services-feature-badge {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 20px;
-  padding: 4px 10px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  position: static;
-  transform: none;
 }
 
 /* ── Stats mini ── */
@@ -224,7 +226,10 @@
   gap: 3px;
   flex: 1;
   text-align: center;
-  transition: all 0.3s ease;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .services-stat-mini:hover {
@@ -313,8 +318,6 @@
   font-weight: 400;
 }
 
-/* ✅ FIX: CTA for weight loss moved OUT of weight-stat-row to its own row
-   (see JSX changes — add a separate <a> below the stat row) */
 .services-weight-cta {
   margin-top: 8px;
 }
@@ -326,7 +329,7 @@
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-auto-rows: minmax(165px, auto);
-  gap: 10px;
+  gap: 15px;
 }
 
 /* Prescription Refills — 4 cols */
@@ -344,7 +347,6 @@
 }
 
 /* Mental Health — 2 cols, 2 rows (tall) */
-/* ✅ NOTE: "smal-1" typo preserved to match existing JSX class */
 .services-bento-smal-1 {
   grid-column: span 2;
   grid-row: span 2;
@@ -563,10 +565,6 @@
   .services-content-right {
     flex-direction: column;
     width: 100%;
-  }
-  .services-icon-box {
-    width: 34px;
-    height: 34px;
   }
   .services-stat-value-text {
     font-size: 16px;

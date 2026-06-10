@@ -39,7 +39,7 @@ const applyProgress = (enrollment, nextCompletedSteps, nextCurrentStep) => {
 // ── POST /api/doctor/send-register-otp ───────────────────────────────────────
 router.post("/send-register-otp", async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, name } = req.body;
     if (!email) return res.status(400).json({ message: "Email is required." });
 
     const clean = email.toLowerCase().trim();
@@ -47,7 +47,7 @@ router.post("/send-register-otp", async (req, res) => {
     if (exists)
       return res.status(409).json({ message: "This email is already registered. Please login." });
 
-    await createAndSendOTP(clean, "register", "doctor");
+    await createAndSendOTP(clean, "register", "doctor", name);
     return res.json({ message: "OTP sent to your email." });
   } catch (err) {
     console.error("sendDoctorRegisterOTP error:", err);

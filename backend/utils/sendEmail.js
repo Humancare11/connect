@@ -45,7 +45,11 @@ const sendMail = async (message) => {
   }
 };
 
-const buildEmailHTML = (otp, type) => `
+const buildEmailHTML = (otp, type, name) => {
+  const greeting = name
+    ? `Hello ${name},`
+    : `Hello,`;
+  return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -146,7 +150,7 @@ const buildEmailHTML = (otp, type) => `
     </div>
 
     <div class="body">
-      <p>Hello,</p>
+      <p>${greeting}</p>
 
       <p>
         ${type === "register"
@@ -179,8 +183,9 @@ const buildEmailHTML = (otp, type) => `
   </div>
 </body>
 </html>`;
+};
 
-const sendOTPEmail = async (to, otp, type = "register") => {
+const sendOTPEmail = async (to, otp, type = "register", name) => {
   const subject =
     type === "register"
       ? "Humancare Connect — Email Verification OTP"
@@ -190,7 +195,7 @@ const sendOTPEmail = async (to, otp, type = "register") => {
     from: `"HumanCare Connect" <${MAIL_FROM}>`,
     to,
     subject,
-    html: buildEmailHTML(otp, type),
+    html: buildEmailHTML(otp, type, name),
   });
 };
 

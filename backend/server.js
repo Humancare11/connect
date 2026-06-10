@@ -333,6 +333,7 @@ app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/audit-logs", require("./routes/auditLogs"));
 app.use("/api/security-incidents", require("./routes/securityIncidents"));
 app.use("/api/retention-policies", require("./routes/retention"));
+app.use("/api/locations", require("./routes/locations"));
 
 // Health Check
 app.get("/api/health", (req, res) => {

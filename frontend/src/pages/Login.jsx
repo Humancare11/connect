@@ -1,10 +1,25 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import socket from "../socket";
 import "./log.css";
 
-const PASSWORD_REQUIREMENTS = "8+ chars with uppercase, lowercase, number, and symbol.";
+function EyeIcon({ open }) {
+  return open ? (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  ) : (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+
+const PASSWORD_REQUIREMENTS = "8+ chars, uppercase, lowercase, number & symbol.";
 const COMMON_PASSWORDS = new Set([
   "password", "password1", "password123", "12345678", "123456789", "qwerty123",
   "admin123", "admin1234", "welcome1", "welcome123", "letmein1", "iloveyou1",
@@ -28,6 +43,7 @@ function getDobError(dob) {
   if (!dob) return "Select Date of Birth";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return "Enter a valid Date of Birth";
   if (Number.isNaN(new Date(`${dob}T00:00:00`).getTime())) return "Enter a valid Date of Birth";
+  if (dob.startsWith("0000")) return "Enter a valid year of birth";
   if (dob > todayISO()) return "Date of Birth cannot be in the future";
   if (dob < DOB_MIN) return "Date of Birth must be in or after 1900";
   return "";
@@ -40,6 +56,8 @@ import PhoneInputField, {
   findCountryByName,
   toFlag,
 } from "../components/PhoneInputField";
+import DatePickerField from "../components/DatePickerField";
+import useLocationData from "../hooks/useLocationData";
 
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
@@ -146,10 +164,11 @@ export default function AuthPage() {
   const [view, setView] = useState("auth");
   const [isRegister, setIsRegister] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
-    name: "", email: "", mobile: "", dob: "", gender: "", country: "", password: "",
+    name: "", email: "", mobile: "", dob: "", gender: "", country: "", state: "", city: "", password: "",
     terms: false, privacyConsent: false, hipaaConsent: false,
   });
 
@@ -169,6 +188,7 @@ export default function AuthPage() {
   const [resetToken, setResetToken] = useState("");
   const [newPass, setNewPass] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
+  const [showPasswords, setShowPasswords] = useState({ register: false, login: false, newPass: false, confirmPass: false });
 
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
@@ -176,6 +196,7 @@ export default function AuthPage() {
     location.state?.registered ? "Account created successfully! Please sign in." : ""
   );
   const registerPasswordError = registerForm.password ? getPasswordError(registerForm.password) : "";
+  const { states, cities, loadingStates, loadingCities } = useLocationData(registerForm.country, registerForm.state);
 
   /* ── helpers ─────────────────────────────────────────────── */
   const clrErr = () => { setFormError(""); setFormSuccess(""); };
@@ -209,6 +230,15 @@ export default function AuthPage() {
   };
 
   const selectedPhoneCountry = findCountryByName(registerForm.country);
+
+  useEffect(() => {
+    if (!countryOpen) return;
+    const close = (e) => {
+      if (!e.target.closest(".custom-country-dropdown")) setCountryOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [countryOpen]);
 
   function afterLogin(user) {
     login(user);
@@ -297,6 +327,7 @@ export default function AuthPage() {
         email: registerForm.email,
         password: registerForm.password,
         dob: registerForm.dob,
+        name: registerForm.name,
         privacyConsent: registerForm.privacyConsent,
         hipaaConsent: registerForm.hipaaConsent,
       });
@@ -335,6 +366,7 @@ export default function AuthPage() {
         email: registerForm.email,
         password: registerForm.password,
         dob: registerForm.dob,
+        name: registerForm.name,
         privacyConsent: registerForm.privacyConsent,
         hipaaConsent: registerForm.hipaaConsent,
       });
@@ -412,17 +444,13 @@ export default function AuthPage() {
             <div className="row reg-row">
               <div className="reg-field-wrap">
                 <label className="reg-label">Date of Birth</label>
-                <div className="date-field">
-                  <input
-                    type="date"
-                    className="date-input"
-                    value={googleProfile.dob}
-                    onChange={(e) => setGoogleProfile((p) => ({ ...p, dob: e.target.value }))}
-                    min={DOB_MIN}
-                    max={todayISO()}
-                    required
-                  />
-                </div>
+                <DatePickerField
+                  value={googleProfile.dob}
+                  onChange={(v) => setGoogleProfile((p) => ({ ...p, dob: v }))}
+                  min={DOB_MIN}
+                  max={todayISO()}
+                  placeholder="Date of Birth"
+                />
               </div>
               <div className="reg-field-wrap">
                 <label className="reg-label">Gender</label>
@@ -584,7 +612,7 @@ export default function AuthPage() {
   /* Registration OTP */
   if (view === "register-otp") return (
     <FlowCard icon="📧" title="Verify Your Email"
-      subtitle={<>We sent a 6-digit OTP to <strong style={{ color: "#059669" }}>{registerForm.email}</strong></>}
+      subtitle={<>We sent a 6-digit security code to <strong style={{ color: "#059669" }}>{registerForm.email}</strong></>}
       formError={formError} onBack={() => { goTo("auth"); setIsRegister(true); }}>
       <form onSubmit={handleOTPSubmit} style={{ width: "100%" }}>
         <OTPInput value={otpValue} onChange={(v) => { setOtpValue(v); clrErr(); }} />
@@ -641,10 +669,20 @@ export default function AuthPage() {
       subtitle="Choose a strong password for your account."
       formError={formError} onBack={() => goTo("forgot-otp")}>
       <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
-      <input type="password" placeholder="New password (8+ chars, mixed case, number, symbol)" value={newPass}
+      <div className="password-wrapper">
+        <input type={showPasswords.newPass ? "text" : "password"} placeholder="Example: MySecurePass@123!" value={newPass}
           onChange={(e) => { setNewPass(e.target.value); clrErr(); }} required />
-        <input type="password" placeholder="Confirm new password" value={confirmPass}
+        <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, newPass: !p.newPass }))} tabIndex={-1}>
+          <EyeIcon open={showPasswords.newPass} />
+        </button>
+      </div>
+      <div className="password-wrapper">
+        <input type={showPasswords.confirmPass ? "text" : "password"} placeholder="Confirm new password" value={confirmPass}
           onChange={(e) => { setConfirmPass(e.target.value); clrErr(); }} required />
+        <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, confirmPass: !p.confirmPass }))} tabIndex={-1}>
+          <EyeIcon open={showPasswords.confirmPass} />
+        </button>
+      </div>
         <button type="submit" disabled={loading} style={{ width: "100%", marginTop: 8 }}>
           {loading ? "Resetting..." : "Reset Password"}
         </button>
@@ -661,7 +699,7 @@ export default function AuthPage() {
         <div className="auth-form-box register-form-box">
           <form onSubmit={handleRegisterSubmit} className="register-form">
             <h1>Create Account</h1>
-            <p className="form-subtitle">Join Humancare and take charge of your health</p>
+            <p className="form-subtitle">Join Humanicare and take charge of your health</p>
 
             <div className="social-links">
               <button type="button" className="google-btn" onClick={() => initiateGoogleLogin()}>
@@ -681,21 +719,15 @@ export default function AuthPage() {
 
             <div className="row reg-row">
               <div className="reg-field-wrap">
-                {/* <label className="reg-label">Date of Birth</label> */}
-                <div className="date-field">
-                  <input
-                    type="date"
-                    className="date-input"
-                    value={registerForm.dob}
-                    onChange={(e) => setRegisterForm((p) => ({ ...p, dob: e.target.value }))}
-                    min={DOB_MIN}
-                    max={todayISO()}
-                    required
-                  />
-                </div>
+                <DatePickerField
+                  value={registerForm.dob}
+                  onChange={(v) => setRegisterForm((p) => ({ ...p, dob: v }))}
+                  min={DOB_MIN}
+                  max={todayISO()}
+                  placeholder="Date of Birth"
+                />
               </div>
               <div className="reg-field-wrap">
-                {/* <label className="reg-label">Gender</label> */}
                 <div className="reg-gender-wrap">
                   <select value={registerForm.gender}
                     onChange={(e) => setRegisterForm((p) => ({ ...p, gender: e.target.value }))}
@@ -718,7 +750,7 @@ export default function AuthPage() {
  <button
   type="button"
   className="country-trigger"
-  onClick={() => setCountryOpen((v) => !v)}
+  onClick={() => { setCountryOpen((v) => !v); if (!countryOpen) setCountrySearch(""); }}
 >
   {selectedPhoneCountry ? (
     <>
@@ -742,7 +774,37 @@ export default function AuthPage() {
 
   {countryOpen && (
     <div className="country-dropdown-menu">
-      {PHONE_COUNTRIES.map((c) => (
+      <div style={{ padding: "10px 10px 6px", borderBottom: "1px solid #f1f5f9" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "8px 12px",
+              background: "#f8fafc", border: "1.5px solid #e8edf2", borderRadius: 10,
+            }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="#94a3b8" strokeWidth="2" style={{ flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search country"
+            value={countrySearch}
+            onChange={e => setCountrySearch(e.target.value)}
+            style={{
+                  flex: 1, border: "none", background: "transparent",
+                  fontSize: 13, fontFamily: "inherit",
+                  color: "#1e293b", outline: "none",
+                }}
+          />
+          {countrySearch && (
+            <button type="button" onClick={() => setCountrySearch("")}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#cbd5e1", fontSize: 14, lineHeight: 1 }}>
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+      {PHONE_COUNTRIES.filter(c => !countrySearch || c.name.toLowerCase().includes(countrySearch.toLowerCase())).map((c) => (
         <button
           key={c.code}
           type="button"
@@ -760,6 +822,7 @@ export default function AuthPage() {
   }));
 
   setCountryOpen(false);
+  setCountrySearch("");
 }}
         >
           <img
@@ -795,8 +858,58 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <input type="password" placeholder="Password (8+ chars, mixed case, number, symbol)" value={registerForm.password}
-              onChange={(e) => setRegisterForm((p) => ({ ...p, password: e.target.value }))} required />
+            <div className="row reg-row">
+              <div className="reg-field-wrap">
+                <select
+                  value={registerForm.state}
+                  onChange={(e) => setRegisterForm((p) => ({ ...p, state: e.target.value, city: "" }))}
+                  disabled={!registerForm.country}
+                  style={{
+                    width: "100%", height: 46, padding: "0 14px",
+                    border: "1.5px solid #c7d7fe", borderRadius: 12,
+                    background: !registerForm.country ? "#f1f5f9" : "#f8fbff",
+                    fontSize: 14, fontFamily: "inherit", color: registerForm.state ? "#1f2937" : "#9ca3af",
+                    outline: "none", cursor: !registerForm.country ? "not-allowed" : "pointer",
+                    appearance: "none", WebkitAppearance: "none",
+                    backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+                    backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", backgroundSize: "10px 6px",
+                    paddingRight: 36,
+                  }}
+                >
+                  <option value="">{loadingStates ? "Loading..." : registerForm.country ? "Select state / province" : "Select country first"}</option>
+                  {states.map((s) => <option key={s.isoCode} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="reg-field-wrap">
+                <select
+                  value={registerForm.city}
+                  onChange={(e) => setRegisterForm((p) => ({ ...p, city: e.target.value }))}
+                  disabled={!registerForm.state}
+                  style={{
+                    width: "100%", height: 46, padding: "0 14px",
+                    border: "1.5px solid #c7d7fe", borderRadius: 12,
+                    background: !registerForm.state ? "#f1f5f9" : "#f8fbff",
+                    fontSize: 14, fontFamily: "inherit", color: registerForm.city ? "#1f2937" : "#9ca3af",
+                    outline: "none", cursor: !registerForm.state ? "not-allowed" : "pointer",
+                    appearance: "none", WebkitAppearance: "none",
+                    backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+                    backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", backgroundSize: "10px 6px",
+                    paddingRight: 36,
+                  }}
+                >
+                  <option value="">{loadingCities ? "Loading..." : registerForm.state ? "Select city" : "Select state first"}</option>
+                  {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="password-wrapper">
+              <input type={showPasswords.register ? "text" : "password"} placeholder="Example: MySecurePass@123!" value={registerForm.password}
+                onChange={(e) => setRegisterForm((p) => ({ ...p, password: e.target.value }))} required />
+              <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, register: !p.register }))} tabIndex={-1}>
+                <EyeIcon open={showPasswords.register} />
+              </button>
+            </div>
             <p className={registerPasswordError ? "password-requirements password-error" : "password-requirements"}>
               {registerPasswordError || PASSWORD_REQUIREMENTS}
             </p>
@@ -853,8 +966,13 @@ I agree to <a href="/terms">Terms</a>, <a href="/privacy">Privacy Policy</a> & H
 
             <input type="email" placeholder="Email Address" value={loginForm.email}
               onChange={(e) => setLoginForm((p) => ({ ...p, email: e.target.value }))} required />
-            <input type="password" placeholder="Password" value={loginForm.password}
-              onChange={(e) => setLoginForm((p) => ({ ...p, password: e.target.value }))} required />
+            <div className="password-wrapper">
+              <input type={showPasswords.login ? "text" : "password"} placeholder="Password" value={loginForm.password}
+                onChange={(e) => setLoginForm((p) => ({ ...p, password: e.target.value }))} required />
+              <button type="button" className="password-toggle" onClick={() => setShowPasswords((p) => ({ ...p, login: !p.login }))} tabIndex={-1}>
+                <EyeIcon open={showPasswords.login} />
+              </button>
+            </div>
 
             <button type="button" className="forgot-link"
               onClick={() => { setView("forgot-email"); clrErr(); }}>

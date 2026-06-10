@@ -4,11 +4,27 @@ import "./Dashboard.css";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
 
+function EyeIcon({ open }) {
+  return open ? (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </svg>
+  ) : (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+
 export default function SuperAdminDashboard() {
   const { admin: user, loading: authLoading, logout: contextLogout } = useAdmin();
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "admin" });
+  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [creating, setCreating] = useState(false);
@@ -158,14 +174,21 @@ export default function SuperAdminDashboard() {
                 </div>
                 <div className="sa-field">
                   <label>Password</label>
-                  <input
-                    type="password"
-                    placeholder="8+ chars, upper/lower, number, symbol"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    required
-                    disabled={creating}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="8+ chars, upper/lower, number, symbol"
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      required
+                      disabled={creating}
+                      style={{ paddingRight: 44 }}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}
+                      style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 5, display: "flex", alignItems: "center" }}>
+                      <EyeIcon open={showPassword} />
+                    </button>
+                  </div>
                 </div>
                 <div className="sa-field">
                   <label>Role</label>

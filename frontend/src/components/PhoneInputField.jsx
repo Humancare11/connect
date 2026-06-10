@@ -259,8 +259,11 @@ export function parseValue(val, defaultCode) {
   if (!val || !val.startsWith("+")) return { country: def, local: val || "" };
   const digits = val.slice(1);
   const sorted = [...COUNTRIES].sort((a, b) => b.dial.length - a.dial.length);
-  const matched = sorted.find(c => digits.startsWith(c.dial));
-  if (matched) return { country: matched, local: digits.slice(matched.dial.length) };
+  const matches = sorted.filter(c => digits.startsWith(c.dial));
+  if (matches.length > 0) {
+    const matched = matches.length === 1 ? matches[0] : matches.find(c => c.code === "US") || matches[0];
+    return { country: matched, local: digits.slice(matched.dial.length) };
+  }
   return { country: def, local: digits };
 }
 
@@ -429,10 +432,8 @@ export default function PhoneInputField({
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
-    window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
     return () => {
-      window.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
     };
   }, [open]);
@@ -574,7 +575,8 @@ export default function PhoneInputField({
             <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6"
               strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-        </button>
+
+                        </button>
 
         {/* Divider */}
         <div className="pif-divider" />
