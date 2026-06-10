@@ -1,435 +1,279 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../../api";
 import "./AdminAppointments.css";
 
-const STATUS_COLORS = {
-  requested: { bg: "#f5f3ff", color: "#7c3aed", border: "#ddd6fe" },
-  pending:   { bg: "#fef3c7", color: "#d97706", border: "#fcd34d" },
-  confirmed: { bg: "#ecfdf5", color: "#059669", border: "#6ee7b7" },
-  completed: { bg: "#eff6ff", color: "#2563eb", border: "#bfdbfe" },
-  cancelled: { bg: "#fef2f2", color: "#dc2626", border: "#fca5a5" },
+const STATUS_ORDER = ["upcoming", "assigned", "pending", "confirmed", "complete", "cancelled", "all"];
+
+const STATUS_META = {
+  upcoming: { label: "Upcoming", bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+  requested: { label: "Upcoming", bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+  assigned: { label: "Assigned", bg: "#f0fdfa", color: "#0f766e", border: "#99f6e4" },
+  pending: { label: "Pending", bg: "#fff7ed", color: "#c2410c", border: "#fed7aa" },
+  confirmed: { label: "Confirmed", bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
+  complete: { label: "Complete", bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" },
+  completed: { label: "Complete", bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" },
+  cancelled: { label: "Cancelled", bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
 };
 
-function fileIcon(type = "") {
-  if (type.includes("pdf")) return "📄";
-  if (type.startsWith("image/")) return "🖼️";
-  if (type.includes("word") || type.includes("doc")) return "📝";
-  return "📎";
+function canonicalStatus(status) {
+  if (status === "requested") return "upcoming";
+  if (status === "completed") return "complete";
+  return status || "upcoming";
+}
+
+function formatMoney(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) return "-";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function patientCountry(appointment) {
+  return appointment.patientDetails?.country || appointment.patientId?.country || "-";
+}
+
+function patientGender(appointment) {
+  return appointment.patientDetails?.gender || appointment.patientId?.gender || "-";
+}
+
+function assignedBy(appointment) {
+  return appointment.assignedBy?.name || appointment.assignedBy?.email || "-";
+}
+
+function doctorCountry(appointment) {
+  return appointment.doctorMeta?.country || appointment.doctorId?.country || "-";
+}
+
+function hasAssignedDoctor(appointment) {
+  return Boolean(appointment.doctorId?._id || appointment.doctorId);
+}
+
+function StatusPill({ status }) {
+  const meta = STATUS_META[status] || STATUS_META[canonicalStatus(status)] || STATUS_META.upcoming;
+  return (
+    <span
+      className="adp-status-pill"
+      style={{ background: meta.bg, color: meta.color, borderColor: meta.border }}
+    >
+      {meta.label}
+    </span>
+  );
 }
 
 export default function AdminAppointments() {
   const [appointments, setAppointments] = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [search,   setSearch]   = useState("");
-  const [filter,   setFilter]   = useState("all");
-  const [expandedId, setExpandedId] = useState(null);
-  const [doctors, setDoctors] = useState([]);
-  const [reassigningId, setReassigningId] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalAppt, setModalAppt] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [toast, setToast] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const showToast = (msg, ok = true) => {
-    setToast({ msg, ok });
-    setTimeout(() => setToast(null), 4000);
-  };
+  const initialFilter = canonicalStatus(searchParams.get("tab"));
+  const [filter, setFilter] = useState(STATUS_ORDER.includes(initialFilter) ? initialFilter : "upcoming");
 
   useEffect(() => {
-    api.get("/api/appointments/admin/all")
-      .then(r => setAppointments(r.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    let alive = true;
 
-  useEffect(() => {
-    api.get("/api/doctor/approved")
-      .then((r) => setDoctors(r.data || []))
-      .catch(console.error);
-  }, []);
-
-  const changeDoctor = async (appointmentId, newDoctorId) => {
-    if (!newDoctorId) return;
-    setReassigningId(appointmentId);
-
-    try {
-      const res = await api.put(`/api/appointments/${appointmentId}/change-doctor`, {
-        doctorId: newDoctorId,
-      });
-
-      const updated = res.data.appointment;
-      const chosenDoctor = doctors.find((doc) => doc.doctorId?.toString() === newDoctorId?.toString());
-
-      setAppointments((prev) =>
-        prev.map((appt) =>
-          appt._id === appointmentId
-            ? {
-                ...appt,
-                doctorId: updated?.doctorId || appt.doctorId,
-                status: updated?.status || appt.status,
-                doctorMeta: chosenDoctor
-                  ? {
-                      specialty: chosenDoctor.specialty || "—",
-                      city: chosenDoctor.city || "—",
-                      country: chosenDoctor.country || "—",
-                      price: chosenDoctor.price || appt.doctorMeta?.price || null,
-                    }
-                  : appt.doctorMeta,
-              }
-            : appt
-        )
-      );
-
-      // close modal if open for this appointment
-      if (modalAppt && modalAppt._id === appointmentId) {
-        setModalOpen(false);
-        setModalAppt(null);
+    async function loadAppointments() {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await api.get("/api/appointments/admin/all");
+        if (alive) setAppointments(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error("Failed to load appointments", err);
+        if (alive) setError(err.response?.data?.msg || "Failed to load appointments.");
+      } finally {
+        if (alive) setLoading(false);
       }
-
-      showToast(res.data?.msg || "Doctor assigned successfully. The patient has been notified by email.");
-    } catch (error) {
-      console.error(error);
-      const message = error?.response?.data?.msg || "Could not change doctor.";
-      showToast(message, false);
-    } finally {
-      setReassigningId(null);
     }
+
+    loadAppointments();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const counts = useMemo(() => {
+    const base = { all: appointments.length, upcoming: 0, assigned: 0, pending: 0, confirmed: 0, complete: 0, cancelled: 0 };
+    appointments.forEach((appointment) => {
+      const key = canonicalStatus(appointment.status);
+      if (base[key] !== undefined) base[key] += 1;
+    });
+    return base;
+  }, [appointments]);
+
+  const displayed = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return appointments.filter((appointment) => {
+      const status = canonicalStatus(appointment.status);
+      const matchesFilter = filter === "all" || status === filter;
+      if (!matchesFilter) return false;
+      if (!q) return true;
+
+      return [
+        appointment._id,
+        appointment.patientId?.name,
+        appointment.patientId?.email,
+        appointment.doctorId?.name,
+        appointment.category,
+        appointment.specialty,
+        appointment.condition,
+        patientGender(appointment),
+        patientCountry(appointment),
+        assignedBy(appointment),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [appointments, filter, search]);
+
+  const setActiveFilter = (nextFilter) => {
+    setFilter(nextFilter);
+    setSearchParams(nextFilter === "upcoming" ? {} : { tab: nextFilter });
   };
-
-  const renderLocation = (entity) => {
-    if (!entity) return "—";
-    return [entity.city, entity.country].filter(Boolean).join(", ") || entity.location || "—";
-  };
-
-  const renderDoctorSpecialty = (appt) =>
-    appt.doctorMeta?.specialty || appt.doctorId?.specialty || "—";
-
-  const counts = {
-    all:       appointments.length,
-    requested: appointments.filter(a => a.status === "requested").length,
-    pending:   appointments.filter(a => a.status === "pending").length,
-    confirmed: appointments.filter(a => a.status === "confirmed").length,
-    completed: appointments.filter(a => a.status === "completed").length,
-    cancelled: appointments.filter(a => a.status === "cancelled").length,
-  };
-
-  const displayed = appointments.filter(a => {
-    const patient = a.patientId?.name || "";
-    const doctor  = a.doctorId?.name  || "";
-    const matchSearch = !search.trim() || patient.toLowerCase().includes(search.toLowerCase()) || doctor.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === "all" || a.status === filter;
-    return matchSearch && matchFilter;
-  });
 
   return (
-    <div>
-      {toast && (
-        <div className={`adp-toast ${toast.ok ? "adp-toast--ok" : "adp-toast--err"}`}>
-          <span>{toast.ok ? "✓" : "!"}</span> {toast.msg}
-        </div>
-      )}
-      <div className="adp-header">
-        <span className="adp-eyebrow">Admin Panel</span>
-        <h1 className="adp-title">Appointments</h1>
-        <p className="adp-sub">Monitor all appointments across the platform.</p>
-      </div>
-      {/* Alternate Doctor modal */}
-      {modalOpen && modalAppt && (
-        <div className="adp-modal-backdrop" onClick={() => { setModalOpen(false); setModalAppt(null); }}>
-          <div className="adp-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="adp-modal-header">
-              <h3>{modalAppt.status === "requested" || !modalAppt.doctorId ? "Assign Doctor" : "Alternate Doctor"} — {modalAppt.patientId?.name || "Patient"}</h3>
-              <button className="adp-modal-close" onClick={() => { setModalOpen(false); setModalAppt(null); }}>Close</button>
-            </div>
-
-            <div className="adp-modal-body">
-              {/* Current doctor details */}
-              <div className="adp-current-doctor">
-                <h4>Current Doctor</h4>
-                {(() => {
-                  const curId = (modalAppt.doctorId?._id?.toString() || modalAppt.doctorId?.toString() || "");
-                  const cur = doctors.find(d => d.mongoId?.toString() === curId) || {};
-                  return (
-                    <div className="adp-cur-grid">
-                      <div className="adp-doctor-id-badge">Dr. {cur.doctorId || "ID"}</div>
-                      <div><strong>Name:</strong> {cur.name || modalAppt.doctorId?.name || '—'}</div>
-                      <div><strong>Specialty:</strong> {cur.specialty || modalAppt.doctorMeta?.specialty || '—'}</div>
-                      <div><strong>Country:</strong> {cur.country || modalAppt.doctorMeta?.country || '—'}</div>
-                      <div><strong>Consultation Fees:</strong> {cur.price ? `₹${cur.price}` : '—'}</div>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Search + results */}
-              <div className="adp-search-doctor">
-                <h4>{modalAppt.status === "requested" || !modalAppt.doctorId ? "Assign Doctor" : "Alternate Doctor"}</h4>
-                <input
-                  className="adp-search-input"
-                  placeholder="Search by name or Doctor ID"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-
-                <div className="adp-search-results">
-                  {doctors.filter(d => {
-                    if (!searchQuery.trim()) return false;
-                    const q = searchQuery.toLowerCase();
-                    return (d.name || '').toLowerCase().includes(q) || (d.doctorId || '').toString() === searchQuery || (d.id || '').toString() === searchQuery;
-                  }).map((doc) => (
-                    <div key={doc.doctorId || doc.id} className="adp-doctor-row">
-                      <div style={{ flex: 1 }}>
-                        <div className="adp-doctor-id-inline">Dr. {doc.doctorId || "ID"}</div>
-                        <div style={{ fontWeight: 700 }}>{doc.name}</div>
-                        <div style={{ fontSize: 13, color: '#64748b' }}>{doc.specialty || '—'}</div>
-                        <div style={{ fontSize: 13, color: '#64748b' }}>Location: {doc.country || doc.city || '—'}</div>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexDirection: 'column' }}>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{doc.price ? `₹${doc.price}` : '—'}</div>
-                        <button
-                          className="adp-assign-btn"
-                          disabled={reassigningId === modalAppt._id}
-                          onClick={() => changeDoctor(modalAppt._id, doc.doctorId)}
-                        >
-                          {reassigningId === modalAppt._id ? 'Assigning…' : 'Assign'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="adp-page">
+     
 
       <div className="adp-stats">
         {[
-          { label: "Total",     value: counts.all,       cls: "" },
-          { label: "Requested", value: counts.requested, cls: "" },
-          { label: "Pending",   value: counts.pending,   cls: "adp-stat--amber" },
-          { label: "Confirmed", value: counts.confirmed, cls: "adp-stat--green" },
-          { label: "Completed", value: counts.completed, cls: "adp-stat--blue" },
-          { label: "Cancelled", value: counts.cancelled, cls: "" },
-        ].map(s => (
-          <div key={s.label} className={`adp-stat ${s.cls}`} style={{ cursor: "pointer" }} onClick={() => setFilter(s.label.toLowerCase() === "total" ? "all" : s.label.toLowerCase())}>
-            <div className="adp-stat-value">{s.value}</div>
-            <div className="adp-stat-label">{s.label}</div>
-          </div>
+          { key: "upcoming", label: "Upcoming" },
+          { key: "assigned", label: "Assigned" },
+          { key: "pending", label: "Pending" },
+          { key: "confirmed", label: "Confirmed" },
+          { key: "complete", label: "Complete" },
+          { key: "all", label: "Total" },
+        ].map((stat) => (
+          <button
+            type="button"
+            key={stat.key}
+            className={`adp-stat ${filter === stat.key ? "adp-stat--active" : ""}`}
+            onClick={() => setActiveFilter(stat.key)}
+          >
+            <span className="adp-stat-value">{counts[stat.key]}</span>
+            <span className="adp-stat-label">{stat.label}</span>
+          </button>
         ))}
       </div>
 
-      <div className="adp-card">
+      <section className="adp-card">
         <div className="adp-card-header">
-          <div className="adp-tabs">
-            {["all","requested","pending","confirmed","completed","cancelled"].map(f => (
-              <button key={f} className={`adp-tab ${filter === f ? "active" : ""}`} onClick={() => setFilter(f)}>
-                {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-                <span className="adp-tab-count">{counts[f]}</span>
+          {/* <div className="adp-tabs" role="tablist" aria-label="Appointment status">
+            {STATUS_ORDER.map((tab) => (
+              <button
+                type="button"
+                key={tab}
+                className={`adp-tab ${filter === tab ? "active" : ""}`}
+                onClick={() => setActiveFilter(tab)}
+              >
+                {tab === "all" ? "All" : STATUS_META[tab].label}
+                <span className="adp-tab-count">{counts[tab] ?? 0}</span>
               </button>
             ))}
-          </div>
-          <div className="adp-search">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input placeholder="Search patient or doctor…" value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
+          </div> */}
+          <label className="adp-search" aria-label="Search appointments">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              placeholder="Search patient, doctor, country, specialty..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
         </div>
 
         {loading ? (
-          <div className="adp-loading"><div className="adp-spinner" /><p>Loading appointments…</p></div>
+          <div className="adp-loading">
+            <div className="adp-spinner" />
+            <p>Loading appointments...</p>
+          </div>
+        ) : error ? (
+          <div className="adp-empty">
+            <h3>Could not load appointments</h3>
+            <p>{error}</p>
+          </div>
         ) : displayed.length === 0 ? (
           <div className="adp-empty">
-            <div className="adp-empty-icon">📅</div>
             <h3>No appointments found</h3>
-            <p>No appointments match your current filter.</p>
+            <p>No appointments match this view.</p>
           </div>
         ) : (
           <div className="adp-table-wrap">
-            <table className="adp-table">
+            <table className="adp-flow-table">
               <thead>
                 <tr>
-                  <th>Appointment ID</th>
-                  <th>Patient</th>
-                  <th>Doctor</th>
-                  <th>Date & Time</th>
-                  <th>Alternate Doctor</th>
+                  <th>SR No</th>
+                  <th>Appointment Booking ID</th>
+                  <th>Patient Name</th>
+                  <th>Consultation Fee</th>
                   <th>Status</th>
+                  <th>Assigned By</th>
                   <th>View</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {displayed.map(a => {
-                  const sc = STATUS_COLORS[a.status] || STATUS_COLORS.pending;
-                  const isOpen = expandedId === a._id;
-                  const currentDoctorId = a.doctorId?._id?.toString() || a.doctorId?.toString() || "";
-                  const doctorOptions = doctors.slice();
-                  const currentDoctorPresent = doctorOptions.some((doc) => doc.mongoId?.toString() === currentDoctorId);
-                  if (!currentDoctorPresent && a.doctorId) {
-                    doctorOptions.unshift({
-                      doctorId: null,
-                      mongoId: a.doctorId._id?.toString() || a.doctorId?.toString() || "",
-                      name: a.doctorId.name || "Current doctor",
-                      email: a.doctorId.email || "",
-                      specialty: a.doctorMeta?.specialty || "—",
-                      city: a.doctorMeta?.city || "—",
-                      country: a.doctorMeta?.country || "—",
-                    });
-                  }
+                {displayed.map((appointment, index) => {
+                  const assigned = hasAssignedDoctor(appointment);
 
                   return (
-                    <>
-                      <tr key={a._id} className={`adp-row ${isOpen ? "adp-row--open" : ""}`}>
-                        <td style={{ fontSize: 12, color: "#475569" }}>{a._id}</td>
-                        <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                            <div className="adp-avatar" style={{ background: "#ede9fe", color: "#7c3aed" }}>{(a.patientId?.name || "P")[0].toUpperCase()}</div>
-                            <div>
-                              <div style={{ fontWeight: 600, color: "#0f172a" }}>{a.patientId?.name || "Unknown"}</div>
-                              <div style={{ fontSize: 12, color: "#64748b" }}>{renderLocation(a.patientId)}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                            <div className="adp-avatar" style={{ background: "#ecfdf5", color: "#059669" }}>{(a.doctorId?.name || "D")[0].toUpperCase()}</div>
-                            <div>
-                              <div>{a.doctorId?.name || "Unassigned"}</div>
-                              <div style={{ fontSize: 12, color: "#64748b" }}>{renderDoctorSpecialty(a)}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ whiteSpace: "nowrap" }}>
-                          <div style={{ fontWeight: 600 }}>{a.date}</div>
-                          <div style={{ fontSize: 13, color: '#64748b' }}>{a.time || '—'}</div>
-                        </td>
-                        <td>
-                          <button
-                            className="adp-alt-btn"
-                            onClick={() => {
-                              setModalAppt(a);
-                              setSearchQuery("");
-                              setModalOpen(true);
-                            }}
-                          >
-                            {a.status === "requested" || !a.doctorId ? "Assign Doctor" : "Alternate Doctor"}
-                          </button>
-                        </td>
-                        <td>
-                          <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, textTransform: "capitalize" }}>
-                            {a.status}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            className="adp-view-btn"
-                            onClick={() => setExpandedId(isOpen ? null : a._id)}
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-
-                      {isOpen && (
-                        <tr key={`${a._id}-exp`} className="adp-expand-row">
-                          <td colSpan={8}>
-                            <div className="adp-expand">
-                              <div className="adp-expand-grid">
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Appointment ID</span>
-                                  <span className="adp-exp-value">{a._id}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Patient</span>
-                                  <span className="adp-exp-value">{a.patientId?.name || "—"}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Gender</span>
-                                  <span className="adp-exp-value">{a.patientId?.gender || "—"}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Patient city & country</span>
-                                  <span className="adp-exp-value">{renderLocation(a.patientId)}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Doctor</span>
-                                  <span className="adp-exp-value">{a.doctorId?.name || "—"}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Specialty</span>
-                                  <span className="adp-exp-value">{a.specialty || renderDoctorSpecialty(a)}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Category</span>
-                                  <span className="adp-exp-value">{a.category || "—"}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Condition</span>
-                                  <span className="adp-exp-value">{a.condition || "—"}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Consultation Price</span>
-                                  <span className="adp-exp-value">{a.consultationPrice ? `₹${a.consultationPrice}` : "—"}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Doctor city & country</span>
-                                  <span className="adp-exp-value">{renderLocation(a.doctorMeta)}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Appointment Date</span>
-                                  <span className="adp-exp-value">{a.date}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Appointment Time</span>
-                                  <span className="adp-exp-value">{a.time || "—"}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Alternate Doctor</span>
-                                  <span className="adp-exp-value">{doctors.find((doc) => doc.mongoId?.toString() === currentDoctorId)?.name || a.doctorId?.name || "—"}</span>
-                                </div>
-                                <div className="adp-exp-item">
-                                  <span className="adp-exp-label">Status</span>
-                                  <span className="adp-exp-value">{a.status}</span>
-                                </div>
+                    <tr key={appointment._id}>
+                      <td className="adp-sr-cell">{index + 1}</td>
+                      <td>
+                        <span className="adp-booking-id">{appointment._id}</span>
+                      </td>
+                      <td>
+                        <div className="adp-patient-cell">
+                          <strong>{appointment.patientId?.name || "Unknown patient"}</strong>
+                          <span>{patientGender(appointment)} - {patientCountry(appointment)}</span>
+                        </div>
+                      </td>
+                      <td>{formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)}</td>
+                      <td>
+                        <StatusPill status={appointment.status} />
+                      </td>
+                      <td>{assignedBy(appointment)}</td>
+                      <td>
+                        <Link className="adp-view-btn" to={`/admin-dashboard/appointments/${appointment._id}`}>
+                          View
+                        </Link>
+                      </td>
+                      <td>
+                        <div className="adp-list-actions">
+                          {assigned ? (
+                            <>
+                              <div className="adp-assigned-doctor-mini">
+                                <strong>{appointment.doctorId?.name || "Assigned doctor"}</strong>
+                                <span>{appointment.category || "-"} - {doctorCountry(appointment)}</span>
                               </div>
-
-                              {a.medicalReports?.length > 0 ? (
-                                <div className="adp-reports">
-                                  <p className="adp-reports-label">
-                                    Medical Reports
-                                    <span className="adp-reports-count">{a.medicalReports.length}</span>
-                                  </p>
-                                  <div className="adp-reports-list">
-                                    {a.medicalReports.map((r, i) => (
-                                      <a
-                                        key={i}
-                                        href={r.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="adp-report-chip"
-                                        title={r.name}
-                                      >
-                                        <span>{fileIcon(r.type)}</span>
-                                        <span className="adp-report-name">{r.name}</span>
-                                        <span className="adp-report-arrow">↗</span>
-                                      </a>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : (
-                                <p className="adp-no-reports">No medical reports attached</p>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
+                              <Link className="adp-secondary-link" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
+                                Alternate Doctor
+                              </Link>
+                            </>
+                          ) : (
+                            <Link className="adp-alt-btn" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
+                              Assign Doctor
+                            </Link>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

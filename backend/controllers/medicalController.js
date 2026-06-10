@@ -13,7 +13,7 @@ const getDoctorPatients = async (req, res) => {
 
     const appointments = await Appointment.find({
       doctorId: req.user.id,
-      status:   "completed",
+      status:   { $in: ["complete", "completed"] },
     })
       .populate("patientId", "name email mobile gender dob")
       .sort({ createdAt: -1 })

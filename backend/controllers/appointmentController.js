@@ -8,6 +8,8 @@ const { paypalFetch } = require("../utils/paypal");
 const { sendEmail } = require("../utils/sendEmail");
 const { recordSecurityIncident } = require("../utils/securityMonitor");
 
+const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
+
 async function resolveDoctorId(value) {
   if (!value) return null;
 
@@ -42,6 +44,18 @@ function timeToMinutes(value) {
   return hours * 60 + minutes;
 }
 
+function buildUtcDateTime(date, time) {
+  if (!date || !time) return null;
+  const minutes = timeToMinutes(time);
+  if (minutes === null) return null;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  const utc = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(utc.getTime())) return null;
+  utc.setUTCHours(hours, mins, 0, 0);
+  return utc;
+}
+
 const createAppointment = async (req, res) => {
   try {
     const {
@@ -57,6 +71,8 @@ const createAppointment = async (req, res) => {
       condition,
       consultationPrice,
       patientDetails,
+      appointmentDateTimeUtc,
+      patientTimezone,
     } = req.body;
     const patientId = req.user.id;
 
@@ -126,7 +142,7 @@ const createAppointment = async (req, res) => {
         doctorId: resolvedDoctorId,
         date,
         time,
-        status: { $in: ["pending", "confirmed"] },
+        status: { $in: ACTIVE_DOCTOR_STATUSES },
       });
       if (conflict) {
         return res.status(409).json({ msg: "This time slot is already booked. Please choose a different time." });
@@ -164,11 +180,19 @@ const createAppointment = async (req, res) => {
       paymentStatus = "paid";
     }
 
+    const parsedAppointmentDateTimeUtc = appointmentDateTimeUtc
+      ? new Date(appointmentDateTimeUtc)
+      : buildUtcDateTime(date, time);
+
     const appointment = await Appointment.create({
       patientId,
       doctorId: resolvedDoctorId,
       date,
       time,
+      appointmentDateTimeUtc: Number.isNaN(parsedAppointmentDateTimeUtc?.getTime())
+        ? buildUtcDateTime(date, time)
+        : parsedAppointmentDateTimeUtc,
+      patientTimezone: typeof patientTimezone === "string" ? patientTimezone.slice(0, 80) : "",
       problem,
       category,
       specialty,
@@ -176,7 +200,7 @@ const createAppointment = async (req, res) => {
       consultationPrice: Number(consultationPrice) || 0,
       patientDetails: patientDetails || {},
       medicalReports: Array.isArray(medicalReports) ? medicalReports : [],
-      status: resolvedDoctorId ? "pending" : "requested",
+      status: resolvedDoctorId ? "pending" : "upcoming",
       paymentIntentId: paymentRef,
       paymentAmount: paymentAmountFinal,
       paymentStatus,
@@ -263,6 +287,10 @@ const confirmAppointment = async (req, res) => {
       return res.status(403).json({ msg: "You can only confirm your own appointments." });
     }
 
+    if (!["assigned", "pending"].includes(appointment.status)) {
+      return res.status(400).json({ msg: "Only assigned or pending appointments can be confirmed." });
+    }
+
     appointment.status = "confirmed";
     appointment.sessionStarted = true;
     await appointment.save();
@@ -305,7 +333,7 @@ const completeAppointment = async (req, res) => {
       return res.status(400).json({ msg: "Only confirmed appointments can be marked complete." });
     }
 
-    appointment.status = "completed";
+    appointment.status = "complete";
     await appointment.save();
 
     const io = req.app.get("io");
@@ -387,15 +415,29 @@ const reassignAppointmentDoctor = async (req, res) => {
       doctorId: newDoctor._id,
       date: appointment.date,
       time: appointment.time,
-      status: { $in: ["pending", "confirmed"] },
+      status: { $in: ACTIVE_DOCTOR_STATUSES },
     });
     if (conflict) {
       return res.status(409).json({ msg: "The selected doctor is already booked for this slot." });
     }
 
-    const wasRequested = appointment.status === "requested" || !appointment.doctorId;
+    const wasRequested = ["upcoming", "requested"].includes(appointment.status) || !appointment.doctorId;
+    const assigningAdmin = req.user?.id
+      ? await User.findById(req.user.id).select("name email").lean()
+      : null;
+    const assignedDoctorEnrollment = await Enrollment.findOne({ doctorId: newDoctor._id })
+      .select("timezone")
+      .lean();
+
     appointment.doctorId = newDoctor._id;
-    if (wasRequested) appointment.status = "pending";
+    appointment.status = "assigned";
+    appointment.doctorTimezone = assignedDoctorEnrollment?.timezone || appointment.doctorTimezone || "";
+    appointment.assignedBy = {
+      id: req.user?.id || null,
+      name: assigningAdmin?.name || req.user?.name || req.user?.email || "Admin",
+      email: assigningAdmin?.email || req.user?.email || "",
+      assignedAt: new Date(),
+    };
     await appointment.save();
 
     const patient = await User.findById(appointment.patientId).select("name email");
@@ -517,6 +559,9 @@ const getAllAppointments = async (req, res) => {
           price: enrollment?.consultantFees || null,
           languages: enrollment?.languagesKnown || [],
           address: enrollment?.clinicAddress || enrollment?.address || "—",
+          timezone: enrollment?.timezone || "",
+          phoneNumber: enrollment?.phoneNumber || "",
+          countryCode: enrollment?.countryCode || "",
         },
       };
     });
@@ -541,8 +586,8 @@ const getAllAppointments = async (req, res) => {
 const getAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "name email mobile")
-      .populate("doctorId", "name email")
+      .populate("patientId", "name email mobile gender city country")
+      .populate("doctorId", "name email doctorId")
       .lean();
 
     if (!appointment) {
@@ -561,7 +606,25 @@ const getAppointmentById = async (req, res) => {
       return res.status(403).json({ msg: "Access denied." });
     }
 
-    res.status(200).json(appointment);
+    let doctorMeta = null;
+    const appointmentDoctorId = appointment.doctorId?._id?.toString() || appointment.doctorId?.toString();
+    if (appointmentDoctorId) {
+      const enrollment = await Enrollment.findOne({ doctorId: appointmentDoctorId }).lean();
+      doctorMeta = {
+        specialty: enrollment?.specialization || "-",
+        city: enrollment?.city || "-",
+        country: enrollment?.country || "-",
+        experience: enrollment?.experience || "-",
+        price: enrollment?.consultantFees || null,
+        languages: enrollment?.languagesKnown || [],
+        address: enrollment?.clinicAddress || enrollment?.address || "-",
+        timezone: enrollment?.timezone || "",
+        phoneNumber: enrollment?.phoneNumber || "",
+        countryCode: enrollment?.countryCode || "",
+      };
+    }
+
+    res.status(200).json({ ...appointment, doctorMeta });
   } catch (error) {
     console.error("getAppointmentById error:", error);
     res.status(500).json({ msg: "Failed to fetch appointment." });
@@ -631,7 +694,7 @@ const getBookedSlots = async (req, res) => {
     const appointments = await Appointment.find({
       doctorId: resolvedDoctorId,
       date,
-      status: { $in: ["pending", "confirmed"] },
+      status: { $in: ACTIVE_DOCTOR_STATUSES },
     }).select("time").lean();
     res.json({ slots: appointments.map((a) => a.time) });
   } catch (err) {

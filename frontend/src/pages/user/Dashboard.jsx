@@ -122,7 +122,7 @@ export default function Dashboard() {
   /* ── derived counts ── */
   const pendingCount = appointments.filter((a) => a.status === "pending").length;
   const confirmedCount = appointments.filter((a) => a.status === "confirmed").length;
-  const completedCount = appointments.filter((a) => a.status === "completed").length;
+  const completedCount = appointments.filter((a) => ["complete", "completed"].includes(a.status)).length;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "—";
@@ -156,10 +156,10 @@ export default function Dashboard() {
     ...appointments.map((a) => ({
       id: a._id,
       type: "appointment",
-      icon: a.status === "confirmed" ? "✅" : a.status === "completed" ? "📋" : "⏳",
+      icon: a.status === "confirmed" ? "✅" : ["complete", "completed"].includes(a.status) ? "📋" : "⏳",
       title: `Appointment with Dr. ${a.doctorId?.name || "Unknown"}`,
       detail: `${formatDate(a.date)}${a.time ? " · " + a.time : ""}`,
-      status: a.status === "completed" ? "completed" : a.status === "confirmed" ? "confirmed" : "pending",
+      status: ["complete", "completed"].includes(a.status) ? "completed" : a.status === "confirmed" ? "confirmed" : "pending",
       createdAt: new Date(a.createdAt || a.date),
     })),
     ...questions.map((q) => ({

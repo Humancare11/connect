@@ -5,10 +5,12 @@ import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 
 const STATUS_META = {
+  assigned: { label: "Assigned", icon: "A", color: "teal" },
   pending: { label: "Pending", icon: "⏳", color: "amber" },
   confirmed: { label: "Confirmed", icon: "✓", color: "teal" },
   cancelled: { label: "Cancelled", icon: "✕", color: "red" },
-  completed: { label: "Completed", icon: "★", color: "slate" },
+  complete: { label: "Complete", icon: "C", color: "slate" },
+  completed: { label: "Complete", icon: "C", color: "slate" },
 };
 
 function formatDate(dateStr) {
@@ -106,7 +108,7 @@ export default function DoctorAppointments() {
     try {
       await api.put(`/api/appointments/${id}/complete`, {});
       setAppointments((prev) =>
-        prev.map((a) => (a._id === id ? { ...a, status: "completed" } : a)),
+        prev.map((a) => (a._id === id ? { ...a, status: "complete" } : a)),
       );
       showToast("Consultation marked as completed.");
     } catch {
@@ -116,19 +118,20 @@ export default function DoctorAppointments() {
     }
   };
 
-  const TABS = ["all", "pending", "confirmed", "completed"];
+  const TABS = ["all", "assigned", "pending", "confirmed", "complete"];
 
   const counts = {
     all: appointments.length,
+    assigned: appointments.filter((a) => a.status === "assigned").length,
     pending: appointments.filter((a) => a.status === "pending").length,
     confirmed: appointments.filter((a) => a.status === "confirmed").length,
-    completed: appointments.filter((a) => a.status === "completed").length,
+    complete: appointments.filter((a) => ["complete", "completed"].includes(a.status)).length,
   };
 
   const filtered =
     filter === "all"
       ? appointments
-      : appointments.filter((a) => a.status === filter);
+      : appointments.filter((a) => (filter === "complete" ? ["complete", "completed"].includes(a.status) : a.status === filter));
 
   return (
     <div className="da-root">
@@ -241,9 +244,10 @@ export default function DoctorAppointments() {
       {/* Stats */}
       <div className="da-stats">
         {[
+          { key: "assigned", label: "Assigned", dot: "teal" },
           { key: "pending", label: "Pending", dot: "amber" },
           { key: "confirmed", label: "Confirmed", dot: "teal" },
-          { key: "completed", label: "Completed", dot: "green" },
+          { key: "complete", label: "Complete", dot: "green" },
           { key: "all", label: "Total", dot: "purple" },
         ].map(({ key, label, dot }, i) => (
           <div
@@ -331,7 +335,7 @@ export default function DoctorAppointments() {
                         <td onClick={(e) => e.stopPropagation()}>
                           <div className="da-action-group">
                             {/* CONFIRM */}
-                            {appt.status === "pending" && (
+                            {["assigned", "pending"].includes(appt.status) && (
                               <button
                                 className="da-btn da-btn--confirm"
                                 onClick={(e) => {

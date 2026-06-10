@@ -395,29 +395,47 @@ export default function PhoneInputField({
     setCountry(next.country);
     setLocal(next.local);
   }, [value]);
+useEffect(() => {
+  let cancelled = false;
 
-  useEffect(() => {
-    let cancelled = false;
-    if (defaultCountry !== "auto" || value) {
-      onCountryChange?.({
-        code: country.code,
-        name: country.name,
-        dialCode: `+${country.dial}`,
-        dial: country.dial,
-        flag: toFlag(country.code),
-      });
-      return undefined;
-    }
-    if (autoAppliedRef.current) return undefined;
+  if (defaultCountry !== "auto" || value) return;
 
-    detectCountry().then((detected) => {
-      if (cancelled || !detected || userSelectedRef.current) return;
-      autoAppliedRef.current = true;
-      applyCountry(detected, false);
-    });
+  if (autoAppliedRef.current) return;
 
-    return () => { cancelled = true; };
-  }, [applyCountry, country.code, country.dial, country.name, defaultCountry, onCountryChange, value]);
+  detectCountry().then((detected) => {
+    if (cancelled || !detected || userSelectedRef.current) return;
+
+    autoAppliedRef.current = true;
+    applyCountry(detected, false);
+  });
+
+  return () => {
+    cancelled = true;
+  };
+}, [defaultCountry, value]);
+  // useEffect(() => {
+  //   let cancelled = false;
+  //   console.log("country effect fired");
+  //   if (defaultCountry !== "auto" || value) {
+  //     onCountryChange?.({
+  //       code: country.code,
+  //       name: country.name,
+  //       dialCode: `+${country.dial}`,
+  //       dial: country.dial,
+  //       flag: toFlag(country.code),
+  //     });
+  //     return undefined;
+  //   }
+  //   if (autoAppliedRef.current) return undefined;
+
+  //   detectCountry().then((detected) => {
+  //     if (cancelled || !detected || userSelectedRef.current) return;
+  //     autoAppliedRef.current = true;
+  //     applyCountry(detected, false);
+  //   });
+
+  //   return () => { cancelled = true; };
+  // }, [applyCountry, country.code, country.dial, country.name, defaultCountry, onCountryChange, value]);
 
   useEffect(() => {
     if (!open) return;

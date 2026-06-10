@@ -355,7 +355,7 @@ function PatientPanel({ entry, onClose }) {
       .finally(() => setLoading(false));
   };
 
-  const completedAppts = history?.appointments?.filter((a) => a.status === "completed") || [];
+  const completedAppts = history?.appointments?.filter((a) => ["complete", "completed"].includes(a.status)) || [];
 
   return (
     <div className="dp-panel-overlay" onClick={onClose}>

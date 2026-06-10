@@ -15,6 +15,25 @@ import "./Appointment.css";
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 
+function getClientTimezone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
+function toAppointmentUtc(date, time) {
+  if (!date || !time) return "";
+  const match = String(time).trim().match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
+  if (!match) return "";
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const meridiem = match[3]?.toUpperCase();
+  if (meridiem === "PM" && hours !== 12) hours += 12;
+  if (meridiem === "AM" && hours === 12) hours = 0;
+  const localDate = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(localDate.getTime())) return "";
+  localDate.setHours(hours, minutes, 0, 0);
+  return localDate.toISOString();
+}
+
 const ELEMENTS_APPEARANCE = {
   theme: "stripe",
   variables: {
@@ -538,6 +557,8 @@ export default function AppointmentBookingForm() {
         consultationPrice: selection.cost || 0,
         date: formData.date,
         time: formData.time,
+        appointmentDateTimeUtc: toAppointmentUtc(formData.date, formData.time),
+        patientTimezone: getClientTimezone(),
         problem: formData.notes,
         medicalReports: reports,
       };

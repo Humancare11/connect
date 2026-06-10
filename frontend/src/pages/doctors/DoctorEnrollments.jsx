@@ -3136,7 +3136,7 @@ export default function DoctorOnboardingWizard({
               </button>
               <button
                 className="btn btn-outline btn-sm"
-                onClick={() => navigate("/doctor-pending")}
+                onClick={() => navigate("/doctor-dashboard/enrollments")}
               >
                 View Status
               </button>

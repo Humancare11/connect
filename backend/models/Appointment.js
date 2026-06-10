@@ -32,14 +32,23 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    appointmentDateTimeUtc: { type: Date, default: null },
+    patientTimezone: { type: String, default: "" },
+    doctorTimezone: { type: String, default: "" },
     problem: {
       type: String,
       default: "",
     },
     status: {
       type: String,
-      enum: ["requested", "pending", "confirmed", "completed", "cancelled"],
-      default: "requested",
+      enum: ["upcoming", "assigned", "pending", "confirmed", "complete", "requested", "completed", "cancelled"],
+      default: "upcoming",
+    },
+    assignedBy: {
+      id: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+      name: { type: String, default: "" },
+      email: { type: String, default: "" },
+      assignedAt: { type: Date, default: null },
     },
     sessionStarted: {
       type: Boolean,
