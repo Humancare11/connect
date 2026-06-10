@@ -396,7 +396,7 @@ export default function DoctorAuthPage() {
         {/* ── REGISTER FORM ─────────────────────────────────── */}
         <div className="auth-form-box register-form-box">
           <form onSubmit={handleRegisterSubmit} className="register-form">
-            <h1>Doctor Register</h1>
+            <h1>Doctor Registration </h1>
             <p className="form-subtitle">Join Humancare Connect as a healthcare professional</p>
 
             <div className="social-links">

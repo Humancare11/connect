@@ -616,7 +616,7 @@ export default function VideoCall() {
 
     const handleApptUpdated = ({ status }) => {
       if (!mounted) return;
-      if (status === "completed" && !isDoctor) {
+      if (["complete", "completed"].includes(status) && !isDoctor) {
         setShowCompletedOverlay(true);
         setTimeout(() => navigate("/user/dashboard", { replace: true }), 4000);
       }
@@ -959,13 +959,13 @@ export default function VideoCall() {
     );
   }
 
-  if (appt?.status === "completed" || appt?.status === "cancelled") {
+  if (["complete", "completed"].includes(appt?.status) || appt?.status === "cancelled") {
     return (
       <div className="hc-vc__gate">
         <div className="hc-vc__gate-icon">
-          {appt.status === "completed" ? <FiCheckCircle /> : <FiX />}
+          {["complete", "completed"].includes(appt.status) ? <FiCheckCircle /> : <FiX />}
         </div>
-        <h2>Appointment {appt.status === "completed" ? "Completed" : "Cancelled"}</h2>
+        <h2>Appointment {["complete", "completed"].includes(appt.status) ? "Complete" : "Cancelled"}</h2>
         <p>This appointment is no longer active.</p>
         <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>Go Back</button>
       </div>

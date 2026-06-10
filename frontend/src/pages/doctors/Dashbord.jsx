@@ -88,10 +88,10 @@ export default function DoctorDashboard() {
     ...appointments.map((a) => ({
       id:        a._id,
       type:      "appointment",
-      icon:      a.status === "confirmed" ? "✅" : (a.status === "completed" || a.status === "done") ? "📋" : "⏳",
+      icon:      a.status === "confirmed" ? "✅" : (["complete", "completed", "done"].includes(a.status)) ? "📋" : "⏳",
       title:     `Patient: ${a.patientId?.name || "Unknown"}`,
       detail:    `${formatDate(a.date)}${a.time ? " · " + a.time : ""}`,
-      status:    (a.status === "completed" || a.status === "done") ? "completed" : a.status === "confirmed" ? "confirmed" : "pending",
+      status:    (["complete", "completed", "done"].includes(a.status)) ? "completed" : a.status === "confirmed" ? "confirmed" : "pending",
       createdAt: new Date(a.createdAt || a.date),
       path:      `/doctor-dashboard/appointments?activityId=${a._id}`,
     })),

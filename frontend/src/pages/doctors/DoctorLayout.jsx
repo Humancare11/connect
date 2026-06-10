@@ -108,7 +108,7 @@ export default function DoctorLayout({ children }) {
     if (!formCompleted) {
       navigate("/doctor-dashboard/enrollments", { replace: true });
     } else if (!isEnrolled) {
-      navigate("/doctor-pending", { replace: true });
+      navigate("/doctor-dashboard/enrollments", { replace: true });
     }
   }, [enrollmentLoaded, formCompleted, isEnrolled, navigate]);
 

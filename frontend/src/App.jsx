@@ -67,6 +67,8 @@ import AdminDoctorProfile from "./pages/admin/AdminDoctorProfile";
 import DoctorPayments from "./pages/admin/DoctorPayments";
 import ManageUsers from "./pages/admin/ManageUsers";
 import AdminAppointments from "./pages/admin/AdminAppointments";
+import AdminAppointmentDetails from "./pages/admin/AdminAppointmentDetails";
+import AdminAssignDoctor from "./pages/admin/AdminAssignDoctor";
 import AdminPayments from "./pages/admin/AdminPayments";
 import PaymentLinks from "./pages/admin/PaymentLinks";
 import PaymentLinkHistory from "./pages/admin/PaymentLinkHistory";
@@ -639,6 +641,26 @@ function AppLayout() {
             <PrivateRoute allowedRoles={["admin", "superadmin"]}>
               <AdminLayout>
                 <AdminAppointments />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/appointments/:id"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <AdminAppointmentDetails />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/appointments/:id/assign"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <AdminAssignDoctor />
               </AdminLayout>
             </PrivateRoute>
           }
