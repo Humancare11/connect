@@ -77,6 +77,15 @@ function InfoTile({ label, value }) {
   );
 }
 
+function formatPatientId(value) {
+  if (value === undefined || value === null || value === "") return "";
+  const numeric = Number(value);
+  if (Number.isInteger(numeric) && numeric >= 0 && numeric <= 99999) {
+    return String(numeric).padStart(5, "0");
+  }
+  return String(value);
+}
+
 const FLOW = [
   { key: "upcoming", label: "Upcoming" },
   { key: "assigned", label: "Assigned" },
@@ -166,7 +175,7 @@ export default function AdminAppointmentDetails() {
   const patientTimezone = appointment.patientTimezone || "UTC";
   const doctorTimezone = appointment.doctorTimezone || appointment.doctorMeta?.timezone || "UTC";
   const adminTimezone = getLocalTimezone();
-  const userId = appointment.patientId?._id || appointment.patientId || "-";
+  const userId = formatPatientId(appointment.patientId?.patientId) || appointment.patientId?._id || appointment.patientId || "-";
   const doctorId = appointment.doctorId?.doctorId || appointment.doctorId?._id || appointment.doctorId || "-";
   const userLocation = [
     appointment.patientDetails?.city || appointment.patientId?.city,
@@ -204,7 +213,7 @@ export default function AdminAppointmentDetails() {
       <div className="adp-detail-grid">
         <Section title="Appointment Details">
           <div className="adp-info-grid">
-            <InfoTile label="User ID" value={userId} />
+            <InfoTile label="Patient ID" value={userId} />
             <InfoTile label="User Name" value={appointment.patientId?.name} />
             <InfoTile label="Doctor ID" value={doctorId} />
             <InfoTile label="Appointment ID" value={appointment._id} />

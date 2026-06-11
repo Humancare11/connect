@@ -367,7 +367,7 @@ const getDoctorAppointments = async (req, res) => {
     }
 
     const appointments = await Appointment.find({ doctorId: req.user.id })
-      .populate("patientId", "name email mobile")
+      .populate("patientId", "patientId name email mobile")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -596,7 +596,7 @@ const reassignAppointmentDoctor = async (req, res) => {
     }
 
     const populatedAppointment = await Appointment.findById(appointment._id)
-      .populate("patientId", "name email gender city country")
+      .populate("patientId", "patientId name email gender city country")
       .populate("doctorId", "name email doctorId")
       .lean();
 
@@ -634,7 +634,7 @@ const reassignAppointmentDoctor = async (req, res) => {
 const getAllAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find()
-      .populate("patientId", "name email gender dob city country")
+      .populate("patientId", "patientId name email gender dob city country")
       .populate("doctorId", "name email doctorId")
       .sort({ createdAt: -1 })
       .lean();
@@ -688,7 +688,7 @@ const getAllAppointments = async (req, res) => {
 const getAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "name email mobile gender dob city country")
+      .populate("patientId", "patientId name email mobile gender dob city country")
       .populate("doctorId", "name email doctorId")
       .lean();
 
@@ -750,7 +750,7 @@ const getDoctorOwnAppointment = async (req, res) => {
     }
 
     const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "name email mobile gender dob")
+      .populate("patientId", "patientId name email mobile gender dob")
       .populate("doctorId", "name email")
       .lean();
 
@@ -774,7 +774,7 @@ const getPatientOwnAppointment = async (req, res) => {
     }
 
     const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "name email mobile gender dob")
+      .populate("patientId", "patientId name email mobile gender dob")
       .populate("doctorId", "name email")
       .lean();
 

@@ -107,6 +107,15 @@ function MetaRow({ icon, label, value }) {
   );
 }
 
+function formatPatientId(value) {
+  if (value === undefined || value === null || value === "") return "—";
+  const numeric = Number(value);
+  if (Number.isInteger(numeric) && numeric >= 0 && numeric <= 99999) {
+    return String(numeric).padStart(5, "0");
+  }
+  return String(value);
+}
+
 /* ══════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════ */
@@ -304,7 +313,7 @@ export default function ProfileSettings() {
 
               {/* Meta rows */}
               <div className="ps-meta-grid" style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px" }}>
-                <MetaRow icon="📅" label="Member since" value={getMemberSince()} />
+                <MetaRow icon="🆔" label="Patient ID" value={formatPatientId(user.patientId)} />
                 {formData.gender && (
                   <MetaRow icon="👤" label="Gender" value={formData.gender} />
                 )}
