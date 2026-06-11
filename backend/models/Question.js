@@ -32,6 +32,7 @@ const questionSchema = new mongoose.Schema(
 
     // Attachments uploaded with the question
     attachments: [{
+      key:  { type: String },
       url:  { type: String },
       name: { type: String },
       type: { type: String },

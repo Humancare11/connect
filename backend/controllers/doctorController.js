@@ -205,11 +205,15 @@ export const getApprovedDoctors = async (req, res) => {
       price: e.consultantFees,
       country: e.country || "",
       city: e.city || "",
-      location: e.city && e.state ? `${e.city}, ${e.state}` : "Location not specified",
+      state: e.state || "",
+      location: [e.city, e.state, e.country].filter(Boolean).join(", ") || "Location not specified",
       languages: e.languagesKnown || [],
       gender: e.gender,
       about: e.aboutDoctor,
       verified: e.verified,
+      internationalLicenses: e.internationalLicenses || [],
+      medicalRegistrationNumber: e.medicalRegistrationNumber || "",
+      medicalCouncilName: e.medicalCouncilName || "",
       rating: 4.8, // Default rating
     }));
 

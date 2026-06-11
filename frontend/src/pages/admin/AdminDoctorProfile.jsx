@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api, { normalizeFileUrl } from "../../api";
+import { uploadFileDirectToS3 } from "../../utils/directUpload";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
@@ -320,13 +321,8 @@ function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
     setPreview(URL.createObjectURL(raw));
     setUploading(true);
     try {
-      const fd = new FormData(); fd.append("file", raw);
-      if (enrollmentId) {
-        fd.append("ownerType", "doctor");
-        fd.append("ownerId", enrollmentId);
-      }
-      const { data } = await api.post("/api/upload", fd);
-      setLocalUrl(data.url); onChange(data.url);
+      const uploaded = await uploadFileDirectToS3(raw, { ownerType: "doctor", ownerId: enrollmentId });
+      setLocalUrl(uploaded.key); onChange(uploaded.key);
     } catch { setErr("Upload failed — please try again."); }
     finally { setUploading(false); }
   };
@@ -402,13 +398,8 @@ function AdminDocUpload({ label, currentUrl, onChange, accept, enrollmentId, fie
     if (!raw) return;
     setErr(""); setUploading(true);
     try {
-      const fd = new FormData(); fd.append("file", raw);
-      if (enrollmentId) {
-        fd.append("ownerType", "doctor");
-        fd.append("ownerId", enrollmentId);
-      }
-      const { data } = await api.post("/api/upload", fd);
-      setLocalUrl(data.url); onChange(data.url);
+      const uploaded = await uploadFileDirectToS3(raw, { ownerType: "doctor", ownerId: enrollmentId });
+      setLocalUrl(uploaded.key); onChange(uploaded.key);
     } catch { setErr("Upload failed — please try again."); }
     finally { setUploading(false); }
   };

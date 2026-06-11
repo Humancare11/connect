@@ -4,10 +4,12 @@ const multer   = require("multer");
 const path     = require("path");
 const { randomBytes } = require("crypto");
 const { verifyToken } = require("../middleware/verifyToken");
-const { storeUploadInS3 } = require("../utils/uploadStorage");
+const { storeUploadInS3, uploadKey } = require("../utils/uploadStorage");
+const { createS3PresignedPutUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
+const { getS3ObjectUrl } = require("../config/s3");
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const BLOCKED_EXTENSIONS = new Set([
@@ -55,6 +57,12 @@ function generateStoredFilename(originalname) {
     .replace(/^-+|-+$/g, "")
     .slice(0, 80) || "document";
   return `${base}-${Date.now()}-${randomBytes(4).toString("hex")}${ext}`;
+}
+
+function sanitizeMetadataValue(value) {
+  return String(value || "")
+    .replace(/[^\t\x20-\x7e]/g, "")
+    .slice(0, 500);
 }
 
 function slugFolderName(name, fallback) {
@@ -162,6 +170,78 @@ async function validateUploadedFile(file) {
 
   return detectedMime || file.mimetype;
 }
+
+function validateUploadMetadata({ originalName, contentType, size }) {
+  const ext = path.extname(originalName || "").toLowerCase();
+  const allowed = ALLOWED_TYPES[ext];
+  const fileSize = Number(size);
+
+  if (!originalName || !allowed || BLOCKED_EXTENSIONS.has(ext)) {
+    throw new Error("File type not allowed. Accepted: images, PDF, Word, Excel, TXT.");
+  }
+  if (!Number.isFinite(fileSize) || fileSize <= 0 || fileSize > MAX_FILE_SIZE) {
+    throw new Error("File is too large. Maximum allowed size is 10 MB.");
+  }
+  if (BLOCKED_MIME_PREFIXES.some((prefix) => String(contentType || "").startsWith(prefix))) {
+    throw new Error("Executable files are not allowed.");
+  }
+  if (!allowed.includes(contentType)) {
+    throw new Error("Uploaded file content type is not allowed for this file extension.");
+  }
+}
+
+// POST /api/upload/presign — returns a private S3 PUT URL for direct browser upload
+router.post("/presign", verifyToken, async (req, res) => {
+  try {
+    const originalName = String(req.body.originalName || req.body.name || "").trim();
+    const contentType = String(req.body.contentType || req.body.type || "").trim();
+    const size = Number(req.body.size);
+
+    validateUploadMetadata({ originalName, contentType, size });
+
+    const filename = generateStoredFilename(originalName);
+    const folderKey = await resolveUploadFolder(req);
+    const key = folderKey ? `${folderKey}/${filename}` : uploadKey(filename);
+    const metadata = {
+      originalname: sanitizeMetadataValue(originalName),
+      contenttype: sanitizeMetadataValue(contentType),
+      size: String(size),
+      uploadedby: req.user?.id ? String(req.user.id) : "",
+      uploadedbyrole: sanitizeMetadataValue(req.user?.role || ""),
+      uploadedat: new Date().toISOString(),
+    };
+    const signed = await createS3PresignedPutUrl(key, {
+      expiresIn: DEFAULT_EXPIRY_SECONDS,
+      contentType,
+      metadata,
+    });
+
+    return res.json({
+      uploadUrl: signed.url,
+      expiresAt: signed.expiresAt,
+      headers: {
+        "Content-Type": contentType,
+        "x-amz-meta-originalname": metadata.originalname,
+        "x-amz-meta-contenttype": metadata.contenttype,
+        "x-amz-meta-size": metadata.size,
+        "x-amz-meta-uploadedby": metadata.uploadedby,
+        "x-amz-meta-uploadedbyrole": metadata.uploadedbyrole,
+        "x-amz-meta-uploadedat": metadata.uploadedat,
+      },
+      file: {
+        url: getS3ObjectUrl(key),
+        key,
+        name: originalName,
+        type: contentType,
+        size,
+      },
+    });
+  } catch (err) {
+    console.error("upload presign error:", err);
+    const status = /not allowed|too large|Executable|content type/i.test(err.message) ? 400 : 500;
+    return res.status(status).json({ msg: status === 400 ? err.message : "Could not prepare direct upload." });
+  }
+});
 
 // POST /api/upload  — protected, any logged-in user or doctor
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {

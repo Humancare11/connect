@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, { normalizeFileUrl } from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import "./DoctorProfile.css";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -190,12 +191,10 @@ function DocumentCard({ label, value, doctorId, field, editable, onChange }) {
     setUploading(true);
     setError("");
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const { data } = await api.post("/api/upload", fd);
-      onChange?.(data.url || data.key || "");
+      const uploaded = await uploadFileDirectToS3(file);
+      onChange?.(uploaded.key || uploaded.url || "");
     } catch (err) {
-      setError(err?.response?.data?.msg || "Upload failed.");
+      setError(err?.response?.data?.msg || err.message || "Upload failed.");
     } finally {
       setUploading(false);
     }
@@ -248,10 +247,8 @@ function PhotoEditor({ value, doctorId, editable, onChange, initials }) {
     setPreview(URL.createObjectURL(file));
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const { data } = await api.post("/api/upload", fd);
-      onChange(data.url || data.key || "");
+      const uploaded = await uploadFileDirectToS3(file);
+      onChange(uploaded.key || uploaded.url || "");
     } finally {
       setUploading(false);
     }

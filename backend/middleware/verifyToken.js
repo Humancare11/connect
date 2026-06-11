@@ -158,10 +158,12 @@ function makeVerify(cookieName) {
 }
 
 const verifyToken = async (req, res, next) => {
+  // Try higher-privilege tokens first so an admin who also holds a userToken
+  // cookie is correctly identified as admin, not as the user.
   const candidates = [
-    req.cookies?.userToken,
-    req.cookies?.doctorToken,
     req.cookies?.adminToken,
+    req.cookies?.doctorToken,
+    req.cookies?.userToken,
     extractBearerToken(req),
   ].filter(Boolean);
 
