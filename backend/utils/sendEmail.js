@@ -72,7 +72,7 @@ const buildEmailHTML = (otp, type, name) => {
     }
 
     .hdr{
-      background:linear-gradient(135deg,#0b0443 0%,#1a0b73 100%);
+      background:linear-gradient(135deg,#132e88 0%,#1c4bbb 100%);
       padding:34px 40px;
       text-align:center;
     }
@@ -145,8 +145,8 @@ const buildEmailHTML = (otp, type, name) => {
 <body>
   <div class="wrap">
     <div class="hdr">
-      <h1> Humancare Connect</h1>
-      <p>${type === "register" ? "Email Verification" : "Password Reset"}</p>
+    <img src="https://humancareconnect.co/assets/Logo-CFoJDHpJ.png" alt="HumanCare Connect" width="48" style="margin-bottom:8px;"/>
+    <p>${type === "register" ? "Email Verification" : "Password Reset"}</p>
     </div>
 
     <div class="body">

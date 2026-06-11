@@ -1,8 +1,19 @@
 // models/User.js
 const mongoose = require("mongoose");
+const { generatePatientId } = require("../utils/idSequence");
 
 const userSchema = new mongoose.Schema(
   {
+    patientId: {
+      type: Number,
+      unique: true,
+      sparse: true,
+      immutable: true,
+      min: 10000,
+      max: 99999,
+      index: true,
+    },
+
     name: { type: String, required: true, trim: true },
 
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -42,5 +53,26 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre("validate", async function assignPatientId() {
+  if (!this.isNew || this.role !== "user" || this.patientId) return;
+  this.patientId = await generatePatientId();
+});
+
+function rejectPatientIdMutation(next) {
+  const update = this.getUpdate() || {};
+  const hasDirectMutation = Object.prototype.hasOwnProperty.call(update, "patientId");
+  const hasSetMutation = update.$set && Object.prototype.hasOwnProperty.call(update.$set, "patientId");
+  const hasUnsetMutation = update.$unset && Object.prototype.hasOwnProperty.call(update.$unset, "patientId");
+
+  if (hasDirectMutation || hasSetMutation || hasUnsetMutation) {
+    return next(new Error("patientId is immutable and cannot be changed."));
+  }
+  return next();
+}
+
+userSchema.pre("findOneAndUpdate", rejectPatientIdMutation);
+userSchema.pre("updateOne", rejectPatientIdMutation);
+userSchema.pre("updateMany", rejectPatientIdMutation);
 
 module.exports = mongoose.model("User", userSchema);

@@ -331,9 +331,11 @@ export default function ManageDoctors() {
                   const requestMeta = REQUEST_META[requestType] || REQUEST_META.none;
                   const name = `${row.firstName || ""} ${row.surname || ""}`.trim() || row.doctorId?.name || "-";
                   const email = row.email || row.doctorId?.email || "-";
+                  const hasPendingProfileUpdate =
+                    requestType === "profile_update" && (row.profileUpdateRequestStatus || "pending") === "pending";
                   const canApprove =
-                    row.approvalStatus !== "approved" &&
-                    (progress.completedSteps >= 4 || row.approvalStatus === "rejected");
+                    hasPendingProfileUpdate ||
+                    (row.approvalStatus !== "approved" && (progress.completedSteps >= 4 || row.approvalStatus === "rejected"));
 
                   return (
                     <tr key={row._id}>
@@ -412,7 +414,7 @@ export default function ManageDoctors() {
                               {canApprove && (
                                 <button className="adp-btn adp-btn--approve" onClick={() => approveDoctor(row._id)}>Approve</button>
                               )}
-                              {row.approvalStatus !== "rejected" && (
+                              {(row.approvalStatus !== "rejected" || hasPendingProfileUpdate) && (
                                 <button className="adp-btn adp-btn--reject" onClick={() => rejectDoctor(row._id)}>Reject</button>
                               )}
                             </>

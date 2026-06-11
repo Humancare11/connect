@@ -92,7 +92,7 @@ export default function DoctorLayout({ children }) {
       api.get(`/api/doctor/enrollment/${doctor._id || doctor.id}`)
         .then((res) => {
           const enrollment = res.data;
-          setIsEnrolled(enrollment?.approvalStatus === "approved");
+          setIsEnrolled(enrollment?.approvalStatus === "approved" || enrollment?.pendingRequestType === "profile_update");
           setFormCompleted(enrollment?.formCompleted === true);
         })
         .catch(() => {

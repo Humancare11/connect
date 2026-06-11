@@ -2,7 +2,7 @@ import axios from "axios";
 import { dispatchSessionActivity } from "./utils/session";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+  baseURL: import.meta.env.VITE_API_URL || "",
   withCredentials: true,
 });
 
@@ -44,16 +44,21 @@ export function getUserAuthToken() {
   return "";
 }
 
-const _apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const _apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 const UPLOAD_URL_RE = /^(https?:\/\/[^/]+)\/(?:api\/)?(uploads\/.+)$/;
 const UPLOAD_PATH_RE = /^\/(?:api\/)?(uploads\/.+)$/;
+const STRUCTURED_UPLOAD_KEY_RE = /^(uploads|doctors|patients)\/.+$/;
+const RAW_UPLOAD_KEY_FIELDS = new Set(["key", "storageKey"]);
 const _apiOrigin = (() => {
   try { return new URL(_apiBase).origin; } catch { return ""; }
 })();
 
-function _deepNormalizeUrls(data) {
+function _deepNormalizeUrls(data, fieldName = "") {
   if (!data) return data;
   if (typeof data === "string") {
+    if (RAW_UPLOAD_KEY_FIELDS.has(fieldName)) return data;
+    if (STRUCTURED_UPLOAD_KEY_RE.test(data)) return `${_apiBase}/api/uploads/${data}`;
+
     const pathMatch = UPLOAD_PATH_RE.exec(data);
     if (pathMatch) return `${_apiBase}/api/${pathMatch[pathMatch.length - 1]}`;
 
@@ -65,10 +70,10 @@ function _deepNormalizeUrls(data) {
     }
     return data;
   }
-  if (Array.isArray(data)) return data.map(_deepNormalizeUrls);
+  if (Array.isArray(data)) return data.map((item) => _deepNormalizeUrls(item, fieldName));
   if (typeof data === "object") {
     const out = {};
-    for (const [k, v] of Object.entries(data)) out[k] = _deepNormalizeUrls(v);
+    for (const [k, v] of Object.entries(data)) out[k] = _deepNormalizeUrls(v, k);
     return out;
   }
   return data;

@@ -8,7 +8,6 @@ import PhoneInputField, {
   findCountryByName,
 } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
-import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State, City } from "country-state-city";
 // ─── Constants ───
 
@@ -1357,8 +1356,10 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
     setUploading(true);
     onFile({ name: rawFile.name, url: null });
     try {
-      const uploaded = await uploadFileDirectToS3(rawFile);
-      onFile({ name: uploaded.name || rawFile.name, url: uploaded.key || uploaded.url });
+      const fd = new FormData();
+      fd.append("file", rawFile);
+      const { data } = await api.post("/api/upload", fd);
+      onFile({ name: data.name || rawFile.name, url: data.url });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
     } finally {
@@ -1519,7 +1520,7 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
 }
 
 // file prop shape: null | { name: string, url: string|null }
-// Uploads directly to S3 immediately when a file is picked, then calls onFile({ name, url })
+// Uploads to /api/upload immediately when a file is picked, then calls onFile({ name, url })
 function FileUpload({ label, file, onFile, onRemove, required }) {
   const ref = useRef();
   const [uploading, setUploading] = useState(false);
@@ -1532,8 +1533,10 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
     // Optimistically show the filename while uploading
     onFile({ name: rawFile.name, url: null });
     try {
-      const uploaded = await uploadFileDirectToS3(rawFile);
-      onFile({ name: uploaded.name || rawFile.name, url: uploaded.key || uploaded.url });
+      const fd = new FormData();
+      fd.append("file", rawFile);
+      const { data } = await api.post("/api/upload", fd);
+      onFile({ name: data.name || rawFile.name, url: data.url });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
       // Keep the { name, url: null } so the user sees the error state

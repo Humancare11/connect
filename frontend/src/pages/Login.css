@@ -1,0 +1,1105 @@
+/* ═══════════════════════════════════════════════════════════════
+   auth.css  –  Humancare Auth Page
+   All classes namespaced with hc- · zero duplicate rule-sets
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Scoped reset ────────────────────────────────────────── */
+.hc-page-bg *,
+.hc-page-bg *::before,
+.hc-page-bg *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Page backdrop ───────────────────────────────────────── */
+.hc-page-bg {
+  position: relative;
+  z-index: 1;
+  min-height: 90vh;
+  padding: 80px 0 60px;
+  background:
+    radial-gradient(
+      ellipse 60% 50% at 20% 0%,
+      rgba(37, 99, 235, 0.12) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 80% 100%,
+      rgba(30, 64, 175, 0.1) 0%,
+      transparent 70%
+    ),
+    #edf4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "satoshi", sans-serif;
+}
+
+/* ── Main card ───────────────────────────────────────────── */
+.hc-card {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow:
+    0 0 0 1px rgba(37, 99, 235, 0.08),
+    0 24px 64px rgba(30, 64, 175, 0.14),
+    0 8px 24px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+  width: 960px;
+  max-width: 96%;
+  min-height: 660px;
+  margin: 0 auto;
+}
+
+/* Flow screens get a narrower card */
+.hc-card--flow {
+  width: 460px;
+  min-height: auto;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TYPOGRAPHY
+══════════════════════════════════════════════════════════ */
+.hc-heading {
+  font-family: "satoshi", sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  color: #0b1f66;
+  letter-spacing: -0.3px;
+  margin-bottom: 4px;
+}
+
+.hc-subtext {
+  font-size: 14px;
+  font-weight: 400;
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+.hc-form-subtitle {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 2px 0 0;
+}
+
+.hc-divider-text {
+  font-size: 12px;
+  color: #9ca3af;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 6px 0 4px;
+}
+
+/* ── Links ───────────────────────────────────────────────── */
+.hc-card a {
+  color: #2563eb;
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 0.2s;
+  font-weight: 500;
+}
+.hc-card a:hover {
+  color: #1d4ed8;
+}
+
+/* ══════════════════════════════════════════════════════════
+   INPUTS  — unified height + consistent gap
+══════════════════════════════════════════════════════════ */
+.hc-input {
+  background: #f8fbff;
+  border: 1.5px solid #c7d7fe;
+  border-radius: 12px;
+  height: 46px; /* unified with selects */
+  padding: 0 14px;
+  margin: 0 0 10px; /* consistent bottom gap on every field */
+  width: 100%;
+  font-size: 14px;
+  font-family: "satoshi", sans-serif;
+  color: #1f2937;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+  display: block;
+}
+.hc-input::placeholder {
+  color: #9ca3af;
+}
+.hc-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.hc-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Selects ─────────────────────────────────────────────── */
+.hc-select {
+  background: #f8fbff;
+  border: 1.5px solid #c7d7fe;
+  border-radius: 12px;
+  height: 46px;
+  padding: 0 36px 0 14px;
+  margin: 0 0 10px;
+  width: 100%;
+  font-size: 14px;
+  font-family: "satoshi", sans-serif;
+  color: #1f2937;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 10px 6px;
+  cursor: pointer;
+}
+.hc-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.hc-select:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  color: #9ca3af;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PASSWORD WRAPPER  — eye always perfectly centred inside
+══════════════════════════════════════════════════════════ */
+.hc-pw-wrapper {
+  position: relative;
+  width: 100%;
+  margin: 0 0 10px; /* same gap as .hc-input */
+}
+
+/* the input inside a pw-wrapper must not add its own margin */
+.hc-pw-wrapper .hc-input {
+  margin: 0;
+  padding-right: 46px; /* room for the eye */
+}
+
+/* eye button — absolutely centred vertically */
+.hc-pw-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  /* kill all inherited button styles */
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 4px;
+  margin: 0;
+  min-height: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: color 0.2s;
+  z-index: 2;
+  /* kill any transform from .hc-btn hover */
+  text-transform: none;
+  letter-spacing: 0;
+}
+.hc-pw-toggle:hover {
+  color: #2563eb;
+  transform: translateY(-50%); /* stay vertically centred on hover */
+  background: none;
+  box-shadow: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════════ */
+.hc-btn {
+  border-radius: 50px;
+  border: none;
+  font-family: "satoshi", sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 0 44px;
+  height: 50px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.hc-btn:focus {
+  outline: none;
+}
+
+/* Primary */
+.hc-btn--primary {
+  background: linear-gradient(135deg, #2563eb 0%, #0b1f66 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.32);
+  width: 100%;
+  margin-top: 6px;
+}
+.hc-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.42);
+}
+.hc-btn--primary:active {
+  transform: translateY(0);
+}
+.hc-btn--primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Ghost (panel) */
+.hc-btn--ghost {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: blur(4px);
+}
+.hc-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #fff;
+  box-shadow: none;
+  transform: translateY(-2px);
+}
+
+/* Outline (mobile switch) */
+.hc-btn--outline {
+  background: transparent;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
+  box-shadow: none;
+  height: 42px;
+  padding: 0 28px;
+}
+.hc-btn--outline:hover {
+  background: #eff6ff;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Google button ───────────────────────────────────────── */
+.hc-google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 46px;
+  padding: 0 20px;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  color: #374151;
+  font-family: "satoshi", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  text-transform: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
+  cursor: pointer;
+  margin: 0;
+}
+.hc-google-btn:hover {
+  border-color: #2563eb;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.16);
+  transform: translateY(-1px);
+}
+.hc-google-btn svg {
+  flex-shrink: 0;
+}
+
+/* ── Social wrapper ──────────────────────────────────────── */
+.hc-social-links {
+  width: 100%;
+  margin: 8px 0 12px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FORM LAYOUT
+══════════════════════════════════════════════════════════ */
+.hc-form {
+  background: #fff;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 36px 44px 28px;
+  height: 100%;
+  text-align: center;
+  overflow-y: auto;
+}
+
+.hc-form-box {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: all 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.hc-form-box--login {
+  left: 0;
+  width: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: stretch;
+}
+.hc-form-box--login .hc-form {
+  justify-content: center; /* login has fewer fields, centre them */
+  width: 100%;
+}
+
+.hc-card--register-active .hc-form-box--login {
+  transform: translateX(100%);
+}
+
+.hc-form-box--register {
+  left: 0;
+  width: 50%;
+  opacity: 0;
+  z-index: 1;
+}
+.hc-card--register-active .hc-form-box--register {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+  animation: hc-show 0.6s;
+}
+@keyframes hc-show {
+  0%,
+  49.99% {
+    opacity: 0;
+    z-index: 1;
+  }
+  50%,
+  100% {
+    opacity: 1;
+    z-index: 5;
+  }
+}
+
+/* ── Row / field helpers ─────────────────────────────────── */
+.hc-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 0; /* rows supply their own bottom via children */
+}
+
+.hc-reg-row {
+  align-items: stretch;
+}
+
+.hc-field-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* the selects inside rows match the .hc-input bottom gap */
+.hc-reg-row .hc-select,
+.hc-reg-row .hc-input {
+  margin-bottom: 10px;
+}
+
+.hc-country-mobile-row {
+  align-items: stretch;
+  gap: 10px;
+}
+
+/* ── Small-caps register label ───────────────────────────── */
+.hc-reg-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+/* ── Gender wrap ─────────────────────────────────────────── */
+.hc-gender-wrap {
+  position: relative;
+  width: 100%;
+}
+.hc-gender-wrap .hc-select {
+  width: 100%;
+}
+.hc-gender-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #9ca3af;
+}
+
+/* ── Custom country dropdown ─────────────────────────────── */
+.hc-country-dropdown {
+  position: relative;
+  width: 100%;
+  z-index: 200;
+}
+
+.hc-country-trigger {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid #c7d7fe;
+  border-radius: 12px;
+  background: #f8fbff;
+  font-family: "satoshi", sans-serif;
+  font-size: 14px;
+  color: #1f2937;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s;
+  margin-bottom: 10px;
+}
+.hc-country-trigger:hover {
+  border-color: #2563eb;
+}
+
+.hc-country-menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.13),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+  z-index: 9999;
+  overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.hc-country-search-wrap {
+  padding: 8px 10px 6px;
+  border-bottom: 1px solid #f1f5f9;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+.hc-country-search-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: #f8fafc;
+  border: 1.5px solid #e8edf2;
+  border-radius: 10px;
+}
+
+.hc-country-search-input {
+  all: unset;
+  flex: 1;
+  font-family: "satoshi", sans-serif;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.hc-country-search-clear {
+  all: unset;
+  cursor: pointer;
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.hc-country-search-clear:hover {
+  color: #94a3b8;
+}
+
+.hc-country-option {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "satoshi", sans-serif;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.hc-country-option:hover {
+  background: #f8fafc;
+}
+
+.hc-country-select {
+  font-family: "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
+/* ── Password requirements hint ──────────────────────────── */
+.hc-pw-requirements {
+  width: 100%;
+  margin: -6px 0 8px;
+  color: #64748b;
+  font-size: 11.5px;
+  line-height: 1.4;
+  text-align: left;
+}
+.hc-pw-requirements--error {
+  color: #dc2626;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SLIDING PANEL
+══════════════════════════════════════════════════════════ */
+.hc-panel-wrapper {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+  z-index: 100;
+}
+.hc-card--register-active .hc-panel-wrapper {
+  transform: translateX(-100%);
+}
+
+.hc-panel {
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 20% 20%,
+      rgba(96, 165, 250, 0.24) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 80% at 80% 80%,
+      rgba(30, 64, 175, 0.45) 0%,
+      transparent 60%
+    ),
+    linear-gradient(145deg, #2563eb 0%, #0b1f66 100%);
+  color: #fff;
+  position: relative;
+  left: -100%;
+  height: 100%;
+  width: 200%;
+  transform: translateX(0);
+  transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+}
+.hc-panel::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 40px solid rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+.hc-panel::after {
+  content: "";
+  position: absolute;
+  bottom: -60px;
+  left: 30%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 30px solid rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+.hc-card--register-active .hc-panel {
+  transform: translateX(50%);
+}
+
+.hc-panel-content {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 48px;
+  text-align: center;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.hc-panel-heading {
+  font-family: "satoshi", sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.hc-panel-text {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 10px 0 28px;
+}
+
+.hc-panel-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.hc-panel-content--left {
+  transform: translateX(-20%);
+}
+.hc-card--register-active .hc-panel-content--left {
+  transform: translateX(0);
+}
+.hc-panel-content--right {
+  right: 0;
+  transform: translateX(0);
+}
+.hc-card--register-active .hc-panel-content--right {
+  transform: translateX(20%);
+}
+
+/* ══════════════════════════════════════════════════════════
+   ALERTS / FEEDBACK
+══════════════════════════════════════════════════════════ */
+.hc-form-error {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  text-align: center;
+  margin: 0 0 10px;
+}
+
+.hc-success-msg {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TERMS / CONSENT
+══════════════════════════════════════════════════════════ */
+.hc-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0 8px;
+  font-family: "satoshi", sans-serif;
+  font-size: 13px;
+  color: #6b7280;
+  text-align: left;
+  line-height: 1.4;
+}
+
+/* reset checkbox from global button styles */
+.hc-terms input[type="checkbox"] {
+  all: unset;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 1px;
+  /* re-apply native checkbox appearance */
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+.hc-consent-terms a {
+  font-weight: 700;
+}
+
+/* ── Forgot link ─────────────────────────────────────────── */
+.hc-forgot-link {
+  all: unset;
+  color: #2563eb;
+  font-family: "satoshi", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  align-self: flex-end;
+  margin: 0 0 6px;
+  transition: color 0.2s;
+}
+.hc-forgot-link:hover {
+  color: #1d4ed8;
+}
+
+/* ── Mobile switch ───────────────────────────────────────── */
+.hc-mobile-switch {
+  display: none;
+  margin-top: 16px;
+  text-align: center;
+}
+.hc-mobile-switch p {
+  color: #6b7280;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+/* ── Back button ─────────────────────────────────────────── */
+.hc-back-btn {
+  all: unset;
+  color: #9ca3af;
+  font-family: "satoshi", sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  transition: color 0.2s;
+}
+.hc-back-btn:hover {
+  color: #6b7280;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FLOW CARD (OTP · Forgot PW · Google complete)
+══════════════════════════════════════════════════════════ */
+.hc-flow-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44px 44px 36px;
+  text-align: center;
+  width: 100%;
+}
+
+.hc-flow-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #0b1f66);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+}
+
+/* ── OTP boxes ───────────────────────────────────────────── */
+.hc-otp-boxes {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 16px 0 6px;
+  width: 100%;
+}
+
+.hc-otp-box {
+  /* kill inherited .hc-input styles */
+  width: 50px;
+  height: 58px;
+  border: 2px solid #c7d7fe;
+  border-radius: 12px;
+  background: #f8fbff;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: "satoshi", sans-serif;
+  color: #0b1f66;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  display: block;
+  flex-shrink: 0;
+}
+.hc-otp-box:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ── OTP resend ──────────────────────────────────────────── */
+.hc-otp-resend {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 10px 0 0;
+  text-align: center;
+  width: 100%;
+  line-height: 1.4;
+}
+
+.hc-otp-resend-btn {
+  all: unset;
+  color: #2563eb;
+  font-family: "satoshi", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.hc-otp-resend-btn:hover {
+  color: #1d4ed8;
+}
+
+/* ══════════════════════════════════════════════════════════
+   THIRD-PARTY COMPONENT OVERRIDES
+   (PhoneInputField · DatePickerField)
+   Scoped under .hc-page-bg so they only apply here
+══════════════════════════════════════════════════════════ */
+.hc-page-bg .pif-control,
+.hc-page-bg .date-input {
+  width: 100%;
+  height: 46px;
+  min-height: 46px;
+  margin: 0 0 10px;
+  border: 1.5px solid #c7d7fe;
+  border-radius: 12px;
+  background: #f8fbff;
+  color: #1f2937;
+  font-family: "satoshi", sans-serif;
+  font-size: 14px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+}
+
+.hc-page-bg .pif-control {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hc-page-bg .pif-control.is-active,
+.hc-page-bg .date-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.hc-page-bg .pif-country-trigger {
+  all: unset;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.hc-page-bg .pif-country-trigger:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.hc-page-bg .pif-flag {
+  font-size: 20px;
+  line-height: 1;
+}
+.hc-page-bg .pif-dial {
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+.hc-page-bg .pif-chevron {
+  flex-shrink: 0;
+  color: #64748b;
+  opacity: 0.7;
+}
+.hc-page-bg .pif-divider {
+  width: 1px;
+  height: 22px;
+  flex-shrink: 0;
+  background: #c7d7fe;
+}
+.hc-page-bg .pif-input {
+  all: unset;
+  height: 100%;
+  padding: 0 14px;
+  flex: 1;
+  min-width: 0;
+  font-family: "satoshi", sans-serif;
+  font-size: 14px;
+  color: #1f2937;
+}
+.hc-page-bg .pif-input::placeholder {
+  color: #9ca3af;
+}
+
+/* DatePickerField */
+.hc-page-bg .date-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+.hc-page-bg .date-field::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.65;
+  background: no-repeat center / 18px 18px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z'/%3E%3C/svg%3E");
+}
+.hc-page-bg .date-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 44px 0 16px;
+  line-height: 46px;
+}
+.hc-page-bg .date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0;
+  width: 44px;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.hc-page-bg .date-input::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .hc-page-bg {
+    padding-top: 24px;
+    padding-bottom: 40px;
+    align-items: flex-start;
+  }
+
+  .hc-card {
+    min-height: auto;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px;
+    margin: 0 12px;
+  }
+
+  .hc-form-box,
+  .hc-form-box--login,
+  .hc-form-box--register {
+    position: static;
+    width: 100%;
+    left: 0;
+    transform: none;
+    opacity: 1;
+    z-index: 1;
+  }
+
+  .hc-form-box--register {
+    display: none;
+  }
+
+  .hc-card--register-active .hc-form-box--login {
+    display: none;
+    transform: none;
+  }
+  .hc-card--register-active .hc-form-box--register {
+    display: flex;
+    transform: none;
+  }
+
+  .hc-panel-wrapper {
+    display: none;
+  }
+
+  .hc-form {
+    padding: 28px 22px 32px;
+    height: auto;
+  }
+  .hc-form-box--login .hc-form {
+    justify-content: flex-start;
+  }
+
+  .hc-heading {
+    font-size: 22px;
+  }
+
+  .hc-row,
+  .hc-reg-row {
+    flex-direction: column;
+  }
+
+  .hc-mobile-switch {
+    display: block;
+  }
+
+  .hc-page-bg .pif-control,
+  .hc-page-bg .date-input {
+    height: 44px;
+    min-height: 44px;
+  }
+  .hc-page-bg .date-input {
+    line-height: 44px;
+  }
+}
