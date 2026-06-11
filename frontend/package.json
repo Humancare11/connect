@@ -8,6 +8,7 @@
     "build": "vite build",
     "postbuild": "node -e \"const fs=require('fs');fs.copyFileSync('dist/index.html','dist/200.html')\"",
     "build:prod": "vite build --mode production",
+    "build:uat": "vite build --mode uat",
     "preview": "vite preview",
     "lint": "eslint ."
   },

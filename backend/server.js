@@ -5,7 +5,11 @@ const path = require("path");
 require("dotenv").config({
   path: path.resolve(
     __dirname,
-    process.env.NODE_ENV === "production" ? ".env.production" : ".env"
+    process.env.NODE_ENV === "production"
+      ? ".env.production"
+      : process.env.NODE_ENV === "uat"
+      ? ".env.uat"
+      : ".env"
   ),
 });
 
