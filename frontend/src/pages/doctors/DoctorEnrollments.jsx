@@ -2,36 +2,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
-import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES } from "../../components/PhoneInputField";
-import useLocationData from "../../hooks/useLocationData";
+import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
-
+import { Country, State, City } from "country-state-city";
 // ─── Constants ───
-const COUNTRIES = [
-  "United States",
-  "United Kingdom",
-  "India",
-  "Canada",
-  "Australia",
-  "Germany",
-  "France",
-  "Brazil",
-  "Mexico",
-  "South Africa",
-  "Nigeria",
-  "Kenya",
-  "UAE",
-  "Saudi Arabia",
-  "Singapore",
-  "Japan",
-  "South Korea",
-  "Philippines",
-  "Pakistan",
-  "Bangladesh",
-  "Sri Lanka",
-  "Nepal",
-  "Other",
-];
+
 const SPECIALTIES = [
   "General Practice",
   "Internal Medicine",
@@ -89,7 +64,7 @@ const getCountryCodeFromDialCode = (dialCode) => {
 
 // Countries with state/province-level medical licensing
 const STATE_LICENSING_COUNTRIES = {
-  "United States": {
+  "US": {
     label: "State",
     plural: "States",
     items: [
@@ -146,7 +121,7 @@ const STATE_LICENSING_COUNTRIES = {
       "Wyoming",
     ],
   },
-  India: {
+  "IN": {
     label: "State/UT",
     plural: "States/UTs",
     items: [
@@ -185,7 +160,7 @@ const STATE_LICENSING_COUNTRIES = {
       "Chandigarh",
     ],
   },
-  Australia: {
+  "AU": {
     label: "State/Territory",
     plural: "States/Territories",
     items: [
@@ -199,7 +174,7 @@ const STATE_LICENSING_COUNTRIES = {
       "Australian Capital Territory",
     ],
   },
-  Canada: {
+  "CA": {
     label: "Province/Territory",
     plural: "Provinces/Territories",
     items: [
@@ -218,7 +193,7 @@ const STATE_LICENSING_COUNTRIES = {
       "Yukon",
     ],
   },
-  Germany: {
+  "DE": {
     label: "Bundesland",
     plural: "Bundesländer",
     items: [
@@ -240,7 +215,7 @@ const STATE_LICENSING_COUNTRIES = {
       "Thuringia",
     ],
   },
-  Brazil: {
+  "BR": {
     label: "State",
     plural: "States",
     items: [
@@ -273,7 +248,7 @@ const STATE_LICENSING_COUNTRIES = {
       "Tocantins",
     ],
   },
-  Mexico: {
+  "MX": {
     label: "State",
     plural: "States",
     items: [
@@ -311,7 +286,7 @@ const STATE_LICENSING_COUNTRIES = {
       "Zacatecas",
     ],
   },
-  Nigeria: {
+  "NG": {
     label: "State",
     plural: "States",
     items: [
@@ -657,9 +632,6 @@ h1,h2,h3,h4,h5,h6 {
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
 }
-.field-select:disabled {
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
 
 /* ─── Buttons ─── */
 .btn {
@@ -950,12 +922,14 @@ function MultiSelect({
   placeholder,
   searchPlaceholder,
   hasError,
+  showFlags = false,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const wrapperRef = useRef();
   const triggerRef = useRef();
   const dropdownRef = useRef();
+  const searchInputRef = useRef();
   const position = useDropdownPosition(triggerRef, open);
 
   useEffect(() => {
@@ -973,64 +947,157 @@ function MultiSelect({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  useEffect(() => {
+    if (open && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  const getDisplayName = (item) => typeof item === 'string' ? item : item.name;
+
   const filtered = items.filter((i) =>
-    i.toLowerCase().includes(search.toLowerCase()),
+    getDisplayName(i).toLowerCase().includes(search.toLowerCase()),
   );
+
   const toggle = (item) => {
+    const displayName = getDisplayName(item);
     onChange(
-      selected.includes(item)
-        ? selected.filter((s) => s !== item)
-        : [...selected, item],
+      selected.includes(displayName)
+        ? selected.filter((s) => s !== displayName)
+        : [...selected, displayName],
     );
   };
 
   const dropdown =
     open && position.width > 0
       ? createPortal(
-          <div
-            ref={dropdownRef}
-            className="ms-dropdown animate-in"
-            style={{
-              position: "absolute",
-              top: `${position.top}px`,
-              left: `${position.left}px`,
-              width: `${position.width}px`,
-            }}
-          >
-            <input
-              className="ms-search"
-              placeholder={searchPlaceholder || "Search..."}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              autoFocus
-            />
-            <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
-              {filtered.length === 0 ? (
-                <div className="ms-empty">No results found</div>
-              ) : (
-                filtered.map((item) => (
+        <div
+          ref={dropdownRef}
+          style={{
+            position: "absolute",
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+            width: `${position.width}px`,
+            background: "#fff",
+            border: "1.5px solid #e2e8f0",
+            borderRadius: 12,
+            boxShadow: "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
+            zIndex: 9999,
+            overflow: "hidden",
+          }}
+        >
+          {/* Search */}
+          <div style={{ padding: "10px 10px 6px", borderBottom: "1px solid #f1f5f9" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "8px 12px",
+              background: "#f8fafc", border: "1.5px solid #e8edf2", borderRadius: 10,
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="#94a3b8" strokeWidth="2" style={{ flexShrink: 0 }}>
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder={searchPlaceholder || "Search..."}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  flex: 1, border: "none", background: "transparent",
+                  fontSize: 13, fontFamily: "inherit",
+                  color: "#1e293b", outline: "none",
+                }}
+              />
+              {search && (
+                <button type="button" onClick={() => setSearch("")}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#cbd5e1", fontSize: 14, lineHeight: 1 }}>
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* List */}
+          <div style={{ maxHeight: 280, overflowY: "auto" }}>
+            {filtered.length === 0 ? (
+              <div style={{ padding: "18px 16px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+                No results found
+              </div>
+            ) : (
+              filtered.map((item) => {
+                const displayName = getDisplayName(item);
+                const countryData = typeof item === 'string' ? findCountryByName(item) : null;
+                const isSelected = selected.includes(displayName);
+
+                return (
                   <div
-                    key={item}
-                    className="ms-option"
+                    key={displayName}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: "9px 14px",
+                      border: "none",
+                      background: isSelected ? "#f0fdf4" : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      fontFamily: "inherit",
+                      transition: "background 0.1s",
+                    }}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       toggle(item);
                     }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = "#f8fafc";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = isSelected ? "#f0fdf4" : "transparent";
+                    }}
                   >
+                    {showFlags && countryData && (
+                      <img
+                        src={getFlagUrl(countryData.code)}
+                        alt={countryData.code}
+                        style={{
+                          width: 20,
+                          height: 15,
+                          objectFit: "cover",
+                          borderRadius: 2,
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
+                    <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
+                      {displayName}
+                    </span>
                     <div
-                      className={`ms-check ${selected.includes(item) ? "on" : ""}`}
+                      style={{
+                        width: 16,
+                        height: 16,
+                        border: "1.5px solid #cbd5e1",
+                        borderRadius: 3,
+                        background: isSelected ? "#10b981" : "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
                     >
-                      {selected.includes(item) && "✓"}
+                      {isSelected && <span style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>✓</span>}
                     </div>
-                    <span>{item}</span>
                   </div>
-                ))
-              )}
-            </div>
-          </div>,
-          document.body,
-        )
+                );
+              })
+            )}
+          </div>
+        </div>,
+        document.body,
+      )
       : null;
 
   return (
@@ -1051,7 +1118,8 @@ function MultiSelect({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggle(s);
+                      const item = items.find(i => getDisplayName(i) === s);
+                      toggle(item || s);
                     }}
                   >
                     ×
@@ -1101,50 +1169,50 @@ function SingleSelect({ items, value, onChange, placeholder, hasError }) {
   const dropdown =
     open && position.width > 0
       ? createPortal(
-          <div
-            ref={dropdownRef}
-            className="ms-dropdown animate-in"
-            style={{
-              position: "absolute",
-              top: `${position.top}px`,
-              left: `${position.left}px`,
-              width: `${position.width}px`,
-            }}
-          >
-            <input
-              className="ms-search"
-              placeholder="Search specialty..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              autoFocus
-            />
-            <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
-              {filtered.length === 0 ? (
-                <div className="ms-empty">No results found</div>
-              ) : (
-                filtered.map((item) => (
-                  <div
-                    key={item}
-                    className="ms-option"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      onChange(item);
-                      setOpen(false);
-                      setSearch("");
-                    }}
-                  >
-                    <div className={`ms-check ${value === item ? "on" : ""}`}>
-                      {value === item && "✓"}
-                    </div>
-                    <span>{item}</span>
+        <div
+          ref={dropdownRef}
+          className="ms-dropdown animate-in"
+          style={{
+            position: "absolute",
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+            width: `${position.width}px`,
+          }}
+        >
+          <input
+            className="ms-search"
+            placeholder="Search specialty..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            autoFocus
+          />
+          <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
+            {filtered.length === 0 ? (
+              <div className="ms-empty">No results found</div>
+            ) : (
+              filtered.map((item) => (
+                <div
+                  key={item}
+                  className="ms-option"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onChange(item);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                >
+                  <div className={`ms-check ${value === item ? "on" : ""}`}>
+                    {value === item && "✓"}
                   </div>
-                ))
-              )}
-            </div>
-          </div>,
-          document.body,
-        )
+                  <span>{item}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>,
+        document.body,
+      )
       : null;
 
   return (
@@ -1539,10 +1607,32 @@ export default function DoctorOnboardingWizard({
     zip: "",
     address: "",
   });
+  const countries = Country.getAllCountries();
+
+const states = s1.country
+  ? State.getStatesOfCountry(s1.country)
+  : [];
+const hasStates = states.length > 0;
+const cities = s1.country
+  ? hasStates
+    ? s1.state
+      ? City.getCitiesOfState(s1.country, s1.state)
+      : []
+    : City.getCitiesOfCountry(s1.country)
+  : [];
+const hasCities = cities.length > 0;
+
+  useEffect(() => {
+  if (!hasStates && s1.state) {
+    setS1(prev => ({
+      ...prev,
+      state: "",
+    }));
+  }
+}, [hasStates]);
   const [languagesKnown, setLanguagesKnown] = useState([]);
   const [s1Errors, setS1Errors] = useState({});
   const [phoneCountryCode, setPhoneCountryCode] = useState("auto");
-  const { states, cities, loadingStates, loadingCities } = useLocationData(s1.country, s1.state);
 
   // Step 2
   const [s2, setS2] = useState({
@@ -1557,6 +1647,7 @@ export default function DoctorOnboardingWizard({
     experience: "",
     medicalCouncilName: "",
     consultationMode: "",
+    consultantFees: "",
     feeCurrency: "USD",
     clinicName: "",
     clinicAddress: "",
@@ -1604,11 +1695,11 @@ export default function DoctorOnboardingWizard({
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
-  const isUS = s1.country === "United States";
+  const isUS = s1.country === "US";
   const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
-  const otherCountryOptions = COUNTRIES.filter(
-    (c) => c !== s1.country && c !== "Other",
-  );
+ const otherCountryOptions = countries.filter(
+  (c) => c.isoCode !== s1.country
+);
   const mobileValue = `${s1.countryCode || ""}${s1.phone || ""}`;
   const handleMobileChange = (value, countryMeta) => {
     const nextPhone = splitPhoneValue(value, countryMeta);
@@ -1655,9 +1746,9 @@ export default function DoctorOnboardingWizard({
         ? rawLangs
         : typeof rawLangs === "string" && rawLangs.trim()
           ? rawLangs
-              .split(",")
-              .map((l) => l.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((l) => l.trim())
+            .filter(Boolean)
           : [],
     );
     setS2({
@@ -1672,6 +1763,7 @@ export default function DoctorOnboardingWizard({
       experience: data.experience ? String(data.experience) : "",
       medicalCouncilName: data.medicalCouncilName || "",
       consultationMode: data.consultationMode || "",
+      consultantFees: data.consultantFees ? String(data.consultantFees) : "",
       feeCurrency: data.feeCurrency || "USD",
       clinicName: data.clinicName || "",
       clinicAddress: data.clinicAddress || "",
@@ -1688,8 +1780,6 @@ export default function DoctorOnboardingWizard({
     });
     if (data.timezone) setTimezone(data.timezone);
     if (data.state) setLicensedStates([data.state]);
-    if (Array.isArray(data.internationalLicenses))
-      setOtherLicenseCountries(data.internationalLicenses);
 
     const makeFileRef = (nameOrUrl) => {
       if (!nameOrUrl) return null;
@@ -1725,7 +1815,7 @@ export default function DoctorOnboardingWizard({
       if (Array.isArray(d.otherLicenseCountries))
         setOtherLicenseCountries(d.otherLicenseCountries);
       if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
-    } catch {}
+    } catch { }
   }, [doctorId, initialData]);
 
   // Auto-detect timezone on mount.
@@ -1756,7 +1846,7 @@ export default function DoctorOnboardingWizard({
     try {
       const iana = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (iana) setTimezone((prev) => prev || matchTz(iana));
-    } catch {}
+    } catch { }
 
     // ── Step 2: async IP-based refinement (best-effort, 3 fallback APIs) ───
     const fetchTz = async (url, extract) => {
@@ -1837,7 +1927,7 @@ export default function DoctorOnboardingWizard({
             completedSteps,
             currentStep,
           })
-          .catch(() => {});
+          .catch(() => { });
       }, 250);
     },
     [doctorId],
@@ -1886,6 +1976,8 @@ export default function DoctorOnboardingWizard({
     if (!s2.school.trim()) e.school = "Required";
     if (!s2.gradYear.trim()) e.gradYear = "Required";
     if (!String(s2.experience).trim()) e.experience = "Required";
+    if (!s2.consultantFees || Number(s2.consultantFees) <= 0)
+      e.consultantFees = "Required";
     if (!files.degree) e.degree = "Required";
     else if (!files.degree.url)
       e.degree =
@@ -1909,6 +2001,8 @@ export default function DoctorOnboardingWizard({
     else if (step === 3) setStep(4);
     else if (step === 4 && validateS4()) submitEnrollment();
   };
+
+  
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
   };
@@ -1931,7 +2025,7 @@ export default function DoctorOnboardingWizard({
         `hc_enroll_draft_${doctorId}`,
         JSON.stringify(draftData),
       );
-    } catch {}
+    } catch { }
     setDraftSaved(true);
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => setDraftSaved(false), 2500);
@@ -1989,6 +2083,7 @@ export default function DoctorOnboardingWizard({
       medicalRegistrationNumber: isUS ? s2.npi.trim() : s2.licenseNum.trim(),
       medicalLicense: s2.licenseNum.trim(),
       consultationMode: s2.consultationMode,
+      consultantFees: s2.consultantFees ? Number(s2.consultantFees) : 0,
       feeCurrency: s2.feeCurrency || "USD",
       clinicName: s2.clinicName.trim(),
       clinicAddress: s2.clinicAddress.trim(),
@@ -2009,7 +2104,6 @@ export default function DoctorOnboardingWizard({
       paypalId: s4.paypalId.trim(),
       availability,
       timezone,
-      internationalLicenses: otherLicenseCountries,
     };
 
     try {
@@ -2021,14 +2115,14 @@ export default function DoctorOnboardingWizard({
       // setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
       try {
         localStorage.removeItem(`hc_enroll_draft_${doctorId}`);
-      } catch {}
+      } catch { }
       setStep(5);
       if (enrollment && typeof onComplete === "function")
         onComplete(enrollment);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-          "Failed to submit enrollment. Please try again.",
+        "Failed to submit enrollment. Please try again.",
       );
     } finally {
       setSubmitBusy(false);
@@ -2103,11 +2197,12 @@ export default function DoctorOnboardingWizard({
             </label>
             <div className={`de-phone-input ${s1Errors.phone ? "error" : ""}`}>
               <PhoneInputField
-                value={mobileValue}
+                value={s1.countryCode + s1.phone}
                 onChange={handleMobileChange}
                 onCountryChange={handleMobileCountryChange}
                 defaultCountry={phoneCountryCode}
                 placeholder="Mobile number"
+                showCountryNameInDropdown={true}
               />
             </div>
             {s1Errors.phone && (
@@ -2178,74 +2273,115 @@ export default function DoctorOnboardingWizard({
             <label className="field-label">
               Country <span className="req">*</span>
             </label>
-            <select
+           
+              <select
               className={`field-select ${s1Errors.country ? "error" : ""}`}
               value={s1.country}
-              onChange={(e) => {
-                setS1({ ...s1, country: e.target.value, state: "", city: "" });
-                setLicensedStates([]);
-                setOtherLicenseCountries([]);
-              }}
+              onChange={(e) =>
+                setS1(prev => ({
+                  ...prev,
+                  country: e.target.value,
+                  state: "",
+                  city: "",
+                }))
+              }
             >
               <option value="">Select country...</option>
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+
+              {countries.map(country => (
+                <option key={country.isoCode} value={country.isoCode}>
+                  {country.name}
                 </option>
               ))}
             </select>
             {s1Errors.country && (
               <div className="field-error">{s1Errors.country}</div>
             )}
+              {!hasStates && !hasCities && s1.country && (
+  <div
+    style={{
+      fontSize: 13,
+      color: "var(--red-500)",
+      marginTop: 6,
+      
+    }}
+  >
+    This country does not have state or city data available.
+  </div>
+)}
           </div>
-            <div className="location-row">
+          <div className="location-row">
+            {hasStates && (
             <div className="field-group">
-            <label className="field-label">
-              State / Province
-              {s1.country === "United States" && <span className="req">*</span>}
-              {!s1.country && <span style={{ fontSize: "12px", fontWeight: "600", color: "red", marginLeft: "auto" }}>ⓘ Select country first</span>}
-            </label>
-            <select
-              className={`field-select ${s1Errors.state ? "error" : ""}`}
-              value={s1.state}
-              onChange={(e) => setS1({ ...s1, state: e.target.value, city: "" })}
-              disabled={!s1.country}
-              title={!s1.country ? "Please select a country first" : ""}
-            >
-              <option value="">{loadingStates ? "Loading..." : s1.country ? "Select state / province" : "Select country first"}</option>
-              {states.map((s) => <option key={s.isoCode} value={s.name}>{s.name}</option>)}
-            </select>
-            {s1Errors.state && (
-              <div className="field-error">{s1Errors.state}</div>
-            )}
-          </div>
-          <div className="field-group">
-            <label className="field-label">
-              City
-              {!s1.state && <span style={{ fontSize: "12px", fontWeight: "600", color: "red", marginLeft: "auto" }}>ⓘ Select state first</span>}
-            </label>
-            <select
-              className="field-select"
-              value={s1.city}
-              onChange={(e) => setS1({ ...s1, city: e.target.value })}
-              disabled={!s1.state}
-              title={!s1.state ? "Please select a state first" : ""}
-            >
-              <option value="">{loadingCities ? "Loading..." : s1.state ? "Select city" : "Select state first"}</option>
-              {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="field-group">
-            <label className="field-label">ZIP / Postal Code</label>
-            <input
-              className="field-input"
-              placeholder="ZIP or postal code"
-              value={s1.zip}
-              onChange={(e) => setS1({ ...s1, zip: e.target.value })}
-            />
-          </div>
+              <label className="field-label">
+                State / Province
+                {s1.country === "United States" && <span className="req">*</span>}
+                {!s1.country && <span style={{ fontSize: "12px", fontWeight: "600", color: "red", marginLeft: "auto" }}>ⓘ Select country first</span>}
+              </label>
+              <select
+                className={`field-select ${s1Errors.state ? "error" : ""}`}
+                value={s1.state}
+                disabled={!s1.country}
+                onChange={(e) =>
+                  setS1(prev => ({
+                    ...prev,
+                    state: e.target.value,
+                    city: "",
+                  }))
+                }
+              >
+                <option value="">Select state</option>
+
+                {states.map(state => (
+                  <option key={state.isoCode} value={state.isoCode}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
+              {s1Errors.state && (
+                <div className="field-error">{s1Errors.state}</div>
+              )}
             </div>
+            )}
+            {hasCities && (
+            <div className="field-group">
+              <label className="field-label">
+                City
+                {!s1.state && <span style={{ fontSize: "12px", fontWeight: "600", color: "red", marginLeft: "auto" }}>ⓘ Select state first</span>}
+              </label>
+              <select
+                className="field-select"
+                value={s1.city}
+                disabled={!s1.state}
+                onChange={(e) =>
+                  setS1(prev => ({
+                    ...prev,
+                    city: e.target.value,
+                  }))
+                }
+              >
+                <option value="">Select city</option>
+
+                {cities.map(city => (
+                  <option key={city.name} value={city.name}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            )}
           
+            <div className="field-group">
+              <label className="field-label">ZIP / Postal Code</label>
+              <input
+                className="field-input"
+                placeholder="ZIP or postal code"
+                value={s1.zip}
+                onChange={(e) => setS1({ ...s1, zip: e.target.value })}
+              />
+            </div>
+          </div>
+
           <div className="field-group full-width">
             <label className="field-label">Street Address</label>
             <input
@@ -2526,6 +2662,7 @@ export default function DoctorOnboardingWizard({
               onChange={setOtherLicenseCountries}
               placeholder="Select countries (if applicable)..."
               searchPlaceholder="Search countries..."
+              showFlags={true}
             />
           </div>
           {otherLicenseCountries.length > 0 && (
@@ -2602,6 +2739,73 @@ export default function DoctorOnboardingWizard({
           Consultation &amp; Practice
         </h4>
         <div className="form-grid">
+          <div className="field-group">
+            <label className="field-label">
+              Consultation Fee <span className="req">*</span>
+            </label>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                border: `1.5px solid ${s2Errors.consultantFees ? "var(--red)" : "var(--gray-200)"}`,
+                borderRadius: "var(--radius-sm)",
+                overflow: "hidden",
+                background: "var(--white)",
+                boxShadow: s2Errors.consultantFees
+                  ? "0 0 0 3px rgba(220,38,38,0.08)"
+                  : "none",
+              }}
+            >
+              <select
+                value={s2.feeCurrency}
+                onChange={(e) => setS2({ ...s2, feeCurrency: e.target.value })}
+                style={{
+                  padding: "11px 10px",
+                  background: "var(--gray-100)",
+                  color: "var(--gray-700)",
+                  fontWeight: 700,
+                  borderRight: "1.5px solid var(--gray-200)",
+                  fontSize: 13,
+                  border: "none",
+                  outline: "none",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                {[
+                  "USD",
+                  "INR",
+                  "GBP",
+                  "EUR",
+                  "AUD",
+                  "CAD",
+                  "AED",
+                  "SAR",
+                  "SGD",
+                  "JPY",
+                ].map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <input
+                className="field-input"
+                style={{ border: "none", borderRadius: 0, boxShadow: "none" }}
+                type="number"
+                min="0"
+                step="1"
+                placeholder="e.g. 500"
+                value={s2.consultantFees}
+                onChange={(e) =>
+                  setS2({ ...s2, consultantFees: e.target.value })
+                }
+              />
+            </div>
+            {s2Errors.consultantFees && (
+              <div className="field-error">{s2Errors.consultantFees}</div>
+            )}
+          </div>
           <div className="field-group">
             <label className="field-label">Clinic / Practice Name</label>
             <input
@@ -2685,15 +2889,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -2842,15 +3046,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -2979,15 +3183,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}

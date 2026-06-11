@@ -1,7 +1,16 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 
-// ─── Flag emoji from ISO-3166-1 alpha-2 code ─────────────────────────────────
+// ─── Flag CDN or fallback ─────────────────────────────────
+const UNSUPPORTED_FLAGS = new Set(["AC", "AX", "BQ", "IO", "PN", "SJ", "TF", "UM"]);
+
+export const getFlagUrl = (code) => {
+  if (UNSUPPORTED_FLAGS.has(code.toUpperCase())) {
+    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 67'%3E%3Crect width='100' height='67' fill='%23012169'/%3E%3C/svg%3E`;
+  }
+  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+};
+
 export const toFlag = (iso2) =>
   [...iso2.toUpperCase()].map(c =>
     String.fromCodePoint(c.charCodeAt(0) + 127397)
@@ -324,6 +333,7 @@ export default function PhoneInputField({
   onCountryChange,
   defaultCountry = "auto",
   placeholder = "Phone Number",
+  showCountryNameInDropdown = false,
 }) {
   const init = parseValue(value, defaultCountry);
   const [country, setCountry] = useState(init.country);
@@ -577,7 +587,7 @@ useEffect(() => {
           className="pif-country-trigger"
         >
 <img
-  src={`https://flagcdn.com/w40/${country.code.toLowerCase()}.png`}
+  src={getFlagUrl(country.code)}
   alt={country.code}
   style={{
     width: 20,
@@ -585,7 +595,10 @@ useEffect(() => {
     objectFit: "cover",
     borderRadius: 2,
   }}
-/>          <svg
+/>
+          {country.dial}
+
+         <svg
             width="10" height="6" viewBox="0 0 10 6" fill="none"
             className="pif-chevron"
             style={{ transform: open ? "rotate(180deg)" : "none" }}
@@ -680,7 +693,7 @@ useEffect(() => {
                 className={`pif-item${country.code === c.code ? " sel" : ""}`}
               >
 <img
-  src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
+  src={getFlagUrl(c.code)}
   alt={c.code}
   style={{
     width: 20,
@@ -690,6 +703,7 @@ useEffect(() => {
     flexShrink: 0,
   }}
 />                <span style={{ fontSize: 13, color: "#334155", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {showCountryNameInDropdown ? c.name : ""}
                 </span>
                 <span style={{ fontSize: 12, color: "#059669", fontWeight: 700, flexShrink: 0 }}>
                   +{c.dial}

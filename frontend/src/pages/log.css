@@ -1312,3 +1312,6 @@
   transform: translateY(-50%) !important;
   box-shadow: none !important;
 }
+.custom-country-dropdown {
+  position: relative;
+}

@@ -54,6 +54,7 @@ import PhoneInputField, {
   COUNTRIES as PHONE_COUNTRIES,
   parseValue as parsePhoneValue,
   findCountryByName,
+  getFlagUrl,
   toFlag,
 } from "../components/PhoneInputField";
 import DatePickerField from "../components/DatePickerField";
@@ -755,7 +756,7 @@ export default function AuthPage() {
   {selectedPhoneCountry ? (
     <>
       <img
-        src={`https://flagcdn.com/w40/${selectedPhoneCountry.code.toLowerCase()}.png`}
+        src={getFlagUrl(selectedPhoneCountry.code)}
         alt={selectedPhoneCountry.name}
         style={{
           width: 20,
@@ -826,7 +827,8 @@ export default function AuthPage() {
 }}
         >
           <img
-            src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
+  src={getFlagUrl(c.code)}
+
             alt={c.name}
             style={{
               width: 20,
