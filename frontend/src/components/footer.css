@@ -20,7 +20,7 @@ footer {
       135deg,
       #020817 0%,
       #04152d 45%,
-      #061a38 100%
+      #061a38 100% 
     ); */
 
   background:
@@ -49,6 +49,7 @@ footer {
 }
 
 .footer-bg-text {
+  font-family: Satoshi, sans-serif;
   position: absolute;
 
   left: 50%;
@@ -59,7 +60,7 @@ footer {
 
   transform-origin: bottom center;
 
-  font-size: clamp(80px, 18vw, 120px);
+  font-size: clamp(80px, 35vw, 120px);
   
   font-weight: 700;
 
@@ -273,7 +274,7 @@ footer {
   margin-top: 60px;
 
   padding:
-    38px 0;
+    10px 0;
 
   display: flex;
   justify-content: space-between;

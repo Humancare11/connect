@@ -435,23 +435,7 @@ export default function HomePage() {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: wrapperRef.current,
-        start: "top top",
-        end: "+=220%",
-        pin: true,
-        pinSpacing: true,
-      });
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: wrapperRef.current,
-          start: "top top",
-          end: "+=220%",
-          scrub: false,
-          toggleActions: "play none none none",
-        },
-      });
+      const tl = gsap.timeline();
 
       tl.fromTo(
         headerRef.current,
@@ -526,7 +510,7 @@ export default function HomePage() {
         <div className="hero-left" ref={headerRef}>
           <div className="hero-badge">
             <div className="badge-pulse" />
-            Available in all 50 states — 24 / 7.
+            Available 24 / 7.
           </div>
 
           <h1>

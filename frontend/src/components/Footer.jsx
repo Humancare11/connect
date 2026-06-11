@@ -35,7 +35,7 @@ export default function Footer() {
           </p>
 
           {/* CONTACT INFO */}
-          <div className="footer-contact">
+          {/* <div className="footer-contact">
 
             <div className="contact-item">
               <FaEnvelope />
@@ -53,36 +53,10 @@ export default function Footer() {
                 4 Peddlers Row #1091 Newark, DE 19702 USA              </span>
             </div>
 
-          </div>
+          </div> */}
 
           {/* SOCIAL ICONS */}
-          <div className="footer-socials">
-
-            <a href="https://x.com/HCCofficial_" className="soc-btn">
-              <FaXTwitter />
-            </a>
-
-            <a href="https://www.linkedin.com/company/122144245 " className="soc-btn">
-              <FaLinkedinIn />
-            </a>
-
-            <a href="https://www.youtube.com/@HumancareConncect " className="soc-btn">
-              <FaYoutube />
-            </a>
-
-            <a href=" https://www.facebook.com/profile.php?id=61589783051065" className="soc-btn">
-              <FaFacebookF />
-            </a>
-
-            <a href="https://www.instagram.com/humancareconnect/" className="soc-btn">
-              <FaInstagram />
-            </a>
-
-            <a href="https://www.threads.com/@humancareconnect " className="soc-btn">
-              <FaThreads />
-            </a>
-
-          </div>
+          
         </div>
         {/* PLATFORM */}
         <div className="footer-col">
@@ -145,9 +119,37 @@ export default function Footer() {
           © 2026 Humancare Connect. All rights reserved.
         </span>
 
-        <span>
+        {/* <span>
           Designed with care for better healthcare experiences ❤️
-        </span>
+        </span> */}
+
+        <div className="footer-socials">
+
+            <a href="https://x.com/HCCofficial_" className="soc-btn">
+              <FaXTwitter />
+            </a>
+
+            <a href="https://www.linkedin.com/company/122144245 " className="soc-btn">
+              <FaLinkedinIn />
+            </a>
+
+            <a href="https://www.youtube.com/@HumancareConncect " className="soc-btn">
+              <FaYoutube />
+            </a>
+
+            <a href=" https://www.facebook.com/profile.php?id=61589783051065" className="soc-btn">
+              <FaFacebookF />
+            </a>
+
+            <a href="https://www.instagram.com/humancareconnect/" className="soc-btn">
+              <FaInstagram />
+            </a>
+
+            <a href="https://www.threads.com/@humancareconnect " className="soc-btn">
+              <FaThreads />
+            </a>
+
+          </div> 
 
       </div>
     </footer>

@@ -10,11 +10,7 @@ import {
 import "./primarycare.css";
 import Bghero from "../../assets/primary-care-hero.jpg";
 
-// ────────────────────────────────────────────────────────────
-// DESIGN TOKENS  (matches brand CSS variables)
-// ────────────────────────────────────────────────────────────
-// --ink: #0A1F44  --blue: #0B57E8  --blue-3: #7CB7FF
-// --blue-4: #C8DFFF  --navy: #061333  --muted: #5C7099
+
 
 // ────────────────────────────────────────────────────────────
 // DATA
