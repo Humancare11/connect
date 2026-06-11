@@ -6,6 +6,7 @@ import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import "./Appointment.css";
 import api from "../api";
 import { notifyUserActivityUpdated } from "../utils/activityEvents";
+import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { useAuth } from "../context/AuthContext";
 import { useCurrency } from "../hooks/useCurrency";
 
@@ -404,11 +405,12 @@ export default function BookAppointment() {
     setUploading(true);
     const results = [];
     for (const file of Array.from(fileList)) {
-      const fd = new FormData(); fd.append("file", file);
       try {
-        const res = await api.post("/api/upload", fd);
-        results.push({ url: res.data.url, name: res.data.name, type: res.data.type, size: res.data.size });
-      } catch { setError(`Failed to upload "${file.name}". Max 10 MB.`); }
+        const uploaded = await uploadFileDirectToS3(file);
+        results.push({ url: uploaded.url, name: uploaded.name, type: uploaded.type, size: uploaded.size });
+      } catch {
+        setError(`Failed to upload "${file.name}". Max 10 MB.`);
+      }
     }
     setReports(prev => [...prev, ...results]);
     setUploading(false);

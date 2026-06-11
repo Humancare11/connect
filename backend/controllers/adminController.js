@@ -460,7 +460,7 @@ const getDoctorPayments = async (req, res) => {
     const appointments = await Appointment.find({
       paymentStatus: "paid",
     })
-      .populate("patientId", "name email")
+      .populate("patientId", "patientId name email")
       .populate("doctorId", "name email doctorId")
       .sort({ createdAt: -1 })
       .lean();

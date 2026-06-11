@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
-import "./AdminAppointments.css";
+import "./AdminAssignDoctor.css";
 
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
@@ -13,91 +13,87 @@ function includesToken(source, target) {
   return Boolean(a && b && (a.includes(b) || b.includes(a)));
 }
 
-function scoreDoctor(doctor, appointment) {
-  let score = 0;
-  const reasons = [];
+function uniqueValues(values) {
+  return [...new Set(values.map((value) => String(value || "").trim()).filter(Boolean))];
+}
 
-  if (includesToken(doctor.specialty, appointment.specialty)) {
-    score += 70;
-    reasons.push("Specialty match");
-  }
+function doctorDisplayName(name) {
+  const cleanName = String(name || "").trim();
+  if (!cleanName) return "Doctor";
+  return cleanName.toLowerCase().startsWith("dr.") ? cleanName : `Dr. ${cleanName}`;
+}
+
+function getAppointmentCountry(appointment) {
+  return appointment?.patientId?.country || appointment?.country || "";
+}
+
+function getLicenseCountries(doctor) {
+  return uniqueValues([
+    doctor.licenseCountry,
+    doctor.medicalLicenseCountry,
+    doctor.registrationCountry,
+    doctor.country,
+    ...(Array.isArray(doctor.internationalLicenses) ? doctor.internationalLicenses : []),
+  ]);
+}
+
+function scoreDoctor(doctor, appointment) {
+  const appointmentCountry = getAppointmentCountry(appointment);
+  const licenseCountries = getLicenseCountries(doctor);
+  const priority = {
+    specialty: includesToken(doctor.specialty, appointment.specialty),
+    country: includesToken(doctor.country, appointmentCountry),
+    licenseCountry: licenseCountries.some((country) => includesToken(country, appointmentCountry)),
+  };
+  let secondaryScore = 0;
+
   if (includesToken(doctor.subSpecialty, appointment.specialty)) {
-    score += 40;
-    reasons.push("Sub-specialty match");
+    secondaryScore += 40;
   }
-  if (includesToken(doctor.specialty, appointment.category) || includesToken(doctor.about, appointment.category)) {
-    score += 25;
-    reasons.push("Category fit");
+  if (
+    includesToken(doctor.specialty, appointment.category) ||
+    includesToken(doctor.about, appointment.category)
+  ) {
+    secondaryScore += 25;
   }
-  if (includesToken(doctor.about, appointment.condition) || includesToken(doctor.subSpecialty, appointment.condition)) {
-    score += 20;
-    reasons.push("Condition experience");
+  if (
+    includesToken(doctor.about, appointment.condition) ||
+    includesToken(doctor.subSpecialty, appointment.condition)
+  ) {
+    secondaryScore += 20;
   }
   if (Number(doctor.experience) >= 10) {
-    score += 5;
-    reasons.push("Senior clinician");
+    secondaryScore += 5;
   }
 
-  return { score, reasons };
+  const score =
+    (priority.specialty ? 1000 : 0) +
+    (priority.country ? 100 : 0) +
+    (priority.licenseCountry ? 10 : 0) +
+    secondaryScore / 100;
+
+  return { score, priority, secondaryScore };
 }
 
-function formatMoney(value) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount) || amount <= 0) return "-";
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function DoctorCard({ doctor, appointment, assigning, selected, onAssign }) {
-  const initials = (doctor.name || "D").slice(0, 1).toUpperCase();
-  const location = [doctor.city, doctor.country].filter(Boolean).join(", ") || doctor.location || "-";
-
+function DoctorRow({ doctor, appointment, assigning, selected, index, onAssign }) {
   return (
-    <article className={`adp-doctor-match-card ${selected ? "adp-doctor-match-card--selected" : ""}`}>
-      <div className="adp-doctor-match-head">
-        <div className="adp-doctor-avatar">{initials}</div>
-        <div>
-          <span>Dr. {doctor.doctorId || "ID pending"}</span>
-          <h2>{doctor.name}</h2>
-          <p>{doctor.specialty || "Specialty not listed"}</p>
-        </div>
+    <div className={`aad-doctor-row ${selected ? "aad-doctor-row--selected" : ""}`}>
+      <div className="aad-cell aad-cell-sr">{index + 1}</div>
+      <div className="aad-cell aad-cell-id">{doctor.doctorId || "-"}</div>
+      <div className="aad-cell aad-cell-name">{doctorDisplayName(doctor.name)}</div>
+      <div className="aad-cell aad-cell-specialty">{doctor.specialty || "-"}</div>
+      <div className="aad-cell aad-cell-country">{doctor.country || "-"}</div>
+      <div className="aad-doctor-action">
+        <button
+          type="button"
+          className={`aad-assign-btn ${selected ? "aad-assign-btn--current" : doctor.doctorId ? "aad-assign-btn--primary" : ""}`}
+          disabled={assigning || selected || !doctor.doctorId}
+          onClick={() => onAssign(doctor)}
+        >
+          {selected ? "Assigned" : assigning ? "Assigning…" : appointment.doctorId ? "Reassign" : "Assign"}
+        </button>
       </div>
-
-      <div className="adp-doctor-metrics">
-        <div>
-          <span>Experience</span>
-          <strong>{doctor.experience || "-"} yrs</strong>
-        </div>
-        <div>
-          <span>Fee</span>
-          <strong>{formatMoney(doctor.price)}</strong>
-        </div>
-        <div>
-          <span>Location</span>
-          <strong>{location}</strong>
-        </div>
-      </div>
-
-      <div className="adp-match-reasons">
-        {(doctor.matchReasons.length ? doctor.matchReasons : ["Available approved doctor"]).slice(0, 3).map((reason) => (
-          <span key={reason}>{reason}</span>
-        ))}
-      </div>
-
-      <p className="adp-doctor-about">{doctor.about || "Profile summary is not available."}</p>
-
-      <button
-        type="button"
-        className="adp-assign-primary"
-        disabled={assigning || selected || !doctor.doctorId}
-        onClick={() => onAssign(doctor)}
-      >
-        {selected ? "Current Doctor" : assigning ? "Assigning..." : appointment.doctorId ? "Assign Alternate" : "Assign Doctor"}
-      </button>
-    </article>
+    </div>
   );
 }
 
@@ -123,22 +119,18 @@ export default function AdminAssignDoctor() {
           api.get(`/api/appointments/${id}`),
           api.get("/api/doctor/approved"),
         ]);
-
         if (!alive) return;
         setAppointment(appointmentRes.data);
         setDoctors(Array.isArray(doctorsRes.data) ? doctorsRes.data : []);
       } catch (err) {
-        console.error("Failed to load assignment data", err);
-        if (alive) setError(err.response?.data?.msg || "Failed to load assignment data.");
+        if (alive) setError(err.response?.data?.msg || "Failed to load data.");
       } finally {
         if (alive) setLoading(false);
       }
     }
 
     loadData();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [id]);
 
   const rankedDoctors = useMemo(() => {
@@ -148,7 +140,12 @@ export default function AdminAssignDoctor() {
     return doctors
       .map((doctor) => {
         const match = scoreDoctor(doctor, appointment);
-        return { ...doctor, matchScore: match.score, matchReasons: match.reasons };
+        return {
+          ...doctor,
+          matchScore: match.score,
+          matchPriority: match.priority,
+          matchSecondaryScore: match.secondaryScore,
+        };
       })
       .filter((doctor) => {
         if (!q) return true;
@@ -158,34 +155,38 @@ export default function AdminAssignDoctor() {
           doctor.specialty,
           doctor.subSpecialty,
           doctor.city,
+          doctor.state,
           doctor.country,
+          ...(Array.isArray(doctor.internationalLicenses) ? doctor.internationalLicenses : []),
         ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(q);
+          .filter(Boolean).join(" ").toLowerCase().includes(q);
       })
-      .sort((a, b) => b.matchScore - a.matchScore || String(a.name).localeCompare(String(b.name)));
+      .sort((a, b) => {
+        const priorityCompare =
+          Number(b.matchPriority?.specialty) - Number(a.matchPriority?.specialty) ||
+          Number(b.matchPriority?.country) - Number(a.matchPriority?.country) ||
+          Number(b.matchPriority?.licenseCountry) - Number(a.matchPriority?.licenseCountry);
+
+        return (
+          priorityCompare ||
+          b.matchSecondaryScore - a.matchSecondaryScore ||
+          String(a.name).localeCompare(String(b.name))
+        );
+      });
   }, [appointment, doctors, query]);
 
-  const suggestedDoctors = rankedDoctors.filter((doctor) => doctor.matchScore > 0);
   const currentDoctorMongoId = appointment?.doctorId?._id?.toString() || "";
 
   const assignDoctor = async (doctor) => {
     if (!doctor?.doctorId || assigningDoctorId) return;
-
     setAssigningDoctorId(String(doctor.doctorId));
     setError("");
     setNotice("");
-
     try {
-      const res = await api.put(`/api/appointments/${id}/change-doctor`, {
-        doctorId: doctor.doctorId,
-      });
+      const res = await api.put(`/api/appointments/${id}/change-doctor`, { doctorId: doctor.doctorId });
       setNotice(res.data?.msg || "Doctor assigned successfully.");
       setTimeout(() => navigate(`/admin-dashboard/appointments/${id}`), 900);
     } catch (err) {
-      console.error("Doctor assignment failed", err);
       setError(err.response?.data?.msg || "Could not assign doctor.");
     } finally {
       setAssigningDoctorId("");
@@ -194,10 +195,10 @@ export default function AdminAssignDoctor() {
 
   if (loading) {
     return (
-      <div className="adp-page">
-        <div className="adp-loading">
-          <div className="adp-spinner" />
-          <p>Loading assignment workspace...</p>
+      <div className="aad-page">
+        <div className="aad-loading">
+          <div className="aad-spinner" />
+          <p>Loading…</p>
         </div>
       </div>
     );
@@ -205,95 +206,128 @@ export default function AdminAssignDoctor() {
 
   if (error && !appointment) {
     return (
-      <div className="adp-page">
-        <div className="adp-empty">
-          <h3>Assignment unavailable</h3>
+      <div className="aad-page">
+        <div className="aad-empty">
           <p>{error}</p>
-          <Link className="adp-view-btn" to="/admin-dashboard/appointments">Back to appointments</Link>
+          <Link to="/admin-dashboard/appointments">Back to appointments</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="adp-page adp-assign-page">
-      <div className="adp-assign-hero">
-        <div>
-          <Link className="adp-back-link" to={`/admin-dashboard/appointments/${id}`}>Back to details</Link>
-          <span className="adp-eyebrow">Care Team Assignment</span>
-          <h1 className="adp-title">{appointment.patientId?.name || "Patient"}</h1>
-          <p className="adp-sub">
-            {appointment.category || "Category pending"} - {appointment.specialty || "Specialty pending"} - {appointment.condition || "Condition pending"}
-          </p>
+    <div className="aad-page">
+
+      {/* ── Top nav ── */}
+      <div className="aad-nav">
+        <Link className="aad-back" to={`/admin-dashboard/appointments/${id}`}>
+          ← Back
+        </Link>
+        <span className="aad-nav-dot">·</span>
+        <span className="aad-nav-title">Assign Doctor</span>
+      </div>
+
+      {/* ── Appointment bar – single horizontal strip ── */}
+      <div className="aad-appt-bar">
+        <div className="aad-appt-field">
+          <span className="aad-appt-label">Patient</span>
+          <span className="aad-appt-val">{appointment.patientId?.name || "—"}</span>
         </div>
-        <div className="adp-assignment-status">
-          <span>Current Doctor</span>
-          <strong>{appointment.doctorId?.name || "Unassigned"}</strong>
+        <div className="aad-appt-sep" />
+        <div className="aad-appt-field">
+          <span className="aad-appt-label">Country</span>
+          <span className="aad-appt-val">{getAppointmentCountry(appointment) || "—"}</span>
+        </div>
+        <div className="aad-appt-sep" />
+        <div className="aad-appt-field">
+          <span className="aad-appt-label">Category</span>
+          <span className="aad-appt-val">{appointment.category || "—"}</span>
+        </div>
+        <div className="aad-appt-sep" />
+        <div className="aad-appt-field">
+          <span className="aad-appt-label">Specialty</span>
+          <span className="aad-appt-val">{appointment.specialty || "—"}</span>
+        </div>
+        <div className="aad-appt-sep" />
+        <div className="aad-appt-field">
+          <span className="aad-appt-label">Condition</span>
+          <span className="aad-appt-val">{appointment.condition || "—"}</span>
+        </div>
+        <div className="aad-appt-sep" />
+        <div className="aad-appt-field">
+          <span className="aad-appt-label">Date</span>
+          <span className="aad-appt-val">{appointment.date || "—"}</span>
+        </div>
+        <div className="aad-appt-sep" />
+        <div className="aad-appt-field">
+          <span className="aad-appt-label">Time</span>
+          <span className="aad-appt-val">{appointment.time || "—"}</span>
+        </div>
+        <div className="aad-appt-sep" />
+        <div className="aad-appt-field">
+          <span className="aad-appt-label">Current Doctor</span>
+          <span className="aad-appt-val aad-appt-doctor">
+            {appointment.doctorId?.name || "Unassigned"}
+          </span>
         </div>
       </div>
 
+      {/* ── Banner ── */}
       {(error || notice) && (
-        <div className={`adp-assignment-banner ${error ? "adp-assignment-banner--error" : ""}`}>
+        <div className={`aad-banner ${error ? "aad-banner--error" : "aad-banner--ok"}`}>
           {error || notice}
         </div>
       )}
 
-      <div className="adp-assign-layout">
-        <aside className="adp-request-panel">
-          <h2>Appointment Request</h2>
-          <div className="adp-request-list">
-            <div><span>Category</span><strong>{appointment.category || "-"}</strong></div>
-            <div><span>Specialty</span><strong>{appointment.specialty || "-"}</strong></div>
-            <div><span>Condition</span><strong>{appointment.condition || "-"}</strong></div>
-            <div><span>Date</span><strong>{appointment.date || "-"}</strong></div>
-            <div><span>Time</span><strong>{appointment.time || "-"}</strong></div>
-            <div><span>Consultation</span><strong>{formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)}</strong></div>
-          </div>
-          <div className="adp-detail-note">
-            <span>Consultation Details</span>
-            <p>{appointment.problem || "No consultation details provided."}</p>
-          </div>
-        </aside>
+      {/* ── Doctor list ── */}
+      <div className="aad-list-section">
 
-        <main className="adp-doctor-workspace">
-          <div className="adp-workspace-header">
-            <div>
-              <h2>Suggested Doctors</h2>
-              <p>{suggestedDoctors.length} matched from {doctors.length} approved doctors.</p>
-            </div>
-            <label className="adp-search adp-search--wide">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                placeholder="Search doctor name, ID, specialty, city..."
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </label>
+        {/* Column header + search */}
+        <div className="aad-list-header">
+          <div className="aad-list-title">
+            <h2>Recommended doctors</h2>
+            <p>Ranking uses specialty, country, license country, and clinical fit.</p>
           </div>
+          <label className="aad-search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              placeholder="Search by name, ID, specialty, country…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+        </div>
 
+        {/* Rows */}
+        <div className="aad-doctor-list">
+          <div className="aad-doctor-row aad-doctor-row--head">
+            <div className="aad-col aad-cell-sr">Sr. No.</div>
+            <div className="aad-col aad-cell-id">Doctor ID</div>
+            <div className="aad-col aad-cell-name">Doctor Name</div>
+            <div className="aad-col aad-cell-specialty">Specialty</div>
+            <div className="aad-col aad-cell-country">Country</div>
+            <div className="aad-col aad-cell-assign">Assign</div>
+          </div>
           {rankedDoctors.length === 0 ? (
-            <div className="adp-empty">
-              <h3>No doctors found</h3>
-              <p>Adjust the search or approve more doctors for this specialty.</p>
-            </div>
+            <div className="aad-empty-row">No doctors match. Adjust search or approve more doctors.</div>
           ) : (
-            <div className="adp-doctor-match-grid">
-              {rankedDoctors.map((doctor) => (
-                <DoctorCard
-                  key={doctor.id || doctor.doctorId}
-                  doctor={doctor}
-                  appointment={appointment}
-                  assigning={assigningDoctorId === String(doctor.doctorId)}
-                  selected={doctor.mongoId?.toString() === currentDoctorMongoId}
-                  onAssign={assignDoctor}
-                />
-              ))}
-            </div>
+            rankedDoctors.map((doctor, index) => (
+              <DoctorRow
+                key={doctor.id || doctor.doctorId}
+                doctor={doctor}
+                appointment={appointment}
+                assigning={assigningDoctorId === String(doctor.doctorId)}
+                selected={doctor.mongoId?.toString() === currentDoctorMongoId}
+                index={index}
+                onAssign={assignDoctor}
+              />
+            ))
           )}
-        </main>
+        </div>
+
+        <p className="aad-count">{rankedDoctors.length} of {doctors.length} approved doctors shown</p>
       </div>
     </div>
   );

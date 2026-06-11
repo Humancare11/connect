@@ -10,6 +10,7 @@ import {
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
+import { uploadFileDirectToS3 } from "../utils/directUpload";
 import "./Appointment.css";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -528,12 +529,7 @@ export default function AppointmentBookingForm() {
       // Upload files upfront so URLs survive any 3DS page redirect
       const reports = [];
       for (const file of form.files) {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await api.post("/api/upload", fd, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        reports.push(res.data);
+        reports.push(await uploadFileDirectToS3(file));
       }
       setUploadedReports(reports);
       setStage("payment");

@@ -5,6 +5,7 @@ import "./videocall.css";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
+import { uploadFileDirectToS3 } from "../utils/directUpload";
 import {
   FiAlertTriangle,
   FiCalendar,
@@ -884,20 +885,18 @@ export default function VideoCall() {
     }
     setUploadingFile(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await api.post("/api/upload", form, { headers: { "Content-Type": "multipart/form-data" } });
+      const uploaded = await uploadFileDirectToS3(file);
       socket.emit("appointment-message", {
         appointmentId,
         senderId: currentUser.id,
         senderName: currentUser.name,
         text: "",
-        fileUrl: res.data.url,
-        fileName: res.data.name ?? file.name,
-        fileType: res.data.type ?? file.type,
+        fileUrl: uploaded.key,
+        fileName: uploaded.name ?? file.name,
+        fileType: uploaded.type ?? file.type,
       });
     } catch (err) {
-      setInlineError(err.response?.data?.msg || "File upload failed.");
+      setInlineError(err.response?.data?.msg || err.message || "File upload failed.");
       setTimeout(() => setInlineError(""), 4000);
     } finally {
       setUploadingFile(false);

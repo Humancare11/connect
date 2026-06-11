@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import "./MedicalQuestions.css";
 import api from "../../api";
 import { notifyUserActivityUpdated } from "../../utils/activityEvents";
+import { uploadFileDirectToS3 } from "../../utils/directUpload";
 
 const CATEGORY_META = {
   General:      { bg: "#EEF2FF", text: "#4338CA" },
@@ -172,12 +173,10 @@ export default function MedicalQuestions() {
     }
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await api.post("/api/upload", formData);
-      setAttachments(prev => [...prev, res.data]);
+      const uploaded = await uploadFileDirectToS3(file);
+      setAttachments(prev => [...prev, uploaded]);
     } catch (err) {
-      showToast(err.response?.data?.msg || "Failed to upload file.", false);
+      showToast(err.response?.data?.msg || err.message || "Failed to upload file.", false);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

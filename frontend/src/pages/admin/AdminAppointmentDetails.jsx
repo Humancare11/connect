@@ -77,6 +77,15 @@ function InfoTile({ label, value }) {
   );
 }
 
+function formatPatientId(value) {
+  if (value === undefined || value === null || value === "") return "";
+  const numeric = Number(value);
+  if (Number.isInteger(numeric) && numeric >= 0 && numeric <= 99999) {
+    return String(numeric).padStart(5, "0");
+  }
+  return String(value);
+}
+
 const FLOW = [
   { key: "upcoming", label: "Upcoming" },
   { key: "assigned", label: "Assigned" },
@@ -166,7 +175,7 @@ export default function AdminAppointmentDetails() {
   const patientTimezone = appointment.patientTimezone || "UTC";
   const doctorTimezone = appointment.doctorTimezone || appointment.doctorMeta?.timezone || "UTC";
   const adminTimezone = getLocalTimezone();
-  const userId = appointment.patientId?._id || appointment.patientId || "-";
+  const userId = formatPatientId(appointment.patientId?.patientId) || appointment.patientId?._id || appointment.patientId || "-";
   const doctorId = appointment.doctorId?.doctorId || appointment.doctorId?._id || appointment.doctorId || "-";
   const userLocation = [
     appointment.patientDetails?.city || appointment.patientId?.city,
@@ -181,11 +190,11 @@ export default function AdminAppointmentDetails() {
   return (
     <div className="adp-page">
       <div className="adp-detail-hero">
-        <div>
+        {/* <div>
           <span className="adp-eyebrow">Appointment Details</span>
           <h1 className="adp-title">Appointment Information</h1>
           <p className="adp-sub">{appointment.patientId?.name || "Patient"} - {appointment.category || "General care"} - {appointment.specialty || "Specialty pending"}</p>
-        </div>
+        </div> */}
         <div className="adp-detail-actions">
           <Link className="adp-back-button" to="/admin-dashboard/appointments">Back to Appointments</Link>
           <Link className="adp-alt-btn" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
@@ -194,17 +203,17 @@ export default function AdminAppointmentDetails() {
         </div>
       </div>
 
-      <div className="adp-detail-summary">
+      {/* <div className="adp-detail-summary">
         <InfoTile label="Status" value={statusLabel(appointment.status)} />
         <InfoTile label="UTC Appointment Time" value={instant ? instant.toISOString() : "-"} />
         <InfoTile label="Patient Timezone" value={patientTimezone} />
         <InfoTile label="Fee" value={formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)} />
-      </div>
+      </div> */}
 
       <div className="adp-detail-grid">
         <Section title="Appointment Details">
           <div className="adp-info-grid">
-            <InfoTile label="User ID" value={userId} />
+            <InfoTile label="Patient ID" value={userId} />
             <InfoTile label="User Name" value={appointment.patientId?.name} />
             <InfoTile label="Doctor ID" value={doctorId} />
             <InfoTile label="Appointment ID" value={appointment._id} />
@@ -217,16 +226,16 @@ export default function AdminAppointmentDetails() {
             <InfoTile label="Status" value={statusLabel(appointment.status)} />
             <InfoTile label="Consultation Fee" value={formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)} />
           </div>
-          <div className="adp-detail-note">
+          {/* <div className="adp-detail-note">
             <span>Timezone Handling</span>
             <p>Appointments are stored as a UTC timestamp and rendered in the patient, doctor, and admin timezones to avoid cross-country scheduling drift.</p>
-          </div>
+          </div> */}
         </Section>
 
         <Section title="User Details">
           <div className="adp-info-grid">
             <InfoTile label="Gender" value={patientDetails.gender || appointment.patientId?.gender} />
-            <InfoTile label="Date of Birth" value={patientDetails.dob} />
+            <InfoTile label="Date of Birth" value={patientDetails.dob || appointment.patientId?.dob} />
             <InfoTile label="Location" value={userLocation} />
             <InfoTile label="Phone Number" value={appointment.patientId?.mobile || patientDetails.phone} />
             <InfoTile label="Email ID" value={appointment.patientId?.email || patientDetails.email} />
@@ -245,7 +254,7 @@ export default function AdminAppointmentDetails() {
           </div>
         </Section>
 
-        <Section title="Timeline">
+        {/* <Section title="Timeline">
           <div className="adp-timeline">
             {FLOW.map((step, index) => {
               const done = currentStepIndex >= index;
@@ -263,7 +272,7 @@ export default function AdminAppointmentDetails() {
               Assigned by {appointment.assignedBy?.name || appointment.assignedBy?.email || "Admin"} on {new Date(appointment.assignedBy.assignedAt).toLocaleString("en-IN")}
             </p>
           )}
-        </Section>
+        </Section> */}
 
         <Section title="Medical Reports">
           {reports.length === 0 ? (

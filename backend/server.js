@@ -23,9 +23,10 @@ const Appointment = require("./models/Appointment");
 const Doctor = require("./models/Doctor");
 const Session = require("./models/Session");
 const ChatMessage = require("./models/ChatMessage");
+const Question = require("./models/Question");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
 const { logAudit } = require("./utils/auditLogger");
-const { findUploadInS3, streamUploadFromS3 } = require("./utils/uploadStorage");
+const { findUploadInS3, streamUploadFromS3, keyFromStoredValue } = require("./utils/uploadStorage");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityIncident } = require("./utils/securityMonitor");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -174,6 +175,12 @@ function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function uploadAccessPath(value) {
+  const key = keyFromStoredValue(value);
+  if (!key) return null;
+  return `/api/uploads/${key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
 async function requestIdentities(req) {
   const identities = [];
   const seen = new Set();
@@ -223,18 +230,62 @@ async function canAccessUpload(req, filename) {
 
   const fileUrlPattern = new RegExp(`(?:^|/)${escapeRegExp(filename)}$`);
   const appointment = await Appointment.findOne({
-    "medicalReports.url": fileUrlPattern,
+    $or: [
+      { "medicalReports.url": fileUrlPattern },
+      { "medicalReports.key": fileUrlPattern },
+    ],
   })
     .select("patientId doctorId medicalReports")
     .lean();
 
-  if (!appointment) return { allowed: false, reason: "unassigned" };
+  let accessAppointment = appointment;
+  if (!accessAppointment) {
+    const chatMessage = await ChatMessage.findOne({ fileUrl: fileUrlPattern })
+      .select("appointmentId fileUrl")
+      .lean();
+    if (chatMessage?.appointmentId) {
+      accessAppointment = await Appointment.findById(chatMessage.appointmentId)
+        .select("patientId doctorId")
+        .lean();
+    }
+  }
+
+  if (!accessAppointment) {
+    const question = await Question.findOne({
+      $or: [
+        { "attachments.url": fileUrlPattern },
+        { "attachments.key": fileUrlPattern },
+      ],
+    })
+      .select("user assignedDoctorId")
+      .lean();
+
+    if (question) {
+      const matchedQuestionUser = identities.find((identity) => {
+        const identityId = String(identity.id);
+        return (
+          (identity.role === "user" && String(question.user) === identityId) ||
+          (identity.role === "doctor" && String(question.assignedDoctorId) === identityId)
+        );
+      });
+
+      return {
+        allowed: Boolean(matchedQuestionUser),
+        reason: matchedQuestionUser?.role === "user" ? "question_owner" : matchedQuestionUser?.role === "doctor" ? "assigned_doctor" : "not_assigned",
+        identity: matchedQuestionUser,
+        appointmentId: null,
+        patientId: question.user,
+      };
+    }
+  }
+
+  if (!accessAppointment) return { allowed: false, reason: "unassigned" };
 
   const matched = identities.find((identity) => {
     const identityId = String(identity.id);
     return (
-      (identity.role === "user" && String(appointment.patientId) === identityId) ||
-      (identity.role === "doctor" && String(appointment.doctorId) === identityId)
+      (identity.role === "user" && String(accessAppointment.patientId) === identityId) ||
+      (identity.role === "doctor" && String(accessAppointment.doctorId) === identityId)
     );
   });
 
@@ -242,8 +293,8 @@ async function canAccessUpload(req, filename) {
     allowed: Boolean(matched),
     reason: matched?.role === "user" ? "patient" : matched?.role === "doctor" ? "doctor" : "not_assigned",
     identity: matched,
-    appointmentId: appointment._id,
-    patientId: appointment.patientId,
+    appointmentId: accessAppointment._id,
+    patientId: accessAppointment.patientId,
   };
 }
 
@@ -313,10 +364,10 @@ async function serveProtectedUpload(req, res, next) {
   return next();
 }
 
-app.get("/uploads/:filename", (_req, res) => {
+app.get(/^\/uploads\/.+$/, (_req, res) => {
   res.status(404).json({ msg: "Direct upload URLs are disabled. Use the authenticated API path." });
 });
-app.get("/api/uploads/:filename", verifyToken, serveProtectedUpload);
+app.get(/^\/api\/uploads\/.+$/, verifyToken, serveProtectedUpload);
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
@@ -484,7 +535,7 @@ io.on("connection", (socket) => {
           senderName: message.senderName,
           senderRole: message.senderRole,
           text: decryptChatText(message),
-          fileUrl: message.fileUrl || null,
+          fileUrl: uploadAccessPath(message.fileUrl),
           fileName: message.fileName || null,
           fileType: message.fileType || null,
           createdAt: message.createdAt,
@@ -524,6 +575,7 @@ io.on("connection", (socket) => {
       const senderUserId = liveIdentity?.userId || socket.userId || senderId;
       const encrypted = encryptChatText(text || "");
       const hour = new Date().getHours();
+      const fileKey = fileUrl ? keyFromStoredValue(fileUrl) : "";
 
       ChatMessage.create({
         appointmentId,
@@ -531,7 +583,7 @@ io.on("connection", (socket) => {
         senderName: senderName || "",
         senderRole: senderRole === "doctor" ? "doctor" : "user",
         ...encrypted,
-        fileUrl: fileUrl || "",
+        fileUrl: fileKey,
         fileName: fileName || "",
         fileType: fileType || "",
         deliveredAt: new Date(),
@@ -543,7 +595,7 @@ io.on("connection", (socket) => {
             resource: "ChatMessage",
             resourceId: message._id,
             patientId: null,
-            details: { appointmentId, hasAttachment: Boolean(fileUrl), encrypted: true, keyVersion: encrypted.keyVersion },
+            details: { appointmentId, hasAttachment: Boolean(fileKey), encrypted: true, keyVersion: encrypted.keyVersion },
           }
         ))
         .catch((err) => console.error("chat message persist error:", err));
@@ -569,7 +621,7 @@ io.on("connection", (socket) => {
           senderId,
           senderName,
           text: text || "",
-          fileUrl: fileUrl || null,
+          fileUrl: uploadAccessPath(fileKey),
           fileName: fileName || null,
           fileType: fileType || null,
           createdAt: new Date().toISOString(),

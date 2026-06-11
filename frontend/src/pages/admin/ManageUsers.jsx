@@ -48,6 +48,15 @@ function InfoRow({ icon, label, value, noBorder }) {
   );
 }
 
+function formatPatientId(value) {
+  if (value === undefined || value === null || value === "") return "—";
+  const numeric = Number(value);
+  if (Number.isInteger(numeric) && numeric >= 0 && numeric <= 99999) {
+    return String(numeric).padStart(5, "0");
+  }
+  return String(value);
+}
+
 function UserModal({ user, onClose, onDelete }) {
   if (!user) return null;
 
@@ -140,6 +149,7 @@ function UserModal({ user, onClose, onDelete }) {
 
           {/* Account Information */}
           <InfoSection title="Account Information">
+            <InfoRow icon="🆔" label="Patient ID" value={formatPatientId(user.patientId)} />
             <InfoRow icon="🔑" label="Role" value={user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : "User"} />
             <InfoRow icon="📅" label="Member Since" value={joinedDate} />
             <InfoRow icon="🌐" label="Registration IP" value={user.registrationIp || "—"} noBorder />
@@ -185,6 +195,7 @@ export default function ManageUsers() {
   };
 
   const filtered = users.filter(u =>
+    String(u.patientId || "").toLowerCase().includes(search.toLowerCase()) ||
     u.name?.toLowerCase().includes(search.toLowerCase()) ||
     u.email?.toLowerCase().includes(search.toLowerCase())
   );
@@ -230,7 +241,7 @@ export default function ManageUsers() {
           <h2 className="adp-card-title">All Users ({filtered.length})</h2>
           <div className="adp-search">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input placeholder="Search by name or email…" value={search} onChange={e => setSearch(e.target.value)} />
+            <input placeholder="Search by patient ID, name or email…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
 
@@ -248,6 +259,7 @@ export default function ManageUsers() {
               <thead>
                 <tr>
                   <th>User</th>
+                  <th>Patient ID</th>
                   <th>Mobile</th>
                   <th>Gender</th>
                   <th>Country</th>
@@ -267,6 +279,9 @@ export default function ManageUsers() {
                           <div style={{ fontSize: 12, color: "#94a3b8" }}>{u.email}</div>
                         </div>
                       </div>
+                    </td>
+                    <td style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace", color: "#475569" }}>
+                      {formatPatientId(u.patientId)}
                     </td>
                     <td>{u.mobile || "—"}</td>
                     <td style={{ textTransform: "capitalize" }}>{u.gender || "—"}</td>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api, { normalizeFileUrl } from "../../api";
+import { uploadFileDirectToS3 } from "../../utils/directUpload";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const DAYS = [
@@ -741,6 +742,7 @@ function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
     setPreview(URL.createObjectURL(raw));
     setUploading(true);
     try {
+<<<<<<< HEAD
       const fd = new FormData();
       fd.append("file", raw);
       if (enrollmentId) {
@@ -755,6 +757,12 @@ function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
     } finally {
       setUploading(false);
     }
+=======
+      const uploaded = await uploadFileDirectToS3(raw, { ownerType: "doctor", ownerId: enrollmentId });
+      setLocalUrl(uploaded.key); onChange(uploaded.key);
+    } catch { setErr("Upload failed — please try again."); }
+    finally { setUploading(false); }
+>>>>>>> eb4c0ac91d50691b985c6371b2ad435a0fc5e4ee
   };
 
   const normalizedLocalUrl = normalizeFileUrl(localUrl);
@@ -946,6 +954,7 @@ function AdminDocUpload({
     setErr("");
     setUploading(true);
     try {
+<<<<<<< HEAD
       const fd = new FormData();
       fd.append("file", raw);
       if (enrollmentId) {
@@ -960,6 +969,12 @@ function AdminDocUpload({
     } finally {
       setUploading(false);
     }
+=======
+      const uploaded = await uploadFileDirectToS3(raw, { ownerType: "doctor", ownerId: enrollmentId });
+      setLocalUrl(uploaded.key); onChange(uploaded.key);
+    } catch { setErr("Upload failed — please try again."); }
+    finally { setUploading(false); }
+>>>>>>> eb4c0ac91d50691b985c6371b2ad435a0fc5e4ee
   };
 
   const fileUrl = normalizeFileUrl(localUrl);

@@ -7,8 +7,53 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { paypalFetch } = require("../utils/paypal");
 const { sendEmail } = require("../utils/sendEmail");
 const { recordSecurityIncident } = require("../utils/securityMonitor");
+const { keyFromStoredValue } = require("../utils/uploadStorage");
+const { getS3ObjectUrl } = require("../config/s3");
+const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
+
+function normalizeMedicalReports(reports) {
+  if (!Array.isArray(reports)) return [];
+  return reports
+    .map((report) => {
+      const key = keyFromStoredValue(report?.key || report?.url);
+      if (!key) return null;
+      return {
+        url: getS3ObjectUrl(key),
+        name: String(report?.name || key.split("/").pop() || "Medical report").slice(0, 180),
+        type: String(report?.type || "").slice(0, 120),
+        size: Number(report?.size) || 0,
+      };
+    })
+    .filter(Boolean);
+}
+
+async function withPresignedMedicalReportUrls(appointment) {
+  if (!appointment) return appointment;
+  const reports = Array.isArray(appointment.medicalReports) ? appointment.medicalReports : [];
+  if (!reports.length) return appointment;
+
+  const medicalReports = await Promise.all(
+    reports.map(async (report) => {
+      const key = keyFromStoredValue(report?.key || report?.url);
+      if (!key) return report;
+      const signed = await createS3PresignedGetUrl(key);
+      return {
+        ...report,
+        s3Url: getS3ObjectUrl(key),
+        url: signed.url,
+        urlExpiresAt: signed.expiresAt,
+      };
+    })
+  );
+
+  return { ...appointment, medicalReports };
+}
+
+async function withPresignedMedicalReports(appointments) {
+  return Promise.all(appointments.map(withPresignedMedicalReportUrls));
+}
 
 async function resolveDoctorId(value) {
   if (!value) return null;
@@ -44,16 +89,47 @@ function timeToMinutes(value) {
   return hours * 60 + minutes;
 }
 
-function buildUtcDateTime(date, time) {
+// Convert a date + time string (in the patient's local timezone) to a UTC Date.
+// Uses the Intl API so DST and non-integer offsets (e.g. IST +5:30) are handled correctly.
+// Falls back to treating the time as UTC when the timezone is unknown/invalid.
+function buildUtcDateTime(date, time, timezone) {
   if (!date || !time) return null;
   const minutes = timeToMinutes(time);
   if (minutes === null) return null;
   const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  const utc = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(utc.getTime())) return null;
-  utc.setUTCHours(hours, mins, 0, 0);
-  return utc;
+  const mins  = minutes % 60;
+
+  const [year, month, day] = date.split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  if (timezone) {
+    try {
+      // Create a UTC epoch at the same clock values as the desired local time.
+      const utcEstimate = new Date(Date.UTC(year, month - 1, day, hours, mins, 0, 0));
+
+      // Format that UTC instant in the patient's timezone to see what local clock it shows.
+      const localStr = utcEstimate.toLocaleString("en-US", {
+        timeZone: timezone,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false,
+      });
+
+      // Parse the local clock back as if it were UTC to get the raw millisecond offset.
+      const localAsUtc = new Date(localStr + " UTC");
+      if (Number.isNaN(localAsUtc.getTime())) throw new Error("parse failed");
+
+      // offsetMs = how far ahead/behind the timezone is from UTC.
+      // actual UTC = utcEstimate + offsetMs
+      const offsetMs = utcEstimate.getTime() - localAsUtc.getTime();
+      return new Date(utcEstimate.getTime() + offsetMs);
+    } catch {
+      // Fall through to UTC fallback below.
+    }
+  }
+
+  // Fallback: treat the time as UTC (legacy behaviour, no timezone info available).
+  return new Date(Date.UTC(year, month - 1, day, hours, mins, 0, 0));
 }
 
 const createAppointment = async (req, res) => {
@@ -76,10 +152,16 @@ const createAppointment = async (req, res) => {
     } = req.body;
     const patientId = req.user.id;
 
+    // ── Input validation ──────────────────────────────────────────────────────
     if (!date || !time) {
       return res.status(400).json({ msg: "Date and time are required." });
     }
-
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ msg: "date must be in YYYY-MM-DD format." });
+    }
+    if (timeToMinutes(time) === null) {
+      return res.status(400).json({ msg: "time must be HH:MM or H:MM AM/PM format." });
+    }
     if (!doctorId && (!category || !specialty || !condition)) {
       return res.status(400).json({ msg: "Category, specialty, and condition are required." });
     }
@@ -180,26 +262,46 @@ const createAppointment = async (req, res) => {
       paymentStatus = "paid";
     }
 
-    const parsedAppointmentDateTimeUtc = appointmentDateTimeUtc
-      ? new Date(appointmentDateTimeUtc)
-      : buildUtcDateTime(date, time);
+    // Resolve the UTC instant for the appointment.
+    // Prefer the value sent by the frontend (already converted in the patient's browser TZ).
+    // Fall back to a server-side conversion using the patient's IANA timezone string.
+    const safeTimezone = typeof patientTimezone === "string" ? patientTimezone.slice(0, 80) : "";
+    let resolvedUtc = null;
+    if (appointmentDateTimeUtc) {
+      const d = new Date(appointmentDateTimeUtc);
+      if (!Number.isNaN(d.getTime())) resolvedUtc = d;
+    }
+    if (!resolvedUtc) {
+      resolvedUtc = buildUtcDateTime(date, time, safeTimezone);
+    }
+
+    const bookedAt = new Date();
+    const patient = await User.findById(patientId)
+      .select("name email mobile dob gender country city")
+      .lean();
+    const safePatientDetails = {
+      ...(patientDetails || {}),
+      email: patientDetails?.email || patient?.email || "",
+      phone: patientDetails?.phone || patient?.mobile || "",
+      dob: patientDetails?.dob || patient?.dob || "",
+      gender: patientDetails?.gender || patient?.gender || "",
+    };
 
     const appointment = await Appointment.create({
       patientId,
       doctorId: resolvedDoctorId,
       date,
       time,
-      appointmentDateTimeUtc: Number.isNaN(parsedAppointmentDateTimeUtc?.getTime())
-        ? buildUtcDateTime(date, time)
-        : parsedAppointmentDateTimeUtc,
-      patientTimezone: typeof patientTimezone === "string" ? patientTimezone.slice(0, 80) : "",
+      appointmentDateTimeUtc: resolvedUtc,
+      bookedAt,
+      patientTimezone: safeTimezone,
       problem,
       category,
       specialty,
       condition,
       consultationPrice: Number(consultationPrice) || 0,
-      patientDetails: patientDetails || {},
-      medicalReports: Array.isArray(medicalReports) ? medicalReports : [],
+      patientDetails: safePatientDetails,
+      medicalReports: normalizeMedicalReports(medicalReports),
       status: resolvedDoctorId ? "pending" : "upcoming",
       paymentIntentId: paymentRef,
       paymentAmount: paymentAmountFinal,
@@ -251,7 +353,7 @@ const getPatientAppointments = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    res.status(200).json(appointments);
+    res.status(200).json(await withPresignedMedicalReports(appointments));
   } catch (error) {
     console.error("getPatientAppointments error:", error);
     res.status(500).json({ msg: "Failed to fetch patient appointments." });
@@ -265,11 +367,11 @@ const getDoctorAppointments = async (req, res) => {
     }
 
     const appointments = await Appointment.find({ doctorId: req.user.id })
-      .populate("patientId", "name email mobile")
+      .populate("patientId", "patientId name email mobile")
       .sort({ createdAt: -1 })
       .lean();
 
-    res.status(200).json(appointments);
+    res.status(200).json(await withPresignedMedicalReports(appointments));
   } catch (error) {
     console.error("getDoctorAppointments error:", error);
     res.status(500).json({ msg: "Failed to fetch doctor appointments." });
@@ -494,7 +596,7 @@ const reassignAppointmentDoctor = async (req, res) => {
     }
 
     const populatedAppointment = await Appointment.findById(appointment._id)
-      .populate("patientId", "name email gender city country")
+      .populate("patientId", "patientId name email gender city country")
       .populate("doctorId", "name email doctorId")
       .lean();
 
@@ -532,7 +634,7 @@ const reassignAppointmentDoctor = async (req, res) => {
 const getAllAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find()
-      .populate("patientId", "name email gender city country")
+      .populate("patientId", "patientId name email gender dob city country")
       .populate("doctorId", "name email doctorId")
       .sort({ createdAt: -1 })
       .lean();
@@ -576,7 +678,7 @@ const getAllAppointments = async (req, res) => {
       });
     }
 
-    res.status(200).json(enhancedAppointments);
+    res.status(200).json(await withPresignedMedicalReports(enhancedAppointments));
   } catch (error) {
     console.error("getAllAppointments error:", error);
     res.status(500).json({ msg: "Failed to fetch appointments." });
@@ -586,7 +688,7 @@ const getAllAppointments = async (req, res) => {
 const getAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "name email mobile gender city country")
+      .populate("patientId", "patientId name email mobile gender dob city country")
       .populate("doctorId", "name email doctorId")
       .lean();
 
@@ -624,7 +726,7 @@ const getAppointmentById = async (req, res) => {
       };
     }
 
-    res.status(200).json({ ...appointment, doctorMeta });
+    res.status(200).json(await withPresignedMedicalReportUrls({ ...appointment, doctorMeta }));
   } catch (error) {
     console.error("getAppointmentById error:", error);
     res.status(500).json({ msg: "Failed to fetch appointment." });
@@ -648,11 +750,11 @@ const getDoctorOwnAppointment = async (req, res) => {
     }
 
     const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "name email mobile")
+      .populate("patientId", "patientId name email mobile gender dob")
       .populate("doctorId", "name email")
       .lean();
 
-    res.status(200).json(appointment);
+    res.status(200).json(await withPresignedMedicalReportUrls(appointment));
   } catch (error) {
     console.error("getDoctorOwnAppointment error:", error);
     res.status(500).json({ msg: "Failed to fetch appointment." });
@@ -672,11 +774,11 @@ const getPatientOwnAppointment = async (req, res) => {
     }
 
     const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "name email mobile")
+      .populate("patientId", "patientId name email mobile gender dob")
       .populate("doctorId", "name email")
       .lean();
 
-    res.status(200).json(appointment);
+    res.status(200).json(await withPresignedMedicalReportUrls(appointment));
   } catch (error) {
     console.error("getPatientOwnAppointment error:", error);
     res.status(500).json({ msg: "Failed to fetch appointment." });
