@@ -112,6 +112,54 @@ function Field({ label, value, full }) {
     </div>
   );
 }
+
+function formatChangeValue(value) {
+  if (value === undefined || value === null || value === "") return "—";
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function ProfileChangeSummary({ changes = [], requestedAt }) {
+  if (!Array.isArray(changes) || changes.length === 0) return null;
+  return (
+    <Section icon="📝" title="Profile Changes Submitted by Doctor">
+      <div style={{ background:"#fffbeb", border:"1px solid #fde68a", borderRadius:10, padding:"12px 16px", marginBottom:14 }}>
+        <div style={{ fontSize:13, fontWeight:700, color:"#92400e" }}>
+          {changes.length} field{changes.length === 1 ? "" : "s"} changed
+        </div>
+        {requestedAt && (
+          <div style={{ fontSize:12, color:"#a16207", marginTop:3 }}>
+            Submitted {new Date(requestedAt).toLocaleString()}
+          </div>
+        )}
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        {changes.map((change) => (
+          <div key={change.field} style={{ border:"1px solid #e2e8f0", borderRadius:10, overflow:"hidden", background:"#fff" }}>
+            <div style={{ padding:"10px 14px", borderBottom:"1px solid #f1f5f9", background:"#f8fafc", fontSize:13, fontWeight:800, color:"#334155" }}>
+              {change.label || change.field}
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:0 }}>
+              <div style={{ padding:"12px 14px", borderRight:"1px solid #f1f5f9" }}>
+                <div style={{ fontSize:11, fontWeight:800, color:"#94a3b8", textTransform:"uppercase", marginBottom:5 }}>Before</div>
+                <div style={{ fontSize:13, color:"#475569", lineHeight:1.5, whiteSpace:"pre-wrap", wordBreak:"break-word" }}>
+                  {formatChangeValue(change.previousValue)}
+                </div>
+              </div>
+              <div style={{ padding:"12px 14px", background:"#f0fdf4" }}>
+                <div style={{ fontSize:11, fontWeight:800, color:"#16a34a", textTransform:"uppercase", marginBottom:5 }}>After</div>
+                <div style={{ fontSize:13, color:"#14532d", lineHeight:1.5, whiteSpace:"pre-wrap", wordBreak:"break-word" }}>
+                  {formatChangeValue(change.newValue)}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
 const IMAGE_EXTS = new Set(["jpg","jpeg","png","gif","webp","svg","bmp"]);
 const DOCUMENT_FIELDS = new Set(["profilePhoto", "idProof", "degreeFile", "medicalLicenseFile", "malpracticeInsuranceFile"]);
 function getFileType(url) {
@@ -963,7 +1011,8 @@ export default function AdminDoctorProfile() {
   const phone       = [e.countryCode, e.phoneNumber].filter(Boolean).join(" ");
   const location_   = [e.city, e.state, e.country].filter(Boolean).join(", ");
   const langs       = Array.isArray(e.languagesKnown) ? e.languagesKnown.join(", ") : (e.languagesKnown || "");
-  const canApprove  = e.approvalStatus !== "approved" && (progress.completedSteps >= 4 || e.approvalStatus === "rejected");
+  const hasPendingProfileUpdate = requestType === "profile_update" && (e.profileUpdateRequestStatus || "pending") === "pending";
+  const canApprove  = hasPendingProfileUpdate || (e.approvalStatus !== "approved" && (progress.completedSteps >= 4 || e.approvalStatus === "rejected"));
 
   return (
     <div style={{ maxWidth:980, margin:"0 auto", paddingBottom:40 }}>
@@ -1093,6 +1142,13 @@ export default function AdminDoctorProfile() {
            VIEW MODE — read-only sections
         ════════════════════════════════════ */
         <>
+          {requestType === "profile_update" && (
+            <ProfileChangeSummary
+              changes={e.pendingProfileChanges}
+              requestedAt={e.profileUpdateRequestedAt}
+            />
+          )}
+
           {/* ── Personal & Contact ── */}
           <Section icon="👤" title="Personal & Contact Details">
             {e.profilePhoto ? (

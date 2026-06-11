@@ -88,6 +88,25 @@ const enrollmentSchema = new mongoose.Schema({
     default: "new_enrollment",
   },
   profileUpdateRequestedAt: Date,
+  profileUpdateReviewedAt: Date,
+  profileUpdateRequestStatus: {
+    type: String,
+    enum: ["none", "pending", "approved", "rejected"],
+    default: "none",
+  },
+  pendingProfileChanges: {
+    type: [{
+      field: String,
+      label: String,
+      previousValue: mongoose.Schema.Types.Mixed,
+      newValue: mongoose.Schema.Types.Mixed,
+    }],
+    default: [],
+  },
+  profileUpdateSnapshot: {
+    type: mongoose.Schema.Types.Mixed,
+    default: undefined,
+  },
   profileDeleteReason: String,
   profileDeleteRequestedAt: Date,
   profileDeleteApprovedAt: Date,

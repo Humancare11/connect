@@ -75,6 +75,7 @@ const normalizeEnrollmentWorkflow = (enrollment) => {
     currentStepLabel: enrollment.currentStepLabel || STEP_LABELS[Math.min(Math.max(currentStep - 1, 0), STEP_LABELS.length - 1)],
     applicationStatus,
     pendingRequestType: enrollment.pendingRequestType || "none",
+    profileUpdateRequestStatus: enrollment.profileUpdateRequestStatus || (enrollment.pendingRequestType === "profile_update" ? "pending" : "none"),
     profileDeleteRequestStatus: enrollment.profileDeleteRequestStatus || "none",
   };
 };
@@ -119,6 +120,15 @@ const approveDoctor = async (req, res) => {
       return res.status(400).json({ msg: "This record has a pending delete request. Use delete approval action instead." });
     }
 
+    const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
+    if (isProfileUpdateRequest) {
+      (enrollment.pendingProfileChanges || []).forEach((change) => {
+        if (change?.field) enrollment.set(change.field, change.newValue);
+      });
+      enrollment.markModified("languagesKnown");
+      enrollment.markModified("availability");
+    }
+
     enrollment.approvalStatus = "approved";
     enrollment.verified = true;
     enrollment.formCompleted = true;
@@ -128,8 +138,14 @@ const approveDoctor = async (req, res) => {
     enrollment.applicationStatus = "Approved";
     enrollment.pendingRequestType = "none";
     enrollment.profileUpdateRequestedAt = undefined;
+    enrollment.profileUpdateReviewedAt = isProfileUpdateRequest ? new Date() : undefined;
+    enrollment.profileUpdateRequestStatus = isProfileUpdateRequest ? "approved" : "none";
+    enrollment.pendingProfileChanges = [];
+    enrollment.profileUpdateSnapshot = undefined;
     enrollment.profileDeleteRequestStatus = "none";
     enrollment.updatedAt = new Date();
+    enrollment.markModified("pendingProfileChanges");
+    enrollment.markModified("profileUpdateSnapshot");
     await enrollment.save();
 
     if (enrollment.doctorId) {
@@ -156,14 +172,39 @@ const rejectDoctor = async (req, res) => {
     const enrollment = await Enrollment.findById(req.params.id);
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
 
-    enrollment.approvalStatus = "rejected";
-    enrollment.verified = false;
-    enrollment.applicationStatus = "Rejected";
+    const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
+    if (isProfileUpdateRequest) {
+      const snapshot = enrollment.profileUpdateSnapshot || {};
+      Object.entries(snapshot).forEach(([field, value]) => {
+        enrollment.set(field, value);
+      });
+      enrollment.approvalStatus = "approved";
+      enrollment.verified = true;
+      enrollment.formCompleted = true;
+      enrollment.completedSteps = 5;
+      enrollment.currentStep = 5;
+      enrollment.currentStepLabel = STEP_LABELS[4];
+      enrollment.applicationStatus = "Approved";
+      enrollment.pendingRequestType = "none";
+      enrollment.profileUpdateRequestedAt = undefined;
+      enrollment.profileUpdateReviewedAt = new Date();
+      enrollment.profileUpdateRequestStatus = "rejected";
+      enrollment.pendingProfileChanges = [];
+      enrollment.profileUpdateSnapshot = undefined;
+      enrollment.markModified("pendingProfileChanges");
+      enrollment.markModified("profileUpdateSnapshot");
+      enrollment.markModified("languagesKnown");
+      enrollment.markModified("availability");
+    } else {
+      enrollment.approvalStatus = "rejected";
+      enrollment.verified = false;
+      enrollment.applicationStatus = "Rejected";
+    }
     enrollment.updatedAt = new Date();
     await enrollment.save();
 
     if (enrollment.doctorId) {
-      await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: false });
+      await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: isProfileUpdateRequest });
     }
 
     await logAudit(req, {
@@ -173,7 +214,10 @@ const rejectDoctor = async (req, res) => {
       details: { doctorId: enrollment.doctorId?.toString() },
     });
 
-    res.status(200).json({ msg: "Doctor rejected", enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()) });
+    res.status(200).json({
+      msg: isProfileUpdateRequest ? "Profile update rejected. Previous approved profile restored." : "Doctor rejected",
+      enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()),
+    });
   } catch (error) {
     console.error("rejectDoctor error:", error);
     res.status(500).json({ msg: "Failed to reject doctor" });
@@ -395,7 +439,7 @@ const getDoctorWorkflowStats = async (req, res) => {
   try {
     const [totalDoctors, updateRequests, deleteRequests] = await Promise.all([
       Enrollment.countDocuments({ approvalStatus: "approved" }),
-      Enrollment.countDocuments({ pendingRequestType: "profile_update", approvalStatus: "pending" }),
+      Enrollment.countDocuments({ pendingRequestType: "profile_update", profileUpdateRequestStatus: "pending" }),
       Enrollment.countDocuments({ profileDeleteRequestStatus: "pending" }),
     ]);
 
@@ -709,6 +753,13 @@ const updateDoctorByAdmin = async (req, res) => {
         enrollment.currentStep = 5;
         enrollment.currentStepLabel = STEP_LABELS[4];
         enrollment.pendingRequestType = "none";
+        enrollment.profileUpdateRequestedAt = undefined;
+        enrollment.profileUpdateReviewedAt = undefined;
+        enrollment.profileUpdateRequestStatus = "none";
+        enrollment.pendingProfileChanges = [];
+        enrollment.profileUpdateSnapshot = undefined;
+        enrollment.markModified("pendingProfileChanges");
+        enrollment.markModified("profileUpdateSnapshot");
       }
     }
     enrollment.applicationStatus = deriveApplicationStatus(enrollment);

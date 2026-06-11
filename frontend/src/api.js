@@ -2,7 +2,7 @@ import axios from "axios";
 import { dispatchSessionActivity } from "./utils/session";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+  baseURL: import.meta.env.VITE_API_URL || "",
   withCredentials: true,
 });
 
@@ -44,7 +44,7 @@ export function getUserAuthToken() {
   return "";
 }
 
-const _apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const _apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 const UPLOAD_URL_RE = /^(https?:\/\/[^/]+)\/(?:api\/)?(uploads\/.+)$/;
 const UPLOAD_PATH_RE = /^\/(?:api\/)?(uploads\/.+)$/;
 const _apiOrigin = (() => {

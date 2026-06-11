@@ -1,647 +1,689 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api";
+import api, { normalizeFileUrl } from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import "./DoctorProfile.css";
 
-function slugifyDoctorName(name) {
-  return (name || "")
-    .replace(/^Dr\.?\s*/i, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "") || "doctor";
-}
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
+const QUALIFICATIONS = ["MD", "DO", "NP", "PA", "Other"];
+const CONSULTATION_MODES = ["Video Call", "In-Person", "Both", "Phone Call"];
+const CURRENCIES = ["USD", "GBP", "EUR", "INR", "AED", "SAR", "AUD", "CAD", "SGD", "JPY", "Other"];
+const COUNTRIES = [
+  "United States", "United Kingdom", "India", "Canada", "Australia", "Germany", "France",
+  "Brazil", "Mexico", "South Africa", "Nigeria", "Kenya", "UAE", "Saudi Arabia",
+  "Singapore", "Japan", "South Korea", "Philippines", "Pakistan", "Bangladesh", "Other",
+];
+const SPECIALTIES = [
+  "General Practice", "Internal Medicine", "Cardiology", "Dermatology", "Endocrinology",
+  "Gastroenterology", "Neurology", "Oncology", "Ophthalmology", "Orthopedics", "Pediatrics",
+  "Psychiatry", "Pulmonology", "Radiology", "Surgery", "Urology", "OB/GYN", "Emergency Medicine",
+  "Anesthesiology", "Pathology", "Other",
+];
+const DOCUMENT_FIELDS = new Set(["profilePhoto", "idProof", "degreeFile", "medicalLicenseFile", "malpracticeInsuranceFile"]);
 
-const STATUS_COLORS = {
-  approved: { bg: "#dcfce7", color: "#166534", label: "Approved" },
-  pending:  { bg: "#fef9c3", color: "#854d0e", label: "Pending Approval" },
-  rejected: { bg: "#fee2e2", color: "#991b1b", label: "Rejected" },
+const STATUS_META = {
+  pending: { label: "Pending", bg: "#fef3c7", color: "#92400e" },
+  approved: { label: "Approved", bg: "#dcfce7", color: "#166534" },
+  rejected: { label: "Rejected", bg: "#fee2e2", color: "#991b1b" },
 };
 
-const SPECIALTIES = [
-  "General Practice","Internal Medicine","Cardiology","Dermatology","Endocrinology",
-  "Gastroenterology","Neurology","Oncology","Ophthalmology","Orthopedics","Pediatrics",
-  "Psychiatry","Pulmonology","Radiology","Surgery","Urology","OB/GYN","Emergency Medicine",
-  "Anesthesiology","Pathology","Other"
-];
-const QUALIFICATIONS = ["MD","DO","NP","PA","Other"];
-const GENDERS = ["Male","Female","Non-binary","Prefer not to say"];
-const COUNTRIES = [
-  "United States","United Kingdom","India","Canada","Australia","Germany","France",
-  "Brazil","Mexico","South Africa","Nigeria","Kenya","UAE","Saudi Arabia","Singapore",
-  "Japan","South Korea","Philippines","Pakistan","Bangladesh","Sri Lanka","Nepal","Other"
-];
+const REQUEST_META = {
+  pending: {
+    label: "Profile Update Pending",
+    bg: "#fffbeb",
+    border: "#fde68a",
+    color: "#92400e",
+    text: "Your submitted profile changes are waiting for admin review. Your dashboard access remains active.",
+  },
+  approved: {
+    label: "Profile Update Approved",
+    bg: "#f0fdf4",
+    border: "#bbf7d0",
+    color: "#166534",
+    text: "Your latest profile update request was approved.",
+  },
+  rejected: {
+    label: "Profile Update Rejected",
+    bg: "#fff1f2",
+    border: "#fecdd3",
+    color: "#991b1b",
+    text: "Your latest profile update request was rejected. Your previously approved profile remains active.",
+  },
+};
 
-// ── Styles ──────────────────────────────────────────────────────────────────
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');
-.dp-root-dp {
-  width: 100%;
-  padding: 24px;
-  box-sizing: border-box;
-}
-.dp-section {
-  background: #fff; border-radius: 14px; border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 4px rgba(34,58,94,0.06); overflow: hidden; margin-bottom: 20px;
-}
-.dp-section-head {
-  padding: 16px 24px; border-bottom: 1px solid #f1f5f9;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.dp-section-title { display: flex; align-items: center; gap: 10px; }
-.dp-section-title h3 { margin: 0; font-size: 15px; font-weight: 700; color: #223a5e; font-family: 'Outfit',sans-serif; }
-.dp-section-body { padding: 20px 24px; }
-.dp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px 24px; }
-.dp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
-.dp-row label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 3px; }
-.dp-row span  { font-size: 14px; color: #1e293b; font-weight: 500; word-break: break-word; }
-.dp-row span.empty { color: #94a3b8; font-style: italic; }
-.dp-field { display: flex; flex-direction: column; gap: 5px; }
-.dp-field label { font-size: 12px; font-weight: 600; color: #223a5e; }
-.dp-input, .dp-select, .dp-textarea {
-  padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px;
-  font-size: 14px; color: #1e293b; font-family: inherit; outline: none;
-  transition: border-color .2s, box-shadow .2s; background: #fff; width: 100%;
-}
-.dp-input:focus, .dp-select:focus, .dp-textarea:focus {
-  border-color: #0c8b7a; box-shadow: 0 0 0 3px rgba(12,139,122,.1);
-}
-.dp-select { cursor: pointer; appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
-}
-.dp-textarea { resize: vertical; min-height: 80px; }
-.dp-fee-wrap { display: flex; align-items: center; border: 1.5px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; }
-.dp-fee-wrap:focus-within { border-color: #0c8b7a; box-shadow: 0 0 0 3px rgba(12,139,122,.1); }
-.dp-fee-sym { padding: 9px 12px; background: #f1f5f9; color: #475569; font-weight: 700; font-size: 15px; border-right: 1.5px solid #e2e8f0; }
-.dp-fee-usd { padding: 9px 10px; font-size: 11px; color: #94a3b8; white-space: nowrap; }
-.dp-btn { padding: 9px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: .2s; }
-.dp-btn-primary { background: #0c8b7a; color: #fff; }
-.dp-btn-primary:hover { background: #0a7a6b; }
-.dp-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-.dp-btn-secondary { background: #f1f5f9; color: #223a5e; }
-.dp-btn-secondary:hover { background: #e2e8f0; }
-.dp-btn-ghost { background: transparent; border: 1.5px solid #e2e8f0; color: #475569; }
-.dp-btn-ghost:hover { border-color: #0c8b7a; color: #0c8b7a; }
-.dp-edit-bar { display: flex; justify-content: flex-end; gap: 10px; padding-top: 24px; border-top: 1px solid #f1f5f9; margin-top: 28px; flex-wrap: wrap; }
-.dp-warn { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #92400e; margin-bottom: 20px; }
-.dp-success { background: #dcfce7; border: 1px solid #86efac; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #166534; margin-bottom: 20px; }
-.dp-error { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #991b1b; margin-bottom: 20px; }
-
-/* ── Header card classes ── */
-.dp-header-card {
-  background: linear-gradient(135deg,#223a5e 0%,#0c8b7a 100%);
-  border-radius: 16px; padding: 28px 32px; margin-bottom: 20px;
-  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
-  box-shadow: 0 4px 16px rgba(34,58,94,0.15);
-}
-.dp-header-avatar {
-  width: 80px; height: 80px; border-radius: 50%;
-  background: rgba(255,255,255,0.2);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; font-weight: 700; color: #fff; font-family: 'Outfit',sans-serif;
-  border: 3px solid rgba(255,255,255,0.4); flex-shrink: 0;
-}
-.dp-header-info { flex: 1; min-width: 0; }
-.dp-header-name { margin: 0 0 6px; font-size: 24px; font-weight: 800; color: #fff; font-family: 'Outfit',sans-serif; }
-.dp-header-right {
-  display: flex; flex-direction: column;
-  align-items: flex-end; gap: 10px; flex-shrink: 0;
-}
-
-/* ── Tablet (≤768px) ── */
-@media (max-width: 768px) {
-  .dp-root-dp { padding: 16px; }
-  .dp-section-head { padding: 12px 16px; }
-  .dp-section-body { padding: 16px; }
-  .dp-grid { grid-template-columns: 1fr 1fr; }
-  .dp-header-card { padding: 20px; gap: 16px; }
-  .dp-header-avatar { width: 64px; height: 64px; font-size: 22px; }
-  .dp-header-name { font-size: 20px; }
-  .dp-header-right { flex-direction: row; align-items: center; width: 100%; justify-content: flex-start; }
-}
-
-/* ── Mobile (≤480px) ── */
-@media (max-width: 480px) {
-  .dp-root-dp { padding: 10px; }
-  .dp-section { border-radius: 10px; margin-bottom: 12px; }
-  .dp-section-head { padding: 10px 12px; flex-wrap: wrap; gap: 6px; }
-  .dp-section-title h3 { font-size: 13px; }
-  .dp-section-body { padding: 12px; }
-  .dp-grid { grid-template-columns: 1fr; }
-  .dp-grid-2 { grid-template-columns: 1fr; }
-  .dp-header-card { padding: 16px; gap: 12px; border-radius: 12px; }
-  .dp-header-avatar { width: 52px; height: 52px; font-size: 18px; }
-  .dp-header-name { font-size: 17px !important; }
-  .dp-header-right { flex-direction: row; flex-wrap: wrap; align-items: center; width: 100%; justify-content: flex-start; gap: 8px; }
-  .dp-btn { padding: 8px 14px; font-size: 12px; }
-  .dp-edit-bar { padding-top: 16px; margin-top: 16px; }
-  .dp-fee-wrap { max-width: 100% !important; }
-  .dp-warn, .dp-success, .dp-error { font-size: 12px; padding: 10px 12px; }
-  .dp-status-bar { padding: 14px !important; border-radius: 10px !important; }
-}
+.dp-adminlike { max-width:980px; margin:0 auto; padding-bottom:40px; }
+.dp-topnav { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:24px; }
+.dp-kicker { font-size:12px; color:#94a3b8; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+.dp-title { margin:0; font-size:20px; font-weight:800; color:#0f172a; }
+.dp-hero { background:linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 100%); border-radius:16px; padding:24px 28px; margin-bottom:24px; display:flex; align-items:flex-start; gap:20px; flex-wrap:wrap; }
+.dp-avatar { width:72px; height:72px; border-radius:50%; overflow:hidden; border:2.5px solid rgba(255,255,255,.5); flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.18); color:#fff; font-size:26px; font-weight:800; }
+.dp-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+.dp-hero-main { flex:1; min-width:220px; }
+.dp-name { font-size:22px; font-weight:800; color:#fff; margin:0 0 4px; }
+.dp-hero-meta { font-size:14px; color:rgba(255,255,255,.85); margin:0 0 4px; }
+.dp-chipbox { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+.dp-chip { display:inline-flex; align-items:center; justify-content:center; border-radius:50px; padding:5px 14px; font-size:12px; font-weight:700; white-space:nowrap; }
+.dp-chip-ghost { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3); }
+.dp-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; margin-bottom:20px; }
+.dp-card-head { padding:14px 22px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; gap:10px; background:#f8fafc; }
+.dp-card-head h4 { margin:0; font-size:14px; font-weight:800; color:#223a5e; }
+.dp-card-body { padding:18px 22px; }
+.dp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px 24px; }
+.dp-grid-wide { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px 20px; }
+.dp-field, .dp-read { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.dp-read label { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; }
+.dp-field label { display:block; font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
+.dp-read span { font-size:14px; color:#0f172a; line-height:1.45; word-break:break-word; }
+.dp-read span.empty { color:#cbd5e1; font-style:italic; }
+.dp-field input, .dp-field select, .dp-field textarea { width:100%; box-sizing:border-box; border:1.5px solid #e2e8f0; border-radius:8px; padding:9px 12px; font:inherit; font-size:14px; color:#0f172a; background:#fff; outline:none; transition:border-color .2s; }
+.dp-field select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; cursor:pointer; }
+.dp-field textarea { min-height:110px; resize:vertical; line-height:1.55; }
+.dp-field input:focus, .dp-field select:focus, .dp-field textarea:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.dp-actions { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+.dp-btn { border:none; border-radius:8px; padding:9px 16px; font:inherit; font-size:13px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+.dp-btn:disabled { opacity:.6; cursor:not-allowed; }
+.dp-btn-primary { background:#2563eb; color:#fff; }
+.dp-btn-soft { background:#eff6ff; color:#1d4ed8; border:1.5px solid #bfdbfe; }
+.dp-btn-secondary { background:#fff; color:#334155; border:1.5px solid #e2e8f0; }
+.dp-notice { border:1px solid; border-radius:12px; padding:14px 18px; margin-bottom:18px; }
+.dp-notice-title { margin:0 0 4px; font-size:14px; font-weight:800; }
+.dp-notice-text { margin:0; font-size:13px; line-height:1.55; }
+.dp-doc { display:flex; flex-direction:column; gap:12px; padding:16px 18px; border-radius:12px; border:1.5px solid #e2e8f0; background:#fafafa; }
+.dp-doc.has-file { border-color:#86efac; background:#f0fdf4; }
+.dp-doc-title { font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+.dp-doc-name { font-size:13px; color:#1e293b; word-break:break-all; line-height:1.45; }
+.dp-upload-row { display:flex; align-items:center; gap:18px; padding:16px; border:1.5px solid #e2e8f0; background:#f8fafc; border-radius:12px; flex-wrap:wrap; }
+.dp-photo-upload { width:92px; height:92px; border-radius:50%; overflow:hidden; border:2.5px solid #bfdbfe; background:#e2e8f0; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+.dp-photo-upload img { width:100%; height:100%; object-fit:cover; display:block; }
+.dp-change { border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; background:#fff; margin-top:10px; }
+.dp-change-head { padding:9px 12px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:13px; font-weight:800; color:#334155; }
+.dp-change-cols { display:grid; grid-template-columns:1fr 1fr; }
+.dp-change-col { padding:11px 12px; min-width:0; }
+.dp-change-col + .dp-change-col { border-left:1px solid #f1f5f9; background:#f0fdf4; }
+.dp-spinner { width:36px; height:36px; border-radius:50%; border:3px solid #e2e8f0; border-top-color:#2563eb; animation:dpSpin .8s linear infinite; }
+@keyframes dpSpin { to { transform:rotate(360deg); } }
+@media (max-width:760px){ .dp-topnav,.dp-hero{align-items:stretch}.dp-chipbox{align-items:flex-start}.dp-grid-wide,.dp-change-cols{grid-template-columns:1fr}.dp-change-col+.dp-change-col{border-left:0;border-top:1px solid #f1f5f9} }
 `;
 
-// ── Sub-components ───────────────────────────────────────────────────────────
+function slugifyDoctorName(name) {
+  return (name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
 
-function InfoRow({ label, value }) {
+function displayValue(value) {
+  if (value === undefined || value === null || value === "") return "";
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function displayFileName(value) {
+  if (!value) return "";
+  const raw = String(value);
+  try {
+    const url = new URL(raw);
+    return decodeURIComponent(url.pathname.split("/").pop() || "document");
+  } catch {
+    return decodeURIComponent(raw.split("?")[0].split("/").pop() || "document");
+  }
+}
+
+function Section({ icon, title, children }) {
   return (
-    <div className="dp-row">
+    <section className="dp-card">
+      <div className="dp-card-head"><span>{icon}</span><h4>{title}</h4></div>
+      <div className="dp-card-body">{children}</div>
+    </section>
+  );
+}
+
+function ReadField({ label, value, full }) {
+  return (
+    <div className="dp-read" style={{ gridColumn: full ? "1/-1" : undefined }}>
       <label>{label}</label>
-      <span className={value ? "" : "empty"}>{value || "—"}</span>
+      <span className={value ? "" : "empty"}>{value || "-"}</span>
     </div>
   );
 }
 
-function SectionHead({ icon, title, editing, onEdit, onSave, onCancel, saving }) {
+function InputField({ label, children, full }) {
   return (
-    <div className="dp-section-head">
-      <div className="dp-section-title">
-        <span style={{ fontSize: 18 }}>{icon}</span>
-        <h3>{title}</h3>
-      </div>
-      {!editing
-        ? <button className="dp-btn dp-btn-ghost" style={{ fontSize: 12, padding: "5px 14px" }} onClick={onEdit}>✏️ Edit</button>
-        : (
-          <div style={{ display: "flex", gap: 8 }}>
-            <button className="dp-btn dp-btn-secondary" style={{ fontSize: 12, padding: "5px 14px" }} onClick={onCancel} disabled={saving}>Cancel</button>
-            <button className="dp-btn dp-btn-primary" style={{ fontSize: 12, padding: "5px 14px" }} onClick={onSave} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </button>
-          </div>
-        )
-      }
+    <div className="dp-field" style={{ gridColumn: full ? "1/-1" : undefined }}>
+      <label>{label}</label>
+      {children}
     </div>
   );
 }
 
-// ── Consultation Fee Section (dedicated PATCH — no re-approval) ──────────────
-function FeeSection({ doctorId, initialFee, onSaved }) {
-  const [editing, setEditing] = useState(false);
-  const [fee, setFee] = useState(initialFee ?? "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+async function getDoctorDocumentUrl(doctorId, field) {
+  const { data } = await api.get(`/api/doctor/enrollment/${doctorId}/documents/${field}/access-url`);
+  return data.url;
+}
 
-  const handleSave = async () => {
-    const val = Number(fee);
-    if (fee === "" || isNaN(val) || val < 0) { setError("Enter a valid dollar amount."); return; }
-    setSaving(true); setError("");
+function SignedImage({ doctorId, field, alt, fallback, className }) {
+  const [src, setSrc] = useState("");
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setSrc("");
+    setFailed(false);
+    if (!doctorId || !DOCUMENT_FIELDS.has(field)) return undefined;
+    getDoctorDocumentUrl(doctorId, field)
+      .then((url) => { if (alive) setSrc(url); })
+      .catch(() => { if (alive) setFailed(true); });
+    return () => { alive = false; };
+  }, [doctorId, field]);
+
+  if (failed || !src) return fallback || null;
+  return <img className={className} src={src} alt={alt} onError={() => setFailed(true)} />;
+}
+
+function DocumentCard({ label, value, doctorId, field, editable, onChange }) {
+  const ref = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const upload = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    setError("");
     try {
-      await api.patch(`/api/doctor/enrollment/${doctorId}/consultation-fee`, { consultantFees: val });
-      setSuccess(true); setEditing(false); onSaved(val);
-      setTimeout(() => setSuccess(false), 3000);
+      const fd = new FormData();
+      fd.append("file", file);
+      const { data } = await api.post("/api/upload", fd);
+      onChange?.(data.url || data.key || "");
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to update fee.");
-    } finally { setSaving(false); }
+      setError(err?.response?.data?.msg || "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <div className="dp-section">
-      <SectionHead
-        icon="💲" title="Consultation Fee"
-        editing={editing}
-        onEdit={() => { setFee(initialFee ?? ""); setEditing(true); setError(""); setSuccess(false); }}
-        onSave={handleSave} onCancel={() => { setEditing(false); setFee(initialFee ?? ""); setError(""); }}
-        saving={saving}
-      />
-      <div className="dp-section-body">
-        {!editing ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ fontSize: 32, fontWeight: 800, color: initialFee ? "#0c8b7a" : "#94a3b8", fontFamily: "'Outfit',sans-serif" }}>
-              {initialFee ? `$${initialFee}` : "—"}
-            </div>
-            <div style={{ fontSize: 13, color: "#64748b" }}>{initialFee ? "per consultation (USD)" : "No fee set"}</div>
-            {success && <span style={{ marginLeft: "auto", fontSize: 12, color: "#166534", fontWeight: 600, background: "#dcfce7", padding: "4px 12px", borderRadius: 50 }}>✓ Saved</span>}
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Updating your fee does <strong>not</strong> require re-approval.</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <div className="dp-fee-wrap" style={{ maxWidth: 200 }}>
-                <span className="dp-fee-sym">$</span>
-                <input className="dp-input" style={{ border: "none", boxShadow: "none", borderRadius: 0 }} type="number" min="0" step="1"
-                  value={fee} onChange={e => { setFee(e.target.value); setError(""); }} placeholder="e.g. 50" />
-                <span className="dp-fee-usd">USD</span>
-              </div>
-            </div>
-            {error && <p style={{ margin: 0, fontSize: 12, color: "#dc2626" }}>{error}</p>}
-          </div>
+    <div className={`dp-doc ${value ? "has-file" : ""}`}>
+      <input ref={ref} type="file" style={{ display: "none" }} onChange={(event) => upload(event.target.files?.[0])} />
+      <div>
+        <div className="dp-doc-title">{label}</div>
+        <div className="dp-doc-name">{value ? displayFileName(value) : "Not uploaded"}</div>
+        {error && <div style={{ color: "#dc2626", fontSize: 12, marginTop: 4 }}>{error}</div>}
+      </div>
+      <div className="dp-actions" style={{ justifyContent: "flex-start" }}>
+        {value && (
+          <button
+            type="button"
+            className="dp-btn dp-btn-primary"
+            onClick={async () => {
+              const url = await getDoctorDocumentUrl(doctorId, field);
+              window.open(url, "_blank", "noopener,noreferrer");
+            }}
+          >
+            View
+          </button>
+        )}
+        {editable && (
+          <button type="button" className="dp-btn dp-btn-secondary" disabled={uploading} onClick={() => ref.current?.click()}>
+            {uploading ? "Uploading..." : value ? "Replace" : "Upload"}
+          </button>
         )}
       </div>
     </div>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+function PhotoEditor({ value, doctorId, editable, onChange, initials }) {
+  const ref = useRef(null);
+  const [preview, setPreview] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const directUrl = normalizeFileUrl(value);
+  const showDirect = directUrl && /^https?:\/\//i.test(directUrl);
+
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+
+  const upload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { data } = await api.post("/api/upload", fd);
+      onChange(data.url || data.key || "");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="dp-upload-row">
+      <input ref={ref} type="file" accept="image/*" style={{ display: "none" }} onChange={(event) => upload(event.target.files?.[0])} />
+      <div className="dp-photo-upload" onClick={() => editable && ref.current?.click()}>
+        {preview ? (
+          <img src={preview} alt="Profile preview" />
+        ) : showDirect ? (
+          <img src={directUrl} alt="Profile" />
+        ) : value ? (
+          <SignedImage doctorId={doctorId} field="profilePhoto" alt="Profile" fallback={<span>{initials}</span>} />
+        ) : (
+          <span>{initials}</span>
+        )}
+      </div>
+      <div style={{ minWidth: 180, flex: 1 }}>
+        <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 14 }}>
+          {uploading ? "Uploading..." : value ? "Profile photo uploaded" : "No profile photo"}
+        </div>
+        <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>JPG, PNG, or WebP. Click the avatar to replace.</div>
+        {editable && (
+          <button type="button" className="dp-btn dp-btn-soft" style={{ marginTop: 10 }} disabled={uploading} onClick={() => ref.current?.click()}>
+            {value ? "Replace Photo" : "Upload Photo"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfileUpdateStatus({ enrollment }) {
+  const status = enrollment.profileUpdateRequestStatus ||
+    (enrollment.pendingRequestType === "profile_update" ? "pending" : "none");
+  const meta = REQUEST_META[status];
+  if (!meta) return null;
+  const changes = Array.isArray(enrollment.pendingProfileChanges) ? enrollment.pendingProfileChanges : [];
+  return (
+    <div className="dp-notice" style={{ background: meta.bg, borderColor: meta.border, color: meta.color }}>
+      <p className="dp-notice-title">{meta.label}</p>
+      <p className="dp-notice-text">{meta.text}</p>
+      {enrollment.profileUpdateRequestedAt && (
+        <p className="dp-notice-text" style={{ marginTop: 4 }}>Submitted {new Date(enrollment.profileUpdateRequestedAt).toLocaleString()}</p>
+      )}
+      {status === "pending" && changes.map((change) => (
+        <div key={change.field} className="dp-change">
+          <div className="dp-change-head">{change.label || change.field}</div>
+          <div className="dp-change-cols">
+            <div className="dp-change-col">
+              <div className="dp-doc-title">Current approved</div>
+              <div className="dp-doc-name">{displayValue(change.previousValue) || "-"}</div>
+            </div>
+            <div className="dp-change-col">
+              <div className="dp-doc-title">Submitted update</div>
+              <div className="dp-doc-name">{displayValue(change.newValue) || "-"}</div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function DoctorProfile() {
   const { doctor } = useDoctorAuth();
   const navigate = useNavigate();
   const [enrollment, setEnrollment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [consultantFees, setConsultantFees] = useState(null);
-
-  // per-section edit state
-  const [editSection, setEditSection] = useState(null); // "personal" | "professional" | "about" | "clinic" | "payout"
+  const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState({ type: "", text: "" });
+  const [toast, setToast] = useState(null);
+
+  const doctorId = doctor?._id || doctor?.id;
 
   useEffect(() => {
-    if (!doctor) return;
-    const id = doctor._id || doctor.id;
-    api.get(`/api/doctor/enrollment/${id}`)
-      .then(res => {
-        const d = res.data || null;
-        setEnrollment(d);
-        setConsultantFees(d?.consultantFees ?? null);
-      })
+    if (!doctorId) return;
+    setLoading(true);
+    api.get(`/api/doctor/enrollment/${doctorId}`)
+      .then((res) => setEnrollment(res.data || null))
       .catch(() => setEnrollment(null))
       .finally(() => setLoading(false));
-  }, [doctor]);
+  }, [doctorId]);
 
-  const openEdit = (section) => {
-    if (!enrollment) return;
-    setForm({
-      firstName:               enrollment.firstName || "",
-      surname:                 enrollment.surname || "",
-      email:                   enrollment.email || "",
-      countryCode:             enrollment.countryCode || "",
-      phoneNumber:             enrollment.phoneNumber || "",
-      gender:                  enrollment.gender || "",
-      dob:                     enrollment.dob || "",
-      country:                 enrollment.country || "",
-      state:                   enrollment.state || "",
-      city:                    enrollment.city || "",
-      zip:                     enrollment.zip || "",
-      address:                 enrollment.address || "",
-      languagesKnown:          (enrollment.languagesKnown || []).join(", "),
-      specialization:          enrollment.specialization || "",
-      subSpecialization:       enrollment.subSpecialization || "",
-      qualification:           enrollment.qualification || "",
-      experience:              enrollment.experience ? String(enrollment.experience) : "",
-      medicalSchool:           enrollment.medicalSchool || "",
-      registrationYear:        enrollment.registrationYear || "",
-      medicalCouncilName:      enrollment.medicalCouncilName || "",
-      medicalRegistrationNumber: enrollment.medicalRegistrationNumber || "",
-      medicalLicense:          enrollment.medicalLicense || "",
-      consultationMode:        enrollment.consultationMode || "",
-      aboutDoctor:             enrollment.aboutDoctor || "",
-      clinicName:              enrollment.clinicName || "",
-      clinicAddress:           enrollment.clinicAddress || "",
-      bankName:                enrollment.bankName || "",
-      accountHolderName:       enrollment.accountHolderName || "",
-      accountNumber:           enrollment.accountNumber || "",
-      ifscCode:                enrollment.ifscCode || "",
-      payoutEmail:             enrollment.payoutEmail || "",
-      paypalId:                enrollment.paypalId || "",
-    });
-    setEditSection(section);
-    setSaveMsg({ type: "", text: "" });
+  const initialForm = useMemo(() => {
+    const e = enrollment || {};
+    return {
+      firstName: e.firstName || "",
+      surname: e.surname || "",
+      email: e.email || "",
+      countryCode: e.countryCode || "",
+      phoneNumber: e.phoneNumber || "",
+      gender: e.gender || "",
+      dob: e.dob || "",
+      languagesKnown: Array.isArray(e.languagesKnown) ? e.languagesKnown.join(", ") : e.languagesKnown || "",
+      country: e.country || "",
+      state: e.state || "",
+      city: e.city || "",
+      zip: e.zip || "",
+      address: e.address || "",
+      specialization: e.specialization || "",
+      subSpecialization: e.subSpecialization || "",
+      qualification: e.qualification || "",
+      experience: e.experience != null ? String(e.experience) : "",
+      medicalSchool: e.medicalSchool || "",
+      registrationYear: e.registrationYear || "",
+      medicalCouncilName: e.medicalCouncilName || "",
+      medicalRegistrationNumber: e.medicalRegistrationNumber || "",
+      medicalLicense: e.medicalLicense || "",
+      idProofType: e.idProofType || "",
+      consultationMode: e.consultationMode || "",
+      consultantFees: e.consultantFees != null ? String(e.consultantFees) : "",
+      feeCurrency: e.feeCurrency || "USD",
+      clinicName: e.clinicName || "",
+      clinicAddress: e.clinicAddress || "",
+      aboutDoctor: e.aboutDoctor || "",
+      profilePhoto: e.profilePhoto || "",
+      idProof: e.idProof || "",
+      degreeFile: e.degreeFile || "",
+      medicalLicenseFile: e.medicalLicenseFile || "",
+      malpracticeInsuranceFile: e.malpracticeInsuranceFile || "",
+      bankName: e.bankName || "",
+      accountHolderName: e.accountHolderName || "",
+      accountNumber: e.accountNumber || "",
+      ifscCode: e.ifscCode || "",
+      paypalId: e.paypalId || "",
+      payoutEmail: e.payoutEmail || "",
+      timezone: e.timezone || "",
+      availability: e.availability || {},
+    };
+  }, [enrollment]);
+
+  const beginEdit = () => {
+    setForm(initialForm);
+    setToast(null);
+    setEditMode(true);
   };
 
-  const closeEdit = () => { setEditSection(null); setSaveMsg({ type: "", text: "" }); };
+  const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const handleSave = async () => {
-    setSaving(true); setSaveMsg({ type: "", text: "" });
+  const save = async () => {
+    setSaving(true);
+    setToast(null);
     try {
-      const langArr = form.languagesKnown
-        ? form.languagesKnown.split(",").map(l => l.trim()).filter(Boolean)
-        : [];
       const payload = {
-        doctorId: doctor._id || doctor.id,
+        doctorId,
         ...form,
-        languagesKnown: langArr,
-        experience: form.experience ? Number(form.experience) : undefined,
+        languagesKnown: form.languagesKnown ? form.languagesKnown.split(",").map((item) => item.trim()).filter(Boolean) : [],
+        experience: form.experience === "" ? undefined : Number(form.experience),
+        consultantFees: form.consultantFees === "" ? undefined : Number(form.consultantFees),
       };
-      const res = await api.post("/api/doctor/enrollment", payload);
-      const updated = res.data?.enrollment || null;
-      setEnrollment(updated);
-      if (updated?.consultantFees != null) setConsultantFees(updated.consultantFees);
-      setEditSection(null);
-      setSaveMsg({ type: "success", text: res.data?.message || "Profile updated." });
-      setTimeout(() => setSaveMsg({ type: "", text: "" }), 5000);
+      const { data } = await api.post("/api/doctor/enrollment", payload);
+      setEnrollment(data?.enrollment || enrollment);
+      setEditMode(false);
+      setToast({ ok: true, text: data?.message || "Profile saved." });
     } catch (err) {
-      setSaveMsg({ type: "error", text: err?.response?.data?.message || "Failed to save changes." });
-    } finally { setSaving(false); }
+      setToast({ ok: false, text: err?.response?.data?.message || "Could not save profile." });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // ── helpers ──
-  const f = (key) => form[key] ?? "";
-  const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
-  const inp = (key, placeholder, type = "text") => (
-    <input className="dp-input" type={type} placeholder={placeholder}
-      value={f(key)} onChange={e => set(key, e.target.value)} />
+  const input = (key, placeholder = "", type = "text") => (
+    <input type={type} value={form[key] || ""} placeholder={placeholder} onChange={(event) => update(key, event.target.value)} />
   );
-  const sel = (key, options, placeholder = "Select…") => (
-    <select className="dp-select" value={f(key)} onChange={e => set(key, e.target.value)}>
+  const select = (key, options, placeholder = "Select...") => (
+    <select value={form[key] || ""} onChange={(event) => update(key, event.target.value)}>
       <option value="">{placeholder}</option>
-      {options.map(o => <option key={o} value={o}>{o}</option>)}
+      {options.map((option) => <option key={option} value={option}>{option}</option>)}
     </select>
   );
 
-  // ── loading / no data ──
-  if (loading) return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
-      <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#0c8b7a", animation: "spin 0.8s linear infinite" }} />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  );
+  if (loading) {
+    return (
+      <>
+        <style>{CSS}</style>
+        <div style={{ minHeight: 300, display: "flex", justifyContent: "center", alignItems: "center" }}><div className="dp-spinner" /></div>
+      </>
+    );
+  }
 
-  if (!enrollment) return (
-    <div style={{ textAlign: "center", padding: "60px 24px" }}>
-      <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
-      <h3 style={{ color: "#223a5e", marginBottom: 8, fontFamily: "'Outfit',sans-serif" }}>No profile found</h3>
-      <p style={{ color: "#64748b" }}>Your profile will appear here once enrollment is complete.</p>
-    </div>
-  );
+  if (!enrollment) {
+    return (
+      <>
+        <style>{CSS}</style>
+        <div style={{ padding: 60, textAlign: "center", color: "#64748b" }}>No profile found. Complete your enrollment first.</div>
+      </>
+    );
+  }
 
-  const fullName = `Dr. ${enrollment.firstName || ""} ${enrollment.surname || ""}`.trim();
-  const initials = `${(enrollment.firstName || " ")[0]}${(enrollment.surname || " ")[0]}`.toUpperCase();
-  const statusStyle = STATUS_COLORS[enrollment.approvalStatus] || STATUS_COLORS.pending;
-  const locationStr = [enrollment.city, enrollment.state, enrollment.country].filter(Boolean).join(", ");
-  const langStr = Array.isArray(enrollment.languagesKnown) ? enrollment.languagesKnown.join(", ") : enrollment.languagesKnown;
-  const doctorId = doctor._id || doctor.id;
-  const numericDoctorId = doctor.doctorId;
-  const isApproved = enrollment.approvalStatus === "approved";
-  const publicProfileSlug = numericDoctorId
-    ? `${numericDoctorId}-${slugifyDoctorName(fullName)}`
-    : null;
+  const e = enrollment;
+  const source = editMode ? form : e;
+  const fullName = `Dr. ${source.firstName || ""} ${source.surname || ""}`.trim() || doctor?.name || "Doctor";
+  const initials = `${(source.firstName || "D")[0]}${(source.surname || "R")[0]}`.toUpperCase();
+  const statusMeta = STATUS_META[e.approvalStatus] || STATUS_META.pending;
+  const location = [source.city, source.state, source.country].filter(Boolean).join(", ");
+  const publicSlug = doctor?.doctorId ? `${doctor.doctorId}-${slugifyDoctorName(fullName)}` : "";
+  const languages = Array.isArray(e.languagesKnown) ? e.languagesKnown.join(", ") : e.languagesKnown;
 
   return (
     <>
       <style>{CSS}</style>
-      <div className="dp-root-dp">
+      <div className="dp-adminlike">
+        <div className="dp-topnav">
+          <div>
+            <div className="dp-kicker">Doctor Profile {editMode && <span style={{ color: "#2563eb" }}>· EDIT MODE</span>}</div>
+            <h1 className="dp-title">{fullName}</h1>
+          </div>
+          <div className="dp-actions">
+            {editMode ? (
+              <>
+                <button className="dp-btn dp-btn-secondary" type="button" onClick={() => { setEditMode(false); setForm({}); }} disabled={saving}>Cancel</button>
+                <button className="dp-btn dp-btn-primary" type="button" onClick={save} disabled={saving}>{saving ? "Saving..." : "Save Changes"}</button>
+              </>
+            ) : (
+              <button className="dp-btn dp-btn-soft" type="button" onClick={beginEdit}>Edit Profile</button>
+            )}
+          </div>
+        </div>
 
-        {/* ── Global save/error messages ── */}
-        {saveMsg.text && (
-          <div className={saveMsg.type === "success" ? "dp-success" : "dp-error"}>
-            {saveMsg.type === "success" ? "✓ " : "⚠ "}{saveMsg.text}
+        {toast && (
+          <div className="dp-notice" style={{ background: toast.ok ? "#f0fdf4" : "#fff1f2", borderColor: toast.ok ? "#bbf7d0" : "#fecdd3", color: toast.ok ? "#166534" : "#991b1b" }}>
+            <p className="dp-notice-text" style={{ fontWeight: 800 }}>{toast.text}</p>
           </div>
         )}
 
-        {/* ── Header card ── */}
-        <div className="dp-header-card">
-          <div className="dp-header-avatar">{initials}</div>
-          <div className="dp-header-info">
-            <h1 className="dp-header-name">{fullName}</h1>
-            {(enrollment.qualification || enrollment.specialization) && (
-              <p style={{ margin: "0 0 6px", fontSize: 14, color: "rgba(255,255,255,0.85)" }}>
-                {[enrollment.qualification, enrollment.specialization].filter(Boolean).join(" · ")}
-              </p>
-            )}
-            {enrollment.experience && (
-              <p style={{ margin: "0 0 6px", fontSize: 13, color: "rgba(255,255,255,0.75)" }}>
-                🏅 {enrollment.experience} years of experience
-              </p>
-            )}
-            {locationStr && (
-              <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.7)" }}>📍 {locationStr}</p>
-            )}
+        <div className="dp-hero">
+          <div className="dp-avatar">
+            {source.profilePhoto ? (
+              <SignedImage doctorId={doctorId} field="profilePhoto" alt={fullName} fallback={<span>{initials}</span>} />
+            ) : <span>{initials}</span>}
           </div>
-          <div className="dp-header-right">
-            {numericDoctorId && (
-              <span style={{ background: "rgba(255,255,255,0.12)", color: "#cde3f7", padding: "4px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "1px solid rgba(255,255,255,0.22)", letterSpacing: "0.05em" }}>
-                ID: {numericDoctorId}
-              </span>
-            )}
-            <span style={{ background: statusStyle.bg, color: statusStyle.color, padding: "5px 14px", borderRadius: 50, fontSize: 12, fontWeight: 700 }}>
-              {statusStyle.label}
-            </span>
-            {consultantFees && (
-              <span style={{ background: "rgba(255,255,255,0.15)", color: "#fff", padding: "5px 14px", borderRadius: 50, fontSize: 13, fontWeight: 700, border: "1.5px solid rgba(255,255,255,0.3)" }}>
-                ${consultantFees} / visit
-              </span>
-            )}
-            {isApproved && publicProfileSlug && (
-              <button
-                onClick={() => navigate(`/doctors/${publicProfileSlug}`)}
-                style={{ background: "rgba(255,255,255,0.15)", color: "#fff", padding: "6px 14px", borderRadius: 50, fontSize: 12, fontWeight: 600, border: "1.5px solid rgba(255,255,255,0.3)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                View Public Profile
-              </button>
+          <div className="dp-hero-main">
+            <div className="dp-name">{fullName}</div>
+            {(source.qualification || source.specialization) && <div className="dp-hero-meta">{[source.qualification, source.specialization].filter(Boolean).join(" · ")}</div>}
+            {source.experience && <div className="dp-hero-meta">{source.experience} years experience</div>}
+            {location && <div className="dp-hero-meta">{location}</div>}
+          </div>
+          <div className="dp-chipbox">
+            <span className="dp-chip" style={{ background: statusMeta.bg, color: statusMeta.color }}>{statusMeta.label}</span>
+            <span className="dp-chip dp-chip-ghost">ID: {doctor?.doctorId || "-"}</span>
+            {source.consultantFees && <span className="dp-chip dp-chip-ghost">{source.feeCurrency || "USD"} {source.consultantFees} / visit</span>}
+            {publicSlug && e.approvalStatus === "approved" && !editMode && (
+              <button className="dp-chip dp-chip-ghost" type="button" style={{ cursor: "pointer" }} onClick={() => navigate(`/doctors/${publicSlug}`)}>View Public Profile</button>
             )}
           </div>
         </div>
 
-        {/* re-approval warning shown whenever a section is open for editing */}
-        {editSection && isApproved && (
-          <div className="dp-warn">
-            ⚠️ Saving changes will resubmit your profile for admin re-approval. You may temporarily lose dashboard access until re-approved.
+        <ProfileUpdateStatus enrollment={e} />
+
+        {editMode && e.approvalStatus === "approved" && (
+          <div className="dp-notice" style={{ background: "#fffbeb", borderColor: "#fde68a", color: "#92400e" }}>
+            <p className="dp-notice-title">Admin review required</p>
+            <p className="dp-notice-text">Saving changes submits the whole profile update for admin review. Your dashboard access remains active.</p>
           </div>
         )}
 
-        {/* ── Consultation Fee ── */}
-        <FeeSection doctorId={doctorId} initialFee={consultantFees} onSaved={setConsultantFees} />
+        {editMode ? (
+          <>
+            <Section icon="📷" title="Profile Photo">
+              <PhotoEditor value={form.profilePhoto} doctorId={doctorId} editable onChange={(value) => update("profilePhoto", value)} initials={initials} />
+            </Section>
 
-        {/* ════ PERSONAL DETAILS ════ */}
-        <div className="dp-section">
-          <SectionHead icon="👤" title="Personal Details"
-            editing={editSection === "personal"}
-            onEdit={() => openEdit("personal")} onSave={handleSave} onCancel={closeEdit}
-            saving={saving}
-          />
-          <div className="dp-section-body">
-            {editSection !== "personal" ? (
-              <div className="dp-grid">
-                <InfoRow label="First Name"       value={enrollment.firstName} />
-                <InfoRow label="Surname"          value={enrollment.surname} />
-                <InfoRow label="Email"            value={enrollment.email} />
-                <InfoRow label="Phone"            value={[enrollment.countryCode, enrollment.phoneNumber].filter(Boolean).join(" ")} />
-                <InfoRow label="Gender"           value={enrollment.gender} />
-                <InfoRow label="Date of Birth"    value={enrollment.dob} />
-                <InfoRow label="Languages"        value={langStr} />
+            <Section icon="👤" title="Personal & Contact Details">
+              <div className="dp-grid-wide">
+                <InputField label="First Name">{input("firstName", "First name")}</InputField>
+                <InputField label="Surname">{input("surname", "Surname")}</InputField>
+                <InputField label="Email">{input("email", "Email", "email")}</InputField>
+                <InputField label="Phone">
+                  <div style={{ display: "grid", gridTemplateColumns: "74px 1fr", gap: 8 }}>
+                    {input("countryCode", "+1")}
+                    {input("phoneNumber", "Phone number")}
+                  </div>
+                </InputField>
+                <InputField label="Gender">{select("gender", GENDERS)}</InputField>
+                <InputField label="Date of Birth">{input("dob", "", "date")}</InputField>
+                <InputField label="Languages Known" full>{input("languagesKnown", "English, Hindi, Spanish")}</InputField>
               </div>
-            ) : (
-              <div className="dp-grid-2">
-                <div className="dp-field"><label>First Name</label>{inp("firstName","First name")}</div>
-                <div className="dp-field"><label>Surname</label>{inp("surname","Surname")}</div>
-                <div className="dp-field"><label>Email</label>{inp("email","Email","email")}</div>
-                <div className="dp-field"><label>Phone</label>
-                  <div style={{ display:"flex", gap:8 }}>
-                    <input className="dp-input" style={{width:70,flexShrink:0}} placeholder="+1" value={f("countryCode")} onChange={e=>set("countryCode",e.target.value)} />
-                    <input className="dp-input" placeholder="555-000-0000" value={f("phoneNumber")} onChange={e=>set("phoneNumber",e.target.value)} />
+            </Section>
+
+            <Section icon="📍" title="Location">
+              <div className="dp-grid-wide">
+                <InputField label="Country">{select("country", COUNTRIES)}</InputField>
+                <InputField label="State">{input("state", "State")}</InputField>
+                <InputField label="City">{input("city", "City")}</InputField>
+                <InputField label="ZIP / Postal">{input("zip", "ZIP")}</InputField>
+                <InputField label="Street Address" full>{input("address", "Street address")}</InputField>
+              </div>
+            </Section>
+
+            <Section icon="🩺" title="Professional Details">
+              <div className="dp-grid-wide">
+                <InputField label="Specialization">{select("specialization", SPECIALTIES, "Select specialty")}</InputField>
+                <InputField label="Sub-Specialization">{input("subSpecialization", "Sub-specialization")}</InputField>
+                <InputField label="Qualification">{select("qualification", QUALIFICATIONS)}</InputField>
+                <InputField label="Experience">{input("experience", "Years", "number")}</InputField>
+                <InputField label="Medical School">{input("medicalSchool", "Medical school")}</InputField>
+                <InputField label="Graduation Year">{input("registrationYear", "YYYY")}</InputField>
+                <InputField label="Medical Council">{input("medicalCouncilName", "Council")}</InputField>
+                <InputField label="Registration Number">{input("medicalRegistrationNumber", "Registration number")}</InputField>
+                <InputField label="Medical License No.">{input("medicalLicense", "License number")}</InputField>
+                <InputField label="Consultation Mode">{select("consultationMode", CONSULTATION_MODES)}</InputField>
+                <InputField label="Consultation Fee">{input("consultantFees", "Fee", "number")}</InputField>
+                <InputField label="Fee Currency">{select("feeCurrency", CURRENCIES)}</InputField>
+                <InputField label="Clinic Name">{input("clinicName", "Clinic name")}</InputField>
+                <InputField label="Clinic Address">{input("clinicAddress", "Clinic address")}</InputField>
+                <InputField label="About Doctor" full>
+                  <textarea value={form.aboutDoctor || ""} onChange={(event) => update("aboutDoctor", event.target.value)} />
+                </InputField>
+              </div>
+            </Section>
+
+            <Section icon="📋" title="Submitted Documents">
+              <div className="dp-grid">
+                <DocumentCard editable label="Government ID / Nationality Proof" value={form.idProof} doctorId={doctorId} field="idProof" onChange={(value) => update("idProof", value)} />
+                <DocumentCard editable label="Medical Degree Certificate" value={form.degreeFile} doctorId={doctorId} field="degreeFile" onChange={(value) => update("degreeFile", value)} />
+                <DocumentCard editable label="Medical License Document" value={form.medicalLicenseFile} doctorId={doctorId} field="medicalLicenseFile" onChange={(value) => update("medicalLicenseFile", value)} />
+                <DocumentCard editable label="Malpractice Insurance License" value={form.malpracticeInsuranceFile} doctorId={doctorId} field="malpracticeInsuranceFile" onChange={(value) => update("malpracticeInsuranceFile", value)} />
+              </div>
+            </Section>
+
+            <Section icon="💳" title="Payout Information">
+              <div className="dp-grid-wide">
+                <InputField label="Bank Name">{input("bankName", "Bank name")}</InputField>
+                <InputField label="Account Holder">{input("accountHolderName", "Account holder")}</InputField>
+                <InputField label="Account Number">{input("accountNumber", "Account number")}</InputField>
+                <InputField label="SWIFT / BIC">{input("ifscCode", "SWIFT / BIC")}</InputField>
+                <InputField label="PayPal ID">{input("paypalId", "PayPal ID")}</InputField>
+                <InputField label="Payout Email">{input("payoutEmail", "Payout email", "email")}</InputField>
+              </div>
+            </Section>
+          </>
+        ) : (
+          <>
+            <Section icon="👤" title="Personal & Contact Details">
+              {e.profilePhoto ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 18px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10, marginBottom: 18 }}>
+                  <div className="dp-avatar" style={{ width: 72, height: 72, borderColor: "#16a34a" }}>
+                    <SignedImage doctorId={doctorId} field="profilePhoto" alt={fullName} fallback={<span>{initials}</span>} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#166534" }}>Profile photo uploaded</div>
+                    <button className="dp-btn dp-btn-secondary" style={{ marginTop: 8 }} type="button" onClick={async () => window.open(await getDoctorDocumentUrl(doctorId, "profilePhoto"), "_blank", "noopener,noreferrer")}>View full size</button>
                   </div>
                 </div>
-                <div className="dp-field"><label>Gender</label>{sel("gender",GENDERS)}</div>
-                <div className="dp-field"><label>Date of Birth</label><input className="dp-input" type="date" value={f("dob")} onChange={e=>set("dob",e.target.value)} /></div>
-                <div className="dp-field" style={{ gridColumn:"1/-1" }}>
-                  <label>Languages Known <span style={{fontWeight:400,color:"#94a3b8"}}>(comma-separated)</span></label>
-                  {inp("languagesKnown","English, Hindi, Spanish…")}
+              ) : (
+                <div style={{ padding: "12px 16px", background: "#fafafa", border: "1px dashed #e2e8f0", borderRadius: 10, marginBottom: 18, fontSize: 13, color: "#94a3b8" }}>No profile photo uploaded.</div>
+              )}
+              <div className="dp-grid">
+                <ReadField label="First Name" value={e.firstName} />
+                <ReadField label="Surname" value={e.surname} />
+                <ReadField label="Email" value={e.email || doctor?.email} />
+                <ReadField label="Mobile" value={[e.countryCode, e.phoneNumber].filter(Boolean).join(" ")} />
+                <ReadField label="Gender" value={e.gender} />
+                <ReadField label="Date of Birth" value={e.dob} />
+                <ReadField label="Languages" value={languages} full={languages?.length > 40} />
+              </div>
+            </Section>
+
+            <Section icon="📍" title="Location">
+              <div className="dp-grid">
+                <ReadField label="Country" value={e.country} />
+                <ReadField label="State" value={e.state} />
+                <ReadField label="City" value={e.city} />
+                <ReadField label="ZIP / Postal" value={e.zip} />
+                <ReadField label="Street Address" value={e.address} full />
+              </div>
+            </Section>
+
+            <Section icon="🩺" title="Professional Details">
+              <div className="dp-grid">
+                <ReadField label="Specialization" value={e.specialization} />
+                <ReadField label="Sub-Specialization" value={e.subSpecialization} />
+                <ReadField label="Qualification" value={e.qualification} />
+                <ReadField label="Experience" value={e.experience ? `${e.experience} years` : ""} />
+                <ReadField label="Medical School" value={e.medicalSchool} />
+                <ReadField label="Graduation Year" value={e.registrationYear} />
+                <ReadField label="Medical Council" value={e.medicalCouncilName} />
+                <ReadField label="Registration Number" value={e.medicalRegistrationNumber} />
+                <ReadField label="Medical License No." value={e.medicalLicense} />
+                <ReadField label="Consultation Mode" value={e.consultationMode} />
+                <ReadField label="Consultation Fee" value={e.consultantFees ? `${e.feeCurrency || "USD"} ${e.consultantFees}` : ""} />
+                <ReadField label="Clinic Name" value={e.clinicName} />
+                <ReadField label="Clinic Address" value={e.clinicAddress} full />
+              </div>
+              {e.aboutDoctor && <p style={{ margin: "16px 0 0", paddingTop: 16, borderTop: "1px solid #f1f5f9", fontSize: 14, color: "#334155", lineHeight: 1.7 }}>{e.aboutDoctor}</p>}
+            </Section>
+
+            <Section icon="📋" title="Submitted Documents">
+              <div className="dp-grid">
+                <DocumentCard label="Government ID / Nationality Proof" value={e.idProof} doctorId={doctorId} field="idProof" />
+                <DocumentCard label="Medical Degree Certificate" value={e.degreeFile} doctorId={doctorId} field="degreeFile" />
+                <DocumentCard label="Medical License Document" value={e.medicalLicenseFile} doctorId={doctorId} field="medicalLicenseFile" />
+                <DocumentCard label="Malpractice Insurance License" value={e.malpracticeInsuranceFile} doctorId={doctorId} field="malpracticeInsuranceFile" />
+              </div>
+            </Section>
+
+            <Section icon="🗓️" title="Availability Schedule">
+              {e.timezone && <div style={{ marginBottom: 14, fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>Timezone: {e.timezone}</div>}
+              {e.availability && typeof e.availability === "object" && Object.keys(e.availability).length > 0 ? (
+                <div className="dp-grid">
+                  {DAYS.map((day) => {
+                    const dayData = e.availability?.[day];
+                    if (!dayData) return null;
+                    return (
+                      <div key={day} style={{ padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${dayData.enabled ? "#bfdbfe" : "#e2e8f0"}`, background: dayData.enabled ? "#eff6ff" : "#f8fafc" }}>
+                        <div style={{ fontWeight: 800, fontSize: 13, color: dayData.enabled ? "#1d4ed8" : "#94a3b8", marginBottom: dayData.enabled ? 8 : 0 }}>{day}</div>
+                        {dayData.enabled && Array.isArray(dayData.blocks) && dayData.blocks.map((block, index) => (
+                          <div key={`${block.start}-${block.end}-${index}`} style={{ fontSize: 12, color: "#334155", fontWeight: 600 }}>{block.start} - {block.end}</div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
+              ) : <p style={{ color: "#94a3b8", fontSize: 14, fontStyle: "italic" }}>No availability schedule submitted.</p>}
+            </Section>
 
-        {/* ════ LOCATION ════ */}
-        <div className="dp-section">
-          <SectionHead icon="📍" title="Location"
-            editing={editSection === "location"}
-            onEdit={() => openEdit("location")} onSave={handleSave} onCancel={closeEdit}
-            saving={saving}
-          />
-          <div className="dp-section-body">
-            {editSection !== "location" ? (
+            <Section icon="💳" title="Payout Information">
               <div className="dp-grid">
-                <InfoRow label="Country"         value={enrollment.country} />
-                <InfoRow label="State / Region"  value={enrollment.state} />
-                <InfoRow label="City"            value={enrollment.city} />
-                <InfoRow label="ZIP / Postal"    value={enrollment.zip} />
-                <InfoRow label="Address"         value={enrollment.address} />
+                <ReadField label="Bank Name" value={e.bankName} />
+                <ReadField label="Account Holder" value={e.accountHolderName} />
+                <ReadField label="Account Number" value={e.accountNumber ? `****${String(e.accountNumber).slice(-4)}` : ""} />
+                <ReadField label="SWIFT / BIC" value={e.ifscCode} />
+                <ReadField label="PayPal ID" value={e.paypalId} />
+                <ReadField label="Payout Email" value={e.payoutEmail} />
               </div>
-            ) : (
-              <div className="dp-grid-2">
-                <div className="dp-field"><label>Country</label>{sel("country",COUNTRIES)}</div>
-                <div className="dp-field"><label>State / Region</label>{inp("state","e.g. California")}</div>
-                <div className="dp-field"><label>City</label>{inp("city","City")}</div>
-                <div className="dp-field"><label>ZIP / Postal Code</label>{inp("zip","ZIP")}</div>
-                <div className="dp-field" style={{ gridColumn:"1/-1" }}><label>Street Address</label>{inp("address","Street address")}</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ════ PROFESSIONAL DETAILS ════ */}
-        <div className="dp-section">
-          <SectionHead icon="🩺" title="Professional Details"
-            editing={editSection === "professional"}
-            onEdit={() => openEdit("professional")} onSave={handleSave} onCancel={closeEdit}
-            saving={saving}
-          />
-          <div className="dp-section-body">
-            {editSection !== "professional" ? (
-              <div className="dp-grid">
-                <InfoRow label="Specialization"       value={enrollment.specialization} />
-                <InfoRow label="Sub-Specialization"  value={enrollment.subSpecialization} />
-                <InfoRow label="Qualification"       value={enrollment.qualification} />
-                <InfoRow label="Experience"          value={enrollment.experience ? `${enrollment.experience} years` : null} />
-                <InfoRow label="Medical School"      value={enrollment.medicalSchool} />
-                <InfoRow label="Graduation Year"     value={enrollment.registrationYear} />
-                <InfoRow label="Medical Council"     value={enrollment.medicalCouncilName} />
-                <InfoRow label="Reg. Number"         value={enrollment.medicalRegistrationNumber} />
-                <InfoRow label="Medical License No." value={enrollment.medicalLicense} />
-                {enrollment.medicalLicenseFile && (
-                  <div className="dp-row" style={{ gridColumn: "1/-1" }}>
-                    <label>Medical License Document</label>
-                    <span style={{ display:"flex", alignItems:"center", gap:8 }}>
-                      <span style={{ fontSize:18 }}>📄</span>
-                      <span style={{ fontWeight:500, color:"#0c8b7a" }}>{enrollment.medicalLicenseFile}</span>
-                      <span style={{ fontSize:11, color:"#94a3b8", background:"#f1f5f9", padding:"2px 8px", borderRadius:50 }}>Uploaded</span>
-                    </span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="dp-grid-2">
-                <div className="dp-field"><label>Specialization</label>{sel("specialization",SPECIALTIES,"Select specialty…")}</div>
-                <div className="dp-field"><label>Sub-Specialization</label>{inp("subSpecialization","e.g. Interventional Cardiology")}</div>
-                <div className="dp-field"><label>Qualification</label>{sel("qualification",QUALIFICATIONS,"Select…")}</div>
-                <div className="dp-field"><label>Years of Experience</label><input className="dp-input" type="number" min="0" value={f("experience")} onChange={e=>set("experience",e.target.value)} placeholder="e.g. 10" /></div>
-                <div className="dp-field"><label>Medical School</label>{inp("medicalSchool","School name")}</div>
-                <div className="dp-field"><label>Graduation Year</label>{inp("registrationYear","YYYY")}</div>
-                <div className="dp-field"><label>Medical Council</label>{inp("medicalCouncilName","e.g. MCI, GMC, AMA")}</div>
-                <div className="dp-field"><label>Registration Number</label>{inp("medicalRegistrationNumber","Reg. number")}</div>
-                <div className="dp-field"><label>Medical License No.</label>{inp("medicalLicense","License number")}</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ════ ABOUT ════ */}
-        <div className="dp-section">
-          <SectionHead icon="📝" title="About"
-            editing={editSection === "about"}
-            onEdit={() => openEdit("about")} onSave={handleSave} onCancel={closeEdit}
-            saving={saving}
-          />
-          <div className="dp-section-body">
-            {editSection !== "about" ? (
-              <p style={{ margin: 0, fontSize: 14, color: enrollment.aboutDoctor ? "#334155" : "#94a3b8", lineHeight: 1.7, fontStyle: enrollment.aboutDoctor ? "normal" : "italic" }}>
-                {enrollment.aboutDoctor || "No bio added yet."}
-              </p>
-            ) : (
-              <div className="dp-field">
-                <label>Professional Bio</label>
-                <textarea className="dp-textarea" style={{ minHeight: 120 }} placeholder="Brief professional bio, areas of focus, patient care philosophy…"
-                  value={f("aboutDoctor")} onChange={e=>set("aboutDoctor",e.target.value)} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ════ CLINIC / PRACTICE ════ */}
-        <div className="dp-section">
-          <SectionHead icon="🏥" title="Clinic / Practice"
-            editing={editSection === "clinic"}
-            onEdit={() => openEdit("clinic")} onSave={handleSave} onCancel={closeEdit}
-            saving={saving}
-          />
-          <div className="dp-section-body">
-            {editSection !== "clinic" ? (
-              <div className="dp-grid">
-                <InfoRow label="Clinic Name"    value={enrollment.clinicName} />
-                <InfoRow label="Clinic Address" value={enrollment.clinicAddress} />
-              </div>
-            ) : (
-              <div className="dp-grid-2">
-                <div className="dp-field"><label>Clinic Name</label>{inp("clinicName","e.g. City Health Clinic")}</div>
-                <div className="dp-field"><label>Clinic Address</label>{inp("clinicAddress","Street address of clinic")}</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ════ PAYOUT INFORMATION ════ */}
-        <div className="dp-section">
-          <SectionHead icon="💳" title="Payout Information"
-            editing={editSection === "payout"}
-            onEdit={() => openEdit("payout")} onSave={handleSave} onCancel={closeEdit}
-            saving={saving}
-          />
-          <div className="dp-section-body">
-            {editSection !== "payout" ? (
-              <div className="dp-grid">
-                <InfoRow label="Bank Name"       value={enrollment.bankName} />
-                <InfoRow label="Account Holder"  value={enrollment.accountHolderName} />
-                <InfoRow label="Account Number"  value={enrollment.accountNumber ? `****${enrollment.accountNumber.slice(-4)}` : null} />
-                <InfoRow label="SWIFT / BIC"     value={enrollment.ifscCode} />
-                <InfoRow label="Payout Email"    value={enrollment.payoutEmail} />
-                <InfoRow label="PayPal ID"       value={enrollment.paypalId} />
-              </div>
-            ) : (
-              <div className="dp-grid-2">
-                <div className="dp-field"><label>Bank Name</label>{inp("bankName","Bank name")}</div>
-                <div className="dp-field"><label>Account Holder Name</label>{inp("accountHolderName","Full name on account")}</div>
-                <div className="dp-field"><label>Account Number</label>{inp("accountNumber","Account number")}</div>
-                <div className="dp-field"><label>SWIFT / BIC Code</label>{inp("ifscCode","SWIFT / BIC code")}</div>
-                <div className="dp-field"><label>Payout Email</label>{inp("payoutEmail","Email for payouts","email")}</div>
-                <div className="dp-field"><label>PayPal ID</label>{inp("paypalId","PayPal email or username")}</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Enrollment Status ── */}
-        <div className="dp-status-bar" style={{ background: statusStyle.bg, borderRadius: 14, padding: "20px 24px", border: `1.5px solid ${statusStyle.color}33` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 22 }}>
-              {enrollment.approvalStatus === "approved" ? "✅" : enrollment.approvalStatus === "rejected" ? "❌" : "⏳"}
-            </span>
-            <div style={{ flex: 1 }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: statusStyle.color }}>Enrollment Status: {statusStyle.label}</p>
-              <p style={{ margin: "4px 0 0", fontSize: 12, color: statusStyle.color, opacity: 0.8 }}>
-                {enrollment.approvalStatus === "approved" && "Your profile is live and visible to patients on the platform."}
-                {enrollment.approvalStatus === "pending"  && "Your application is under review. You'll be notified once approved."}
-                {enrollment.approvalStatus === "rejected" && "Your application was rejected. Update your details and save to resubmit."}
-              </p>
-            </div>
-          </div>
-        </div>
-
+            </Section>
+          </>
+        )}
       </div>
     </>
   );
