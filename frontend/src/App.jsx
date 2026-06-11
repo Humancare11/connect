@@ -96,7 +96,7 @@ import PaymentLinkCheckout from "./pages/PaymentLinkCheckout";
 //
 import Specialties from "./pages/Specialties";
 import Symptoms from "./pages/Symptoms";
-
+import Categories from "./pages/Categories";
 // Specialty pages
 import PrimaryCare from "./pages/Specialty/PrimaryCare";
 
@@ -195,7 +195,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -269,7 +269,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -726,10 +726,12 @@ function AppLayout() {
         <Route path="/video-call/:appointmentId" element={<VideoCall />} />
 
         {/* Specialties */}
-        <Route path="/specialty" element={<Specialties />} />
+        <Route path="/specialties" element={<Specialties />} />
         <Route path="/symptoms" element={<Symptoms />} />
-
+        <Route path="/categories" element={<Categories />} />
+        
         <Route path="/primary-care" element={<PrimaryCare />} />
+
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
       </Routes>
