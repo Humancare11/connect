@@ -5,7 +5,6 @@ import { useDoctorAuth } from "../../context/DoctorAuthContext";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import "./DoctorProfile.css";
 
-
 const DAYS = [
   "Monday",
   "Tuesday",

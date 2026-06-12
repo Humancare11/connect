@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema(
       immutable: true,
       min: 10000,
       max: 99999,
-      index: true,
     },
 
     name: { type: String, required: true, trim: true },
