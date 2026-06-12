@@ -9,7 +9,6 @@ import PhoneInputField, {
 } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
-import { Country, State, City } from "country-state-city";
 // ─── Constants ───
 
 const SPECIALTIES = [
@@ -1669,18 +1668,37 @@ export default function DoctorOnboardingWizard({
     zip: "",
     address: "",
   });
-  const countries = Country.getAllCountries();
+  const [countryApi, setCountryApi] = useState(null);
+  const [stateApi, setStateApi] = useState(null);
 
-  const states = s1.country ? State.getStatesOfCountry(s1.country) : [];
+  useEffect(() => {
+    let active = true;
+    import("country-state-city/lib/country.js").then(({ default: Country }) => {
+      if (active) setCountryApi(Country);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!s1.country || stateApi) return undefined;
+
+    let active = true;
+    import("country-state-city/lib/state.js").then(({ default: State }) => {
+      if (active) setStateApi(State);
+    });
+    return () => {
+      active = false;
+    };
+  }, [s1.country, stateApi]);
+
+  const countries = countryApi?.getAllCountries() || [];
+
+  const states = s1.country && stateApi ? stateApi.getStatesOfCountry(s1.country) : [];
   const hasStates = states.length > 0;
-  const cities = s1.country
-    ? hasStates
-      ? s1.state
-        ? City.getCitiesOfState(s1.country, s1.state)
-        : []
-      : City.getCitiesOfCountry(s1.country)
-    : [];
-  const hasCities = cities.length > 0;
+  const cities = [];
+  const hasCities = false;
 
   useEffect(() => {
     if (!hasStates && s1.state) {
@@ -2016,7 +2034,7 @@ export default function DoctorOnboardingWizard({
     if (!s1.gender) e.gender = "Required";
     if (!s1.dob) e.dob = "Required";
     if (!s1.country) e.country = "Required";
-    if (s1.country === "United States" && !s1.state.trim())
+    if (s1.country === "US" && !s1.state.trim())
       e.state = "Required for US";
     if (languagesKnown.length === 0) e.languages = "Required";
     setS1Errors(e);
@@ -2334,6 +2352,7 @@ export default function DoctorOnboardingWizard({
             <select
               className={`field-select ${s1Errors.country ? "error" : ""}`}
               value={s1.country}
+              disabled={!countryApi}
               onChange={(e) =>
                 setS1((prev) => ({
                   ...prev,
@@ -2343,7 +2362,7 @@ export default function DoctorOnboardingWizard({
                 }))
               }
             >
-              <option value="">Select country...</option>
+              <option value="">{countryApi ? "Select country..." : "Loading countries..."}</option>
 
               {countries.map((country) => (
                 <option key={country.isoCode} value={country.isoCode}>
@@ -2354,24 +2373,13 @@ export default function DoctorOnboardingWizard({
             {s1Errors.country && (
               <div className="field-error">{s1Errors.country}</div>
             )}
-            {!hasStates && !hasCities && s1.country && (
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "var(--red-500)",
-                  marginTop: 6,
-                }}
-              >
-                This country does not have state or city data available.
-              </div>
-            )}
           </div>
           <div className="location-row">
             {hasStates && (
               <div className="field-group">
                 <label className="field-label">
                   State / Province
-                  {s1.country === "United States" && (
+                  {s1.country === "US" && (
                     <span className="req">*</span>
                   )}
                   {!s1.country && (
@@ -2450,6 +2458,21 @@ export default function DoctorOnboardingWizard({
                 </select>
               </div>
             )}
+
+            <div className="field-group">
+              <label className="field-label">City</label>
+              <input
+                className="field-input"
+                placeholder="City"
+                value={s1.city}
+                onChange={(e) =>
+                  setS1((prev) => ({
+                    ...prev,
+                    city: e.target.value,
+                  }))
+                }
+              />
+            </div>
 
             <div className="field-group">
               <label className="field-label">ZIP / Postal Code</label>
