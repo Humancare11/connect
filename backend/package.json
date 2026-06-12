@@ -7,6 +7,7 @@
     "dev": "nodemon server.js",
     "start": "NODE_ENV=development node server.js",
     "start:prod": "NODE_ENV=production node server.js",
+    "start:uat": "NODE_ENV=uat node server.js",
     "backfill:uploads": "node scripts/backfillUploadsToS3.js",
     "backfill:patient-ids": "node scripts/backfillPatientIds.js",
     "test": "echo \"Error: no test specified\" && exit 1"

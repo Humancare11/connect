@@ -5,6 +5,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Humancare Connect | Online Doctor Consultation & Telehealth Services</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" />
 
     <!-- Primary SEO -->
     <meta name="title" content="Humancare Connect | Online Doctor Consultation & Telehealth Services" />
@@ -52,13 +58,24 @@
         }
       }
     </script>
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-5DQTLVD4');</script>
-<!-- End Google Tag Manager -->
+    <!-- Google Tag Manager: delayed so analytics does not compete with first paint. -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+      window.addEventListener("load", function () {
+        var loadGtm = function () {
+          var script = document.createElement("script");
+          script.async = true;
+          script.src = "https://www.googletagmanager.com/gtm.js?id=GTM-5DQTLVD4";
+          document.head.appendChild(script);
+        };
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(loadGtm, { timeout: 3000 });
+        } else {
+          window.setTimeout(loadGtm, 2000);
+        }
+      });
+    </script>
    <meta name="google-site-verification" content="20ipt0mJf1G1s8evv0ROH_QL3hPY2oPmq1fcwKxQOiQ" />
 
   </head>
