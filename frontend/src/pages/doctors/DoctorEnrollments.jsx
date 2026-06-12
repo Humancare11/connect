@@ -1473,7 +1473,7 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
           >
             A professional headshot helps patients identify you.
             <br />
-            Accepted: JPG, PNG, WebP · Max 5 MB
+            Accepted: JPG, PNG, Webp · Max 5 MB
           </div>
           {(uploadErr || showValidationErr) && (
             <div className="field-error">
