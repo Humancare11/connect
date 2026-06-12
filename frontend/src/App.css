@@ -846,3 +846,7 @@ section {
   font-weight: 700;
   cursor: pointer;
 }
+
+.hc-route-loading {
+  min-height: 72vh;
+}

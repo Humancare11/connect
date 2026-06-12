@@ -328,8 +328,8 @@ function AppLayout() {
       <SessionTimeoutManager />
       {!hideLayout && <Header />}
 
-      <Suspense fallback={null}>
-      <Routes>
+      <Suspense fallback={<main className="hc-route-loading" aria-hidden="true" />}>
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/ask-a-question" element={<AskDoctor />} />
@@ -735,9 +735,9 @@ function AppLayout() {
 
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
-      </Routes>
+        </Routes>
+        {!hideLayout && <Footer />}
       </Suspense>
-      {!hideLayout && <Footer />}
     </>
   );
 }
