@@ -2,12 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api, { normalizeFileUrl } from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
-<<<<<<< HEAD
-// import "./DoctorProfile.css";
-=======
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import "./DoctorProfile.css";
->>>>>>> eb4c0ac91d50691b985c6371b2ad435a0fc5e4ee
 
 const DAYS = [
   "Monday",

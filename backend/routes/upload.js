@@ -219,15 +219,10 @@ router.post("/presign", verifyToken, async (req, res) => {
     return res.json({
       uploadUrl: signed.url,
       expiresAt: signed.expiresAt,
-      headers: {
-        "Content-Type": contentType,
-        "x-amz-meta-originalname": metadata.originalname,
-        "x-amz-meta-contenttype": metadata.contenttype,
-        "x-amz-meta-size": metadata.size,
-        "x-amz-meta-uploadedby": metadata.uploadedby,
-        "x-amz-meta-uploadedbyrole": metadata.uploadedbyrole,
-        "x-amz-meta-uploadedat": metadata.uploadedat,
-      },
+      // Only Content-Type is needed — all x-amz-meta-* headers are already
+      // embedded (hoisted) in the presigned URL query string by the SDK.
+      // Sending them again from the browser triggers CORS preflight failures.
+      headers: { "Content-Type": contentType },
       file: {
         url: getS3ObjectUrl(key),
         key,
