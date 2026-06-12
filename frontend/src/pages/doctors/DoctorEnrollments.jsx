@@ -1357,7 +1357,10 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
     onFile({ name: rawFile.name, url: null });
     try {
       const uploaded = await uploadFileDirectToS3(rawFile);
-      onFile({ name: uploaded.name || rawFile.name, url: uploaded.key || uploaded.url });
+      onFile({
+        name: uploaded.name || rawFile.name,
+        url: uploaded.key || uploaded.url,
+      });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
     } finally {
@@ -1532,7 +1535,10 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
     onFile({ name: rawFile.name, url: null });
     try {
       const uploaded = await uploadFileDirectToS3(rawFile);
-      onFile({ name: uploaded.name || rawFile.name, url: uploaded.key || uploaded.url });
+      onFile({
+        name: uploaded.name || rawFile.name,
+        url: uploaded.key || uploaded.url,
+      });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
       // Keep the { name, url: null } so the user sees the error state
@@ -1695,7 +1701,8 @@ export default function DoctorOnboardingWizard({
 
   const countries = countryApi?.getAllCountries() || [];
 
-  const states = s1.country && stateApi ? stateApi.getStatesOfCountry(s1.country) : [];
+  const states =
+    s1.country && stateApi ? stateApi.getStatesOfCountry(s1.country) : [];
   const hasStates = states.length > 0;
   const cities = [];
   const hasCities = false;
@@ -2034,8 +2041,7 @@ export default function DoctorOnboardingWizard({
     if (!s1.gender) e.gender = "Required";
     if (!s1.dob) e.dob = "Required";
     if (!s1.country) e.country = "Required";
-    if (s1.country === "US" && !s1.state.trim())
-      e.state = "Required for US";
+    if (s1.country === "US" && !s1.state.trim()) e.state = "Required for US";
     if (languagesKnown.length === 0) e.languages = "Required";
     setS1Errors(e);
     return Object.keys(e).length === 0;
@@ -2362,7 +2368,9 @@ export default function DoctorOnboardingWizard({
                 }))
               }
             >
-              <option value="">{countryApi ? "Select country..." : "Loading countries..."}</option>
+              <option value="">
+                {countryApi ? "Select country..." : "Loading countries..."}
+              </option>
 
               {countries.map((country) => (
                 <option key={country.isoCode} value={country.isoCode}>
@@ -2379,9 +2387,7 @@ export default function DoctorOnboardingWizard({
               <div className="field-group">
                 <label className="field-label">
                   State / Province
-                  {s1.country === "US" && (
-                    <span className="req">*</span>
-                  )}
+                  {s1.country === "US" && <span className="req">*</span>}
                   {!s1.country && (
                     <span
                       style={{
