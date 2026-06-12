@@ -8,11 +8,45 @@ require("dotenv").config({
 });
 
 const connectDB = require("../config/db");
+const Counter = require("../models/Counter");
 const User = require("../models/User");
-const { generatePatientId } = require("../utils/idSequence");
+const {
+  generatePatientId,
+  PATIENT_SEQUENCE_NAME,
+  PATIENT_ID_INITIAL_VALUE,
+  PATIENT_ID_MAX_VALUE,
+} = require("../utils/idSequence");
 
 async function backfillPatientIds() {
   await connectDB();
+
+  const [existingMax] = await User.aggregate([
+    {
+      $match: {
+        role: "user",
+        patientId: {
+          $type: "number",
+          $gte: PATIENT_ID_INITIAL_VALUE + 1,
+          $lte: PATIENT_ID_MAX_VALUE,
+        },
+      },
+    },
+    { $group: { _id: null, maxPatientId: { $max: "$patientId" } } },
+  ]);
+  const counterFloor = Math.max(
+    Number(existingMax?.maxPatientId || 0),
+    PATIENT_ID_INITIAL_VALUE
+  );
+
+  await Counter.updateOne(
+    { _id: PATIENT_SEQUENCE_NAME },
+    { $setOnInsert: { value: counterFloor } },
+    { upsert: true }
+  );
+  await Counter.updateOne(
+    { _id: PATIENT_SEQUENCE_NAME, value: { $lt: counterFloor } },
+    { $set: { value: counterFloor } }
+  );
 
   const users = await User.find({
     role: "user",

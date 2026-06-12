@@ -17,6 +17,11 @@ async function nextSequenceValue(name, options = {}) {
     if (error?.code !== 11000) throw error;
   }
 
+  await Counter.updateOne(
+    { _id: name, value: { $lt: initialValue } },
+    { $set: { value: initialValue } }
+  );
+
   const counter = await Counter.findOneAndUpdate(
     { _id: name },
     { $inc: { value: 1 } },

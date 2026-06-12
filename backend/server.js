@@ -27,6 +27,7 @@ const Question = require("./models/Question");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
 const { logAudit } = require("./utils/auditLogger");
 const { findUploadInS3, streamUploadFromS3, keyFromStoredValue } = require("./utils/uploadStorage");
+const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityIncident } = require("./utils/securityMonitor");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -96,6 +97,8 @@ const startServer = async () => {
 
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
+
+  await ensureBucketCors(allowedOrigins);
 };
 
 // Allowed Origins

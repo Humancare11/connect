@@ -16,7 +16,7 @@ export async function uploadFileDirectToS3(file, options = {}) {
 
   const uploadRes = await fetch(data.uploadUrl, {
     method: "PUT",
-    headers: data.headers || { "Content-Type": file.type || "application/octet-stream" },
+    headers: { "Content-Type": file.type || "application/octet-stream" },
     body: file,
   });
 
