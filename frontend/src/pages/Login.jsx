@@ -1077,7 +1077,7 @@ export default function AuthPage() {
           >
             <h1 className="hc-heading">Create Account</h1>
             <p className="hc-form-subtitle">
-              Join Humanicare and take charge of your health
+              Join Humancare connect and take charge of your health
             </p>
 
             <div className="hc-social-links">
@@ -1091,7 +1091,6 @@ export default function AuthPage() {
             </div>
 
             {formError && <p className="hc-form-error">{formError}</p>}
-            <span className="hc-divider-text">or use your email</span>
 
             {/* <input
               className="hc-input"

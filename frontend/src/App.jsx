@@ -343,11 +343,13 @@ function AppLayout() {
         <Route path="/home-demo" element={<Home2 />} />
         <Route path="/test" element={<Test />} />
         <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
-
         {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
         <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
         {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
         <Route path="/doctor/:id" element={<DoctorProfileForUser legacyId />} />
+        {/* ================condition pages ================= */}
+
+
 
         <Route
           path="/user/dashboard"
