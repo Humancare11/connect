@@ -447,7 +447,7 @@ export default function Categories() {
                 <div className="cat-spec-item__text">
                   <div className="cat-spec-item__row">
                     <span className="cat-spec-item__name">{sp.name}</span>
-                    {sp.featured && <span className="cat-spec-item__badge">Top</span>}
+                    {/* {sp.featured && <span className="cat-spec-item__badge">Top</span>} */}
                   </div>
                   <span className="cat-spec-item__count">{sp.count} doctors</span>
                 </div>
@@ -457,7 +457,7 @@ export default function Categories() {
           </div>
         </div>
       </section>
-
+  
       {/* ── NEW: Symptoms Strip ─────────────────────────────── */}
       <section className="cat-section cat-section--bg">
         <div className="cat-section__wrap">

@@ -38,33 +38,30 @@ function toAppointmentUtc(date, time) {
 const ELEMENTS_APPEARANCE = {
   theme: "stripe",
   variables: {
-    colorPrimary: "#223a5e",
+    colorPrimary: "#1a3a5c",
     colorBackground: "#ffffff",
-    colorText: "#0f172a",
+    colorText: "#111827",
     colorDanger: "#dc2626",
-    fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif",
-    borderRadius: "10px",
-    fontSizeBase: "15px",
+    fontFamily: "'Inter', system-ui, sans-serif",
+    borderRadius: "8px",
+    fontSizeBase: "14px",
     spacingUnit: "4px",
   },
   rules: {
     ".Input": {
-      border: "1.5px solid #e2e8f0",
+      border: "1px solid #d1d5db",
       boxShadow: "none",
-      backgroundColor: "#f8fafc",
+      backgroundColor: "#f9fafb",
     },
     ".Input:focus": {
-      border: "1.5px solid #223a5e",
-      boxShadow: "0 0 0 3px rgba(34,58,94,.12)",
+      border: "1px solid #1a3a5c",
+      boxShadow: "0 0 0 3px rgba(26,58,92,.1)",
       backgroundColor: "#fff",
     },
-    ".Label": { color: "#334155", fontWeight: "600", fontSize: "13px" },
-    ".Tab": { border: "1.5px solid #e2e8f0", borderRadius: "10px" },
-    ".Tab:hover": { border: "1.5px solid #223a5e" },
-    ".Tab--selected": {
-      border: "1.5px solid #223a5e",
-      backgroundColor: "#eef4fb",
-    },
+    ".Label": { color: "#374151", fontWeight: "600", fontSize: "13px" },
+    ".Tab": { border: "1px solid #d1d5db", borderRadius: "8px" },
+    ".Tab:hover": { border: "1px solid #1a3a5c" },
+    ".Tab--selected": { border: "1px solid #1a3a5c", backgroundColor: "#eef4fb" },
   },
 };
 
@@ -113,7 +110,6 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
     setPaying(true);
     setPayError("");
 
-    // Save state for 3DS redirect recovery
     sessionStorage.setItem(
       "hcc_booking_pending",
       JSON.stringify({ selection, formData, uploadedReports }),
@@ -145,26 +141,20 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
           options={{ layout: "tabs", paymentMethodOrder: ["card"] }}
         />
       </div>
+
+      {/* Test mode notice */}
       <div
-        className="ap-pay-notice"
         style={{
           fontSize: "12px",
-          padding: "12px",
+          padding: "10px 12px",
           background: "#eef4fb",
-          border: "1px solid #cbd9ea",
+          border: "1px solid #c8d9ec",
           borderRadius: "8px",
-          color: "#223a5e",
-          marginTop: "12px",
+          color: "#1a3a5c",
         }}
       >
         <strong>Test Mode:</strong> Use card{" "}
-        <code
-          style={{
-            background: "#fff",
-            padding: "2px 4px",
-            borderRadius: "4px",
-          }}
-        >
+        <code style={{ background: "#fff", padding: "2px 5px", borderRadius: "4px", fontSize: "11px" }}>
           4242 4242 4242 4242
         </code>{" "}
         with any future date and any CVC.
@@ -179,31 +169,16 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
       {payError && <p className="ap-error">{payError}</p>}
 
       <div className="ap-pay-security">
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="11" width="18" height="11" rx="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
         Payments are secured and encrypted by Stripe
       </div>
 
-      <button
-        className="ap-submit"
-        type="submit"
-        disabled={!stripe || !ready || paying}
-      >
+      <button className="ap-submit" type="submit" disabled={!stripe || !ready || paying}>
         {paying ? (
-          <>
-            <span className="ap-spinner ap-spinner--white" /> Processing…
-          </>
+          <><span className="ap-spinner ap-spinner--white" /> Processing…</>
         ) : (
           `Pay ₹${amount?.toLocaleString("en-IN")} →`
         )}
@@ -226,24 +201,18 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
     if (clientSecret) { setMethod("stripe"); return; }
     setStripeCreating(true);
     try {
-      const res = await api.post("/api/payments/create-intent-by-amount", {
-        amountInr: amount,
-      });
+      const res = await api.post("/api/payments/create-intent-by-amount", { amountInr: amount });
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
-      setStripeError(
-        err.response?.data?.msg || "Failed to initialize payment. Please try again.",
-      );
+      setStripeError(err.response?.data?.msg || "Failed to initialize payment. Please try again.");
     } finally {
       setStripeCreating(false);
     }
   };
 
   const createPaypalOrder = async () => {
-    const res = await api.post("/api/paypal/create-order-by-amount", {
-      amountInr: amount,
-    });
+    const res = await api.post("/api/paypal/create-order-by-amount", { amountInr: amount });
     return res.data.orderId;
   };
 
@@ -251,36 +220,20 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
     setPaypalLoading(true);
     setPaypalError("");
     try {
-      const res = await api.post("/api/paypal/capture-order", {
-        orderId: data.orderID,
-      });
-      if (res.data.status === "COMPLETED") {
-        onComplete(res.data.orderId, "paypal");
-      }
+      const res = await api.post("/api/paypal/capture-order", { orderId: data.orderID });
+      if (res.data.status === "COMPLETED") onComplete(res.data.orderId, "paypal");
     } catch (err) {
-      setPaypalError(
-        err.response?.data?.msg || "PayPal payment failed. Please try again.",
-      );
+      setPaypalError(err.response?.data?.msg || "PayPal payment failed. Please try again.");
     } finally {
       setPaypalLoading(false);
     }
   };
 
   return (
-    <PayPalScriptProvider
-      options={{ "client-id": PAYPAL_CLIENT_ID, currency: "INR", intent: "capture" }}
-    >
+    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "INR", intent: "capture" }}>
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
           Back to details
@@ -290,32 +243,24 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
         <div className="ap-pay-summary">
           <div className="ap-pay-summary-title">Appointment Summary</div>
           <div className="ap-pay-summary-row">
-            <span>Category</span>
-            <strong>{selection.catLabel}</strong>
+            <span>Category</span><strong>{selection.catLabel}</strong>
           </div>
           <div className="ap-pay-summary-row">
-            <span>Specialty</span>
-            <strong>{selection.specName}</strong>
+            <span>Specialty</span><strong>{selection.specName}</strong>
           </div>
           <div className="ap-pay-summary-row">
             <span>Condition</span>
-            <strong>
-              {selection.condIco} {selection.condName}
-            </strong>
+            <strong>{selection.condIco} {selection.condName}</strong>
           </div>
           <div className="ap-pay-summary-row">
-            <span>Date</span>
-            <strong>{formatDisplayDate(formData.date)}</strong>
+            <span>Date</span><strong>{formatDisplayDate(formData.date)}</strong>
           </div>
           <div className="ap-pay-summary-row">
-            <span>Time</span>
-            <strong>{formData.time}</strong>
+            <span>Time</span><strong>{formData.time}</strong>
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">
-              ₹{amount?.toLocaleString("en-IN")}
-            </strong>
+            <strong className="ap-pay-fee-amount">₹{amount?.toLocaleString("en-IN")}</strong>
           </div>
         </div>
 
@@ -329,11 +274,7 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
               onClick={selectStripe}
               disabled={stripeCreating}
             >
-              {stripeCreating ? (
-                <span className="ap-spinner" />
-              ) : (
-                <span className="ap-pay-method-icon">💳</span>
-              )}
+              {stripeCreating ? <span className="ap-spinner" /> : <span className="ap-pay-method-icon">💳</span>}
               <span>Credit / Debit Card</span>
               <span className="ap-pay-method-sub">Stripe · Secure</span>
             </button>
@@ -345,40 +286,24 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
               disabled={!PAYPAL_CLIENT_ID}
             >
               <span className="ap-pay-method-icon">
-                <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
-                  <path
-                    d="M19.5 7.5c.28 1.63-.1 3.14-1.1 4.3C17.4 13 15.88 13.75 14 13.75H12.3l-.9 5.25H8.5L10.5 7.5h9z"
-                    fill="#009cde"
-                  />
-                  <path
-                    d="M21.5 5.5c.28 1.63-.1 3.14-1.1 4.3C19.4 11 17.88 11.75 16 11.75H14.3l-.9 5.25H10.5L12.5 5.5h9z"
-                    fill="#012169"
-                    opacity=".6"
-                  />
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+                  <path d="M19.5 7.5c.28 1.63-.1 3.14-1.1 4.3C17.4 13 15.88 13.75 14 13.75H12.3l-.9 5.25H8.5L10.5 7.5h9z" fill="#009cde" />
+                  <path d="M21.5 5.5c.28 1.63-.1 3.14-1.1 4.3C19.4 11 17.88 11.75 16 11.75H14.3l-.9 5.25H10.5L12.5 5.5h9z" fill="#012169" opacity=".6" />
                 </svg>
               </span>
               <span>PayPal</span>
               <span className="ap-pay-method-sub">Fast &amp; Secure</span>
             </button>
           </div>
-          {stripeError && (
-            <p className="ap-error" style={{ marginTop: 10 }}>
-              {stripeError}
-            </p>
-          )}
+          {stripeError && <p className="ap-error" style={{ marginTop: 10 }}>{stripeError}</p>}
           {!PAYPAL_CLIENT_ID && (
-            <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
-              PayPal not configured
-            </p>
+            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>PayPal not configured</p>
           )}
         </div>
 
         {/* Stripe form */}
         {method === "stripe" && clientSecret && (
-          <Elements
-            stripe={stripePromise}
-            options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
-          >
+          <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
             <StripeForm
               clientSecret={clientSecret}
               amount={amount}
@@ -400,27 +325,13 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
               </div>
             ) : (
               <PayPalButtons
-                style={{
-                  layout: "vertical",
-                  color: "blue",
-                  shape: "rect",
-                  label: "pay",
-                  height: 48,
-                }}
+                style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay", height: 46 }}
                 createOrder={createPaypalOrder}
                 onApprove={onPaypalApprove}
-                onError={(err) =>
-                  setPaypalError(
-                    err.message || "PayPal encountered an error. Please try again.",
-                  )
-                }
+                onError={(err) => setPaypalError(err.message || "PayPal encountered an error.")}
               />
             )}
-            {paypalError && (
-              <p className="ap-error" style={{ marginTop: 10 }}>
-                {paypalError}
-              </p>
-            )}
+            {paypalError && <p className="ap-error" style={{ marginTop: 10 }}>{paypalError}</p>}
           </div>
         )}
       </div>
@@ -435,7 +346,6 @@ export default function AppointmentBookingForm() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  // Recover selection from route state or sessionStorage (after 3DS redirect)
   const [selection, setSelection] = useState(() => {
     if (state?.selection) return state.selection;
     const raw = sessionStorage.getItem("hcc_booking_pending");
@@ -445,7 +355,6 @@ export default function AppointmentBookingForm() {
     return null;
   });
 
-  // stage: "form" | "payment" | "confirming" | "success"
   const [stage, setStage] = useState("form");
   const [form, setForm] = useState({ notes: "", date: "", time: "", files: [] });
   const [errors, setErrors] = useState({});
@@ -454,6 +363,17 @@ export default function AppointmentBookingForm() {
   const [uploadedReports, setUploadedReports] = useState([]);
   const [confirmErr, setConfirmErr] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [consents, setConsents] = useState({
+    telehealth: false,
+    terms: false,
+    hipaa: false,
+    age: false,
+  });
+
+  const allConsentsChecked = Object.values(consents).every(Boolean);
+
+  const toggleConsent = (key) =>
+    setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -519,14 +439,10 @@ export default function AppointmentBookingForm() {
 
   const handleProceedToPayment = async () => {
     if (!validate()) return;
-    if (!user) {
-      setProceedErr("Please log in to continue booking.");
-      return;
-    }
+    if (!user) { setProceedErr("Please log in to continue booking."); return; }
     setProceeding(true);
     setProceedErr("");
     try {
-      // Upload files upfront so URLs survive any 3DS page redirect
       const reports = [];
       for (const file of form.files) {
         reports.push(await uploadFileDirectToS3(file));
@@ -534,9 +450,7 @@ export default function AppointmentBookingForm() {
       setUploadedReports(reports);
       setStage("payment");
     } catch (err) {
-      setProceedErr(
-        err?.response?.data?.msg || "Failed to upload reports. Please try again.",
-      );
+      setProceedErr(err?.response?.data?.msg || "Failed to upload reports. Please try again.");
     } finally {
       setProceeding(false);
     }
@@ -560,7 +474,6 @@ export default function AppointmentBookingForm() {
       };
       if (gateway === "paypal") body.paypalOrderId = paymentRef;
       else body.paymentIntentId = paymentRef;
-
       await api.post("/api/appointments", body);
       setStage("success");
     } catch (err) {
@@ -576,7 +489,7 @@ export default function AppointmentBookingForm() {
     createAppointment(paymentRef, gateway, form, uploadedReports);
   };
 
-  // ─── Guard: auth loading ───────────────────────────────────────────────────
+  // ─── Guards ────────────────────────────────────────────────────────────────
   if (authLoading) {
     return (
       <div className="ap-page">
@@ -590,10 +503,8 @@ export default function AppointmentBookingForm() {
     );
   }
 
-  // ─── Guard: no selection ───────────────────────────────────────────────────
   if (!selection) return <Navigate to="/appointment-booking" replace />;
 
-  // ─── Guard: auth required for payment ─────────────────────────────────────
   if (!user && stage !== "form") {
     return <Navigate to="/login" state={{ from: "/appointment-booking/form" }} replace />;
   }
@@ -602,14 +513,20 @@ export default function AppointmentBookingForm() {
 
   return (
     <div className="ap-page">
+
+      {/* Page-level heading (mirrors "Create Your Account" style) */}
+      {stage === "form" && (
+        <div className="ap-page-title">
+          <h1>Book an Appointment</h1>
+          <p>Select your preferred date and time, then proceed to payment.</p>
+        </div>
+      )}
+
       <div className="ap-card">
 
         {/* ── Hero: selection badge ── */}
         <div className="ap-hero">
-          <div
-            className="ap-hero-avatar"
-            style={{ background: "#223a5e", fontSize: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
+          <div className="ap-hero-avatar">
             {selection.specIco}
           </div>
           <div className="ap-hero-body">
@@ -635,32 +552,32 @@ export default function AppointmentBookingForm() {
             {["Details", "Payment", "Confirmed"].map((label, i) => (
               <div
                 key={label}
-                className={`ap-progress-step ${i <= stageIndex ? "ap-progress-step--done" : ""} ${i === stageIndex ? "ap-progress-step--active" : ""}`}
+                className={`ap-progress-step ${i < stageIndex ? "ap-progress-step--done" : ""} ${i === stageIndex ? "ap-progress-step--active" : ""}`}
               >
                 <div className="ap-progress-dot">
                   {i < stageIndex ? "✓" : i + 1}
                 </div>
                 <span>{label}</span>
                 {i < 2 && (
-                  <div
-                    className={`ap-progress-line ${i < stageIndex ? "ap-progress-line--done" : ""}`}
-                  />
+                  <div className={`ap-progress-line ${i < stageIndex ? "ap-progress-line--done" : ""}`} />
                 )}
               </div>
             ))}
           </div>
         )}
 
-        {/* ── Stage: form ── */}
+        {/* ══════════════════════════════════════
+            Stage: form
+        ══════════════════════════════════════ */}
         {stage === "form" && (
           <div className="ap-form">
 
-            {/* Step 1 – Date */}
+            {/* ── Step 1: Date ── */}
             <div className="ap-step">
               <div className="ap-step-header">
                 <span className="ap-step-num">1</span>
                 <div>
-                  <div className="ap-step-title">Select a Date</div>
+                  <div className="ap-step-title">Appointment Date <span style={{ color: "#e11d48" }}>*</span></div>
                   {form.date && (
                     <div className="ap-step-meta">{formatDisplayDate(form.date)}</div>
                   )}
@@ -672,17 +589,20 @@ export default function AppointmentBookingForm() {
                 value={form.date}
                 min={today}
                 onChange={(e) => handleDateChange(e.target.value)}
+                placeholder="dd-mm-yyyy"
               />
               {errors.date && <p className="ap-error">{errors.date}</p>}
             </div>
 
-            {/* Step 2 – Time slots: only rendered after date is chosen */}
+            {/* ── Step 2: Time slots ── */}
             {form.date ? (
               <div className="ap-step">
                 <div className="ap-step-header">
                   <span className="ap-step-num">2</span>
                   <div>
-                    <div className="ap-step-title">Choose a Time Slot</div>
+                    <div className="ap-step-title">
+                      Preferred Time Slot <span style={{ color: "#e11d48" }}>*</span>
+                    </div>
                     <div className="ap-step-meta">
                       {availableSlots.length} of {ALL_TIME_SLOTS.length} slots available
                     </div>
@@ -693,7 +613,6 @@ export default function AppointmentBookingForm() {
                   {ALL_TIME_SLOTS.map((slot) => {
                     const passed = isSlotPassed(form.date, slot);
                     const selected = form.time === slot;
-                    const status = passed ? "past" : selected ? "selected" : "available";
                     return (
                       <button
                         key={slot}
@@ -717,14 +636,11 @@ export default function AppointmentBookingForm() {
                 {errors.time && <p className="ap-error">{errors.time}</p>}
               </div>
             ) : (
-              /* Placeholder shown before date is selected */
               <div className="ap-step ap-step--locked">
                 <div className="ap-step-header">
                   <span className="ap-step-num ap-step-num--inactive">2</span>
                   <div>
-                    <div className="ap-step-title" style={{ color: "#94a3b8" }}>
-                      Choose a Time Slot
-                    </div>
+                    <div className="ap-step-title" style={{ color: "#9ca3af" }}>Preferred Time Slot</div>
                     <div className="ap-step-meta" style={{ color: "#f59e0b" }}>
                       ⚠ Select a date above to see available slots
                     </div>
@@ -733,7 +649,10 @@ export default function AppointmentBookingForm() {
               </div>
             )}
 
-            {/* Step 3 – Problem */}
+            {/* ── Divider ── */}
+            <div className="ap-divider" />
+
+            {/* ── Step 3: Problem description ── */}
             <div className="ap-step">
               <div className="ap-step-header">
                 <span className="ap-step-num">3</span>
@@ -748,7 +667,7 @@ export default function AppointmentBookingForm() {
               />
             </div>
 
-            {/* Step 4 – Reports */}
+            {/* ── Step 4: Medical reports ── */}
             <div className="ap-step">
               <div className="ap-step-header">
                 <span className="ap-step-num">4</span>
@@ -759,6 +678,7 @@ export default function AppointmentBookingForm() {
                   </div>
                 </div>
               </div>
+
               <div
                 className={`ap-upload-zone ${dragOver ? "ap-upload-zone--over" : ""}`}
                 onClick={() => fileInputRef.current?.click()}
@@ -788,6 +708,7 @@ export default function AppointmentBookingForm() {
                 </p>
                 <p className="ap-upload-sub">Max 10 MB per file</p>
               </div>
+
               {form.files.length > 0 && (
                 <div className="ap-report-list">
                   {form.files.map((f, i) => (
@@ -799,11 +720,7 @@ export default function AppointmentBookingForm() {
                           {(f.size / 1048576).toFixed(1)} MB
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        className="ap-report-remove"
-                        onClick={() => removeFile(i)}
-                      >
+                      <button type="button" className="ap-report-remove" onClick={() => removeFile(i)}>
                         ×
                       </button>
                     </div>
@@ -812,26 +729,66 @@ export default function AppointmentBookingForm() {
               )}
             </div>
 
+            {/* ── Consent block ── */}
+            <div className="ap-consent-wrap">
+              <p className="ap-consent-heading">Before You Continue — Please Read:</p>
+              <div className="ap-consent-scroll">
+                <p className="ap-consent-text">
+                  <strong>Patient Informed Consent:</strong> By booking this appointment, you
+                  consent to receive telehealth services from licensed physicians through
+                  Humancare Connect. You understand that (1) telehealth is not a substitute for
+                  in-person care in all situations; (2) physicians on this platform are independent
+                  contractors; (3) in a medical emergency, call 112 immediately. You have read and
+                  agree to our Telehealth Informed Consent policy.
+                </p>
+              </div>
+              <div className="ap-consent-checks">
+                {[
+                  { key: "telehealth", label: "I have read and agree to the Telehealth Informed Consent" },
+                  { key: "terms",      label: "I agree to the Terms of Service and Privacy Policy" },
+                  { key: "hipaa",      label: "I have read the HIPAA Notice of Privacy Practices" },
+                  { key: "age",        label: "I am 18 years of age or older" },
+                ].map(({ key, label }) => (
+                  <label key={key} className="ap-consent-row">
+                    <input
+                      type="checkbox"
+                      className="ap-consent-checkbox"
+                      checked={consents[key]}
+                      onChange={() => toggleConsent(key)}
+                    />
+                    <span className="ap-consent-label">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             {proceedErr && <p className="ap-error">{proceedErr}</p>}
 
+            {/* ── CTA ── */}
             <button
               className="ap-submit"
               type="button"
-              disabled={proceeding}
+              disabled={proceeding || !allConsentsChecked}
               onClick={handleProceedToPayment}
             >
               {proceeding ? (
-                <>
-                  <span className="ap-spinner ap-spinner--white" /> Preparing…
-                </>
+                <><span className="ap-spinner ap-spinner--white" /> Preparing…</>
               ) : (
                 `Proceed to Payment${selection.cost ? ` — ₹${selection.cost.toLocaleString("en-IN")}` : ""} →`
               )}
             </button>
+
+            {!user && (
+              <p className="ap-submit-helper">
+                Already have an account? <Link to="/login">Log in</Link>
+              </p>
+            )}
           </div>
         )}
 
-        {/* ── Stage: confirming ── */}
+        {/* ══════════════════════════════════════
+            Stage: confirming
+        ══════════════════════════════════════ */}
         {stage === "confirming" && (
           <div className="ap-confirming">
             <span className="ap-spinner ap-spinner--lg" />
@@ -839,7 +796,9 @@ export default function AppointmentBookingForm() {
           </div>
         )}
 
-        {/* ── Stage: payment ── */}
+        {/* ══════════════════════════════════════
+            Stage: payment
+        ══════════════════════════════════════ */}
         {stage === "payment" && (
           <PaymentStage
             amount={selection.cost}
@@ -852,23 +811,16 @@ export default function AppointmentBookingForm() {
         )}
 
         {confirmErr && stage !== "form" && (
-          <p className="ap-error" style={{ marginTop: 12 }}>
-            {confirmErr}
-          </p>
+          <p className="ap-error" style={{ margin: "0 28px 20px" }}>{confirmErr}</p>
         )}
 
-        {/* ── Stage: success ── */}
+        {/* ══════════════════════════════════════
+            Stage: success
+        ══════════════════════════════════════ */}
         {stage === "success" && (
           <div className="ap-success">
             <div className="ap-success-icon">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
@@ -884,9 +836,7 @@ export default function AppointmentBookingForm() {
               </div>
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
-                <span className="ap-success-val">
-                  {selection.condIco} {selection.condName}
-                </span>
+                <span className="ap-success-val">{selection.condIco} {selection.condName}</span>
               </div>
               <div className="ap-success-row">
                 <span className="ap-success-key">Date</span>
@@ -907,13 +857,17 @@ export default function AppointmentBookingForm() {
                 <span className="ap-badge ap-badge--pending">Awaiting Doctor Assignment</span>
               </div>
             </div>
-            <Link to="/user/appointments" className="ap-submit" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
+            <Link
+              to="/user/appointments"
+              className="ap-submit"
+              style={{ display: "block", textAlign: "center", textDecoration: "none" }}
+            >
               View My Appointments
             </Link>
             <button
               type="button"
               className="ap-btn-outline"
-              style={{ marginTop: 12 }}
+              style={{ marginTop: 10 }}
               onClick={() => navigate("/appointment-booking")}
             >
               Book Another Appointment

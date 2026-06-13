@@ -88,21 +88,8 @@ export default function IndustrySlider() {
 
   return (
     <section className="industry-slider-section">
-      {/* Dynamic Background */}
-      {/* <AnimatePresence mode="wait"> */}
-        {/* <motion.div 
-          key={activeIndex}
-          className="slider-dynamic-bg"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 0.4, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.1 }}
-          transition={{ duration: 1.5, ease: "easeInOut" }}
-          style={{ '--accent': industries[activeIndex].accent }}
-        /> */}
-      {/* </AnimatePresence> */}
-
       <div className="slider-page-wrap">
-        <motion.div 
+        <motion.div
           className="slider-header-modern"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -113,23 +100,25 @@ export default function IndustrySlider() {
           <p className="slider-subtitle">Tailored medical solutions designed for the unique challenges of your sector.</p>
         </motion.div>
 
-        {/* Sync Tabs */}
-        <motion.div 
-          className="slider-nav-v2"
+        {/* Sync Tabs — scroll wrapper keeps nav on one line on mobile */}
+        <motion.div
+          className="slider-nav-scroll-wrap"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          {industries.map((ind, i) => (
-            <button
-              key={ind.id}
-              className={`nav-v2-item ${activeIndex === i ? "active" : ""}`}
-              onClick={() => handleTabClick(i)}
-            >
-              {ind.tab}
-            </button>
-          ))}
+          <div className="slider-nav-v2">
+            {industries.map((ind, i) => (
+              <button
+                key={ind.id}
+                className={`nav-v2-item ${activeIndex === i ? "active" : ""}`}
+                onClick={() => handleTabClick(i)}
+              >
+                {ind.tab}
+              </button>
+            ))}
+          </div>
         </motion.div>
 
         {/* 3D PANORAMIC STAGE */}
@@ -162,13 +151,12 @@ export default function IndustrySlider() {
             className="industry-panoramic-swiper"
           >
             {industries.map((ind, index) => (
-              // <SwiperSlide key={ind.id} style={{ width: 'min(90vw, 1000px)' }}>
               <SwiperSlide key={ind.id} style={{ width: 'min(90vw, 1000px)' }}>
-                <motion.div 
-                  className="industry-card-v3" 
+                <motion.div
+                  className="industry-card-v3"
                   style={{ '--accent': ind.accent }}
                   initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ 
+                  animate={{
                     opacity: activeIndex === index ? 1 : 0.4,
                     scale: activeIndex === index ? 1 : 0.9,
                     filter: activeIndex === index ? "blur(0px)" : "blur(2px)"
@@ -178,7 +166,7 @@ export default function IndustrySlider() {
                   <div className="v3-image-area">
                     <img src={ind.image} alt={ind.title} />
                     <div className="v3-overlay"></div>
-                    <motion.div 
+                    <motion.div
                       className="v3-icon-badge"
                       initial={{ scale: 0 }}
                       animate={{ scale: activeIndex === index ? 1 : 0 }}
@@ -187,9 +175,9 @@ export default function IndustrySlider() {
                       {ind.icon}
                     </motion.div>
                   </div>
-                  
+
                   <div className="v3-content">
-                    <motion.div 
+                    <motion.div
                       className="v3-tag"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: activeIndex === index ? 1 : 0.45, x: activeIndex === index ? 0 : -8 }}
@@ -197,7 +185,7 @@ export default function IndustrySlider() {
                     >
                       {ind.tag}
                     </motion.div>
-                    <motion.h3 
+                    <motion.h3
                       className="v3-title"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: activeIndex === index ? 1 : 0.55, y: activeIndex === index ? 0 : 8 }}
@@ -205,7 +193,7 @@ export default function IndustrySlider() {
                     >
                       {ind.title}
                     </motion.h3>
-                    <motion.p 
+                    <motion.p
                       className="v3-desc"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: activeIndex === index ? 1 : 0.42, y: activeIndex === index ? 0 : 8 }}
@@ -213,11 +201,11 @@ export default function IndustrySlider() {
                     >
                       {ind.description}
                     </motion.p>
-                    
+
                     <div className="v3-features">
                       {ind.features.map((f, idx) => (
-                        <motion.div 
-                          className="v3-feat" 
+                        <motion.div
+                          className="v3-feat"
                           key={idx}
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: activeIndex === index ? 1 : 0.38, x: activeIndex === index ? 0 : 8 }}
@@ -231,7 +219,7 @@ export default function IndustrySlider() {
                       ))}
                     </div>
 
-                    <motion.div 
+                    <motion.div
                       className="v3-footer"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: activeIndex === index ? 1 : 0.45, y: activeIndex === index ? 0 : 8 }}
@@ -249,4 +237,3 @@ export default function IndustrySlider() {
     </section>
   );
 }
-

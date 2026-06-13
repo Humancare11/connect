@@ -96,7 +96,9 @@ const Specialties = lazy(() => import("./pages/Specialties"));
 const Symptoms = lazy(() => import("./pages/Symptoms"));
 const Categories = lazy(() => import("./pages/Categories"));
 // Specialty pages
-const PrimaryCare = lazy(() => import("./pages/Specialty/PrimaryCare"));
+import SPdemo from "./pages/Specialty/SPeDemo";
+// category pages
+import ChildFamilyCare from "./pages/Categories/ChildMain";
 
 const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
 const AppointmentBookingForm = lazy(() => import("./pages/AppointmentBookingForm"));
@@ -706,12 +708,15 @@ function AppLayout() {
         />
         <Route path="/video-call/:appointmentId" element={<VideoCall />} />
 
-        {/* Specialties */}
-        <Route path="/specialties" element={<Specialties />} />
-        <Route path="/symptoms" element={<Symptoms />} />
+        {/* Categories*/}
         <Route path="/categories" element={<Categories />} />
-        
-        <Route path="/primary-care" element={<PrimaryCare />} />
+        <Route path="/specialties" element={<Specialties />} />
+        <Route path="/conditions" element={<Symptoms />} />
+
+        <Route path="/child-family-care" element={<ChildFamilyCare />} />
+        <Route path="/sp-demo" element={<SPdemo />} />
+
+
 
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
