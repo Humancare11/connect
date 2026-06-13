@@ -14,15 +14,25 @@ export async function uploadFileDirectToS3(file, options = {}) {
     ownerId: options.ownerId,
   });
 
-  const uploadRes = await fetch(data.uploadUrl, {
-    method: "PUT",
-    headers: data.headers || { "Content-Type": file.type || "application/octet-stream" },
-    body: file,
-  });
+  try {
+    const uploadRes = await fetch(data.uploadUrl, {
+      method: "PUT",
+      headers: data.headers || { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
 
-  if (!uploadRes.ok) {
-    throw new Error("Upload to S3 failed.");
+    if (!uploadRes.ok) {
+      throw new Error("Upload to S3 failed.");
+    }
+
+    return data.file;
+  } catch {
+    const form = new FormData();
+    form.append("file", file);
+    if (options.ownerType) form.append("ownerType", options.ownerType);
+    if (options.ownerId) form.append("ownerId", options.ownerId);
+
+    const fallback = await api.post("/api/upload", form);
+    return fallback.data;
   }
-
-  return data.file;
 }

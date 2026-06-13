@@ -447,7 +447,11 @@
   border-top-color: #fff;
 }
 
-@keyframes ap-spin { to { transform: rotate(360deg); } }
+@keyframes ap-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ── File list ────────────────────────── */
 
@@ -470,7 +474,9 @@
   color: #9ca3af; cursor: pointer; padding: 0 2px; flex-shrink: 0;
   transition: color .12s;
 }
-.ap-report-remove:hover { color: #dc2626; }
+.ap-report-remove:hover {
+  color: #dc2626;
+}
 
 /* ── Error ────────────────────────────── */
 

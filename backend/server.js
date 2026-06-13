@@ -5,7 +5,11 @@ const path = require("path");
 require("dotenv").config({
   path: path.resolve(
     __dirname,
-    process.env.NODE_ENV === "production" ? ".env.production" : ".env"
+    process.env.NODE_ENV === "production"
+      ? ".env.production"
+      : process.env.NODE_ENV === "uat"
+      ? ".env.uat"
+      : ".env"
   ),
 });
 
@@ -27,6 +31,7 @@ const Question = require("./models/Question");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
 const { logAudit } = require("./utils/auditLogger");
 const { findUploadInS3, streamUploadFromS3, keyFromStoredValue } = require("./utils/uploadStorage");
+const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityIncident } = require("./utils/securityMonitor");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -96,14 +101,38 @@ const startServer = async () => {
 
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
+
+  await ensureBucketCors(allowedOrigins);
 };
 
+function normalizeOrigin(value) {
+  const origin = String(value || "").trim().replace(/\/+$/, "");
+  if (!origin) return "";
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return origin;
+  }
+}
+
+function parseOriginList(value) {
+  return String(value || "")
+    .split(",")
+    .map(normalizeOrigin)
+    .filter(Boolean);
+}
+
 // Allowed Origins
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "http://localhost:5173",
-  "http://localhost:3000",
-].filter(Boolean);
+const allowedOrigins = Array.from(
+  new Set([
+    ...parseOriginList(process.env.FRONTEND_URL),
+    ...parseOriginList(process.env.CORS_ALLOWED_ORIGINS),
+    "https://humancareconnect.co",
+    "https://www.humancareconnect.co",
+    "http://localhost:5173",
+    "http://localhost:3000",
+  ].filter(Boolean))
+);
 
 const awsS3Region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "us-east-1";
 const s3AssetSources = [
@@ -154,7 +183,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     // Allow listed origins
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.indexOf(normalizeOrigin(origin)) !== -1) {
       return callback(null, true);
     }
 

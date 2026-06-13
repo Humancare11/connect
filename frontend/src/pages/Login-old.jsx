@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import socket from "../socket";
-import "./Login.css";
+import "./log.css";
 
 function EyeIcon({ open }) {
   return open ? (
@@ -128,7 +128,7 @@ function GoogleIcon() {
 }
 
 /* ─── 6-digit OTP input ──────────────────────────────────────── */
-function OTPInput({ value, onChange, boxClass = "hc-otp-box" }) {
+function OTPInput({ value, onChange, boxClass = "otp-box" }) {
   const inputs = useRef([]);
   const digits = (value + "      ").slice(0, 6).split("");
 
@@ -164,7 +164,7 @@ function OTPInput({ value, onChange, boxClass = "hc-otp-box" }) {
   };
 
   return (
-    <div className="hc-otp-boxes">
+    <div className="otp-boxes">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <input
           key={i}
@@ -189,20 +189,36 @@ function OTPInput({ value, onChange, boxClass = "hc-otp-box" }) {
 /* ─── Flow card wrapper (OTP / Forgot PW screens) ───────────── */
 function FlowCard({ icon, title, subtitle, formError, onBack, children }) {
   return (
-    <div className="hc-page-bg">
-      <div className="hc-card hc-card--flow">
-        <div className="hc-flow-card">
-          <div className="hc-flow-icon">{icon}</div>
-          <h1 className="hc-heading">{title}</h1>
-          <p
-            className="hc-subtext"
-            style={{ marginTop: 8, marginBottom: formError ? 4 : 16 }}
-          >
+    <div className="main-log">
+      <div
+        className="auth-wrapper"
+        style={{ maxWidth: 440, minHeight: "auto" }}
+      >
+        <div className="flow-card">
+          <div className="flow-icon">{icon}</div>
+          <h1 style={{ marginBottom: 0 }}>{title}</h1>
+          <p style={{ marginTop: 8, marginBottom: formError ? 4 : 16 }}>
             {subtitle}
           </p>
-          {formError && <p className="hc-form-error">{formError}</p>}
+          {formError && <p className="form-error">{formError}</p>}
           {children}
-          <button type="button" onClick={onBack} className="hc-back-btn">
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              background: "none",
+              color: "#9ca3af",
+              border: "none",
+              marginTop: 10,
+              cursor: "pointer",
+              fontSize: 13,
+              boxShadow: "none",
+              padding: "8px 20px",
+              textTransform: "none",
+              fontWeight: 400,
+              letterSpacing: 0,
+            }}
+          >
             ← Back
           </button>
         </div>
@@ -217,6 +233,7 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  /* view: 'auth' | 'register-otp' | 'forgot-email' | 'forgot-otp' | 'forgot-reset' */
   const [view, setView] = useState("auth");
   const [isRegister, setIsRegister] = useState(false);
   const [countryOpen, setCountryOpen] = useState(false);
@@ -238,6 +255,7 @@ export default function AuthPage() {
     hipaaConsent: false,
   });
 
+  /* Google profile completion for new users */
   const [googlePending, setGooglePending] = useState(null);
   const [googleProfile, setGoogleProfile] = useState({
     mobile: "",
@@ -248,10 +266,12 @@ export default function AuthPage() {
     hipaaConsent: false,
   });
 
+  /* OTP */
   const [otpValue, setOtpValue] = useState("");
   const [otpTimer, setOtpTimer] = useState(0);
   const timerRef = useRef(null);
 
+  /* Forgot password */
   const [forgotEmail, setForgotEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [newPass, setNewPass] = useState("");
@@ -278,6 +298,7 @@ export default function AuthPage() {
     registerForm.state,
   );
 
+  /* ── helpers ─────────────────────────────────────────────── */
   const clrErr = () => {
     setFormError("");
     setFormSuccess("");
@@ -323,7 +344,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (!countryOpen) return;
     const close = (e) => {
-      if (!e.target.closest(".hc-country-dropdown")) setCountryOpen(false);
+      if (!e.target.closest(".custom-country-dropdown")) setCountryOpen(false);
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
@@ -421,14 +442,6 @@ export default function AuthPage() {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     clrErr();
-
-    if (!/^[a-zA-Z\s]+$/.test(registerForm.name.trim())) {
-      return setFormError("Name must contain only letters.");
-    }
-    if (registerForm.name.trim().length < 2) {
-      return setFormError("Please enter your full name.");
-    }
-
     if (
       !registerForm.terms ||
       !registerForm.privacyConsent ||
@@ -445,9 +458,6 @@ export default function AuthPage() {
     if (dobError) return setFormError(dobError);
     if (!registerForm.gender) return setFormError("Select Gender");
     if (!registerForm.country) return setFormError("Select your country");
-    if (!registerForm.state)
-      return setFormError("Select your state / province");
-    if (!registerForm.city) return setFormError("Select your city");
     setLoading(true);
     try {
       await api.post("/api/auth/send-register-otp", {
@@ -603,53 +613,47 @@ export default function AuthPage() {
   /* Google profile completion */
   if (googlePending) {
     return (
-      <div className="hc-page-bg">
-        <div className="hc-card hc-card--flow">
-          <form onSubmit={handleGoogleComplete} className="hc-flow-card">
-            <div className="hc-flow-icon">🩺</div>
-            <h1 className="hc-heading" style={{ marginBottom: 0 }}>
-              Complete Your Profile
-            </h1>
-            <p
-              className="hc-subtext"
-              style={{ marginTop: 8, marginBottom: formError ? 4 : 16 }}
-            >
+      <div className="main-log">
+        <div
+          className="auth-wrapper"
+          style={{ maxWidth: 440, minHeight: "auto" }}
+        >
+          <form onSubmit={handleGoogleComplete} className="flow-card">
+            <div className="flow-icon">🩺</div>
+            <h1 style={{ marginBottom: 0 }}>Complete Your Profile</h1>
+            <p style={{ marginTop: 8, marginBottom: formError ? 4 : 16 }}>
               Welcome,{" "}
-              <strong style={{ color: "#2563eb" }}>{googlePending.name}</strong>
+              <strong style={{ color: "#059669" }}>{googlePending.name}</strong>
               ! Just a few more details.
             </p>
-            {formError && <p className="hc-form-error">{formError}</p>}
+            {formError && <p className="form-error">{formError}</p>}
             <input
-              className="hc-input"
               type="text"
               value={googlePending.name}
               disabled
               style={{ opacity: 0.55, cursor: "not-allowed" }}
             />
             <input
-              className="hc-input"
               type="email"
               value={googlePending.email}
               disabled
               style={{ opacity: 0.55, cursor: "not-allowed" }}
             />
-            <div className="hc-row hc-reg-row">
-              <div className="hc-field-wrap">
-                <label className="hc-reg-label">Date of Birth</label>
+            <div className="row reg-row">
+              <div className="reg-field-wrap">
+                <label className="reg-label">Date of Birth</label>
                 <DatePickerField
                   value={googleProfile.dob}
                   onChange={(v) => setGoogleProfile((p) => ({ ...p, dob: v }))}
                   min={DOB_MIN}
                   max={todayISO()}
                   placeholder="Date of Birth"
-                  required
                 />
               </div>
-              <div className="hc-field-wrap">
-                <label className="hc-reg-label">Gender</label>
-                <div className="hc-gender-wrap">
+              <div className="reg-field-wrap">
+                <label className="reg-label">Gender</label>
+                <div className="reg-gender-wrap">
                   <select
-                    className="hc-select hc-gender-select"
                     value={googleProfile.gender}
                     onChange={(e) =>
                       setGoogleProfile((p) => ({
@@ -658,6 +662,7 @@ export default function AuthPage() {
                       }))
                     }
                     required
+                    className="reg-gender-select"
                   >
                     <option value="" disabled>
                       Select gender
@@ -667,7 +672,7 @@ export default function AuthPage() {
                     <option value="Other">Other</option>
                   </select>
                   <svg
-                    className="hc-gender-arrow"
+                    className="reg-gender-arrow"
                     width="14"
                     height="14"
                     viewBox="0 0 24 24"
@@ -682,11 +687,11 @@ export default function AuthPage() {
                 </div>
               </div>
             </div>
-            <div className="hc-row hc-reg-row hc-country-mobile-row">
-              <div className="hc-field-wrap">
-                <label className="hc-reg-label">Country</label>
+            <div className="row reg-row country-mobile-row">
+              <div className="reg-field-wrap">
+                <label className="reg-label">Country</label>
                 <select
-                  className="hc-select hc-country-select"
+                  className="register-country-select"
                   value={googleProfile.country}
                   onChange={(e) =>
                     setGoogleProfile((p) => ({ ...p, country: e.target.value }))
@@ -787,8 +792,8 @@ export default function AuthPage() {
                   <option value="Zimbabwe">Zimbabwe</option>
                 </select>
               </div>
-              <div className="hc-field-wrap">
-                <label className="hc-reg-label">Mobile Number</label>
+              <div className="reg-field-wrap">
+                <label className="reg-label">Mobile Number</label>
                 <PhoneInputField
                   value={googleProfile.mobile}
                   onChange={(ph) =>
@@ -796,11 +801,10 @@ export default function AuthPage() {
                   }
                   defaultCountry="auto"
                   placeholder="Mobile number"
-                  required
                 />
               </div>
             </div>
-            <label className="hc-terms hc-consent-terms">
+            <label className="terms consent-terms">
               <input
                 type="checkbox"
                 checked={
@@ -827,7 +831,6 @@ export default function AuthPage() {
             </label>
             <button
               type="submit"
-              className="hc-btn hc-btn--primary"
               disabled={loading}
               style={{ marginTop: 16, width: "100%" }}
             >
@@ -835,11 +838,22 @@ export default function AuthPage() {
             </button>
             <button
               type="button"
-              className="hc-back-btn"
               onClick={() => {
                 setGooglePending(null);
                 setIsRegister(false);
                 clrErr();
+              }}
+              style={{
+                background: "none",
+                color: "#9ca3af",
+                border: "none",
+                marginTop: 10,
+                cursor: "pointer",
+                fontSize: 13,
+                boxShadow: "none",
+                padding: "8px 20px",
+                textTransform: "none",
+                fontWeight: 400,
               }}
             >
               Cancel
@@ -859,7 +873,7 @@ export default function AuthPage() {
         subtitle={
           <>
             We sent a 6-digit security code to{" "}
-            <strong style={{ color: "#2563eb" }}>{registerForm.email}</strong>
+            <strong style={{ color: "#059669" }}>{registerForm.email}</strong>
           </>
         }
         formError={formError}
@@ -876,7 +890,7 @@ export default function AuthPage() {
               clrErr();
             }}
           />
-          <p className="hc-otp-resend">
+          <p className="otp-resend">
             {otpTimer > 0 ? (
               <>
                 Resend in <strong>{otpTimer}s</strong>
@@ -884,11 +898,7 @@ export default function AuthPage() {
             ) : (
               <>
                 Didn't receive it?{" "}
-                <button
-                  type="button"
-                  className="hc-otp-resend-btn"
-                  onClick={handleResendRegisterOTP}
-                >
+                <button type="button" onClick={handleResendRegisterOTP}>
                   Resend OTP
                 </button>
               </>
@@ -896,7 +906,6 @@ export default function AuthPage() {
           </p>
           <button
             type="submit"
-            className="hc-btn hc-btn--primary"
             disabled={loading || otpValue.length < 6}
             style={{ width: "100%", marginTop: 16 }}
           >
@@ -918,7 +927,6 @@ export default function AuthPage() {
       >
         <form onSubmit={handleForgotSend} style={{ width: "100%" }}>
           <input
-            className="hc-input"
             type="email"
             placeholder="Your registered email"
             value={forgotEmail}
@@ -929,12 +937,7 @@ export default function AuthPage() {
             required
             style={{ marginBottom: 16 }}
           />
-          <button
-            type="submit"
-            className="hc-btn hc-btn--primary"
-            disabled={loading}
-            style={{ width: "100%" }}
-          >
+          <button type="submit" disabled={loading} style={{ width: "100%" }}>
             {loading ? "Sending..." : "Send Reset OTP"}
           </button>
         </form>
@@ -950,7 +953,7 @@ export default function AuthPage() {
         subtitle={
           <>
             OTP sent to{" "}
-            <strong style={{ color: "#2563eb" }}>{forgotEmail}</strong>
+            <strong style={{ color: "#059669" }}>{forgotEmail}</strong>
           </>
         }
         formError={formError}
@@ -964,7 +967,7 @@ export default function AuthPage() {
               clrErr();
             }}
           />
-          <p className="hc-otp-resend">
+          <p className="otp-resend">
             {otpTimer > 0 ? (
               <>
                 Resend in <strong>{otpTimer}s</strong>
@@ -972,11 +975,7 @@ export default function AuthPage() {
             ) : (
               <>
                 Didn't receive it?{" "}
-                <button
-                  type="button"
-                  className="hc-otp-resend-btn"
-                  onClick={handleForgotResend}
-                >
+                <button type="button" onClick={handleForgotResend}>
                   Resend OTP
                 </button>
               </>
@@ -984,7 +983,6 @@ export default function AuthPage() {
           </p>
           <button
             type="submit"
-            className="hc-btn hc-btn--primary"
             disabled={loading || otpValue.length < 6}
             style={{ width: "100%", marginTop: 16 }}
           >
@@ -1005,9 +1003,8 @@ export default function AuthPage() {
         onBack={() => goTo("forgot-otp")}
       >
         <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
-          <div className="hc-pw-wrapper">
+          <div className="password-wrapper">
             <input
-              className="hc-input"
               type={showPasswords.newPass ? "text" : "password"}
               placeholder="Example: MySecurePass@123!"
               value={newPass}
@@ -1019,7 +1016,7 @@ export default function AuthPage() {
             />
             <button
               type="button"
-              className="hc-pw-toggle"
+              className="password-toggle"
               onClick={() =>
                 setShowPasswords((p) => ({ ...p, newPass: !p.newPass }))
               }
@@ -1028,9 +1025,8 @@ export default function AuthPage() {
               <EyeIcon open={showPasswords.newPass} />
             </button>
           </div>
-          <div className="hc-pw-wrapper">
+          <div className="password-wrapper">
             <input
-              className="hc-input"
               type={showPasswords.confirmPass ? "text" : "password"}
               placeholder="Confirm new password"
               value={confirmPass}
@@ -1042,7 +1038,7 @@ export default function AuthPage() {
             />
             <button
               type="button"
-              className="hc-pw-toggle"
+              className="password-toggle"
               onClick={() =>
                 setShowPasswords((p) => ({ ...p, confirmPass: !p.confirmPass }))
               }
@@ -1053,7 +1049,6 @@ export default function AuthPage() {
           </div>
           <button
             type="submit"
-            className="hc-btn hc-btn--primary"
             disabled={loading}
             style={{ width: "100%", marginTop: 8 }}
           >
@@ -1065,36 +1060,30 @@ export default function AuthPage() {
 
   /* ── Main auth UI ────────────────────────────────────────── */
   return (
-    <div className="hc-page-bg">
-      <div
-        className={`hc-card ${isRegister ? "hc-card--register-active" : ""}`}
-      >
+    <div className="main-log">
+      <div className={`auth-wrapper ${isRegister ? "panel-active" : ""}`}>
         {/* ── REGISTER FORM ─────────────────────────────────── */}
-        <div className="hc-form-box hc-form-box--register">
-          <form
-            onSubmit={handleRegisterSubmit}
-            className="hc-form hc-register-form"
-          >
-            <h1 className="hc-heading">Create Account</h1>
-            <p className="hc-form-subtitle">
+        <div className="auth-form-box register-form-box">
+          <form onSubmit={handleRegisterSubmit} className="register-form">
+            <h1>Create Account</h1>
+            <p className="form-subtitle">
               Join Humanicare and take charge of your health
             </p>
 
-            <div className="hc-social-links">
+            <div className="social-links">
               <button
                 type="button"
-                className="hc-google-btn"
+                className="google-btn"
                 onClick={() => initiateGoogleLogin()}
               >
                 <GoogleIcon /> Continue with Google
               </button>
             </div>
 
-            {formError && <p className="hc-form-error">{formError}</p>}
-            <span className="hc-divider-text">or use your email</span>
+            {formError && <p className="form-error">{formError}</p>}
+            <span>or use your email</span>
 
-            {/* <input
-              className="hc-input"
+            <input
               type="text"
               placeholder="Full Name"
               value={registerForm.name}
@@ -1102,22 +1091,9 @@ export default function AuthPage() {
                 setRegisterForm((p) => ({ ...p, name: e.target.value }))
               }
               required
-            /> */}
-
-            <input
-              className="hc-input"
-              type="text"
-              placeholder="Full Name"
-              value={registerForm.name}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                setRegisterForm((p) => ({ ...p, name: value }));
-              }}
-              required
             />
 
             <input
-              className="hc-input"
               type="email"
               placeholder="Email Address"
               value={registerForm.email}
@@ -1128,8 +1104,8 @@ export default function AuthPage() {
               style={{ width: "100%" }}
             />
 
-            <div className="hc-row hc-reg-row">
-              <div className="hc-field-wrap">
+            <div className="row reg-row">
+              <div className="reg-field-wrap">
                 <DatePickerField
                   value={registerForm.dob}
                   onChange={(v) => setRegisterForm((p) => ({ ...p, dob: v }))}
@@ -1138,15 +1114,15 @@ export default function AuthPage() {
                   placeholder="Date of Birth"
                 />
               </div>
-              <div className="hc-field-wrap">
-                <div className="hc-gender-wrap">
+              <div className="reg-field-wrap">
+                <div className="reg-gender-wrap">
                   <select
-                    className="hc-select hc-gender-select"
                     value={registerForm.gender}
                     onChange={(e) =>
                       setRegisterForm((p) => ({ ...p, gender: e.target.value }))
                     }
                     required
+                    className="reg-gender-select"
                   >
                     <option value="" disabled>
                       Select gender
@@ -1156,7 +1132,7 @@ export default function AuthPage() {
                     <option value="Other">Other</option>
                   </select>
                   <svg
-                    className="hc-gender-arrow"
+                    className="reg-gender-arrow"
                     width="14"
                     height="14"
                     viewBox="0 0 24 24"
@@ -1172,12 +1148,12 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <div className="hc-row hc-reg-row hc-country-mobile-row">
-              <div className="hc-field-wrap">
-                <div className="hc-country-dropdown">
+            <div className="row reg-row country-mobile-row">
+              <div className="reg-field-wrap">
+                <div className="custom-country-dropdown">
                   <button
                     type="button"
-                    className="hc-country-trigger"
+                    className="country-trigger"
                     onClick={() => {
                       setCountryOpen((v) => !v);
                       if (!countryOpen) setCountrySearch("");
@@ -1195,6 +1171,7 @@ export default function AuthPage() {
                             borderRadius: 2,
                           }}
                         />
+
                         <span>{selectedPhoneCountry.name}</span>
                       </>
                     ) : (
@@ -1203,9 +1180,24 @@ export default function AuthPage() {
                   </button>
 
                   {countryOpen && (
-                    <div className="hc-country-menu">
-                      <div className="hc-country-search-wrap">
-                        <div className="hc-country-search-inner">
+                    <div className="country-dropdown-menu">
+                      <div
+                        style={{
+                          padding: "10px 10px 6px",
+                          borderBottom: "1px solid #f1f5f9",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 12px",
+                            background: "#f8fafc",
+                            border: "1.5px solid #e8edf2",
+                            borderRadius: 10,
+                          }}
+                        >
                           <svg
                             width="14"
                             height="14"
@@ -1219,17 +1211,33 @@ export default function AuthPage() {
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                           </svg>
                           <input
-                            className="hc-country-search-input"
                             type="text"
                             placeholder="Search country"
                             value={countrySearch}
                             onChange={(e) => setCountrySearch(e.target.value)}
+                            style={{
+                              flex: 1,
+                              border: "none",
+                              background: "transparent",
+                              fontSize: 13,
+                              fontFamily: "inherit",
+                              color: "#1e293b",
+                              outline: "none",
+                            }}
                           />
                           {countrySearch && (
                             <button
                               type="button"
-                              className="hc-country-search-clear"
                               onClick={() => setCountrySearch("")}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: 0,
+                                color: "#cbd5e1",
+                                fontSize: 14,
+                                lineHeight: 1,
+                              }}
                             >
                               ✕
                             </button>
@@ -1246,17 +1254,19 @@ export default function AuthPage() {
                         <button
                           key={c.code}
                           type="button"
-                          className="hc-country-option"
+                          className="country-option"
                           onClick={() => {
                             const { local } = parsePhoneValue(
                               registerForm.mobile,
                               c.code,
                             );
+
                             setRegisterForm((p) => ({
                               ...p,
                               country: c.name,
                               mobile: `+${c.dial}${local}`,
                             }));
+
                             setCountryOpen(false);
                             setCountrySearch("");
                           }}
@@ -1271,6 +1281,7 @@ export default function AuthPage() {
                               borderRadius: 2,
                             }}
                           />
+
                           <span>{c.name}</span>
                         </button>
                       ))}
@@ -1278,7 +1289,7 @@ export default function AuthPage() {
                   )}
                 </div>
               </div>
-              <div className="hc-field-wrap">
+              <div className="reg-field-wrap">
                 <PhoneInputField
                   value={registerForm.mobile}
                   onChange={(ph, meta) =>
@@ -1298,10 +1309,9 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <div className="hc-row hc-reg-row">
-              <div className="hc-field-wrap">
+            <div className="row reg-row">
+              <div className="reg-field-wrap">
                 <select
-                  className="hc-select hc-state-select"
                   value={registerForm.state}
                   onChange={(e) =>
                     setRegisterForm((p) => ({
@@ -1311,7 +1321,27 @@ export default function AuthPage() {
                     }))
                   }
                   disabled={!registerForm.country}
-                  required
+                  style={{
+                    width: "100%",
+                    height: 46,
+                    padding: "0 14px",
+                    border: "1.5px solid #c7d7fe",
+                    borderRadius: 12,
+                    background: !registerForm.country ? "#f1f5f9" : "#f8fbff",
+                    fontSize: 14,
+                    fontFamily: "inherit",
+                    color: registerForm.state ? "#1f2937" : "#9ca3af",
+                    outline: "none",
+                    cursor: !registerForm.country ? "not-allowed" : "pointer",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    backgroundImage:
+                      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 14px center",
+                    backgroundSize: "10px 6px",
+                    paddingRight: 36,
+                  }}
                 >
                   <option value="">
                     {loadingStates
@@ -1327,15 +1357,34 @@ export default function AuthPage() {
                   ))}
                 </select>
               </div>
-              <div className="hc-field-wrap">
+              <div className="reg-field-wrap">
                 <select
-                  className="hc-select hc-city-select"
                   value={registerForm.city}
                   onChange={(e) =>
                     setRegisterForm((p) => ({ ...p, city: e.target.value }))
                   }
                   disabled={!registerForm.state}
-                  required
+                  style={{
+                    width: "100%",
+                    height: 46,
+                    padding: "0 14px",
+                    border: "1.5px solid #c7d7fe",
+                    borderRadius: 12,
+                    background: !registerForm.state ? "#f1f5f9" : "#f8fbff",
+                    fontSize: 14,
+                    fontFamily: "inherit",
+                    color: registerForm.city ? "#1f2937" : "#9ca3af",
+                    outline: "none",
+                    cursor: !registerForm.state ? "not-allowed" : "pointer",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    backgroundImage:
+                      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 14px center",
+                    backgroundSize: "10px 6px",
+                    paddingRight: 36,
+                  }}
                 >
                   <option value="">
                     {loadingCities
@@ -1353,9 +1402,8 @@ export default function AuthPage() {
               </div>
             </div>
 
-            <div className="hc-pw-wrapper">
+            <div className="password-wrapper">
               <input
-                className="hc-input"
                 type={showPasswords.register ? "text" : "password"}
                 placeholder="Example: MySecurePass@123!"
                 value={registerForm.password}
@@ -1366,7 +1414,7 @@ export default function AuthPage() {
               />
               <button
                 type="button"
-                className="hc-pw-toggle"
+                className="password-toggle"
                 onClick={() =>
                   setShowPasswords((p) => ({ ...p, register: !p.register }))
                 }
@@ -1376,12 +1424,16 @@ export default function AuthPage() {
               </button>
             </div>
             <p
-              className={`hc-pw-requirements${registerPasswordError ? " hc-pw-requirements--error" : ""}`}
+              className={
+                registerPasswordError
+                  ? "password-requirements password-error"
+                  : "password-requirements"
+              }
             >
               {registerPasswordError || PASSWORD_REQUIREMENTS}
             </p>
 
-            <label className="hc-terms hc-consent-terms">
+            <label className="terms consent-terms">
               <input
                 type="checkbox"
                 checked={
@@ -1405,19 +1457,14 @@ export default function AuthPage() {
               </span>
             </label>
 
-            <button
-              type="submit"
-              className="hc-btn hc-btn--primary hc-btn--full"
-              disabled={loading}
-            >
+            <button type="submit" disabled={loading}>
               {loading ? "Sending OTP…" : "Sign Up"}
             </button>
 
-            <div className="hc-mobile-switch">
+            <div className="mobile-switch">
               <p>Already have an account?</p>
               <button
                 type="button"
-                className="hc-btn hc-btn--outline"
                 onClick={() => {
                   setIsRegister(false);
                   clrErr();
@@ -1430,17 +1477,17 @@ export default function AuthPage() {
         </div>
 
         {/* ── LOGIN FORM ───────────────────────────────────────── */}
-        <div className="hc-form-box hc-form-box--login">
-          <form onSubmit={handleLoginSubmit} className="hc-form hc-login-form">
-            <h1 className="hc-heading">Welcome Back</h1>
-            <p className="hc-form-subtitle">
+        <div className="auth-form-box login-form-box">
+          <form onSubmit={handleLoginSubmit}>
+            <h1>Welcome Back</h1>
+            <p className="form-subtitle">
               Sign in to continue your healthcare journey
             </p>
 
-            <div className="hc-social-links">
+            <div className="social-links">
               <button
                 type="button"
-                className="hc-google-btn"
+                className="google-btn"
                 onClick={() => initiateGoogleLogin()}
               >
                 <GoogleIcon /> Continue with Google
@@ -1448,15 +1495,27 @@ export default function AuthPage() {
             </div>
 
             {formSuccess && (
-              <div className="hc-success-msg">
+              <div
+                style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #86efac",
+                  borderRadius: 8,
+                  padding: "10px 14px",
+                  marginBottom: 8,
+                  fontSize: 13,
+                  color: "#15803d",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
                 <span>&#10003;</span> {formSuccess}
               </div>
             )}
-            {formError && <p className="hc-form-error">{formError}</p>}
-            <span className="hc-divider-text">or use your email</span>
+            {formError && <p className="form-error">{formError}</p>}
+            <span>or use your email</span>
 
             <input
-              className="hc-input"
               type="email"
               placeholder="Email Address"
               value={loginForm.email}
@@ -1465,9 +1524,8 @@ export default function AuthPage() {
               }
               required
             />
-            <div className="hc-pw-wrapper">
+            <div className="password-wrapper">
               <input
-                className="hc-input"
                 type={showPasswords.login ? "text" : "password"}
                 placeholder="Password"
                 value={loginForm.password}
@@ -1478,7 +1536,7 @@ export default function AuthPage() {
               />
               <button
                 type="button"
-                className="hc-pw-toggle"
+                className="password-toggle"
                 onClick={() =>
                   setShowPasswords((p) => ({ ...p, login: !p.login }))
                 }
@@ -1490,7 +1548,7 @@ export default function AuthPage() {
 
             <button
               type="button"
-              className="hc-forgot-link"
+              className="forgot-link"
               onClick={() => {
                 setView("forgot-email");
                 clrErr();
@@ -1499,19 +1557,14 @@ export default function AuthPage() {
               Forgot your password?
             </button>
 
-            <button
-              type="submit"
-              className="hc-btn hc-btn--primary"
-              disabled={loading}
-            >
+            <button type="submit" disabled={loading}>
               {loading ? "Signing in…" : "Sign In"}
             </button>
 
-            <div className="hc-mobile-switch">
+            <div className="mobile-switch">
               <p>Don't have an account?</p>
               <button
                 type="button"
-                className="hc-btn hc-btn--outline"
                 onClick={() => {
                   setIsRegister(true);
                   clrErr();
@@ -1524,31 +1577,31 @@ export default function AuthPage() {
         </div>
 
         {/* ── SLIDING PANEL ─────────────────────────────────────── */}
-        <div className="hc-panel-wrapper">
-          <div className="hc-panel">
-            <div className="hc-panel-content hc-panel-content--left">
-              <div className="hc-panel-badge">👋</div>
-              <h1 className="hc-panel-heading">Welcome Back!</h1>
-              <p className="hc-panel-text">
+        <div className="slide-panel-wrapper">
+          <div className="slide-panel">
+            <div className="panel-content panel-content-left">
+              <div className="panel-badge">👋</div>
+              <h1>Welcome Back!</h1>
+              <p>
                 Stay connected — log in with your credentials and continue your
                 healthcare experience.
               </p>
               <button
-                className="hc-btn hc-btn--ghost"
+                className="transparent-btn"
                 onClick={() => setIsRegister(false)}
               >
                 Sign In
               </button>
             </div>
-            <div className="hc-panel-content hc-panel-content--right">
-              <div className="hc-panel-badge">🩺</div>
-              <h1 className="hc-panel-heading">Join Humancare Connect</h1>
-              <p className="hc-panel-text">
+            <div className="panel-content panel-content-right">
+              <div className="panel-badge">🩺</div>
+              <h1>Join Humancare Connect</h1>
+              <p>
                 Connect with top doctors, manage appointments, and take control
                 of your health today.
               </p>
               <button
-                className="hc-btn hc-btn--ghost"
+                className="transparent-btn"
                 onClick={() => setIsRegister(true)}
               >
                 Sign Up

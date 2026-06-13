@@ -237,8 +237,8 @@ export default function Header() {
 
           {/* LOGO */}
           <Link to="/" className={`logo ${isScrolled ? "scrolled" : ""}`}>
-            <img src={logo}     alt="Humancare Logo"      className="logo-full" />
-            <img src={miniLogo} alt="Humancare Mini Logo" className="logo-mini" />
+            <img src={logo} alt="Humancare Logo" className="logo-full" decoding="async" />
+            <img src={miniLogo} alt="Humancare Mini Logo" className="logo-mini" decoding="async" />
           </Link>
 
           {/*

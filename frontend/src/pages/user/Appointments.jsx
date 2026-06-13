@@ -45,9 +45,15 @@ export default function Appointments() {
   // Re-fetch on focus, visibility, and socket events
   useEffect(() => {
     const onFocus = () => queueRefresh();
-    const onVisible = () => { if (document.visibilityState === "visible") queueRefresh(); };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") queueRefresh();
+    };
 
-    const socketEvents = ["appointment-updated", "new-prescription", "new-certificate"];
+    const socketEvents = [
+      "appointment-updated",
+      "new-prescription",
+      "new-certificate",
+    ];
     socketEvents.forEach((ev) => socket.on(ev, queueRefresh));
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisible);
@@ -71,32 +77,53 @@ export default function Appointments() {
     }
 
     const target = appointments.find((a) => a._id === activityId);
-    if (!target) { setFocusedAppointmentId(""); return; }
+    if (!target) {
+      setFocusedAppointmentId("");
+      return;
+    }
 
     setFocusedAppointmentId(activityId);
     if (["requested", "upcoming", "assigned"].includes(target.status)) {
       setActiveTab("pending");
-    } else if (["pending", "confirmed", "completed", "complete"].includes(target.status)) {
+    } else if (
+      ["pending", "confirmed", "completed", "complete"].includes(target.status)
+    ) {
       setActiveTab(target.status === "complete" ? "completed" : target.status);
     }
 
     setTimeout(() => {
-      document.getElementById(`appt-${activityId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById(`appt-${activityId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 40);
   }, [appointments, location.search]);
 
-  const pendingAppointments   = appointments.filter((a) => ["requested", "upcoming", "assigned", "pending"].includes(a.status));
-  const confirmedAppointments = appointments.filter((a) => a.status === "confirmed");
-  const completedAppointments = appointments.filter((a) => ["complete", "completed"].includes(a.status));
+  const pendingAppointments = appointments.filter((a) =>
+    ["requested", "upcoming", "assigned", "pending"].includes(a.status),
+  );
+  const confirmedAppointments = appointments.filter(
+    (a) => a.status === "confirmed",
+  );
+  const completedAppointments = appointments.filter((a) =>
+    ["complete", "completed"].includes(a.status),
+  );
 
-  const tabData = { pending: pendingAppointments, confirmed: confirmedAppointments, completed: completedAppointments };
+  const tabData = {
+    pending: pendingAppointments,
+    confirmed: confirmedAppointments,
+    completed: completedAppointments,
+  };
   const currentList = tabData[activeTab];
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "—";
     const d = new Date(dateStr);
     if (isNaN(d)) return dateStr;
-    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    return d.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   return (
@@ -106,7 +133,9 @@ export default function Appointments() {
         <div className="appt-header-text">
           <p className="appt-eyebrow">Humancare connect</p>
           <h1 className="appt-title">My Appointments</h1>
-          <p className="appt-subtitle">Track, manage and connect with your doctors</p>
+          <p className="appt-subtitle">
+            Track, manage and connect with your doctors
+          </p>
         </div>
         <Link to="/appointment-booking" className="appt-book-btn">
           <span className="appt-book-icon">+</span>
@@ -143,7 +172,9 @@ export default function Appointments() {
             className={`appt-tab ${activeTab === tab ? "active" : ""} tab-${tab}`}
             onClick={() => setActiveTab(tab)}
           >
-            <span className="tab-label">{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
+            <span className="tab-label">
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </span>
             <span className="tab-count">{tabData[tab].length}</span>
           </button>
         ))}
@@ -159,7 +190,11 @@ export default function Appointments() {
         ) : currentList.length === 0 ? (
           <div className="appt-empty">
             <div className="appt-empty-icon">
-              {activeTab === "pending" ? "⏳" : activeTab === "confirmed" ? "✅" : "📋"}
+              {activeTab === "pending"
+                ? "⏳"
+                : activeTab === "confirmed"
+                  ? "✅"
+                  : "📋"}
             </div>
             <h3>No {activeTab} appointments</h3>
             <p>
@@ -170,10 +205,14 @@ export default function Appointments() {
                   : "Your completed consultations will appear here."}
             </p>
             {activeTab !== "completed" && (
-              <Link to="/appointment-booking" className="appt-empty-cta">Book Appointment</Link>
+              <Link to="/appointment-booking" className="appt-empty-cta">
+                Book Appointment
+              </Link>
             )}
             {activeTab === "completed" && (
-              <Link to="/user/my-records" className="appt-empty-cta">View Medical Records</Link>
+              <Link to="/user/my-records" className="appt-empty-cta">
+                View Medical Records
+              </Link>
             )}
           </div>
         ) : (
@@ -184,14 +223,18 @@ export default function Appointments() {
                 className={`appt-card appt-card--${activeTab}`}
                 key={appt._id}
                 style={{ animationDelay: `${i * 60}ms` }}
-                data-focused={focusedAppointmentId === appt._id ? "true" : "false"}
+                data-focused={
+                  focusedAppointmentId === appt._id ? "true" : "false"
+                }
               >
                 {/* Card Left */}
                 <div className="appt-card-left">
                   <div className="appt-avatar">
                     {appt.doctorId?.name?.charAt(0)?.toUpperCase() || "D"}
                   </div>
-                  <div className={`appt-status-line status-line--${activeTab}`} />
+                  <div
+                    className={`appt-status-line status-line--${activeTab}`}
+                  />
                 </div>
 
                 {/* Card Body */}
@@ -199,12 +242,16 @@ export default function Appointments() {
                   <div className="appt-card-top">
                     <div className="appt-doctor-info">
                       <h4 className="appt-doctor-name">
-                        {appt.doctorId?.name ? `Dr. ${appt.doctorId.name}` : "Doctor assignment pending"}
+                        {appt.doctorId?.name
+                          ? `Dr. ${appt.doctorId.name}`
+                          : "Doctor assignment pending"}
                       </h4>
-                      <p className="appt-doctor-email">{appt.doctorId?.email || appt.specialty || ""}</p>
+                      <p className="appt-doctor-email">
+                        {appt.doctorId?.email || appt.specialty || ""}
+                      </p>
                     </div>
                     <span className={`appt-badge appt-badge--${activeTab}`}>
-                      {activeTab === "pending"   && "⏳ Pending"}
+                      {activeTab === "pending" && "⏳ Pending"}
                       {activeTab === "confirmed" && "✅ Confirmed"}
                       {activeTab === "completed" && "✔ Completed"}
                     </span>
@@ -240,7 +287,11 @@ export default function Appointments() {
                             className="appt-report-chip"
                             title={r.name}
                           >
-                            {r.type?.includes("pdf") ? "📄" : r.type?.startsWith("image/") ? "🖼️" : "📎"}
+                            {r.type?.includes("pdf")
+                              ? "📄"
+                              : r.type?.startsWith("image/")
+                                ? "🖼️"
+                                : "📎"}
                             <span>{r.name}</span>
                           </a>
                         ))}
@@ -267,7 +318,10 @@ export default function Appointments() {
                         >
                           💬 Start Consultation
                         </button>
-                        <Link to={`/video-call/${appt._id}`} className="appt-btn appt-btn--outline">
+                        <Link
+                          to={`/video-call/${appt._id}`}
+                          className="appt-btn appt-btn--outline"
+                        >
                           📹 Join Video Call
                         </Link>
                       </>
@@ -275,7 +329,9 @@ export default function Appointments() {
 
                     {activeTab === "completed" && (
                       <div className="appt-completed-actions">
-                        <span className="appt-done-text">✔ Consultation completed</span>
+                        <span className="appt-done-text">
+                          ✔ Consultation completed
+                        </span>
                         <Link
                           to="/user/my-records"
                           className="appt-btn appt-btn--records"
@@ -294,19 +350,31 @@ export default function Appointments() {
 
       {/* Consultation Modal */}
       {selectedAppointment && selectedAppointment.status === "confirmed" && (
-        <div className="appt-modal-overlay" onClick={() => setSelectedAppointment(null)}>
+        <div
+          className="appt-modal-overlay"
+          onClick={() => setSelectedAppointment(null)}
+        >
           <div className="appt-modal" onClick={(e) => e.stopPropagation()}>
             <div className="appt-modal-header">
               <div className="appt-modal-title-group">
                 <div className="appt-modal-avatar">
-                  {selectedAppointment.doctorId?.name?.charAt(0)?.toUpperCase() || "D"}
+                  {selectedAppointment.doctorId?.name
+                    ?.charAt(0)
+                    ?.toUpperCase() || "D"}
                 </div>
                 <div>
                   <h3>Live Consultation</h3>
-                  <p>Dr. {selectedAppointment.doctorId?.name || "Unknown Doctor"}</p>
+                  <p>
+                    Dr. {selectedAppointment.doctorId?.name || "Unknown Doctor"}
+                  </p>
                 </div>
               </div>
-              <button className="appt-modal-close" onClick={() => setSelectedAppointment(null)}>×</button>
+              <button
+                className="appt-modal-close"
+                onClick={() => setSelectedAppointment(null)}
+              >
+                ×
+              </button>
             </div>
             <div className="appt-modal-body">
               <AppointmentChat
@@ -316,7 +384,10 @@ export default function Appointments() {
               />
             </div>
             <div className="appt-modal-footer">
-              <Link to={`/video-call/${selectedAppointment._id}`} className="appt-btn appt-btn--primary full-width">
+              <Link
+                to={`/video-call/${selectedAppointment._id}`}
+                className="appt-btn appt-btn--primary full-width"
+              >
                 📹 Join Video Call
               </Link>
             </div>

@@ -565,7 +565,7 @@ router.patch("/enrollment/:doctorId/consultation-fee", verifyDoctorToken, async 
     const enrollment = await Enrollment.findOneAndUpdate(
       { doctorId: req.params.doctorId },
       { consultantFees: fee, updatedAt: new Date() },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!enrollment)
       return res.status(404).json({ message: "Enrollment not found." });
@@ -730,4 +730,5 @@ router.get("/:id", async (req, res) => {
 });
 
 module.exports = router;
+
 

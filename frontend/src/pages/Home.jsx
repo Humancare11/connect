@@ -1,22 +1,18 @@
 import React, {
+  lazy,
+  Suspense,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   useCallback,
 } from "react";
 import "./home.css";
-import Sa from "../components/Sa";
-import Aa from "../components/Aa";
+const Sa = lazy(() => import("../components/Sa"));
+const Aa = lazy(() => import("../components/Aa"));
 import sceneVideo from "../assets/gifts/scene-card-bg-video.mp4";
 import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
-import LogoMarquee from "../components/LogoMarquee";
-
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination, Autoplay } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/pagination";
+const LogoMarquee = lazy(() => import("../components/LogoMarquee"));
 import {
   FiSmartphone,
   FiUserCheck,
@@ -26,15 +22,10 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
-import gsap from "gsap";
-import ScrollTrigger from "gsap/ScrollTrigger";
-
 import { useNavigate } from "react-router-dom";
 
-import PCP from "../components/PCPSection";
-import Why from "../components/WhySection";
-
-gsap.registerPlugin(ScrollTrigger);
+const PCP = lazy(() => import("../components/PCPSection"));
+const Why = lazy(() => import("../components/WhySection"));
 
 // ─── Scene data ───────────────────────────────────────────────────────────────
 const SCENES = [
@@ -433,8 +424,14 @@ export default function HomePage() {
   const btnRef = useRef(null);
   const rightRef = useRef(null);
 
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
+  useEffect(() => {
+    let ctx;
+    let cancelled = false;
+
+    import("gsap").then(({ default: gsap }) => {
+      if (cancelled) return;
+
+      ctx = gsap.context(() => {
       const tl = gsap.timeline();
 
       tl.fromTo(
@@ -473,8 +470,12 @@ export default function HomePage() {
         "+=0.3"
       );
     }, wrapperRef);
+    });
 
-    return () => ctx.revert();
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, []);
 
   // ── Testimonials parallax ─────────────────────────────────────────────────
@@ -596,6 +597,8 @@ export default function HomePage() {
             loop
             muted
             playsInline
+            preload="metadata"
+            aria-hidden="true"
             className="hero-right-video-bg"
           >
             <source src={sceneVideo} type="video/mp4" />
@@ -684,19 +687,29 @@ export default function HomePage() {
       </section>
 
       {/* ════════ LOGO MARQUEE ═══════════════════════════════════════════════ */}
-      <LogoMarquee />
+      <Suspense fallback={null}>
+        <LogoMarquee />
+      </Suspense>
 
       {/* ════════ SERVICES ═══════════════════════════════════════════════════ */}
-      <Sa />
+      <Suspense fallback={null}>
+        <Sa />
+      </Suspense>
 
       {/* ════════ SPECIALTIES ════════════════════════════════════════════════ */}
-      <Aa />
+      <Suspense fallback={null}>
+        <Aa />
+      </Suspense>
 
       {/* ════════ HOW IT WORKS / PCP ════════════════════════════════════════ */}
-      <PCP />
+      <Suspense fallback={null}>
+        <PCP />
+      </Suspense>
 
       {/* ════════ WHY HUMANCARE ═════════════════════════════════════════════ */}
-      <Why />
+      <Suspense fallback={null}>
+        <Why />
+      </Suspense>
 
       {/* ════════ TESTIMONIALS ══════════════════════════════════════════════ */}
       <section className="testimonials-section reveal reveal-stagger" ref={testimonialsRef}>
