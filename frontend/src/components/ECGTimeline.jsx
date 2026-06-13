@@ -132,13 +132,21 @@ const HEAD_LEN = 90;
 const TRAIL_LEN = 180;
 const SPEED = 320;
 
+const iconStrings = [
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>',
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.845v6.311a1 1 0 0 1-1.447.893L15 14M3 8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/></svg>',
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+];
+
 export default function ECGTimeline() {
   const activeStepRef = useRef(-1);
   const startTRef = useRef(null);
   const animFrameRef = useRef(null);
   const pulseFrameRef = useRef(null);
 
-  // Refs for SVG elements
   const ecgBaseRef = useRef(null);
   const ecgTraceRef = useRef(null);
   const ecgTrailRef = useRef(null);
@@ -147,7 +155,6 @@ export default function ECGTimeline() {
   const nodeGroupRef = useRef(null);
   const stepCardsRef = useRef(null);
 
-  // Store computed data
   const nodePositionsRef = useRef([]);
   const totalLenRef = useRef(0);
 
@@ -182,6 +189,8 @@ export default function ECGTimeline() {
     });
 
     const pathEl = ecgBaseRef.current;
+    if (!pathEl) return;
+
     const totalLen = pathEl.getTotalLength();
     totalLenRef.current = totalLen;
 
@@ -200,9 +209,10 @@ export default function ECGTimeline() {
     });
     nodePositionsRef.current = nodePositions;
 
-    // Build halos
     const haloG = nodeHalosRef.current;
     const nodeG = nodeGroupRef.current;
+    if (!haloG || !nodeG) return;
+
     haloG.innerHTML = "";
     nodeG.innerHTML = "";
 
@@ -254,6 +264,7 @@ export default function ECGTimeline() {
       for (let i = 0; i < STEPS.length; i++) {
         const halo = document.getElementById("halo" + i);
         const inner = document.getElementById("node" + i);
+        if (!halo || !inner) continue;
         if (i === idx) {
           halo.setAttribute("opacity", "0.7");
           halo.setAttribute("stroke", STEPS[i].accent);
@@ -269,41 +280,23 @@ export default function ECGTimeline() {
 
     function resetNodes() {
       for (let i = 0; i < STEPS.length; i++) {
-        document.getElementById("halo" + i).setAttribute("opacity", "0");
+        const halo = document.getElementById("halo" + i);
         const inner = document.getElementById("node" + i);
+        if (!halo || !inner) continue;
+        halo.setAttribute("opacity", "0");
         inner.setAttribute("fill", "#1a3a6a");
         inner.setAttribute("r", "7");
       }
     }
 
-    // Build step cards
     const cardsEl = stepCardsRef.current;
+    if (!cardsEl) return;
     cardsEl.innerHTML = "";
+
     STEPS.forEach((s, i) => {
       const card = document.createElement("div");
       card.className = "hc-step-card";
-      card.innerHTML =
-        '<div class="hc-step-card-bar" style="background:' +
-          s.accent +
-          '"></div>' +
-          '<div class="hc-step-num">' +
-          s.num +
-          "</div>" +
-          '<div class="hc-step-icon" style="background:rgba(255,255,255,0.05);color:' +
-          s.accent +
-          '">' +
-          card.appendChild(document.createElement("span")) &&
-        "" +
-          "</div>" +
-          '<div class="hc-step-name">' +
-          s.name +
-          "</div>" +
-          '<div class="hc-step-desc">' +
-          s.desc +
-          "</div>";
 
-      // Re-build properly to inject SVG icon
-      card.innerHTML = "";
       const bar = document.createElement("div");
       bar.className = "hc-step-card-bar";
       bar.style.background = s.accent;
@@ -316,15 +309,6 @@ export default function ECGTimeline() {
       iconWrap.className = "hc-step-icon";
       iconWrap.style.background = "rgba(255,255,255,0.05)";
       iconWrap.style.color = s.accent;
-      // Render SVG icon as HTML string
-      const iconStrings = [
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>',
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.845v6.311a1 1 0 0 1-1.447.893L15 14M3 8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/></svg>',
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>',
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-      ];
       iconWrap.innerHTML = iconStrings[i];
 
       const name = document.createElement("div");
@@ -342,8 +326,7 @@ export default function ECGTimeline() {
       card.appendChild(desc);
 
       card.addEventListener("click", () => {
-        const idx = i;
-        if (activeStepRef.current === idx) {
+        if (activeStepRef.current === i) {
           activeStepRef.current = -1;
           document
             .querySelectorAll(".hc-step-card")
@@ -351,17 +334,16 @@ export default function ECGTimeline() {
           resetNodes();
           return;
         }
-        activeStepRef.current = idx;
+        activeStepRef.current = i;
         document
           .querySelectorAll(".hc-step-card")
-          .forEach((c, j) => c.classList.toggle("active", j === idx));
-        highlightNode(idx);
+          .forEach((c, j) => c.classList.toggle("active", j === i));
+        highlightNode(i);
       });
 
       cardsEl.appendChild(card);
     });
 
-    // Animation loop
     function animate(ts) {
       if (!startTRef.current) startTRef.current = ts;
       const elapsed = (ts - startTRef.current) / 1000;
@@ -369,6 +351,8 @@ export default function ECGTimeline() {
 
       const lightEl = ecgLightRef.current;
       const trailEl = ecgTrailRef.current;
+      if (!lightEl || !trailEl) return;
+
       const nps = nodePositionsRef.current;
 
       let nodeAhead = null;
@@ -385,34 +369,26 @@ export default function ECGTimeline() {
       for (let j = 0; j < nps.length; j++) {
         const dist = Math.abs(nps[j].len - headPos);
         const halo = document.getElementById("halo" + j);
-        if (!halo) continue;
+        const inner = document.getElementById("node" + j);
+        if (!halo || !inner) continue;
         if (activeStepRef.current === j) continue;
         if (dist < 40) {
           const glow = (1 - dist / 40) * 0.55;
           halo.setAttribute("opacity", glow.toFixed(3));
           halo.setAttribute("stroke", STEPS[j].accent);
-          document
-            .getElementById("node" + j)
-            .setAttribute("fill", STEPS[j].accent);
+          inner.setAttribute("fill", STEPS[j].accent);
         } else if (dist < 80) {
           halo.setAttribute("opacity", "0");
-          if (activeStepRef.current !== j)
-            document.getElementById("node" + j).setAttribute("fill", "#1a3a6a");
+          inner.setAttribute("fill", "#1a3a6a");
         }
       }
 
       lightEl.style.strokeDasharray = HEAD_LEN + " " + (totalLen + 100);
-      lightEl.style.strokeDashoffset = (totalLen - headPos + HEAD_LEN).toFixed(
-        1,
-      );
+      lightEl.style.strokeDashoffset = (totalLen - headPos + HEAD_LEN).toFixed(1);
       lightEl.setAttribute("stroke", lightColor);
 
       trailEl.style.strokeDasharray = TRAIL_LEN + " " + (totalLen + 100);
-      trailEl.style.strokeDashoffset = (
-        totalLen -
-        headPos +
-        TRAIL_LEN * 0.7
-      ).toFixed(1);
+      trailEl.style.strokeDashoffset = (totalLen - headPos + TRAIL_LEN * 0.7).toFixed(1);
       trailEl.setAttribute("stroke", lightColor);
       trailEl.setAttribute("opacity", "0.12");
 
@@ -441,20 +417,14 @@ export default function ECGTimeline() {
 
   return (
     <div className="hc-ecg-container">
-      {/* Header */}
       <div className="hc-header">
-        <p className="hc-header-eyebrow">
-          {/* <span className="hc-header-line" /> */}
-          How It Works
-          {/* <span className="hc-header-line" /> */}
-        </p>
+        <p className="hc-header-eyebrow">How It Works</p>
         <h2 className="hc-header-title">From signup to care in minutes</h2>
         <p className="hc-header-desc">
           A seamless digital experience designed around your employees
         </p>
       </div>
 
-      {/* SVG ECG */}
       <div className="hc-svg-wrapper">
         <svg
           id="ecgSvg"
@@ -470,13 +440,7 @@ export default function ECGTimeline() {
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            <filter
-              id="hcGlowSoft"
-              x="-20%"
-              y="-20%"
-              width="140%"
-              height="140%"
-            >
+            <filter id="hcGlowSoft" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="6" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
@@ -521,7 +485,6 @@ export default function ECGTimeline() {
         </svg>
       </div>
 
-      {/* Step cards */}
       <div id="stepCards" ref={stepCardsRef} />
     </div>
   );

@@ -98,7 +98,9 @@ import Specialties from "./pages/Specialties";
 import Symptoms from "./pages/Symptoms";
 import Categories from "./pages/Categories";
 // Specialty pages
-import PrimaryCare from "./pages/Specialty/PrimaryCare";
+import SPdemo from "./pages/Specialty/SPeDemo";
+// category pages
+import ChildFamilyCare from "./pages/Categories/ChildMain";
 
 import AppointmentBooking from "./pages/AppointmentBooking";
 import AppointmentBookingForm from "./pages/AppointmentBookingForm";
@@ -725,12 +727,15 @@ function AppLayout() {
         />
         <Route path="/video-call/:appointmentId" element={<VideoCall />} />
 
-        {/* Specialties */}
-        <Route path="/specialties" element={<Specialties />} />
-        <Route path="/symptoms" element={<Symptoms />} />
+        {/* Categories*/}
         <Route path="/categories" element={<Categories />} />
-        
-        <Route path="/primary-care" element={<PrimaryCare />} />
+        <Route path="/specialties" element={<Specialties />} />
+        <Route path="/conditions" element={<Symptoms />} />
+
+        <Route path="/child-family-care" element={<ChildFamilyCare />} />
+        <Route path="/sp-demo" element={<SPdemo />} />
+
+
 
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />

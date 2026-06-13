@@ -254,8 +254,43 @@ export default function PCPSection() {
             </div>
           </Motion.div>
 
-        </div>
-      </div>
+          {/* ════ KNOW MORE — bottom of right column ════
+              At desktop: sits in normal flow below pcp-image-stack height
+              + the absolute-positioned steps card. The CSS margin-top
+              pushes it clear of the card's bottom edge.
+              At <=1200px: pcp-steps-card is relative so this flows
+              naturally right after it.                              */}
+          <Motion.div
+            className="pcp-know-more-wrap"
+            variants={fadeUp(0.8)}
+            initial="hidden"
+            animate={rightInView ? "visible" : "hidden"}
+          >
+            <Motion.button
+              className="pcp-know-more-btn"
+              whileHover={{
+                y: -4,
+                boxShadow: "0 20px 48px rgba(67, 109, 186, 0.28)",
+                transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+              }}
+              whileTap={{ scale: 0.97 }}
+            >
+              Know More
+              <span className="pcp-btn-arrow" aria-hidden="true">→</span>
+            </Motion.button>
+
+            <Motion.p
+              className="pcp-know-more-hint"
+              variants={fadeUp(0.92)}
+              initial="hidden"
+              animate={rightInView ? "visible" : "hidden"}
+            >
+              No insurance needed · Cancel anytime
+            </Motion.p>
+          </Motion.div>
+
+        </div>{/* /pcp-right */}
+      </div>{/* /pcp-container */}
     </Motion.section>
   );
 }

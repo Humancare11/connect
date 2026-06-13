@@ -1119,7 +1119,7 @@ h1, h2, h3, h4 {
   box-shadow: 0 18px 50px rgba(15, 31, 61, 0.10);
 }
 
-.marquee-left .testi-quote { color: #26364d; }
+.marquee-left .testi-quote { color: linear-gradient(135deg, #436dba 0%, #5e86d1 100%); }
 .marquee-left .testi-author-simple { color: #70819b; }
 
 .marquee-right .testi-card-v2 {

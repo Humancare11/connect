@@ -59,7 +59,6 @@
   border-radius: 100px;
   padding: 8px 14px 8px 20px;
   box-shadow: var(--shadow-1);
-
 }
 
 /* ============================================================
@@ -102,7 +101,15 @@
 }
 
 /* ============================================================
-   HELP SLIDER
+   HELP SLIDER WRAP
+============================================================ */
+.help-slider-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   HELP SLIDER PILL
 ============================================================ */
 .help-slider {
   display: flex;
@@ -123,6 +130,25 @@
     0 6px 20px rgba(46,74,122,.10);
   overflow: hidden;
   flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color  .22s ease,
+    box-shadow    .22s ease,
+    background    .22s ease;
+}
+
+.help-slider:hover,
+.help-slider--open {
+  border-color: rgba(11,87,232,.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.30),
+    0 6px 28px rgba(11,87,232,.14);
+  background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.14));
+}
+
+.help-slide-track.paused {
+  animation-play-state: paused;
 }
 
 .help-label {
@@ -155,6 +181,7 @@
   flex: 1;
   overflow: hidden;
   height: var(--item-h);
+  min-width: 80px; /* FIX: prevent the text area from collapsing */
 }
 
 .help-slide-track {
@@ -186,6 +213,135 @@
 }
 
 /* ============================================================
+   HELP DROPDOWN
+
+============================================================ */
+.help-dropdown {
+  position: absolute;
+  top: calc(100% + 15px);
+
+  left: 100%;
+  transform: translateX(-50%);
+  width: clamp(460px, 580px, 90vw);
+
+  z-index: 90;
+
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(200,215,255,.50);
+  border-radius: 24px;
+  padding: 16px 14px 14px;
+  box-shadow:
+    0 16px 48px rgba(11,40,100,.14),
+    0 4px 12px  rgba(11,40,100,.07),
+    inset 0 1px 0 rgba(255,255,255,.95);
+
+  animation: dropdownIn .22s var(--ease-out-expo);
+  animation-fill-mode: both;
+  will-change: translate, scale, opacity;
+
+  width: 800px;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+    scale: .98;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+.help-dropdown-heading {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 6px 10px;
+  margin: 0 0 8px;
+  border-bottom: 1px solid rgba(11,40,100,.07);
+}
+
+/* 3-column grid */
+.help-dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.help-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background .18s ease,
+    transform   .20s var(--ease-out-expo);
+}
+
+.help-dropdown-item:hover {
+  background: rgba(11,87,232,.06);
+  transform: translateY(-2px);
+}
+
+.help-dropdown-item:hover .help-dropdown-icon {
+  background: rgba(11,87,232,.12);
+  color: var(--blue);
+}
+
+.help-dropdown-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: rgba(11,40,100,.05);
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .18s ease, color .18s ease;
+}
+
+.help-dropdown-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.help-dropdown-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.help-dropdown-desc {
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.help-dropdown-arrow { display: none; }
+
+/* ============================================================
    DESKTOP NAV MENU + PILL
 ============================================================ */
 .nav-menu {
@@ -194,10 +350,10 @@
   align-items: center;
   gap: 2px;
   flex: 1;
-  min-width: 0;         
+  min-width: 0;
   height: 42px;
   padding: 0 4px;
-  overflow: visible;    
+  overflow: visible;
 }
 
 .nav-pill {
@@ -209,7 +365,6 @@
   pointer-events: none;
   z-index: 1;
   opacity: 0;
-
   transition:
     left       0.36s var(--ease-out-expo),
     width      0.36s var(--ease-out-expo),
@@ -217,12 +372,10 @@
     background 0.18s ease,
     border     0.18s ease,
     box-shadow 0.18s ease;
-
   backdrop-filter: blur(8px) saturate(140%);
   -webkit-backdrop-filter: blur(8px) saturate(140%);
 }
 
-/* Nav items sit above the pill */
 .nav-item {
   position: relative;
   z-index: 2;
@@ -243,18 +396,8 @@
   transition: color .20s ease;
 }
 
-.nav-item:hover {
-  color: var(--blue);
-}
-
-.nav-item:hover {
-  color: var(--blue);
-}
-
-.nav-item.active {
-  color: var(--blue);
-  
-}
+.nav-item:hover { color: var(--blue); }
+.nav-item.active { color: var(--blue); }
 
 .nav-item.active::before {
   content: "";
@@ -266,7 +409,7 @@
   height: 16px;
   border-radius: 999px;
   background: var(--blue);
-  box-shadow: 0 0 6px rgba(11, 87, 232, .45);
+  box-shadow: 0 0 6px rgba(11,87,232,.45);
   animation: barIn .26s var(--ease-out-expo) both;
 }
 
@@ -278,9 +421,7 @@
 /* ============================================================
    AUTH BUTTONS
 ============================================================ */
-.auth-buttons {
-  flex-shrink: 0;
-}
+.auth-buttons { flex-shrink: 0; }
 
 .auth-combined {
   display: inline-flex;
@@ -306,15 +447,8 @@
   box-shadow: 0 14px 30px -10px rgba(46,74,122,.58);
 }
 
-.auth-link {
-  color: #fff;
-  text-decoration: none;
-}
-
-.divider {
-  opacity: .50;
-  color: #fff;
-}
+.auth-link    { color: #fff; text-decoration: none; }
+.divider      { opacity: .50; color: #fff; }
 
 .profile-icon {
   font-size: 28px;
@@ -356,7 +490,7 @@
    MOBILE MENU
 ============================================================ */
 .mobile-menu {
-  display: none;          
+  display: none;
   position: absolute;
   top: calc(100% + 10px);
   left: 0;
@@ -372,14 +506,11 @@
   flex-direction: column;
   gap: 2px;
 
-  /* Slide-down entry animation */
   transform-origin: top center;
   animation: mobileMenuIn .28s var(--ease-out-expo) both;
 }
 
-.mobile-menu.open {
-  display: flex;
-}
+.mobile-menu.open { display: flex; }
 
 @keyframes mobileMenuIn {
   from { opacity: 0; transform: translateY(-8px) scale(.98); }
@@ -426,22 +557,17 @@
   border: 1px solid rgba(255,255,255,.12);
   transition: background .18s ease, color .18s ease;
 }
-.mobile-auth-link:hover { background: rgba(255,255,255,.08); color: #fff; }
-
-.mobile-auth-cta {
-  background: #2E4A7A;
-  color: #fff;
-  border-color: transparent;
-}
-.mobile-auth-cta:hover { background: #35558B; color: #fff; }
+.mobile-auth-link:hover        { background: rgba(255,255,255,.08); color: #fff; }
+.mobile-auth-cta               { background: #2E4A7A; color: #fff; border-color: transparent; }
+.mobile-auth-cta:hover         { background: #35558B; color: #fff; }
 
 /* ============================================================
-   OVERLAY 
+   OVERLAY
 ============================================================ */
 .mobile-overlay {
   position: fixed;
   inset: 0;
-  z-index: 79;  
+  z-index: 79;
   background: transparent;
   cursor: pointer;
 }
@@ -452,32 +578,20 @@
 
 /* ── 1180px: tighten nav item spacing ── */
 @media (max-width: 1180px) {
-  .nav-item {
-    font-size: 12px;
-    padding: 0 9px;
-  }
+  .nav-item { font-size: 12px; padding: 0 9px; }
   .nav-menu { gap: 0; }
-  .help-slider {
-    width: 200px;
-    min-width: 200px;
-  }
+  .help-slider { width: 200px; min-width: 200px; }
 }
 
-/* ── 1024px: shrink help slider further ── */
+/* ── 1024px ── */
 @media (max-width: 1024px) {
-  .nav-item {
-    font-size: 12px;
-    padding: 0 8px;
-  }
-  .auth-combined {
-    padding: 9px 14px;
-    font-size: 13px;
-  }
+  .nav-item      { font-size: 12px; padding: 0 8px; }
+  .auth-combined { padding: 9px 14px; font-size: 13px; }
 }
 
-/* ── 980px: hide help slider ── */
+/* ── 980px: hide help slider at mid-tablet ── */
 @media (max-width: 980px) {
-  .help-slider { display: none; }
+  .help-slider-wrap { display: none; }
 }
 
 /* ── 768px: switch to mobile layout ── */
@@ -490,10 +604,10 @@
   .nav-menu     { display: none; }
   .auth-buttons { display: none; }
 
-
   .hamburger {
     display: flex;
-    margin-left: auto;  
+    margin-left: auto;
+    flex-shrink: 0;
   }
 
   .logo {
@@ -502,14 +616,134 @@
     flex-shrink: 0;
   }
 
+  /* Shrink logo container when mini-logo is shown */
+  .glass-header.shrink .logo {
+    width: 40px;
+    max-width: 40px;
+  }
+
   .nav-container {
     padding: 8px 12px 8px 16px;
-    gap: 0;            
+    gap: 0;
+  }
+
+  /* ── MOBILE HELP SLIDER
+     Hidden by default. Revealed when header gets .shrink. ── */
+  .help-slider-wrap {
+    display: none;
+    flex-shrink: 0;
+    margin-left: 8px;
+    margin-right: 0;
+  }
+
+  /* Reveal when scrolled */
+  .glass-header.shrink .help-slider-wrap {
+    display: flex;
+    align-items: center;
+  }
+
+  /* FIX: explicit min-width prevents the pill from collapsing.
+     The slide-wrapper has overflow:hidden so contributes zero
+     intrinsic width — without min-width the pill shrinks to nothing. */
+  .glass-header.shrink .help-slider {
+    width: auto;
+    min-width: 200px;
+    max-width: calc(100vw - 160px); /* leaves room for logo + hamburger */
+    height: 36px;
+    padding: 0 14px;
+  }
+
+  .glass-header.shrink .help-label {
+    display: flex;
+    font-size: 8px;
+    letter-spacing: 1px;
+    padding-right: 10px;
+    margin-right: 10px;
+  }
+
+  .glass-header.shrink .help-slide-item {
+    font-size: 12px;
+  }
+
+  /* ── MOBILE DROPDOWN FIX ──────────────────────────────────────
+     Switch to position:fixed so the dropdown is positioned
+     relative to the VIEWPORT, not the small pill element.
+
+     With position:absolute + left:50% the percentage is measured
+     from the pill's own width (~180px), so "50%" = 90px, then
+     translateX(-50%) subtracts half the dropdown width (~200px),
+     landing the left edge at roughly -110px — off screen.
+
+     position:fixed + left/right coordinates solves this cleanly.
+  ──────────────────────────────────────────────────────────────── */
+  .help-dropdown {
+    position: fixed;
+    top: 72px;        /* header height (~60px) + 12px gap */
+    left: 12px;
+    right: 12px;
+    width: auto;
+    transform: none;  /* clear the desktop translateX(-50%) */
+    max-width: none;
+    border-radius: 18px;
+  }
+
+  .help-dropdown-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .help-dropdown-item {
+    padding: 8px 8px;
+    gap: 8px;
+  }
+
+  .help-dropdown-label {
+    font-size: 11.5px;
+  }
+
+  .help-dropdown-desc {
+    font-size: 10px;
+  }
+
+  .help-dropdown-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .help-dropdown-icon svg {
+    width: 15px;
+    height: 15px;
   }
 }
 
 /* ── 480px: very small screens ── */
 @media (max-width: 480px) {
   .glass-header { width: calc(100% - 16px); }
-  .logo { max-width: 110px; }
+  .logo         { max-width: 110px; }
+
+  .glass-header.shrink .help-slider {
+    min-width: 170px;
+    max-width: calc(100vw - 140px);
+    height: 34px;
+    padding: 0 10px;
+  }
+
+  .glass-header.shrink .help-label {
+    font-size: 7px;
+    letter-spacing: 0.8px;
+    padding-right: 8px;
+    margin-right: 8px;
+  }
+
+  .glass-header.shrink .help-slide-item {
+    font-size: 11px;
+  }
+
+  /* Bump the fixed dropdown down a touch on very small screens
+     to match the slightly smaller header height */
+  .help-dropdown {
+    top: 66px;
+    left: 8px;
+    right: 8px;
+  }
 }
