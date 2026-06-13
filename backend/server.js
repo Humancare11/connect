@@ -105,12 +105,34 @@ const startServer = async () => {
   await ensureBucketCors(allowedOrigins);
 };
 
+function normalizeOrigin(value) {
+  const origin = String(value || "").trim().replace(/\/+$/, "");
+  if (!origin) return "";
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return origin;
+  }
+}
+
+function parseOriginList(value) {
+  return String(value || "")
+    .split(",")
+    .map(normalizeOrigin)
+    .filter(Boolean);
+}
+
 // Allowed Origins
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "http://localhost:5173",
-  "http://localhost:3000",
-].filter(Boolean);
+const allowedOrigins = Array.from(
+  new Set([
+    ...parseOriginList(process.env.FRONTEND_URL),
+    ...parseOriginList(process.env.CORS_ALLOWED_ORIGINS),
+    "https://humancareconnect.co",
+    "https://www.humancareconnect.co",
+    "http://localhost:5173",
+    "http://localhost:3000",
+  ].filter(Boolean))
+);
 
 const awsS3Region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "us-east-1";
 const s3AssetSources = [
@@ -161,7 +183,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     // Allow listed origins
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.indexOf(normalizeOrigin(origin)) !== -1) {
       return callback(null, true);
     }
 

@@ -282,6 +282,15 @@ export default function DoctorAuthPage() {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     clrErr();
+
+    // Add these checks
+    if (!/^[a-zA-Z\s.]+$/.test(registerForm.name.trim())) {
+      return setFormError("Name must contain only letters.");
+    }
+    if (registerForm.name.trim().length < 2) {
+      return setFormError("Please enter your full name.");
+    }
+
     const pwd = registerForm.password;
     if (pwd !== registerForm.confirmPassword)
       return setFormError("Passwords do not match.");
@@ -664,12 +673,23 @@ export default function DoctorAuthPage() {
             {formError && <p className="form-error">{formError}</p>}
             <span>or use your email</span>
 
-            <input
+            {/* <input
               type="text"
               placeholder="Dr. Full Name"
               value={registerForm.name}
               onChange={(e) => {
                 setRegisterForm((p) => ({ ...p, name: e.target.value }));
+                clrErr();
+              }}
+              required
+            /> */}
+            <input
+              type="text"
+              placeholder="Dr. Full Name"
+              value={registerForm.name}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^a-zA-Z\s.]/g, "");
+                setRegisterForm((p) => ({ ...p, name: value }));
                 clrErr();
               }}
               required

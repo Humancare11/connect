@@ -69,14 +69,12 @@ const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminAppointmentDetails = lazy(() => import("./pages/admin/AdminAppointmentDetails"));
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
-const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
 const PaymentLinkHistory = lazy(() => import("./pages/admin/PaymentLinkHistory"));
 const QnAPage = lazy(() => import("./pages/admin/QnAPage"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
 const SuperAdminDashboard = lazy(() => import("./pages/admin/SuperAdminDashboard"));
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
-const SecurityIncidents = lazy(() => import("./pages/admin/SecurityIncidents"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -667,16 +665,6 @@ function AppLayout() {
           }
         />
         <Route
-          path="/admin-dashboard/payments"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <AdminPayments />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
           path="/admin-dashboard/qna"
           element={
             <PrivateRoute allowedRoles={["admin", "superadmin"]}>
@@ -710,16 +698,6 @@ function AppLayout() {
             <PrivateRoute allowedRoles={["superadmin"]}>
               <AdminLayout>
                 <AuditLogs />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/security-incidents"
-          element={
-            <PrivateRoute allowedRoles={["superadmin"]}>
-              <AdminLayout>
-                <SecurityIncidents />
               </AdminLayout>
             </PrivateRoute>
           }

@@ -742,10 +742,17 @@ function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
     setPreview(URL.createObjectURL(raw));
     setUploading(true);
     try {
-      const uploaded = await uploadFileDirectToS3(raw, { ownerType: "doctor", ownerId: enrollmentId });
-      setLocalUrl(uploaded.key); onChange(uploaded.key);
-    } catch { setErr("Upload failed — please try again."); }
-    finally { setUploading(false); }
+      const uploaded = await uploadFileDirectToS3(raw, {
+        ownerType: "doctor",
+        ownerId: enrollmentId,
+      });
+      setLocalUrl(uploaded.key);
+      onChange(uploaded.key);
+    } catch {
+      setErr("Upload failed — please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const normalizedLocalUrl = normalizeFileUrl(localUrl);
@@ -937,10 +944,17 @@ function AdminDocUpload({
     setErr("");
     setUploading(true);
     try {
-      const uploaded = await uploadFileDirectToS3(raw, { ownerType: "doctor", ownerId: enrollmentId });
-      setLocalUrl(uploaded.key); onChange(uploaded.key);
-    } catch { setErr("Upload failed — please try again."); }
-    finally { setUploading(false); }
+      const uploaded = await uploadFileDirectToS3(raw, {
+        ownerType: "doctor",
+        ownerId: enrollmentId,
+      });
+      setLocalUrl(uploaded.key);
+      onChange(uploaded.key);
+    } catch {
+      setErr("Upload failed — please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const fileUrl = normalizeFileUrl(localUrl);
@@ -2701,7 +2715,7 @@ export default function AdminDoctorProfile() {
           )}
 
           {/* ── Personal & Contact ── */}
-          <Section icon="👤" title="Personal & Contact Details-test">
+          <Section icon="👤" title="Personal & Contact Details">
             {e.profilePhoto ? (
               <div
                 style={{

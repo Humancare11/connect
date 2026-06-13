@@ -37,9 +37,21 @@ function getS3ObjectUrl(key) {
   return `https://${bucket}.s3.${AWS_REGION}.amazonaws.com/${encodeS3Key(key)}`;
 }
 
+function normalizeCorsOrigins(allowedOrigins) {
+  const values = Array.isArray(allowedOrigins) ? allowedOrigins : [allowedOrigins];
+  return Array.from(
+    new Set(
+      values
+        .flatMap((value) => String(value || "").split(","))
+        .map((value) => value.trim().replace(/\/+$/, ""))
+        .filter(Boolean)
+    )
+  );
+}
+
 async function ensureBucketCors(allowedOrigins) {
   if (!AWS_S3_BUCKET) return;
-  const origins = (allowedOrigins || []).filter(Boolean);
+  const origins = normalizeCorsOrigins(allowedOrigins);
   if (!origins.length) return;
   try {
     await s3Client.send(
@@ -49,9 +61,9 @@ async function ensureBucketCors(allowedOrigins) {
           CORSRules: [
             {
               AllowedOrigins: origins,
-              AllowedMethods: ["PUT", "GET"],
-              AllowedHeaders: ["Content-Type", "Authorization"],
-              ExposeHeaders: ["ETag"],
+              AllowedMethods: ["PUT", "GET", "HEAD"],
+              AllowedHeaders: ["*"],
+              ExposeHeaders: ["ETag", "x-amz-request-id", "x-amz-id-2"],
               MaxAgeSeconds: 3600,
             },
           ],

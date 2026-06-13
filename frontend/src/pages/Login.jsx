@@ -421,6 +421,14 @@ export default function AuthPage() {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     clrErr();
+
+    if (!/^[a-zA-Z\s]+$/.test(registerForm.name.trim())) {
+      return setFormError("Name must contain only letters.");
+    }
+    if (registerForm.name.trim().length < 2) {
+      return setFormError("Please enter your full name.");
+    }
+
     if (
       !registerForm.terms ||
       !registerForm.privacyConsent ||
@@ -437,6 +445,9 @@ export default function AuthPage() {
     if (dobError) return setFormError(dobError);
     if (!registerForm.gender) return setFormError("Select Gender");
     if (!registerForm.country) return setFormError("Select your country");
+    if (!registerForm.state)
+      return setFormError("Select your state / province");
+    if (!registerForm.city) return setFormError("Select your city");
     setLoading(true);
     try {
       await api.post("/api/auth/send-register-otp", {
@@ -631,6 +642,7 @@ export default function AuthPage() {
                   min={DOB_MIN}
                   max={todayISO()}
                   placeholder="Date of Birth"
+                  required
                 />
               </div>
               <div className="hc-field-wrap">
@@ -784,6 +796,7 @@ export default function AuthPage() {
                   }
                   defaultCountry="auto"
                   placeholder="Mobile number"
+                  required
                 />
               </div>
             </div>
@@ -1080,7 +1093,7 @@ export default function AuthPage() {
             {formError && <p className="hc-form-error">{formError}</p>}
             <span className="hc-divider-text">or use your email</span>
 
-            <input
+            {/* <input
               className="hc-input"
               type="text"
               placeholder="Full Name"
@@ -1088,6 +1101,18 @@ export default function AuthPage() {
               onChange={(e) =>
                 setRegisterForm((p) => ({ ...p, name: e.target.value }))
               }
+              required
+            /> */}
+
+            <input
+              className="hc-input"
+              type="text"
+              placeholder="Full Name"
+              value={registerForm.name}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                setRegisterForm((p) => ({ ...p, name: value }));
+              }}
               required
             />
 
@@ -1286,6 +1311,7 @@ export default function AuthPage() {
                     }))
                   }
                   disabled={!registerForm.country}
+                  required
                 >
                   <option value="">
                     {loadingStates
@@ -1309,6 +1335,7 @@ export default function AuthPage() {
                     setRegisterForm((p) => ({ ...p, city: e.target.value }))
                   }
                   disabled={!registerForm.state}
+                  required
                 >
                   <option value="">
                     {loadingCities
