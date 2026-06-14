@@ -97,6 +97,18 @@ import DryEyes from "./pages/Conditions/DryEyes";
 import EarInfection from "./pages/Conditions/EarInfection";
 import EarPain from "./pages/Conditions/EarPain";
 import EyeRedness from "./pages/Conditions/EyeRedness";
+import EyeStrain from "./pages/Conditions/EyeStrain";
+import Hoarseness from "./pages/Conditions/Hoarseness";
+import KneePain from "./pages/Conditions/KneePain";
+import MuscleStrain from "./pages/Conditions/MuscleStrain";
+import NasalCongestion from "./pages/Conditions/NasalCongestion";
+import NeckPain from "./pages/Conditions/NeckPain";
+import NumbnessAndTingling from "./pages/Conditions/NumbnessAndTingling";
+import Stye from "./pages/Conditions/Stye";
+import SwollenFeetAnkles from "./pages/Conditions/SwollenFeetAnkles";
+import Tonsillitis from "./pages/Conditions/Tonsillitis";
+import JointPain from "./pages/Conditions/JointPain";
+import VisionChanges from "./pages/Conditions/VisionChanges";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -881,6 +893,18 @@ function AppLayout() {
           <Route path="/ear-infection" element={<EarInfection />} />
           <Route path="/ear-pain" element={<EarPain />} />
           <Route path="/eye-redness" element={<EyeRedness />} />
+          <Route path="/eye-strain" element={<EyeStrain />} />
+          <Route path="/hoarseness" element={<Hoarseness />} />
+          <Route path="/knee-pain" element={<KneePain />} />
+          <Route path="/muscle-strain" element={<MuscleStrain />} />
+          <Route path="/nasal-congestion" element={<NasalCongestion />} />
+          <Route path="/neck-pain" element={<NeckPain />} />
+          <Route path="/numbness-tingling" element={<NumbnessAndTingling />} />
+          <Route path="/stye" element={<Stye />} />
+          <Route path="/swollen-feet-ankles" element={<SwollenFeetAnkles />} />
+          <Route path="/tonsillitis" element={<Tonsillitis />} />
+          <Route path="/joint-pain" element={<JointPain />} />
+          <Route path="/vision-changes" element={<VisionChanges />} />
 
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           <Route
