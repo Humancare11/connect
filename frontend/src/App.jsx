@@ -40,6 +40,29 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
+// Specialty pages
+import SPdemo from "./pages/Specialty/SPeDemo";
+// category pages
+import ChildFamilyCare from "./pages/Categories/ChildMain";
+// condition pages
+import Arthritis from "./pages/Conditions/Arthritis";
+import CancerSecond from "./pages/Conditions/CancerSecondOpinion";
+import ChestPain from "./pages/Conditions/ChestPain";
+import ChronicKidney from "./pages/Conditions/ChronicKidneyDisease";
+import ChronicMigraine from "./pages/Conditions/ChronicMigraine";
+import ComplexDiagnosis from "./pages/Conditions/ComplexDiagnosisReview";
+import FattyLiver from "./pages/Conditions/FattyLiver";
+import HeartDisease from "./pages/Conditions/HeartDisease";
+import HighBloodPressure from "./pages/Conditions/HighBloodPressure";
+import HighCholesterol from "./pages/Conditions/HighCholesterol";
+import HormoneImblance from "./pages/Conditions/HormoneImbalance";
+import MemoryConcerns from "./pages/Conditions/MemoryConcerns";
+import Obesity from "./pages/Conditions/Obesity";
+
+
+
+
+
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
 const DoctorLayout = lazy(() => import("./pages/doctors/DoctorLayout"));
@@ -91,14 +114,11 @@ const Home2 = lazy(() => import("./pages/Home-2"));
 const Test = lazy(() => import("./pages/Test"));
 const PaymentLinkCheckout = lazy(() => import("./pages/PaymentLinkCheckout"));
 
-//
+//Main pages of categories, specialties and conditions
 const Specialties = lazy(() => import("./pages/Specialties"));
 const Symptoms = lazy(() => import("./pages/Symptoms"));
 const Categories = lazy(() => import("./pages/Categories"));
-// Specialty pages
-import SPdemo from "./pages/Specialty/SPeDemo";
-// category pages
-import ChildFamilyCare from "./pages/Categories/ChildMain";
+
 
 const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
 const AppointmentBookingForm = lazy(() => import("./pages/AppointmentBookingForm"));
@@ -330,396 +350,412 @@ function AppLayout() {
 
       <Suspense fallback={<main className="hc-route-loading" aria-hidden="true" />}>
         <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/ask-a-question" element={<AskDoctor />} />
-        <Route path="/medical-services" element={<Services />} />
-        <Route path="/blogs" element={<Blogs />} />
-        <Route path="/corporates" element={<Corporates />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/login" element={<Login />} />
-        {/* <Route path="/register" element={<Register />} /> */}
-        <Route path="/book-appointment" element={<BookAppointment />} />
-        <Route path="/home-demo" element={<Home2 />} />
-        <Route path="/test" element={<Test />} />
-        <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
-        {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
-        <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-        {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
-        <Route path="/doctor/:id" element={<DoctorProfileForUser legacyId />} />
-        {/* ================condition pages ================= */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/ask-a-question" element={<AskDoctor />} />
+          <Route path="/medical-services" element={<Services />} />
+          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/corporates" element={<Corporates />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/login" element={<Login />} />
+          {/* <Route path="/register" element={<Register />} /> */}
+          <Route path="/book-appointment" element={<BookAppointment />} />
+          <Route path="/home-demo" element={<Home2 />} />
+          <Route path="/test" element={<Test />} />
+          <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
+
+          {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
+          <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
+          {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
+          <Route path="/doctor/:id" element={<DoctorProfileForUser legacyId />} />
+
+          <Route
+            path="/user/dashboard"
+            element={
+              <UserLayout>
+                <Dashboard />
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/user/appointments"
+            element={
+              <UserLayout>
+                <Appointments />
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/user/medical-questions"
+            element={
+              <UserLayout>
+                <MedicalQuestions />
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/user/favourite-doctors"
+            element={
+              <UserLayout>
+                <FavouriteDoctors />
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/user/lab-appointments"
+            element={
+              <UserLayout>
+                <LabAppointments />
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/user/profile-settings"
+            element={
+              <UserLayout>
+                <ProfileSettings />
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/user/change-password"
+            element={
+              <UserLayout>
+                <ChangePassword />
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/user/my-records"
+            element={
+              <UserLayout>
+                <MyRecords />
+              </UserLayout>
+            }
+          />
+          <Route
+            path="/user/raise-ticket"
+            element={
+              <UserLayout>
+                <UserRaiseTicket />
+              </UserLayout>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={<Navigate to="/user/dashboard" replace />}
+          />
+
+          {/* <Route path="/doctor-register" element={<DoctorRegister />} /> */}
+          <Route path="/doctor-login" element={<DoctorLogin />} />
+
+          <Route
+            path="/doctor-dashboard"
+            element={
+              <DoctorLayout>
+                <Dashbord />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/profile"
+            element={
+              <DoctorLayout>
+                <DoctorProfile />
+              </DoctorLayout>
+            }
+          />
+          {/* Enrollment is standalone — no sidebar/header until approved */}
+          <Route
+            path="/doctor-dashboard/enrollments"
+            element={<DoctorEnrollmentsWrapper />}
+          />
+          <Route
+            path="/doctor-dashboard/appointments"
+            element={
+              <DoctorLayout>
+                <DoctorAppointments />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/patients"
+            element={
+              <DoctorLayout>
+                <DoctorPatients />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/messages"
+            element={
+              <DoctorLayout>
+                <DoctorMessages />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/raise-ticket"
+            element={
+              <DoctorLayout>
+                <RaiseTicket />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/qna"
+            element={
+              <DoctorLayout>
+                <DoctorQnA />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/analytics"
+            element={
+              <DoctorLayout>
+                <DoctorAnalytics />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/settings"
+            element={
+              <DoctorLayout>
+                <DoctorSettings />
+              </DoctorLayout>
+            }
+          />
+
+          <Route path="/adminauth" element={<AdminAuthPage />} />
+          <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
+          <Route
+            path="/payment-admin"
+            element={<Navigate to="/payment-admin/payment-links" replace />}
+          />
+          <Route
+            path="/payment-admin/payment-links"
+            element={
+              <PrivateRoute
+                allowedRoles={["paymentadmin"]}
+                loginPath="/payment-admin-login"
+              >
+                <AdminLayout>
+                  <PaymentLinks />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/payment-admin/payment-history"
+            element={
+              <PrivateRoute
+                allowedRoles={["paymentadmin"]}
+                loginPath="/payment-admin-login"
+              >
+                <AdminLayout>
+                  <PaymentLinkHistory />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-auth"
+            element={<Navigate to="/adminauth" replace />}
+          />
+          <Route
+            path="/admin-dashboard"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDashboard />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/payment-links"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <PaymentLinks />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/payment-link-history"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <PaymentLinkHistory />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/our-doctors"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <OurDoctors />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/doctors/:slug"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <DoctorProfileForUser adminView />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/manage-doctors"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <ManageDoctors />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/doctor-profile/:id"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDoctorProfile />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/doctor-payments"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <DoctorPayments />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/manage-users"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <ManageUsers />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/appointments"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminAppointments />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/appointments/:id"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminAppointmentDetails />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/appointments/:id/assign"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminAssignDoctor />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/qna"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <QnAPage />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/tickets"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <SupportTickets />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/superadmin-dashboard"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <SuperAdminDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/audit-logs"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <AuditLogs />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route path="/video-call/:appointmentId" element={<VideoCall />} />
+
+          {/* ALL*/}
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/specialties" element={<Specialties />} />
+          <Route path="/conditions" element={<Symptoms />} />
+
+          {/* categories */}
+          <Route path="/child-family-care" element={<ChildFamilyCare />} />
+
+          {/* specialties */}
+          <Route path="/sp-demo" element={<SPdemo />} />
+
+          {/* condition pages */}
+            <Route path="/arthritis" element={<Arthritis />} / >
+            <Route path="/cancer-second-opinion" element={<CancerSecond />} / > 
+            <Route path="/chest-pain" element={<ChestPain/>} / > 
+            <Route path="/chronic-kidney-disease" element={<ChronicKidney />} / > 
+            <Route path="/chronic-migraine" element={<ChronicMigraine />} / > 
+            <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} / > 
+            <Route path="/fatty-liver" element={<FattyLiver />} / >
+            <Route path="/heart-disease" element={<HeartDisease />} / >
+            <Route path="/high-blood-pressure" element={<HighBloodPressure />} / >
+            <Route path="/high-cholesterol" element={<HighCholesterol />} / >
+            <Route path="/hormone-imblance" element={<HormoneImblance />} / >
+            <Route path="/memory-concerns" element={<MemoryConcerns />} / >
+            <Route path="/obesity" element={<Obesity />} / >
 
 
 
-        <Route
-          path="/user/dashboard"
-          element={
-            <UserLayout>
-              <Dashboard />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/user/appointments"
-          element={
-            <UserLayout>
-              <Appointments />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/user/medical-questions"
-          element={
-            <UserLayout>
-              <MedicalQuestions />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/user/favourite-doctors"
-          element={
-            <UserLayout>
-              <FavouriteDoctors />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/user/lab-appointments"
-          element={
-            <UserLayout>
-              <LabAppointments />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/user/profile-settings"
-          element={
-            <UserLayout>
-              <ProfileSettings />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/user/change-password"
-          element={
-            <UserLayout>
-              <ChangePassword />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/user/my-records"
-          element={
-            <UserLayout>
-              <MyRecords />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/user/raise-ticket"
-          element={
-            <UserLayout>
-              <UserRaiseTicket />
-            </UserLayout>
-          }
-        />
-
-        <Route
-          path="/profile"
-          element={<Navigate to="/user/dashboard" replace />}
-        />
-
-        {/* <Route path="/doctor-register" element={<DoctorRegister />} /> */}
-        <Route path="/doctor-login" element={<DoctorLogin />} />
-
-        <Route
-          path="/doctor-dashboard"
-          element={
-            <DoctorLayout>
-              <Dashbord />
-            </DoctorLayout>
-          }
-        />
-        <Route
-          path="/doctor-dashboard/profile"
-          element={
-            <DoctorLayout>
-              <DoctorProfile />
-            </DoctorLayout>
-          }
-        />
-        {/* Enrollment is standalone — no sidebar/header until approved */}
-        <Route
-          path="/doctor-dashboard/enrollments"
-          element={<DoctorEnrollmentsWrapper />}
-        />
-        <Route
-          path="/doctor-dashboard/appointments"
-          element={
-            <DoctorLayout>
-              <DoctorAppointments />
-            </DoctorLayout>
-          }
-        />
-        <Route
-          path="/doctor-dashboard/patients"
-          element={
-            <DoctorLayout>
-              <DoctorPatients />
-            </DoctorLayout>
-          }
-        />
-        <Route
-          path="/doctor-dashboard/messages"
-          element={
-            <DoctorLayout>
-              <DoctorMessages />
-            </DoctorLayout>
-          }
-        />
-        <Route
-          path="/doctor-dashboard/raise-ticket"
-          element={
-            <DoctorLayout>
-              <RaiseTicket />
-            </DoctorLayout>
-          }
-        />
-        <Route
-          path="/doctor-dashboard/qna"
-          element={
-            <DoctorLayout>
-              <DoctorQnA />
-            </DoctorLayout>
-          }
-        />
-        <Route
-          path="/doctor-dashboard/analytics"
-          element={
-            <DoctorLayout>
-              <DoctorAnalytics />
-            </DoctorLayout>
-          }
-        />
-        <Route
-          path="/doctor-dashboard/settings"
-          element={
-            <DoctorLayout>
-              <DoctorSettings />
-            </DoctorLayout>
-          }
-        />
-
-        <Route path="/adminauth" element={<AdminAuthPage />} />
-        <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-        <Route
-          path="/payment-admin"
-          element={<Navigate to="/payment-admin/payment-links" replace />}
-        />
-        <Route
-          path="/payment-admin/payment-links"
-          element={
-            <PrivateRoute
-              allowedRoles={["paymentadmin"]}
-              loginPath="/payment-admin-login"
-            >
-              <AdminLayout>
-                <PaymentLinks />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/payment-admin/payment-history"
-          element={
-            <PrivateRoute
-              allowedRoles={["paymentadmin"]}
-              loginPath="/payment-admin-login"
-            >
-              <AdminLayout>
-                <PaymentLinkHistory />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-auth"
-          element={<Navigate to="/adminauth" replace />}
-        />
-        <Route
-          path="/admin-dashboard"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <AdminDashboard />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/payment-links"
-          element={
-            <PrivateRoute allowedRoles={["superadmin"]}>
-              <AdminLayout>
-                <PaymentLinks />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/payment-link-history"
-          element={
-            <PrivateRoute allowedRoles={["superadmin"]}>
-              <AdminLayout>
-                <PaymentLinkHistory />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/our-doctors"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <OurDoctors />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/doctors/:slug"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <DoctorProfileForUser adminView />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/manage-doctors"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <ManageDoctors />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/doctor-profile/:id"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <AdminDoctorProfile />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/doctor-payments"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <DoctorPayments />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/manage-users"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <ManageUsers />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/appointments"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <AdminAppointments />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/appointments/:id"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <AdminAppointmentDetails />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/appointments/:id/assign"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <AdminAssignDoctor />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/qna"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <QnAPage />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/tickets"
-          element={
-            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-              <AdminLayout>
-                <SupportTickets />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/superadmin-dashboard"
-          element={
-            <PrivateRoute allowedRoles={["superadmin"]}>
-              <SuperAdminDashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin-dashboard/audit-logs"
-          element={
-            <PrivateRoute allowedRoles={["superadmin"]}>
-              <AdminLayout>
-                <AuditLogs />
-              </AdminLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route path="/video-call/:appointmentId" element={<VideoCall />} />
-
-        {/* Categories*/}
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/specialties" element={<Specialties />} />
-        <Route path="/conditions" element={<Symptoms />} />
-
-        <Route path="/child-family-care" element={<ChildFamilyCare />} />
-        <Route path="/sp-demo" element={<SPdemo />} />
-
-
-
-        <Route path="/appointment-booking" element={<AppointmentBooking />} />
-        <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
+          <Route path="/appointment-booking" element={<AppointmentBooking />} />
+          <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
         </Routes>
         {!hideLayout && <Footer />}
       </Suspense>
