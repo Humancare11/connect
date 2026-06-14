@@ -40,6 +40,8 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
+import AboutUs from "./pages/AboutPage";                  // about us page 
+import PrivacyConcerns from './pages/PrivacyConcerns';         // privacy concerns
 // Specialty pages
 import SPdemo from "./pages/Specialty/SPeDemo";
 // category pages
@@ -960,10 +962,14 @@ function AppLayout() {
           <Route path="/doctors-note" element={<DoctorsNote />} />
 
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
-          <Route
-            path="/appointment-booking/form"
-            element={<AppointmentBookingForm />}
-          />
+          <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
+
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
+
+
+
+
         </Routes>
         {!hideLayout && <Footer />}
       </Suspense>
