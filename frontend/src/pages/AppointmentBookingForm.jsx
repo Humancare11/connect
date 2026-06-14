@@ -15,6 +15,22 @@ import "./Appointment.css";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
+const BOOKING_PENDING_KEY = "hcc_booking_pending";
+const BOOKING_RESUME_KEY = "hcc_booking_resume_after_login";
+
+function readPendingBooking() {
+  const raw = sessionStorage.getItem(BOOKING_PENDING_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function savePendingBooking(payload) {
+  sessionStorage.setItem(BOOKING_PENDING_KEY, JSON.stringify(payload));
+}
 
 function getClientTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -110,10 +126,7 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
     setPaying(true);
     setPayError("");
 
-    sessionStorage.setItem(
-      "hcc_booking_pending",
-      JSON.stringify({ selection, formData, uploadedReports }),
-    );
+    savePendingBooking({ selection, formData, uploadedReports });
 
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
@@ -124,11 +137,11 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
     });
 
     if (error) {
-      sessionStorage.removeItem("hcc_booking_pending");
+      sessionStorage.removeItem(BOOKING_PENDING_KEY);
       setPayError(error.message);
       setPaying(false);
     } else if (paymentIntent?.status === "succeeded") {
-      sessionStorage.removeItem("hcc_booking_pending");
+      sessionStorage.removeItem(BOOKING_PENDING_KEY);
       onSuccess(paymentIntent.id);
     }
   };
@@ -348,15 +361,19 @@ export default function AppointmentBookingForm() {
 
   const [selection, setSelection] = useState(() => {
     if (state?.selection) return state.selection;
-    const raw = sessionStorage.getItem("hcc_booking_pending");
-    if (raw) {
-      try { return JSON.parse(raw).selection || null; } catch { return null; }
-    }
-    return null;
+    return readPendingBooking()?.selection || null;
   });
 
   const [stage, setStage] = useState("form");
-  const [form, setForm] = useState({ notes: "", date: "", time: "", files: [] });
+  const [form, setForm] = useState(() => {
+    const formData = readPendingBooking()?.formData;
+    return {
+      notes: formData?.notes || "",
+      date: formData?.date || "",
+      time: formData?.time || "",
+      files: [],
+    };
+  });
   const [errors, setErrors] = useState({});
   const [proceedErr, setProceedErr] = useState("");
   const [proceeding, setProceeding] = useState(false);
@@ -382,6 +399,32 @@ export default function AppointmentBookingForm() {
     [form.date],
   );
 
+  const continueToPayment = async ({ formData = form, reports = uploadedReports } = {}) => {
+    setProceeding(true);
+    setProceedErr("");
+    try {
+      const uploaded = reports?.length ? reports : [];
+      if (!uploaded.length && formData.files?.length) {
+        for (const file of formData.files) {
+          uploaded.push(await uploadFileDirectToS3(file));
+        }
+      }
+      setUploadedReports(uploaded);
+      setForm((prev) => ({
+        ...prev,
+        notes: formData.notes || "",
+        date: formData.date || "",
+        time: formData.time || "",
+        files: formData.files || [],
+      }));
+      setStage("payment");
+    } catch (err) {
+      setProceedErr(err?.response?.data?.msg || "Failed to upload reports. Please try again.");
+    } finally {
+      setProceeding(false);
+    }
+  };
+
   // Handle Stripe 3DS redirect return
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -391,9 +434,8 @@ export default function AppointmentBookingForm() {
 
     window.history.replaceState({}, "", window.location.pathname);
 
-    const raw = sessionStorage.getItem("hcc_booking_pending");
-    const pending = raw ? JSON.parse(raw) : null;
-    sessionStorage.removeItem("hcc_booking_pending");
+    const pending = readPendingBooking();
+    sessionStorage.removeItem(BOOKING_PENDING_KEY);
 
     if (redirectStatus === "succeeded" && pending) {
       setSelection(pending.selection);
@@ -404,6 +446,34 @@ export default function AppointmentBookingForm() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (authLoading || !user) return;
+    if (sessionStorage.getItem(BOOKING_RESUME_KEY) !== "1") return;
+
+    const pending = readPendingBooking();
+    sessionStorage.removeItem(BOOKING_RESUME_KEY);
+    if (!pending?.selection || !pending?.formData) return;
+
+    setSelection(pending.selection);
+    setForm({
+      notes: pending.formData.notes || "",
+      date: pending.formData.date || "",
+      time: pending.formData.time || "",
+      files: [],
+    });
+    setUploadedReports(pending.uploadedReports || []);
+    continueToPayment({
+      formData: {
+        notes: pending.formData.notes || "",
+        date: pending.formData.date || "",
+        time: pending.formData.time || "",
+        files: [],
+      },
+      reports: pending.uploadedReports || [],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user]);
 
   const validate = () => {
     const e = {};
@@ -439,21 +509,27 @@ export default function AppointmentBookingForm() {
 
   const handleProceedToPayment = async () => {
     if (!validate()) return;
-    if (!user) { setProceedErr("Please log in to continue booking."); return; }
-    setProceeding(true);
-    setProceedErr("");
-    try {
-      const reports = [];
-      for (const file of form.files) {
-        reports.push(await uploadFileDirectToS3(file));
-      }
-      setUploadedReports(reports);
-      setStage("payment");
-    } catch (err) {
-      setProceedErr(err?.response?.data?.msg || "Failed to upload reports. Please try again.");
-    } finally {
-      setProceeding(false);
+    if (!user) {
+      savePendingBooking({
+        selection,
+        formData: {
+          notes: form.notes,
+          date: form.date,
+          time: form.time,
+        },
+        uploadedReports: [],
+      });
+      sessionStorage.setItem(BOOKING_RESUME_KEY, "1");
+      navigate("/login", {
+        state: {
+          from: "/appointment-booking/form",
+          resumeBooking: true,
+        },
+        replace: true,
+      });
+      return;
     }
+    continueToPayment();
   };
 
   const createAppointment = async (paymentRef, gateway, formData, reports) => {
@@ -475,6 +551,8 @@ export default function AppointmentBookingForm() {
       if (gateway === "paypal") body.paypalOrderId = paymentRef;
       else body.paymentIntentId = paymentRef;
       await api.post("/api/appointments", body);
+      sessionStorage.removeItem(BOOKING_PENDING_KEY);
+      sessionStorage.removeItem(BOOKING_RESUME_KEY);
       setStage("success");
     } catch (err) {
       setConfirmErr(

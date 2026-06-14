@@ -130,7 +130,6 @@ export default function Header() {
   const navItems = [
     ...(location.pathname !== "/" ? [{ label: "Home", link: "/" }] : []),
     { label: "Book Appointment", link: "/appointment-booking" },
-    { label: "Ask a Question",   link: "/ask-a-question"      },
     { label: "Medical Services", link: "/medical-services"    },
     { label: "Corporates",       link: "/corporates"          },
     { label: "Blogs",            link: "/blogs"               },
