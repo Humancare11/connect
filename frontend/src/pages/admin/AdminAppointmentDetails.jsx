@@ -6,9 +6,9 @@ import "./AdminAppointments.css";
 function formatMoney(value) {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return "-";
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "INR",
+    currency: "USD",
     maximumFractionDigits: 0,
   }).format(amount);
 }

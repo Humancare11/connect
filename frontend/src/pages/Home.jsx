@@ -511,6 +511,7 @@ export default function HomePage() {
           <div className="hero-badge">
             <div className="badge-pulse" />
             Available 24/7 Virtual Care
+            Available 24 / 7.
           </div>
 
           <h1>

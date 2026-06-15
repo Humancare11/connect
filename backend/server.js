@@ -8,8 +8,8 @@ require("dotenv").config({
     process.env.NODE_ENV === "production"
       ? ".env.production"
       : process.env.NODE_ENV === "uat"
-      ? ".env.uat"
-      : ".env"
+        ? ".env.uat"
+        : ".env"
   ),
 });
 
@@ -37,8 +37,15 @@ const { recordSecurityIncident } = require("./utils/securityMonitor");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
+// const Anthropic = require("@anthropic-ai/sdk");
+const Groq = require("groq-sdk");
 
 const app = express();
+
+
+// const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 
 // Trust the first reverse proxy (Nginx, Apache, Cloudflare).
 // Without this, req.protocol returns "http" even behind HTTPS termination.
@@ -417,6 +424,67 @@ app.use("/api/audit-logs", require("./routes/auditLogs"));
 app.use("/api/security-incidents", require("./routes/securityIncidents"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));
+
+// app.post("/api/search", async (req, res) => {
+//   const { query, routes } = req.body;
+//   console.log("🔍 Search hit:", query); // ✅ add this
+
+//   try {
+//     const message = await client.messages.create({
+//       model: "claude-sonnet-4-6",
+//       max_tokens: 500,
+//       messages: [{
+//         role: "user",
+//         content: `A patient searched: "${query}".
+// From this list, return the top 5 most relevant as a JSON array (same shape as input).
+// List: ${JSON.stringify(routes)}
+// Return ONLY a valid JSON array. No explanation, no markdown.`
+//       }]
+//     });
+
+//     const results = JSON.parse(message.content[0].text);
+//     res.json({ results });
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Search failed" });
+//   }
+// });
+
+app.post("/api/search", async (req, res) => {
+  const { query, routes } = req.body;
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      max_tokens: 500,
+      messages: [
+        {
+          role: "system",
+          content: "You are a medical search assistant. Always respond with ONLY a valid JSON array. Never include markdown, backticks, or explanation."
+        },
+        {
+          role: "user",
+          content: `A patient searched: "${query}".
+From this list, return the top 5 most relevant as a JSON array (same shape as input).
+List: ${JSON.stringify(routes)}
+Return ONLY a valid JSON array. No markdown, no backticks, no explanation.`
+        }
+      ]
+    });
+
+    // Strip markdown backticks if Groq adds them anyway
+    let raw = completion.choices[0].message.content.trim();
+    raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+
+    const results = JSON.parse(raw);
+    res.json({ results });
+
+  } catch (err) {
+    console.error("Search error:", err);
+    res.status(500).json({ error: "Search failed", detail: err.message });
+  }
+});
 
 // Health Check
 app.get("/api/health", (req, res) => {

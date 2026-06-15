@@ -40,12 +40,12 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
     }).lean();
     const feeAmount = enrollment?.consultantFees || 500;
     const feeCurrency = enrollment?.feeCurrency || "USD";
-    const feeINR = convertAmount(feeAmount, feeCurrency, "INR").toFixed(2);
+    const feeUSD = convertAmount(feeAmount, feeCurrency, "USD").toFixed(2);
 
     const order = await paypalFetch("POST", "/v2/checkout/orders", {
       intent: "CAPTURE",
       purchase_units: [{
-        amount: { currency_code: "INR", value: feeINR },
+        amount: { currency_code: "USD", value: feeUSD },
         description: "Doctor Consultation Fee",
       }],
     });
@@ -59,17 +59,17 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
 });
 
 /* POST /api/paypal/create-order-by-amount
-   Creates a PayPal order for a fixed INR amount (category-based bookings). */
+   Creates a PayPal order for a fixed USD amount (category-based bookings). */
 router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
   try {
-    const amountInr = Number(req.body.amountInr);
-    if (!Number.isFinite(amountInr) || amountInr < 1)
-      return res.status(400).json({ msg: "Valid amountInr (in INR) is required." });
+    const amountUsd = Number(req.body.amountUsd);
+    if (!Number.isFinite(amountUsd) || amountUsd < 1)
+      return res.status(400).json({ msg: "Valid amountUsd (in USD) is required." });
 
     const order = await paypalFetch("POST", "/v2/checkout/orders", {
       intent: "CAPTURE",
       purchase_units: [{
-        amount: { currency_code: "INR", value: amountInr.toFixed(2) },
+        amount: { currency_code: "USD", value: amountUsd.toFixed(2) },
         description: "Consultation Booking Fee",
       }],
     });
@@ -83,7 +83,7 @@ router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
 });
 
 /* POST /api/paypal/capture-order
-   Captures an approved PayPal order. Returns orderId, status, amountPaise. */
+   Captures an approved PayPal order. Returns orderId, status, amountCents. */
 router.post("/capture-order", verifyUserToken, async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -98,12 +98,12 @@ router.post("/capture-order", verifyUserToken, async (req, res) => {
     }
 
     const captureData = capture.purchase_units[0].payments.captures[0];
-    const amountINR   = parseFloat(captureData.amount.value);
+    const amountUSD   = parseFloat(captureData.amount.value);
 
     res.json({
       orderId:     capture.id,
       status:      "COMPLETED",
-      amountPaise: Math.round(amountINR * 100),
+      amountCents: Math.round(amountUSD * 100),
     });
   } catch (err) {
     console.error("paypal/capture-order:", err.message);
