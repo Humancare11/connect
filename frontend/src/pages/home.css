@@ -1,3 +1,5 @@
+
+
 /* ═══ FONT IMPORTS ═══ */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
 @import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap");
@@ -66,7 +68,7 @@ h4 {
   background: var(--bg);
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: var(--neu-up);
-  overflow: hidden;
+  overflow: visible;
   z-index: 1;
   font-family: "Satoshi", sans-serif;
 }
@@ -736,6 +738,8 @@ h4 {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  position: relative;
+  z-index: 200;
   animation: fadeUp 0.7s 0.4s var(--ease) both;
 }
 

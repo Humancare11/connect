@@ -567,61 +567,7 @@ export default function HomePage() {
               )}
           </div>
 
-          <div className="trust" ref={btnRef}>
-            <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#7CB7FF"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              HIPAA Compliant
-            </span>
-            <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#7CB7FF"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              GDPR Ready
-            </span>
-            <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#7CB7FF"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              500+ Verified Doctors
-            </span>
-            <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#7CB7FF"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
-              Prescriptions Available
-            </span>
-          </div>
+          
         </div>
 
         {/* ── RIGHT ── */}

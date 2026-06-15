@@ -154,7 +154,7 @@ export default function PricingManagement() {
                           <strong>{CATEGORY_LABELS[rec.categoryId] || rec.label}</strong>
                         </td>
                         <td style={{ ...tdStyle, textAlign: "center", color: "#6b7280" }}>
-                          {rec.currency || "INR"}
+                          {rec.currency || "USD"}
                         </td>
                         <td style={{ ...tdStyle, textAlign: "right" }}>
                           {editing === rec.categoryId ? (

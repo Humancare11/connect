@@ -7,7 +7,7 @@ const Enrollment = require("../models/Enrollment");
 const Doctor = require("../models/Doctor");
 const PaymentLink = require("../models/PaymentLink");
 const { verifyUserToken, verifyAdminToken, adminOnly, paymentAdminOnly } = require("../middleware/verifyToken");
-const { toPaise } = require("../utils/currency");
+const { toCents } = require("../utils/currency");
 
 const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd"];
 const ZERO_DECIMAL_CURRENCIES = new Set(["jpy"]);
@@ -91,11 +91,11 @@ router.post("/create-intent", verifyUserToken, async (req, res) => {
 
     const feeAmount = enrollment?.consultantFees || 500;
     const feeCurrency = enrollment?.feeCurrency || "USD";
-    const feePaise = toPaise(feeAmount, feeCurrency);
+    const feeCents = toCents(feeAmount, feeCurrency);
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: feePaise,
-      currency: "inr",
+      amount: feeCents,
+      currency: "usd",
       payment_method_types: ["card"],
       metadata: {
         doctorId: resolvedDoctorId.toString(),
@@ -103,7 +103,7 @@ router.post("/create-intent", verifyUserToken, async (req, res) => {
       },
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret, amount: feePaise });
+    res.json({ clientSecret: paymentIntent.client_secret, amount: feeCents });
   } catch (err) {
     console.error("create-intent error:", err.message);
     res.status(500).json({ msg: err.message || "Failed to create payment intent." });
@@ -126,8 +126,8 @@ router.get("/fee", verifyUserToken, async (req, res) => {
     }).lean();
     const feeAmount = enrollment?.consultantFees || 500;
     const feeCurrency = enrollment?.feeCurrency || "USD";
-    const feePaise = toPaise(feeAmount, feeCurrency);
-    res.json({ feePaise, feeAmount, feeCurrency });
+    const feeCents = toCents(feeAmount, feeCurrency);
+    res.json({ feeCents, feeAmount, feeCurrency });
   } catch (err) {
     console.error("fee error:", err.message);
     res.status(500).json({ msg: "Failed to get fee." });
@@ -295,19 +295,19 @@ router.get("/admin/payment-link-creators", verifyAdminToken, paymentAdminOnly, a
 });
 
 /* POST /api/payments/create-intent-by-amount
-   Creates a Stripe PaymentIntent for a fixed INR amount (specialty preset fee).
+   Creates a Stripe PaymentIntent for a fixed USD amount (specialty preset fee).
    Used for category-based appointment bookings where no specific doctor is chosen yet. */
 router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
   try {
-    const amountInr = Number(req.body.amountInr);
-    if (!Number.isFinite(amountInr) || amountInr < 1) {
-      return res.status(400).json({ msg: "Valid amountInr (in INR) is required." });
+    const amountUsd = Number(req.body.amountUsd);
+    if (!Number.isFinite(amountUsd) || amountUsd < 1) {
+      return res.status(400).json({ msg: "Valid amountUsd (in USD) is required." });
     }
-    const amountPaise = Math.round(amountInr * 100);
+    const amountCents = Math.round(amountUsd * 100);
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountPaise,
-      currency: "inr",
+      amount: amountCents,
+      currency: "usd",
       payment_method_types: ["card"],
       metadata: {
         patientId: req.user.id,
@@ -315,7 +315,7 @@ router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
       },
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret, amountPaise });
+    res.json({ clientSecret: paymentIntent.client_secret, amountCents });
   } catch (err) {
     console.error("create-intent-by-amount error:", err.message);
     res.status(500).json({ msg: err.message || "Failed to create payment intent." });

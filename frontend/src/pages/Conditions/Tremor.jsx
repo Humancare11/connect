@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
   Calendar,
   Star,
@@ -806,6 +807,7 @@ function AboutSpecialty() {
 // STICKY BOOKING CARD
 // ─────────────────────────────────────────────────────────────────
 function StickyBookingCard() {
+  const price = useCategoryPrice();
   return (
     <div className="sp-sbc">
       <div className="sp-sbc-badge">
@@ -819,7 +821,7 @@ function StickyBookingCard() {
           animation: "sp-sbcFadeUp .6s .10s cubic-bezier(.22,.68,0,1.2) both",
         }}
       >
-        <div className="sp-sbc-price">$49</div>
+        <div className="sp-sbc-price">${price ?? 49}</div>
         <p className="sp-sbc-price-sub">
           One-time consultation fee · No subscription required
         </p>
