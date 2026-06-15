@@ -1,11 +1,618 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiArrowRight, FiSearch, FiChevronDown, FiChevronUp, FiX,
-  FiStar, FiClock, FiVideo, FiMapPin, FiFilter, FiCheckCircle,
-  FiCalendar, FiUser, FiHeart, FiAlertCircle, FiBook,
-  FiActivity, FiMessageSquare, FiShield
+  FiArrowRight, FiChevronDown, FiChevronUp, FiX,
+  FiStar, FiClock, FiVideo, FiMapPin, FiCheckCircle,
+  FiCalendar, FiUser, FiHeart, FiAlertCircle,
+  FiActivity, FiMessageSquare, FiShield, FiPhone
 } from "react-icons/fi";
+
+// ─── CSS Variables & Global Styles ───────────────────────────────────────────
+const GLOBAL_CSS = `
+  :root {
+    --navy:   #1E3A5F;
+    --blue:   #2563EB;
+    --blue-lt:#60A5FA;
+    --gold:   #C97B1A;
+    --bg:     #F4F7FB;
+    --tint:   #DCE6F2;
+    --white:  #fff;
+    --muted:  rgba(30,58,95,.6);
+    --line:   rgba(30,58,95,.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Satoshi', 'DM Sans', -apple-system, sans-serif; background: var(--bg); color: var(--navy); }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--tint); border-radius: 99px; }
+
+  .hcc-hero {
+    position: relative;
+    min-height: 520px;
+    background: linear-gradient(100deg, #0d2240 0%, #1E3A5F 55%, #1a3356 100%);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hcc-hero-bg {
+    position: absolute;
+    inset: 0;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+  .hcc-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(13,34,64,0.92) 0%, rgba(13,34,64,0.7) 55%, rgba(13,34,64,0.45) 100%);
+    pointer-events: none;
+  }
+  /* geometric decorative circles */
+  .hcc-hero-deco-1 {
+    position: absolute; right: 340px; top: -80px;
+    width: 340px; height: 340px; border-radius: 50%;
+    border: 1px solid rgba(96,165,250,0.12);
+    pointer-events: none;
+  }
+  .hcc-hero-deco-2 {
+    position: absolute; right: 200px; bottom: -120px;
+    width: 480px; height: 480px; border-radius: 50%;
+    border: 1px solid rgba(96,165,250,0.08);
+    pointer-events: none;
+  }
+  /* floating medical icons in bg */
+  .hcc-hero-icon {
+    position: absolute;
+    opacity: 0.12;
+    color: var(--blue-lt);
+    pointer-events: none;
+  }
+
+  .hcc-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 100px clamp(20px,5vw,80px) 56px;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 56px;
+    align-items: center;
+    flex: 1;
+  }
+
+  /* Left hero content */
+  .hcc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(37,99,235,0.22);
+    border: 1px solid rgba(96,165,250,0.35);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue-lt);
+    margin-bottom: 22px;
+  }
+  .hcc-badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blue-lt);
+    box-shadow: 0 0 6px var(--blue-lt);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hcc-headline {
+    font-size: clamp(32px, 5vw, 58px);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+  .hcc-subline {
+    font-size: clamp(14px, 1.6vw, 17px);
+    color: rgba(255,255,255,0.72);
+    line-height: 1.7;
+    max-width: 500px;
+    margin-bottom: 36px;
+  }
+
+  .hcc-cta-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+  .hcc-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.18s, box-shadow 0.18s;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.45);
+  }
+  .hcc-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(37,99,235,0.55);
+  }
+  .hcc-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.10);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    padding: 13px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.18s, border-color 0.18s;
+    backdrop-filter: blur(8px);
+  }
+  .hcc-btn-secondary:hover {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.5);
+  }
+
+  .hcc-trust-row {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+  }
+  .hcc-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+  }
+  .hcc-trust-item svg {
+    color: var(--blue-lt);
+    flex-shrink: 0;
+  }
+
+  /* ── Booking Card ── */
+  .hcc-book-card {
+    background: rgba(255,255,255,0.97);
+    border-radius: 24px;
+    padding: 25px 25px;
+    box-shadow: 0 24px 64px rgba(13,34,64,0.28), 0 4px 16px rgba(13,34,64,0.12);
+    border: 1px solid rgba(255,255,255,0.8);
+  }
+  .hcc-book-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .hcc-book-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .hcc-form-group {
+    margin-bottom: 14px;
+  }
+  .hcc-form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .hcc-form-input, .hcc-form-select {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1.5px solid var(--tint);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--navy);
+    background: var(--bg);
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    appearance: none;
+  }
+  .hcc-form-input:focus, .hcc-form-select:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    background: #fff;
+  }
+  .hcc-form-input::placeholder {
+    color: rgba(30,58,95,0.38);
+  }
+  .hcc-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .hcc-select-wrap {
+    position: relative;
+  }
+  .hcc-select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 6px; height: 6px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    pointer-events: none;
+  }
+  .hcc-book-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 18px;
+    transition: background 0.18s, box-shadow 0.18s;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.35);
+  }
+  .hcc-book-submit:hover {
+    background: #1d4ed8;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.45);
+  }
+  .hcc-book-note {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+
+  /* ── Page body ── */
+  .hcc-body {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 clamp(20px,5vw,80px);
+  }
+
+  /* ── Section ── */
+  .hcc-section {
+    padding: 72px 0 0;
+  }
+  .hcc-section-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue);
+    display: block;
+    margin-bottom: 10px;
+  }
+  .hcc-section-title {
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .hcc-section-sub {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.65;
+    max-width: 520px;
+    margin-bottom: 36px;
+  }
+
+  /* Specialty cards */
+  .hcc-specialty-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%,270px), 1fr));
+    gap: 18px;
+  }
+  .hcc-specialty-card {
+    background: var(--white);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 24px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .hcc-specialty-card:hover {
+    border-color: rgba(37,99,235,0.4);
+    box-shadow: 0 10px 32px rgba(37,99,235,0.1);
+    transform: translateY(-3px);
+  }
+  .hcc-specialty-icon {
+    font-size: 28px;
+    margin-bottom: 14px;
+    display: block;
+  }
+  .hcc-specialty-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .hcc-specialty-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .hcc-specialty-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .hcc-specialty-pill {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue);
+    background: rgba(37,99,235,0.09);
+    border-radius: 50px;
+    padding: 4px 12px;
+  }
+
+  /* Condition cards */
+  .hcc-condition-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%,290px), 1fr));
+    gap: 18px;
+  }
+  .hcc-condition-card {
+    background: var(--white);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 22px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .hcc-condition-card:hover {
+    border-color: rgba(37,99,235,0.35);
+    box-shadow: 0 8px 24px rgba(37,99,235,0.09);
+  }
+  .hcc-condition-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .hcc-condition-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 14px;
+  }
+  .hcc-tag {
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 50px;
+    padding: 3px 10px;
+    display: inline-block;
+  }
+  .hcc-tag-blue {
+    background: rgba(37,99,235,0.09);
+    color: var(--blue);
+  }
+  .hcc-tag-muted {
+    background: var(--tint);
+    color: var(--navy);
+  }
+
+  /* Treatment cards */
+  .hcc-treatment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%,230px), 1fr));
+    gap: 16px;
+  }
+  .hcc-treatment-card {
+    background: var(--white);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 24px;
+    transition: box-shadow 0.2s;
+  }
+  .hcc-treatment-card:hover {
+    box-shadow: 0 6px 24px rgba(37,99,235,0.08);
+  }
+  .hcc-treatment-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: rgba(37,99,235,0.09);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--blue);
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+  .hcc-treatment-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .hcc-treatment-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* FAQ */
+  .hcc-faq-wrap {
+    max-width: 740px;
+  }
+  .hcc-faq-item {
+    background: var(--white);
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .hcc-faq-item.open {
+    border-color: rgba(37,99,235,0.3);
+  }
+  .hcc-faq-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    gap: 16px;
+    font-family: inherit;
+  }
+  .hcc-faq-question {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--navy);
+    line-height: 1.4;
+  }
+  .hcc-faq-icon {
+    color: var(--blue);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  .hcc-faq-answer {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.75;
+    padding: 0 24px 20px;
+    border-top: 1px solid var(--line);
+  }
+  .hcc-faq-answer-inner {
+    padding-top: 14px;
+  }
+
+  /* CTA Banner */
+  .hcc-cta-banner {
+    margin: 72px 0 80px;
+    background: linear-gradient(120deg, var(--navy) 0%, #0d2240 100%);
+    border-radius: 28px;
+    padding: clamp(40px,5vw,72px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+  }
+  .hcc-cta-banner::before {
+    content: '';
+    position: absolute;
+    right: -80px; top: -80px;
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    border: 1px solid rgba(96,165,250,0.12);
+    pointer-events: none;
+  }
+  .hcc-cta-banner::after {
+    content: '';
+    position: absolute;
+    left: 40%; bottom: -120px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: rgba(37,99,235,0.08);
+    pointer-events: none;
+  }
+  .hcc-cta-text .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue-lt);
+    margin-bottom: 10px;
+    display: block;
+  }
+  .hcc-cta-text h2 {
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .hcc-cta-text p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.65;
+    max-width: 400px;
+  }
+  .hcc-cta-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+
+  /* Mobile sticky CTA */
+  .hcc-mobile-cta {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    background: var(--white);
+    border-top: 1px solid var(--line);
+    padding: 14px 20px;
+    gap: 10px;
+    box-shadow: 0 -4px 24px rgba(30,58,95,0.1);
+  }
+
+  @media (max-width: 960px) {
+    .hcc-inner {
+      grid-template-columns: 1fr;
+      gap: 40px;
+      padding: 56px clamp(20px,5vw,48px) 48px;
+    }
+    .hcc-book-card {
+      max-width: 500px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .hcc-mobile-cta { display: flex; }
+    .hcc-cta-banner { flex-direction: column; text-align: center; }
+    .hcc-cta-banner .hcc-cta-text p { margin: 0 auto; }
+    .hcc-cta-actions { justify-content: center; }
+  }
+`;
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -14,13 +621,11 @@ const CATEGORY_DATA = {
     id: "mental-health",
     label: "Mental Health",
     tagline: "Compassionate care, wherever you are",
-    headline: "Compassionate Mental Health Care, Wherever You Are",
+    headline: "Mental Health",
+    headlineAccent: "Compassionate Care",
     subheadline: "Connect with licensed psychologists, psychiatrists, therapists and counselors for personalized, confidential care.",
-    color: "#7B68EE",
-    colorSoft: "#EEF0FF",
-    colorDark: "#4A3FCB",
     icon: "🧠",
-    stats: { specialists: 340, conditions: 48, doctors: 120, avgTime: "30 min", satisfaction: "97%" },
+    stats: { specialists: 340, conditions: 48, satisfaction: "97%" },
     specialties: [
       { name: "Psychiatry", icon: "🔬", desc: "Medical diagnosis and treatment of mental disorders with medication management.", doctors: 42 },
       { name: "Clinical Psychology", icon: "💬", desc: "Evidence-based psychological assessment and therapy for mental health conditions.", doctors: 38 },
@@ -43,7 +648,6 @@ const CATEGORY_DATA = {
       { name: "Burnout", desc: "Chronic workplace or caregiver stress leading to physical and emotional exhaustion.", symptoms: ["Exhaustion", "Detachment", "Reduced performance"], specialists: ["Counseling Psychology", "Psychiatry"] },
       { name: "Stress Management", desc: "Support for managing overwhelming stress from life, work, or relationships.", symptoms: ["Irritability", "Headaches", "Overwhelm"], specialists: ["Counseling Psychology", "Behavioral Therapy"] },
     ],
-    symptoms: ["Persistent Sadness", "Mood Swings", "Sleep Problems", "Excessive Worry", "Fatigue", "Concentration Issues", "Irritability", "Social Withdrawal", "Low Self-Esteem", "Panic Episodes"],
     treatments: [
       { icon: <FiVideo />, title: "Video Consultation", desc: "Speak with a therapist or psychiatrist from home, in complete privacy." },
       { icon: <FiMapPin />, title: "In-Person Sessions", desc: "Face-to-face consultations at partner clinics near you." },
@@ -51,18 +655,6 @@ const CATEGORY_DATA = {
       { icon: <FiCalendar />, title: "Follow-Up Care", desc: "Structured follow-up plans to track your progress over time." },
       { icon: <FiShield />, title: "Prescription Support", desc: "Psychiatrists who can prescribe and manage your medication safely." },
       { icon: <FiUser />, title: "Specialist Referrals", desc: "Warm handoffs to specialist care when your needs evolve." },
-    ],
-    doctors: [
-      { name: "Dr. Priya Sharma", specialty: "Psychiatry", exp: "14 yrs", rating: 4.9, reviews: 312, langs: ["English", "Hindi"], fee: "₹1,200", avail: "Today", img: null, initials: "PS" },
-      { name: "Dr. Arjun Mehta", specialty: "Clinical Psychology", exp: "11 yrs", rating: 4.8, reviews: 267, langs: ["English", "Marathi"], fee: "₹950", avail: "Tomorrow", img: null, initials: "AM" },
-      { name: "Dr. Sana Qureshi", specialty: "Behavioral Therapy", exp: "9 yrs", rating: 4.9, reviews: 198, langs: ["English", "Urdu"], fee: "₹1,100", avail: "Today", img: null, initials: "SQ" },
-      { name: "Dr. Rohan Das", specialty: "Counseling Psychology", exp: "8 yrs", rating: 4.7, reviews: 144, langs: ["English", "Bengali"], fee: "₹800", avail: "In 2 days", img: null, initials: "RD" },
-    ],
-    resources: [
-      { type: "Guide", title: "Understanding Anxiety: A Complete Guide", time: "8 min read" },
-      { type: "Article", title: "When Should You See a Psychiatrist vs. Therapist?", time: "5 min read" },
-      { type: "FAQ", title: "Online Mental Health Consultations: What to Expect", time: "3 min read" },
-      { type: "Tip", title: "5 Daily Habits That Support Mental Wellbeing", time: "4 min read" },
     ],
     faqs: [
       { q: "When should I see a mental health specialist?", a: "If your thoughts, emotions, or behaviors are consistently affecting your work, relationships, or daily functioning for two or more weeks, speaking with a specialist is a good step. Early support leads to better outcomes." },
@@ -74,15 +666,13 @@ const CATEGORY_DATA = {
   },
   "general-care": {
     id: "general-care",
-    label: "General & Everyday Care",
+    label: "General Care",
     tagline: "Your first step to feeling better",
-    headline: "Fast, Reliable Everyday Medical Care",
+    headline: "Everyday Medical",
+    headlineAccent: "Care & Wellness",
     subheadline: "Consult experienced general physicians for common illnesses, health check-ups, and ongoing wellness management.",
-    color: "#0B57E8",
-    colorSoft: "#EEF4FF",
-    colorDark: "#0840B5",
     icon: "🩺",
-    stats: { specialists: 280, conditions: 60, doctors: 180, avgTime: "20 min", satisfaction: "96%" },
+    stats: { specialists: 280, conditions: 60, satisfaction: "96%" },
     specialties: [
       { name: "General Medicine", icon: "🩺", desc: "Diagnosis and treatment of common illnesses, infections, and chronic conditions.", doctors: 64 },
       { name: "Family Medicine", icon: "👨‍👩‍👧‍👦", desc: "Comprehensive primary care for all family members across all age groups.", doctors: 48 },
@@ -99,7 +689,6 @@ const CATEGORY_DATA = {
       { name: "UTI", desc: "Bacterial infection of the urinary tract causing pain and discomfort.", symptoms: ["Burning urination", "Frequent urge", "Pelvic pain"], specialists: ["General Medicine"] },
       { name: "Allergies", desc: "Immune reactions to environmental triggers like pollen, food, or dust.", symptoms: ["Sneezing", "Itchy eyes", "Rash"], specialists: ["General Medicine"] },
     ],
-    symptoms: ["Fever", "Cough", "Fatigue", "Headache", "Nausea", "Body Ache", "Sore Throat", "Dizziness", "Chest Pain", "Breathlessness"],
     treatments: [
       { icon: <FiVideo />, title: "Video Consultation", desc: "Quick diagnosis and prescriptions for everyday illnesses." },
       { icon: <FiMapPin />, title: "In-Person Visit", desc: "Physical examinations at clinics near you." },
@@ -107,18 +696,6 @@ const CATEGORY_DATA = {
       { icon: <FiCalendar />, title: "Follow-Up Care", desc: "Ongoing management for chronic and recurring conditions." },
       { icon: <FiShield />, title: "Prescription Support", desc: "Digital prescriptions delivered to your pharmacist." },
       { icon: <FiUser />, title: "Specialist Referrals", desc: "Guided referrals when your condition needs focused expertise." },
-    ],
-    doctors: [
-      { name: "Dr. Anil Kapoor", specialty: "General Medicine", exp: "16 yrs", rating: 4.8, reviews: 420, langs: ["English", "Hindi"], fee: "₹600", avail: "Today", img: null, initials: "AK" },
-      { name: "Dr. Meera Iyer", specialty: "Family Medicine", exp: "12 yrs", rating: 4.9, reviews: 388, langs: ["English", "Tamil"], fee: "₹700", avail: "Today", img: null, initials: "MI" },
-      { name: "Dr. Sameer Joshi", specialty: "Internal Medicine", exp: "14 yrs", rating: 4.7, reviews: 295, langs: ["English", "Marathi"], fee: "₹750", avail: "Tomorrow", img: null, initials: "SJ" },
-      { name: "Dr. Pooja Nair", specialty: "Preventive Care", exp: "9 yrs", rating: 4.8, reviews: 211, langs: ["English", "Malayalam"], fee: "₹650", avail: "In 2 days", img: null, initials: "PN" },
-    ],
-    resources: [
-      { type: "Guide", title: "When to See a Doctor vs. Wait It Out", time: "6 min read" },
-      { type: "Article", title: "Understanding Your Blood Pressure Numbers", time: "4 min read" },
-      { type: "FAQ", title: "Online General Consultations: Common Questions", time: "3 min read" },
-      { type: "Tip", title: "10 Preventive Health Checks Everyone Should Do", time: "5 min read" },
     ],
     faqs: [
       { q: "When should I consult a general physician?", a: "For any illness that lasts more than 2–3 days or significantly affects your daily life — including fever, persistent cough, fatigue, or unusual pain — a consultation is appropriate." },
@@ -129,77 +706,201 @@ const CATEGORY_DATA = {
   },
 };
 
-// Fill remaining categories with minimal data so the switcher works
-const STUB = (id, label, icon, color, colorSoft, tagline) => ({
-  id, label, icon, color, colorSoft, colorDark: color, tagline,
-  headline: `Expert ${label} Care, Right When You Need It`,
+const STUB = (id, label, icon, tagline, headline, headlineAccent) => ({
+  id, label, icon, tagline, headline, headlineAccent,
   subheadline: `Access specialist doctors, explore conditions, and book consultations — all in one place.`,
-  stats: { specialists: Math.floor(Math.random()*300+100), conditions: Math.floor(Math.random()*50+20), doctors: Math.floor(Math.random()*150+50), avgTime: "25 min", satisfaction: "96%" },
-  specialties: [], conditions: [], symptoms: [], treatments: [], doctors: [], resources: [], faqs: [],
+  stats: { specialists: Math.floor(Math.random() * 300 + 100), conditions: Math.floor(Math.random() * 50 + 20), satisfaction: "96%" },
+  specialties: [], conditions: [], treatments: [], faqs: [],
 });
 
 const ALL_CATEGORIES = {
   ...CATEGORY_DATA,
-  "skin-hair": STUB("skin-hair","Skin & Hair","🌸","#E8856A","#FEF3EF","Confidence starts with healthy skin"),
-  "womens-health": STUB("womens-health","Women's Health","🌺","#D05C8A","#FCEEF5","Specialized care at every stage of life"),
-  "mens-health": STUB("mens-health","Men's Health","💪","#2D9CDB","#EBF7FF","Performance, vitality, and longevity"),
-  "children-family": STUB("children-family","Children & Family","⭐","#F7A44A","#FFF5E9","Caring for your little ones"),
-  "weight-nutrition": STUB("weight-nutrition","Weight & Nutrition","🥗","#27AE60","#EBF9F1","Science-backed wellness from within"),
-  "chronic-care": STUB("chronic-care","Chronic Care & Expert Opinion","🔬","#8B5CF6","#F3EFFE","Long-term care for lasting health"),
-  "eye-ear-bone": STUB("eye-ear-bone","Eye, Ear & Bone","👁️","#0EA5E9","#EBF8FF","Precision care for sensory & structural health"),
-  "sexual-health": STUB("sexual-health","Sexual Health","❤️","#EF4444","#FEF2F2","Discreet, judgement-free care"),
-  "travel-care": STUB("travel-care","Travel & Global Care","✈️","#10B981","#ECFDF5","Health support wherever you go"),
+  "skin-hair": STUB("skin-hair", "Skin & Hair", "🌸", "Confidence starts with healthy skin", "Skin &", "Hair Care"),
+  "womens-health": STUB("womens-health", "Women's Health", "🌺", "Specialized care at every stage of life", "Women's", "Health Care"),
+  "mens-health": STUB("mens-health", "Men's Health", "💪", "Performance, vitality, and longevity", "Men's", "Health & Vitality"),
+  "children-family": STUB("children-family", "Children & Family", "⭐", "Caring for your little ones", "Children &", "Family Care"),
+  "weight-nutrition": STUB("weight-nutrition", "Weight & Nutrition", "🥗", "Science-backed wellness from within", "Weight &", "Nutrition"),
+  "chronic-care": STUB("chronic-care", "Chronic Care", "🔬", "Long-term care for lasting health", "Chronic Care &", "Expert Opinion"),
+  "eye-ear-bone": STUB("eye-ear-bone", "Eye, Ear & Bone", "👁️", "Precision care for sensory health", "Eye, Ear &", "Bone Health"),
+  "sexual-health": STUB("sexual-health", "Sexual Health", "❤️", "Discreet, judgement-free care", "Sexual", "Health Care"),
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Booking Form ─────────────────────────────────────────────────────────────
 
-const Avatar = ({ initials, color }) => (
-  <div style={{
-    width: 52, height: 52, borderRadius: "50%",
-    background: color + "22",
-    border: `2px solid ${color}44`,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 16, fontWeight: 700, color, flexShrink: 0,
-    fontFamily: "Satoshi, sans-serif",
-  }}>{initials}</div>
-);
+function BookingForm({ categoryLabel }) {
+  const [form, setForm] = useState({
+    name: "", phone: "", date: "", time: "", type: "", specialty: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
 
-const StarRating = ({ rating }) => (
-  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-    <FiStar style={{ fill: "#F59E0B", stroke: "#F59E0B", width: 13, height: 13 }} />
-    <span style={{ fontSize: 13, fontWeight: 600, color: "#0A1F44" }}>{rating}</span>
-  </span>
-);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-const Chip = ({ label, active, onClick, color }) => (
-  <button onClick={onClick} style={{
-    padding: "7px 16px", borderRadius: 50, border: `1.5px solid ${active ? color : "#D0DCF5"}`,
-    background: active ? color + "18" : "#F7FAFF",
-    color: active ? color : "#445577", fontSize: 13, fontWeight: 500,
-    cursor: "pointer", transition: "all 0.18s", whiteSpace: "nowrap",
-    fontFamily: "Satoshi, sans-serif",
-  }}>{label}</button>
-);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.name || !form.phone || !form.date) return;
+    setSubmitted(true);
+    setTimeout(() => setSubmitted(false), 3000);
+  };
 
-const SectionHeading = ({ eyebrow, title, sub }) => (
-  <div style={{ marginBottom: "2.5rem" }}>
-    {eyebrow && <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#0B57E8", display: "block", marginBottom: 8 }}>{eyebrow}</span>}
-    <h2 style={{ fontSize: "clamp(24px,3vw,34px)", fontWeight: 700, color: "#0A1F44", margin: 0, lineHeight: 1.2, fontFamily: "Satoshi, sans-serif" }}>{title}</h2>
-    {sub && <p style={{ marginTop: 10, color: "#556080", fontSize: 16, maxWidth: 540, lineHeight: 1.65 }}>{sub}</p>}
-  </div>
-);
+  if (submitted) {
+    return (
+      <div className="hcc-book-card" style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+        <div className="hcc-book-title">Appointment Requested!</div>
+        <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8, lineHeight: 1.6 }}>
+          We'll confirm your slot via call or SMS within 15 minutes.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="hcc-book-card">
+      <div className="hcc-book-title">Book an Appointment</div>
+      <p className="hcc-book-sub">Same-day slots often available</p>
+
+      <div className="hcc-form-group">
+        <label className="hcc-form-label">Full Name</label>
+        <input
+          className="hcc-form-input"
+          placeholder="Your full name"
+          value={form.name}
+          onChange={e => set("name", e.target.value)}
+        />
+      </div>
+
+      <div className="hcc-form-group">
+        <label className="hcc-form-label">Phone Number</label>
+        <input
+          className="hcc-form-input"
+          placeholder="+91 98765 43210"
+          value={form.phone}
+          onChange={e => set("phone", e.target.value)}
+        />
+      </div>
+
+      <div className="hcc-form-row">
+        <div className="hcc-form-group">
+          <label className="hcc-form-label">Date</label>
+          <input
+            className="hcc-form-input"
+            type="date"
+            value={form.date}
+            onChange={e => set("date", e.target.value)}
+          />
+        </div>
+        <div className="hcc-form-group">
+          <label className="hcc-form-label">Time</label>
+          <div className="hcc-select-wrap">
+            <select
+              className="hcc-form-select"
+              value={form.time}
+              onChange={e => set("time", e.target.value)}
+            >
+              <option value="">Select</option>
+              <option>Morning (9–12)</option>
+              <option>Afternoon (12–4)</option>
+              <option>Evening (4–8)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="hcc-form-group">
+        <label className="hcc-form-label">Consultation Type</label>
+        <div className="hcc-select-wrap">
+          <select
+            className="hcc-form-select"
+            value={form.type}
+            onChange={e => set("type", e.target.value)}
+          >
+            <option value="">Select type</option>
+            <option>Video Consultation</option>
+            <option>In-Person Visit</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="hcc-form-group">
+        <label className="hcc-form-label">Specialty (optional)</label>
+        <input
+          className="hcc-form-input"
+          placeholder={`e.g. Specialist in ${categoryLabel}`}
+          value={form.specialty}
+          onChange={e => set("specialty", e.target.value)}
+        />
+      </div>
+
+      <button className="hcc-book-submit" onClick={handleSubmit}>
+        <FiCalendar /> Confirm Appointment
+      </button>
+
+      <p className="hcc-book-note">
+        <FiShield size={11} /> Free cancellation up to 2 hours before
+      </p>
+    </div>
+  );
+}
+
+// ─── Condition Card ───────────────────────────────────────────────────────────
+
+function ConditionCard({ cond, index }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <motion.div
+      className="hcc-condition-card"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ delay: Math.min(index * 0.04, 0.3) }}
+      onClick={() => setOpen(o => !o)}
+    >
+      <div className="hcc-condition-name">{cond.name}</div>
+      <p className="hcc-condition-desc">{cond.desc}</p>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22 }}
+            style={{ overflow: "hidden" }}
+          >
+            <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, marginTop: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
+                Common Symptoms
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                {cond.symptoms.map((s, i) => (
+                  <span key={i} className="hcc-tag hcc-tag-blue">{s}</span>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
+                Specialists
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {cond.specialists.map((s, i) => (
+                  <span key={i} className="hcc-tag hcc-tag-muted">{s}</span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div style={{ marginTop: 12, fontSize: 12, color: "var(--blue)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+        {open ? "Show less" : "See symptoms & specialists"} <FiArrowRight size={12} />
+      </div>
+    </motion.div>
+  );
+}
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ChildMain({ categoryId = "mental-health" }) {
   const [activeCategory, setActiveCategory] = useState(categoryId);
-  const [activeSymptom, setActiveSymptom] = useState(null);
-  const [conditionSearch, setConditionSearch] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
-  const [countersVisible, setCountersVisible] = useState(false);
-  const [displayedCounts, setDisplayedCounts] = useState({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const cat = ALL_CATEGORIES[activeCategory] || CATEGORY_DATA["mental-health"];
 
@@ -207,306 +908,99 @@ export default function ChildMain({ categoryId = "mental-health" }) {
     overview: useRef(null),
     specialties: useRef(null),
     conditions: useRef(null),
-    symptoms: useRef(null),
-    doctors: useRef(null),
-    resources: useRef(null),
+    treatments: useRef(null),
     faq: useRef(null),
   };
 
-  const statsRef = useRef(null);
-
-  // Animated counters
-  useEffect(() => {
-    if (!countersVisible) return;
-    const targets = {
-      specialists: cat.stats.specialists,
-      conditions: cat.stats.conditions,
-      doctors: cat.stats.doctors,
-    };
-    const duration = 1200;
-    const steps = 40;
-    let step = 0;
-    const interval = setInterval(() => {
-      step++;
-      const progress = step / steps;
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayedCounts({
-        specialists: Math.round(targets.specialists * eased),
-        conditions: Math.round(targets.conditions * eased),
-        doctors: Math.round(targets.doctors * eased),
-      });
-      if (step >= steps) clearInterval(interval);
-    }, duration / steps);
-    return () => clearInterval(interval);
-  }, [countersVisible, activeCategory]);
-
-  // IntersectionObserver for stats counter
-  useEffect(() => {
-    setCountersVisible(false);
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setCountersVisible(true); }, { threshold: 0.3 });
-    if (statsRef.current) obs.observe(statsRef.current);
-    return () => obs.disconnect();
-  }, [activeCategory]);
-
-  // Sticky nav highlight
-  useEffect(() => {
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) setActiveSection(e.target.dataset.section); });
-    }, { rootMargin: "-40% 0px -40% 0px" });
-    Object.entries(sectionRefs).forEach(([k, r]) => { if (r.current) { r.current.dataset.section = k; obs.observe(r.current); } });
-    return () => obs.disconnect();
-  }, [activeCategory]);
-
-  const scrollTo = (key) => { sectionRefs[key]?.current?.scrollIntoView({ behavior: "smooth", block: "start" }); };
-
-  const filteredConditions = cat.conditions.filter(c => {
-    const searchMatch = c.name.toLowerCase().includes(conditionSearch.toLowerCase()) || c.desc.toLowerCase().includes(conditionSearch.toLowerCase());
-    const symptomMatch = !activeSymptom || c.symptoms.some(s => s.toLowerCase().includes(activeSymptom.toLowerCase()));
-    return searchMatch && symptomMatch;
-  });
-
-  const navItems = [
-    { key: "overview", label: "Overview" },
-    { key: "specialties", label: "Specialties" },
-    { key: "conditions", label: "Conditions" },
-    { key: "symptoms", label: "Symptoms" },
-    { key: "doctors", label: "Doctors" },
-    { key: "resources", label: "Resources" },
-    { key: "faq", label: "FAQ" },
-  ];
 
   return (
-    <div style={{ fontFamily: "Satoshi, -apple-system, sans-serif", background: "#F7FAFF", color: "#0A1F44", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'Satoshi', 'DM Sans', -apple-system, sans-serif", background: "var(--bg)", color: "var(--navy)", minHeight: "100vh" }}>
+      <style>{GLOBAL_CSS}</style>
 
-      {/* ── Breadcrumb ── */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #E8EEF8", padding: "0 clamp(20px,5vw,80px)" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "12px 0", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#7A8CAB" }}>
-          <span style={{ cursor: "pointer", color: "#0B57E8" }}>Home</span>
-          <span>›</span>
-          <span style={{ cursor: "pointer", color: "#0B57E8" }}>Categories</span>
-          <span>›</span>
-          <span style={{ color: "#0A1F44", fontWeight: 500 }}>{cat.label}</span>
-        </div>
-      </div>
 
       {/* ── Hero ── */}
-      <section ref={sectionRefs.overview} style={{
-        background: `linear-gradient(135deg, ${cat.color}12 0%, ${cat.colorSoft} 60%, #F7FAFF 100%)`,
-        padding: "clamp(40px,7vw,90px) clamp(20px,5vw,80px) 0",
-        position: "relative", overflow: "hidden",
-      }}>
-        {/* decorative circle */}
-        <div style={{ position: "absolute", right: -80, top: -80, width: 500, height: 500, borderRadius: "50%", background: cat.color + "08", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", right: 60, top: 60, width: 280, height: 280, borderRadius: "50%", background: cat.color + "0C", pointerEvents: "none" }} />
+      <section ref={sectionRefs.overview} className="hcc-hero">
+        {/* bg image as gradient overlay placeholder */}
+        <div className="hcc-hero-overlay" />
+        {/* Decorative circles */}
+        <div className="hcc-hero-deco-1" />
+        <div className="hcc-hero-deco-2" />
+        {/* Floating icon accents */}
+        <FiHeart className="hcc-hero-icon" style={{ top: 48, right: 420, fontSize: 48 }} />
+        <FiShield className="hcc-hero-icon" style={{ bottom: 60, right: 500, fontSize: 36 }} />
+        <FiActivity className="hcc-hero-icon" style={{ top: 140, right: 340, fontSize: 30 }} />
+        <FiCheckCircle className="hcc-hero-icon" style={{ bottom: 120, right: 420, fontSize: 28 }} />
 
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 40, alignItems: "flex-end" }}>
-            <div style={{ maxWidth: 720 }}>
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: cat.color + "18", border: `1px solid ${cat.color}30`, borderRadius: 50, padding: "6px 16px", marginBottom: 24 }}>
-                  <span style={{ fontSize: 18 }}>{cat.icon}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: cat.colorDark }}>{cat.label}</span>
-                </div>
-                <h1 style={{ fontSize: "clamp(28px,4.5vw,52px)", fontWeight: 800, lineHeight: 1.15, color: "#0A1F44", margin: "0 0 18px", letterSpacing: "-0.5px" }}>
-                  {cat.headline}
-                </h1>
-                <p style={{ fontSize: "clamp(15px,1.8vw,18px)", color: "#445577", lineHeight: 1.7, marginBottom: 32, maxWidth: 580 }}>
-                  {cat.subheadline}
-                </p>
-
-                {/* Search bar */}
-                <div style={{ display: "flex", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
-                  <div style={{
-                    flex: 1, minWidth: 280, display: "flex", alignItems: "center", gap: 12,
-                    background: "#fff", border: "1.5px solid #D0DCF5", borderRadius: 50, padding: "12px 20px",
-                    boxShadow: "0 2px 12px rgba(11,87,232,0.08)",
-                  }}>
-                    <FiSearch style={{ color: "#7A8CAB", flexShrink: 0 }} />
-                    <input
-                      placeholder={`Search conditions, symptoms in ${cat.label}...`}
-                      style={{ border: "none", outline: "none", fontSize: 14, color: "#0A1F44", background: "transparent", width: "100%", fontFamily: "inherit" }}
-                      value={conditionSearch}
-                      onChange={e => setConditionSearch(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* CTA buttons */}
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                  <button
-                    onClick={() => scrollTo("doctors")}
-                    style={{
-                      background: cat.color, color: "#fff", border: "none", borderRadius: 50,
-                      padding: "14px 28px", fontSize: 15, fontWeight: 600, cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s",
-                      boxShadow: `0 4px 20px ${cat.color}40`,
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 8px 24px ${cat.color}55`; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `0 4px 20px ${cat.color}40`; }}
-                  >
-                    Find Doctors <FiArrowRight />
-                  </button>
-                  <button
-                    onClick={() => scrollTo("conditions")}
-                    style={{
-                      background: "#fff", color: cat.color, border: `2px solid ${cat.color}`, borderRadius: 50,
-                      padding: "12px 28px", fontSize: 15, fontWeight: 600, cursor: "pointer",
-                      display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = cat.color + "0A"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
-                  >
-                    Explore Conditions
-                  </button>
-                </div>
-              </motion.div>
+        <div className="hcc-inner">
+          {/* Left: Hero text */}
+          <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
+            <div className="hcc-badge">
+              <span className="hcc-badge-dot" />
+              + Trusted {cat.label}
             </div>
 
-            {/* Category switcher pill (desktop) */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, alignSelf: "flex-start", marginTop: 20 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7A8CAB", marginBottom: 4 }}>Switch Category</span>
-              {Object.values(ALL_CATEGORIES).slice(0, 6).map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => { setActiveCategory(c.id); setConditionSearch(""); setActiveSymptom(null); setOpenFaq(null); }}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 8,
-                    background: c.id === activeCategory ? c.color + "18" : "#fff",
-                    border: `1.5px solid ${c.id === activeCategory ? c.color : "#E8EEF8"}`,
-                    borderRadius: 50, padding: "7px 14px", cursor: "pointer",
-                    fontSize: 13, fontWeight: c.id === activeCategory ? 600 : 400,
-                    color: c.id === activeCategory ? c.colorDark || c.color : "#445577",
-                    transition: "all 0.18s", whiteSpace: "nowrap",
-                  }}
-                >
-                  <span>{c.icon}</span> {c.label}
-                </button>
-              ))}
-              <button
-                onClick={() => setDrawerOpen(true)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8, background: "#F7FAFF",
-                  border: "1.5px dashed #C8DFFF", borderRadius: 50, padding: "7px 14px",
-                  cursor: "pointer", fontSize: 13, color: "#0B57E8", fontWeight: 500, marginTop: 2,
-                }}
-              >
-                + View all categories
+            <h1 className="hcc-headline">
+              {cat.headline}
+              <br />
+              <span style={{ color: "var(--blue-lt)" }}>{cat.headlineAccent}</span>
+            </h1>
+
+            <p className="hcc-subline">{cat.subheadline}</p>
+
+            <div className="hcc-cta-row">
+              <button className="hcc-btn-primary" onClick={() => scrollTo("specialties")}>
+                <FiCalendar /> Book Appointment
+              </button>
+              <button className="hcc-btn-secondary" onClick={() => scrollTo("conditions")}>
+                <FiUser size={15} /> Know More
               </button>
             </div>
-          </div>
 
-          {/* Quick stat pills */}
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", padding: "32px 0 0" }}>
-            {[
-              { label: `${cat.stats.specialists}+ Specialists`, icon: <FiUser /> },
-              { label: `${cat.stats.conditions}+ Conditions`, icon: <FiActivity /> },
-              { label: `${cat.stats.doctors} Doctors Online`, icon: <FiCheckCircle /> },
-              { label: `${cat.stats.satisfaction} Satisfaction`, icon: <FiHeart /> },
-            ].map((s, i) => (
-              <div key={i} style={{
-                display: "flex", alignItems: "center", gap: 8, background: "#fff",
-                border: "1px solid #E8EEF8", borderRadius: 50, padding: "8px 18px",
-                fontSize: 13, fontWeight: 500, color: "#0A1F44",
-                boxShadow: "0 2px 8px rgba(11,87,232,0.06)",
-              }}>
-                <span style={{ color: cat.color }}>{s.icon}</span> {s.label}
-              </div>
-            ))}
-          </div>
+            <div className="hcc-trust-row">
+              <div className="hcc-trust-item"><FiCheckCircle size={14} /> Same Day Visits</div>
+              <div className="hcc-trust-item"><FiShield size={14} /> Insurance Accepted</div>
+              <div className="hcc-trust-item"><FiVideo size={14} /> Virtual Care</div>
+            </div>
+          </motion.div>
+
+          {/* Right: Booking form */}
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.15 }}
+          >
+            <BookingForm categoryLabel={cat.label} />
+          </motion.div>
         </div>
 
-        {/* Sticky nav bar */}
-        <div style={{
-          position: "sticky", top: 0, zIndex: 90, background: "#fff",
-          borderTop: "1px solid #E8EEF8", borderBottom: "1px solid #E8EEF8",
-          marginTop: 32, overflowX: "auto",
-        }}>
-          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 clamp(20px,5vw,80px)", display: "flex", gap: 0 }}>
-            {navItems.map(n => (
-              <button
-                key={n.key}
-                onClick={() => scrollTo(n.key)}
-                style={{
-                  padding: "14px 20px", fontSize: 14, fontWeight: activeSection === n.key ? 600 : 400,
-                  color: activeSection === n.key ? cat.color : "#445577",
-                  background: "transparent", border: "none", cursor: "pointer",
-                  borderBottom: `2.5px solid ${activeSection === n.key ? cat.color : "transparent"}`,
-                  whiteSpace: "nowrap", transition: "all 0.15s",
-                }}
-              >
-                {n.label}
-              </button>
-            ))}
-          </div>
-        </div>
+       
       </section>
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 clamp(20px,5vw,80px)" }}>
+      {/* ── Body ── */}
+      <div className="hcc-body">
 
-        {/* ── Stats Section ── */}
-        <section ref={statsRef} style={{ padding: "56px 0 0" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 16 }}>
-            {[
-              { label: "Total Specialists", value: displayedCounts.specialists ?? cat.stats.specialists, suffix: "+", icon: <FiUser />, color: cat.color },
-              { label: "Conditions Covered", value: displayedCounts.conditions ?? cat.stats.conditions, suffix: "+", icon: <FiActivity />, color: "#10B981" },
-              { label: "Doctors Available", value: displayedCounts.doctors ?? cat.stats.doctors, suffix: "", icon: <FiCheckCircle />, color: "#8B5CF6" },
-              { label: "Avg. Consultation", value: cat.stats.avgTime, suffix: "", icon: <FiClock />, color: "#F59E0B", isString: true },
-              { label: "Patient Satisfaction", value: cat.stats.satisfaction, suffix: "", icon: <FiHeart />, color: "#EF4444", isString: true },
-            ].map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                animate={countersVisible ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: i * 0.08, duration: 0.4 }}
-                style={{
-                  background: "#fff", border: "1px solid #E8EEF8", borderRadius: 20,
-                  padding: "24px 20px", textAlign: "center",
-                  boxShadow: "0 2px 12px rgba(11,87,232,0.05)",
-                }}
-              >
-                <div style={{
-                  width: 44, height: 44, borderRadius: 14, background: s.color + "14",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  margin: "0 auto 14px", fontSize: 20, color: s.color,
-                }}>{s.icon}</div>
-                <div style={{ fontSize: "clamp(22px,2.5vw,28px)", fontWeight: 800, color: "#0A1F44", lineHeight: 1 }}>
-                  {s.isString ? s.value : s.value}{s.suffix}
-                </div>
-                <div style={{ fontSize: 12, color: "#7A8CAB", marginTop: 6, fontWeight: 500 }}>{s.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Specialties Section ── */}
+        {/* ── Specialties ── */}
         {cat.specialties.length > 0 && (
-          <section ref={sectionRefs.specialties} style={{ padding: "72px 0 0" }}>
-            <SectionHeading eyebrow="Expertise" title="Specialties Covered" sub={`All ${cat.label} specialties available on HumanCare Connect.`} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,280px),1fr))", gap: 20 }}>
+          <section ref={sectionRefs.specialties} className="hcc-section">
+            <span className="hcc-section-eyebrow">Expertise</span>
+            <h2 className="hcc-section-title">Specialties Covered</h2>
+            <p className="hcc-section-sub">All {cat.label} specialties available on HumanCare Connect.</p>
+            <div className="hcc-specialty-grid">
               {cat.specialties.map((sp, i) => (
                 <motion.div
                   key={i}
+                  className="hcc-specialty-card"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.05 }}
-                  whileHover={{ y: -4, boxShadow: `0 12px 32px ${cat.color}18` }}
-                  style={{
-                    background: "#fff", border: "1px solid #E8EEF8", borderRadius: 20,
-                    padding: "24px", cursor: "pointer",
-                    transition: "box-shadow 0.2s, border-color 0.2s",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = cat.color + "50"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = "#E8EEF8"}
                 >
-                  <div style={{ fontSize: 28, marginBottom: 12 }}>{sp.icon}</div>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0A1F44", margin: "0 0 8px" }}>{sp.name}</h3>
-                  <p style={{ fontSize: 13, color: "#556080", lineHeight: 1.6, margin: "0 0 16px" }}>{sp.desc}</p>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: cat.color, background: cat.color + "12", borderRadius: 50, padding: "4px 12px" }}>
-                      {sp.doctors} Doctors
-                    </span>
-                    <FiArrowRight style={{ color: cat.color, opacity: 0.7 }} />
+                  <span className="hcc-specialty-icon">{sp.icon}</span>
+                  <div className="hcc-specialty-name">{sp.name}</div>
+                  <p className="hcc-specialty-desc">{sp.desc}</p>
+                  <div className="hcc-specialty-footer">
+                    <span className="hcc-specialty-pill">{sp.doctors} Doctors</span>
+                    <FiArrowRight style={{ color: "var(--blue)", opacity: 0.6 }} />
                   </div>
                 </motion.div>
               ))}
@@ -514,186 +1008,68 @@ export default function ChildMain({ categoryId = "mental-health" }) {
           </section>
         )}
 
-        {/* ── Conditions Section ── */}
+        {/* ── Conditions ── */}
         {cat.conditions.length > 0 && (
-          <section ref={sectionRefs.conditions} style={{ padding: "72px 0 0" }}>
-            <SectionHeading eyebrow="Conditions" title="Conditions & Symptoms We Treat" sub="Browse by condition or use the search to find relevant care." />
-
-            {/* Filter row */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28, flexWrap: "wrap" }}>
-              <div style={{
-                display: "flex", alignItems: "center", gap: 10, background: "#fff",
-                border: "1.5px solid #D0DCF5", borderRadius: 50, padding: "9px 18px", flex: 1, minWidth: 220,
-              }}>
-                <FiSearch style={{ color: "#7A8CAB", flexShrink: 0 }} />
-                <input
-                  placeholder="Filter conditions..."
-                  value={conditionSearch}
-                  onChange={e => setConditionSearch(e.target.value)}
-                  style={{ border: "none", outline: "none", fontSize: 14, background: "transparent", width: "100%", fontFamily: "inherit", color: "#0A1F44" }}
-                />
-                {conditionSearch && <button onClick={() => setConditionSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#7A8CAB", padding: 0 }}><FiX /></button>}
-              </div>
-              {activeSymptom && (
-                <button onClick={() => setActiveSymptom(null)} style={{ display: "flex", alignItems: "center", gap: 6, background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 50, padding: "9px 16px", fontSize: 13, color: "#EF4444", cursor: "pointer" }}>
-                  <FiX size={13} /> Clear filter: {activeSymptom}
-                </button>
-              )}
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,300px),1fr))", gap: 20 }}>
+          <section ref={sectionRefs.conditions} className="hcc-section">
+            <span className="hcc-section-eyebrow">Conditions</span>
+            <h2 className="hcc-section-title">Conditions &amp; Symptoms We Treat</h2>
+            <p className="hcc-section-sub">Click on any condition to see symptoms and the right specialists for you.</p>
+            <div className="hcc-condition-grid">
               <AnimatePresence>
-                {filteredConditions.map((cond, i) => (
-                  <ConditionCard key={cond.name} cond={cond} color={cat.color} index={i} />
+                {cat.conditions.map((cond, i) => (
+                  <ConditionCard key={cond.name} cond={cond} index={i} />
                 ))}
               </AnimatePresence>
-              {filteredConditions.length === 0 && (
-                <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "48px 0", color: "#7A8CAB" }}>
-                  <FiSearch size={32} style={{ marginBottom: 12, opacity: 0.4 }} />
-                  <p>No conditions match your search.</p>
-                </div>
-              )}
             </div>
           </section>
         )}
 
-        {/* ── Symptoms Section ── */}
-        {cat.symptoms.length > 0 && (
-          <section ref={sectionRefs.symptoms} style={{ padding: "72px 0 0" }}>
-            <SectionHeading eyebrow="Symptoms" title="Common Symptoms" sub="Tap a symptom to filter relevant conditions above." />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              {cat.symptoms.map((s, i) => (
-                <Chip
-                  key={i} label={s}
-                  active={activeSymptom === s}
-                  color={cat.color}
-                  onClick={() => { setActiveSymptom(activeSymptom === s ? null : s); scrollTo("conditions"); }}
-                />
-              ))}
-            </div>
-            {activeSymptom && (
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{
-                marginTop: 20, background: cat.color + "10", border: `1px solid ${cat.color}30`,
-                borderRadius: 14, padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: cat.colorDark || cat.color,
-              }}>
-                <FiAlertCircle /> Showing conditions related to <strong>{activeSymptom}</strong> — scroll up to see results.
-              </motion.div>
-            )}
-          </section>
-        )}
-
-        {/* ── Treatments Section ── */}
+        {/* ── Treatments ── */}
         {cat.treatments.length > 0 && (
-          <section style={{ padding: "72px 0 0" }}>
-            <SectionHeading eyebrow="Care Options" title="Treatment & Care Pathways" sub="Multiple ways to access quality care, on your terms." />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,240px),1fr))", gap: 16 }}>
+          <section ref={sectionRefs.treatments} className="hcc-section">
+            <span className="hcc-section-eyebrow">Care Options</span>
+            <h2 className="hcc-section-title">Treatment &amp; Care Pathways</h2>
+            <p className="hcc-section-sub">Multiple ways to access quality care, on your terms.</p>
+            <div className="hcc-treatment-grid">
               {cat.treatments.map((t, i) => (
                 <motion.div
                   key={i}
+                  className="hcc-treatment-card"
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.06 }}
-                  style={{
-                    background: "#fff", border: "1px solid #E8EEF8", borderRadius: 20,
-                    padding: "22px 20px",
-                  }}
                 >
-                  <div style={{
-                    width: 40, height: 40, borderRadius: 12, background: cat.color + "14",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    marginBottom: 14, fontSize: 18, color: cat.color,
-                  }}>{t.icon}</div>
-                  <h4 style={{ fontSize: 15, fontWeight: 700, color: "#0A1F44", margin: "0 0 8px" }}>{t.title}</h4>
-                  <p style={{ fontSize: 13, color: "#556080", lineHeight: 1.6, margin: 0 }}>{t.desc}</p>
+                  <div className="hcc-treatment-icon">{t.icon}</div>
+                  <div className="hcc-treatment-title">{t.title}</div>
+                  <p className="hcc-treatment-desc">{t.desc}</p>
                 </motion.div>
               ))}
             </div>
           </section>
         )}
 
-        {/* ── Doctors Section ── */}
-        {cat.doctors.length > 0 && (
-          <section ref={sectionRefs.doctors} style={{ padding: "72px 0 0" }}>
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: "2.5rem" }}>
-              <SectionHeading eyebrow="Our Doctors" title="Featured Specialists" sub={`Highly rated ${cat.label} specialists available for consultation.`} />
-              <button style={{
-                background: "transparent", border: `2px solid ${cat.color}`, color: cat.color, borderRadius: 50,
-                padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 8,
-              }}>
-                View All Doctors <FiArrowRight />
-              </button>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,290px),1fr))", gap: 20 }}>
-              {cat.doctors.map((doc, i) => (
-                <DoctorCard key={i} doc={doc} color={cat.color} index={i} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Resources Section ── */}
-        {cat.resources.length > 0 && (
-          <section ref={sectionRefs.resources} style={{ padding: "72px 0 0" }}>
-            <SectionHeading eyebrow="Learn" title="Health Resources" sub={`Articles, guides, and tips for ${cat.label}.`} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,260px),1fr))", gap: 20 }}>
-              {cat.resources.map((r, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.07 }}
-                  whileHover={{ y: -3 }}
-                  style={{
-                    background: "#fff", border: "1px solid #E8EEF8", borderRadius: 20,
-                    padding: "24px", cursor: "pointer",
-                  }}
-                >
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
-                    color: cat.color, background: cat.color + "14", borderRadius: 50, padding: "4px 12px",
-                    display: "inline-block", marginBottom: 14,
-                  }}>{r.type}</span>
-                  <h4 style={{ fontSize: 15, fontWeight: 600, color: "#0A1F44", margin: "0 0 12px", lineHeight: 1.4 }}>{r.title}</h4>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 12, color: "#7A8CAB" }}><FiClock style={{ verticalAlign: -2, marginRight: 4 }} />{r.time}</span>
-                    <FiArrowRight style={{ color: cat.color }} />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── FAQ Section ── */}
+        {/* ── FAQ ── */}
         {cat.faqs.length > 0 && (
-          <section ref={sectionRefs.faq} style={{ padding: "72px 0 0" }}>
-            <SectionHeading eyebrow="FAQ" title="Frequently Asked Questions" />
-            <div style={{ maxWidth: 760 }}>
+          <section ref={sectionRefs.faq} className="hcc-section">
+            <span className="hcc-section-eyebrow">FAQ</span>
+            <h2 className="hcc-section-title">Frequently Asked Questions</h2>
+            <div className="hcc-faq-wrap" style={{ marginTop: 32 }}>
               {cat.faqs.map((faq, i) => (
                 <motion.div
                   key={i}
+                  className={`hcc-faq-item${openFaq === i ? " open" : ""}`}
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.05 }}
-                  style={{
-                    background: "#fff", border: "1px solid #E8EEF8", borderRadius: 16,
-                    marginBottom: 12, overflow: "hidden",
-                  }}
                 >
                   <button
+                    className="hcc-faq-btn"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    style={{
-                      width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "20px 24px", background: "none", border: "none", cursor: "pointer",
-                      textAlign: "left", gap: 16,
-                    }}
                   >
-                    <span style={{ fontSize: 15, fontWeight: 600, color: "#0A1F44", lineHeight: 1.4 }}>{faq.q}</span>
-                    <span style={{ color: cat.color, flexShrink: 0 }}>
+                    <span className="hcc-faq-question">{faq.q}</span>
+                    <span className="hcc-faq-icon">
                       {openFaq === i ? <FiChevronUp /> : <FiChevronDown />}
                     </span>
                   </button>
@@ -706,8 +1082,8 @@ export default function ChildMain({ categoryId = "mental-health" }) {
                         transition={{ duration: 0.25 }}
                         style={{ overflow: "hidden" }}
                       >
-                        <div style={{ padding: "0 24px 20px", fontSize: 14, color: "#556080", lineHeight: 1.7, borderTop: "1px solid #F0F4FB" }}>
-                          <div style={{ paddingTop: 14 }}>{faq.a}</div>
+                        <div className="hcc-faq-answer">
+                          <div className="hcc-faq-answer-inner">{faq.a}</div>
                         </div>
                       </motion.div>
                     )}
@@ -718,58 +1094,33 @@ export default function ChildMain({ categoryId = "mental-health" }) {
           </section>
         )}
 
-        {/* ── CTA Section ── */}
-        <section style={{ padding: "72px 0 80px" }}>
-          <div style={{
-            background: `linear-gradient(135deg, ${cat.color} 0%, ${cat.colorDark || cat.color} 100%)`,
-            borderRadius: 28, padding: "clamp(36px,5vw,64px)",
-            display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
-            position: "relative", overflow: "hidden",
-          }}>
-            <div style={{ position: "absolute", right: -60, bottom: -60, width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", left: -40, top: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: 16 }}>
-              {cat.label}
-            </span>
-            <h2 style={{ fontSize: "clamp(24px,3.5vw,40px)", fontWeight: 800, color: "#fff", margin: "0 0 16px", lineHeight: 1.2 }}>
-              Get Expert Care Today
-            </h2>
-            <p style={{ fontSize: 16, color: "rgba(255,255,255,0.82)", maxWidth: 480, lineHeight: 1.7, marginBottom: 36 }}>
-              Connect with experienced {cat.label} specialists — same-day appointments often available.
-            </p>
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
-              <button style={{
-                background: "#fff", color: cat.color, border: "none", borderRadius: 50,
-                padding: "14px 32px", fontSize: 15, fontWeight: 700, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-              }}>
-                Find Doctors <FiArrowRight />
-              </button>
-              <button style={{
-                background: "rgba(255,255,255,0.15)", color: "#fff", border: "2px solid rgba(255,255,255,0.4)", borderRadius: 50,
-                padding: "12px 32px", fontSize: 15, fontWeight: 600, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 8, backdropFilter: "blur(8px)",
-              }}>
-                Book Consultation <FiCalendar />
-              </button>
-            </div>
+        {/* ── CTA Banner ── */}
+        <div className="hcc-cta-banner">
+          <div className="hcc-cta-text">
+            <span className="eyebrow">{cat.label}</span>
+            <h2>Get Expert Care Today</h2>
+            <p>Connect with experienced {cat.label} specialists — same-day appointments often available.</p>
           </div>
-        </section>
-
+          <div className="hcc-cta-actions">
+            <button className="hcc-btn-primary" style={{ background: "#fff", color: "var(--blue)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
+              Find Doctors <FiArrowRight />
+            </button>
+            <button className="hcc-btn-secondary" style={{ borderColor: "rgba(255,255,255,0.35)" }}>
+              <FiPhone size={14} /> Call Us Now
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* ── Mobile sticky CTA ── */}
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        display: "none", // handled via media query below
-        background: "#fff", borderTop: "1px solid #E8EEF8", padding: "12px 20px",
-        gap: 10,
-        "@media (max-width: 768px)": { display: "flex" },
-      }} className="mobile-cta">
-        <button style={{
-          flex: 1, background: cat.color, color: "#fff", border: "none", borderRadius: 50,
-          padding: "13px", fontSize: 14, fontWeight: 700, cursor: "pointer",
-        }}>Book Appointment</button>
+      <div className="hcc-mobile-cta">
+        <button
+          className="hcc-btn-primary"
+          style={{ flex: 1, justifyContent: "center", borderRadius: 12 }}
+          onClick={() => scrollTo("overview")}
+        >
+          Book Appointment
+        </button>
       </div>
 
       {/* ── All Categories Drawer ── */}
@@ -779,41 +1130,55 @@ export default function ChildMain({ categoryId = "mental-health" }) {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setDrawerOpen(false)}
-              style={{ position: "fixed", inset: 0, background: "rgba(10,31,68,0.4)", zIndex: 200, backdropFilter: "blur(4px)" }}
+              style={{ position: "fixed", inset: 0, background: "rgba(13,34,64,0.5)", zIndex: 200, backdropFilter: "blur(4px)" }}
             />
             <motion.div
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 26, stiffness: 280 }}
               style={{
-                position: "fixed", right: 0, top: 0, bottom: 0, width: "min(420px,95vw)",
-                background: "#fff", zIndex: 201, overflowY: "auto", padding: 32,
-                boxShadow: "-8px 0 40px rgba(10,31,68,0.15)",
+                position: "fixed", right: 0, top: 0, bottom: 0,
+                width: "min(420px, 95vw)",
+                background: "var(--white)", zIndex: 201,
+                overflowY: "auto", padding: 32,
+                boxShadow: "-8px 0 40px rgba(13,34,64,0.2)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
-                <h3 style={{ fontSize: 20, fontWeight: 700, color: "#0A1F44", margin: 0 }}>All Categories</h3>
-                <button onClick={() => setDrawerOpen(false)} style={{ background: "#F7FAFF", border: "none", borderRadius: 50, width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <FiX style={{ color: "#445577" }} />
+                <h3 style={{ fontSize: 20, fontWeight: 800, color: "var(--navy)" }}>All Categories</h3>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  style={{ background: "var(--tint)", border: "none", borderRadius: 50, width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  <FiX style={{ color: "var(--navy)" }} />
                 </button>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {Object.values(ALL_CATEGORIES).map(c => (
                   <button
                     key={c.id}
-                    onClick={() => { setActiveCategory(c.id); setDrawerOpen(false); setConditionSearch(""); setActiveSymptom(null); setOpenFaq(null); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    onClick={() => {
+                      setActiveCategory(c.id);
+                      setDrawerOpen(false);
+                      setOpenFaq(null);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
                     style={{
                       display: "flex", alignItems: "center", gap: 14,
-                      background: c.id === activeCategory ? c.color + "12" : "#F7FAFF",
-                      border: `1.5px solid ${c.id === activeCategory ? c.color : "#E8EEF8"}`,
-                      borderRadius: 14, padding: "14px 18px", cursor: "pointer", textAlign: "left",
+                      background: c.id === activeCategory ? "rgba(37,99,235,0.07)" : "var(--bg)",
+                      border: `1.5px solid ${c.id === activeCategory ? "var(--blue)" : "var(--line)"}`,
+                      borderRadius: 14, padding: "14px 18px",
+                      cursor: "pointer", textAlign: "left",
+                      transition: "all 0.15s",
                     }}
                   >
                     <span style={{ fontSize: 24, lineHeight: 1 }}>{c.icon}</span>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: "#0A1F44" }}>{c.label}</div>
-                      <div style={{ fontSize: 12, color: "#7A8CAB", marginTop: 2 }}>{c.tagline}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: "var(--navy)" }}>{c.label}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>{c.tagline}</div>
                     </div>
-                    {c.id === activeCategory && <FiCheckCircle style={{ marginLeft: "auto", color: c.color }} />}
+                    {c.id === activeCategory && (
+                      <FiCheckCircle style={{ marginLeft: "auto", color: "var(--blue)" }} />
+                    )}
                   </button>
                 ))}
               </div>
@@ -821,125 +1186,6 @@ export default function ChildMain({ categoryId = "mental-health" }) {
           </>
         )}
       </AnimatePresence>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .mobile-cta { display: flex !important; }
-        }
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #F7FAFF; }
-        ::-webkit-scrollbar-thumb { background: #C8DFFF; border-radius: 99px; }
-      `}</style>
     </div>
-  );
-}
-
-// ─── Condition Card ───────────────────────────────────────────────────────────
-
-function ConditionCard({ cond, color, index }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ delay: Math.min(index * 0.04, 0.3) }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: "#fff", border: `1px solid ${hovered ? color + "40" : "#E8EEF8"}`,
-        borderRadius: 20, padding: "22px", cursor: "pointer",
-        transition: "border-color 0.2s, box-shadow 0.2s",
-        boxShadow: hovered ? `0 8px 24px ${color}14` : "none",
-      }}
-    >
-      <h4 style={{ fontSize: 15, fontWeight: 700, color: "#0A1F44", margin: "0 0 8px" }}>{cond.name}</h4>
-      <p style={{ fontSize: 13, color: "#556080", lineHeight: 1.55, margin: "0 0 14px" }}>{cond.desc}</p>
-      <AnimatePresence>
-        {hovered && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}>
-            <div style={{ borderTop: "1px solid #F0F4FB", paddingTop: 12, marginTop: 4 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7A8CAB", marginBottom: 8 }}>Common Symptoms</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                {cond.symptoms.map((s, i) => (
-                  <span key={i} style={{ fontSize: 12, background: color + "10", color, borderRadius: 50, padding: "3px 10px", fontWeight: 500 }}>{s}</span>
-                ))}
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7A8CAB", marginBottom: 8 }}>Specialists</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {cond.specialists.map((s, i) => (
-                  <span key={i} style={{ fontSize: 12, background: "#F7FAFF", border: "1px solid #E8EEF8", color: "#445577", borderRadius: 50, padding: "3px 10px" }}>{s}</span>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-// ─── Doctor Card ──────────────────────────────────────────────────────────────
-
-function DoctorCard({ doc, color, index }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.07 }}
-      style={{
-        background: "#fff", border: "1px solid #E8EEF8", borderRadius: 22, padding: "24px",
-        display: "flex", flexDirection: "column", gap: 0,
-      }}
-    >
-      {/* Header */}
-      <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 14 }}>
-        <Avatar initials={doc.initials} color={color} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#0A1F44" }}>{doc.name}</div>
-          <div style={{ fontSize: 13, color: "#445577", marginTop: 2 }}>{doc.specialty}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
-            <StarRating rating={doc.rating} />
-            <span style={{ fontSize: 12, color: "#7A8CAB" }}>({doc.reviews} reviews)</span>
-          </div>
-        </div>
-        <div style={{
-          background: doc.avail === "Today" ? "#DCFCE7" : "#F7FAFF",
-          color: doc.avail === "Today" ? "#16A34A" : "#445577",
-          fontSize: 11, fontWeight: 700, borderRadius: 50, padding: "4px 10px", whiteSpace: "nowrap",
-        }}>{doc.avail}</div>
-      </div>
-
-      {/* Details */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-        <span style={{ fontSize: 12, background: "#F7FAFF", border: "1px solid #E8EEF8", color: "#445577", borderRadius: 50, padding: "4px 10px" }}>
-          <FiClock style={{ verticalAlign: -2, marginRight: 3, fontSize: 10 }} />{doc.exp} exp.
-        </span>
-        {doc.langs.map((l, i) => (
-          <span key={i} style={{ fontSize: 12, background: "#F7FAFF", border: "1px solid #E8EEF8", color: "#445577", borderRadius: 50, padding: "4px 10px" }}>{l}</span>
-        ))}
-      </div>
-
-      {/* Fee + Buttons */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 14, borderTop: "1px solid #F0F4FB" }}>
-        <div>
-          <div style={{ fontSize: 11, color: "#7A8CAB" }}>Consultation</div>
-          <div style={{ fontSize: 17, fontWeight: 800, color: "#0A1F44" }}>{doc.fee}</div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button style={{
-            background: "#F7FAFF", border: "1px solid #E8EEF8", color: "#0A1F44", borderRadius: 50,
-            padding: "8px 14px", fontSize: 13, fontWeight: 500, cursor: "pointer",
-          }}>Profile</button>
-          <button style={{
-            background: color, color: "#fff", border: "none", borderRadius: 50,
-            padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            boxShadow: `0 3px 12px ${color}40`,
-          }}>Book</button>
-        </div>
-      </div>
-    </motion.div>
   );
 }

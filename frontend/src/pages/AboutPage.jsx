@@ -644,6 +644,8 @@ function ContactSection() {
   );
 }
 
+
+
 /* ─── ROOT EXPORT ─── */
 export default function AboutPage() {
   return (
@@ -657,6 +659,7 @@ export default function AboutPage() {
       <ServicesSection />
       <TrustSection />
       <ContactSection />
+
     </div>
   );
 }

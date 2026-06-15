@@ -3,7 +3,7 @@ import "./header.css";
 import { Link, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import logo from "../assets/Logo.png";
-import miniLogo from "../assets/single-logo.png";
+import miniLogo from "../assets/logo-2.png";
 import { useAuth } from "../context/AuthContext";
 
 /* ── Inline SVG icons for the help dropdown ── */
@@ -129,6 +129,7 @@ export default function Header() {
 
   const navItems = [
     ...(location.pathname !== "/" ? [{ label: "Home", link: "/" }] : []),
+    { label: "About Us",            link: "/about-us"               },
     { label: "Book Appointment", link: "/appointment-booking" },
     { label: "Medical Services", link: "/medical-services"    },
     { label: "Corporates",       link: "/corporates"          },
@@ -242,9 +243,7 @@ export default function Header() {
 
           {/*
             HELP SLIDER WRAP
-            FIX: removed the conditional "visible-mobile" class — it was
-            never defined in CSS and the mobile reveal is already handled
-            by `.glass-header.shrink .help-slider-wrap` in the stylesheet.
+           
           */}
           <div
             className="help-slider-wrap"
