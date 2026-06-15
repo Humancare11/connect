@@ -65,7 +65,7 @@ export default function WhySection() {
               initial="hidden"
               animate={leftInView ? "visible" : "hidden"}
             >
-              Why Humancare
+              WHY HUMANCARE CONNECT
             </Motion.div>
 
             <Motion.h2
@@ -75,7 +75,8 @@ export default function WhySection() {
               animate={leftInView ? "visible" : "hidden"}
               style={{ marginBottom: "34px" }}
             >
-              Built on trust,<br />at every step.
+              Built on trust,<br />backed by real healthcare expertise.
+
             </Motion.h2>
 
             <Motion.div
@@ -87,40 +88,44 @@ export default function WhySection() {
             >
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">HIPAA &amp; SOC 2 Certified</div>
+                  <div className="why-item-title">HIPAA & SOC 2 Certified
+</div>
                   <div className="why-item-desc">
-                    End-to-end encryption on every visit, message, and record.
-                    Your health data never leaves our secure, audited infrastructure.
+                    Your privacy comes first. Our secure telemedicine platform uses advanced encryption and compliance standards to protect every online doctor consultation, medical record, prescription, and patient interaction.
+
                   </div>
                 </div>
               </Motion.div>
 
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">Board-Certified Physicians Only</div>
+                  <div className="why-item-title">Board-Certified Physicians Only
+</div>
                   <div className="why-item-desc">
-                    Every doctor clears a rigorous 9-step credentialing process —
-                    state licensure, malpractice history, peer reviews, and ongoing audits.
+                    Every provider on Humancare Connect is carefully credentialed and licensed to deliver trusted telehealth services, virtual healthcare consultations, and high-quality patient care across multiple specialties.
+
                   </div>
                 </div>
               </Motion.div>
 
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">Transparent, Flat-Fee Pricing</div>
+                  <div className="why-item-title">Transparent, Flat-Fee Pricing
+</div>
                   <div className="why-item-desc">
-                    No surprise bills. See the exact cost before booking. Most major
-                    insurance plans accepted, or a flat $49 uninsured rate.
+                   No surprise medical bills or hidden costs. Get affordable telemedicine services, upfront pricing, and flexible online healthcare access with or without insurance coverage.
+
                   </div>
                 </div>
               </Motion.div>
 
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">24 / 7 Human Support</div>
+                  <div className="why-item-title">24/7 Human Support
+</div>
                   <div className="why-item-desc">
-                    Real people — by chat, phone, or video — available around the clock
-                    for urgent questions, escalations, and care coordination.
+                    Talk to real people whenever you need help. Our support team is available around the clock to assist with online doctor appointments, prescriptions, virtual care coordination, and patient questions.
+
                   </div>
                 </div>
               </Motion.div>
@@ -226,8 +231,9 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label">Rating</div>
-              <div className="sf-val" style={{ color: "#d97706" }}>4.9 ★</div>
+              <div className="sf-label">Visit Completion Rate
+</div>
+              <div className="sf-val" style={{ color: "#d97706" }}>98% +  </div>
             </Motion.div>
 
           </div>

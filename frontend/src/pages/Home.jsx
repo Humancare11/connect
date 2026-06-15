@@ -27,18 +27,15 @@ import { useNavigate } from "react-router-dom";
 const PCP = lazy(() => import("../components/PCPSection"));
 const Why = lazy(() => import("../components/WhySection"));
 
-// Add these two imports near the top of HomePage.jsx
-import searchIndex from "../data/searchIndex";
-
 // ─── Scene data ───────────────────────────────────────────────────────────────
 const SCENES = [
   {
     step: 1,
-    badge: "Open App",
-    title: "Launch Humancare",
-    desc: "Open the app or website. Your health dashboard loads instantly with your profile ready.",
-    metricValue: "< 1s",
-    metricLabel: "App load time",
+    badge: "Create Account",
+    title: " Create your account",
+    desc: " Sign up in under a minute. Registration is frictionless and seamless.",
+    metricValue: "< 10s",
+    metricLabel: " Sign-up time",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -47,11 +44,11 @@ const SCENES = [
   },
   {
     step: 2,
-    badge: "AI Match",
-    title: "Matched to Dr. Patel",
-    desc: "Our AI matches you to the best available physician based on your symptoms and history.",
-    metricValue: "4 sec",
-    metricLabel: "Match time",
+    badge: "Choose Service",
+    title: "Choose the service you need",
+    desc: "Browse by category, specialty, or condition, or describe your concern. From general care to travel medicine, pick the right service in a few taps.",
+    metricValue: "30+",
+    metricLabel: "Specialties available",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -61,11 +58,11 @@ const SCENES = [
   },
   {
     step: 3,
-    badge: "Waiting",
-    title: "Virtual Waiting Room",
-    desc: "A brief hold while your doctor prepares. Average wait is under 90 seconds nationwide.",
-    metricValue: "~12 sec",
-    metricLabel: "Your wait today",
+    badge: "Book Appointment",
+    title: "Book your appointment",
+    desc: "We match you with a verified doctor and confirm a time that works. No waiting rooms, no phone tag, just a slot that fits your day.",
+    metricValue: " 24/7",
+    metricLabel: "Booking availability",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <circle cx="12" cy="12" r="10" />
@@ -75,11 +72,11 @@ const SCENES = [
   },
   {
     step: 4,
-    badge: "Connected",
-    title: "Video Consultation",
-    desc: "Face to face with your doctor over HIPAA secured, HD video. Share symptoms, ask questions.",
-    metricValue: "256-bit",
-    metricLabel: "Encrypted",
+    badge: "Consult",
+    title: "Consult your doctor",
+    desc: " Connect by secure video from anywhere. Discuss your symptoms, get a diagnosis, and ask everything you need, face to face.",
+    metricValue: "100% ",
+    metricLabel: " erified physicians",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -88,30 +85,30 @@ const SCENES = [
   },
   {
     step: 5,
-    badge: "E-Prescribe",
-    title: "Prescription Sent",
-    desc: "Your doctor sends the prescription electronically to your preferred pharmacy. Ready for pickup.",
-    metricValue: "Instant",
-    metricLabel: "E-Rx delivery",
+    badge: " Rx & Complete",
+    title: "Get your Rx and complete",
+    desc: "Receive your prescription and visit summary right in your dashboard. Care is documented, secure, and ready when you need it.",
+    metricValue: "< 30s ",
+    metricLabel: "Total to prescription",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <polyline points="20 6 9 17 4 12" />
       </svg>
     ),
   },
-  {
-    step: 6,
-    badge: "Done",
-    title: "Visit Complete!",
-    desc: "Rate your experience, schedule follow ups, and access visit notes, all from one dashboard.",
-    metricValue: "4.9 ★",
-    metricLabel: "Avg rating",
-    metricIcon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
-      </svg>
-    ),
-  },
+  // {
+  //   step: 6,
+  //   badge: "Done",
+  //   title: "Visit Complete!",
+  //   desc: "Rate your experience, schedule follow ups, and access visit notes, all from one dashboard.",
+  //   metricValue: "4.9 ★",
+  //   metricLabel: "Avg rating",
+  //   metricIcon: (
+  //     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+  //       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
+  //     </svg>
+  //   ),
+  // },
 ];
 
 const STEP_ICONS = [
@@ -120,21 +117,72 @@ const STEP_ICONS = [
   <FiClock key="clock" />,
   <FiVideo key="video" />,
   <FiFileText key="filetext" />,
-  <FiCheckCircle key="checkcircle" />,
 ];
 
 const DOT_LABELS = [
-  "Open App",
-  "Match Doctor",
-  "Wait Room",
-  "Video Call",
-  "Rx Sent",
-  "Complete",
+  " Create Account",
+  "Choose Service",
+  "Book Appointment",
+  "Consult",
+  " Rx & Complete",
+
 ];
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 const STEP_DURATION = 4000;
 const CIRCUMFERENCE = 2 * Math.PI * 10;
 const STEP_CIRCUMFERENCE = 2 * Math.PI * 20;
+
+// ─── Search data defined outside component to avoid re-creation on every render
+const SEARCH_DATA = [
+  {
+    id: 1,
+    title: "Cardiologist",
+    keywords: ["heart", "cardiac", "chest pain", "bp"],
+    route: "/findadoctor",
+    sectionId: "cardiology",
+    type: "Specialty",
+  },
+  {
+    id: 2,
+    title: "Dermatologist",
+    keywords: ["skin", "acne", "rash", "eczema"],
+    route: "/findadoctor",
+    sectionId: "dermatology",
+    type: "Specialty",
+  },
+  {
+    id: 3,
+    title: "Mental Health",
+    keywords: ["stress", "anxiety", "depression", "therapy"],
+    route: "/mental-health",
+    sectionId: "therapy-section",
+    type: "Condition",
+  },
+  {
+    id: 4,
+    title: "Pediatrics",
+    keywords: ["kids", "child", "baby", "children"],
+    route: "/findadoctor",
+    sectionId: "pediatrics",
+    type: "Department",
+  },
+  {
+    id: 5,
+    title: "Book Video Consultation",
+    keywords: ["video call", "online doctor", "consultation"],
+    route: "/consultation",
+    sectionId: "video-consult",
+    type: "Service",
+  },
+  {
+    id: 6,
+    title: "Prescriptions",
+    keywords: ["medicine", "rx", "drugs"],
+    route: "/prescriptions",
+    sectionId: "rx-section",
+    type: "Service",
+  },
+];
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -144,62 +192,27 @@ export default function HomePage() {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [isAiLoading, setIsAiLoading] = useState(false);
   const searchRef = useRef(null);
 
-  // ── AI search via Anthropic ───────────────────────────────────────────────
-  async function aiSearch(query) {
-    const response = await fetch("http://localhost:5000/api/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, routes: searchIndex }),
-    });
-    const data = await response.json();
-    return data.results;
-  }
-
-  // ── Filter suggestions: local first, AI fallback ──────────────────────────
+  // ── Filter search suggestions ─────────────────────────────────────────────
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredSuggestions([]);
-      setIsAiLoading(false);
       return;
     }
-
-    const q = searchQuery.toLowerCase();
-
-    // 1️⃣ Instant local match on title
-    const local = searchIndex.filter((item) =>
-      item.title.toLowerCase().includes(q),
+    const query = searchQuery.toLowerCase();
+    const results = SEARCH_DATA.filter(
+      (item) =>
+        item.title.toLowerCase().includes(query) ||
+        item.keywords.some((kw) => kw.toLowerCase().includes(query))
     );
-
-    if (local.length > 0) {
-      // Local hit — show immediately, no AI needed
-      setFilteredSuggestions(local.slice(0, 6));
-      setIsAiLoading(false);
-    } else {
-      // No local hit — ask AI
-      setFilteredSuggestions([]);
-      setIsAiLoading(true);
-      setShowSuggestions(true);
-      aiSearch(searchQuery)
-        .then((results) => {
-          if (results && results.length > 0) {
-            setFilteredSuggestions(results.slice(0, 6));
-          }
-          setIsAiLoading(false);
-        })
-        .catch((err) => {
-          console.error("AI search failed:", err);
-          setIsAiLoading(false);
-        });
-    } // ← this closing brace was missing
+    setFilteredSuggestions(results);
   }, [searchQuery]);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSuggestions(false);
       }
     };
@@ -212,11 +225,11 @@ export default function HomePage() {
     (selectedItem = null) => {
       const item = selectedItem || filteredSuggestions[0];
       if (!item) return;
-      navigate(item.route);
+      navigate(item.route, { state: { scrollTo: item.sectionId } });
       setSearchQuery("");
       setShowSuggestions(false);
     },
-    [filteredSuggestions, navigate],
+    [filteredSuggestions, navigate]
   );
 
   // ── Keyboard navigation ───────────────────────────────────────────────────
@@ -227,20 +240,22 @@ export default function HomePage() {
         case "ArrowDown":
           e.preventDefault();
           setActiveIndex((prev) =>
-            prev < filteredSuggestions.length - 1 ? prev + 1 : 0,
+            prev < filteredSuggestions.length - 1 ? prev + 1 : 0
           );
           break;
         case "ArrowUp":
           e.preventDefault();
           setActiveIndex((prev) =>
-            prev > 0 ? prev - 1 : filteredSuggestions.length - 1,
+            prev > 0 ? prev - 1 : filteredSuggestions.length - 1
           );
           break;
         case "Enter":
           e.preventDefault();
-          handleSearch(
-            activeIndex >= 0 ? filteredSuggestions[activeIndex] : null,
-          );
+          if (activeIndex >= 0) {
+            handleSearch(filteredSuggestions[activeIndex]);
+          } else {
+            handleSearch();
+          }
           break;
         case "Escape":
           setShowSuggestions(false);
@@ -249,7 +264,7 @@ export default function HomePage() {
           break;
       }
     },
-    [filteredSuggestions, activeIndex, handleSearch],
+    [filteredSuggestions, activeIndex, handleSearch]
   );
 
   // ── Testimonials data ─────────────────────────────────────────────────────
@@ -294,7 +309,7 @@ export default function HomePage() {
           if (entry.isIntersecting) entry.target.classList.add("in");
         });
       },
-      { threshold: 0.12 },
+      { threshold: 0.12 }
     );
     document.querySelectorAll(".reveal").forEach((el) => ro.observe(el));
     return () => ro.disconnect();
@@ -323,7 +338,8 @@ export default function HomePage() {
     const currentIdx = currentRef.current;
     const timerOffset = timerOffsetRef.current;
     const currentStepProgress = 1 - timerOffset / CIRCUMFERENCE;
-    let progressPct = ((currentIdx + currentStepProgress) / TOTAL_STEPS) * 100;
+    let progressPct =
+      ((currentIdx + currentStepProgress) / TOTAL_STEPS) * 100;
     progressPct = Math.min(progressPct, 100);
 
     if (progressFillRef.current) {
@@ -334,11 +350,7 @@ export default function HomePage() {
       if (!el) return;
       const isActive = i === currentIdx;
       const isCompleted = i < currentIdx;
-      const progress = isActive
-        ? timerOffset / CIRCUMFERENCE
-        : isCompleted
-          ? 0
-          : 1;
+      const progress = isActive ? timerOffset / CIRCUMFERENCE : isCompleted ? 0 : 1;
       const progressOffset = progress * STEP_CIRCUMFERENCE;
       el.style.strokeDashoffset = String(progressOffset);
     });
@@ -360,7 +372,7 @@ export default function HomePage() {
       timerOffsetRef.current = CIRCUMFERENCE * (1 - inStep);
       updateVisuals();
     },
-    [updateVisuals],
+    [updateVisuals]
   );
 
   // ── Animation tick ────────────────────────────────────────────────────────
@@ -419,44 +431,44 @@ export default function HomePage() {
       if (cancelled) return;
 
       ctx = gsap.context(() => {
-        const tl = gsap.timeline();
+      const tl = gsap.timeline();
 
-        tl.fromTo(
-          headerRef.current,
-          { opacity: 0, y: 60 },
-          { opacity: 1, y: 0, duration: 1.2 },
-        );
-        tl.fromTo(
-          featuresRef.current[0],
-          { opacity: 0, x: -70 },
-          { opacity: 1, x: 0, duration: 0.8 },
-          "+=0.2",
-        );
-        tl.fromTo(
-          featuresRef.current[1],
-          { opacity: 0, x: -70 },
-          { opacity: 1, x: 0, duration: 0.8 },
-          "+=0.1",
-        );
-        tl.fromTo(
-          featuresRef.current[2],
-          { opacity: 0, x: -70 },
-          { opacity: 1, x: 0, duration: 0.8 },
-          "+=0.1",
-        );
-        tl.fromTo(
-          btnRef.current,
-          { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 0.7 },
-          "+=0.1",
-        );
-        tl.fromTo(
-          rightRef.current,
-          { opacity: 0, y: 80, scale: 0.95 },
-          { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
-          "+=0.3",
-        );
-      }, wrapperRef);
+      tl.fromTo(
+        headerRef.current,
+        { opacity: 0, y: 60 },
+        { opacity: 1, y: 0, duration: 1.2 }
+      );
+      tl.fromTo(
+        featuresRef.current[0],
+        { opacity: 0, x: -70 },
+        { opacity: 1, x: 0, duration: 0.8 },
+        "+=0.2"
+      );
+      tl.fromTo(
+        featuresRef.current[1],
+        { opacity: 0, x: -70 },
+        { opacity: 1, x: 0, duration: 0.8 },
+        "+=0.1"
+      );
+      tl.fromTo(
+        featuresRef.current[2],
+        { opacity: 0, x: -70 },
+        { opacity: 1, x: 0, duration: 0.8 },
+        "+=0.1"
+      );
+      tl.fromTo(
+        btnRef.current,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.7 },
+        "+=0.1"
+      );
+      tl.fromTo(
+        rightRef.current,
+        { opacity: 0, y: 80, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
+        "+=0.3"
+      );
+    }, wrapperRef);
     });
 
     return () => {
@@ -498,25 +510,22 @@ export default function HomePage() {
         <div className="hero-left" ref={headerRef}>
           <div className="hero-badge">
             <div className="badge-pulse" />
-            Available  • 24/7 Virtual Care
+            Available 24/7 Virtual Care
+            Available 24 / 7.
           </div>
 
-          {/* <h1>
+          <h1>
             Talk to a <span className="fancy-underline">licensed doctor</span>
             <br />
             in minutes.
-          </h1> */}
-
-          <h1 style={{ fontSize: "2.5rem", fontWeight: "bold" }}>
-            Talk to a licensed doctor in minutes.
           </h1>
 
           <p>
-            Book video consultations, get prescriptions, and receive follow-up
-            care from board-certified physicians, without leaving home.
+           Get fast, reliable telemedicine services from board-certified healthcare providers without leaving home. Schedule an online doctor appointment, discuss symptoms, receive treatment guidance, and get prescriptions through our secure virtual healthcare platform available across all 50 states.
+
           </p>
 
-          {/* SEARCH BAR — no changes to the bar itself */}
+          {/* SEARCH BAR */}
           <div className="search-wrapper" ref={searchRef}>
             <div className="search-bar">
               <input
@@ -533,89 +542,47 @@ export default function HomePage() {
               <button onClick={() => handleSearch()}>Search</button>
             </div>
 
-            {/* Loading state */}
-            {isAiLoading &&
-              showSuggestions && ( // ✅ add && showSuggestions
-                <div className="search-suggestions">
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="search-suggestions">
+                {filteredSuggestions.map((item, index) => (
                   <div
-                    className="suggestion-item"
-                    style={{ color: "#9ca3af", fontSize: 13 }}
+                    key={item.id}
+                    className={`suggestion-item${activeIndex === index ? " active" : ""}`}
+                    onClick={() => handleSearch(item)}
                   >
-                    <span>Finding best matches...</span>
-                  </div>
-                </div>
-              )}
-
-            {/* Results */}
-            {!isAiLoading &&
-              showSuggestions &&
-              filteredSuggestions.length > 0 && (
-                <div className="search-suggestions">
-                  {filteredSuggestions.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className={`suggestion-item${activeIndex === index ? " active" : ""}`}
-                      onClick={() => handleSearch(item)}
-                    >
-                      <div className="suggestion-left">
-                        <span className="suggestion-title">{item.title}</span>
-                      </div>
-                      <span className="suggestion-arrow">→</span>
+                    <div className="suggestion-left">
+                      <span className="suggestion-title">{item.title}</span>
+                      <span className="suggestion-type">{item.type}</span>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <span className="suggestion-arrow">→</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#7CB7FF"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA Compliant
+
             </span>
             <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#7CB7FF"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               GDPR Ready
             </span>
             <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#7CB7FF"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               500+ Verified Doctors
             </span>
             <span className="trust-chip">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="#7CB7FF"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
@@ -646,10 +613,11 @@ export default function HomePage() {
             <div className="t-orb t-orb-3" />
 
             <div className="timeline-header">
-              <div className="eyebrow-hero">The Humancare Experience</div>
+              <div className="eyebrow-hero">The Humancare Connect Experience</div>
               <h3>
-                Your Visit in <span>90 Seconds</span>
+                Your Visit in <span>30 Seconds</span>
               </h3>
+              <p> From sign-up to prescription, five simple steps to care anywhere in the world.</p>
             </div>
 
             <div className="progress-track">
@@ -704,14 +672,10 @@ export default function HomePage() {
                         />
 
                         <div className="scene-metric">
-                          <div className="metric-icon">{scene.metricIcon}</div>
+                          {/* <div className="metric-icon">{scene.metricIcon}</div> */}
                           <div className="metric-text">
-                            <span className="metric-value">
-                              {scene.metricValue}
-                            </span>
-                            <span className="metric-label">
-                              {scene.metricLabel}
-                            </span>
+                            <span className="metric-value">{scene.metricValue}</span>
+                            <span className="metric-label">{scene.metricLabel}</span>
                           </div>
                         </div>
                       </div>
@@ -750,16 +714,13 @@ export default function HomePage() {
       </Suspense>
 
       {/* ════════ TESTIMONIALS ══════════════════════════════════════════════ */}
-      <section
-        className="testimonials-section reveal reveal-stagger"
-        ref={testimonialsRef}
-      >
+      <section className="testimonials-section reveal reveal-stagger" ref={testimonialsRef}>
         <div className="testi-header">
           <div className="testi-eyebrow">Testimonials</div>
-          <h2 className="testi-title">What Our Patients Are Saying</h2>
+          <h2 className="testi-title">What patients are saying about Humancare Connect.
+</h2>
           <p className="testi-desc">
-            We take pride in delivering exceptional care that delivers great
-            results. But don&apos;t just take our word for it.
+            Real stories. Real care. Real results from trusted virtual healthcare services and licensed online doctors. 
           </p>
         </div>
 
@@ -793,65 +754,39 @@ export default function HomePage() {
           <h2 className="cta-title">
             Your health
             <br />
-            deserves better.
+            deserves better virtual care.
           </h2>
           <p className="cta-desc">
-            Join 2.4 million Americans who chose a smarter way to access care.
+           Affordable telehealth services, same-day online doctor consultations, prescriptions, and ongoing care all through one secure telemedicine platform. 
+
+
           </p>
           <div className="cta-btns">
-            <button className="cta-btn-w">Create Free Account</button>
-            <button className="cta-btn-g">Talk to a Doctor Now</button>
+            <a href="/login"><button className="cta-btn-w">Create Free Account</button></a>
+            <a href="/appointment-booking"><button className="cta-btn-g">Talk to a Doctor Now</button></a>
           </div>
           <div className="cta-pills">
             <span className="cta-pill">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA Compliant
             </span>
             <span className="cta-pill">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Board-Certified Doctors
             </span>
             <span className="cta-pill">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               24/7 Available
             </span>
             <span className="cta-pill">
-              <svg
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>

@@ -245,7 +245,7 @@ function StripeForm({
             <span className="ap-spinner ap-spinner--white" /> Processing…
           </>
         ) : (
-          `Pay ₹${amount?.toLocaleString("en-IN")} →`
+          `Pay $${amount?.toLocaleString("en-US")} →`
         )}
       </button>
     </form>
@@ -276,9 +276,7 @@ function PaymentStage({
     }
     setStripeCreating(true);
     try {
-      const res = await api.post("/api/payments/create-intent-by-amount", {
-        amountInr: amount,
-      });
+      const res = await api.post("/api/payments/create-intent-by-amount", { amountInr: amount });
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
@@ -292,9 +290,7 @@ function PaymentStage({
   };
 
   const createPaypalOrder = async () => {
-    const res = await api.post("/api/paypal/create-order-by-amount", {
-      amountInr: amount,
-    });
+    const res = await api.post("/api/paypal/create-order-by-amount", { amountInr: amount });
     return res.data.orderId;
   };
 
@@ -317,13 +313,7 @@ function PaymentStage({
   };
 
   return (
-    <PayPalScriptProvider
-      options={{
-        "client-id": PAYPAL_CLIENT_ID,
-        currency: "INR",
-        intent: "capture",
-      }}
-    >
+    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "INR", intent: "capture" }}>
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
           <svg
@@ -367,9 +357,7 @@ function PaymentStage({
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">
-              ₹{amount?.toLocaleString("en-IN")}
-            </strong>
+            <strong className="ap-pay-fee-amount">₹{amount?.toLocaleString("en-IN")}</strong>
           </div>
         </div>
 
@@ -788,7 +776,7 @@ export default function AppointmentBookingForm() {
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
-                ₹{selection.cost.toLocaleString("en-IN")}
+                ${selection.cost.toLocaleString("en-US")}
               </span>
             </div>
           )}
@@ -1016,7 +1004,7 @@ export default function AppointmentBookingForm() {
                   <span className="ap-spinner ap-spinner--white" /> Preparing…
                 </>
               ) : (
-                `Proceed to Payment${selection.cost ? ` — ₹${selection.cost.toLocaleString("en-IN")}` : ""} →`
+                `Proceed to Payment${selection.cost ? ` — $${selection.cost.toLocaleString("en-US")}` : ""} →`
               )}
             </button>
 
@@ -1107,7 +1095,7 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Amount Paid</span>
                 <span className="ap-success-val ap-success-val--green">
-                  ₹{selection.cost?.toLocaleString("en-IN")}
+                  ${selection.cost?.toLocaleString("en-US")}
                 </span>
               </div>
               <div className="ap-success-row">

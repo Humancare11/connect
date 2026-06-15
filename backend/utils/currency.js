@@ -25,7 +25,13 @@ function toPaise(amount, fromCurrency = "USD") {
   return Math.round(convertAmount(amount, fromCurrency, "INR") * 100);
 }
 
+// Convert any currency amount to USD cents (Stripe/PayPal minor unit for USD)
+function toCents(amount, fromCurrency = "USD") {
+  return Math.round(convertAmount(amount, fromCurrency, "USD") * 100);
+}
+
 module.exports = {
   convertAmount,
   toPaise,
+  toCents,
 };

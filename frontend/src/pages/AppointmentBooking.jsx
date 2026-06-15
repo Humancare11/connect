@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AppointmentBooking.css";
+import { usePrices } from "../context/PricingContext";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const HCC_TREE = [
@@ -10,30 +11,15 @@ const HCC_TREE = [
     e: "🩺",
     specs: [
       {
-        name: "General Physician", ico: "🩺", live: true, count: "98 doctors", cost: 499,
+        name: "General Physician", ico: "🩺", live: true, count: "98 doctors", cost: 100,
         conds: [["Fever", "🌡️"], ["Cold & flu", "🤧"], ["Cough & sore throat", "😷"], ["Headache", "🤕"], ["Sinus infection", "👃"], ["Body aches", "💪"], ["Fatigue", "😮‍💨"], ["Minor infections", "🩹"]],
-        name: "General Physician",
-        ico: "🩺",
-        live: true,
-        count: "98 doctors",
-        cost: 100,
-        conds: [
-          ["Fever", "🌡️"],
-          ["Cold & flu", "🤧"],
-          ["Cough & sore throat", "😷"],
-          ["Headache", "🤕"],
-          ["Sinus infection", "👃"],
-          ["Body aches", "💪"],
-          ["Fatigue", "😮‍💨"],
-          ["Minor infections", "🩹"],
-        ],
       },
       {
-        name: "Internal Medicine", ico: "🏥", cost: 799,
+        name: "Internal Medicine", ico: "🏥", cost: 100,
         conds: [["Undiagnosed symptoms", "❓"], ["Multi-system complaints", "🩺"], ["Preventive screening", "🛡️"], ["Medication review", "💊"]],
       },
       {
-        name: "Family Medicine", ico: "👨‍👩‍👧", cost: 599,
+        name: "Family Medicine", ico: "👨‍👩‍👧", cost: 100,
         conds: [["Routine check-ups", "✅"], ["Whole-family illness", "👪"], ["Chronic-disease review", "📋"], ["Vaccination advice", "💉"]],
       },
     ],
@@ -63,25 +49,8 @@ const HCC_TREE = [
     e: "🧴",
     specs: [
       {
-        name: "Dermatology", ico: "🧴", live: true, count: "35 doctors", cost: 899,
+        name: "Dermatology", ico: "🧴", live: true, count: "35 doctors", cost: 100,
         conds: [["Acne", "🔴"], ["Eczema", "🌾"], ["Psoriasis", "🩹"], ["Skin rashes", "🌡️"], ["Hives", "🐝"], ["Rosacea", "🌹"], ["Fungal infections", "🍄"], ["Hair loss", "💈"], ["Nail problems", "💅"], ["Mole & skin checks", "🔎"]],
-        name: "Dermatology",
-        ico: "🧴",
-        live: true,
-        count: "35 doctors",
-        cost: 100,
-        conds: [
-          ["Acne", "🔴"],
-          ["Eczema", "🌾"],
-          ["Psoriasis", "🩹"],
-          ["Skin rashes", "🌡️"],
-          ["Hives", "🐝"],
-          ["Rosacea", "🌹"],
-          ["Fungal infections", "🍄"],
-          ["Hair loss", "💈"],
-          ["Nail problems", "💅"],
-          ["Mole & skin checks", "🔎"],
-        ],
       },
     ],
   },
@@ -104,33 +73,8 @@ const HCC_TREE = [
     label: "Men's Health",
     e: "♂️",
     specs: [
-      { name: "Men's Health", ico: "♂️", count: "19 doctors", cost: 799, conds: [["Erectile dysfunction", "💙"], ["Low testosterone", "📉"], ["Hair loss", "💈"], ["Prostate concerns", "🔬"], ["Low libido", "💤"]] },
-      { name: "Urology", ico: "🚹", cost: 1099, conds: [["UTIs", "🚻"], ["Kidney stones follow-up", "🪨"], ["Blood in urine", "🩸"], ["Incontinence", "💧"], ["Bladder problems", "🚽"]] },
-      {
-        name: "Men's Health",
-        ico: "♂️",
-        count: "19 doctors",
-        cost: 100,
-        conds: [
-          ["Erectile dysfunction", "💙"],
-          ["Low testosterone", "📉"],
-          ["Hair loss", "💈"],
-          ["Prostate concerns", "🔬"],
-          ["Low libido", "💤"],
-        ],
-      },
-      {
-        name: "Urology",
-        ico: "🚹",
-        cost: 1099,
-        conds: [
-          ["UTIs", "🚻"],
-          ["Kidney stones follow-up", "🪨"],
-          ["Blood in urine", "🩸"],
-          ["Incontinence", "💧"],
-          ["Bladder problems", "🚽"],
-        ],
-      },
+      { name: "Men's Health", ico: "♂️", count: "19 doctors", cost: 100, conds: [["Erectile dysfunction", "💙"], ["Low testosterone", "📉"], ["Hair loss", "💈"], ["Prostate concerns", "🔬"], ["Low libido", "💤"]] },
+      { name: "Urology", ico: "🚹", cost: 100, conds: [["UTIs", "🚻"], ["Kidney stones follow-up", "🪨"], ["Blood in urine", "🩸"], ["Incontinence", "💧"], ["Bladder problems", "🚽"]] },
     ],
   },
   {
@@ -197,17 +141,20 @@ const HCC_TREE = [
   },
 ];
 
-// Flatten helpers
-const HCC_SPECS = [];
-const HCC_CONDS = [];
-HCC_TREE.forEach((cat) =>
-  cat.specs.forEach((s) => {
-    HCC_SPECS.push({ ...s, catId: cat.id, catLabel: cat.label });
-    s.conds.forEach(([cn, ci]) =>
-      HCC_CONDS.push({ name: cn, ico: ci, to: s.name, catId: cat.id, catLabel: cat.label, cost: s.cost }),
-    );
-  }),
-);
+// Build flat helpers from a (possibly price-enriched) tree
+function buildFlatHelpers(tree) {
+  const specs = [];
+  const conds = [];
+  tree.forEach((cat) =>
+    cat.specs.forEach((s) => {
+      specs.push({ ...s, catId: cat.id, catLabel: cat.label });
+      s.conds.forEach(([cn, ci]) =>
+        conds.push({ name: cn, ico: ci, to: s.name, catId: cat.id, catLabel: cat.label, cost: s.cost }),
+      );
+    }),
+  );
+  return { specs, conds };
+}
 
 // ─── Time slots ───────────────────────────────────────────────────────────────
 const ALL_TIME_SLOTS = [
@@ -255,11 +202,29 @@ function Breadcrumb({ items, onNavigate }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AppointmentBooking() {
   const navigate = useNavigate();
+  const categoryPrices = usePrices();
   const [drillLevel, setDrillLevel] = useState("cat");
   const [activeCat, setActiveCat] = useState(null);
   const [activeSpec, setActiveSpec] = useState(null);
   const [browseTab, setBrowseTab] = useState(null);
   const [query, setQuery] = useState("");
+
+  // Apply Super Admin category prices to all specialties in each category
+  const enrichedTree = useMemo(() => {
+    if (!categoryPrices) return HCC_TREE;
+    return HCC_TREE.map((cat) => ({
+      ...cat,
+      specs: cat.specs.map((spec) => ({
+        ...spec,
+        cost: categoryPrices[cat.id]?.price ?? spec.cost,
+      })),
+    }));
+  }, [categoryPrices]);
+
+  const { specs: HCC_SPECS, conds: HCC_CONDS } = useMemo(
+    () => buildFlatHelpers(enrichedTree),
+    [enrichedTree],
+  );
 
   // Keep switchRef / gliderRef in the tree so the glider animation code still runs
   // even though we've hidden the glider element (it does no harm).
@@ -294,15 +259,15 @@ export default function AppointmentBooking() {
 
   const visibleFlatSpecs = useMemo(
     () => HCC_SPECS.filter((s) => !q || s.name.toLowerCase().includes(q)),
-    [q],
+    [q, HCC_SPECS],
   );
   const visibleFlatConds = useMemo(
     () => HCC_CONDS.filter((c) => !q || c.name.toLowerCase().includes(q) || c.to.toLowerCase().includes(q)),
-    [q],
+    [q, HCC_CONDS],
   );
   const visibleCats = useMemo(
-    () => HCC_TREE.filter((c) => !q || c.label.toLowerCase().includes(q) || c.specs.some((s) => s.name.toLowerCase().includes(q))),
-    [q],
+    () => enrichedTree.filter((c) => !q || c.label.toLowerCase().includes(q) || c.specs.some((s) => s.name.toLowerCase().includes(q))),
+    [q, enrichedTree],
   );
 
   const handleTabSwitch = (tabId) => {
@@ -355,7 +320,7 @@ export default function AppointmentBooking() {
   };
 
   const handleFlatSpecClick = (spec) => {
-    const cat = HCC_TREE.find((c) => c.id === spec.catId);
+    const cat = enrichedTree.find((c) => c.id === spec.catId);
     setBrowseTab(null);
     setActiveCat(cat);
     setActiveSpec(spec);
@@ -386,7 +351,7 @@ export default function AppointmentBooking() {
 
   // Derive the numbered label shown in level-label (e.g. "01 — General & Everyday Care")
   const activeCatIndex = activeCat
-    ? HCC_TREE.findIndex((c) => c.id === activeCat.id)
+    ? enrichedTree.findIndex((c) => c.id === activeCat.id)
     : -1;
   const catNumLabel = activeCatIndex >= 0
     ? String(activeCatIndex + 1).padStart(2, "0")

@@ -77,18 +77,18 @@
   height: 44px;
   width: auto;
   object-fit: contain;
-  transition: opacity .45s var(--ease-out-expo), transform .45s var(--ease-out-expo);
+  transition: opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
 }
 
 .logo-mini {
   position: absolute;
   left: 0;
   top: 50%;
-  height: 42px;
+  height: 58px;
   width: auto;
   opacity: 0;
   transform: translateY(-50%) scale(0.75);
-  transition: opacity .45s var(--ease-out-expo), transform .45s var(--ease-out-expo);
+  transition: opacity .9s var(--ease-out-expo), transform .9s var(--ease-out-expo);
 }
 
 .logo.scrolled .logo-full {
@@ -181,7 +181,7 @@
   flex: 1;
   overflow: hidden;
   height: var(--item-h);
-  min-width: 80px; /* FIX: prevent the text area from collapsing */
+  min-width: 80px; /* prevent the text area from collapsing */
 }
 
 .help-slide-track {
@@ -214,14 +214,18 @@
 
 /* ============================================================
    HELP DROPDOWN
-
 ============================================================ */
 .help-dropdown {
   position: absolute;
   top: calc(100% + 15px);
 
-  left: 100%;
-  transform: translateX(-50%);
+  /* FIX: anchor to the left edge of the slider wrap instead of
+     left:100% + translateX(-50%), which pushed the dropdown's
+     center to the wrap's right edge and sent it off-screen on
+     most desktop widths. */
+  left: 0;
+  transform: none;
+
   width: clamp(460px, 580px, 90vw);
 
   z-index: 90;
@@ -240,8 +244,6 @@
   animation: dropdownIn .22s var(--ease-out-expo);
   animation-fill-mode: both;
   will-change: translate, scale, opacity;
-
-  width: 800px;
 }
 
 @keyframes dropdownIn {
@@ -616,10 +618,9 @@
     flex-shrink: 0;
   }
 
-  /* Shrink logo container when mini-logo is shown */
   .glass-header.shrink .logo {
-    width: 40px;
-    max-width: 40px;
+    width: 56px;
+    max-width: 56px;
   }
 
   .nav-container {
@@ -627,8 +628,6 @@
     gap: 0;
   }
 
-  /* ── MOBILE HELP SLIDER
-     Hidden by default. Revealed when header gets .shrink. ── */
   .help-slider-wrap {
     display: none;
     flex-shrink: 0;
@@ -636,15 +635,11 @@
     margin-right: 0;
   }
 
-  /* Reveal when scrolled */
   .glass-header.shrink .help-slider-wrap {
     display: flex;
     align-items: center;
   }
 
-  /* FIX: explicit min-width prevents the pill from collapsing.
-     The slide-wrapper has overflow:hidden so contributes zero
-     intrinsic width — without min-width the pill shrinks to nothing. */
   .glass-header.shrink .help-slider {
     width: auto;
     min-width: 200px;
@@ -665,54 +660,62 @@
     font-size: 12px;
   }
 
-  /* ── MOBILE DROPDOWN FIX ──────────────────────────────────────
-     Switch to position:fixed so the dropdown is positioned
-     relative to the VIEWPORT, not the small pill element.
-
-     With position:absolute + left:50% the percentage is measured
-     from the pill's own width (~180px), so "50%" = 90px, then
-     translateX(-50%) subtracts half the dropdown width (~200px),
-     landing the left edge at roughly -110px — off screen.
-
-     position:fixed + left/right coordinates solves this cleanly.
-  ──────────────────────────────────────────────────────────────── */
+  /* ── MOBILE DROPDOWN ──────────────────────────────────────
+    
+  ──────────────────────────────────────────────────────────── */
   .help-dropdown {
     position: fixed;
-    top: 72px;        /* header height (~60px) + 12px gap */
+    top: 72px;
     left: 12px;
     right: 12px;
     width: auto;
-    transform: none;  /* clear the desktop translateX(-50%) */
+    transform: none;
     max-width: none;
     border-radius: 18px;
+    padding: 14px 10px 10px;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .help-dropdown-list {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px;
   }
 
   .help-dropdown-item {
-    padding: 8px 8px;
-    gap: 8px;
+    padding: 8px 6px;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .help-dropdown-text {
+    min-width: 0;
+    flex: 1;
   }
 
   .help-dropdown-label {
-    font-size: 11.5px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .help-dropdown-desc {
-    font-size: 10px;
+    font-size: 9.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .help-dropdown-icon {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 8px;
   }
 
   .help-dropdown-icon svg {
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
   }
 }
 
@@ -739,11 +742,14 @@
     font-size: 11px;
   }
 
-  /* Bump the fixed dropdown down a touch on very small screens
-     to match the slightly smaller header height */
-  .help-dropdown {
+    .help-dropdown {
     top: 66px;
     left: 8px;
     right: 8px;
+    padding: 12px 8px 8px;
   }
+
+  .help-dropdown-label { font-size: 10.5px; }
+  .help-dropdown-desc  { font-size: 9px; }
+
 }

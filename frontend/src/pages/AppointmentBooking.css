@@ -44,10 +44,7 @@
   --t: 0.2s var(--ease);
 
   /* ─── Apply ─── */
-  /* background:
-    radial-gradient(ellipse 80% 60% at 60% 10%, rgba(11,87,232,0.18) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 50% at 10% 80%, rgba(124,183,255,0.20) 0%, transparent 65%),
-    #cdddf5; */
+
     background: var(--bg);
   font-family: var(--font);
   color: var(--navy-deep);
@@ -65,7 +62,7 @@
    ═══════════════════════════════════════════════════════════════ */
 .hcc-sx .wrap {
   max-width: 1400px;
-  /* [CHANGED] was 1140px */
+
   margin: 0 auto;
   padding: 0 40px 100px;
 }

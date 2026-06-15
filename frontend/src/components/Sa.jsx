@@ -72,9 +72,9 @@ export default function ServicesSection() {
     restDelta: 0.001,
   });
 
-  const scale   = useTransform(smoothProgress, [0, 1], [0.88, 1]);
+  const scale = useTransform(smoothProgress, [0, 1], [0.88, 1]);
   const opacity = useTransform(smoothProgress, [0, 0.4, 1], [0, 0.6, 1]);
-  const y       = useTransform(smoothProgress, [0, 1], [48, 0]);
+  const y = useTransform(smoothProgress, [0, 1], [48, 0]);
 
   return (
     <Motion.section
@@ -104,7 +104,7 @@ export default function ServicesSection() {
             Everything you need,
             <br />
             <span className="services-heading-highlight">
-              all in one place.
+              for virtual healthcare, all in one place.
             </span>
           </Motion.h2>
         </div>
@@ -121,19 +121,18 @@ export default function ServicesSection() {
               <div className="services-icon-box">
                 <FaPills />
               </div>
-              <span className="services-feature-badge">MOST REQUESTED</span>
+              {/* <span className="services-feature-badge">MOST REQUESTED</span> */}
             </div>
 
             <div className="services-content-split">
               <div className="services-content-left">
                 <h3 className="services-card-title">Prescription Refills</h3>
                 <p className="services-card-description">
-                  Running low on medication? Fast-track refill from a licensed
-                  provider — often within the same day. No appointment required.
-                  Works even if you're between doctors.
+                  Need a medication refill without the wait? Connect with a licensed provider through a fast online doctor appointment and receive prescription refill support the same day through our secure virtual healthcare services.
+
                 </p>
                 <a href="#" className="services-card-cta-link">
-                  Request refill →
+                  Refill Prescription →
                 </a>
               </div>
 
@@ -160,8 +159,8 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title">Weight Loss Programs</h3>
             <p className="services-card-description">
-              Personalized plans including GLP-1 medications (Ozempic, Wegovy),
-              lifestyle coaching, and monthly monitoring.
+              Personalized virtual weight loss programs with licensed providers, GLP-1 treatment support, lifestyle coaching, and ongoing telehealth services designed to help you reach long-term health goals safely.
+
             </p>
 
             <div className="services-weight-stat-block">
@@ -170,8 +169,8 @@ export default function ServicesSection() {
                 <span className="services-weight-stat-number">15 lbs</span>
                 <span className="services-weight-stat-period">/ 3 months</span>
               </div>
-              <a href="#" className="services-card-cta-link services-weight-cta">
-                Start program →
+              <a href="/weight-loss-planning" className="services-card-cta-link services-weight-cta">
+                Start Program →
               </a>
             </div>
           </RevealCard>
@@ -186,11 +185,9 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title">Mental Health</h3>
             <p className="services-card-description">
-              Professional therapy, psychiatry, and counseling for anxiety,
-              depression, and stress management. Connect with a licensed
-              therapist on your schedule — no waitlists.
+              Get compassionate mental health support through secure online therapy consultations for anxiety, stress, burnout, depression, and emotional wellness from experienced online providers.
             </p>
-            <a href="#" className="services-card-cta-link">
+            <a href="/mental-health" className="services-card-cta-link">
               Get support →
             </a>
           </RevealCard>
@@ -203,13 +200,14 @@ export default function ServicesSection() {
             <div className="services-icon-box">
               <FaStethoscope />
             </div>
-            <h3 className="services-card-title">General Consultation</h3>
+            <h3 className="services-card-title">General Consultation
+            </h3>
             <p className="services-card-description">
-              Sick visits, wellness checks, infections, minor injuries.
-              Same-day access to a licensed doctor.
+              Confidential online sexual health consultations for STI concerns, ED treatment, birth control guidance, prescriptions, and preventive virtual healthcare services with licensed providers.
+
             </p>
-            <a href="#" className="services-card-cta-link">
-              See a doctor →
+            <a href="/general-consultation" className="services-card-cta-link">
+              See a Doctor →
             </a>
           </RevealCard>
 
@@ -223,10 +221,10 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title">Sexual Health</h3>
             <p className="services-card-description">
-              Confidential, judgment-free care for STI testing, ED, birth
-              control, and more.
+             Confidential online sexual health consultations for STI concerns, ED treatment, birth control guidance, prescriptions, and preventive virtual healthcare services with licensed providers. 
+
             </p>
-            <a href="#" className="services-card-cta-link">
+            <a href="/sexual-health" className="services-card-cta-link">
               Learn more →
             </a>
           </RevealCard>
@@ -241,10 +239,10 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title">Chronic Care</h3>
             <p className="services-card-description">
-              Ongoing support for diabetes, hypertension, thyroid, and asthma
-              with a dedicated care team that knows your history.
+             Ongoing chronic care management for diabetes, asthma, thyroid disorders, hypertension, cholesterol, and long-term health conditions through personalized telemedicine healthcare support.
+
             </p>
-            <a href="#" className="services-card-cta-link">
+            <a href="/chronic-care" className="services-card-cta-link">
               Manage condition →
             </a>
           </RevealCard>
