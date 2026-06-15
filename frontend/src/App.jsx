@@ -109,6 +109,22 @@ import SwollenFeetAnkles from "./pages/Conditions/SwollenFeetAnkles";
 import Tonsillitis from "./pages/Conditions/Tonsillitis";
 import JointPain from "./pages/Conditions/JointPain";
 import VisionChanges from "./pages/Conditions/VisionChanges";
+import ChildhoodAllergies from "./pages/Conditions/ChildhoodAllergies";
+import EarPainChildren from "./pages/Conditions/EarPainChildren";
+import FeedingConcerns from "./pages/Conditions/FeedingConcerns";
+import MildAsthmaSymptoms from "./pages/Conditions/MildAsthmaSymptoms";
+import MoodAnxietyTeens from "./pages/Conditions/MoodAnxietyTeens";
+import PediatricColdFlu from "./pages/Conditions/PediatricColdFlu";
+import PediatricFever from "./pages/Conditions/PediatricFever";
+import PinkEyeChildren from "./pages/Conditions/PinkEyeChildren";
+import PubertyConcerns from "./pages/Conditions/PubertyConcerns";
+import SkinRashChildren from "./pages/Conditions/SkinRashChildren";
+import SoreThroatChildren from "./pages/Conditions/SoreThroatChildren";
+import SportsInjuries from "./pages/Conditions/SportsInjuries";
+import StomachPainChildren from "./pages/Conditions/StomachPainChildren";
+import GrowthDevelopment from "./pages/Conditions/GrowthDevelopment";
+import VomitingDiarrheaChildren from "./pages/Conditions/VomitingDiarrheaChildren";
+import DoctorsNote from "./pages/Conditions/DoctorsNote";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -905,6 +921,34 @@ function AppLayout() {
           <Route path="/tonsillitis" element={<Tonsillitis />} />
           <Route path="/joint-pain" element={<JointPain />} />
           <Route path="/vision-changes" element={<VisionChanges />} />
+          <Route path="/childhood-allergies" element={<ChildhoodAllergies />} />
+          <Route path="/ear-pain-children" element={<EarPainChildren />} />
+          <Route path="/feeding-concerns" element={<FeedingConcerns />} />
+          <Route
+            path="/mild-asthma-symptoms"
+            element={<MildAsthmaSymptoms />}
+          />
+          <Route path="/mood-anxiety-teens" element={<MoodAnxietyTeens />} />
+          <Route path="/pediatric-cold-flu" element={<PediatricColdFlu />} />
+          <Route path="/pediatric-fever" element={<PediatricFever />} />
+          <Route path="/pink-eye-children" element={<PinkEyeChildren />} />
+          <Route path="/puberty-concerns" element={<PubertyConcerns />} />
+          <Route path="/skin-rash-children" element={<SkinRashChildren />} />
+          <Route
+            path="/sore-throat-children"
+            element={<SoreThroatChildren />}
+          />
+          <Route path="/sports-injuries" element={<SportsInjuries />} />
+          <Route
+            path="/stomach-pain-children"
+            element={<StomachPainChildren />}
+          />
+          <Route path="/growth-development" element={<GrowthDevelopment />} />
+          <Route
+            path="/vomiting-diarrhea-children"
+            element={<VomitingDiarrheaChildren />}
+          />
+          <Route path="/doctors-note" element={<DoctorsNote />} />
 
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           <Route
