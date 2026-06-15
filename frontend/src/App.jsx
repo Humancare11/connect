@@ -175,6 +175,7 @@ const SuperAdminDashboard = lazy(
   () => import("./pages/admin/SuperAdminDashboard"),
 );
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
+const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -804,6 +805,14 @@ function AppLayout() {
                 <AdminLayout>
                   <AuditLogs />
                 </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/superadmin-dashboard/pricing-management"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <PricingManagement />
               </PrivateRoute>
             }
           />

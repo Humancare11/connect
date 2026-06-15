@@ -130,6 +130,7 @@ export default function SuperAdminDashboard() {
         </div>
         <nav className="dash-nav">
           <button className="dash-nav-item active">Manage Admins</button>
+          <button className="dash-nav-item" onClick={() => navigate("/superadmin-dashboard/pricing-management")}>Pricing Management</button>
           <button className="dash-nav-item" onClick={() => navigate("/admin-dashboard")}>Admin Dashboard</button>
         </nav>
         <button className="dash-logout" onClick={handleLogout}>Logout</button>

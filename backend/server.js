@@ -36,6 +36,7 @@ const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityIncident } = require("./utils/securityMonitor");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
+const { seedCategoryPricing } = require("./models/CategoryPricing");
 
 const app = express();
 
@@ -99,6 +100,7 @@ const startServer = async () => {
     console.log(`✅ Backfilled doctorId for ${doctorsWithoutId.length} doctor(s).`);
   }
 
+  await seedCategoryPricing();
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
 
@@ -410,6 +412,7 @@ app.use("/api/tickets", require("./routes/tickets"));
 app.use("/api/medical", require("./routes/medical"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/paypal", require("./routes/paypal"));
+app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/audit-logs", require("./routes/auditLogs"));
 app.use("/api/security-incidents", require("./routes/securityIncidents"));
 app.use("/api/retention-policies", require("./routes/retention"));
