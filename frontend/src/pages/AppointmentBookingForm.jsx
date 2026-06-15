@@ -38,7 +38,9 @@ function getClientTimezone() {
 
 function toAppointmentUtc(date, time) {
   if (!date || !time) return "";
-  const match = String(time).trim().match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
+  const match = String(time)
+    .trim()
+    .match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
   if (!match) return "";
   let hours = Number(match[1]);
   const minutes = Number(match[2]);
@@ -77,18 +79,39 @@ const ELEMENTS_APPEARANCE = {
     ".Label": { color: "#374151", fontWeight: "600", fontSize: "13px" },
     ".Tab": { border: "1px solid #d1d5db", borderRadius: "8px" },
     ".Tab:hover": { border: "1px solid #1a3a5c" },
-    ".Tab--selected": { border: "1px solid #1a3a5c", backgroundColor: "#eef4fb" },
+    ".Tab--selected": {
+      border: "1px solid #1a3a5c",
+      backgroundColor: "#eef4fb",
+    },
   },
 };
 
 // ─── Time slots ───────────────────────────────────────────────────────────────
 const ALL_TIME_SLOTS = [
-  "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM",
-  "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-  "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
-  "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM",
-  "4:00 PM", "4:30 PM", "5:00 PM", "5:30 PM",
-  "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
+  "8:00 AM",
+  "8:30 AM",
+  "9:00 AM",
+  "9:30 AM",
+  "10:00 AM",
+  "10:30 AM",
+  "11:00 AM",
+  "11:30 AM",
+  "12:00 PM",
+  "12:30 PM",
+  "1:00 PM",
+  "1:30 PM",
+  "2:00 PM",
+  "2:30 PM",
+  "3:00 PM",
+  "3:30 PM",
+  "4:00 PM",
+  "4:30 PM",
+  "5:00 PM",
+  "5:30 PM",
+  "6:00 PM",
+  "6:30 PM",
+  "7:00 PM",
+  "7:30 PM",
 ];
 
 function isSlotPassed(dateStr, slot) {
@@ -113,7 +136,14 @@ function formatDisplayDate(dateStr) {
 }
 
 // ─── Stripe form (inside <Elements>) ─────────────────────────────────────────
-function StripeForm({ clientSecret, amount, selection, formData, uploadedReports, onSuccess }) {
+function StripeForm({
+  clientSecret,
+  amount,
+  selection,
+  formData,
+  uploadedReports,
+  onSuccess,
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [paying, setPaying] = useState(false);
@@ -156,7 +186,7 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
       </div>
 
       {/* Test mode notice */}
-      <div
+      {/* <div
         style={{
           fontSize: "12px",
           padding: "10px 12px",
@@ -167,11 +197,18 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
         }}
       >
         <strong>Test Mode:</strong> Use card{" "}
-        <code style={{ background: "#fff", padding: "2px 5px", borderRadius: "4px", fontSize: "11px" }}>
+        <code
+          style={{
+            background: "#fff",
+            padding: "2px 5px",
+            borderRadius: "4px",
+            fontSize: "11px",
+          }}
+        >
           4242 4242 4242 4242
         </code>{" "}
         with any future date and any CVC.
-      </div>
+      </div> */}
 
       {!ready && (
         <div className="ap-pay-element-loading">
@@ -182,16 +219,31 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
       {payError && <p className="ap-error">{payError}</p>}
 
       <div className="ap-pay-security">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <rect x="3" y="11" width="18" height="11" rx="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
         Payments are secured and encrypted by Stripe
       </div>
 
-      <button className="ap-submit" type="submit" disabled={!stripe || !ready || paying}>
+      <button
+        className="ap-submit"
+        type="submit"
+        disabled={!stripe || !ready || paying}
+      >
         {paying ? (
-          <><span className="ap-spinner ap-spinner--white" /> Processing…</>
+          <>
+            <span className="ap-spinner ap-spinner--white" /> Processing…
+          </>
         ) : (
           `Pay ₹${amount?.toLocaleString("en-IN")} →`
         )}
@@ -201,7 +253,14 @@ function StripeForm({ clientSecret, amount, selection, formData, uploadedReports
 }
 
 // ─── Payment stage ────────────────────────────────────────────────────────────
-function PaymentStage({ amount, selection, formData, uploadedReports, onBack, onComplete }) {
+function PaymentStage({
+  amount,
+  selection,
+  formData,
+  uploadedReports,
+  onBack,
+  onComplete,
+}) {
   const [method, setMethod] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
   const [stripeCreating, setStripeCreating] = useState(false);
@@ -211,21 +270,31 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
 
   const selectStripe = async () => {
     setStripeError("");
-    if (clientSecret) { setMethod("stripe"); return; }
+    if (clientSecret) {
+      setMethod("stripe");
+      return;
+    }
     setStripeCreating(true);
     try {
-      const res = await api.post("/api/payments/create-intent-by-amount", { amountInr: amount });
+      const res = await api.post("/api/payments/create-intent-by-amount", {
+        amountInr: amount,
+      });
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
-      setStripeError(err.response?.data?.msg || "Failed to initialize payment. Please try again.");
+      setStripeError(
+        err.response?.data?.msg ||
+          "Failed to initialize payment. Please try again.",
+      );
     } finally {
       setStripeCreating(false);
     }
   };
 
   const createPaypalOrder = async () => {
-    const res = await api.post("/api/paypal/create-order-by-amount", { amountInr: amount });
+    const res = await api.post("/api/paypal/create-order-by-amount", {
+      amountInr: amount,
+    });
     return res.data.orderId;
   };
 
@@ -233,20 +302,39 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
     setPaypalLoading(true);
     setPaypalError("");
     try {
-      const res = await api.post("/api/paypal/capture-order", { orderId: data.orderID });
-      if (res.data.status === "COMPLETED") onComplete(res.data.orderId, "paypal");
+      const res = await api.post("/api/paypal/capture-order", {
+        orderId: data.orderID,
+      });
+      if (res.data.status === "COMPLETED")
+        onComplete(res.data.orderId, "paypal");
     } catch (err) {
-      setPaypalError(err.response?.data?.msg || "PayPal payment failed. Please try again.");
+      setPaypalError(
+        err.response?.data?.msg || "PayPal payment failed. Please try again.",
+      );
     } finally {
       setPaypalLoading(false);
     }
   };
 
   return (
-    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "INR", intent: "capture" }}>
+    <PayPalScriptProvider
+      options={{
+        "client-id": PAYPAL_CLIENT_ID,
+        currency: "INR",
+        intent: "capture",
+      }}
+    >
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          >
             <polyline points="15 18 9 12 15 6" />
           </svg>
           Back to details
@@ -256,24 +344,32 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
         <div className="ap-pay-summary">
           <div className="ap-pay-summary-title">Appointment Summary</div>
           <div className="ap-pay-summary-row">
-            <span>Category</span><strong>{selection.catLabel}</strong>
+            <span>Category</span>
+            <strong>{selection.catLabel}</strong>
           </div>
           <div className="ap-pay-summary-row">
-            <span>Specialty</span><strong>{selection.specName}</strong>
+            <span>Specialty</span>
+            <strong>{selection.specName}</strong>
           </div>
           <div className="ap-pay-summary-row">
             <span>Condition</span>
-            <strong>{selection.condIco} {selection.condName}</strong>
+            <strong>
+              {selection.condIco} {selection.condName}
+            </strong>
           </div>
           <div className="ap-pay-summary-row">
-            <span>Date</span><strong>{formatDisplayDate(formData.date)}</strong>
+            <span>Date</span>
+            <strong>{formatDisplayDate(formData.date)}</strong>
           </div>
           <div className="ap-pay-summary-row">
-            <span>Time</span><strong>{formData.time}</strong>
+            <span>Time</span>
+            <strong>{formData.time}</strong>
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">₹{amount?.toLocaleString("en-IN")}</strong>
+            <strong className="ap-pay-fee-amount">
+              ₹{amount?.toLocaleString("en-IN")}
+            </strong>
           </div>
         </div>
 
@@ -287,7 +383,11 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
               onClick={selectStripe}
               disabled={stripeCreating}
             >
-              {stripeCreating ? <span className="ap-spinner" /> : <span className="ap-pay-method-icon">💳</span>}
+              {stripeCreating ? (
+                <span className="ap-spinner" />
+              ) : (
+                <span className="ap-pay-method-icon">💳</span>
+              )}
               <span>Credit / Debit Card</span>
               <span className="ap-pay-method-sub">Stripe · Secure</span>
             </button>
@@ -295,28 +395,47 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
             <button
               type="button"
               className={`ap-pay-method-btn${method === "paypal" ? " ap-pay-method-btn--active" : ""}`}
-              onClick={() => { setMethod("paypal"); setPaypalError(""); }}
+              onClick={() => {
+                setMethod("paypal");
+                setPaypalError("");
+              }}
               disabled={!PAYPAL_CLIENT_ID}
             >
               <span className="ap-pay-method-icon">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-                  <path d="M19.5 7.5c.28 1.63-.1 3.14-1.1 4.3C17.4 13 15.88 13.75 14 13.75H12.3l-.9 5.25H8.5L10.5 7.5h9z" fill="#009cde" />
-                  <path d="M21.5 5.5c.28 1.63-.1 3.14-1.1 4.3C19.4 11 17.88 11.75 16 11.75H14.3l-.9 5.25H10.5L12.5 5.5h9z" fill="#012169" opacity=".6" />
+                  <path
+                    d="M19.5 7.5c.28 1.63-.1 3.14-1.1 4.3C17.4 13 15.88 13.75 14 13.75H12.3l-.9 5.25H8.5L10.5 7.5h9z"
+                    fill="#009cde"
+                  />
+                  <path
+                    d="M21.5 5.5c.28 1.63-.1 3.14-1.1 4.3C19.4 11 17.88 11.75 16 11.75H14.3l-.9 5.25H10.5L12.5 5.5h9z"
+                    fill="#012169"
+                    opacity=".6"
+                  />
                 </svg>
               </span>
               <span>PayPal</span>
               <span className="ap-pay-method-sub">Fast &amp; Secure</span>
             </button>
           </div>
-          {stripeError && <p className="ap-error" style={{ marginTop: 10 }}>{stripeError}</p>}
+          {stripeError && (
+            <p className="ap-error" style={{ marginTop: 10 }}>
+              {stripeError}
+            </p>
+          )}
           {!PAYPAL_CLIENT_ID && (
-            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>PayPal not configured</p>
+            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+              PayPal not configured
+            </p>
           )}
         </div>
 
         {/* Stripe form */}
         {method === "stripe" && clientSecret && (
-          <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
+          <Elements
+            stripe={stripePromise}
+            options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
+          >
             <StripeForm
               clientSecret={clientSecret}
               amount={amount}
@@ -338,13 +457,25 @@ function PaymentStage({ amount, selection, formData, uploadedReports, onBack, on
               </div>
             ) : (
               <PayPalButtons
-                style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay", height: 46 }}
+                style={{
+                  layout: "vertical",
+                  color: "blue",
+                  shape: "rect",
+                  label: "pay",
+                  height: 46,
+                }}
                 createOrder={createPaypalOrder}
                 onApprove={onPaypalApprove}
-                onError={(err) => setPaypalError(err.message || "PayPal encountered an error.")}
+                onError={(err) =>
+                  setPaypalError(err.message || "PayPal encountered an error.")
+                }
               />
             )}
-            {paypalError && <p className="ap-error" style={{ marginTop: 10 }}>{paypalError}</p>}
+            {paypalError && (
+              <p className="ap-error" style={{ marginTop: 10 }}>
+                {paypalError}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -380,15 +511,16 @@ export default function AppointmentBookingForm() {
   const [uploadedReports, setUploadedReports] = useState([]);
   const [confirmErr, setConfirmErr] = useState("");
   const [dragOver, setDragOver] = useState(false);
+
+  // ── Consent modal state ──────────────────────────────────────────────────────
+  const [showConsentModal, setShowConsentModal] = useState(false);
   const [consents, setConsents] = useState({
-    telehealth: false,
-    terms: false,
-    hipaa: false,
-    age: false,
+    telehealth: true,
+    terms: true,
+    hipaa: true,
+    age: true,
   });
-
   const allConsentsChecked = Object.values(consents).every(Boolean);
-
   const toggleConsent = (key) =>
     setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -399,7 +531,10 @@ export default function AppointmentBookingForm() {
     [form.date],
   );
 
-  const continueToPayment = async ({ formData = form, reports = uploadedReports } = {}) => {
+  const continueToPayment = async ({
+    formData = form,
+    reports = uploadedReports,
+  } = {}) => {
     setProceeding(true);
     setProceedErr("");
     try {
@@ -419,7 +554,10 @@ export default function AppointmentBookingForm() {
       }));
       setStage("payment");
     } catch (err) {
-      setProceedErr(err?.response?.data?.msg || "Failed to upload reports. Please try again.");
+      setProceedErr(
+        err?.response?.data?.msg ||
+          "Failed to upload reports. Please try again.",
+      );
     } finally {
       setProceeding(false);
     }
@@ -439,7 +577,12 @@ export default function AppointmentBookingForm() {
 
     if (redirectStatus === "succeeded" && pending) {
       setSelection(pending.selection);
-      createAppointment(piId, "stripe", pending.formData, pending.uploadedReports || []);
+      createAppointment(
+        piId,
+        "stripe",
+        pending.formData,
+        pending.uploadedReports || [],
+      );
     } else {
       if (pending?.selection) setSelection(pending.selection);
       setProceedErr("Payment was not completed. Please try again.");
@@ -485,16 +628,27 @@ export default function AppointmentBookingForm() {
 
   const handleDateChange = (val) => {
     setForm((f) => ({ ...f, date: val, time: "" }));
-    setErrors((e) => { const n = { ...e }; delete n.date; delete n.time; return n; });
+    setErrors((e) => {
+      const n = { ...e };
+      delete n.date;
+      delete n.time;
+      return n;
+    });
   };
 
   const selectTime = (t) => {
     setForm((f) => ({ ...f, time: t }));
-    setErrors((e) => { const n = { ...e }; delete n.time; return n; });
+    setErrors((e) => {
+      const n = { ...e };
+      delete n.time;
+      return n;
+    });
   };
 
   const addFiles = (fileList) => {
-    const incoming = Array.from(fileList).filter((f) => f.size <= 10 * 1024 * 1024);
+    const incoming = Array.from(fileList).filter(
+      (f) => f.size <= 10 * 1024 * 1024,
+    );
     setForm((prev) => ({
       ...prev,
       files: [
@@ -505,10 +659,24 @@ export default function AppointmentBookingForm() {
   };
 
   const removeFile = (i) =>
-    setForm((prev) => ({ ...prev, files: prev.files.filter((_, idx) => idx !== i) }));
+    setForm((prev) => ({
+      ...prev,
+      files: prev.files.filter((_, idx) => idx !== i),
+    }));
+
+  // ── Opens consent modal (validates date/time first) ──────────────────────────
+  const handleProceedClick = () => {
+    if (!validate()) return;
+    setShowConsentModal(true);
+  };
+
+  // ── Called after user confirms consent in modal ──────────────────────────────
+  const handleConsentConfirm = () => {
+    setShowConsentModal(false);
+    handleProceedToPayment();
+  };
 
   const handleProceedToPayment = async () => {
-    if (!validate()) return;
     if (!user) {
       savePendingBooking({
         selection,
@@ -584,15 +752,20 @@ export default function AppointmentBookingForm() {
   if (!selection) return <Navigate to="/appointment-booking" replace />;
 
   if (!user && stage !== "form") {
-    return <Navigate to="/login" state={{ from: "/appointment-booking/form" }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: "/appointment-booking/form" }}
+        replace
+      />
+    );
   }
 
   const stageIndex = stage === "form" ? 0 : stage === "payment" ? 1 : 2;
 
   return (
     <div className="ap-page">
-
-      {/* Page-level heading (mirrors "Create Your Account" style) */}
+      {/* Page-level heading */}
       {stage === "form" && (
         <div className="ap-page-title">
           <h1>Book an Appointment</h1>
@@ -601,12 +774,9 @@ export default function AppointmentBookingForm() {
       )}
 
       <div className="ap-card">
-
         {/* ── Hero: selection badge ── */}
         <div className="ap-hero">
-          <div className="ap-hero-avatar">
-            {selection.specIco}
-          </div>
+          <div className="ap-hero-avatar">{selection.specIco}</div>
           <div className="ap-hero-body">
             <span className="ap-hero-eyebrow">{selection.catLabel}</span>
             <h2 className="ap-hero-name">{selection.specName}</h2>
@@ -637,7 +807,9 @@ export default function AppointmentBookingForm() {
                 </div>
                 <span>{label}</span>
                 {i < 2 && (
-                  <div className={`ap-progress-line ${i < stageIndex ? "ap-progress-line--done" : ""}`} />
+                  <div
+                    className={`ap-progress-line ${i < stageIndex ? "ap-progress-line--done" : ""}`}
+                  />
                 )}
               </div>
             ))}
@@ -649,15 +821,18 @@ export default function AppointmentBookingForm() {
         ══════════════════════════════════════ */}
         {stage === "form" && (
           <div className="ap-form">
-
             {/* ── Step 1: Date ── */}
             <div className="ap-step">
               <div className="ap-step-header">
                 <span className="ap-step-num">1</span>
                 <div>
-                  <div className="ap-step-title">Appointment Date <span style={{ color: "#e11d48" }}>*</span></div>
+                  <div className="ap-step-title">
+                    Appointment Date <span style={{ color: "#e11d48" }}>*</span>
+                  </div>
                   {form.date && (
-                    <div className="ap-step-meta">{formatDisplayDate(form.date)}</div>
+                    <div className="ap-step-meta">
+                      {formatDisplayDate(form.date)}
+                    </div>
                   )}
                 </div>
               </div>
@@ -679,10 +854,12 @@ export default function AppointmentBookingForm() {
                   <span className="ap-step-num">2</span>
                   <div>
                     <div className="ap-step-title">
-                      Preferred Time Slot <span style={{ color: "#e11d48" }}>*</span>
+                      Preferred Time Slot{" "}
+                      <span style={{ color: "#e11d48" }}>*</span>
                     </div>
                     <div className="ap-step-meta">
-                      {availableSlots.length} of {ALL_TIME_SLOTS.length} slots available
+                      {availableSlots.length} of {ALL_TIME_SLOTS.length} slots
+                      available
                     </div>
                   </div>
                 </div>
@@ -707,9 +884,15 @@ export default function AppointmentBookingForm() {
                 </div>
 
                 <div className="ap-slots-legend">
-                  <span className="ap-legend-item ap-legend--avail">Available</span>
-                  <span className="ap-legend-item ap-legend--sel">Selected</span>
-                  <span className="ap-legend-item ap-legend--na">Unavailable</span>
+                  <span className="ap-legend-item ap-legend--avail">
+                    Available
+                  </span>
+                  <span className="ap-legend-item ap-legend--sel">
+                    Selected
+                  </span>
+                  <span className="ap-legend-item ap-legend--na">
+                    Unavailable
+                  </span>
                 </div>
                 {errors.time && <p className="ap-error">{errors.time}</p>}
               </div>
@@ -718,7 +901,9 @@ export default function AppointmentBookingForm() {
                 <div className="ap-step-header">
                   <span className="ap-step-num ap-step-num--inactive">2</span>
                   <div>
-                    <div className="ap-step-title" style={{ color: "#9ca3af" }}>Preferred Time Slot</div>
+                    <div className="ap-step-title" style={{ color: "#9ca3af" }}>
+                      Preferred Time Slot
+                    </div>
                     <div className="ap-step-meta" style={{ color: "#f59e0b" }}>
                       ⚠ Select a date above to see available slots
                     </div>
@@ -741,7 +926,9 @@ export default function AppointmentBookingForm() {
                 rows={4}
                 placeholder="Briefly describe your symptoms or reason for visit…"
                 value={form.notes}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, notes: e.target.value }))
+                }
               />
             </div>
 
@@ -760,12 +947,16 @@ export default function AppointmentBookingForm() {
               <div
                 className={`ap-upload-zone ${dragOver ? "ap-upload-zone--over" : ""}`}
                 onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={(e) => {
                   e.preventDefault();
                   setDragOver(false);
-                  if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+                  if (e.dataTransfer.files?.length)
+                    addFiles(e.dataTransfer.files);
                 }}
               >
                 <input
@@ -798,7 +989,11 @@ export default function AppointmentBookingForm() {
                           {(f.size / 1048576).toFixed(1)} MB
                         </span>
                       </div>
-                      <button type="button" className="ap-report-remove" onClick={() => removeFile(i)}>
+                      <button
+                        type="button"
+                        className="ap-report-remove"
+                        onClick={() => removeFile(i)}
+                      >
                         ×
                       </button>
                     </div>
@@ -807,60 +1002,29 @@ export default function AppointmentBookingForm() {
               )}
             </div>
 
-            {/* ── Consent block ── */}
-            <div className="ap-consent-wrap">
-              <p className="ap-consent-heading">Before You Continue — Please Read:</p>
-              <div className="ap-consent-scroll">
-                <p className="ap-consent-text">
-                  <strong>Patient Informed Consent:</strong> By booking this appointment, you
-                  consent to receive telehealth services from licensed physicians through
-                  Humancare Connect. You understand that (1) telehealth is not a substitute for
-                  in-person care in all situations; (2) physicians on this platform are independent
-                  contractors; (3) in a medical emergency, call 112 immediately. You have read and
-                  agree to our Telehealth Informed Consent policy.
-                </p>
-              </div>
-              <div className="ap-consent-checks">
-                {[
-                  { key: "telehealth", label: "I have read and agree to the Telehealth Informed Consent" },
-                  { key: "terms",      label: "I agree to the Terms of Service and Privacy Policy" },
-                  { key: "hipaa",      label: "I have read the HIPAA Notice of Privacy Practices" },
-                  { key: "age",        label: "I am 18 years of age or older" },
-                ].map(({ key, label }) => (
-                  <label key={key} className="ap-consent-row">
-                    <input
-                      type="checkbox"
-                      className="ap-consent-checkbox"
-                      checked={consents[key]}
-                      onChange={() => toggleConsent(key)}
-                    />
-                    <span className="ap-consent-label">{label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
             {proceedErr && <p className="ap-error">{proceedErr}</p>}
 
-            {/* ── CTA ── */}
+            {/* ── CTA — now opens consent modal ── */}
             <button
               className="ap-submit"
               type="button"
-              disabled={proceeding || !allConsentsChecked}
-              onClick={handleProceedToPayment}
+              disabled={proceeding}
+              onClick={handleProceedClick}
             >
               {proceeding ? (
-                <><span className="ap-spinner ap-spinner--white" /> Preparing…</>
+                <>
+                  <span className="ap-spinner ap-spinner--white" /> Preparing…
+                </>
               ) : (
                 `Proceed to Payment${selection.cost ? ` — ₹${selection.cost.toLocaleString("en-IN")}` : ""} →`
               )}
             </button>
 
-            {!user && (
+            {/* {!user && (
               <p className="ap-submit-helper">
                 Already have an account? <Link to="/login">Log in</Link>
               </p>
-            )}
+            )} */}
           </div>
         )}
 
@@ -883,13 +1047,18 @@ export default function AppointmentBookingForm() {
             selection={selection}
             formData={form}
             uploadedReports={uploadedReports}
-            onBack={() => { setStage("form"); setConfirmErr(""); }}
+            onBack={() => {
+              setStage("form");
+              setConfirmErr("");
+            }}
             onComplete={handlePaymentComplete}
           />
         )}
 
         {confirmErr && stage !== "form" && (
-          <p className="ap-error" style={{ margin: "0 28px 20px" }}>{confirmErr}</p>
+          <p className="ap-error" style={{ margin: "0 28px 20px" }}>
+            {confirmErr}
+          </p>
         )}
 
         {/* ══════════════════════════════════════
@@ -898,14 +1067,21 @@ export default function AppointmentBookingForm() {
         {stage === "success" && (
           <div className="ap-success">
             <div className="ap-success-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
             <h3 className="ap-success-title">Appointment Requested!</h3>
             <p className="ap-success-sub">
-              Payment confirmed. Our team will review and assign a doctor shortly.
-              You'll receive an email once a doctor is assigned.
+              Payment confirmed. Our team will review and assign a doctor
+              shortly. You'll receive an email once a doctor is assigned.
             </p>
             <div className="ap-success-details">
               <div className="ap-success-row">
@@ -914,11 +1090,15 @@ export default function AppointmentBookingForm() {
               </div>
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
-                <span className="ap-success-val">{selection.condIco} {selection.condName}</span>
+                <span className="ap-success-val">
+                  {selection.condIco} {selection.condName}
+                </span>
               </div>
               <div className="ap-success-row">
                 <span className="ap-success-key">Date</span>
-                <span className="ap-success-val">{formatDisplayDate(form.date)}</span>
+                <span className="ap-success-val">
+                  {formatDisplayDate(form.date)}
+                </span>
               </div>
               <div className="ap-success-row">
                 <span className="ap-success-key">Time</span>
@@ -932,13 +1112,19 @@ export default function AppointmentBookingForm() {
               </div>
               <div className="ap-success-row">
                 <span className="ap-success-key">Status</span>
-                <span className="ap-badge ap-badge--pending">Awaiting Doctor Assignment</span>
+                <span className="ap-badge ap-badge--pending">
+                  Awaiting Doctor Assignment
+                </span>
               </div>
             </div>
             <Link
               to="/user/appointments"
               className="ap-submit"
-              style={{ display: "block", textAlign: "center", textDecoration: "none" }}
+              style={{
+                display: "block",
+                textAlign: "center",
+                textDecoration: "none",
+              }}
             >
               View My Appointments
             </Link>
@@ -953,6 +1139,104 @@ export default function AppointmentBookingForm() {
           </div>
         )}
 
+        {/* ══════════════════════════════════════
+            Consent Modal
+        ══════════════════════════════════════ */}
+        {showConsentModal && (
+          <div
+            className="ap-modal-overlay"
+            onClick={() => setShowConsentModal(false)}
+          >
+            <div className="ap-modal" onClick={(e) => e.stopPropagation()}>
+              {/* Modal header */}
+              <div className="ap-modal-header">
+                <div className="ap-modal-title">Patient Informed Consent</div>
+                <button
+                  type="button"
+                  className="ap-modal-close"
+                  onClick={() => setShowConsentModal(false)}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Modal body */}
+              <div className="ap-modal-body">
+                <div className="ap-consent-scroll">
+                  <p className="ap-consent-text">
+                    <strong>Patient Informed Consent:</strong> By booking this
+                    appointment, you consent to receive telehealth services from
+                    licensed physicians through Humancare Connect. You
+                    understand that (1) telehealth is not a substitute for
+                    in-person care in all situations; (2) physicians on this
+                    platform are independent contractors; (3) in a medical
+                    emergency, call 112 immediately. You have read and agree to
+                    our Telehealth Informed Consent policy.
+                  </p>
+                </div>
+
+                <div className="ap-consent-checks" style={{ marginTop: 12 }}>
+                  {[
+                    {
+                      key: "telehealth",
+                      label:
+                        "I have read and agree to the Telehealth Informed Consent",
+                    },
+                    {
+                      key: "terms",
+                      label:
+                        "I agree to the Terms of Service and Privacy Policy",
+                    },
+                    {
+                      key: "hipaa",
+                      label:
+                        "I have read the HIPAA Notice of Privacy Practices",
+                    },
+                    { key: "age", label: "I am 18 years of age or older" },
+                  ].map(({ key, label }) => (
+                    <label key={key} className="ap-consent-row">
+                      <input
+                        type="checkbox"
+                        className="ap-consent-checkbox"
+                        checked={consents[key]}
+                        onChange={() => toggleConsent(key)}
+                      />
+                      <span className="ap-consent-label">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal footer */}
+              <div className="ap-modal-footer">
+                <button
+                  type="button"
+                  className="ap-btn-outline"
+                  onClick={() => setShowConsentModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="ap-submit"
+                  style={{ marginTop: 0, flex: 1 }}
+                  disabled={!allConsentsChecked || proceeding}
+                  onClick={handleConsentConfirm}
+                >
+                  {proceeding ? (
+                    <>
+                      <span className="ap-spinner ap-spinner--white" />{" "}
+                      Preparing…
+                    </>
+                  ) : (
+                    "Confirm & Continue →"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

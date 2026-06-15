@@ -12,23 +12,23 @@ import "./Services.css";
    Replace imageUrl with real assets or API
 ───────────────────────────────────────── */
 const SERVICES = [
-  {
-    id: 1,
-    label: "Digital Health",
-    title: "Overseas Medical Solutions ",
-    description:
-      "Skip the waiting room. Our licensed doctors review your medical history and issue valid prescriptions digitally — safely, quickly, and from anywhere in the world.",
-    features: [
-      "Reviewed and signed by certified physicians",
-      "Sent directly to your pharmacy or inbox",
-      "Valid for all standard medications",
-    ],
-    imageUrl:
-      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&q=80",
-    imageAlt: "Doctor writing a digital prescription on a tablet",
-    badgeNum: "2K+",
-    badgeLabel: "Prescriptions Issued",
-  },
+  // {
+  //   id: 1,
+  //   label: "Digital Health",
+  //   title: "Overseas Medical Solutions ",
+  //   description:
+  //     "Skip the waiting room. Our licensed doctors review your medical history and issue valid prescriptions digitally — safely, quickly, and from anywhere in the world.",
+  //   features: [
+  //     "Reviewed and signed by certified physicians",
+  //     "Sent directly to your pharmacy or inbox",
+  //     "Valid for all standard medications",
+  //   ],
+  //   imageUrl:
+  //     "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&q=80",
+  //   imageAlt: "Doctor writing a digital prescription on a tablet",
+  //   badgeNum: "2K+",
+  //   badgeLabel: "Prescriptions Issued",
+  // },
   {
     id: 2,
     label: "Digital Health",
