@@ -58,27 +58,80 @@ import HighCholesterol from "./pages/Conditions/HighCholesterol";
 import HormoneImblance from "./pages/Conditions/HormoneImbalance";
 import MemoryConcerns from "./pages/Conditions/MemoryConcerns";
 import Obesity from "./pages/Conditions/Obesity";
-
-
-
-
+import Osteoarthritis from "./pages/Conditions/Osteoarthritis";
+import Osteoporosis from "./pages/Conditions/Osteoporosis";
+import Palpitations from "./pages/Conditions/Palpitations";
+import PostCovidConcerns from "./pages/Conditions/PostCovidConcerns";
+import PreOpCardiacClearance from "./pages/Conditions/PreOpCardiacClearance";
+import RheumatoidArthritis from "./pages/Conditions/RheumatoidArthritis";
+import SeizuresEpilepsyFollowUp from "./pages/Conditions/SeizuresEpilepsyFollowUp";
+import SleepApnea from "./pages/Conditions/SleepApnea";
+import SurgerySecondOpinion from "./pages/Conditions/SurgerySecondOpinion";
+import ThyroidDisorders from "./pages/Conditions/ThyroidDisorders";
+import TreatmentPlanReview from "./pages/Conditions/TreatmentPlanReview";
+import Tremor from "./pages/Conditions/Tremor";
+import TypeTwoDiabetes from "./pages/Conditions/TypeTwoDiabetes";
+import AbdominalPain from "./pages/Conditions/AbdominalPain";
+import BingeEating from "./pages/Conditions/BingeEating";
+import Bloating from "./pages/Conditions/Bloating";
+import CholesterolLoweringDiet from "./pages/Conditions/CholesterolLoweringDiet";
+import Dehydration from "./pages/Conditions/Dehydration";
+import DiabeticDiet from "./pages/Conditions/DiabeticDiet";
+import DietExercisePlanning from "./pages/Conditions/DietExercisePlanning";
+import FoodIntolerancePlanning from "./pages/Conditions/FoodIntolerancePlanning";
+import Gastritis from "./pages/Conditions/Gastritis";
+import GlpProgramEligibility from "./pages/Conditions/GlpProgramEligibility";
+import HealthyHabitCoaching from "./pages/Conditions/HealthyHabitCoaching";
+import Hemorrhoids from "./pages/Conditions/Hemorrhoids";
+import Indigestion from "./pages/Conditions/Indigestion";
+import IrritableBowelSyndrome from "./pages/Conditions/IrritableBowelSyndrome";
+import PregnancyNutrition from "./pages/Conditions/PregnancyNutrition";
+import SleepHygiene from "./pages/Conditions/SleepHygiene";
+import SportNutrition from "./pages/Conditions/SportsNutrition";
+import TravelersDiarrhea from "./pages/Conditions/TravelersDiarrhea";
+import MetabolicSyndrome from "./pages/Conditions/MetabolicSyndrome";
+import Vomiting from "./pages/Conditions/Vomiting";
+import WeightLossPlanning from "./pages/Conditions/WeightLossPlanning";
+import BackPain from "./pages/Conditions/BackPain";
+import DryEyes from "./pages/Conditions/DryEyes";
+import EarInfection from "./pages/Conditions/EarInfection";
+import EarPain from "./pages/Conditions/EarPain";
+import EyeRedness from "./pages/Conditions/EyeRedness";
+import EyeStrain from "./pages/Conditions/EyeStrain";
+import Hoarseness from "./pages/Conditions/Hoarseness";
+import KneePain from "./pages/Conditions/KneePain";
+import MuscleStrain from "./pages/Conditions/MuscleStrain";
+import NasalCongestion from "./pages/Conditions/NasalCongestion";
+import NeckPain from "./pages/Conditions/NeckPain";
+import NumbnessAndTingling from "./pages/Conditions/NumbnessAndTingling";
+import Stye from "./pages/Conditions/Stye";
+import SwollenFeetAnkles from "./pages/Conditions/SwollenFeetAnkles";
+import Tonsillitis from "./pages/Conditions/Tonsillitis";
+import JointPain from "./pages/Conditions/JointPain";
+import VisionChanges from "./pages/Conditions/VisionChanges";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
 const DoctorLayout = lazy(() => import("./pages/doctors/DoctorLayout"));
 const Dashbord = lazy(() => import("./pages/doctors/Dashbord"));
-const DoctorEnrollments = lazy(() => import("./pages/doctors/DoctorEnrollments"));
+const DoctorEnrollments = lazy(
+  () => import("./pages/doctors/DoctorEnrollments"),
+);
 import { useDoctorAuth } from "./context/DoctorAuthContext";
 const DoctorProfile = lazy(() => import("./pages/doctors/DoctorProfile"));
 // import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
-const DoctorAppointments = lazy(() => import("./pages/doctors/DoctorAppointments"));
+const DoctorAppointments = lazy(
+  () => import("./pages/doctors/DoctorAppointments"),
+);
 const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
 const DoctorQnA = lazy(() => import("./pages/doctors/DoctorQnA"));
 const DoctorAnalytics = lazy(() => import("./pages/doctors/DoctorAnalytics"));
 const DoctorSettings = lazy(() => import("./pages/doctors/DoctorSettings"));
-const DoctorProfileForUser = lazy(() => import("./pages/doctors/DoctorProfileForUser"));
+const DoctorProfileForUser = lazy(
+  () => import("./pages/doctors/DoctorProfileForUser"),
+);
 
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
@@ -86,17 +139,25 @@ const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
 const ManageDoctors = lazy(() => import("./pages/admin/ManageDoctors"));
-const AdminDoctorProfile = lazy(() => import("./pages/admin/AdminDoctorProfile"));
+const AdminDoctorProfile = lazy(
+  () => import("./pages/admin/AdminDoctorProfile"),
+);
 const DoctorPayments = lazy(() => import("./pages/admin/DoctorPayments"));
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
-const AdminAppointmentDetails = lazy(() => import("./pages/admin/AdminAppointmentDetails"));
+const AdminAppointmentDetails = lazy(
+  () => import("./pages/admin/AdminAppointmentDetails"),
+);
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
-const PaymentLinkHistory = lazy(() => import("./pages/admin/PaymentLinkHistory"));
+const PaymentLinkHistory = lazy(
+  () => import("./pages/admin/PaymentLinkHistory"),
+);
 const QnAPage = lazy(() => import("./pages/admin/QnAPage"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
-const SuperAdminDashboard = lazy(() => import("./pages/admin/SuperAdminDashboard"));
+const SuperAdminDashboard = lazy(
+  () => import("./pages/admin/SuperAdminDashboard"),
+);
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 
@@ -120,9 +181,10 @@ const Specialties = lazy(() => import("./pages/Specialties"));
 const Symptoms = lazy(() => import("./pages/Symptoms"));
 const Categories = lazy(() => import("./pages/Categories"));
 
-
 const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
-const AppointmentBookingForm = lazy(() => import("./pages/AppointmentBookingForm"));
+const AppointmentBookingForm = lazy(
+  () => import("./pages/AppointmentBookingForm"),
+);
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -216,7 +278,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => { });
+        api.post("/api/auth/refresh").catch(() => {});
       },
       10 * 60 * 1000,
     );
@@ -290,7 +352,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -349,7 +411,9 @@ function AppLayout() {
       <SessionTimeoutManager />
       {!hideLayout && <Header />}
 
-      <Suspense fallback={<main className="hc-route-loading" aria-hidden="true" />}>
+      <Suspense
+        fallback={<main className="hc-route-loading" aria-hidden="true" />}
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -370,7 +434,10 @@ function AppLayout() {
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
-          <Route path="/doctor/:id" element={<DoctorProfileForUser legacyId />} />
+          <Route
+            path="/doctor/:id"
+            element={<DoctorProfileForUser legacyId />}
+          />
 
           <Route
             path="/user/dashboard"
@@ -747,24 +814,112 @@ function AppLayout() {
           <Route path="/sp-demo" element={<SPdemo />} />
 
           {/* condition pages */}
-            <Route path="/arthritis" element={<Arthritis />} / >
-            <Route path="/cancer-second-opinion" element={<CancerSecond />} / > 
-            <Route path="/chest-pain" element={<ChestPain/>} / > 
-            <Route path="/chronic-kidney-disease" element={<ChronicKidney />} / > 
-            <Route path="/chronic-migraine" element={<ChronicMigraine />} / > 
-            <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} / > 
-            <Route path="/fatty-liver" element={<FattyLiver />} / >
-            <Route path="/heart-disease" element={<HeartDisease />} / >
-            <Route path="/high-blood-pressure" element={<HighBloodPressure />} / >
-            <Route path="/high-cholesterol" element={<HighCholesterol />} / >
-            <Route path="/hormone-imblance" element={<HormoneImblance />} / >
-            <Route path="/memory-concerns" element={<MemoryConcerns />} / >
-            <Route path="/obesity" element={<Obesity />} / >
-
-
+          <Route path="/arthritis" element={<Arthritis />} />
+          <Route path="/cancer-second-opinion" element={<CancerSecond />} />
+          <Route path="/chest-pain" element={<ChestPain />} />
+          <Route path="/chronic-kidney-disease" element={<ChronicKidney />} />
+          <Route path="/chronic-migraine" element={<ChronicMigraine />} />
+          <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} />
+          <Route path="/fatty-liver" element={<FattyLiver />} />
+          <Route path="/heart-disease" element={<HeartDisease />} />
+          <Route path="/high-blood-pressure" element={<HighBloodPressure />} />
+          <Route path="/high-cholesterol" element={<HighCholesterol />} />
+          <Route path="/hormone-imblance" element={<HormoneImblance />} />
+          <Route path="/memory-concerns" element={<MemoryConcerns />} />
+          <Route path="/obesity" element={<Obesity />} />
+          <Route path="/osteoarthritis" element={<Osteoarthritis />} />
+          <Route path="/osteoporosis" element={<Osteoporosis />} />
+          <Route path="/palpitations" element={<Palpitations />} />
+          <Route path="/post-covid-concerns" element={<PostCovidConcerns />} />
+          <Route
+            path="/pre-op-cardiac-clearance"
+            element={<PreOpCardiacClearance />}
+          />
+          <Route
+            path="/rheumatoid-arthritis"
+            element={<RheumatoidArthritis />}
+          />
+          <Route
+            path="/seizures-epilepsy-follow-up"
+            element={<SeizuresEpilepsyFollowUp />}
+          />
+          <Route path="/sleep-apnea" element={<SleepApnea />} />
+          <Route
+            path="/surgery-second-opinion"
+            element={<SurgerySecondOpinion />}
+          />
+          <Route path="/thyroid-disorders" element={<ThyroidDisorders />} />
+          <Route
+            path="/treatment-plan-review"
+            element={<TreatmentPlanReview />}
+          />
+          <Route path="/tremor" element={<Tremor />} />
+          <Route path="/type-2-diabetes" element={<TypeTwoDiabetes />} />
+          <Route path="/abdominal-pain" element={<AbdominalPain />} />
+          <Route path="/binge-eating" element={<BingeEating />} />
+          <Route path="/bloating" element={<Bloating />} />
+          <Route
+            path="/cholesterol-lowering-diet"
+            element={<CholesterolLoweringDiet />}
+          />
+          <Route path="/dehydration" element={<Dehydration />} />
+          <Route path="/diabetic-diet" element={<DiabeticDiet />} />
+          <Route
+            path="/diet-exercise-planning"
+            element={<DietExercisePlanning />}
+          />
+          <Route
+            path="/food-intolerance-planning"
+            element={<FoodIntolerancePlanning />}
+          />
+          <Route path="/gastritis" element={<Gastritis />} />
+          <Route
+            path="/glp-program-eligibility"
+            element={<GlpProgramEligibility />}
+          />
+          <Route
+            path="/healthy-habit-coaching"
+            element={<HealthyHabitCoaching />}
+          />
+          <Route path="/hemorrhoids" element={<Hemorrhoids />} />
+          <Route path="/indigestion" element={<Indigestion />} />
+          <Route
+            path="/irritable-bowel-syndrome"
+            element={<IrritableBowelSyndrome />}
+          />
+          <Route path="/pregnancy-nutrition" element={<PregnancyNutrition />} />
+          <Route path="/sleep-hygiene" element={<SleepHygiene />} />
+          <Route path="/sports-nutrition" element={<SportNutrition />} />
+          <Route path="/travelers-diarrhea" element={<TravelersDiarrhea />} />
+          <Route path="/metabolic-syndrome" element={<MetabolicSyndrome />} />
+          <Route path="/vomiting" element={<Vomiting />} />
+          <Route
+            path="/weight-loss-planning"
+            element={<WeightLossPlanning />}
+          />
+          <Route path="/back-pain" element={<BackPain />} />
+          <Route path="/dry-eyes" element={<DryEyes />} />
+          <Route path="/ear-infection" element={<EarInfection />} />
+          <Route path="/ear-pain" element={<EarPain />} />
+          <Route path="/eye-redness" element={<EyeRedness />} />
+          <Route path="/eye-strain" element={<EyeStrain />} />
+          <Route path="/hoarseness" element={<Hoarseness />} />
+          <Route path="/knee-pain" element={<KneePain />} />
+          <Route path="/muscle-strain" element={<MuscleStrain />} />
+          <Route path="/nasal-congestion" element={<NasalCongestion />} />
+          <Route path="/neck-pain" element={<NeckPain />} />
+          <Route path="/numbness-tingling" element={<NumbnessAndTingling />} />
+          <Route path="/stye" element={<Stye />} />
+          <Route path="/swollen-feet-ankles" element={<SwollenFeetAnkles />} />
+          <Route path="/tonsillitis" element={<Tonsillitis />} />
+          <Route path="/joint-pain" element={<JointPain />} />
+          <Route path="/vision-changes" element={<VisionChanges />} />
 
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
-          <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
+          <Route
+            path="/appointment-booking/form"
+            element={<AppointmentBookingForm />}
+          />
         </Routes>
         {!hideLayout && <Footer />}
       </Suspense>
