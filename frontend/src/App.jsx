@@ -14,7 +14,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 
 const Home = lazy(() => import("./pages/Home"));
-const About = lazy(() => import("./pages/About"));
+
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
@@ -434,7 +434,7 @@ function AppLayout() {
       >
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
+         
           <Route path="/ask-a-question" element={<AskDoctor />} />
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
