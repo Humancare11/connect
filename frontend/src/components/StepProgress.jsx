@@ -6,7 +6,7 @@ import {
   FiClock,
   FiVideo,
   FiFileText,
-  FiCheckCircle,
+ 
 } from "react-icons/fi";
 
 const RADIUS = 18;
@@ -14,12 +14,11 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const DURATION = 3000; // 3 seconds per step
 
 const DEFAULT_STEPS = [
-  { label: "Open App", icon: <FiSmartphone /> },
-  { label: "Match Doctor", icon: <FiUserCheck /> },
-  { label: "Wait Room", icon: <FiClock /> },
-  { label: "Video Call", icon: <FiVideo /> },
-  { label: "Rx Sent", icon: <FiFileText /> },
-  { label: "Complete", icon: <FiCheckCircle /> },
+  { label: "Create Account", icon: <FiSmartphone /> },
+  { label: "Choose Service", icon: <FiUserCheck /> },
+  { label: "Book Appointment", icon: <FiClock /> },
+  { label: "Consult", icon: <FiVideo /> },
+  { label: " Rx & Complete", icon: <FiFileText /> },
 ];
 
 export default function StepProgress({

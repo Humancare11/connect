@@ -31,11 +31,11 @@ const Why = lazy(() => import("../components/WhySection"));
 const SCENES = [
   {
     step: 1,
-    badge: "Open App",
-    title: "Launch Humancare",
-    desc: "Open the app or website. Your health dashboard loads instantly with your profile ready.",
-    metricValue: "< 1s",
-    metricLabel: "App load time",
+    badge: "Create Account",
+    title: " Create your account",
+    desc: " Sign up in under a minute. Registration is frictionless and seamless.",
+    metricValue: "< 10s",
+    metricLabel: " Sign-up time",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -44,11 +44,11 @@ const SCENES = [
   },
   {
     step: 2,
-    badge: "AI Match",
-    title: "Matched to Dr. Patel",
-    desc: "Our AI matches you to the best available physician based on your symptoms and history.",
-    metricValue: "4 sec",
-    metricLabel: "Match time",
+    badge: "Choose Service",
+    title: "Choose the service you need",
+    desc: "Browse by category, specialty, or condition, or describe your concern. From general care to travel medicine, pick the right service in a few taps.",
+    metricValue: "30+",
+    metricLabel: "Specialties available",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -58,11 +58,11 @@ const SCENES = [
   },
   {
     step: 3,
-    badge: "Waiting",
-    title: "Virtual Waiting Room",
-    desc: "A brief hold while your doctor prepares. Average wait is under 90 seconds nationwide.",
-    metricValue: "~12 sec",
-    metricLabel: "Your wait today",
+    badge: "Book Appointment",
+    title: "Book your appointment",
+    desc: "We match you with a verified doctor and confirm a time that works. No waiting rooms, no phone tag, just a slot that fits your day.",
+    metricValue: " 24/7",
+    metricLabel: "Booking availability",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <circle cx="12" cy="12" r="10" />
@@ -72,11 +72,11 @@ const SCENES = [
   },
   {
     step: 4,
-    badge: "Connected",
-    title: "Video Consultation",
-    desc: "Face to face with your doctor over HIPAA secured, HD video. Share symptoms, ask questions.",
-    metricValue: "256-bit",
-    metricLabel: "Encrypted",
+    badge: "Consult",
+    title: "Consult your doctor",
+    desc: " Connect by secure video from anywhere. Discuss your symptoms, get a diagnosis, and ask everything you need, face to face.",
+    metricValue: "100% ",
+    metricLabel: " erified physicians",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -85,30 +85,30 @@ const SCENES = [
   },
   {
     step: 5,
-    badge: "E-Prescribe",
-    title: "Prescription Sent",
-    desc: "Your doctor sends the prescription electronically to your preferred pharmacy. Ready for pickup.",
-    metricValue: "Instant",
-    metricLabel: "E-Rx delivery",
+    badge: " Rx & Complete",
+    title: "Get your Rx and complete",
+    desc: "Receive your prescription and visit summary right in your dashboard. Care is documented, secure, and ready when you need it.",
+    metricValue: "< 30s ",
+    metricLabel: "Total to prescription",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <polyline points="20 6 9 17 4 12" />
       </svg>
     ),
   },
-  {
-    step: 6,
-    badge: "Done",
-    title: "Visit Complete!",
-    desc: "Rate your experience, schedule follow ups, and access visit notes, all from one dashboard.",
-    metricValue: "4.9 ★",
-    metricLabel: "Avg rating",
-    metricIcon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
-      </svg>
-    ),
-  },
+  // {
+  //   step: 6,
+  //   badge: "Done",
+  //   title: "Visit Complete!",
+  //   desc: "Rate your experience, schedule follow ups, and access visit notes, all from one dashboard.",
+  //   metricValue: "4.9 ★",
+  //   metricLabel: "Avg rating",
+  //   metricIcon: (
+  //     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+  //       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
+  //     </svg>
+  //   ),
+  // },
 ];
 
 const STEP_ICONS = [
@@ -117,18 +117,17 @@ const STEP_ICONS = [
   <FiClock key="clock" />,
   <FiVideo key="video" />,
   <FiFileText key="filetext" />,
-  <FiCheckCircle key="checkcircle" />,
 ];
 
 const DOT_LABELS = [
-  "Open App",
-  "Match Doctor",
-  "Wait Room",
-  "Video Call",
-  "Rx Sent",
-  "Complete",
+  " Create Account",
+  "Choose Service",
+  "Book Appointment",
+  "Consult",
+  " Rx & Complete",
+
 ];
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 const STEP_DURATION = 4000;
 const CIRCUMFERENCE = 2 * Math.PI * 10;
 const STEP_CIRCUMFERENCE = 2 * Math.PI * 20;
@@ -511,7 +510,7 @@ export default function HomePage() {
         <div className="hero-left" ref={headerRef}>
           <div className="hero-badge">
             <div className="badge-pulse" />
-            Available  • 24/7 Virtual Care
+            Available 24/7 Virtual Care
           </div>
 
           <h1>
@@ -521,8 +520,8 @@ export default function HomePage() {
           </h1>
 
           <p>
-            Book video consultations, get prescriptions, and receive follow-up
-            care from board-certified physicians, without leaving home.
+           Get fast, reliable telemedicine services from board-certified healthcare providers without leaving home. Schedule an online doctor appointment, discuss symptoms, receive treatment guidance, and get prescriptions through our secure virtual healthcare platform available across all 50 states.
+
           </p>
 
           {/* SEARCH BAR */}
@@ -567,6 +566,7 @@ export default function HomePage() {
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA Compliant
+
             </span>
             <span className="trust-chip">
               <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -612,10 +612,11 @@ export default function HomePage() {
             <div className="t-orb t-orb-3" />
 
             <div className="timeline-header">
-              <div className="eyebrow-hero">The Humancare Experience</div>
+              <div className="eyebrow-hero">The Humancare Connect Experience</div>
               <h3>
-                Your Visit in <span>90 Seconds</span>
+                Your Visit in <span>30 Seconds</span>
               </h3>
+              <p> From sign-up to prescription, five simple steps to care anywhere in the world.</p>
             </div>
 
             <div className="progress-track">
@@ -670,7 +671,7 @@ export default function HomePage() {
                         />
 
                         <div className="scene-metric">
-                          <div className="metric-icon">{scene.metricIcon}</div>
+                          {/* <div className="metric-icon">{scene.metricIcon}</div> */}
                           <div className="metric-text">
                             <span className="metric-value">{scene.metricValue}</span>
                             <span className="metric-label">{scene.metricLabel}</span>
@@ -715,10 +716,10 @@ export default function HomePage() {
       <section className="testimonials-section reveal reveal-stagger" ref={testimonialsRef}>
         <div className="testi-header">
           <div className="testi-eyebrow">Testimonials</div>
-          <h2 className="testi-title">What Our Patients Are Saying</h2>
+          <h2 className="testi-title">What patients are saying about Humancare Connect.
+</h2>
           <p className="testi-desc">
-            We take pride in delivering exceptional care that delivers great
-            results. But don&apos;t just take our word for it.
+            Real stories. Real care. Real results from trusted virtual healthcare services and licensed online doctors. 
           </p>
         </div>
 
@@ -752,14 +753,16 @@ export default function HomePage() {
           <h2 className="cta-title">
             Your health
             <br />
-            deserves better.
+            deserves better virtual care.
           </h2>
           <p className="cta-desc">
-            Join 2.4 million Americans who chose a smarter way to access care.
+           Affordable telehealth services, same-day online doctor consultations, prescriptions, and ongoing care all through one secure telemedicine platform. 
+
+
           </p>
           <div className="cta-btns">
-            <button className="cta-btn-w">Create Free Account</button>
-            <button className="cta-btn-g">Talk to a Doctor Now</button>
+            <a href="/login"><button className="cta-btn-w">Create Free Account</button></a>
+            <a href="/appointment-booking"><button className="cta-btn-g">Talk to a Doctor Now</button></a>
           </div>
           <div className="cta-pills">
             <span className="cta-pill">

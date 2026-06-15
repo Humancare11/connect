@@ -120,6 +120,7 @@ export default function Header() {
   const pillRef    = useRef(null);
   const navMenuRef = useRef(null);
   const helpWrapRef = useRef(null);
+  const headerRef  = useRef(null);
 
   const location = useLocation();
 
@@ -230,9 +231,42 @@ export default function Header() {
     };
   }, [helpOpen]);
 
+  /* ==================== HEADER HEIGHT (for mobile dropdown positioning) ====================
+     FIX: Measures the actual rendered header height and exposes it as the
+     `--header-h` CSS variable (consumed by .help-dropdown on mobile in
+     header.css). This keeps the fixed-position dropdown aligned with the
+     header regardless of its normal vs .shrink height, instead of relying
+     on a hardcoded `top: 72px`.
+  ==================================================================== */
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      const el = headerRef.current;
+      if (!el) return;
+      const h = el.getBoundingClientRect().height;
+      const gap = 12; // breathing room below the header
+      el.style.setProperty("--header-h", `${Math.round(h + gap)}px`);
+    };
+
+    updateHeaderHeight();
+
+    window.addEventListener("resize", updateHeaderHeight, { passive: true });
+
+    // Re-measure shortly after scroll-driven shrink toggles, since the
+    // shrink transition changes the header's height.
+    const tid = setTimeout(updateHeaderHeight, 320);
+
+    return () => {
+      window.removeEventListener("resize", updateHeaderHeight);
+      clearTimeout(tid);
+    };
+  }, [isScrolled, helpOpen]);
+
   return (
     <>
-      <header className={`glass-header ${isScrolled ? "shrink" : ""}`}>
+      <header
+        ref={headerRef}
+        className={`glass-header ${isScrolled ? "shrink" : ""}`}
+      >
         <div className="nav-container">
 
           {/* LOGO */}
@@ -243,7 +277,9 @@ export default function Header() {
 
           {/*
             HELP SLIDER WRAP
-           
+            FIX: removed the conditional "visible-mobile" class — it was
+            never defined in CSS and the mobile reveal is already handled
+            by `.glass-header.shrink .help-slider-wrap` in the stylesheet.
           */}
           <div
             className="help-slider-wrap"
