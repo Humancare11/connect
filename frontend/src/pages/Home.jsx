@@ -498,7 +498,7 @@ export default function HomePage() {
         <div className="hero-left" ref={headerRef}>
           <div className="hero-badge">
             <div className="badge-pulse" />
-            Available 24 / 7.
+            Available  • 24/7 Virtual Care
           </div>
 
           {/* <h1>
