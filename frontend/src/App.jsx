@@ -14,7 +14,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 
 const Home = lazy(() => import("./pages/Home"));
-const About = lazy(() => import("./pages/About"));
+const About = lazy(() => import("./pages/AboutPage"));
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
@@ -40,8 +40,8 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-import AboutUs from "./pages/AboutPage";                  // about us page 
-import PrivacyConcerns from './pages/PrivacyConcerns';         // privacy concerns
+import AboutUs from "./pages/AboutPage"; // about us page
+import PrivacyConcerns from "./pages/PrivacyConcerns"; // privacy concerns
 // Specialty pages
 import SPdemo from "./pages/Specialty/SPeDemo";
 // category pages
@@ -962,14 +962,13 @@ function AppLayout() {
           <Route path="/doctors-note" element={<DoctorsNote />} />
 
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
-          <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
+          <Route
+            path="/appointment-booking/form"
+            element={<AppointmentBookingForm />}
+          />
 
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
-
-
-
-
         </Routes>
         {!hideLayout && <Footer />}
       </Suspense>

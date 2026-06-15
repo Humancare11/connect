@@ -27,6 +27,9 @@ import { useNavigate } from "react-router-dom";
 const PCP = lazy(() => import("../components/PCPSection"));
 const Why = lazy(() => import("../components/WhySection"));
 
+// Add these two imports near the top of HomePage.jsx
+import searchIndex from "../data/searchIndex";
+
 // ─── Scene data ───────────────────────────────────────────────────────────────
 const SCENES = [
   {
@@ -133,58 +136,6 @@ const STEP_DURATION = 4000;
 const CIRCUMFERENCE = 2 * Math.PI * 10;
 const STEP_CIRCUMFERENCE = 2 * Math.PI * 20;
 
-// ─── Search data defined outside component to avoid re-creation on every render
-const SEARCH_DATA = [
-  {
-    id: 1,
-    title: "Cardiologist",
-    keywords: ["heart", "cardiac", "chest pain", "bp"],
-    route: "/findadoctor",
-    sectionId: "cardiology",
-    type: "Specialty",
-  },
-  {
-    id: 2,
-    title: "Dermatologist",
-    keywords: ["skin", "acne", "rash", "eczema"],
-    route: "/findadoctor",
-    sectionId: "dermatology",
-    type: "Specialty",
-  },
-  {
-    id: 3,
-    title: "Mental Health",
-    keywords: ["stress", "anxiety", "depression", "therapy"],
-    route: "/mental-health",
-    sectionId: "therapy-section",
-    type: "Condition",
-  },
-  {
-    id: 4,
-    title: "Pediatrics",
-    keywords: ["kids", "child", "baby", "children"],
-    route: "/findadoctor",
-    sectionId: "pediatrics",
-    type: "Department",
-  },
-  {
-    id: 5,
-    title: "Book Video Consultation",
-    keywords: ["video call", "online doctor", "consultation"],
-    route: "/consultation",
-    sectionId: "video-consult",
-    type: "Service",
-  },
-  {
-    id: 6,
-    title: "Prescriptions",
-    keywords: ["medicine", "rx", "drugs"],
-    route: "/prescriptions",
-    sectionId: "rx-section",
-    type: "Service",
-  },
-];
-
 export default function HomePage() {
   const navigate = useNavigate();
 
@@ -193,27 +144,62 @@ export default function HomePage() {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const searchRef = useRef(null);
 
-  // ── Filter search suggestions ─────────────────────────────────────────────
+  // ── AI search via Anthropic ───────────────────────────────────────────────
+  async function aiSearch(query) {
+    const response = await fetch("http://localhost:5000/api/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, routes: searchIndex }),
+    });
+    const data = await response.json();
+    return data.results;
+  }
+
+  // ── Filter suggestions: local first, AI fallback ──────────────────────────
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredSuggestions([]);
+      setIsAiLoading(false);
       return;
     }
-    const query = searchQuery.toLowerCase();
-    const results = SEARCH_DATA.filter(
-      (item) =>
-        item.title.toLowerCase().includes(query) ||
-        item.keywords.some((kw) => kw.toLowerCase().includes(query))
+
+    const q = searchQuery.toLowerCase();
+
+    // 1️⃣ Instant local match on title
+    const local = searchIndex.filter((item) =>
+      item.title.toLowerCase().includes(q),
     );
-    setFilteredSuggestions(results);
+
+    if (local.length > 0) {
+      // Local hit — show immediately, no AI needed
+      setFilteredSuggestions(local.slice(0, 6));
+      setIsAiLoading(false);
+    } else {
+      // No local hit — ask AI
+      setFilteredSuggestions([]);
+      setIsAiLoading(true);
+      setShowSuggestions(true);
+      aiSearch(searchQuery)
+        .then((results) => {
+          if (results && results.length > 0) {
+            setFilteredSuggestions(results.slice(0, 6));
+          }
+          setIsAiLoading(false);
+        })
+        .catch((err) => {
+          console.error("AI search failed:", err);
+          setIsAiLoading(false);
+        });
+    } // ← this closing brace was missing
   }, [searchQuery]);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
         setShowSuggestions(false);
       }
     };
@@ -226,11 +212,11 @@ export default function HomePage() {
     (selectedItem = null) => {
       const item = selectedItem || filteredSuggestions[0];
       if (!item) return;
-      navigate(item.route, { state: { scrollTo: item.sectionId } });
+      navigate(item.route);
       setSearchQuery("");
       setShowSuggestions(false);
     },
-    [filteredSuggestions, navigate]
+    [filteredSuggestions, navigate],
   );
 
   // ── Keyboard navigation ───────────────────────────────────────────────────
@@ -241,22 +227,20 @@ export default function HomePage() {
         case "ArrowDown":
           e.preventDefault();
           setActiveIndex((prev) =>
-            prev < filteredSuggestions.length - 1 ? prev + 1 : 0
+            prev < filteredSuggestions.length - 1 ? prev + 1 : 0,
           );
           break;
         case "ArrowUp":
           e.preventDefault();
           setActiveIndex((prev) =>
-            prev > 0 ? prev - 1 : filteredSuggestions.length - 1
+            prev > 0 ? prev - 1 : filteredSuggestions.length - 1,
           );
           break;
         case "Enter":
           e.preventDefault();
-          if (activeIndex >= 0) {
-            handleSearch(filteredSuggestions[activeIndex]);
-          } else {
-            handleSearch();
-          }
+          handleSearch(
+            activeIndex >= 0 ? filteredSuggestions[activeIndex] : null,
+          );
           break;
         case "Escape":
           setShowSuggestions(false);
@@ -265,7 +249,7 @@ export default function HomePage() {
           break;
       }
     },
-    [filteredSuggestions, activeIndex, handleSearch]
+    [filteredSuggestions, activeIndex, handleSearch],
   );
 
   // ── Testimonials data ─────────────────────────────────────────────────────
@@ -310,7 +294,7 @@ export default function HomePage() {
           if (entry.isIntersecting) entry.target.classList.add("in");
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.12 },
     );
     document.querySelectorAll(".reveal").forEach((el) => ro.observe(el));
     return () => ro.disconnect();
@@ -339,8 +323,7 @@ export default function HomePage() {
     const currentIdx = currentRef.current;
     const timerOffset = timerOffsetRef.current;
     const currentStepProgress = 1 - timerOffset / CIRCUMFERENCE;
-    let progressPct =
-      ((currentIdx + currentStepProgress) / TOTAL_STEPS) * 100;
+    let progressPct = ((currentIdx + currentStepProgress) / TOTAL_STEPS) * 100;
     progressPct = Math.min(progressPct, 100);
 
     if (progressFillRef.current) {
@@ -351,7 +334,11 @@ export default function HomePage() {
       if (!el) return;
       const isActive = i === currentIdx;
       const isCompleted = i < currentIdx;
-      const progress = isActive ? timerOffset / CIRCUMFERENCE : isCompleted ? 0 : 1;
+      const progress = isActive
+        ? timerOffset / CIRCUMFERENCE
+        : isCompleted
+          ? 0
+          : 1;
       const progressOffset = progress * STEP_CIRCUMFERENCE;
       el.style.strokeDashoffset = String(progressOffset);
     });
@@ -373,7 +360,7 @@ export default function HomePage() {
       timerOffsetRef.current = CIRCUMFERENCE * (1 - inStep);
       updateVisuals();
     },
-    [updateVisuals]
+    [updateVisuals],
   );
 
   // ── Animation tick ────────────────────────────────────────────────────────
@@ -432,44 +419,44 @@ export default function HomePage() {
       if (cancelled) return;
 
       ctx = gsap.context(() => {
-      const tl = gsap.timeline();
+        const tl = gsap.timeline();
 
-      tl.fromTo(
-        headerRef.current,
-        { opacity: 0, y: 60 },
-        { opacity: 1, y: 0, duration: 1.2 }
-      );
-      tl.fromTo(
-        featuresRef.current[0],
-        { opacity: 0, x: -70 },
-        { opacity: 1, x: 0, duration: 0.8 },
-        "+=0.2"
-      );
-      tl.fromTo(
-        featuresRef.current[1],
-        { opacity: 0, x: -70 },
-        { opacity: 1, x: 0, duration: 0.8 },
-        "+=0.1"
-      );
-      tl.fromTo(
-        featuresRef.current[2],
-        { opacity: 0, x: -70 },
-        { opacity: 1, x: 0, duration: 0.8 },
-        "+=0.1"
-      );
-      tl.fromTo(
-        btnRef.current,
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.7 },
-        "+=0.1"
-      );
-      tl.fromTo(
-        rightRef.current,
-        { opacity: 0, y: 80, scale: 0.95 },
-        { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
-        "+=0.3"
-      );
-    }, wrapperRef);
+        tl.fromTo(
+          headerRef.current,
+          { opacity: 0, y: 60 },
+          { opacity: 1, y: 0, duration: 1.2 },
+        );
+        tl.fromTo(
+          featuresRef.current[0],
+          { opacity: 0, x: -70 },
+          { opacity: 1, x: 0, duration: 0.8 },
+          "+=0.2",
+        );
+        tl.fromTo(
+          featuresRef.current[1],
+          { opacity: 0, x: -70 },
+          { opacity: 1, x: 0, duration: 0.8 },
+          "+=0.1",
+        );
+        tl.fromTo(
+          featuresRef.current[2],
+          { opacity: 0, x: -70 },
+          { opacity: 1, x: 0, duration: 0.8 },
+          "+=0.1",
+        );
+        tl.fromTo(
+          btnRef.current,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.7 },
+          "+=0.1",
+        );
+        tl.fromTo(
+          rightRef.current,
+          { opacity: 0, y: 80, scale: 0.95 },
+          { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
+          "+=0.3",
+        );
+      }, wrapperRef);
     });
 
     return () => {
@@ -514,10 +501,14 @@ export default function HomePage() {
             Available 24 / 7.
           </div>
 
-          <h1>
+          {/* <h1>
             Talk to a <span className="fancy-underline">licensed doctor</span>
             <br />
             in minutes.
+          </h1> */}
+
+          <h1 style={{ fontSize: "2.5rem", fontWeight: "bold" }}>
+            Talk to a licensed doctor in minutes.
           </h1>
 
           <p>
@@ -525,7 +516,7 @@ export default function HomePage() {
             care from board-certified physicians, without leaving home.
           </p>
 
-          {/* SEARCH BAR */}
+          {/* SEARCH BAR — no changes to the bar itself */}
           <div className="search-wrapper" ref={searchRef}>
             <div className="search-bar">
               <input
@@ -542,46 +533,89 @@ export default function HomePage() {
               <button onClick={() => handleSearch()}>Search</button>
             </div>
 
-            {showSuggestions && filteredSuggestions.length > 0 && (
-              <div className="search-suggestions">
-                {filteredSuggestions.map((item, index) => (
+            {/* Loading state */}
+            {isAiLoading &&
+              showSuggestions && ( // ✅ add && showSuggestions
+                <div className="search-suggestions">
                   <div
-                    key={item.id}
-                    className={`suggestion-item${activeIndex === index ? " active" : ""}`}
-                    onClick={() => handleSearch(item)}
+                    className="suggestion-item"
+                    style={{ color: "#9ca3af", fontSize: 13 }}
                   >
-                    <div className="suggestion-left">
-                      <span className="suggestion-title">{item.title}</span>
-                      <span className="suggestion-type">{item.type}</span>
-                    </div>
-                    <span className="suggestion-arrow">→</span>
+                    <span>Finding best matches...</span>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              )}
+
+            {/* Results */}
+            {!isAiLoading &&
+              showSuggestions &&
+              filteredSuggestions.length > 0 && (
+                <div className="search-suggestions">
+                  {filteredSuggestions.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className={`suggestion-item${activeIndex === index ? " active" : ""}`}
+                      onClick={() => handleSearch(item)}
+                    >
+                      <div className="suggestion-left">
+                        <span className="suggestion-title">{item.title}</span>
+                      </div>
+                      <span className="suggestion-arrow">→</span>
+                    </div>
+                  ))}
+                </div>
+              )}
           </div>
 
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="#7CB7FF"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA Compliant
             </span>
             <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="#7CB7FF"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               GDPR Ready
             </span>
             <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="#7CB7FF"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               500+ Verified Doctors
             </span>
             <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="#7CB7FF"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
@@ -672,8 +706,12 @@ export default function HomePage() {
                         <div className="scene-metric">
                           <div className="metric-icon">{scene.metricIcon}</div>
                           <div className="metric-text">
-                            <span className="metric-value">{scene.metricValue}</span>
-                            <span className="metric-label">{scene.metricLabel}</span>
+                            <span className="metric-value">
+                              {scene.metricValue}
+                            </span>
+                            <span className="metric-label">
+                              {scene.metricLabel}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -712,7 +750,10 @@ export default function HomePage() {
       </Suspense>
 
       {/* ════════ TESTIMONIALS ══════════════════════════════════════════════ */}
-      <section className="testimonials-section reveal reveal-stagger" ref={testimonialsRef}>
+      <section
+        className="testimonials-section reveal reveal-stagger"
+        ref={testimonialsRef}
+      >
         <div className="testi-header">
           <div className="testi-eyebrow">Testimonials</div>
           <h2 className="testi-title">What Our Patients Are Saying</h2>
@@ -763,26 +804,54 @@ export default function HomePage() {
           </div>
           <div className="cta-pills">
             <span className="cta-pill">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA Compliant
             </span>
             <span className="cta-pill">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Board-Certified Doctors
             </span>
             <span className="cta-pill">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               24/7 Available
             </span>
             <span className="cta-pill">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
