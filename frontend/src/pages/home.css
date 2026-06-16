@@ -572,6 +572,7 @@ h4 {
   max-width: 520px;
   margin-bottom: 18px;
   animation: fadeUp 0.7s 0.3s var(--ease) both;
+  margin-top: 20px;
 }
 
 .search-bar {
