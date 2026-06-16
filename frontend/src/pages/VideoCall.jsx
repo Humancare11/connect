@@ -156,6 +156,25 @@ const BITRATE_PROFILE = {
   voiceAudio: 128_000,
 };
 
+const mediaErrorMessage = (err) => {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    return "Your browser blocked camera/microphone access because this page isn't loaded over a secure (HTTPS) connection.";
+  }
+  switch (err?.name) {
+    case "NotAllowedError":
+    case "PermissionDeniedError":
+      return "Camera/microphone permission was denied. Click the camera icon in the address bar and allow access, then retry.";
+    case "NotFoundError":
+    case "DevicesNotFoundError":
+      return "No camera or microphone was found on this device.";
+    case "NotReadableError":
+    case "TrackStartError":
+      return "Your camera or microphone is already in use by another app. Close it and retry.";
+    default:
+      return "Camera or microphone access failed. Check browser permissions and reload.";
+  }
+};
+
 const setTrackHint = (track, hint) => {
   if (!track || !("contentHint" in track)) return;
   try {
@@ -275,6 +294,7 @@ export default function VideoCall() {
   const [isSelfViewMinimized, setIsSelfViewMinimized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [camError, setCamError] = useState(false);
+  const [camErrorReason, setCamErrorReason] = useState("");
   const [completing, setCompleting] = useState(false);
   const [peerLeft, setPeerLeft] = useState(false);
   const [endCallConfirm, setEndCallConfirm] = useState(false);
@@ -478,42 +498,6 @@ export default function VideoCall() {
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
 
     // Get local media
-    // (async () => {
-    //   try {
-    //     const stream = await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
-
-    //     if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
-
-    //     localStreamRef.current = stream;
-    //     if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
-
-    //     stream.getVideoTracks().forEach((t) => setTrackHint(t, "detail"));
-    //     stream.getAudioTracks().forEach((t) => setTrackHint(t, "speech"));
-
-    //     const senderTuning = stream.getTracks().map((track) => {
-    //       const sender = pc.addTrack(track, stream);
-    //       return tuneSenderQuality(
-    //         sender,
-    //         track.kind === "video"
-    //           ? {
-    //             maxBitrate: BITRATE_PROFILE.cameraVideo,
-    //             maxFramerate: 30,
-    //             maintainResolution: true,
-    //           }
-    //           : { maxBitrate: BITRATE_PROFILE.voiceAudio }
-    //       );
-    //     });
-    //     await Promise.allSettled(senderTuning);
-
-    //     if (mounted) { setIsReady(true); isReadyRef.current = true; }
-    //     resolveLocalReady(true);
-    //   } catch (err) {
-    //     if (mounted) setCamError(true);
-    //     resolveLocalReady(false);
-    //   }
-    // })();
-
-    // Get local media
     (async () => {
       try {
         // First try high-quality constraints
@@ -569,7 +553,7 @@ export default function VideoCall() {
 
       } catch (err) {
         console.error("All media attempts failed:", err.name, err.message);
-        if (mounted) setCamError(true);
+        if (mounted) { setCamError(true); setCamErrorReason(mediaErrorMessage(err)); }
         resolveLocalReady(false);
         // Still mark ready so call can proceed (audio-only or no media)
         if (mounted) { setIsReady(true); isReadyRef.current = true; }
@@ -1504,14 +1488,9 @@ export default function VideoCall() {
         </div>
       </div>
       {/* Cam error banner */}
-      {/* {camError && (
-        <div className="hc-vc__error-bar">
-          <FiAlertTriangle /> Camera or microphone access denied. Check browser permissions and reload.
-        </div>
-      )} */}
       {camError && (
         <div className="hc-vc__error-bar">
-          <FiAlertTriangle /> Camera or microphone access denied. Check browser permissions and reload.
+          <FiAlertTriangle /> {camErrorReason || "Camera or microphone access denied. Check browser permissions and reload."}
           <button
             onClick={async () => {
               setCamError(false);
@@ -1525,8 +1504,10 @@ export default function VideoCall() {
                   else pcRef.current?.addTrack(track, stream);
                 });
                 setIsReady(true);
+                setCamErrorReason("");
               } catch (e) {
                 setCamError(true);
+                setCamErrorReason(mediaErrorMessage(e));
               }
             }}
             style={{
