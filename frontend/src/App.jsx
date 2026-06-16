@@ -138,6 +138,15 @@ import ReturnWorkClearance from "./pages/Conditions/ReturnWorkClearance";
 import SecondMedicalOpinion from "./pages/Conditions/SecondMedicalOpinion";
 import SpecialistReferral from "./pages/Conditions/SpecialistReferral";
 import ChronicMedicationManagement from "./pages/Conditions/ChronicMedicationManagement";
+import AllergicRhinitis from "./pages/Conditions/AllergicRhinitis";
+import Asthma from "./pages/Conditions/Asthma";
+import AsthmaFlareUp from "./pages/Conditions/AsthmaFlareUp";
+import Copd from "./pages/Conditions/Copd";
+import PersistentCough from "./pages/Conditions/PersistentCough";
+import PneumoniaFollowUp from "./pages/Conditions/PneumoniaFollowUp";
+import ShortnessOfBreath from "./pages/Conditions/ShortnessBreath";
+import UpperRespiratoryInfection from "./pages/Conditions/UpperRespiratoryInfection";
+import Wheezing from "./pages/Conditions/Wheezing";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -992,12 +1001,24 @@ function AppLayout() {
             path="/chronic-medication-management"
             element={<ChronicMedicationManagement />}
           />
+          <Route path="/asthma" element={<Asthma />} />
+          <Route path="/asthma-flare-up" element={<AsthmaFlareUp />} />
 
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           <Route
             path="/appointment-booking/form"
             element={<AppointmentBookingForm />}
           />
+          <Route path="/allergic-rhinitis" element={<AllergicRhinitis />} />
+          <Route path="/copd" element={<Copd />} />
+          <Route path="/persistent-cough" element={<PersistentCough />} />
+          <Route path="/pneumonia-follow-up" element={<PneumoniaFollowUp />} />
+          <Route path="/shortness-of-breath" element={<ShortnessOfBreath />} />
+          <Route
+            path="/upper-respiratory-infection"
+            element={<UpperRespiratoryInfection />}
+          />
+          <Route path="/wheezing" element={<Wheezing />} />
 
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
