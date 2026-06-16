@@ -276,7 +276,7 @@ function PaymentStage({
     }
     setStripeCreating(true);
     try {
-      const res = await api.post("/api/payments/create-intent-by-amount", { amountInr: amount });
+      const res = await api.post("/api/payments/create-intent-by-amount", { amountUsd: amount });
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
@@ -290,7 +290,7 @@ function PaymentStage({
   };
 
   const createPaypalOrder = async () => {
-    const res = await api.post("/api/paypal/create-order-by-amount", { amountInr: amount });
+    const res = await api.post("/api/paypal/create-order-by-amount", { amountUsd: amount });
     return res.data.orderId;
   };
 
