@@ -529,6 +529,7 @@ export default function VideoCall() {
           }
         }
 
+        
         if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
 
         localStreamRef.current = stream;
