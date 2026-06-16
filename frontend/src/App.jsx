@@ -129,6 +129,15 @@ import StomachPainChildren from "./pages/Conditions/StomachPainChildren";
 import GrowthDevelopment from "./pages/Conditions/GrowthDevelopment";
 import VomitingDiarrheaChildren from "./pages/Conditions/VomitingDiarrheaChildren";
 import DoctorsNote from "./pages/Conditions/DoctorsNote";
+import FollowUpConsultation from "./pages/Conditions/FollowUpConsultation";
+import LabResultReview from "./pages/Conditions/LabResultReview";
+import MedicalCertificate from "./pages/Conditions/MedicalCertificate";
+import MedicationReview from "./pages/Conditions/MedicationReview";
+import PrescriptionRefill from "./pages/Conditions/PrescriptionRefill";
+import ReturnWorkClearance from "./pages/Conditions/ReturnWorkClearance";
+import SecondMedicalOpinion from "./pages/Conditions/SecondMedicalOpinion";
+import SpecialistReferral from "./pages/Conditions/SpecialistReferral";
+import ChronicMedicationManagement from "./pages/Conditions/ChronicMedicationManagement";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -436,7 +445,7 @@ function AppLayout() {
       >
         <Routes>
           <Route path="/" element={<Home />} />
-         
+
           <Route path="/ask-a-question" element={<AskDoctor />} />
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
@@ -962,6 +971,27 @@ function AppLayout() {
             element={<VomitingDiarrheaChildren />}
           />
           <Route path="/doctors-note" element={<DoctorsNote />} />
+          <Route
+            path="/follow-up-consultation"
+            element={<FollowUpConsultation />}
+          />
+          <Route path="/lab-result-review" element={<LabResultReview />} />
+          <Route path="/medical-certificate" element={<MedicalCertificate />} />
+          <Route path="/medication-review" element={<MedicationReview />} />
+          <Route path="/prescription-refill" element={<PrescriptionRefill />} />
+          <Route
+            path="/return-work-clearance"
+            element={<ReturnWorkClearance />}
+          />
+          <Route
+            path="/second-medical-opinion"
+            element={<SecondMedicalOpinion />}
+          />
+          <Route path="/specialist-referral" element={<SpecialistReferral />} />
+          <Route
+            path="/chronic-medication-management"
+            element={<ChronicMedicationManagement />}
+          />
 
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           <Route
