@@ -478,9 +478,72 @@ export default function VideoCall() {
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
 
     // Get local media
+    // (async () => {
+    //   try {
+    //     const stream = await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
+
+    //     if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
+
+    //     localStreamRef.current = stream;
+    //     if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
+
+    //     stream.getVideoTracks().forEach((t) => setTrackHint(t, "detail"));
+    //     stream.getAudioTracks().forEach((t) => setTrackHint(t, "speech"));
+
+    //     const senderTuning = stream.getTracks().map((track) => {
+    //       const sender = pc.addTrack(track, stream);
+    //       return tuneSenderQuality(
+    //         sender,
+    //         track.kind === "video"
+    //           ? {
+    //             maxBitrate: BITRATE_PROFILE.cameraVideo,
+    //             maxFramerate: 30,
+    //             maintainResolution: true,
+    //           }
+    //           : { maxBitrate: BITRATE_PROFILE.voiceAudio }
+    //       );
+    //     });
+    //     await Promise.allSettled(senderTuning);
+
+    //     if (mounted) { setIsReady(true); isReadyRef.current = true; }
+    //     resolveLocalReady(true);
+    //   } catch (err) {
+    //     if (mounted) setCamError(true);
+    //     resolveLocalReady(false);
+    //   }
+    // })();
+
+    // Get local media
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
+        // First try high-quality constraints
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
+        } catch (firstErr) {
+          console.warn("High-quality media failed, trying basic constraints:", firstErr.name);
+
+          // Fallback 1: Basic constraints
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: true,
+            });
+          } catch (secondErr) {
+            console.warn("Basic video+audio failed, trying audio only:", secondErr.name);
+
+            // Fallback 2: Audio only
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: false,
+              });
+            } catch (finalErr) {
+              // All attempts failed
+              throw finalErr;
+            }
+          }
+        }
 
         if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
 
@@ -495,21 +558,21 @@ export default function VideoCall() {
           return tuneSenderQuality(
             sender,
             track.kind === "video"
-              ? {
-                maxBitrate: BITRATE_PROFILE.cameraVideo,
-                maxFramerate: 30,
-                maintainResolution: true,
-              }
+              ? { maxBitrate: BITRATE_PROFILE.cameraVideo, maxFramerate: 30, maintainResolution: true }
               : { maxBitrate: BITRATE_PROFILE.voiceAudio }
           );
         });
         await Promise.allSettled(senderTuning);
 
-        if (mounted) { setIsReady(true); isReadyRef.current = true; }
+        if (mounted) { setIsReady(true); isReadyRef.current = true; setCamError(false); }
         resolveLocalReady(true);
+
       } catch (err) {
+        console.error("All media attempts failed:", err.name, err.message);
         if (mounted) setCamError(true);
         resolveLocalReady(false);
+        // Still mark ready so call can proceed (audio-only or no media)
+        if (mounted) { setIsReady(true); isReadyRef.current = true; }
       }
     })();
 
@@ -720,7 +783,7 @@ export default function VideoCall() {
   useEffect(() => {
     if (!inCall) return;
     const heartbeat = setInterval(() => {
-      api.post("/api/auth/refresh").catch(() => {});
+      api.post("/api/auth/refresh").catch(() => { });
     }, 4 * 60 * 1000);
     return () => clearInterval(heartbeat);
   }, [inCall]);
@@ -995,29 +1058,29 @@ export default function VideoCall() {
     <div className="hc-vc__page" ref={pageRef}>
 
       <div className="hc-vc__ctrlbar-meta">
-          <div className="hc-vc__meta-left">
-            <div className="hc-vc__logo-mark">
-              <div className="hc-vc__logo-dot" />
-              <span className="hc-vc__logo-text">Humancare Connect</span>
-            </div>
-
-            {otherParty && (
-              <div className="hc-vc__meta-party">
-                <span className="hc-vc__infobar-label">{otherParty.label}</span>
-                <span className="hc-vc__infobar-name">{otherParty.name}</span>
-              </div>
-            )}
+        <div className="hc-vc__meta-left">
+          <div className="hc-vc__logo-mark">
+            <div className="hc-vc__logo-dot" />
+            <span className="hc-vc__logo-text">Humancare Connect</span>
           </div>
 
-          <div className="hc-vc__meta-right">
-            {inCall && isDoctor && (
-              <div className="hc-vc__timer">
-                <FiClock />
-                <span>{fmtDuration(callDuration)}</span>
-              </div>
-            )}
+          {otherParty && (
+            <div className="hc-vc__meta-party">
+              <span className="hc-vc__infobar-label">{otherParty.label}</span>
+              <span className="hc-vc__infobar-name">{otherParty.name}</span>
+            </div>
+          )}
+        </div>
 
-            {/* <div className={`hc-vc__status-pill hc-vc__status-pill--${connectionState}`}>
+        <div className="hc-vc__meta-right">
+          {inCall && isDoctor && (
+            <div className="hc-vc__timer">
+              <FiClock />
+              <span>{fmtDuration(callDuration)}</span>
+            </div>
+          )}
+
+          {/* <div className={`hc-vc__status-pill hc-vc__status-pill--${connectionState}`}>
               <span className="hc-vc__status-dot" />
               {connectionState === "idle" && "Waiting"}
               {connectionState === "connecting" && "Connecting..."}
@@ -1025,11 +1088,11 @@ export default function VideoCall() {
               {connectionState === "disconnected" && "Disconnected"}
             </div> */}
 
-            {/* <span className="hc-vc__infobar-chip"><FiCalendar /> {fmtDate(appt.date)}</span>
+          {/* <span className="hc-vc__infobar-chip"><FiCalendar /> {fmtDate(appt.date)}</span>
             <span className="hc-vc__infobar-chip"><FiClock /> {appt.time}</span>
             <span className="hc-vc__infobar-chip hc-vc__infobar-chip--green"><FiCheckCircle /> Confirmed</span> */}
-          </div>
         </div>
+      </div>
 
       {/* ── Inline error toast ──────────────────────────────────── */}
       {inlineError && (
@@ -1348,7 +1411,7 @@ export default function VideoCall() {
 
       {/* ── Controls bar ─────────────────────────────────────────── */}
       <div className="hc-vc__ctrlbar">
-        
+
 
         <div className="hc-vc__ctrlbar-inner">
           <button
@@ -1380,7 +1443,7 @@ export default function VideoCall() {
             <span className="hc-vc__btn-icon"><FiMonitor /></span>
             <span className="hc-vc__btn-label">{isScreenSharing ? "Stop" : "Share"}</span>
           </button>
- {inCall && (
+          {inCall && (
             <div className="hc-vc__live-pill">
               <span className="hc-vc__live-dot" />
               Live
@@ -1416,7 +1479,7 @@ export default function VideoCall() {
             )}
           </button>
 
-         
+
 
           {/* {isDoctor && (
             <button
@@ -1441,9 +1504,39 @@ export default function VideoCall() {
         </div>
       </div>
       {/* Cam error banner */}
+      {/* {camError && (
+        <div className="hc-vc__error-bar">
+          <FiAlertTriangle /> Camera or microphone access denied. Check browser permissions and reload.
+        </div>
+      )} */}
       {camError && (
         <div className="hc-vc__error-bar">
           <FiAlertTriangle /> Camera or microphone access denied. Check browser permissions and reload.
+          <button
+            onClick={async () => {
+              setCamError(false);
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                localStreamRef.current = stream;
+                if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
+                stream.getTracks().forEach((track) => {
+                  const sender = pcRef.current?.getSenders().find(s => s.track?.kind === track.kind);
+                  if (sender) sender.replaceTrack(track);
+                  else pcRef.current?.addTrack(track, stream);
+                });
+                setIsReady(true);
+              } catch (e) {
+                setCamError(true);
+              }
+            }}
+            style={{
+              marginLeft: 12, padding: "4px 12px", borderRadius: 6,
+              background: "#fff", color: "#dc2626", border: "none",
+              fontWeight: 700, cursor: "pointer"
+            }}
+          >
+            Retry
+          </button>
         </div>
       )}
 
