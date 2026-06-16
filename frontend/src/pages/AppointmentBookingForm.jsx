@@ -357,7 +357,7 @@ function PaymentStage({
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">₹{amount?.toLocaleString("en-IN")}</strong>
+            <strong className="ap-pay-fee-amount">${amount?.toLocaleString("en-IN")}</strong>
           </div>
         </div>
 

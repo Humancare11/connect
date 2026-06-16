@@ -711,6 +711,20 @@ export default function VideoCall() {
     return () => clearInterval(callTimerRef.current);
   }, [inCall]);
 
+  // ── Session keep-alive: a live call has no mouse/keyboard activity and
+  // no other API traffic, so the inactivity timer (client + server) and the
+  // short-lived access token can expire mid-consultation, forcing a logout
+  // that gets misread as "Access Denied" and auto-completes the session.
+  // Refresh on a cadence well under both timeouts to keep the session alive
+  // for as long as the call is actually in progress.
+  useEffect(() => {
+    if (!inCall) return;
+    const heartbeat = setInterval(() => {
+      api.post("/api/auth/refresh").catch(() => {});
+    }, 4 * 60 * 1000);
+    return () => clearInterval(heartbeat);
+  }, [inCall]);
+
   // ── Controls ──────────────────────────────────────────────────────
   const toggleMute = useCallback(() => {
     localStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = !t.enabled; });
