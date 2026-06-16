@@ -510,7 +510,6 @@ export default function HomePage() {
         <div className="hero-left" ref={headerRef}>
           <div className="hero-badge">
             <div className="badge-pulse" />
-            Available 24/7 Virtual Care
             Available 24 / 7.
           </div>
 
@@ -524,6 +523,34 @@ export default function HomePage() {
            Get fast, reliable telemedicine services from board-certified healthcare providers without leaving home. Schedule an online doctor appointment, discuss symptoms, receive treatment guidance, and get prescriptions through our secure virtual healthcare platform available across all 50 states.
 
           </p>
+            <div className="trust" ref={btnRef}>
+            <span className="trust-chip">
+              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              HIPAA Compliant
+
+            </span>
+            <span className="trust-chip">
+              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              GDPR Ready
+            </span>
+            <span className="trust-chip">
+              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              500+ Verified Doctors
+            </span>
+            <span className="trust-chip">
+              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+              Prescriptions Available
+            </span>
+          </div>
 
           {/* SEARCH BAR */}
           <div className="search-wrapper" ref={searchRef}>
@@ -561,34 +588,7 @@ export default function HomePage() {
             )}
           </div>
 
-          <div className="trust" ref={btnRef}>
-            <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              HIPAA Compliant
-
-            </span>
-            <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              GDPR Ready
-            </span>
-            <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              500+ Verified Doctors
-            </span>
-            <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
-              Prescriptions Available
-            </span>
-          </div>
+        
         </div>
 
         {/* ── RIGHT ── */}
