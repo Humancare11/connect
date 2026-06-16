@@ -529,7 +529,7 @@ export default function HomePage() {
         <div className="hero-left" ref={headerRef}>
           <div className="hero-badge">
             <div className="badge-pulse" />
-            Available 24/7 Virtual Care Available 24 / 7.
+            Available 24/7
           </div>
 
           <h1>
@@ -545,46 +545,7 @@ export default function HomePage() {
             prescriptions through our secure virtual healthcare platform
             available across all 50 states.
           </p>
-
-          {/* SEARCH BAR */}
-          <div className="search-wrapper" ref={searchRef}>
-            <div className="search-bar">
-              <input
-                type="text"
-                value={searchQuery}
-                placeholder="Search doctors, specialties, conditions..."
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onKeyDown={handleKeyDown}
-              />
-              <button onClick={() => handleSearch()}>Search</button>
-            </div>
-
-            {showSuggestions && filteredSuggestions.length > 0 && (
-              <div className="search-suggestions">
-                {filteredSuggestions.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className={`suggestion-item${activeIndex === index ? " active" : ""}`}
-                    onClick={() => handleSearch(item)}
-                  >
-                    <div className="suggestion-left">
-                      <span className="suggestion-title">{item.title}</span>
-                      {item.type && (
-                        <span className="suggestion-type">{item.type}</span>
-                      )}
-                    </div>
-                    <span className="suggestion-arrow">→</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="trust" ref={btnRef}>
+ <div className="trust" ref={btnRef}>
             <span className="trust-chip">
               <svg
                 width="12"
@@ -639,6 +600,45 @@ export default function HomePage() {
               Prescriptions Available
             </span>
           </div>
+          {/* SEARCH BAR */}
+          <div className="search-wrapper" ref={searchRef}>
+            <div className="search-bar">
+              <input
+                type="text"
+                value={searchQuery}
+                placeholder="Search doctors, specialties, conditions..."
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onKeyDown={handleKeyDown}
+              />
+              <button onClick={() => handleSearch()}>Search</button>
+            </div>
+
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="search-suggestions">
+                {filteredSuggestions.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className={`suggestion-item${activeIndex === index ? " active" : ""}`}
+                    onClick={() => handleSearch(item)}
+                  >
+                    <div className="suggestion-left">
+                      <span className="suggestion-title">{item.title}</span>
+                      {item.type && (
+                        <span className="suggestion-type">{item.type}</span>
+                      )}
+                    </div>
+                    <span className="suggestion-arrow">→</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+         
         </div>
 
         {/* ── RIGHT ── */}
