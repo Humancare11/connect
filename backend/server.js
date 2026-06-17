@@ -453,7 +453,6 @@ app.use("/api/locations", require("./routes/locations"));
 
 app.post("/api/search", async (req, res) => {
   const { query, routes } = req.body;
-  console.log("🔍 Search hit:", query);
 
   try {
     const completion = await client.chat.completions.create({
