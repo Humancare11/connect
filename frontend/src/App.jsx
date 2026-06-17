@@ -147,6 +147,7 @@ import PneumoniaFollowUp from "./pages/Conditions/PneumoniaFollowUp";
 import ShortnessOfBreath from "./pages/Conditions/ShortnessBreath";
 import UpperRespiratoryInfection from "./pages/Conditions/UpperRespiratoryInfection";
 import Wheezing from "./pages/Conditions/Wheezing";
+import Chlamydia from "./pages/Conditions/Chlamydia";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -1019,6 +1020,7 @@ function AppLayout() {
             element={<UpperRespiratoryInfection />}
           />
           <Route path="/wheezing" element={<Wheezing />} />
+          <Route path="/chlamydia" element={<Chlamydia />} />
 
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
