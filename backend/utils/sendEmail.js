@@ -14,7 +14,6 @@ const createTransporter = (overrides = {}) => {
   if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !MAIL_FROM) {
     throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, and EMAIL_USER.");
   }
-
   return nodemailer.createTransport({
     host: overrides.host || SMTP_HOST,
     port: overrides.port || SMTP_PORT,
@@ -46,139 +45,209 @@ const sendMail = async (message) => {
 };
 
 const buildEmailHTML = (otp, type, name) => {
-  const greeting = name
-    ? `Hello ${name},`
-    : `Hello,`;
-  return `
-<!DOCTYPE html>
+  const greeting = name ? `Hello ${name},` : `Hello,`;
+  const isRegister = type === "register";
+  const badgeText = isRegister ? "Email Verification" : "Password Reset";
+  const bodyText = isRegister
+    ? "Thanks for registering with Humancare Connect! Use the one-time code below to verify your email address and complete your account setup."
+    : "We received a request to reset your Humancare Connect account password. Use the one-time code below to proceed.";
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>${badgeText} — HumanCare Connect</title>
   <style>
-    body{
-      margin:0;
-      padding:0;
-      font-family:'Segoe UI',Arial,sans-serif;
-      background:#eef4ff;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4ff;
     }
-
-    .wrap{
-      max-width:520px;
-      margin:40px auto;
-      background:#ffffff;
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow:0 6px 24px rgba(11, 4, 67, 0.12);
+    .email-wrap {
+      max-width: 750px;
+      margin: 32px auto;
+      background: #ffffff;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid #dde4f0;
     }
-
-    .hdr{
-      background:linear-gradient(135deg,#132e88 0%,#1c4bbb 100%);
-      padding:34px 40px;
-      text-align:center;
+    .hdr {
+      background: #132e88;
+      padding: 20px 48px 20px;
+      text-align: center;
     }
-
-    .hdr h1{
-      color:#ffffff;
-      margin:0;
-      font-size:24px;
-      font-weight:800;
-      letter-spacing:-0.4px;
+    .hdr img.header-logo {
+      width: 292px;
+      height: 95px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 18px;
     }
-
-    .hdr p{
-      color:rgba(255,255,255,0.82);
-      margin:8px 0 0;
-      font-size:13px;
+    .hdr h1 {
+      color: #ffffff;
+      margin: 0 0 10px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
     }
-
-    .body{
-      padding:38px 40px;
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.92);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.25);
     }
-
-    .body p{
-      color:#374151;
-      font-size:15px;
-      line-height:1.7;
-      margin:0 0 14px;
+    .body {
+      padding: 20px 35px;
     }
-
-    .otp-box{
-      background:#f4f3ff;
-      border:2px dashed #312e81;
-      border-radius:14px;
-      text-align:center;
-      padding:24px 16px;
-      margin:24px 0;
+    .body p {
+      color: #374151;
+      font-size: 15px;
+      line-height: 1.75;
+      margin: 0 0 16px;
     }
-
-    .otp-code{
-      font-size:40px;
-      font-weight:800;
-      letter-spacing:14px;
-      color:#0b0443;
-      font-family:monospace;
-      padding-left:14px;
+    .otp-wrap {
+      background: #f5f4ff;
+      border: 1.5px dashed #312e81;
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      margin: 28px 0;
     }
-
-    .otp-note{
-      color:#6b7280;
-      font-size:12px;
-      margin-top:8px;
+    .otp-label {
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #6b7280;
+      font-weight: 600;
+      margin-bottom: 14px;
     }
-
-    .footer{
-      background:#f8f9ff;
-      padding:18px 40px;
-      text-align:center;
-      color:#9ca3af;
-      font-size:11px;
-      border-top:1px solid #e5e7eb;
+    .otp-code {
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: 16px;
+      color: #0b0443;
+      font-family: monospace;
+      padding-left: 16px;
+      line-height: 1;
     }
-
-    .footer a{
-      color:#0b0443;
-      text-decoration:none;
-      font-weight:600;
+    .otp-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+    }
+    .otp-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #ffffff;
+      border: 1px solid #dde2f0;
+      border-radius: 20px;
+      padding: 5px 13px;
+      font-size: 12px;
+      color: #4b5563;
+    }
+    .notice {
+      background: #fffbeb;
+      border-left: 3px solid #f59e0b;
+      border-radius: 0 10px 10px 0;
+      padding: 13px 18px;
+      font-size: 13px;
+      color: #78350f;
+      margin: 0 0 20px;
+    }
+    .divider {
+      height: 1px;
+      background: #e9ecf5;
+      margin: 24px 0;
+    }
+    .footer {
+      background: #f8f9ff;
+      padding: 15px 52px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+    }
+    .footer img.footer-logo {
+      width: 155px;
+      height: 62px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 14px;
+    }
+    .footer-links {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+    .footer-links a {
+      color: #4b5db8;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .footer-sep {
+      margin: 0 6px;
+      color: #d1d5db;
+    }
+    .copyright {
+      font-size: 11px;
+      color: #b0b7c9;
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="email-wrap">
     <div class="hdr">
-    <img src="https://humancareconnect.co/assets/Logo-CFoJDHpJ.png" alt="HumanCare Connect" width="48" style="margin-bottom:8px;"/>
-    <p>${type === "register" ? "Email Verification" : "Password Reset"}</p>
+      <img class="header-logo" src="https://humancareconnect.co/assets/Logo-CFoJDHpJ.png" alt="HumanCare Connect" />
+      <h1>HumanCare Connect</h1>
+      <span class="badge">${badgeText}</span>
     </div>
 
     <div class="body">
       <p>${greeting}</p>
+      <p>${bodyText}</p>
 
-      <p>
-        ${type === "register"
-    ? "Thanks for registering with Humancare Connect! Use the OTP below to verify your email and complete your account setup."
-    : "We received a request to reset your Humancare Connect account password. Use the OTP below to proceed."
-  }
-      </p>
-
-      <div class="otp-box">
+      <div class="otp-wrap">
+        <div class="otp-label">Your one-time code</div>
         <div class="otp-code">${otp}</div>
-        <div class="otp-note">
-          Valid for <strong>10 minutes</strong>
-          &nbsp;·&nbsp;
-          Do not share this with anyone
+        <div class="otp-meta">
+        <div style="text-align:center; margin-top:16px; width:100%;">
+            <div style="display:inline-block; background:#ffffff; border:1px solid #dde2f0; border-radius:20px; padding:5px 13px; font-size:12px; color:#4b5563; margin:0 4px;">
+            ⏱ Valid for <strong>10 minutes</strong>
+            </div>
+            <div style="display:inline-block; background:#ffffff; border:1px solid #dde2f0; border-radius:20px; padding:5px 13px; font-size:12px; color:#4b5563; margin:0 4px;">
+            🔒 Do not share this code
+            </div>
+        </div>
         </div>
       </div>
 
-      <p>
-        If you didn't request this, you can safely ignore this email — your account is secure.
-      </p>
+      <div class="notice">
+        ⚠️ If you didn't request this, please ignore this email — your account remains secure.
+      </div>
+
+      <div class="divider"></div>
+      <p style="margin:0; font-size:13px; color:#9ca3af;">This is an automated message. Please do not reply to this email.</p>
     </div>
 
     <div class="footer">
-      &copy; ${new Date().getFullYear()} HumanCare Connect
-      &nbsp;·&nbsp;
-      <a href="https://humancareconnect.co">
-        humancareconnect.co
-      </a>
+      <img class="footer-logo" src="https://humancareconnect.co/assets/Logo-CFoJDHpJ.png" alt="HumanCare Connect" />
+      <div class="footer-links">
+        <a href="https://humancareconnect.co">Website</a>
+        <span class="footer-sep">·</span>
+        <a href="https://humancareconnect.co/privacy">Privacy Policy</a>
+        <span class="footer-sep">·</span>
+        <a href="https://humancareconnect.co/support">Support</a>
+      </div>
+      <div class="copyright">© ${new Date().getFullYear()} HumanCare Connect. All rights reserved.</div>
     </div>
   </div>
 </body>
