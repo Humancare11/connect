@@ -276,7 +276,7 @@ function PaymentStage({
     }
     setStripeCreating(true);
     try {
-      const res = await api.post("/api/payments/create-intent-by-amount", { amountInr: amount });
+      const res = await api.post("/api/payments/create-intent-by-amount", { amountUsd: amount });
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
@@ -290,7 +290,7 @@ function PaymentStage({
   };
 
   const createPaypalOrder = async () => {
-    const res = await api.post("/api/paypal/create-order-by-amount", { amountInr: amount });
+    const res = await api.post("/api/paypal/create-order-by-amount", { amountUsd: amount });
     return res.data.orderId;
   };
 
@@ -357,7 +357,7 @@ function PaymentStage({
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">₹{amount?.toLocaleString("en-IN")}</strong>
+            <strong className="ap-pay-fee-amount">${amount?.toLocaleString("en-IN")}</strong>
           </div>
         </div>
 
