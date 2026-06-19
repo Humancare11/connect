@@ -1223,7 +1223,7 @@ function FaqSection({ faqGroups, catLabel }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ChildMain({ categoryId = "mental-health" }) {
+export default function ChildFamilyCare({ categoryId = "mental-health" }) {
   const [activeCategory, setActiveCategory] = useState(categoryId);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -1264,7 +1264,7 @@ export default function ChildMain({ categoryId = "mental-health" }) {
               </button>
             </div>
             <div className="hcc-trust-row">
-              <div className="hcc-trust-item"><FiCheckCircle size={14} /> Same Day Visits</div>
+              {/* <div className="hcc-trust-item"><FiCheckCircle size={14} /> Same Day Visits</div> */}
               <div className="hcc-trust-item"><FiShield size={14} /> Insurance Accepted</div>
               <div className="hcc-trust-item"><FiVideo size={14} /> Virtual Care</div>
             </div>

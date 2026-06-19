@@ -23,7 +23,7 @@
     --shadow-3: 0 50px 120px -40px rgba(11, 40, 100, .40);
     --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --display: "Satoshi", sans-serif, system-ui, sans-serif;
-    --mono: "JetBrains Mono", ui-monospace, monospace;
+
 }
 
 body {
@@ -80,7 +80,8 @@ body {
 }
 
 .corp-hero h1 {
-    font-size: clamp(28px, 4vw, 46px);
+    font-size: clamp(28px, 5vw, 46px);
+    max-width: 700px;
     font-weight: 700;
     color: var(--ink);
     letter-spacing: -0.02em;
@@ -90,7 +91,7 @@ body {
 
 .corp-hero p {
     font-size: 15px;
-    color: var(--muted);
+    color: var(--blue-4);
     line-height: 1.65;
     max-width: 520px;
     margin-bottom: 28px;

@@ -45,7 +45,7 @@
 
   /* ─── Apply ─── */
 
-    background: var(--bg);
+    /* background: var(--bg); */
   font-family: var(--font);
   color: var(--navy-deep);
   min-height: 100vh;
@@ -120,7 +120,7 @@
   color: var(--muted);
   font-size: 16px;
   line-height: 1.65;
-  max-width: 500px;
+  max-width: 550px;
   margin: 0;
   font-weight: 400;
 }
@@ -141,7 +141,8 @@
 }
 
 .top-controls .toolbar {
-  flex: 0 0 340px;
+  /* [CHANGED] bigger search bar: was flex: 0 0 340px */
+  flex: 0 0 480px;
   margin-bottom: 0;
 }
 
@@ -161,13 +162,15 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--pill);
-  padding: 5px 5px;
+  padding: 4px 4px;
+  /* [CHANGED] was 5px 5px */
   position: relative;
   width: 100%;
   gap: 2px;
 }
 
 .hcc-sx .switch button {
+  /* [CHANGED] smaller pills: reduced font-size, padding, gap */
   position: relative;
   z-index: 2;
   flex: 1;
@@ -175,9 +178,11 @@
   background: transparent;
   color: var(--muted);
   font-family: var(--font);
-  font-size: 14px;
+  font-size: 12.5px;
+  /* [CHANGED] was 14px */
   font-weight: 500;
-  padding: 13px 16px;
+  padding: 9px 12px;
+  /* [CHANGED] was 13px 16px */
   border-radius: var(--pill);
   cursor: pointer;
   transition: color var(--t), background var(--t);
@@ -185,13 +190,15 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
+  gap: 7px;
+  /* [CHANGED] was 10px */
   letter-spacing: -0.1px;
   text-align: left;
 }
 
 .hcc-sx .switch button .tab-num {
-  font-size: 11px;
+  font-size: 10px;
+  /* [CHANGED] was 11px */
   font-weight: 600;
   color: var(--muted-lt);
   letter-spacing: 0.3px;
@@ -231,7 +238,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SEARCH TOOLBAR — glass
+   SEARCH TOOLBAR — glass — [CHANGED] bigger + new color treatment
    ═══════════════════════════════════════════════════════════════ */
 .hcc-sx .toolbar {
   display: flex;
@@ -244,23 +251,30 @@
 .hcc-sx .search {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(11, 87, 232, 0.10);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(11, 87, 232, 0.22);
+  gap: 12px;
+  /* [CHANGED] was 10px */
+  /* [CHANGED] new color treatment: white frosted glass with navy border
+     (was blue-tinted rgba(11,87,232,0.10) bg / rgba(11,87,232,0.22) border) */
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(30, 45, 69, 0.14);
   border-radius: var(--pill);
-  padding: 4px 8px 4px 18px;
+  /* [CHANGED] taller padding for a bigger bar, was 4px 8px 4px 18px */
+  padding: 7px 12px 7px 22px;
   flex: 1;
-  min-width: 240px;
-  max-width: 400px;
-  transition: border-color var(--t), background var(--t);
+  /* [CHANGED] bigger min/max width, was 240px / 400px */
+  min-width: 280px;
+  max-width: 100%;
+  box-shadow: 0 2px 10px rgba(11, 87, 232, 0.06);
+  transition: border-color var(--t), background var(--t), box-shadow var(--t);
 }
 
 .hcc-sx .search:focus-within {
-  border-color: rgba(11, 87, 232, 0.45);
-  background: rgba(11, 87, 232, 0.14);
-  box-shadow: 0 0 0 3px rgba(11, 87, 232, 0.08);
+  /* [CHANGED] focus state updated to match new base color */
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 3px rgba(11, 87, 232, 0.10);
 }
 
 .hcc-sx .search svg {
@@ -276,14 +290,15 @@
   outline: none;
   color: var(--navy-deep);
   font-family: var(--font);
-  font-size: 14px;
+  /* [CHANGED] bigger input text + padding, was 14px / 10px 4px */
+  font-size: 15px;
   font-weight: 500;
-  padding: 10px 4px;
+  padding: 14px 6px;
 }
 
 .hcc-sx .search input::placeholder {
-  color: rgba(11, 87, 232, 0.45);
-  /* blue-tinted placeholder */
+  /* [CHANGED] muted tone to suit the new lighter background */
+  color: var(--muted);
   font-weight: 400;
 }
 

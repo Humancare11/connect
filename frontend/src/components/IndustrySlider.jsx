@@ -96,8 +96,9 @@ export default function IndustrySlider() {
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="slider-h1-v2">Our Expertise Across <span>Industries</span></h2>
-          <p className="slider-subtitle">Tailored medical solutions designed for the unique challenges of your sector.</p>
+          <h2 className="slider-h1-v2">Telemedicine expertise across every  <span>Industries</span></h2>
+          <p className="slider-subtitle">Flexible telehealth services, online doctor appointments, and virtual healthcare solutions designed for corporate teams, healthcare organizations, logistics, technology, hospitality, education, manufacturing, and more.
+</p>
         </motion.div>
 
         {/* Sync Tabs — scroll wrapper keeps nav on one line on mobile */}

@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import "./AboutPage.css";
+import AboutImg from "../assets/About-us (1).webp";
+import PatientImg from "../assets/patient.webp";
+import DoctorImg from "../assets/doctor.webp";
 
 /* ─── Reusable Hooks ─── */
 function useRevealObserver() {
@@ -13,12 +16,6 @@ function useRevealObserver() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) { setVisible(true); return; }
 
-    // FIX: check immediately in case the element is already in view
-    // on first paint (above-the-fold sections). Without this, if the
-    // observer's first callback is missed or delayed (e.g. due to
-    // late layout shifts from web fonts / hero image loading),
-    // the section stays at opacity:0 until something else triggers
-    // a re-render — which is why a manual refresh "fixes" it.
     const rect = el.getBoundingClientRect();
     if (rect.top < window.innerHeight && rect.bottom > 0) {
       setVisible(true);
@@ -86,7 +83,7 @@ function useCounterObserver(targets) {
 function Eyebrow({ children, light }) {
   return (
     <span className={`eyebrow${light ? " eyebrow--light" : ""}`}>
-      <span className="eyebrow__dash" />
+      {/* <span className="eyebrow__dash" /> */}
       {children}
     </span>
   );
@@ -114,15 +111,31 @@ function Rv({ children, className = "", delay = 0 }) {
 }
 
 /* Photo placeholder — used in Trust panels */
-function PhotoSlot({ label, icon, className = "", variant = "blue" }) {
+function PhotoSlot({
+  label,
+  image,
+  icon,
+  className = "",
+  variant = "blue",
+}) {
   return (
     <div className={`photo-slot photo-slot--${variant} ${className}`}>
       <div className="photo-slot__texture" />
       <div className="photo-slot__sheen" />
-      <div className="photo-slot__content">
-        <div className="photo-slot__icon">{icon}</div>
-        <span className="photo-slot__label">{label}</span>
-      </div>
+
+      {image ? (
+        <img
+          src={image}
+          alt={label}
+          className="photo-slot__image"
+          loading="lazy"
+        />
+      ) : (
+        <div className="photo-slot__content">
+          <div className="photo-slot__icon">{icon}</div>
+          <span className="photo-slot__label">{label}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -164,13 +177,12 @@ function HeroSection() {
           <div ref={ref} className={`hero__text${visible ? " is-visible" : ""}`}>
             <Eyebrow>About Humancare Connect</Eyebrow>
             <h1 className="hero__title">
-              Your health shouldn&apos;t{" "}
-              <span className="hero__title-accent">stop at the border.</span>
+              One Global Connection {" "}
+              <span className="hero__title-accent"> to Better Healthcare</span>
             </h1>
             <p className="hero__lead">
-              Humancare Connect is global telehealth for people who live, work, and
-              travel across the world — and for the organizations responsible for
-              keeping them safe.
+              At Humancare Connect, we make quality healthcare accessible beyond borders. Through secure online doctor consultations and virtual healthcare services, we connect individuals, travelers, and organizations with trusted medical care anytime, anywhere.
+
             </p>
             <div className="hero__actions">
               <Btn href="#how">See how it works</Btn>
@@ -190,9 +202,7 @@ function HeroSection() {
           {/* ── Right: real photo ── */}
           <div ref={ref2} className={`hero__photo${visible2 ? " is-visible" : ""}`}>
             <div className="hero__photo-frame">
-              <img
-                src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=800&q=80&auto=format&fit=crop"
-                alt="Doctor conducting a video consultation with a patient"
+              <img src={AboutImg} alt="ABout-us"
                 loading="eager"
               />
             </div>
@@ -205,7 +215,7 @@ function HeroSection() {
                   height="20"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#2563EB"
+                  stroke="#6b89b8"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -216,7 +226,7 @@ function HeroSection() {
               </div>
               <div>
                 <div className="hero__badge-title">Verified specialist</div>
-                <div className="hero__badge-sub">Connected in &lt; 2 min</div>
+                <div className="hero__badge-sub">Connected in 2 min</div>
               </div>
             </div>
           </div>
@@ -246,25 +256,18 @@ function WhySection() {
           <Rv delay={100}>
             <div>
               <p className="why__intro">
-                Humancare Connect began with a simple, frustrating truth: the moment
-                you leave your home country, your healthcare stops working.
+                Humancare Connect was founded with a simple vision: to transform the way people experience healthcare by making it more accessible, convenient, and connected.
+
               </p>
               <p className="why__body">
-                We spent years inside global healthcare operations — telehealth,
-                medical assistance, claims, denial management — and we kept seeing the
-                same people fall through the cracks. The traveler stranded in a foreign
-                hospital. The expat with no doctor who knows their history. The family
-                abroad who couldn&apos;t tell a real clinic from a tourist trap.
+                With years of experience in healthcare and telemedicine, we recognized the need for a smarter approach one that removes unnecessary barriers and gives patients seamless access to trusted healthcare professionals.
+
               </p>
               <blockquote className="quote">
-                &ldquo;The further people were from home, the easier they were to
-                confuse, overcharge, and turn away.&rdquo;
+                That’s why we created Humancare Connect: A secure virtual healthcare platform designed to deliver online doctor consultations and personalized medical support whenever you need it
               </blockquote>
               <p className="why__closing">
-                So we built the platform we wished existed: one trusted place to reach
-                a verified doctor, at a price you can see before you book, no matter
-                where in the world you happen to be standing. Not a directory. A health
-                passport.
+                We believe great healthcare is not just about treating symptoms it’s about providing peace of mind, building lasting trust, and ensuring every patient receives the quality care they deserve
               </p>
             </div>
           </Rv>
@@ -279,36 +282,36 @@ function ProblemSection() {
   const problems = [
     {
       num: "01",
-      title: "No trusted entry point",
-      body: "In an unfamiliar country, there's no way to tell a credentialed specialist from an opportunist. Patients gamble on strangers.",
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 8v4M12 16h.01" />
-        </svg>
-      ),
+      title: "Trusted Care, Made Accessible",
+      body: "Finding the right healthcare provider should never feel uncertain. Humancare Connect connects patients with experienced healthcare professionals through a secure and reliable virtual healthcare platform.",
+      // icon: (
+      //   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      //     <circle cx="12" cy="12" r="9" />
+      //     <path d="M12 8v4M12 16h.01" />
+      //   </svg>
+      // ),
     },
     {
       num: "02",
-      title: "Opaque, inflated pricing",
-      body: "Foreigners are routinely overcharged. Costs appear after care, not before — and rarely reflect what locals pay.",
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 1v22" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
-      ),
+      title: "Transparent & Convenient Healthcare",
+      body: "We believe patients deserve clarity and convenience. Our online doctor consultations provide a straightforward way to receive professional medical guidance without unnecessary delays.",
+      // icon: (
+      //   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      //     <path d="M12 1v22" />
+      //     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      //   </svg>
+      // ),
     },
     {
       num: "03",
-      title: "Care that doesn't follow you",
-      body: "Records, prescriptions, and history reset at every border. Each new doctor starts from zero, in a language you may not share.",
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6" />
-        </svg>
-      ),
+      title: "Connected Care That Puts Patients First",
+      body: "Healthcare is a journey, not a single appointment. That’s why we focus on creating a seamless digital healthcare experience where patients receive continuous, personalized support whenever they need it.",
+      // icon: (
+      //   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      //     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      //     <path d="M14 2v6h6" />
+      //   </svg>
+      // ),
     },
   ];
 
@@ -318,21 +321,23 @@ function ProblemSection() {
       <div className="section__glow section__glow--tr" />
       <div className="container">
         <Rv>
-          <Eyebrow light>The system we&apos;re fixing</Eyebrow>
+          <Eyebrow light>The system we're fixing</Eyebrow>
         </Rv>
         <Rv delay={80}>
           <h2 className="heading heading--lg problem__title">
-            Away from home, patients don&apos;t just lack care — they get{" "}
-            <span className="text-blue">worked by a system</span> that wasn&apos;t
-            built for them.
+            The Healthcare Challenges {" "}
+            <span className="text-blue">We’re Solving</span>
           </h2>
+          <p className="heading heading--lg problem__desc">
+            Healthcare should be simple, transparent, and built around the patient. Yet too many people still face challenges like long wait times, limited access to trusted medical professionals, unclear costs, and disconnected care experiences.
+          </p>
         </Rv>
         <div className="grid grid--3">
           {problems.map((p, i) => (
             <Rv key={p.num} delay={i * 90}>
               <div className="problem-card">
                 <div className="problem-card__top">
-                  <div className="problem-card__icon">{p.icon}</div>
+                  {/* <div className="problem-card__icon">{p.icon}</div> */}
                   <div className="problem-card__num">{p.num}</div>
                 </div>
                 <h4 className="problem-card__title">{p.title}</h4>
@@ -349,10 +354,10 @@ function ProblemSection() {
 /* 4. How It Works */
 function HowSection() {
   const steps = [
-    { n: 1, title: "Tell us what's wrong", body: "Describe your symptom or concern. Our intent-first search points you to the right specialty — not an endless list of doctors.", color: "navy" },
-    { n: 2, title: "See the price up front", body: "Get a clear, flat price for your consultation before you commit — the same fair rate wherever in the world you are.", color: "blue" },
-    { n: 3, title: "Meet your verified doctor", body: "Connect by secure video with a credential-checked specialist who can advise, diagnose, and prescribe where permitted.", color: "gold" },
-    { n: 4, title: "Carry your care with you", body: "Your notes, prescriptions, and history stay in one place — secure, private, and ready for your next visit anywhere.", color: "navy" },
+    { n: 1, title: "Share Your Health Concern", body: "Tell us about your symptoms or healthcare needs, and we’ll help connect you with the right medical professional for the appropriate care.", color: "navy" },
+    { n: 2, title: " Know Your Consultation Cost", body: "No hidden fees or surprises. View transparent consultation pricing upfront so you can make informed healthcare decisions with confidence.", color: "blue" },
+    { n: 3, title: "Connect With a Trusted Doctor", body: "Meet with licensed healthcare professionals through secure online doctor consultations and receive expert medical guidance, diagnosis, and treatment recommendations where applicable.", color: "gold" },
+    { n: 4, title: " Experience Continuous Care", body: "Your healthcare journey doesn’t end after one appointment. Stay connected with ongoing support, medical records, and a more personalized virtual healthcare experience.", color: "navy" },
   ];
 
   return (
@@ -363,11 +368,12 @@ function HowSection() {
           <div className="section-head">
             <Eyebrow>How it works</Eyebrow>
             <h2 className="heading heading--lg section-head__title">
-              From &ldquo;I don&apos;t feel well&rdquo; to seen by the right doctor
+              Healthcare Made Simple, From Start to Finish
+
             </h2>
             <p className="section-head__lead">
-              No directories to dig through, no guesswork. Tell us what&apos;s wrong
-              and we route you to a verified specialist — in four simple steps.
+              Getting the care you need shouldn’t be complicated. Humancare Connect makes online healthcare easy with a seamless virtual care experience designed around your needs.
+
             </p>
           </div>
         </Rv>
@@ -391,19 +397,19 @@ function HowSection() {
 /* 5. Network */
 function NetworkSection() {
   const stats = [
-    { t: 11,  label: "Clinical categories", suffix: ""  },
-    { t: 30,  label: "Medical specialties", suffix: "+" },
-    { t: 175, label: "Conditions covered",  suffix: "+" },
-    { t: 3,   label: "Regions served",      suffix: ""  },
+    { t: 11, label: "Clinical categories", suffix: "" },
+    { t: 30, label: "Medical specialties", suffix: "+" },
+    { t: 175, label: "Conditions covered", suffix: "+" },
+    { t: 3, label: "Regions served", suffix: "" },
   ];
   const [gridRef, counts] = useCounterObserver(stats.map((s) => s.t));
   const [headRef, headVisible] = useRevealObserver();
-  const [regRef,  regVisible]  = useRevealObserver();
+  const [regRef, regVisible] = useRevealObserver();
 
   const regions = [
-    { name: "United States",      icon: "🇺🇸" },
-    { name: "Canada",             icon: "🇨🇦" },
-    { name: "Europe (EU)",        icon: "🇪🇺" },
+    { name: "United States", icon: "🇺🇸" },
+    { name: "Canada", icon: "🇨🇦" },
+    { name: "Europe (EU)", icon: "🇪🇺" },
     { name: "Travel & Global Care", icon: "🌍" },
   ];
 
@@ -412,14 +418,16 @@ function NetworkSection() {
       <div className="container">
         {/* NetworkSection already uses its own ref correctly — no change needed */}
         <div ref={headRef} className={`section-head${headVisible ? " is-visible" : ""}`}>
-          <Eyebrow>A network built like a health system</Eyebrow>
+          <Eyebrow>Our Network</Eyebrow>
           <h2 className="heading heading--lg section-head__title">
-            Strong where it matters — across borders
+            A Trusted Network of Healthcare Professionals
+
           </h2>
           <p className="section-head__lead">
-            We don&apos;t list every doctor on earth. We build a verified, structured
-            network organized the way medicine actually works — so the right specialist
-            is always one step away.
+            Quality healthcare starts with the right connection. At Humancare Connect, we have built a trusted network of licensed healthcare professionals across multiple specialties, ensuring patients receive the right care from the right medical expert.<br /> <br />
+            Our virtual healthcare platform is designed around quality, accessibility, and trust—making it simple to connect with experienced doctors, receive personalized medical guidance, and experience seamless healthcare whenever you need it.
+
+
           </p>
         </div>
 
@@ -455,8 +463,8 @@ function SolveSection() {
   const cards = [
     {
       color: "blue",
-      title: "Verified doctors only",
-      body: "Every physician is credential-checked against official medical registries before they ever take a patient — so you never have to guess who's real.",
+      title: "Verified Healthcare Professionals",
+      body: "Your health deserves trusted expertise. Every healthcare professional on our platform is carefully verified, ensuring you receive care from qualified and experienced medical providers.",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 12l2 2 4-4" /><path d="M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z" />
@@ -465,8 +473,8 @@ function SolveSection() {
     },
     {
       color: "gold",
-      title: "One honest price",
-      body: "Flat, tier-based pricing shown up front — the same whether you're a local or a visitor. No foreigner markup, no surprise bills.",
+      title: "Transparent Consultation Pricing",
+      body: "No hidden costs or unexpected fees. We believe healthcare should be straightforward, with clear consultation pricing that helps you make informed decisions with confidence.",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C97B1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
@@ -475,8 +483,8 @@ function SolveSection() {
     },
     {
       color: "navy",
-      title: "Care across borders",
-      body: "One account that works in the US, Canada, and across Europe — GDPR and HIPAA-aligned, so your care and your data move with you.",
+      title: "Secure & Connected Healthcare Experience",
+      body: "Your healthcare journey should be simple and seamless. With secure technology and protected health information, we make it easier to stay connected with your care and medical history.",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="9" /><path d="M3 12h18" />
@@ -486,8 +494,8 @@ function SolveSection() {
     },
     {
       color: "blue",
-      title: "Help, fast — anytime",
-      body: "Reach the right specialty in minutes through an intent-first flow: tell us what's wrong, and we route you to the doctor who handles it.",
+      title: "Fast Access to the Right Care",
+      body: "Getting medical support should not mean waiting for days. Our streamlined virtual healthcare platform helps you connect with the right healthcare professional quickly and conveniently.",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 2v4M12 18v4M2 12h4M18 12h4" /><circle cx="12" cy="12" r="4" />
@@ -504,11 +512,12 @@ function SolveSection() {
           <div className="section-head">
             <Eyebrow>What we solve</Eyebrow>
             <h2 className="heading heading--lg section-head__title">
-              Trust, restored — before, during, and after care
+              Care You Can Trust, Every Step of the Way
+
             </h2>
             <p className="section-head__lead">
-              Every part of Humancare Connect is built to remove the uncertainty that
-              hurts patients far from home.
+              At Humancare Connect, every part of our virtual healthcare experience is designed to provide confidence, clarity, and continuous support so you always feel informed and cared for.
+
             </p>
           </div>
         </Rv>
@@ -534,40 +543,40 @@ function ServicesSection() {
   const services = [
     {
       tier: "Primary tier",
-      title: "Everyday & primary care",
-      body: "Common illness, infections, prescriptions, sick notes, and general health questions — your first point of contact, anywhere.",
-      price: "$39", unit: "/ consult", featured: false,
+      title: "Primary & Everyday Care",
+      body: "Receive convenient online doctor consultations for common illnesses, preventive care, general health concerns, prescriptions, and routine medical guidance.",
+      // price: "$39", unit: "/ consult", featured: false,
     },
     {
       tier: "Specialist tier",
-      title: "Specialist consultations",
-      body: "Direct access to verified specialists across dermatology, mental health, pediatrics, cardiology and more — no referral maze.",
-      price: "$69", unit: "/ consult", featured: false,
+      title: "Specialty Care & Expert Consultations",
+      body: "Connect with experienced specialists across various medical fields, including mental health, pediatrics, dermatology, cardiology, and many other areas of healthcare.",
+      // price: "$69", unit: "/ consult", featured: false,
     },
     {
       tier: "Super-specialist tier",
-      title: "Super-specialist & second opinions",
-      body: "Complex cases and expert second opinions from senior consultants — clarity when the stakes are highest.",
-      price: "$99", unit: "/ consult", featured: false,
+      title: "Advanced Care & Second Opinions",
+      body: "Access expert medical opinions for complex health conditions, helping you make confident and informed decisions about your treatment journey.",
+      // price: "$99", unit: "/ consult", featured: false,
     },
     {
       tier: "Flagship",
-      title: "Travel & Global Care",
-      body: "Our differentiator: care designed for travelers, expats, and remote workers — fit-to-fly, urgent help abroad, and continuity wherever you go.",
-      price: "Tailored", unit: "", featured: true,
-    },
-    {
-      tier: "Organizations",
-      title: "For insurers, TPAs & assistance",
-      body: "A teleconsultation network you can plug in — covering members across the US, Canada, and Europe with verified, compliant care.",
-      price: "Partner", unit: "", featured: false,
+      title: "Healthcare for Travelers & Global Communities",
+      body: "Stay connected to trusted medical support wherever life takes you with accessible virtual healthcare designed for modern lifestyles.",
+      // price: "Tailored", unit: "", featured: false,
     },
     {
       tier: "Corporates",
-      title: "For employers & teams",
-      body: "Global health benefits for distributed workforces — one consistent standard of care across every country your people are in.",
-      price: "Partner", unit: "", featured: false,
+      title: "Corporate Healthcare Solutions",
+      body: "Support your workforce with convenient telehealth services, employee healthcare programs, and scalable virtual care solutions designed for organizations.",
+      // price: "Partner", unit: "", featured: false,
     },
+    // {
+    //   tier: "Corporates",
+    //   title: "For employers & teams",
+    //   body: "Global health benefits for distributed workforces — one consistent standard of care across every country your people are in.",
+    //   price: "Partner", unit: "", featured: false,
+    // },
   ];
 
   return (
@@ -617,11 +626,12 @@ function TrustSection() {
           <div className="section-head">
             <Eyebrow>Trust, by design</Eyebrow>
             <h2 className="heading heading--lg section-head__title">
-              Care people rely on — and doctors are proud to give
+              Built on Trust. Designed for Better Care.
+
             </h2>
             <p className="section-head__lead">
-              Trust isn&apos;t a tagline for us. It&apos;s the product. Here&apos;s
-              how we earn it on both sides of every consultation.
+              At Humancare Connect, trust is at the heart of every consultation. We create a healthcare experience where patients feel confident, and healthcare professionals are empowered to deliver their best care.
+
             </p>
           </div>
         </Rv>
@@ -631,21 +641,17 @@ function TrustSection() {
           <Rv>
             <div className="trust-panel">
               <PhotoSlot
-                label="Photo: reassured patient"
+                label="Reassured Patient"
+                image={PatientImg}
                 variant="blue"
                 className="photo-slot--panel"
-                icon={
-                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" strokeWidth="1.4">
-                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z" />
-                  </svg>
-                }
               />
               <div className="trust-panel__text">
-                <h3 className="trust-panel__title">Patients feel safe</h3>
+                <h3 className="trust-panel__title">Patients Feel Confident
+                </h3>
                 <p className="trust-panel__body">
-                  No mystery doctors, no surprise bills, no being treated as an easy
-                  mark. People know who they&apos;re seeing and what it costs — before
-                  anything happens.
+                  From verified healthcare professionals to transparent consultation pricing and secure virtual visits, we ensure every patient knows who they are connecting with and what to expect before their care begins.
+
                 </p>
               </div>
             </div>
@@ -655,24 +661,18 @@ function TrustSection() {
           <Rv delay={80}>
             <div className="trust-panel">
               <div className="trust-panel__text trust-panel__text--first">
-                <h3 className="trust-panel__title">Doctors do their best work</h3>
+                <h3 className="trust-panel__title">Healthcare Professionals Deliver Their Best
+                </h3>
                 <p className="trust-panel__body">
-                  Verified credentials, fair compensation, and patients routed by
-                  genuine need mean clinicians spend their time on care — not chasing
-                  or vetting.
+                  Our platform allows doctors to focus on what matters most providing quality patient care. With a streamlined virtual healthcare experience and a trusted care environment, healthcare professionals can deliver personalized medical support with confidence.
+
                 </p>
               </div>
               <PhotoSlot
-                label="Photo: doctor at work"
+                label="Doctor at Work"
+                image={DoctorImg}
                 variant="gold"
                 className="photo-slot--panel"
-                icon={
-                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" strokeWidth="1.4">
-                    <path d="M8 2v4M16 2v4M3 9h18" />
-                    <rect x="3" y="4" width="18" height="17" rx="2" />
-                    <path d="M9 14l2 2 4-4" />
-                  </svg>
-                }
               />
             </div>
           </Rv>
@@ -688,11 +688,13 @@ function TrustSection() {
                 </svg>
               </div>
               <div className="trust-privacy__text">
-                <h3>Your privacy is the foundation</h3>
+                <h3>Your Privacy. Our Priority.</h3>
                 <p>
-                  Health data is the most personal data there is. We treat it that
-                  way — secure handling, strict access controls, and compliance with
-                  the rules that protect you on both sides of the Atlantic.
+                  At Humancare Connect, we understand that your health information is personal and deserves the highest level of protection. That’s why our virtual healthcare platform is built with secure technology, strict privacy practices, and a commitment to protecting patient confidentiality.
+                </p>
+                <p>
+                  From secure online doctor consultations to protected medical records, we are dedicated to providing a safe and trusted digital healthcare experience where your privacy always comes first.
+
                 </p>
               </div>
               <div className="trust-privacy__badges">
@@ -715,14 +717,9 @@ function ContactSection() {
       label: "United States",
       name: "Humancare Connect, Inc.",
       lines: ["4 Peddlers Row, #1091", "Newark, DE 19702, USA"],
-      email: "hello@humancareconnect.com",
+      email: "head.operations@humancareconnect.com",
     },
-    {
-      label: "India",
-      name: "Humancare Worldwide Pvt Ltd",
-      lines: ["Mumbai, Maharashtra, India"],
-      email: "hello@humancareconnect.com",
-    },
+
   ];
 
   return (
@@ -733,10 +730,10 @@ function ContactSection() {
             <Eyebrow>Where to find us</Eyebrow>
             <h2 className="heading heading--md contact__title">Get in touch</h2>
             <p className="contact__lead">
-              Whether you&apos;re a patient with a question, a clinician who wants to
-              join the network, or an organization exploring a partnership — we&apos;d
-              love to hear from you.
+              Whether you're looking for trusted online healthcare, a healthcare professional interested in joining our network, or an organization exploring virtual healthcare solutions, our team is here to help. <br /> <br />
+              Get in touch with Humancare Connect and discover how we’re making quality healthcare more accessible, connected, and patient-centered.
             </p>
+
           </Rv>
           <Rv delay={80}>
             <div className="address-list">
@@ -778,7 +775,7 @@ export default function AboutPage() {
       <ServicesSection />
       <TrustSection />
       <ContactSection />
-      
+
     </div>
   );
 }

@@ -86,8 +86,8 @@
     margin: 0 auto;
     position: relative;
     z-index: 1;
-    padding: 0 40px;
-    /* FIX: no overflow-x: hidden — would clip the nav pill on mobile */
+    padding: 0 30px;
+    
 }
 
 /* ================================================================
@@ -146,7 +146,7 @@
     font-size: 20px;
     color: var(--muted);
     margin-top: 24px;
-    max-width: 700px;
+    max-width: 900px;
     margin-left: auto;
     margin-right: auto;
     font-weight: 400;
@@ -154,13 +154,7 @@
 }
 
 /* ================================================================
-   NAV — SCROLL WRAPPER
-   FIX: The wrapper is a full-width flex row that centres the pill
-   on desktop (where it fits) and becomes a horizontal scroll
-   container on mobile only when truly needed.
-   KEY: overflow-x must NOT be set to hidden on any ancestor —
-   industry-slider-section, slider-page-wrap, and slider-stage-v2
-   must all allow overflow-x: visible so the pill can breathe.
+   NAV — 
 ================================================================ */
 
 .slider-nav-scroll-wrap {
@@ -168,15 +162,13 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    /* No overflow set here at desktop — pill is centred naturally */
-    margin-bottom: 0; /* spacing comes from pill's own margin-bottom */
+ 
+    margin-bottom: 0; 
 }
 
 /* ================================================================
    NAV — PILL CONTAINER
-   FIX: width: max-content lets the pill size to its contents
-   and never wraps or compresses its children. This is the key
-   rule that keeps all tabs on a single horizontal line.
+
 ================================================================ */
 
 .slider-nav-v2 {
@@ -184,12 +176,9 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    flex-wrap: nowrap;       /* NEVER wrap tabs to a second line */
+    flex-wrap: nowrap;     
     white-space: nowrap;
 
-    /* FIX: max-content means the pill is exactly as wide as all tabs
-       combined — no more, no less. Combined with flex-shrink:0 on
-       items this guarantees a single horizontal row always. */
     width: max-content;
 
     margin-bottom: 100px;
@@ -201,10 +190,7 @@
     border: 1px solid rgba(0, 0, 0, .03);
     box-shadow: 0 10px 30px rgba(0, 0, 0, .02);
 
-    /* FIX: pill must never shrink below its content width */
     flex-shrink: 0;
-
-    /* FIX: no overflow: hidden — that was clipping tabs on mobile */
 }
 
 /* ================================================================

@@ -300,7 +300,7 @@ export default function Header() {
                 }
               }}
             >
-              <span className="help-label">GET HELP WITH</span>
+              <span className="help-label">Book Appointment</span>
               <div className="help-slide-wrapper">
                 <div className={`help-slide-track ${helpOpen ? "paused" : ""}`}>
                   {helpItems.map((item, i) => (

@@ -1,6 +1,6 @@
 .step-progress {
   display: flex;
-  gap: 65px;
+  gap: 45px;
   align-items: flex-start;
   justify-content: center;
   flex-wrap: wrap;
@@ -54,6 +54,7 @@
 .step .ring-icon {
   color: #6b7280; 
 }
+
 
 .step-label {
   margin-top: 8px;

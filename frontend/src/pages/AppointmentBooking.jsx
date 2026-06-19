@@ -333,6 +333,18 @@ export default function AppointmentBooking() {
     if (idx === 1) { setDrillLevel("spec"); setActiveSpec(null); }
   };
 
+  // [FIX] Prevents card onClick from firing when the user is click-dragging
+  // to select/copy text inside a card (name, count, etc). Without this guard,
+  // releasing the mouse after a text selection re-triggers navigation/drill-down
+  // instead of letting the selection stand so the user can copy it.
+  const handleCardClick = (e, action) => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      return;
+    }
+    action();
+  };
+
   const breadcrumbItems = ["All Categories"];
   if (activeCat) breadcrumbItems.push(activeCat.label);
   if (activeSpec) breadcrumbItems.push(activeSpec.name);
@@ -370,11 +382,12 @@ export default function AppointmentBooking() {
             Discover Care
           </span>
 
-          <h2>One app. Every kind of care.</h2>
+          <h2>Find the right online doctor for your needs.
+</h2>
 
           <p className="lead">
-            From a sniffle to a chronic condition, we thread the entire
-            experience together so you get care without friction.
+          Book an online doctor appointment in minutes and access secure virtual healthcare services without long wait times or unnecessary clinic visits. 
+
           </p>
         </div>
 
@@ -401,7 +414,7 @@ export default function AppointmentBooking() {
           {/* ── SEARCH TOOLBAR ── */}
           <div className="toolbar">
             <div className="search">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
@@ -436,7 +449,11 @@ export default function AppointmentBooking() {
                         const cc = c.specs.reduce((n, s) => n + s.conds.length, 0);
                         const samp = c.specs.slice(0, 3).map((s) => s.name).join(", ") + (c.specs.length > 3 ? "…" : "");
                         return (
-                          <div key={c.id} className="catcard" onClick={() => handleOpenCat(c)}>
+                          <div
+                            key={c.id}
+                            className="catcard"
+                            onClick={(e) => handleCardClick(e, () => handleOpenCat(c))}
+                          >
                             <div className="ic">{c.e}</div>
                             <h3>{c.label}</h3>
                             <div className="meta">{sc} specialties · {cc} conditions</div>
@@ -466,7 +483,11 @@ export default function AppointmentBooking() {
                       .map((s) => {
                         const specWithCat = { ...s, catId: activeCat.id, catLabel: activeCat.label, cost: s.cost };
                         return (
-                          <div key={s.name} className="spec" onClick={() => handleOpenSpec(specWithCat)}>
+                          <div
+                            key={s.name}
+                            className="spec"
+                            onClick={(e) => handleCardClick(e, () => handleOpenSpec(specWithCat))}
+                          >
                             {s.live && <span className="live">LIVE</span>}
                             <div className="ic">{s.ico}</div>
                             <h3>{s.name}</h3>
@@ -490,13 +511,20 @@ export default function AppointmentBooking() {
                     {drillConds
                       .filter(([name]) => !q || name.toLowerCase().includes(q))
                       .map(([name, ico]) => (
-                        <div key={name} className="condcard" onClick={() => handleSelectCond(name, ico, activeSpec)}>
+                        <div
+                          key={name}
+                          className="condcard"
+                          onClick={(e) => handleCardClick(e, () => handleSelectCond(name, ico, activeSpec))}
+                        >
                           <div className="condcard-ico">{ico}</div>
                           <div className="condcard-name">{name}</div>
                           <div className="condcard-go">Book →</div>
                         </div>
                       ))}
-                    <div className="condcard condcard-other" onClick={() => handleSelectCond("General Consultation", "🩺", activeSpec)}>
+                    <div
+                      className="condcard condcard-other"
+                      onClick={(e) => handleCardClick(e, () => handleSelectCond("General Consultation", "🩺", activeSpec))}
+                    >
                       <div className="condcard-ico">💬</div>
                       <div className="condcard-name">Other / not listed</div>
                       <div className="condcard-go">Book →</div>
@@ -513,7 +541,11 @@ export default function AppointmentBooking() {
               <div className="grid">
                 {visibleFlatSpecs.length ? (
                   visibleFlatSpecs.map((s) => (
-                    <div key={s.name + s.catId} className="spec" onClick={() => handleFlatSpecClick(s)}>
+                    <div
+                      key={s.name + s.catId}
+                      className="spec"
+                      onClick={(e) => handleCardClick(e, () => handleFlatSpecClick(s))}
+                    >
                       {s.live && <span className="live">LIVE</span>}
                       <div className="ic">{s.ico}</div>
                       <h3>{s.name}</h3>
@@ -534,7 +566,11 @@ export default function AppointmentBooking() {
               <div className="condgrid">
                 {visibleFlatConds.length ? (
                   visibleFlatConds.map((c, i) => (
-                    <div key={i} className="condcard" onClick={() => handleFlatCondClick(c)}>
+                    <div
+                      key={i}
+                      className="condcard"
+                      onClick={(e) => handleCardClick(e, () => handleFlatCondClick(c))}
+                    >
                       <div className="condcard-ico">{c.ico}</div>
                       <div className="condcard-name">{c.name}</div>
                       <div className="condcard-spec">{c.to}</div>

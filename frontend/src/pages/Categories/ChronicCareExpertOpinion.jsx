@@ -1223,7 +1223,7 @@ function FaqSection({ faqGroups, catLabel }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ChildMain({ categoryId = "mental-health" }) {
+export default function ChronicCareExpertOpinion({ categoryId = "mental-health" }) {
   const [activeCategory, setActiveCategory] = useState(categoryId);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -1429,4 +1429,4 @@ export default function ChildMain({ categoryId = "mental-health" }) {
       </AnimatePresence>
     </div>
   );
-}
+} 

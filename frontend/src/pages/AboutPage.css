@@ -47,12 +47,19 @@
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: .16em;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #415a82;
   text-transform: uppercase;
-  color: #2563EB;
+  margin-bottom: 24px;
+  background: #e8eef9;
+  animation: fadeUp 0.6s var(--ease) bot;
+  border-radius: 50px;
+  width: fit-content;
+  max-width: 260px;
 }
 .eyebrow--light { color: #93C5FD; }
 .eyebrow__dash {
@@ -80,13 +87,12 @@
   transition: all .25s ease;
 }
 .btn--solid {
-  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  background: #1e3457;
   color: #fff;
-  box-shadow: 0 8px 22px rgba(37,99,235,.3);
 }
 .btn--solid:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(37,99,235,.44);
+  /* box-shadow: 0 14px 32px rgba(37,99,235,.44); */
 }
 .btn--ghost {
   background: transparent;
@@ -94,7 +100,7 @@
   border: 1.5px solid rgba(30,58,95,.25);
 }
 .btn--ghost:hover {
-  border-color: #2563EB;
+  border-color: #1e3457;
   color: #2563EB;
   background: rgba(37,99,235,.06);
 }
@@ -140,11 +146,7 @@
   max-width: 680px;
   margin: 0 0 56px;
   transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1);
-}
-.section-head:not(.is-visible) {
-  opacity: 0;
-  transform: translateY(34px);
-}
+} 
 .section-head.is-visible {
   opacity: 1;
   transform: none;
@@ -336,7 +338,7 @@
   align-items: center;
   gap: 24px;
   flex-wrap: wrap;
-  margin-top: 48px;
+  margin-top: 30px;
 }
 .trust-strip__item {
   display: flex;
@@ -351,7 +353,7 @@
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: #2563EB;
+  background: #7CB7FF;
 }
 
 /* ─── Hero photo / image frame ─── */
@@ -479,10 +481,16 @@
 
 /* ─── Problem section ─── */
 .problem__title {
-  margin: 18px 0 56px;
-  max-width: 760px;
+  margin: 20px 0 ;
+  max-width: 800px;
   color: #fff;
   font-size: clamp(28px, 3.6vw, 46px);
+}
+.problem__desc {
+  color: #fff;
+  font-size: 18px;
+  margin: 20px 0 50px;
+
 }
 
 .problem-card {
