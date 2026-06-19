@@ -194,17 +194,23 @@ export default function HomePage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchRef = useRef(null);
-
+  const [noResults, setNoResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   // ── Filter search suggestions ─────────────────────────────────────────────
   // Remove the local SEARCH_DATA array entirely, and replace the useEffect that filters it:
+  // In your useEffect that calls the API, track a "no results" state
+
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredSuggestions([]);
+      setNoResults(false);
       return;
     }
 
     const controller = new AbortController();
     const delay = setTimeout(async () => {
+      setIsSearching(true);
+      setNoResults(false);
       try {
         const res = await fetch("/api/search", {
           method: "POST",
@@ -213,11 +219,15 @@ export default function HomePage() {
           signal: controller.signal,
         });
         const data = await res.json();
-        setFilteredSuggestions(data.results || []);
+        const results = data.results || [];
+        setFilteredSuggestions(results);
+        setNoResults(results.length === 0);
       } catch (err) {
-        if (err.name !== "AbortError") console.error("Search failed:", err);
+        if (err.name !== "AbortError") setNoResults(true);
+      } finally {
+        setIsSearching(false);
       }
-    }, 300); // debounce 300ms
+    }, 300);
 
     return () => {
       clearTimeout(delay);
@@ -545,7 +555,7 @@ export default function HomePage() {
             prescriptions through our secure virtual healthcare platform
             available across all 50 states.
           </p>
- <div className="trust" ref={btnRef}>
+          <div className="trust" ref={btnRef}>
             <span className="trust-chip">
               <svg
                 width="12"
@@ -617,28 +627,93 @@ export default function HomePage() {
               <button onClick={() => handleSearch()}>Search</button>
             </div>
 
-            {showSuggestions && filteredSuggestions.length > 0 && (
+            {showSuggestions && searchQuery.trim() && (
               <div className="search-suggestions">
-                {filteredSuggestions.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className={`suggestion-item${activeIndex === index ? " active" : ""}`}
-                    onClick={() => handleSearch(item)}
-                  >
-                    <div className="suggestion-left">
-                      <span className="suggestion-title">{item.title}</span>
-                      {item.type && (
-                        <span className="suggestion-type">{item.type}</span>
+                {/* Loading state */}
+                {isSearching && (
+                  <div className="search-state">
+                    <div className="search-state-icon searching-pulse">
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                      </svg>
+                    </div>
+                    <span className="search-state-text">
+                      Searching treatments...
+                    </span>
+                  </div>
+                )}
+
+                {/* No results state */}
+                {!isSearching && noResults && (
+                  <div className="search-state no-results">
+                    <div className="search-state-icon">
+                      <svg
+                        width="22"
+                        height="22"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                        <path d="M8 11h6M11 8v6" strokeOpacity="0.3" />
+                      </svg>
+                    </div>
+                    <div className="search-state-content">
+                      <span className="search-state-title">
+                        No treatments found for "{searchQuery}"
+                      </span>
+                      <span className="search-state-subtitle">
+                        Try searching by symptom, condition, or specialty
+                      </span>
+                    </div>
+                    <div className="search-state-suggestions">
+                      <span>Try:</span>
+                      {["Anxiety", "Knee Pain", "Diabetes", "Skin Rash"].map(
+                        (s) => (
+                          <button
+                            key={s}
+                            className="search-pill"
+                            onClick={() => {
+                              setSearchQuery(s);
+                              setShowSuggestions(true);
+                            }}
+                          >
+                            {s}
+                          </button>
+                        ),
                       )}
                     </div>
-                    <span className="suggestion-arrow">→</span>
                   </div>
-                ))}
+                )}
+
+                {/* Results */}
+                {!isSearching &&
+                  !noResults &&
+                  filteredSuggestions.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className={`suggestion-item${activeIndex === index ? " active" : ""}`}
+                      onClick={() => handleSearch(item)}
+                    >
+                      <div className="suggestion-left">
+                        <span className="suggestion-title">{item.title}</span>
+                      </div>
+                      <span className="suggestion-arrow">→</span>
+                    </div>
+                  ))}
               </div>
             )}
           </div>
-
-         
         </div>
 
         {/* ── RIGHT ── */}

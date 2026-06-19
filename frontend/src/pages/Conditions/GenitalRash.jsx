@@ -402,8 +402,8 @@ const STYLES = `
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
   badge: "Sexual Health",
-  heading: "Chlamydia",
-  description: "Common sexually transmitted bacterial infection",
+  heading: "Genital Rash",
+  description: "Rash, itching, or skin irritation",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
   bgImage:
     "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
@@ -753,35 +753,35 @@ function AboutSpecialty() {
         {/* RIGHT */}
         <div className="sp-about-right">
           <div>
-            <h3 className="sp-block-title">What is Chlamydia?</h3>
+            <h3 className="sp-block-title">What is Genital Rash?</h3>
             <p className="sp-block-body">
-              Chlamydia can cause burning during urination, unusual discharge,
-              pelvic discomfort, pain during sex, and mild or no symptoms in
-              some cases. If left untreated, it may lead to more serious
-              reproductive health complications.
+              A genital rash can cause redness, itching, burning, bumps,
+              irritation, discomfort, or skin changes in the genital area caused
+              by infections, allergies, irritation, heat, or other skin
+              conditions.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">How?</h3>
             <p className="sp-block-body">
-              Get fast and confidential chlamydia care with Humancare Connect.
-              Our telemedicine services make it easy to schedule an online
-              doctor appointment and connect with a licensed provider from home.
-              Through our secure telemedicine platform, you can receive symptom
-              evaluation, sexual health guidance, treatment recommendations, and
-              prescriptions when appropriate without the discomfort of an
-              in-person clinic visit.
+              Get discreet and confidential care for genital rash symptoms with
+              Humancare Connect. Our telemedicine services make it easy to
+              schedule an online doctor appointment and connect with a licensed
+              provider from home. Through our secure telemedicine platform, you
+              can receive symptom evaluation, treatment guidance, skincare
+              recommendations, and prescriptions when appropriate without the
+              discomfort of an in-person clinic visit.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">
-              Get chlamydia care in 4 simple steps.
+              Get genital rash care in 4 simple steps.
             </h3>
             <div className="sp-benefits-grid">
               {[
-                "Choose Chlamydia care",
+                "Choose Genital Rash care",
                 "Share your symptoms and concerns",
                 "Connect with an online provider",
                 "Receive treatment guidance and confidential care support",
@@ -1038,7 +1038,7 @@ function FaqSection() {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT  — drop-in replacement for any sub-page
 // ─────────────────────────────────────────────────────────────────
-export default function Chlamydia() {
+export default function GenitalRash() {
   return (
     <>
       <style>{STYLES}</style>

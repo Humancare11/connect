@@ -401,9 +401,9 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Sexual Health",
-  heading: "Chlamydia",
-  description: "Common sexually transmitted bacterial infection",
+  badge: "Skin Conditions",
+  heading: "Contact Dermatitis",
+  description: "Skin irritation from direct contact",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
   bgImage:
     "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
@@ -753,38 +753,37 @@ function AboutSpecialty() {
         {/* RIGHT */}
         <div className="sp-about-right">
           <div>
-            <h3 className="sp-block-title">What is Chlamydia?</h3>
+            <h3 className="sp-block-title">What is Contact Dermatitis?</h3>
             <p className="sp-block-body">
-              Chlamydia can cause burning during urination, unusual discharge,
-              pelvic discomfort, pain during sex, and mild or no symptoms in
-              some cases. If left untreated, it may lead to more serious
-              reproductive health complications.
+              Contact dermatitis can cause redness, itching, burning, swelling,
+              dryness, and skin irritation triggered by soaps, fragrances,
+              chemicals, plants, jewelry, or other allergens and irritants.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">How?</h3>
             <p className="sp-block-body">
-              Get fast and confidential chlamydia care with Humancare Connect.
-              Our telemedicine services make it easy to schedule an online
-              doctor appointment and connect with a licensed provider from home.
+              Get relief from contact dermatitis symptoms with Humancare
+              Connect. Our telemedicine services let you book an online doctor
+              appointment and connect with a licensed provider from home.
               Through our secure telemedicine platform, you can receive symptom
-              evaluation, sexual health guidance, treatment recommendations, and
-              prescriptions when appropriate without the discomfort of an
-              in-person clinic visit.
+              evaluation, skincare guidance, treatment recommendations, and
+              prescriptions when appropriate without waiting for an in-person
+              dermatology visit.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">
-              Get chlamydia care in 4 simple steps.
+              Soothe irritated skin in 4 simple steps.
             </h3>
             <div className="sp-benefits-grid">
               {[
-                "Choose Chlamydia care",
-                "Share your symptoms and concerns",
+                "Choose Contact Dermatitis care",
+                "Upload photos and share your symptoms",
                 "Connect with an online provider",
-                "Receive treatment guidance and confidential care support",
+                "Receive treatment guidance and skincare recommendations",
               ].map((b) => (
                 <div key={b} className="sp-benefit-item">
                   <CheckCircle size={14} className="sp-benefit-check" />
@@ -1038,7 +1037,7 @@ function FaqSection() {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT  — drop-in replacement for any sub-page
 // ─────────────────────────────────────────────────────────────────
-export default function Chlamydia() {
+export default function ContactDermatitis() {
   return (
     <>
       <style>{STYLES}</style>

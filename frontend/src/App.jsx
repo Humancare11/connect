@@ -148,6 +148,19 @@ import ShortnessOfBreath from "./pages/Conditions/ShortnessBreath";
 import UpperRespiratoryInfection from "./pages/Conditions/UpperRespiratoryInfection";
 import Wheezing from "./pages/Conditions/Wheezing";
 import Chlamydia from "./pages/Conditions/Chlamydia";
+import GenitalItching from "./pages/Conditions/GenitalItching";
+import GenitalRash from "./pages/Conditions/GenitalRash";
+import Gonorrhea from "./pages/Conditions/Gonorrhea";
+import Herpes from "./pages/Conditions/Herpes";
+import HivPreventionGuidance from "./pages/Conditions/HivPreventionGuidance";
+import PartnerExposureConcerns from "./pages/Conditions/PartnerExposureConcerns";
+import SafeSexCounseling from "./pages/Conditions/SafeSexCounseling";
+import StiConsultation from "./pages/Conditions/StiConsultation";
+import Acne from "./pages/Conditions/Acne";
+import AthletesFoot from "./pages/Conditions/AthletesFoot";
+import Cellulitis from "./pages/Conditions/Cellulitis";
+import ColdSores from "./pages/Conditions/ColdSores";
+import ContactDermatitis from "./pages/Conditions/ContactDermatitis";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -1021,6 +1034,25 @@ function AppLayout() {
           />
           <Route path="/wheezing" element={<Wheezing />} />
           <Route path="/chlamydia" element={<Chlamydia />} />
+          <Route path="/genital-itching" element={<GenitalItching />} />
+          <Route path="/genital-rash" element={<GenitalRash />} />
+          <Route path="/gonorrhea" element={<Gonorrhea />} />
+          <Route path="/herpes" element={<Herpes />} />
+          <Route
+            path="/hiv-prevention-guidance"
+            element={<HivPreventionGuidance />}
+          />
+          <Route
+            path="/partner-exposure-concerns"
+            element={<PartnerExposureConcerns />}
+          />
+          <Route path="/safe-sex-counseling" element={<SafeSexCounseling />} />
+          <Route path="/sti-consultation" element={<StiConsultation />} />
+          <Route path="/acne" element={<Acne />} />
+          <Route path="/athletes-foot" element={<AthletesFoot />} />
+          <Route path="/cellulitis" element={<Cellulitis />} />
+          <Route path="/cold-sores" element={<ColdSores />} />
+          <Route path="/contact-dermatitis" element={<ContactDermatitis />} />
 
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/privacy-concerns" element={<PrivacyConcerns />} />

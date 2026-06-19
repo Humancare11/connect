@@ -401,9 +401,9 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Sexual Health",
-  heading: "Chlamydia",
-  description: "Common sexually transmitted bacterial infection",
+  badge: "Skin Conditions",
+  heading: "Cold Sores",
+  description: "Painful blisters around the mouth",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
   bgImage:
     "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
@@ -753,38 +753,36 @@ function AboutSpecialty() {
         {/* RIGHT */}
         <div className="sp-about-right">
           <div>
-            <h3 className="sp-block-title">What is Chlamydia?</h3>
+            <h3 className="sp-block-title">What are Cold Sores?</h3>
             <p className="sp-block-body">
-              Chlamydia can cause burning during urination, unusual discharge,
-              pelvic discomfort, pain during sex, and mild or no symptoms in
-              some cases. If left untreated, it may lead to more serious
-              reproductive health complications.
+              Cold sores can cause small fluid-filled blisters, burning,
+              tingling, redness, irritation, and discomfort around the lips or
+              mouth caused by the herpes simplex virus (HSV-1).
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">How?</h3>
             <p className="sp-block-body">
-              Get fast and confidential chlamydia care with Humancare Connect.
-              Our telemedicine services make it easy to schedule an online
-              doctor appointment and connect with a licensed provider from home.
-              Through our secure telemedicine platform, you can receive symptom
-              evaluation, sexual health guidance, treatment recommendations, and
-              prescriptions when appropriate without the discomfort of an
-              in-person clinic visit.
+              Get fast care for cold sore symptoms with Humancare Connect. Our
+              telemedicine services make it easy to schedule an online doctor
+              appointment and connect with a licensed provider from home.
+              Through our secure virtual healthcare services, you can receive
+              symptom evaluation, treatment guidance, and prescriptions when
+              appropriate without the need for an in-person clinic visit.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">
-              Get chlamydia care in 4 simple steps.
+              Treat cold sores in 4 simple steps.
             </h3>
             <div className="sp-benefits-grid">
               {[
-                "Choose Chlamydia care",
-                "Share your symptoms and concerns",
+                "Choose Cold Sores care",
+                "Upload photos and share your symptoms",
                 "Connect with an online provider",
-                "Receive treatment guidance and confidential care support",
+                "Receive treatment guidance and prescription care if needed",
               ].map((b) => (
                 <div key={b} className="sp-benefit-item">
                   <CheckCircle size={14} className="sp-benefit-check" />
@@ -1038,7 +1036,7 @@ function FaqSection() {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT  — drop-in replacement for any sub-page
 // ─────────────────────────────────────────────────────────────────
-export default function Chlamydia() {
+export default function ColdSores() {
   return (
     <>
       <style>{STYLES}</style>

@@ -1,5 +1,3 @@
-
-
 /* ═══ FONT IMPORTS ═══ */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
 @import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap");
@@ -565,6 +563,85 @@ h4 {
 /* ══════════════════════════════════════════════
    SEARCH BAR
 ══════════════════════════════════════════════ */
+
+.search-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  gap: 8px;
+  text-align: center;
+}
+
+.search-state-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f0f4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.searching-pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+}
+
+.search-state-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  display: block;
+}
+
+.search-state-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  display: block;
+  margin-top: 2px;
+}
+
+.search-state-suggestions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.search-pill {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.search-pill:hover {
+  background: #e0e7ff;
+  border-color: #6366f1;
+  color: #4f46e5;
+}
 
 .search-wrapper {
   position: relative;
@@ -1837,7 +1914,7 @@ h4 {
     padding: 20px;
   }
   .aa-grid-wrapper {
-    min-height: 650px;
+    min-height: 550px;
   }
   .aa-card {
     padding: 28px;

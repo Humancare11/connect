@@ -401,9 +401,9 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Sexual Health",
-  heading: "Chlamydia",
-  description: "Common sexually transmitted bacterial infection",
+  badge: "Skin Conditions",
+  heading: "Cellulitis",
+  description: "Bacterial skin infection causing swelling",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
   bgImage:
     "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
@@ -753,38 +753,36 @@ function AboutSpecialty() {
         {/* RIGHT */}
         <div className="sp-about-right">
           <div>
-            <h3 className="sp-block-title">What is Chlamydia?</h3>
+            <h3 className="sp-block-title">What is Cellulitis?</h3>
             <p className="sp-block-body">
-              Chlamydia can cause burning during urination, unusual discharge,
-              pelvic discomfort, pain during sex, and mild or no symptoms in
-              some cases. If left untreated, it may lead to more serious
-              reproductive health complications.
+              Cellulitis can cause redness, swelling, warmth, tenderness, pain,
+              and skin inflammation that may spread quickly if left untreated.
+              It commonly affects the legs, arms, or other areas of the skin.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">How?</h3>
             <p className="sp-block-body">
-              Get fast and confidential chlamydia care with Humancare Connect.
-              Our telemedicine services make it easy to schedule an online
-              doctor appointment and connect with a licensed provider from home.
-              Through our secure telemedicine platform, you can receive symptom
-              evaluation, sexual health guidance, treatment recommendations, and
-              prescriptions when appropriate without the discomfort of an
-              in-person clinic visit.
+              Get prompt care for cellulitis symptoms with Humancare Connect.
+              Our telemedicine services make it easy to book an online doctor
+              appointment and connect with a licensed provider from home.
+              Through our secure virtual healthcare services, you can receive
+              symptom evaluation, treatment guidance, and prescriptions when
+              appropriate without waiting for an urgent care visit.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">
-              Get chlamydia care in 4 simple steps.
+              Get cellulitis care in 4 simple steps.
             </h3>
             <div className="sp-benefits-grid">
               {[
-                "Choose Chlamydia care",
-                "Share your symptoms and concerns",
+                "Choose Cellulitis care",
+                "Upload photos and describe your symptoms",
                 "Connect with an online provider",
-                "Receive treatment guidance and confidential care support",
+                "Receive treatment guidance and prescription care if needed",
               ].map((b) => (
                 <div key={b} className="sp-benefit-item">
                   <CheckCircle size={14} className="sp-benefit-check" />
@@ -1038,7 +1036,7 @@ function FaqSection() {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT  — drop-in replacement for any sub-page
 // ─────────────────────────────────────────────────────────────────
-export default function Chlamydia() {
+export default function Cellulitis() {
   return (
     <>
       <style>{STYLES}</style>

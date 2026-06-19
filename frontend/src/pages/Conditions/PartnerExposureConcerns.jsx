@@ -402,8 +402,8 @@ const STYLES = `
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
   badge: "Sexual Health",
-  heading: "Chlamydia",
-  description: "Common sexually transmitted bacterial infection",
+  heading: "Partner Exposure Concerns",
+  description: "Concerns after sexual exposure",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
   bgImage:
     "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
@@ -753,38 +753,40 @@ function AboutSpecialty() {
         {/* RIGHT */}
         <div className="sp-about-right">
           <div>
-            <h3 className="sp-block-title">What is Chlamydia?</h3>
+            <h3 className="sp-block-title">
+              What are partner exposure concerns?
+            </h3>
             <p className="sp-block-body">
-              Chlamydia can cause burning during urination, unusual discharge,
-              pelvic discomfort, pain during sex, and mild or no symptoms in
-              some cases. If left untreated, it may lead to more serious
-              reproductive health complications.
+              Partner exposure concerns can include questions about STI
+              exposure, possible symptoms, sexual health risks, testing
+              recommendations, prevention options, and next steps after intimate
+              contact with a partner.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">How?</h3>
             <p className="sp-block-body">
-              Get fast and confidential chlamydia care with Humancare Connect.
-              Our telemedicine services make it easy to schedule an online
-              doctor appointment and connect with a licensed provider from home.
+              Get confidential sexual health support with Humancare Connect. Our
+              telemedicine services make it easy to schedule an online doctor
+              appointment and connect with a licensed provider from home.
               Through our secure telemedicine platform, you can receive symptom
-              evaluation, sexual health guidance, treatment recommendations, and
-              prescriptions when appropriate without the discomfort of an
-              in-person clinic visit.
+              evaluation, exposure guidance, treatment recommendations, and
+              prescriptions when appropriate without the stress of an in-person
+              clinic visit.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">
-              Get chlamydia care in 4 simple steps.
+              Get exposure guidance in 4 simple steps.
             </h3>
             <div className="sp-benefits-grid">
               {[
-                "Choose Chlamydia care",
-                "Share your symptoms and concerns",
+                "Choose Partner Exposure Concerns care",
+                "Share your symptoms or exposure concerns",
                 "Connect with an online provider",
-                "Receive treatment guidance and confidential care support",
+                "Receive confidential guidance and personalized care support",
               ].map((b) => (
                 <div key={b} className="sp-benefit-item">
                   <CheckCircle size={14} className="sp-benefit-check" />
@@ -1038,7 +1040,7 @@ function FaqSection() {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT  — drop-in replacement for any sub-page
 // ─────────────────────────────────────────────────────────────────
-export default function Chlamydia() {
+export default function PartnerExposureConcerns() {
   return (
     <>
       <style>{STYLES}</style>
