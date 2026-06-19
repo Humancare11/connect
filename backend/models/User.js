@@ -58,20 +58,38 @@ userSchema.pre("validate", async function assignPatientId() {
   this.patientId = await generatePatientId();
 });
 
-function rejectPatientIdMutation(next) {
-  const update = this.getUpdate() || {};
-  const hasDirectMutation = Object.prototype.hasOwnProperty.call(update, "patientId");
-  const hasSetMutation = update.$set && Object.prototype.hasOwnProperty.call(update.$set, "patientId");
-  const hasUnsetMutation = update.$unset && Object.prototype.hasOwnProperty.call(update.$unset, "patientId");
+// function rejectPatientIdMutation(next) {
+//   const update = this.getUpdate() || {};
+//   const hasDirectMutation = Object.prototype.hasOwnProperty.call(update, "patientId");
+//   const hasSetMutation = update.$set && Object.prototype.hasOwnProperty.call(update.$set, "patientId");
+//   const hasUnsetMutation = update.$unset && Object.prototype.hasOwnProperty.call(update.$unset, "patientId");
 
-  if (hasDirectMutation || hasSetMutation || hasUnsetMutation) {
-    return next(new Error("patientId is immutable and cannot be changed."));
+//   if (hasDirectMutation || hasSetMutation || hasUnsetMutation) {
+//     return next(new Error("patientId is immutable and cannot be changed."));
+//   }
+//   return next();
+// }
+
+
+async function rejectPatientIdMutation() {
+  const update = this.getUpdate() || {};
+
+  const hasDirectMutation = Object.prototype.hasOwnProperty.call(update, "patientId");
+  const hasUnsetMutation =
+    update.$unset &&
+    Object.prototype.hasOwnProperty.call(update.$unset, "patientId");
+
+  if (hasDirectMutation || hasUnsetMutation) {
+    throw new Error("patientId is immutable and cannot be changed.");
   }
-  return next();
 }
 
 userSchema.pre("findOneAndUpdate", rejectPatientIdMutation);
 userSchema.pre("updateOne", rejectPatientIdMutation);
 userSchema.pre("updateMany", rejectPatientIdMutation);
+
+// userSchema.pre("findOneAndUpdate", rejectPatientIdMutation);
+// userSchema.pre("updateOne", rejectPatientIdMutation);
+// userSchema.pre("updateMany", rejectPatientIdMutation);
 
 module.exports = mongoose.model("User", userSchema);

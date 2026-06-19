@@ -4,7 +4,7 @@ const REFRESH_TOKEN_MS = 8 * 60 * 60 * 1000;
 
 async function revokeSession(sessionId, reason = "manual") {
   if (!sessionId) return;
-  const session = await Session.findByIdAndUpdate(sessionId, { revokedAt: new Date() }, { new: true });
+  const session = await Session.findByIdAndUpdate(sessionId, { revokedAt: new Date() }, { returnDocument: 'after' });
   if (!session) return;
   await RevokedToken.updateOne(
     { sessionId: String(session._id), userId: session.userId },
@@ -28,3 +28,4 @@ async function revokeUserSessions(userId, reason = "manual") {
 }
 
 module.exports = { revokeSession, revokeUserSessions };
+

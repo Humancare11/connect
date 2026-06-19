@@ -123,7 +123,8 @@ export default function PCPSection() {
             initial="hidden"
             animate={leftInView ? "visible" : "hidden"}
           >
-            — NO PCP? NO PROBLEM.
+            NO PCP? NO PROBLEM.
+
           </Motion.div>
 
           <Motion.h2
@@ -132,7 +133,7 @@ export default function PCPSection() {
             initial="hidden"
             animate={leftInView ? "visible" : "hidden"}
           >
-            Don't have a primary care doctor?
+           Don’t have a primary care doctor?
             <span>We've got you.</span>
           </Motion.h2>
 
@@ -142,27 +143,26 @@ export default function PCPSection() {
             initial="hidden"
             animate={leftInView ? "visible" : "hidden"}
           >
-            Millions of Americans lack access to a regular physician.
-            MediLink bridges that gap — giving you instant access to
-            licensed providers who can serve as your primary care team.
+           Whether you’re between doctors, new to an area, or simply can’t get an appointment soon enough, Humancare Connect gives you fast access to licensed providers for the care you need today, without the long wait.
+
           </Motion.p>
 
           <div className="pcp-features">
             {[
               {
                 n: "01",
-                title: "Acts as Your PCP",
-                desc: "Our providers manage ongoing health, maintain your records, and coordinate specialist referrals.",
+                title: "Get Care Today",
+                desc: "Skip the long wait times. Connect with a licensed provider the same day for everyday health concerns and quick medical support.",
               },
               {
                 n: "02",
-                title: "Continuity of Care",
-                desc: "Build a relationship with the same doctor across visits. Your health history stays in one secure place.",
+                title: "Handle Everyday Health Needs",
+                desc: "Prescription refills, lab orders, specialist referrals, and quick consultations — all in one convenient place.",
               },
               {
                 n: "03",
                 title: "365 Days a Year",
-                desc: "No more 3-week waits. Connect the same day — including evenings and weekends.",
+                desc: "Your health doesn’t wait, and neither do we. Get care when you need it — including evenings, weekends, and holidays.",
               },
             ].map((f, i) => (
               <Motion.div
@@ -254,8 +254,39 @@ export default function PCPSection() {
             </div>
           </Motion.div>
 
-        </div>
-      </div>
+          {/* ════ KNOW MORE — bottom of right column ════ */}
+          <Motion.div
+            className="pcp-know-more-wrap"
+            variants={fadeUp(0.8)}
+            initial="hidden"
+            animate={rightInView ? "visible" : "hidden"}
+          >
+            <Motion.button
+              className="pcp-know-more-btn"
+              whileHover={{
+                y: -4,
+                boxShadow: "0 20px 48px rgba(67, 109, 186, 0.28)",
+                transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+              }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <a href="/appointment-booking">
+              Know More
+              <span className="pcp-btn-arrow" aria-hidden="true">→</span></a>
+            </Motion.button>
+
+            <Motion.p
+              className="pcp-know-more-hint"
+              variants={fadeUp(0.92)}
+              initial="hidden"
+              animate={rightInView ? "visible" : "hidden"}
+            >
+              No insurance needed · Cancel anytime
+            </Motion.p>
+          </Motion.div>
+
+        </div>{/* /pcp-right */}
+      </div>{/* /pcp-container */}
     </Motion.section>
   );
 }

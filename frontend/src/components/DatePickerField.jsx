@@ -1,7 +1,20 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 const DAY_HEADERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 function buildCalendar(year, month) {
@@ -12,13 +25,25 @@ function buildCalendar(year, month) {
   for (let i = 0; i < first; i++) row.push(null);
   for (let d = 1; d <= daysInMonth; d++) {
     row.push(d);
-    if (row.length === 7) { grid.push(row); row = []; }
+    if (row.length === 7) {
+      grid.push(row);
+      row = [];
+    }
   }
-  if (row.length) { while (row.length < 7) row.push(null); grid.push(row); }
+  if (row.length) {
+    while (row.length < 7) row.push(null);
+    grid.push(row);
+  }
   return grid;
 }
 
-export default function DatePickerField({ value, onChange, min = "1880-01-01", max, placeholder = "Select date of birth" }) {
+export default function DatePickerField({
+  value,
+  onChange,
+  min = "1880-01-01",
+  max,
+  placeholder = "Select date of birth",
+}) {
   const today = new Date();
   const maxDate = max || today.toISOString().slice(0, 10);
 
@@ -45,8 +70,12 @@ export default function DatePickerField({ value, onChange, min = "1880-01-01", m
   const yearOptions = [];
   for (let y = maxYear; y >= minYear; y--) yearOptions.push(y);
 
-  const selDate = value && value.length === 10 ? new Date(value + "T00:00:00") : null;
-  const calendar = useMemo(() => buildCalendar(viewYear, viewMonth), [viewYear, viewMonth]);
+  const selDate =
+    value && value.length === 10 ? new Date(value + "T00:00:00") : null;
+  const calendar = useMemo(
+    () => buildCalendar(viewYear, viewMonth),
+    [viewYear, viewMonth],
+  );
 
   const fmt = (y, m, d) =>
     `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -62,9 +91,12 @@ export default function DatePickerField({ value, onChange, min = "1880-01-01", m
   const handleToggle = () => {
     if (!open && wrapRef.current) {
       const r = wrapRef.current.getBoundingClientRect();
-      setDropPos({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX });
+      setDropPos({
+        top: r.bottom + window.scrollY + 4,
+        left: r.left + window.scrollX,
+      });
     }
-    setOpen(v => !v);
+    setOpen((v) => !v);
   };
 
   const handleSelect = (d) => {
@@ -73,25 +105,46 @@ export default function DatePickerField({ value, onChange, min = "1880-01-01", m
     setOpen(false);
   };
 
-  const handleClear = () => { onChange(""); setOpen(false); };
+  const handleClear = () => {
+    onChange("");
+    setOpen(false);
+  };
 
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
-    else setViewMonth(m => m - 1);
+    if (viewMonth === 0) {
+      setViewYear((y) => y - 1);
+      setViewMonth(11);
+    } else setViewMonth((m) => m - 1);
   };
 
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
-    else setViewMonth(m => m + 1);
+    if (viewMonth === 11) {
+      setViewYear((y) => y + 1);
+      setViewMonth(0);
+    } else setViewMonth((m) => m + 1);
   };
 
-  const canPrev = fmt(viewMonth === 0 ? viewYear - 1 : viewYear, viewMonth === 0 ? 11 : viewMonth - 1, 1) >= min;
-  const canNext = fmt(viewMonth === 11 ? viewYear + 1 : viewYear, viewMonth === 11 ? 0 : viewMonth + 1, 1) <= maxDate;
+  const canPrev =
+    fmt(
+      viewMonth === 0 ? viewYear - 1 : viewYear,
+      viewMonth === 0 ? 11 : viewMonth - 1,
+      1,
+    ) >= min;
+  const canNext =
+    fmt(
+      viewMonth === 11 ? viewYear + 1 : viewYear,
+      viewMonth === 11 ? 0 : viewMonth + 1,
+      1,
+    ) <= maxDate;
 
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (wrapRef.current?.contains(e.target) || dropRef.current?.contains(e.target)) return;
+      if (
+        wrapRef.current?.contains(e.target) ||
+        dropRef.current?.contains(e.target)
+      )
+        return;
       setOpen(false);
     };
     document.addEventListener("mousedown", handler);
@@ -106,7 +159,11 @@ export default function DatePickerField({ value, onChange, min = "1880-01-01", m
   }, [value]);
 
   const displayVal = selDate
-    ? selDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    ? selDate.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
     : "";
 
   const todayY = today.getFullYear();
@@ -164,17 +221,37 @@ export default function DatePickerField({ value, onChange, min = "1880-01-01", m
         <div
           onClick={handleToggle}
           style={{
-            display: "flex", alignItems: "center", width: "100%",
-            height: 46, padding: "0 14px", gap: 10,
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+            height: 46,
+            padding: "0 14px",
+            gap: 10,
             border: open ? "1.5px solid #2563eb" : "1.5px solid #cbd5e1",
-            borderRadius: 10, background: "#fff", cursor: "pointer",
-            fontSize: 14, fontFamily: "inherit",
+            borderRadius: 10,
+            background: "#fff",
+            cursor: "pointer",
+            fontSize: 14,
+            fontFamily: "inherit",
             color: selDate ? "#0f172a" : "#9ca3af",
-            boxShadow: open ? "0 0 0 3px rgba(37,99,235,0.1)" : "0 1px 3px rgba(0,0,0,0.05)",
-            transition: "all 0.2s", userSelect: "none",
+            boxShadow: open
+              ? "0 0 0 3px rgba(37,99,235,0.1)"
+              : "0 1px 3px rgba(0,0,0,0.05)",
+            transition: "all 0.2s",
+            userSelect: "none",
           }}
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#64748b"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0 }}
+          >
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
@@ -182,109 +259,266 @@ export default function DatePickerField({ value, onChange, min = "1880-01-01", m
           </svg>
           <span style={{ flex: 1 }}>{displayVal || placeholder}</span>
           {selDate && (
-            <button type="button" onClick={e => { e.stopPropagation(); handleClear(); }}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "#94a3b8", display: "flex" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 2,
+                color: "#94a3b8",
+                display: "flex",
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           )}
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ flexShrink: 0, color: "#64748b", transition: "transform 0.18s", transform: open ? "rotate(180deg)" : "none" }}>
-            <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          <svg
+            width="10"
+            height="6"
+            viewBox="0 0 10 6"
+            fill="none"
+            style={{
+              flexShrink: 0,
+              color: "#64748b",
+              transition: "transform 0.18s",
+              transform: open ? "rotate(180deg)" : "none",
+            }}
+          >
+            <path
+              d="M1 1l4 4 4-4"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
           </svg>
         </div>
 
-        {open && createPortal(
-          <div ref={dropRef} style={{
-            position: "absolute", top: dropPos.top, left: dropPos.left,
-            width: 320, background: "#fff",
-            border: "1.5px solid #e2e8f0", borderRadius: 14,
-            boxShadow: "0 16px 48px rgba(0,0,0,0.13), 0 4px 16px rgba(0,0,0,0.07)",
-            zIndex: 999999, overflow: "hidden",
-            animation: "dpDrop 0.2s cubic-bezier(0.34,1.3,0.64,1)",
-            fontFamily: "inherit",
-          }}>
-
-            {/* ── Header: prev | Month▼ Year▼ | next ── */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "14px 14px 10px" }}>
-              <button type="button" className="dp-nav-btn" onClick={prevMonth} disabled={!canPrev}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
-              </button>
-
-              {/* Month dropdown */}
-              <select
-                className="dp-hdr-sel"
-                style={{ flex: "1.4" }}
-                value={viewMonth}
-                onChange={e => setViewMonth(Number(e.target.value))}
+        {open &&
+          createPortal(
+            <div
+              ref={dropRef}
+              style={{
+                position: "absolute",
+                top: dropPos.top,
+                left: dropPos.left,
+                width: 320,
+                background: "#fff",
+                border: "1.5px solid #e2e8f0",
+                borderRadius: 14,
+                boxShadow:
+                  "0 16px 48px rgba(0,0,0,0.13), 0 4px 16px rgba(0,0,0,0.07)",
+                zIndex: 999999,
+                overflow: "hidden",
+                animation: "dpDrop 0.2s cubic-bezier(0.34,1.3,0.64,1)",
+                fontFamily: "inherit",
+              }}
+            >
+              {/* ── Header: prev | Month▼ Year▼ | next ── */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "14px 14px 10px",
+                }}
               >
-                {MONTHS.map((m, i) => (
-                  <option key={m} value={i}>{m}</option>
-                ))}
-              </select>
+                <button
+                  type="button"
+                  className="dp-nav-btn"
+                  onClick={prevMonth}
+                  disabled={!canPrev}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  >
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
 
-              {/* Year dropdown */}
-              <select
-                className="dp-hdr-sel"
-                style={{ flex: "1" }}
-                value={viewYear}
-                onChange={e => setViewYear(Number(e.target.value))}
+                {/* Month dropdown */}
+                <select
+                  className="dp-hdr-sel"
+                  style={{ flex: "1.4" }}
+                  value={viewMonth}
+                  onChange={(e) => setViewMonth(Number(e.target.value))}
+                >
+                  {MONTHS.map((m, i) => (
+                    <option key={m} value={i}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Year dropdown */}
+                <select
+                  className="dp-hdr-sel"
+                  style={{ flex: "1" }}
+                  value={viewYear}
+                  onChange={(e) => setViewYear(Number(e.target.value))}
+                >
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  className="dp-nav-btn"
+                  onClick={nextMonth}
+                  disabled={!canNext}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* ── Day headers ── */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(7,1fr)",
+                  padding: "0 10px 4px",
+                  textAlign: "center",
+                }}
               >
-                {yearOptions.map(y => (
-                  <option key={y} value={y}>{y}</option>
+                {DAY_HEADERS.map((d, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#94a3b8",
+                      padding: "2px 0",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    {d}
+                  </div>
                 ))}
-              </select>
+              </div>
 
-              <button type="button" className="dp-nav-btn" onClick={nextMonth} disabled={!canNext}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
-              </button>
-            </div>
+              {/* ── Calendar grid ── */}
+              <div style={{ padding: "0 10px 10px" }}>
+                {calendar.map((row, ri) => (
+                  <div
+                    key={ri}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(7,1fr)",
+                      gap: 2,
+                      justifyItems: "center",
+                      marginBottom: 2,
+                    }}
+                  >
+                    {row.map((d, ci) => {
+                      if (d === null)
+                        return (
+                          <div key={ci} style={{ width: 40, height: 40 }} />
+                        );
+                      const disabled = isDisabled(d);
+                      const isSel =
+                        selDate &&
+                        selDate.getDate() === d &&
+                        selDate.getMonth() === viewMonth &&
+                        selDate.getFullYear() === viewYear;
+                      const isToday =
+                        d === todayD &&
+                        viewMonth === todayM &&
+                        viewYear === todayY;
+                      return (
+                        <button
+                          key={ci}
+                          type="button"
+                          className={`dp-cell${isToday && !isSel ? " dp-today" : ""}${isSel ? " dp-sel" : ""}${disabled ? " dp-dis" : ""}`}
+                          onClick={() => handleSelect(d)}
+                          disabled={disabled}
+                        >
+                          {d}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
 
-            {/* ── Day headers ── */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", padding: "0 10px 4px", textAlign: "center" }}>
-              {DAY_HEADERS.map((d, i) => (
-                <div key={i} style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", padding: "2px 0", letterSpacing: "0.5px" }}>{d}</div>
-              ))}
-            </div>
-
-            {/* ── Calendar grid ── */}
-            <div style={{ padding: "0 10px 10px" }}>
-              {calendar.map((row, ri) => (
-                <div key={ri} style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2, justifyItems: "center", marginBottom: 2 }}>
-                  {row.map((d, ci) => {
-                    if (d === null) return <div key={ci} style={{ width: 40, height: 40 }} />;
-                    const disabled = isDisabled(d);
-                    const isSel = selDate && selDate.getDate() === d && selDate.getMonth() === viewMonth && selDate.getFullYear() === viewYear;
-                    const isToday = d === todayD && viewMonth === todayM && viewYear === todayY;
-                    return (
-                      <button key={ci} type="button"
-                        className={`dp-cell${isToday && !isSel ? " dp-today" : ""}${isSel ? " dp-sel" : ""}${disabled ? " dp-dis" : ""}`}
-                        onClick={() => handleSelect(d)}
-                        disabled={disabled}
-                      >
-                        {d}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-
-            {/* ── Footer ── */}
-            <div style={{ borderTop: "1px solid #f1f5f9", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 13, color: selDate ? "#1d4ed8" : "#94a3b8", fontWeight: selDate ? 600 : 400 }}>
-                {selDate
-                  ? selDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-                  : "No date selected"}
-              </span>
-              <button type="button" onClick={() => setOpen(false)}
-                style={{ background: "none", border: "none", fontSize: 13, fontWeight: 600, color: "#64748b", cursor: "pointer", padding: "4px 8px", fontFamily: "inherit" }}>
-                Close
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
+              {/* ── Footer ── */}
+              <div
+                style={{
+                  borderTop: "1px solid #f1f5f9",
+                  padding: "10px 14px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 13,
+                    color: selDate ? "#1d4ed8" : "#94a3b8",
+                    fontWeight: selDate ? 600 : 400,
+                  }}
+                >
+                  {selDate
+                    ? selDate.toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "No date selected"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#64748b",
+                    cursor: "pointer",
+                    padding: "4px 8px",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )}
       </div>
     </>
   );

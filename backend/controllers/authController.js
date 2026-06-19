@@ -503,21 +503,79 @@ const adminLogin = async (req, res) => {
 // ════════════════════════════════════════════
 //  7. UPDATE USER PROFILE
 // ════════════════════════════════════════════
+// const updateProfile = async (req, res) => {
+//   try {
+//     const { name, email, mobile, dob, gender, country } = req.body;
+//     const userId = req.user.id;
+//     if (!name || !email) return res.status(400).json({ msg: "Name and email are required." });
+
+//     const existing = await User.findOne({ email, _id: { $ne: userId } });
+//     if (existing) return res.status(400).json({ msg: "Email is already in use by another account." });
+
+//     const updated = await User.findByIdAndUpdate(
+//       userId,
+//       { name, email, mobile: mobile || "", dob: dob || "", gender: gender || "", country: country || "" },
+//       { new: true, runValidators: true }
+//     );
+//     if (!updated) return res.status(404).json({ msg: "User not found." });
+
+//     await logAudit(req, {
+//       action: "PROFILE_UPDATE",
+//       resource: "User",
+//       resourceId: updated._id,
+//       userId: updated._id,
+//       userName: updated.name,
+//       userEmail: updated.email,
+//       userRole: updated.role,
+//       details: { updatedFields: ["name", "email", "mobile", "dob", "gender", "country"] },
+//     });
+
+//     return res.json({ msg: "Profile updated successfully.", user: safeUser(updated) });
+//   } catch (err) {
+//     console.error("updateProfile error:", err);
+//     return res.status(500).json({ msg: "Server error. Please try again." });
+//   }
+// };
+
 const updateProfile = async (req, res) => {
   try {
     const { name, email, mobile, dob, gender, country } = req.body;
     const userId = req.user.id;
-    if (!name || !email) return res.status(400).json({ msg: "Name and email are required." });
 
-    const existing = await User.findOne({ email, _id: { $ne: userId } });
-    if (existing) return res.status(400).json({ msg: "Email is already in use by another account." });
+    if (!name || !email)
+      return res.status(400).json({ msg: "Name and email are required." });
 
-    const updated = await User.findByIdAndUpdate(
-      userId,
-      { name, email, mobile: mobile || "", dob: dob || "", gender: gender || "", country: country || "" },
-      { new: true, runValidators: true }
-    );
-    if (!updated) return res.status(404).json({ msg: "User not found." });
+    // Validate dob if provided
+    if (dob) {
+      const dobCheck = validateDob(dob);
+      if (!dobCheck.valid)
+        return res.status(400).json({ msg: dobCheck.msg });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    const existing = await User.findOne({ email: cleanEmail, _id: { $ne: userId } });
+    if (existing)
+      return res.status(400).json({ msg: "Email is already in use by another account." });
+
+    // Use $set explicitly so the patientId hook doesn't misfire
+    const updated = await User.findOneAndUpdate(
+  { _id: userId },
+  {
+    $set: {
+      name,
+      email: cleanEmail,
+      mobile: mobile || "",
+      dob: dob || "",
+      gender: gender || "",
+      country: country || "",
+    },
+  },
+  { returnDocument: "after", runValidators: false }
+);
+
+    if (!updated)
+      return res.status(404).json({ msg: "User not found." });
 
     await logAudit(req, {
       action: "PROFILE_UPDATE",
@@ -532,7 +590,7 @@ const updateProfile = async (req, res) => {
 
     return res.json({ msg: "Profile updated successfully.", user: safeUser(updated) });
   } catch (err) {
-    console.error("updateProfile error:", err);
+    console.error("updateProfile error:", err.message, err.stack);
     return res.status(500).json({ msg: "Server error. Please try again." });
   }
 };

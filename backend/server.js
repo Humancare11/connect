@@ -8,8 +8,8 @@ require("dotenv").config({
     process.env.NODE_ENV === "production"
       ? ".env.production"
       : process.env.NODE_ENV === "uat"
-      ? ".env.uat"
-      : ".env"
+        ? ".env.uat"
+        : ".env"
   ),
 });
 
@@ -36,8 +36,16 @@ const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityIncident } = require("./utils/securityMonitor");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
+const { seedCategoryPricing } = require("./models/CategoryPricing");
+// const Anthropic = require("@anthropic-ai/sdk");
+// const Groq = require("groq-sdk");
 
 const app = express();
+
+
+// const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 
 // Trust the first reverse proxy (Nginx, Apache, Cloudflare).
 // Without this, req.protocol returns "http" even behind HTTPS termination.
@@ -99,6 +107,7 @@ const startServer = async () => {
     console.log(`✅ Backfilled doctorId for ${doctorsWithoutId.length} doctor(s).`);
   }
 
+  await seedCategoryPricing();
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
 
@@ -172,7 +181,7 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
   next();
 });
 
@@ -410,10 +419,86 @@ app.use("/api/tickets", require("./routes/tickets"));
 app.use("/api/medical", require("./routes/medical"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/paypal", require("./routes/paypal"));
+app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/audit-logs", require("./routes/auditLogs"));
 app.use("/api/security-incidents", require("./routes/securityIncidents"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));
+
+// app.post("/api/search", async (req, res) => {
+//   const { query, routes } = req.body;
+//   console.log("🔍 Search hit:", query); // ✅ add this
+
+//   try {
+//     const message = await client.messages.create({
+//       model: "claude-sonnet-4-6",
+//       max_tokens: 500,
+//       messages: [{
+//         role: "user",
+//         content: `A patient searched: "${query}".
+// From this list, return the top 5 most relevant as a JSON array (same shape as input).
+// List: ${JSON.stringify(routes)}
+// Return ONLY a valid JSON array. No explanation, no markdown.`
+//       }]
+//     });
+
+//     const results = JSON.parse(message.content[0].text);
+//     res.json({ results });
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Search failed" });
+//   }
+// });
+
+
+// app.post("/api/search", async (req, res) => {
+//   const { query, routes } = req.body;
+
+//   try {
+//     const completion = await client.chat.completions.create({
+//       model: "llama-3.1-8b-instant",
+//       max_tokens: 500,
+//       messages: [
+//         {
+//           role: "system",
+//           content: "You are a medical search assistant. Always respond with ONLY a valid JSON array. Never include markdown, backticks, or explanation."
+//         },
+//         {
+//           role: "user",
+//           // highlight-start
+//           content: `A patient typed: "${query}" (may be partial or misspelled).
+// Match against these medical routes using their title AND keywords.
+// Return the top 5 most relevant as a JSON array (same shape as input, include the keywords field).
+// Prioritize: exact title match > keyword match > partial/fuzzy match.
+// List: ${JSON.stringify(routes)}
+// Return ONLY a valid JSON array.`
+//           // highlight-end
+//         }
+//       ]
+//     });
+
+//     let raw = completion.choices[0].message.content.trim();
+//     raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+
+//     const results = JSON.parse(raw);
+//     res.json({ results });
+
+//   } catch (err) {
+//     console.error("Search error:", err);
+//     res.status(500).json({ error: "Search failed", detail: err.message });
+//   }
+// });
+
+const searchRoutes = require("./searchRoutes");
+
+app.post("/api/search", (req, res) => {
+  const { query, routes } = req.body;
+
+  const results = searchRoutes(query, routes);
+
+  res.json({ results });
+});
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -515,9 +600,15 @@ io.on("connection", (socket) => {
 
     const room = `appointment_${appointmentId}`;
 
-    // If this socket is already in the room (e.g. duplicate emit), just re-notify peers
+    // If this socket is already in the room (e.g. duplicate emit from an
+    // effect re-run), re-notify peers AND tell ourselves about any peer
+    // already present — otherwise a rejoin can leave both sides without a
+    // "peer-joined" signal (e.g. if our previous listener was detached
+    // between the original join and this duplicate emit).
     if (socket.rooms.has(room)) {
       socket.to(room).emit("peer-joined");
+      const existing = io.sockets.adapter.rooms.get(room);
+      if (existing && existing.size > 1) socket.emit("peer-joined");
       return;
     }
 

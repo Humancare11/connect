@@ -978,192 +978,191 @@ function MultiSelect({
     );
   };
 
-  const dropdown =
-    open && position.width > 0
-      ? createPortal(
+  const dropdown = open
+    ? createPortal(
+        <div
+          ref={dropdownRef}
+          style={{
+            position: "fixed",
+            top: `${position.top - window.scrollY}px`,
+            left: `${position.left}px`,
+            width: `${position.width}px`,
+            background: "#fff",
+            border: "1.5px solid #e2e8f0",
+            borderRadius: 12,
+            boxShadow:
+              "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
+            zIndex: 9999,
+            overflow: "hidden",
+          }}
+        >
+          {/* Search */}
           <div
-            ref={dropdownRef}
             style={{
-              position: "absolute",
-              top: `${position.top}px`,
-              left: `${position.left}px`,
-              width: `${position.width}px`,
-              background: "#fff",
-              border: "1.5px solid #e2e8f0",
-              borderRadius: 12,
-              boxShadow:
-                "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
-              zIndex: 9999,
-              overflow: "hidden",
+              padding: "10px 10px 6px",
+              borderBottom: "1px solid #f1f5f9",
             }}
           >
-            {/* Search */}
             <div
               style={{
-                padding: "10px 10px 6px",
-                borderBottom: "1px solid #f1f5f9",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                background: "#f8fafc",
+                border: "1.5px solid #e8edf2",
+                borderRadius: 10,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 12px",
-                  background: "#f8fafc",
-                  border: "1.5px solid #e8edf2",
-                  borderRadius: 10,
-                }}
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#94a3b8"
+                strokeWidth="2"
+                style={{ flexShrink: 0 }}
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#94a3b8"
-                  strokeWidth="2"
-                  style={{ flexShrink: 0 }}
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder={searchPlaceholder || "Search..."}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder={searchPlaceholder || "Search..."}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  flex: 1,
+                  border: "none",
+                  background: "transparent",
+                  fontSize: 13,
+                  fontFamily: "inherit",
+                  color: "#1e293b",
+                  outline: "none",
+                }}
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
                   style={{
-                    flex: 1,
+                    background: "none",
                     border: "none",
-                    background: "transparent",
-                    fontSize: 13,
-                    fontFamily: "inherit",
-                    color: "#1e293b",
-                    outline: "none",
-                  }}
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
-                      color: "#cbd5e1",
-                      fontSize: 14,
-                      lineHeight: 1,
-                    }}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* List */}
-            <div style={{ maxHeight: 280, overflowY: "auto" }}>
-              {filtered.length === 0 ? (
-                <div
-                  style={{
-                    padding: "18px 16px",
-                    textAlign: "center",
-                    color: "#94a3b8",
-                    fontSize: 13,
+                    cursor: "pointer",
+                    padding: 0,
+                    color: "#cbd5e1",
+                    fontSize: 14,
+                    lineHeight: 1,
                   }}
                 >
-                  No results found
-                </div>
-              ) : (
-                filtered.map((item) => {
-                  const displayName = getDisplayName(item);
-                  const countryData =
-                    typeof item === "string" ? findCountryByName(item) : null;
-                  const isSelected = selected.includes(displayName);
-
-                  return (
-                    <div
-                      key={displayName}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        width: "100%",
-                        padding: "9px 14px",
-                        border: "none",
-                        background: isSelected ? "#f0fdf4" : "transparent",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        fontFamily: "inherit",
-                        transition: "background 0.1s",
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        toggle(item);
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected)
-                          e.currentTarget.style.background = "#f8fafc";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = isSelected
-                          ? "#f0fdf4"
-                          : "transparent";
-                      }}
-                    >
-                      {showFlags && countryData && (
-                        <img
-                          src={getFlagUrl(countryData.code)}
-                          alt={countryData.code}
-                          style={{
-                            width: 20,
-                            height: 15,
-                            objectFit: "cover",
-                            borderRadius: 2,
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
-                      <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
-                        {displayName}
-                      </span>
-                      <div
-                        style={{
-                          width: 16,
-                          height: 16,
-                          border: "1.5px solid #cbd5e1",
-                          borderRadius: 3,
-                          background: isSelected ? "#10b981" : "#fff",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {isSelected && (
-                          <span
-                            style={{
-                              color: "#fff",
-                              fontSize: 12,
-                              fontWeight: "bold",
-                            }}
-                          >
-                            ✓
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
+                  ✕
+                </button>
               )}
             </div>
-          </div>,
-          document.body,
-        )
-      : null;
+          </div>
+
+          {/* List */}
+          <div style={{ maxHeight: 280, overflowY: "auto" }}>
+            {filtered.length === 0 ? (
+              <div
+                style={{
+                  padding: "18px 16px",
+                  textAlign: "center",
+                  color: "#94a3b8",
+                  fontSize: 13,
+                }}
+              >
+                No results found
+              </div>
+            ) : (
+              filtered.map((item) => {
+                const displayName = getDisplayName(item);
+                const countryData =
+                  typeof item === "string" ? findCountryByName(item) : null;
+                const isSelected = selected.includes(displayName);
+
+                return (
+                  <div
+                    key={displayName}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: "9px 14px",
+                      border: "none",
+                      background: isSelected ? "#f0fdf4" : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      fontFamily: "inherit",
+                      transition: "background 0.1s",
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggle(item);
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected)
+                        e.currentTarget.style.background = "#f8fafc";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = isSelected
+                        ? "#f0fdf4"
+                        : "transparent";
+                    }}
+                  >
+                    {showFlags && countryData && (
+                      <img
+                        src={getFlagUrl(countryData.code)}
+                        alt={countryData.code}
+                        style={{
+                          width: 20,
+                          height: 15,
+                          objectFit: "cover",
+                          borderRadius: 2,
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
+                    <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
+                      {displayName}
+                    </span>
+                    <div
+                      style={{
+                        width: 16,
+                        height: 16,
+                        border: "1.5px solid #cbd5e1",
+                        borderRadius: 3,
+                        background: isSelected ? "#10b981" : "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isSelected && (
+                        <span
+                          style={{
+                            color: "#fff",
+                            fontSize: 12,
+                            fontWeight: "bold",
+                          }}
+                        >
+                          ✓
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>,
+        document.body,
+      )
+    : null;
 
   return (
     <>
@@ -1231,9 +1230,8 @@ function SingleSelect({ items, value, onChange, placeholder, hasError }) {
     i.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const dropdown =
-    open && position.width > 0
-      ? createPortal(
+  const dropdown = open
+    ? createPortal(
         <div
           ref={dropdownRef}
           className="ms-dropdown animate-in"
@@ -1278,7 +1276,7 @@ function SingleSelect({ items, value, onChange, placeholder, hasError }) {
         </div>,
         document.body,
       )
-      : null;
+    : null;
 
   return (
     <>
@@ -1362,7 +1360,10 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
     onFile({ name: rawFile.name, url: null });
     try {
       const uploaded = await uploadFileDirectToS3(rawFile);
-      onFile({ name: uploaded.name || rawFile.name, url: uploaded.key || uploaded.url });
+      onFile({
+        name: uploaded.name || rawFile.name,
+        url: uploaded.key || uploaded.url,
+      });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
     } finally {
@@ -1537,7 +1538,10 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
     onFile({ name: rawFile.name, url: null });
     try {
       const uploaded = await uploadFileDirectToS3(rawFile);
-      onFile({ name: uploaded.name || rawFile.name, url: uploaded.key || uploaded.url });
+      onFile({
+        name: uploaded.name || rawFile.name,
+        url: uploaded.key || uploaded.url,
+      });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
       // Keep the { name, url: null } so the user sees the error state
@@ -1700,7 +1704,8 @@ export default function DoctorOnboardingWizard({
 
   const countries = countryApi?.getAllCountries() || [];
 
-  const states = s1.country && stateApi ? stateApi.getStatesOfCountry(s1.country) : [];
+  const states =
+    s1.country && stateApi ? stateApi.getStatesOfCountry(s1.country) : [];
   const hasStates = states.length > 0;
   const cities = [];
   const hasCities = false;
@@ -2040,8 +2045,7 @@ export default function DoctorOnboardingWizard({
     if (!s1.gender) e.gender = "Required";
     if (!s1.dob) e.dob = "Required";
     if (!s1.country) e.country = "Required";
-    if (s1.country === "US" && !s1.state.trim())
-      e.state = "Required for US";
+    if (s1.country === "US" && !s1.state.trim()) e.state = "Required for US";
     if (languagesKnown.length === 0) e.languages = "Required";
     setS1Errors(e);
     return Object.keys(e).length === 0;
@@ -2273,7 +2277,7 @@ export default function DoctorOnboardingWizard({
         </h4>
         <div className="form-grid">
           <div className="field-group">
-            <label className="field-label">
+            <label className="field-label ">
               Mobile Number <span className="req">*</span>
             </label>
             <div className={`de-phone-input ${s1Errors.phone ? "error" : ""}`}>
@@ -2363,7 +2367,9 @@ export default function DoctorOnboardingWizard({
                 setOtherLicenseCountries([]);
               }}
             >
-              <option value="">Select country...</option>
+              <option value="">
+                {countryApi ? "Select country..." : "Loading countries..."}
+              </option>
 
               {countries.map(country => (
                 <option key={country.isoCode} value={country.isoCode}>
@@ -2392,9 +2398,7 @@ export default function DoctorOnboardingWizard({
               <div className="field-group">
                 <label className="field-label">
                   State / Province
-                  {s1.country === "US" && (
-                    <span className="req">*</span>
-                  )}
+                  {s1.country === "US" && <span className="req">*</span>}
                   {!s1.country && (
                     <span
                       style={{
@@ -2824,11 +2828,39 @@ export default function DoctorOnboardingWizard({
             <label className="field-label">
               Graduation Year <span className="req">*</span>
             </label>
-            <input
+            {/* <input
               className={`field-input ${s2Errors.gradYear ? "error" : ""}`}
               placeholder="YYYY"
               value={s2.gradYear}
               onChange={(e) => setS2({ ...s2, gradYear: e.target.value })}
+            /> */}
+            <input
+              className={`field-input ${s2Errors.gradYear ? "error" : ""}`}
+              placeholder="YYYY"
+              value={s2.gradYear}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              onChange={(e) =>
+                setS2({
+                  ...s2,
+                  gradYear: e.target.value.replace(/[^0-9]/g, ""),
+                })
+              }
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                  "Home",
+                  "End",
+                ];
+                if (!allowed.includes(e.key) && !/^[0-9]$/.test(e.key))
+                  e.preventDefault();
+              }}
             />
             {s2Errors.gradYear && (
               <div className="field-error">{s2Errors.gradYear}</div>
@@ -2908,14 +2940,34 @@ export default function DoctorOnboardingWizard({
               <input
                 className="field-input"
                 style={{ border: "none", borderRadius: 0, boxShadow: "none" }}
-                type="number"
-                min="0"
-                step="1"
+                type="text"
+                inputMode="decimal"
                 placeholder="e.g. 500"
                 value={s2.consultantFees}
                 onChange={(e) =>
-                  setS2({ ...s2, consultantFees: e.target.value })
+                  setS2({
+                    ...s2,
+                    consultantFees: e.target.value
+                      .replace(/[^0-9.]/g, "")
+                      .replace(/^(\d*\.?\d*).*$/, "$1"),
+                  })
                 }
+                onKeyDown={(e) => {
+                  const allowed = [
+                    "Backspace",
+                    "Delete",
+                    "ArrowLeft",
+                    "ArrowRight",
+                    "Tab",
+                    "Enter",
+                    "Home",
+                    "End",
+                  ];
+                  // Allow one decimal point
+                  if (e.key === "." && !s2.consultantFees.includes(".")) return;
+                  if (!allowed.includes(e.key) && !/^[0-9]$/.test(e.key))
+                    e.preventDefault();
+                }}
               />
             </div>
             {s2Errors.consultantFees && (
@@ -2946,7 +2998,15 @@ export default function DoctorOnboardingWizard({
               className="field-textarea"
               placeholder="Brief professional bio, areas of focus, patient care philosophy..."
               value={s2.aboutDoctor}
-              onChange={(e) => setS2({ ...s2, aboutDoctor: e.target.value })}
+              onChange={(e) =>
+                setS2({
+                  ...s2,
+                  aboutDoctor: e.target.value.replace(
+                    /[-+=*^%$#@!~`|\\<>{}[\]]/g,
+                    "",
+                  ),
+                })
+              }
             />
           </div>
         </div>

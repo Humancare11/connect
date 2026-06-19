@@ -106,7 +106,7 @@ router.put("/:id/assign", verifyAdminToken, adminOnly, async (req, res) => {
     const question = await Question.findByIdAndUpdate(
       req.params.id,
       { status: "assigned", assignedDoctorId: doctorId || null, assignedDoctorName: doctorName || "", assignedDoctorSpec: doctorSpec || "" },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!question) return res.status(404).json({ msg: "Question not found." });
 
@@ -156,7 +156,7 @@ router.put("/:id/answer", verifyDoctorToken, async (req, res) => {
 router.put("/:id/approve", verifyAdminToken, adminOnly, async (req, res) => {
   try {
     const question = await Question.findByIdAndUpdate(
-      req.params.id, { status: "approved", answered: true }, { new: true }
+      req.params.id, { status: "approved", answered: true }, { returnDocument: 'after' }
     );
     if (!question) return res.status(404).json({ msg: "Question not found." });
 
@@ -172,3 +172,4 @@ router.put("/:id/approve", verifyAdminToken, adminOnly, async (req, res) => {
 });
 
 module.exports = router;
+

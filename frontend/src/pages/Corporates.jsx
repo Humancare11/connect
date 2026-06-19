@@ -5,6 +5,7 @@ import IndustrySlider from "../components/IndustrySlider";
 import ECGTimeline from "../components/ECGTimeline";
 import Netaji from "../components/Netaji";
 import Demo from "../components/Demo";
+import CorporateImg from "../assets/Corporate.webp";
 
 const SERVICES = [
     {
@@ -282,11 +283,24 @@ export default function CorporateDemo() {
         <>
             {/* HERO */}
             <section>
-                <div className="corp-hero">
+                <div
+                    className="corp-hero"
+                    style={{
+                        backgroundImage: `
+      linear-gradient(
+            rgba(51, 71, 121, 0.75),
+        rgba(0, 0, 0, 0.75)
+      ),
+      url(${CorporateImg})
+    `
+                    }}
+                >
                     <div className="corp-hero-inner">
-                        <h1>Corporate Solutions & Insights</h1>
+                        <h1>Corporate healthcare solutions built for modern teams.
+                        </h1>
                         <p>
-                            Empowering businesses with innovative strategies, expert consulting, and scalable solutions to drive sustainable growth and success.
+                            Support employee wellness, productivity, and long-term workforce health with secure corporate telemedicine services designed for businesses of every size. Humancare Connect helps companies simplify healthcare access through fast online doctor appointments, virtual healthcare services, and a scalable telemedicine platform employees can access anytime, anywhere.
+
                         </p>
                     </div>
                 </div>
@@ -318,7 +332,7 @@ export default function CorporateDemo() {
                                 onClick={() => setActiveIdx(i)}
                                 style={{ '--panel-accent': svc.accent }}
                             >
-                                
+
                                 {/* Always visible collapsed spine */}
                                 <div className="accordion-spine">
                                     <div className="spine-icon">{svc.icon}</div>

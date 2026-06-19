@@ -196,7 +196,7 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
     try {
       const res = await api.post("/api/paypal/capture-order", { orderId: data.orderID });
       if (res.data.status === "COMPLETED") {
-        onComplete(res.data.orderId, "paypal", res.data.amountPaise);
+        onComplete(res.data.orderId, "paypal", res.data.amountCents);
       }
     } catch (err) {
       setPaypalError(err.response?.data?.msg || "PayPal payment failed. Please try again.");
@@ -206,7 +206,7 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
   };
 
   return (
-    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "INR", intent: "capture" }}>
+    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "USD", intent: "capture" }}>
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -437,7 +437,7 @@ export default function BookAppointment() {
           feeCurrency: res.data.feeCurrency,
         } : prev);
       }
-      setPaymentAmount(res.data.feePaise);
+      setPaymentAmount(res.data.feeCents);
       setStage("payment");
     } catch (err) {
       setError(err.response?.data?.msg || "Failed to load fee. Please try again.");

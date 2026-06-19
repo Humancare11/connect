@@ -8,22 +8,49 @@ import {
   useSpring,
 } from "framer-motion";
 
+// categories
+import cat1 from "../assets/CATEGORIES/1.png";
+import cat2 from "../assets/CATEGORIES/2.png";
+import cat3 from "../assets/CATEGORIES/3.png";
+import cat4 from "../assets/CATEGORIES/4.png";
+import cat5 from "../assets/CATEGORIES/5.png";
+import cat6 from "../assets/CATEGORIES/6.png";
+
+// specilities
+import sp1 from "../assets/SPECIALITIES/1.png";
+import sp2 from "../assets/SPECIALITIES/2.png";
+import sp3 from "../assets/SPECIALITIES/3.png";
+import sp4 from "../assets/SPECIALITIES/4.png";
+import sp5 from "../assets/SPECIALITIES/5.png";
+import sp6 from "../assets/SPECIALITIES/6.png";
+import sp7 from "../assets/SPECIALITIES/7.png";
+
+// conditions
+import cod1 from "../assets/CONDITIONS/1.png";
+import cod2 from "../assets/CONDITIONS/2.png";
+import cod3 from "../assets/CONDITIONS/3.png";
+import cod4 from "../assets/CONDITIONS/4.png";
+import cod5 from "../assets/CONDITIONS/5.png";
+import cod6 from "../assets/CONDITIONS/6.png";
+import cod7 from "../assets/CONDITIONS/7.png";
+import cod8 from "../assets/CONDITIONS/8.png";
+
 export default function SpecialtiesSection() {
   const [activeTab, setActiveTab] = useState("categories");
-  const pillRef  = useRef(null);
-  const tabRefs  = useRef([]);
+  const pillRef = useRef(null);
+  const tabRefs = useRef([]);
   const wrapperRef = useRef(null);
 
   /* ── Sliding pill position ── */
   useEffect(() => {
     const pill = pillRef.current;
-    const idx  = activeTab === "categories" ? 0 : activeTab === "specialties" ? 1 : 2;
-    const tab  = tabRefs.current[idx];
+    const idx = activeTab === "categories" ? 0 : activeTab === "specialties" ? 1 : 2;
+    const tab = tabRefs.current[idx];
 
     const updatePill = () => {
       if (pill && tab) {
         pill.style.width = tab.offsetWidth + "px";
-        pill.style.left  = tab.offsetLeft  + "px";
+        pill.style.left = tab.offsetLeft + "px";
       }
     };
 
@@ -52,68 +79,68 @@ export default function SpecialtiesSection() {
     restDelta: 0.001,
   });
 
-  const scale   = useTransform(smoothProgress, [0, 1], [0.86, 1]);
+  const scale = useTransform(smoothProgress, [0, 1], [0.86, 1]);
   const opacity = useTransform(smoothProgress, [0, 0.3, 1], [0, 0.55, 1]);
-  const y       = useTransform(smoothProgress, [0, 1], [56, 0]);
+  const y = useTransform(smoothProgress, [0, 1], [56, 0]);
 
   const handleTabChange = (tab) => {
     if (tab === activeTab) return;
     setActiveTab(tab);
   };
 
-  const categories = [
-    { img: "https://picsum.photos/seed/heart-care/400/260",     name: "Heart & Vascular", count: "52 doctors" },
-    { img: "https://picsum.photos/seed/brain-health/400/260",   name: "Brain & Nerves",   count: "36 doctors" },
-    { img: "https://picsum.photos/seed/mental-calm/400/260",    name: "Mental Wellness",  count: "76 doctors" },
-    { img: "https://picsum.photos/seed/child-health/400/260",   name: "Child Health",     count: "41 doctors" },
-    { img: "https://picsum.photos/seed/bones-joints/400/260",   name: "Bones & Joints",   count: "29 doctors" },
-    { img: "https://picsum.photos/seed/lungs-breath/400/260",   name: "Respiratory",      count: "33 doctors" },
-    { img: "https://picsum.photos/seed/women-health/400/260",   name: "Women's Health",   count: "44 doctors" },
-    { img: "https://picsum.photos/seed/genetics-lab/400/260",   name: "Genetics & Labs",  count: "18 doctors" },
-  ];
+const categories = [
+  { img: cat1, name: "Heart & Vascular", count: "52 doctors" },
+  { img: cat2, name: "Brain & Nerves", count: "36 doctors" },
+  { img: cat3, name: "Mental Wellness", count: "76 doctors" },
+  { img: cat4, name: "Child Health", count: "41 doctors" },
+  { img: cat5, name: "Bones & Joints", count: "29 doctors" },
+  { img: cat6, name: "Respiratory", count: "33 doctors" },
+  { img: cat1, name: "Women's Health", count: "44 doctors" },
+  { img: cat2, name: "Genetics & Labs", count: "18 doctors" },
+];
 
-  const specialties = [
-    { img: "https://picsum.photos/seed/cardiology-1/400/260",   name: "Cardiology",    count: "48 doctors" },
-    { img: "https://picsum.photos/seed/neurology-2/400/260",    name: "Neurology",     count: "32 doctors" },
-    { img: "https://picsum.photos/seed/mentalhealth-3/400/260", name: "Mental Health", count: "76 doctors" },
-    { img: "https://picsum.photos/seed/pediatrics-4/400/260",   name: "Pediatrics",    count: "41 doctors" },
-    { img: "https://picsum.photos/seed/orthopedics-5/400/260",  name: "Orthopedics",   count: "29 doctors" },
-    { img: "https://picsum.photos/seed/ophthalmology-6/400/260",name: "Ophthalmology", count: "22 doctors" },
-    { img: "https://picsum.photos/seed/primarycare-7/400/260",  name: "Primary Care",  count: "98 doctors" },
-    { img: "https://picsum.photos/seed/dermatology-8/400/260",  name: "Dermatology",   count: "35 doctors" },
-  ];
+const specialties = [
+  { img: sp1, name: "Primary Care", count: "48 doctors", path: "/primary-care" },
+  { img: sp2, name: "Neurology", count: "32 doctors" },
+  { img: sp3, name: "Mental Health", count: "76 doctors" },
+  { img: sp4, name: "Pediatrics", count: "41 doctors" },
+  { img: sp5, name: "Orthopedics", count: "29 doctors" },
+  { img: sp6, name: "Ophthalmology", count: "22 doctors" },
+  { img: sp7, name: "Cardiology", count: "98 doctors" },
 
-  const symptoms = [
-    { img: "https://picsum.photos/seed/fever-symp/400/260",     name: "Fever",        count: "120 doctors" },
-    { img: "https://picsum.photos/seed/headache-symp/400/260",  name: "Headache",     count: "95 doctors"  },
-    { img: "https://picsum.photos/seed/cough-symp/400/260",     name: "Cold & Cough", count: "110 doctors" },
-    { img: "https://picsum.photos/seed/chestpain-symp/400/260", name: "Chest Pain",   count: "60 doctors"  },
-    { img: "https://picsum.photos/seed/jointpain-symp/400/260", name: "Joint Pain",   count: "70 doctors"  },
-    { img: "https://picsum.photos/seed/eye-symp/400/260",       name: "Eye Problems", count: "40 doctors"  },
-    { img: "https://picsum.photos/seed/stress-symp/400/260",    name: "Stress",       count: "85 doctors"  },
-    { img: "https://picsum.photos/seed/skin-symp/400/260",      name: "Skin Issues",  count: "55 doctors"  },
-  ];
+  { img: cod8, name: "Dermatology", count: "35 doctors" },
+];
 
+const condition = [
+  { img: cod1, name: "Fever", count: "120 doctors" },
+  { img: cod2, name: "Headache", count: "95 doctors" },
+  { img: cod3, name: "Cold & Cough", count: "110 doctors" },
+  { img: cod4, name: "Chest Pain", count: "60 doctors" },
+  { img: cod5, name: "Joint Pain", count: "70 doctors" },
+  { img: cod6, name: "Eye Problems", count: "40 doctors" },
+  { img: cod7, name: "Stress", count: "85 doctors" },
+  { img: cod8, name: "Skin Issues", count: "55 doctors" },
+];
   const data =
     activeTab === "categories"
       ? categories
       : activeTab === "specialties"
-      ? specialties
-      : symptoms;
+        ? specialties
+        : condition;
 
   const ctaLink =
     activeTab === "categories"
       ? "/categories"
       : activeTab === "specialties"
-      ? "/specialty"
-      : "/symptoms";
+        ? "/specialties"
+        : "/conditions";
 
   const ctaLabel =
     activeTab === "categories"
       ? "View All Categories"
       : activeTab === "specialties"
-      ? "View All Specialties"
-      : "View All Symptoms";
+        ? "View All Specialties"
+        : "View All Conditions";
 
   return (
     <Motion.section
@@ -122,7 +149,7 @@ export default function SpecialtiesSection() {
       id="specialties"
       style={{ scale, opacity, y }}
     >
-      
+
 
       <div className="aa-container">
 
@@ -151,10 +178,10 @@ export default function SpecialtiesSection() {
             </button>
             <button
               ref={(el) => (tabRefs.current[2] = el)}
-              className={`aa-tab${activeTab === "symptoms" ? " aa-tab-active" : ""}`}
-              onClick={() => handleTabChange("symptoms")}
+              className={`aa-tab${activeTab === "conditions" ? " aa-tab-active" : ""}`}
+              onClick={() => handleTabChange("conditions")}
             >
-              Symptoms
+              Conditions
             </button>
           </div>
         </div>

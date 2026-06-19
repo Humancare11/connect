@@ -379,7 +379,7 @@ const disableUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { accountDisabled: true, disabledAt: new Date(), disabledReason: reason },
-      { new: true }
+      { returnDocument: 'after' }
     ).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found" });
     const revokedCount = await revokeUserSessions(user._id, "account_disabled");
@@ -526,7 +526,7 @@ const markDoctorPayout = async (req, res) => {
         doctorPayoutDate:   new Date(),
         doctorPayoutRef:    payoutRef || "",
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!appointment) return res.status(404).json({ msg: "Appointment not found" });
     res.status(200).json({ msg: "Payout marked as paid", appointment });
@@ -556,7 +556,7 @@ const editDoctorPayout = async (req, res) => {
       }
     }
 
-    const appointment = await Appointment.findByIdAndUpdate(req.params.id, update, { new: true });
+    const appointment = await Appointment.findByIdAndUpdate(req.params.id, update, { returnDocument: 'after' });
     if (!appointment) return res.status(404).json({ msg: "Appointment not found" });
     res.status(200).json({ msg: "Payout updated", appointment });
   } catch (error) {
@@ -854,3 +854,4 @@ module.exports = {
   editDoctorPayout,
   processDoctorPayout,
 };
+

@@ -1,7 +1,5 @@
 /* ══════════════════════════════════════════════
    PCP SECTION
-   — Framer Motion handles scroll pop-up & inner stagger
-   — CSS handles layout, hover, decorative details, responsive
 ══════════════════════════════════════════════ */
 
 /* ─── Section wrapper ─── */
@@ -18,10 +16,9 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
     0 20px 60px rgba(15, 23, 42, 0.06);
-  overflow: visible;            /* MUST be visible — overflow:hidden clips scale() */
+  overflow: visible;
   z-index: 1;
 
-  /* Framer Motion drives scale/opacity/y via inline style */
   will-change: transform, opacity;
   transform-origin: center center;
 }
@@ -105,7 +102,6 @@
   gap: 22px;
   align-items: flex-start;
   backdrop-filter: blur(10px);
-  /* hover lift handled by Framer Motion whileHover — only shadow/bg transition here */
   transition:
     background 0.32s ease,
     box-shadow 0.32s ease,
@@ -154,6 +150,12 @@
 /* ─── Right column ─── */
 .pcp-right {
   position: relative;
+  /* At desktop the image-stack is 640px tall + steps card is absolute.
+     We need the right column to be tall enough to hold both AND the
+     know-more button below. The min-height gives room for everything. */
+  min-height: 780px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ─── Image stack ─── */
@@ -161,6 +163,8 @@
   position: relative;
   width: 100%;
   height: 640px;
+  /* flex-shrink: 0 so it doesn't compress and displace the button */
+  flex-shrink: 0;
 }
 
 .pcp-img-main {
@@ -202,7 +206,7 @@
 .pcp-steps-card {
   position: absolute;
   right: -28px;
-  bottom: -36px;
+  bottom: 100px; 
   width: 400px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(50, 79, 134, 0.08);
@@ -247,7 +251,6 @@
   align-items: flex-start;
 }
 
-/* step-num hover handled by Framer Motion whileHover */
 .pcp-step-num {
   min-width: 48px;
   height: 48px;
@@ -261,7 +264,6 @@
   justify-content: center;
   flex-shrink: 0;
   cursor: pointer;
-  /* bg/color transitions driven by Framer Motion inline */
 }
 
 .pcp-step h4 {
@@ -284,6 +286,68 @@
   margin: 7px 0 7px 23px;
 }
 
+/* ════════════════════════════════════════════
+   KNOW MORE BUTTON
+  
+════════════════════════════════════════════ */
+
+.pcp-know-more-wrap {
+  /* Push to column bottom on desktop */
+  margin-top: auto;
+  padding-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pcp-know-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  background: linear-gradient(135deg, #132444 0%, #1e3a6e 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 18px;
+  padding: 18px 40px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+
+  transition: background 0.35s ease;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 24px rgba(19, 36, 68, 0.18);
+}
+
+.pcp-know-more-btn:hover {
+  background: linear-gradient(135deg, #132444 0%, #1e3a6e 100%);
+}
+
+/* Arrow — slides right on hover via CSS (Framer Motion drives the lift) */
+.pcp-btn-arrow {
+  font-size: 18px;
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pcp-know-more-btn:hover .pcp-btn-arrow {
+  transform: translateX(5px);
+}
+
+/* Hint text below the button */
+.pcp-know-more-hint {
+  font-size: 12px;
+  color: #8fa3c0;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin: 0;
+  padding-left: 4px;
+}
+
 /* ══════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════ */
@@ -301,24 +365,32 @@
     grid-template-columns: 1fr;
     gap: 48px;
   }
+
   .pcp-right {
     max-width: 720px;
     margin: 0 auto;
     width: 100%;
+    /* Reset desktop flex sizing — let content determine height */
+    min-height: unset;
   }
 
-  /* ✅ Hide images at 1200px and below — layout is single-column */
+  /* Images hidden at 1200px and below */
   .pcp-image-stack {
     display: none;
   }
 
-  /* Steps card: lift out of absolute positioning */
+  /* Steps card: back to normal flow */
   .pcp-steps-card {
     position: relative;
     right: auto;
     bottom: auto;
     width: 100%;
     margin-top: 0;
+  }
+
+  /* Know More: in-flow, no longer needs margin-top:auto */
+  .pcp-know-more-wrap {
+    margin-top: 32px;
   }
 }
 
@@ -339,9 +411,16 @@
   .pcp-title {
     font-size: 36px;
   }
-  /* belt-and-suspenders: images definitely hidden */
   .pcp-image-stack {
     display: none !important;
+  }
+  .pcp-know-more-wrap {
+    margin-top: 28px;
+  }
+  .pcp-know-more-btn {
+    padding: 16px 32px;
+    font-size: 14px;
+    border-radius: 14px;
   }
 }
 
@@ -367,7 +446,6 @@
   .pcp-feature-card h4 {
     font-size: 16px;
   }
-  /* triple-lock image hide */
   .pcp-image-stack {
     display: none !important;
   }
@@ -392,6 +470,20 @@
   }
   .pcp-step p {
     font-size: 12px;
+  }
+  .pcp-know-more-wrap {
+    margin-top: 24px;
+    align-items: stretch; /* full-width button on small screens */
+  }
+  .pcp-know-more-btn {
+    justify-content: center;
+    padding: 14px 24px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+  .pcp-know-more-hint {
+    text-align: center;
+    padding-left: 0;
   }
 }
 

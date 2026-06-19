@@ -1,6 +1,6 @@
 /* ================================================================
    ECG PROCESS TIMELINE — Humancare
-   All styles scoped to .hc-step-card and related elements
+   All styles scoped to .hc-ecg-container and related elements
 ================================================================ */
 
 * {
@@ -62,13 +62,13 @@
   line-height: 1.5;
 }
 
-/* SVG Wrapper */
+/* SVG Wrapper — clip peaks on narrow viewports */
 .hc-svg-wrapper {
   width: 100%;
   overflow: hidden;
 }
 
-/* Grid wrapper for step cards - responsive */
+/* Grid wrapper for step cards */
 #stepCards {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -156,10 +156,12 @@
    RESPONSIVE BREAKPOINTS
 ================================================================ */
 
-/* Large Tablets and Small Laptops - 3 columns */
+/* Large Tablets and Small Laptops — 3 columns */
 @media (max-width: 1024px) {
   .hc-ecg-container {
     padding: 40px 28px 0;
+    /* BUG FIX: 120px side margins crush layout on narrower screens */
+    margin: 40px 60px;
   }
 
   .hc-header {
@@ -183,11 +185,13 @@
   }
 }
 
-/* Tablets - 2 columns */
+/* Tablets — 2 columns */
 @media (max-width: 768px) {
   .hc-ecg-container {
     padding: 36px 24px 0;
     border-radius: 12px;
+    /* BUG FIX: reduce margins further so container doesn't overflow viewport */
+    margin: 32px 24px;
   }
 
   .hc-header {
@@ -228,29 +232,9 @@
     margin-bottom: 8px;
   }
 
+  /* BUG FIX: these rules were incorrectly nested inside .hc-step-icon svg {}
+     causing them to never apply. Extracted and placed at correct scope. */
   .hc-step-icon svg {
-    .hc-header {
-      margin-bottom: 24px;
-    }
-
-    .hc-header-eyebrow {
-      font-size: 9px;
-      letter-spacing: 1.8px;
-    }
-
-    .hc-header-line {
-      width: 16px;
-    }
-
-    .hc-header-title {
-      font-size: clamp(20px, 5.5vw, 28px);
-    }
-
-    .hc-header-desc {
-      font-size: 12px;
-      padding: 0 12px;
-    }
-
     width: 14px;
     height: 14px;
   }
@@ -269,10 +253,12 @@
   }
 }
 
-/* Mobile Landscape and Small Tablets - 2 columns */
+/* Mobile Landscape and Small Tablets — 2 columns */
 @media (max-width: 640px) {
   .hc-ecg-container {
     padding: 32px 20px 0;
+    /* BUG FIX: 120px margins on a ~375px screen = only 135px for content */
+    margin: 24px 16px;
   }
 
   #stepCards {
@@ -319,16 +305,21 @@
   }
 }
 
-/* Mobile Portrait - 1 column for better readability */
+/* Mobile Portrait — 1 column for readability */
 @media (max-width: 480px) {
   .hc-ecg-container {
     padding: 28px 16px 0;
     border-radius: 8px;
+    /* BUG FIX: zero out large side margins so section fills the screen */
+    margin: 16px 12px;
   }
 
   #stepCards {
     grid-template-columns: 1fr;
     gap: 0;
+    /* BUG FIX: 1-column layout has no adjacent card; the gap background
+       becomes a full-width coloured band on left/right edges. Remove it. */
+    background: transparent;
   }
 
   .hc-header {
@@ -389,10 +380,11 @@
   }
 }
 
-/* Extra Small Mobile - Optimized for very small screens */
+/* Extra Small Mobile */
 @media (max-width: 360px) {
   .hc-ecg-container {
     padding: 24px 12px 0;
+    margin: 12px 8px;
   }
 
   .hc-step-card {

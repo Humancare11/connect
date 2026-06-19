@@ -83,17 +83,6 @@ const NAV_ITEMS = [
         ),
       },
       {
-        path: "/admin-dashboard/payments",
-        label: "Payments",
-        superadminOnly: true,
-        icon: (
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-            <line x1="1" y1="10" x2="23" y2="10"/>
-          </svg>
-        ),
-      },
-      {
         path: "/admin-dashboard/payment-links",
         paymentAdminPath: "/payment-admin/payment-links",
         label: "Payment Links",
@@ -172,7 +161,6 @@ export default function AdminLayout({ children }) {
   const EXTRA_TITLES = {
     "/superadmin-dashboard":    "Manage Admins",
     "/admin-dashboard/audit-logs": "Audit Logs",
-    "/admin-dashboard/security-incidents": "Security Incidents",
     "/payment-admin/payment-links": "Payment Links",
   };
   const pageTitle = NAV_ITEMS.flatMap(s => s.items)
@@ -276,18 +264,17 @@ export default function AdminLayout({ children }) {
                 Audit Logs
               </Link>
               <Link
-                to="/admin-dashboard/security-incidents"
-                className={`ad-nav-item${location.pathname === "/admin-dashboard/security-incidents" ? " active" : ""}`}
+                to="/superadmin-dashboard/pricing-management"
+                className={`ad-nav-item${location.pathname === "/superadmin-dashboard/pricing-management" ? " active" : ""}`}
                 onClick={() => setSideOpen(false)}
               >
                 <span className="ad-nav-icon">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    <path d="M12 8v5"/>
-                    <path d="M12 17h.01"/>
+                    <line x1="12" y1="1" x2="12" y2="23"/>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                   </svg>
                 </span>
-                Security Incidents
+                Pricing Management
               </Link>
             </>
           )}
