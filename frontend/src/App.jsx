@@ -14,7 +14,6 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 
 const Home = lazy(() => import("./pages/Home"));
-const About = lazy(() => import("./pages/About"));
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
@@ -40,8 +39,7 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-import AboutUs from "./pages/AboutPage"; // about us page
-
+import AboutPage from "./pages/AboutPage"
 import PCP from "./pages/PCP";
 
 // privacy concerns
@@ -468,7 +466,7 @@ function AppLayout() {
       >
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
+
           <Route path="/ask-a-question" element={<AskDoctor />} />
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
@@ -987,7 +985,7 @@ function AppLayout() {
           <Route path="/appointment-booking/form" element={<AppointmentBookingForm />}/>
           
           <Route path="/pcp" element={<PCP/>}/>
-          <Route path="/about-us" element={<AboutUs />} />
+
           {/* PRIVACY  */}
           <Route path="/privacy-concerns" element={<PrivacyConcerns />} />  {/* demo */}
           <Route path="/patient-privacy-notice" element={<PatientPrivacyNotice />} />
@@ -1003,7 +1001,7 @@ function AppLayout() {
           <Route path="/patient-informed-consent-form" element={<PatientInformedConsentForm />} />
 
 
-
+<Route path="/about-us" element={<AboutPage />} />
 
 
         </Routes>
