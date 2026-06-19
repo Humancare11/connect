@@ -19,6 +19,12 @@ function isKnownStructuredKey(value) {
   return /^(uploads|doctors|patients)\//.test(String(value || ""));
 }
 
+function stripApiUploadsPrefix(path) {
+  // Strip /api/uploads/ prefix added by the frontend URL normalizer
+  if (path.startsWith("api/uploads/")) return path.slice("api/uploads/".length);
+  return path;
+}
+
 function keyFromStoredValue(value) {
   if (!value) return "";
   const raw = String(value).trim();
@@ -26,14 +32,16 @@ function keyFromStoredValue(value) {
 
   try {
     const url = new URL(raw);
-    const pathname = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+    const pathname = stripApiUploadsPrefix(decodeURIComponent(url.pathname.replace(/^\/+/, "")));
     if (!pathname) return "";
     if (isKnownStructuredKey(pathname)) return pathname;
     return uploadKey(pathname.split("/").pop());
   } catch {
-    if (isKnownStructuredKey(raw)) return raw;
-    if (raw.includes("/")) return raw;
-    return uploadKey(raw.split("/").pop());
+    // Handle relative paths like /api/uploads/doctors/xxx/file
+    const stripped = stripApiUploadsPrefix(raw.replace(/^\/+/, ""));
+    if (isKnownStructuredKey(stripped)) return stripped;
+    if (stripped.includes("/")) return stripped;
+    return uploadKey(stripped.split("/").pop());
   }
 }
 
