@@ -38,13 +38,13 @@ const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
 // const Anthropic = require("@anthropic-ai/sdk");
-const Groq = require("groq-sdk");
+// const Groq = require("groq-sdk");
 
 const app = express();
 
 
 // const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+// const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 
 // Trust the first reverse proxy (Nginx, Apache, Cloudflare).
@@ -451,39 +451,53 @@ app.use("/api/locations", require("./routes/locations"));
 //   }
 // });
 
-app.post("/api/search", async (req, res) => {
+
+// app.post("/api/search", async (req, res) => {
+//   const { query, routes } = req.body;
+
+//   try {
+//     const completion = await client.chat.completions.create({
+//       model: "llama-3.1-8b-instant",
+//       max_tokens: 500,
+//       messages: [
+//         {
+//           role: "system",
+//           content: "You are a medical search assistant. Always respond with ONLY a valid JSON array. Never include markdown, backticks, or explanation."
+//         },
+//         {
+//           role: "user",
+//           // highlight-start
+//           content: `A patient typed: "${query}" (may be partial or misspelled).
+// Match against these medical routes using their title AND keywords.
+// Return the top 5 most relevant as a JSON array (same shape as input, include the keywords field).
+// Prioritize: exact title match > keyword match > partial/fuzzy match.
+// List: ${JSON.stringify(routes)}
+// Return ONLY a valid JSON array.`
+//           // highlight-end
+//         }
+//       ]
+//     });
+
+//     let raw = completion.choices[0].message.content.trim();
+//     raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+
+//     const results = JSON.parse(raw);
+//     res.json({ results });
+
+//   } catch (err) {
+//     console.error("Search error:", err);
+//     res.status(500).json({ error: "Search failed", detail: err.message });
+//   }
+// });
+
+const searchRoutes = require("./searchRoutes");
+
+app.post("/api/search", (req, res) => {
   const { query, routes } = req.body;
 
-  try {
-    const completion = await client.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      max_tokens: 500,
-      messages: [
-        {
-          role: "system",
-          content: "You are a medical search assistant. Always respond with ONLY a valid JSON array. Never include markdown, backticks, or explanation."
-        },
-        {
-          role: "user",
-          content: `A patient searched: "${query}".
-From this list, return the top 5 most relevant as a JSON array (same shape as input).
-List: ${JSON.stringify(routes)}
-Return ONLY a valid JSON array. No markdown, no backticks, no explanation.`
-        }
-      ]
-    });
+  const results = searchRoutes(query, routes);
 
-    // Strip markdown backticks if Groq adds them anyway
-    let raw = completion.choices[0].message.content.trim();
-    raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
-
-    const results = JSON.parse(raw);
-    res.json({ results });
-
-  } catch (err) {
-    console.error("Search error:", err);
-    res.status(500).json({ error: "Search failed", detail: err.message });
-  }
+  res.json({ results });
 });
 
 // Health Check

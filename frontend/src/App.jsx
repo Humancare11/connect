@@ -14,9 +14,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 
 const Home = lazy(() => import("./pages/Home"));
-
-const About = lazy(() => import("./pages/AboutPage"));
-
+const About = lazy(() => import("./pages/About"));
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
@@ -214,7 +212,6 @@ const SuperAdminDashboard = lazy(
   () => import("./pages/admin/SuperAdminDashboard"),
 );
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
-const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -333,7 +330,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -407,7 +404,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -471,7 +468,7 @@ function AppLayout() {
       >
         <Routes>
           <Route path="/" element={<Home />} />
-         
+          <Route path="/about" element={<About />} />
           <Route path="/ask-a-question" element={<AskDoctor />} />
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
@@ -847,14 +844,6 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route
-            path="/superadmin-dashboard/pricing-management"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <PricingManagement />
-              </PrivateRoute>
-            }
-          />
           <Route path="/video-call/:appointmentId" element={<VideoCall />} />
 
           {/* ALL*/}
@@ -906,38 +895,28 @@ function AppLayout() {
             element={<PreOpCardiacClearance />}
           />
           <Route
-            path="/rheumatoid-arthritis"
-            element={<RheumatoidArthritis />}
+            path="/rheumatoid-arthritis" element={<RheumatoidArthritis />}
           />
           <Route
-            path="/seizures-epilepsy-follow-up"
-            element={<SeizuresEpilepsyFollowUp />}
+            path="/seizures-epilepsy-follow-up" element={<SeizuresEpilepsyFollowUp />}
           />
           <Route path="/sleep-apnea" element={<SleepApnea />} />
           <Route
-            path="/surgery-second-opinion"
-            element={<SurgerySecondOpinion />}
+            path="/surgery-second-opinion" element={<SurgerySecondOpinion />}
           />
           <Route path="/thyroid-disorders" element={<ThyroidDisorders />} />
           <Route
-            path="/treatment-plan-review"
-            element={<TreatmentPlanReview />}
+            path="/treatment-plan-review" element={<TreatmentPlanReview />}
           />
           <Route path="/tremor" element={<Tremor />} />
           <Route path="/type-2-diabetes" element={<TypeTwoDiabetes />} />
           <Route path="/abdominal-pain" element={<AbdominalPain />} />
           <Route path="/binge-eating" element={<BingeEating />} />
           <Route path="/bloating" element={<Bloating />} />
-          <Route
-            path="/cholesterol-lowering-diet"
-            element={<CholesterolLoweringDiet />}
-          />
+          <Route path="/cholesterol-lowering-diet" element={<CholesterolLoweringDiet />} />
           <Route path="/dehydration" element={<Dehydration />} />
           <Route path="/diabetic-diet" element={<DiabeticDiet />} />
-          <Route
-            path="/diet-exercise-planning"
-            element={<DietExercisePlanning />}
-          />
+          <Route path="/diet-exercise-planning" element={<DietExercisePlanning />} />
           <Route
             path="/food-intolerance-planning"
             element={<FoodIntolerancePlanning />}
