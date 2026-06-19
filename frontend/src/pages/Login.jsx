@@ -92,7 +92,6 @@ import PhoneInputField, {
   parseValue as parsePhoneValue,
   findCountryByName,
   getFlagUrl,
-  getFlagUrl,
   toFlag,
 } from "../components/PhoneInputField";
 import DatePickerField from "../components/DatePickerField";
@@ -1106,7 +1105,7 @@ export default function AuthPage() {
 
             <div className="hc-row hc-reg-row">
               <div className="hc-field-wrap">
-                <DatePickerField
+                <DatePickerField 
                   value={registerForm.dob}
                   onChange={(v) => setRegisterForm((p) => ({ ...p, dob: v }))}
                   min={DOB_MIN}

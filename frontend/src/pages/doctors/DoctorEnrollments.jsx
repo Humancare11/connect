@@ -2354,28 +2354,18 @@ export default function DoctorOnboardingWizard({
             <label className="field-label">
               Country <span className="req">*</span>
             </label>
-
             <select
               className={`field-select ${s1Errors.country ? "error" : ""}`}
               value={s1.country}
-              disabled={!countryApi}
-              onChange={(e) =>
-                setS1((prev) => ({
-                  ...prev,
-                  country: e.target.value,
-                  state: "",
-                  city: "",
-                }))
-              }
+              onChange={(e) => {
+                setS1({ ...s1, country: e.target.value, state: "", city: "" });
+                setLicensedStates([]);
+                setOtherLicenseCountries([]);
+              }}
             >
               <option value="">Select country...</option>
 
               {countries.map(country => (
-                <option key={country.isoCode} value={country.isoCode}>
-                  {country.name}
-              <option value="">{countryApi ? "Select country..." : "Loading countries..."}</option>
-
-              {countries.map((country) => (
                 <option key={country.isoCode} value={country.isoCode}>
                   {country.name}
                 </option>

@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-
+import miniLogo from "../assets/single-logo.png";
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_SECURE =
@@ -145,7 +145,7 @@ const buildEmailHTML = (otp, type, name) => {
 <body>
   <div class="wrap">
     <div class="hdr">
-    <img src="https://humancareconnect.co/assets/Logo-CFoJDHpJ.png" alt="HumanCare Connect" width="48" style="margin-bottom:8px;"/>
+    <img src={miniLogo} alt="HumanCare Connect" width="48" style="margin-bottom:8px;"/>
     <p>${type === "register" ? "Email Verification" : "Password Reset"}</p>
     </div>
 
