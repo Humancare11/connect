@@ -7,25 +7,25 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useState } from "react";
 import "./App.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
-import Home from "./pages/Home";
-import About from "./pages/About";
-import AskDoctor from "./pages/AskDoctor";
-import Services from "./pages/Services";
-import Blogs from "./pages/Blogs/Blogs";
-import Corporates from "./pages/Corporates";
-import Contact from "./pages/Contact";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import Login from "./pages/Login";
+const Home = lazy(() => import("./pages/Home"));
+const About = lazy(() => import("./pages/About"));
+const AskDoctor = lazy(() => import("./pages/AskDoctor"));
+const Services = lazy(() => import("./pages/Services"));
+const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
+const Corporates = lazy(() => import("./pages/Corporates"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
-import BookAppointment from "./pages/BookAppointment";
-import VideoCall from "./pages/VideoCall";
+const BookAppointment = lazy(() => import("./pages/BookAppointment"));
+const VideoCall = lazy(() => import("./pages/VideoCall"));
 
 import socket from "./socket";
 import { useAdmin } from "./context/AdminContext";
@@ -41,65 +41,67 @@ import {
 } from "./utils/session";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
-import DoctorLogin from "./pages/doctors/DoctorLogin";
-import DoctorLayout from "./pages/doctors/DoctorLayout";
-import Dashbord from "./pages/doctors/Dashbord";
-import DoctorEnrollments from "./pages/doctors/DoctorEnrollments";
+const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
+const DoctorLayout = lazy(() => import("./pages/doctors/DoctorLayout"));
+const Dashbord = lazy(() => import("./pages/doctors/Dashbord"));
+const DoctorEnrollments = lazy(() => import("./pages/doctors/DoctorEnrollments"));
 import { useDoctorAuth } from "./context/DoctorAuthContext";
-import DoctorProfile from "./pages/doctors/DoctorProfile";
+const DoctorProfile = lazy(() => import("./pages/doctors/DoctorProfile"));
 // import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
-import DoctorAppointments from "./pages/doctors/DoctorAppointments";
-import DoctorPatients from "./pages/doctors/DoctorPatients";
-import DoctorMessages from "./pages/doctors/DoctorMessages";
-import RaiseTicket from "./pages/doctors/RaiseTicket";
-import DoctorQnA from "./pages/doctors/DoctorQnA";
-import DoctorAnalytics from "./pages/doctors/DoctorAnalytics";
-import DoctorSettings from "./pages/doctors/DoctorSettings";
-import DoctorProfileForUser from "./pages/doctors/DoctorProfileForUser";
+const DoctorAppointments = lazy(() => import("./pages/doctors/DoctorAppointments"));
+const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
+const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
+const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
+const DoctorQnA = lazy(() => import("./pages/doctors/DoctorQnA"));
+const DoctorAnalytics = lazy(() => import("./pages/doctors/DoctorAnalytics"));
+const DoctorSettings = lazy(() => import("./pages/doctors/DoctorSettings"));
+const DoctorProfileForUser = lazy(() => import("./pages/doctors/DoctorProfileForUser"));
 
-import AdminAuthPage from "./pages/admin/AdminAuth";
-import PaymentAdminLogin from "./pages/admin/PaymentAdminLogin";
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import OurDoctors from "./pages/admin/OurDoctors";
-import ManageDoctors from "./pages/admin/ManageDoctors";
-import AdminDoctorProfile from "./pages/admin/AdminDoctorProfile";
-import DoctorPayments from "./pages/admin/DoctorPayments";
-import ManageUsers from "./pages/admin/ManageUsers";
-import AdminAppointments from "./pages/admin/AdminAppointments";
-import AdminPayments from "./pages/admin/AdminPayments";
-import PaymentLinks from "./pages/admin/PaymentLinks";
-import PaymentLinkHistory from "./pages/admin/PaymentLinkHistory";
-import QnAPage from "./pages/admin/QnAPage";
-import SupportTickets from "./pages/admin/SupportTickets";
-import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
-import AuditLogs from "./pages/admin/AuditLogs";
-import SecurityIncidents from "./pages/admin/SecurityIncidents";
+const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
+const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
+const ManageDoctors = lazy(() => import("./pages/admin/ManageDoctors"));
+const AdminDoctorProfile = lazy(() => import("./pages/admin/AdminDoctorProfile"));
+const DoctorPayments = lazy(() => import("./pages/admin/DoctorPayments"));
+const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
+const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
+const AdminAppointmentDetails = lazy(() => import("./pages/admin/AdminAppointmentDetails"));
+const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
+const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
+const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
+const PaymentLinkHistory = lazy(() => import("./pages/admin/PaymentLinkHistory"));
+const QnAPage = lazy(() => import("./pages/admin/QnAPage"));
+const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
+const SuperAdminDashboard = lazy(() => import("./pages/admin/SuperAdminDashboard"));
+const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
+const SecurityIncidents = lazy(() => import("./pages/admin/SecurityIncidents"));
 
-import UserLayout from "./pages/user/UserLayout";
-import Dashboard from "./pages/user/Dashboard";
-import Appointments from "./pages/user/Appointments";
-import MedicalQuestions from "./pages/user/MedicalQuestions";
-import FavouriteDoctors from "./pages/user/FavouriteDoctors";
-import LabAppointments from "./pages/user/LabAppointments";
-import ProfileSettings from "./pages/user/ProfileSettings";
-import ChangePassword from "./pages/user/ChangePassword";
-import MyRecords from "./pages/user/MyRecords";
-import UserRaiseTicket from "./pages/user/RaiseTicket";
+const UserLayout = lazy(() => import("./pages/user/UserLayout"));
+const Dashboard = lazy(() => import("./pages/user/Dashboard"));
+const Appointments = lazy(() => import("./pages/user/Appointments"));
+const MedicalQuestions = lazy(() => import("./pages/user/MedicalQuestions"));
+const FavouriteDoctors = lazy(() => import("./pages/user/FavouriteDoctors"));
+const LabAppointments = lazy(() => import("./pages/user/LabAppointments"));
+const ProfileSettings = lazy(() => import("./pages/user/ProfileSettings"));
+const ChangePassword = lazy(() => import("./pages/user/ChangePassword"));
+const MyRecords = lazy(() => import("./pages/user/MyRecords"));
+const UserRaiseTicket = lazy(() => import("./pages/user/RaiseTicket"));
 
-import Home2 from "./pages/Home-2";
-import Test from "./pages/Test";
-import PaymentLinkCheckout from "./pages/PaymentLinkCheckout";
+const Home2 = lazy(() => import("./pages/Home-2"));
+const Test = lazy(() => import("./pages/Test"));
+const PaymentLinkCheckout = lazy(() => import("./pages/PaymentLinkCheckout"));
 
 //
-import Specialties from "./pages/Specialties";
-import Symptoms from "./pages/Symptoms";
-
+const Specialties = lazy(() => import("./pages/Specialties"));
+const Symptoms = lazy(() => import("./pages/Symptoms"));
+const Categories = lazy(() => import("./pages/Categories"));
 // Specialty pages
-import PrimaryCare from "./pages/Specialty/PrimaryCare";
+const PrimaryCare = lazy(() => import("./pages/Specialty/PrimaryCare"));
 
-import AppointmentBooking from "./pages/AppointmentBooking";
-import AppointmentBookingForm from "./pages/AppointmentBookingForm";
+const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
+const AppointmentBookingForm = lazy(() => import("./pages/AppointmentBookingForm"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -193,7 +195,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -267,7 +269,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -326,7 +328,8 @@ function AppLayout() {
       <SessionTimeoutManager />
       {!hideLayout && <Header />}
 
-      <Routes>
+      <Suspense fallback={<main className="hc-route-loading" aria-hidden="true" />}>
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/ask-a-question" element={<AskDoctor />} />
@@ -644,6 +647,26 @@ function AppLayout() {
           }
         />
         <Route
+          path="/admin-dashboard/appointments/:id"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <AdminAppointmentDetails />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard/appointments/:id/assign"
+          element={
+            <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+              <AdminLayout>
+                <AdminAssignDoctor />
+              </AdminLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/admin-dashboard/payments"
           element={
             <PrivateRoute allowedRoles={["admin", "superadmin"]}>
@@ -704,14 +727,17 @@ function AppLayout() {
         <Route path="/video-call/:appointmentId" element={<VideoCall />} />
 
         {/* Specialties */}
-        <Route path="/specialty" element={<Specialties />} />
+        <Route path="/specialties" element={<Specialties />} />
         <Route path="/symptoms" element={<Symptoms />} />
-
+        <Route path="/categories" element={<Categories />} />
+        
         <Route path="/primary-care" element={<PrimaryCare />} />
+
         <Route path="/appointment-booking" element={<AppointmentBooking />} />
         <Route path="/appointment-booking/form" element={<AppointmentBookingForm />} />
-      </Routes>
-      {!hideLayout && <Footer />}
+        </Routes>
+        {!hideLayout && <Footer />}
+      </Suspense>
     </>
   );
 }

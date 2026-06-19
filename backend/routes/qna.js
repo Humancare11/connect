@@ -2,6 +2,24 @@ const express  = require("express");
 const router   = express.Router();
 const Question = require("../models/Question");
 const { verifyUserToken, verifyDoctorToken, verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
+const { keyFromStoredValue } = require("../utils/uploadStorage");
+
+function normalizeAttachments(attachments) {
+  if (!Array.isArray(attachments)) return [];
+  return attachments
+    .map((attachment) => {
+      const key = keyFromStoredValue(attachment?.key || attachment?.url);
+      if (!key) return null;
+      return {
+        key,
+        url: key,
+        name: String(attachment?.name || key.split("/").pop() || "Attachment").slice(0, 180),
+        type: String(attachment?.type || "").slice(0, 120),
+        size: Number(attachment?.size) || 0,
+      };
+    })
+    .filter(Boolean);
+}
 
 // ── POST /api/qna/ask ─────────────────────────────────────────────────────────
 router.post("/ask", verifyUserToken, async (req, res) => {
@@ -20,7 +38,7 @@ router.post("/ask", verifyUserToken, async (req, res) => {
     const newQ = await Question.create({
       user: user.id, name: userName,
       question: question.trim(), category: category || "General", status: "pending",
-      attachments: Array.isArray(attachments) ? attachments : [],
+      attachments: normalizeAttachments(attachments),
     });
 
     const io = req.app.get("io");

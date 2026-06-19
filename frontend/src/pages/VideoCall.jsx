@@ -5,6 +5,7 @@ import "./videocall.css";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
+import { uploadFileDirectToS3 } from "../utils/directUpload";
 import {
   FiAlertTriangle,
   FiCalendar,
@@ -616,7 +617,7 @@ export default function VideoCall() {
 
     const handleApptUpdated = ({ status }) => {
       if (!mounted) return;
-      if (status === "completed" && !isDoctor) {
+      if (["complete", "completed"].includes(status) && !isDoctor) {
         setShowCompletedOverlay(true);
         setTimeout(() => navigate("/user/dashboard", { replace: true }), 4000);
       }
@@ -884,20 +885,18 @@ export default function VideoCall() {
     }
     setUploadingFile(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await api.post("/api/upload", form, { headers: { "Content-Type": "multipart/form-data" } });
+      const uploaded = await uploadFileDirectToS3(file);
       socket.emit("appointment-message", {
         appointmentId,
         senderId: currentUser.id,
         senderName: currentUser.name,
         text: "",
-        fileUrl: res.data.url,
-        fileName: res.data.name ?? file.name,
-        fileType: res.data.type ?? file.type,
+        fileUrl: uploaded.key,
+        fileName: uploaded.name ?? file.name,
+        fileType: uploaded.type ?? file.type,
       });
     } catch (err) {
-      setInlineError(err.response?.data?.msg || "File upload failed.");
+      setInlineError(err.response?.data?.msg || err.message || "File upload failed.");
       setTimeout(() => setInlineError(""), 4000);
     } finally {
       setUploadingFile(false);
@@ -959,13 +958,13 @@ export default function VideoCall() {
     );
   }
 
-  if (appt?.status === "completed" || appt?.status === "cancelled") {
+  if (["complete", "completed"].includes(appt?.status) || appt?.status === "cancelled") {
     return (
       <div className="hc-vc__gate">
         <div className="hc-vc__gate-icon">
-          {appt.status === "completed" ? <FiCheckCircle /> : <FiX />}
+          {["complete", "completed"].includes(appt.status) ? <FiCheckCircle /> : <FiX />}
         </div>
-        <h2>Appointment {appt.status === "completed" ? "Completed" : "Cancelled"}</h2>
+        <h2>Appointment {["complete", "completed"].includes(appt.status) ? "Complete" : "Cancelled"}</h2>
         <p>This appointment is no longer active.</p>
         <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>Go Back</button>
       </div>

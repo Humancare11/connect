@@ -9,9 +9,9 @@ export default function DoctorDashboard() {
   const navigate = useNavigate();
 
   const [appointments, setAppointments] = useState([]);
-  const [questions,    setQuestions]    = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [currentPage,  setCurrentPage]  = useState(1);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const refreshTimerRef = useRef(null);
   const ACTIVITY_PAGE_SIZE = 8;
 
@@ -22,8 +22,16 @@ export default function DoctorDashboard() {
         api.get("/api/appointments/doctor"),
         api.get("/api/qna/doctor/assigned"),
       ]);
-      setAppointments(apptRes.status === "fulfilled" && Array.isArray(apptRes.value.data) ? apptRes.value.data : []);
-      setQuestions(qnaRes.status === "fulfilled" && Array.isArray(qnaRes.value.data) ? qnaRes.value.data : []);
+      setAppointments(
+        apptRes.status === "fulfilled" && Array.isArray(apptRes.value.data)
+          ? apptRes.value.data
+          : [],
+      );
+      setQuestions(
+        qnaRes.status === "fulfilled" && Array.isArray(qnaRes.value.data)
+          ? qnaRes.value.data
+          : [],
+      );
     } catch {
       /* silent */
     } finally {
@@ -39,11 +47,15 @@ export default function DoctorDashboard() {
     }, 150);
   }, [loadData]);
 
-  useEffect(() => { loadData(true); }, [loadData]);
+  useEffect(() => {
+    loadData(true);
+  }, [loadData]);
 
   useEffect(() => {
-    const onFocus      = () => queueRefresh();
-    const onVisibility = () => { if (document.visibilityState === "visible") queueRefresh(); };
+    const onFocus = () => queueRefresh();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") queueRefresh();
+    };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
@@ -53,9 +65,15 @@ export default function DoctorDashboard() {
     };
   }, [queueRefresh]);
 
-  const pendingCount   = appointments.filter((a) => a.status === "pending").length;
-  const confirmedCount = appointments.filter((a) => a.status === "confirmed").length;
-  const answeredCount  = questions.filter((q) => q.status === "answered" || q.status === "approved").length;
+  const pendingCount = appointments.filter(
+    (a) => a.status === "pending",
+  ).length;
+  const confirmedCount = appointments.filter(
+    (a) => a.status === "confirmed",
+  ).length;
+  const answeredCount = questions.filter(
+    (q) => q.status === "answered" || q.status === "approved",
+  ).length;
 
   const getGreeting = () => {
     const h = new Date().getHours();
@@ -68,7 +86,11 @@ export default function DoctorDashboard() {
     if (!dateStr) return "—";
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    return d.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const timeAgo = (date) => {
@@ -86,31 +108,50 @@ export default function DoctorDashboard() {
 
   const allActivities = [
     ...appointments.map((a) => ({
-      id:        a._id,
-      type:      "appointment",
-      icon:      a.status === "confirmed" ? "✅" : (a.status === "completed" || a.status === "done") ? "📋" : "⏳",
-      title:     `Patient: ${a.patientId?.name || "Unknown"}`,
-      detail:    `${formatDate(a.date)}${a.time ? " · " + a.time : ""}`,
-      status:    (a.status === "completed" || a.status === "done") ? "completed" : a.status === "confirmed" ? "confirmed" : "pending",
+      id: a._id,
+      type: "appointment",
+      icon:
+        a.status === "confirmed"
+          ? "✅"
+          : ["complete", "completed", "done"].includes(a.status)
+            ? "📋"
+            : "⏳",
+      title: `Patient: ${a.patientId?.name || "Unknown"}`,
+      detail: `${formatDate(a.date)}${a.time ? " · " + a.time : ""}`,
+      status: ["complete", "completed", "done"].includes(a.status)
+        ? "completed"
+        : a.status === "confirmed"
+          ? "confirmed"
+          : "pending",
       createdAt: new Date(a.createdAt || a.date),
-      path:      `/doctor-dashboard/appointments?activityId=${a._id}`,
+      path: `/doctor-dashboard/appointments?activityId=${a._id}`,
     })),
     ...questions.map((q) => ({
-      id:        q._id,
-      type:      "question",
-      icon:      (q.status === "answered" || q.status === "approved") ? "💡" : "❓",
-      title:     q.question?.length > 65 ? q.question.slice(0, 65) + "…" : q.question,
-      detail:    (q.status === "answered" || q.status === "approved") ? "Answered" : "Awaiting your answer",
-      status:    (q.status === "answered" || q.status === "approved") ? "completed" : "pending",
+      id: q._id,
+      type: "question",
+      icon: q.status === "answered" || q.status === "approved" ? "💡" : "❓",
+      title:
+        q.question?.length > 65 ? q.question.slice(0, 65) + "…" : q.question,
+      detail:
+        q.status === "answered" || q.status === "approved"
+          ? "Answered"
+          : "Awaiting your answer",
+      status:
+        q.status === "answered" || q.status === "approved"
+          ? "completed"
+          : "pending",
       createdAt: new Date(q.createdAt),
-      path:      `/doctor-dashboard/qna?activityId=${q._id}`,
+      path: `/doctor-dashboard/qna?activityId=${q._id}`,
     })),
   ].sort((a, b) => b.createdAt - a.createdAt);
 
-  const totalPages      = Math.max(1, Math.ceil(allActivities.length / ACTIVITY_PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(allActivities.length / ACTIVITY_PAGE_SIZE),
+  );
   const pagedActivities = allActivities.slice(
     (currentPage - 1) * ACTIVITY_PAGE_SIZE,
-    currentPage * ACTIVITY_PAGE_SIZE
+    currentPage * ACTIVITY_PAGE_SIZE,
   );
 
   useEffect(() => {
@@ -123,15 +164,19 @@ export default function DoctorDashboard() {
 
   return (
     <div className="hc-dash__page">
-
       {/* ── Header ── */}
       <div className="hc-dash__header">
         <div className="hc-dash__header-text">
           <p className="hc-dash__eyebrow">HumaniCare</p>
-          <h1 className="hc-dash__title">
+          {/* <h1 className="hc-dash__title">
             {getGreeting()}, Dr. {doctor.name?.split(" ")[0] || "Doctor"} 👋
+          </h1> */}
+          <h1 className="hc-dash__title">
+            {getGreeting()}, {doctor.name || "Doctor"} 👋
           </h1>
-          <p className="hc-dash__subtitle">Here's your practice overview for today</p>
+          <p className="hc-dash__subtitle">
+            Here's your practice overview for today
+          </p>
         </div>
         <Link to="/doctor-dashboard/appointments" className="hc-dash__book-btn">
           <span>📅</span> View Appointments
@@ -181,7 +226,9 @@ export default function DoctorDashboard() {
         <div className="hc-dash__section-header">
           <div>
             <h2 className="hc-dash__section-title">Recent Activity</h2>
-            <p className="hc-dash__section-sub">Your latest appointments and assigned questions</p>
+            <p className="hc-dash__section-sub">
+              Your latest appointments and assigned questions
+            </p>
           </div>
         </div>
 
@@ -195,7 +242,10 @@ export default function DoctorDashboard() {
             <div className="hc-dash__empty-icon">📋</div>
             <h3>No activity yet</h3>
             <p>Your appointments and assigned questions will appear here.</p>
-            <Link to="/doctor-dashboard/appointments" className="hc-dash__empty-cta">
+            <Link
+              to="/doctor-dashboard/appointments"
+              className="hc-dash__empty-cta"
+            >
               View Appointments
             </Link>
           </div>
@@ -215,18 +265,24 @@ export default function DoctorDashboard() {
                   }
                 }}
               >
-                <div className={`hc-dash__activity-dot hc-dash__activity-dot--${act.status}`} />
+                <div
+                  className={`hc-dash__activity-dot hc-dash__activity-dot--${act.status}`}
+                />
                 <div className="hc-dash__activity-icon">{act.icon}</div>
                 <div className="hc-dash__activity-body">
                   <span className="hc-dash__activity-title">{act.title}</span>
                   <span className="hc-dash__activity-meta">
-                    <span className={`hc-dash__activity-tag hc-dash__activity-tag--${act.type}`}>
+                    <span
+                      className={`hc-dash__activity-tag hc-dash__activity-tag--${act.type}`}
+                    >
                       {act.type === "appointment" ? "Appointment" : "Q&A"}
                     </span>
                     &nbsp;· {act.detail}
                   </span>
                 </div>
-                <span className="hc-dash__activity-time">{timeAgo(act.createdAt)}</span>
+                <span className="hc-dash__activity-time">
+                  {timeAgo(act.createdAt)}
+                </span>
               </li>
             ))}
           </ul>

@@ -74,10 +74,10 @@ export default function Appointments() {
     if (!target) { setFocusedAppointmentId(""); return; }
 
     setFocusedAppointmentId(activityId);
-    if (target.status === "requested") {
+    if (["requested", "upcoming", "assigned"].includes(target.status)) {
       setActiveTab("pending");
-    } else if (["pending", "confirmed", "completed"].includes(target.status)) {
-      setActiveTab(target.status);
+    } else if (["pending", "confirmed", "completed", "complete"].includes(target.status)) {
+      setActiveTab(target.status === "complete" ? "completed" : target.status);
     }
 
     setTimeout(() => {
@@ -85,9 +85,9 @@ export default function Appointments() {
     }, 40);
   }, [appointments, location.search]);
 
-  const pendingAppointments   = appointments.filter((a) => ["requested", "pending"].includes(a.status));
+  const pendingAppointments   = appointments.filter((a) => ["requested", "upcoming", "assigned", "pending"].includes(a.status));
   const confirmedAppointments = appointments.filter((a) => a.status === "confirmed");
-  const completedAppointments = appointments.filter((a) => a.status === "completed");
+  const completedAppointments = appointments.filter((a) => ["complete", "completed"].includes(a.status));
 
   const tabData = { pending: pendingAppointments, confirmed: confirmedAppointments, completed: completedAppointments };
   const currentList = tabData[activeTab];
@@ -251,7 +251,11 @@ export default function Appointments() {
                   <div className="appt-card-actions">
                     {activeTab === "pending" && (
                       <span className="appt-waiting-text">
-                        {appt.status === "requested" ? "Awaiting admin review and doctor assignment" : "Awaiting doctor confirmation"}
+                        {["requested", "upcoming"].includes(appt.status)
+                          ? "Awaiting admin review and doctor assignment"
+                          : appt.status === "assigned"
+                            ? "Doctor assigned. Awaiting confirmation"
+                            : "Awaiting doctor confirmation"}
                       </span>
                     )}
 

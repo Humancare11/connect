@@ -10,6 +10,8 @@ const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
 const { assertPasswordAllowed, rememberPassword } = require("../utils/passwordPolicy");
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
 const { recordFailedLogin } = require("../utils/securityMonitor");
+const { keyFromStoredValue } = require("../utils/uploadStorage");
+const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 
 const withDoctorRole = (doctor) => ({ ...doctor.toObject(), role: "doctor" });
 
@@ -35,6 +37,72 @@ const applyProgress = (enrollment, nextCompletedSteps, nextCurrentStep) => {
   enrollment.currentStepLabel = STEP_LABELS[currentStep - 1] || "Identity";
   enrollment.applicationStatus = deriveApplicationStatus(enrollment);
 };
+
+const PROFILE_CHANGE_LABELS = {
+  firstName: "First Name",
+  surname: "Surname",
+  email: "Email",
+  countryCode: "Country Code",
+  phoneNumber: "Phone Number",
+  gender: "Gender",
+  dob: "Date of Birth",
+  country: "Country",
+  state: "State / Region",
+  city: "City",
+  zip: "ZIP / Postal Code",
+  address: "Address",
+  languagesKnown: "Languages Known",
+  specialization: "Specialization",
+  subSpecialization: "Sub-Specialization",
+  qualification: "Qualification",
+  experience: "Years of Experience",
+  medicalSchool: "Medical School",
+  registrationYear: "Graduation Year",
+  medicalCouncilName: "Medical Council",
+  medicalRegistrationNumber: "Medical Registration Number",
+  medicalLicense: "Medical License Number",
+  consultationMode: "Consultation Mode",
+  aboutDoctor: "Professional Bio",
+  clinicName: "Clinic Name",
+  clinicAddress: "Clinic Address",
+  profilePhoto: "Profile Photo",
+  idProof: "Government ID / Nationality Proof",
+  degreeFile: "Medical Degree Certificate",
+  medicalLicenseFile: "Medical License Document",
+  malpracticeInsuranceFile: "Malpractice Insurance License",
+  bankName: "Bank Name",
+  accountHolderName: "Account Holder Name",
+  accountNumber: "Account Number",
+  ifscCode: "SWIFT / BIC Code",
+  payoutEmail: "Payout Email",
+  paypalId: "PayPal ID",
+};
+
+const TRACKED_PROFILE_FIELDS = Object.keys(PROFILE_CHANGE_LABELS);
+const DOCTOR_DOCUMENT_FIELDS = new Set(["profilePhoto", "idProof", "degreeFile", "medicalLicenseFile", "malpracticeInsuranceFile"]);
+
+const normalizeComparableValue = (value) => {
+  if (value === undefined || value === null) return "";
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "number") return Number.isFinite(value) ? value : "";
+  if (typeof value === "string") return value.trim();
+  return value;
+};
+
+const valuesEqual = (left, right) =>
+  JSON.stringify(normalizeComparableValue(left)) === JSON.stringify(normalizeComparableValue(right));
+
+const buildPendingProfileChanges = (enrollment, updates) =>
+  TRACKED_PROFILE_FIELDS
+    .filter((field) => Object.prototype.hasOwnProperty.call(updates, field))
+    .filter((field) => !valuesEqual(enrollment.get(field), updates[field]))
+    .map((field) => ({
+      field,
+      label: PROFILE_CHANGE_LABELS[field],
+      previousValue: enrollment.get(field),
+      newValue: updates[field],
+    }));
 
 // ── POST /api/doctor/send-register-otp ───────────────────────────────────────
 router.post("/send-register-otp", async (req, res) => {
@@ -288,6 +356,36 @@ router.get("/enrollment/:doctorId", verifyDoctorToken, async (req, res) => {
   }
 });
 
+router.get("/enrollment/:doctorId/documents/:field/access-url", verifyDoctorToken, async (req, res) => {
+  try {
+    const { doctorId, field } = req.params;
+    if (req.user.id !== doctorId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+    if (!DOCTOR_DOCUMENT_FIELDS.has(field)) {
+      return res.status(400).json({ message: "Invalid document field." });
+    }
+
+    const enrollment = await Enrollment.findOne({ doctorId }).select(field).lean();
+    if (!enrollment) return res.status(404).json({ message: "Enrollment not found." });
+
+    const key = keyFromStoredValue(enrollment[field]);
+    if (!key) return res.status(404).json({ message: "Document not uploaded." });
+
+    const signed = await createS3PresignedGetUrl(key, { expiresIn: DEFAULT_EXPIRY_SECONDS });
+    return res.json({
+      field,
+      key,
+      url: signed.url,
+      expiresIn: signed.expiresIn,
+      expiresAt: signed.expiresAt,
+    });
+  } catch (err) {
+    console.error("getDoctorOwnDocumentAccessUrl error:", err);
+    return res.status(500).json({ message: "Could not generate document access URL." });
+  }
+});
+
 // ── POST /api/doctor/enrollment ───────────────────────────────────────────────
 router.post("/enrollment", verifyDoctorToken, async (req, res) => {
   try {
@@ -306,22 +404,43 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
     if (enrollment) {
       const wasApprovedOrRejected =
         enrollment.approvalStatus === "approved" || enrollment.approvalStatus === "rejected";
-      // Use Mongoose's .set() instead of Object.assign so all field types are
-      // properly tracked as modified. Then explicitly markModified for Mixed-type
-      // (availability) and Array-type (languagesKnown) which Mongoose cannot
-      // auto-detect when replaced wholesale.
-      enrollment.set(enrollmentData);
-      enrollment.markModified("availability");
-      enrollment.markModified("languagesKnown");
+      const pendingProfileChanges = wasApprovedOrRejected
+        ? buildPendingProfileChanges(enrollment, enrollmentData)
+        : [];
+      const profileUpdateSnapshot = pendingProfileChanges.reduce((snapshot, change) => {
+        snapshot[change.field] = change.previousValue;
+        return snapshot;
+      }, {});
+
+      if (wasApprovedOrRejected && pendingProfileChanges.length === 0) {
+        return res.status(200).json({
+          message: "No profile changes detected.",
+          enrollment,
+        });
+      }
+
+      // New enrollments update the live record immediately. Approved doctors'
+      // profile edits are staged below and applied only after admin approval.
+      if (!wasApprovedOrRejected) {
+        enrollment.set(enrollmentData);
+        enrollment.markModified("availability");
+        enrollment.markModified("languagesKnown");
+      }
       enrollment.formCompleted = true;
       enrollment.completedSteps = 5;
       enrollment.currentStep = 5;
       enrollment.currentStepLabel = STEP_LABELS[4];
       if (wasApprovedOrRejected) {
-        enrollment.approvalStatus = "pending";
-        enrollment.verified = false;
+        enrollment.approvalStatus = "approved";
+        enrollment.verified = true;
         enrollment.pendingRequestType = "profile_update";
         enrollment.profileUpdateRequestedAt = new Date();
+        enrollment.profileUpdateReviewedAt = undefined;
+        enrollment.profileUpdateRequestStatus = "pending";
+        enrollment.pendingProfileChanges = pendingProfileChanges;
+        enrollment.profileUpdateSnapshot = profileUpdateSnapshot;
+        enrollment.markModified("pendingProfileChanges");
+        enrollment.markModified("profileUpdateSnapshot");
         responseMessage = "Update request submitted and pending admin approval.";
       } else {
         enrollment.pendingRequestType = enrollment.pendingRequestType || "new_enrollment";
@@ -345,8 +464,7 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
       await enrollment.save();
     }
 
-    // Enrollment submission means the profile is under review until admin approval.
-    await Doctor.findByIdAndUpdate(doctorId, { isEnrolled: false });
+    await Doctor.findByIdAndUpdate(doctorId, { isEnrolled: enrollment.approvalStatus === "approved" });
 
     res.status(201).json({ message: responseMessage, enrollment });
   } catch (err) {
@@ -532,8 +650,16 @@ router.get("/approved", async (req, res) => {
       name: `Dr. ${e.firstName || ""} ${e.surname || ""}`.trim(),
       degree: e.qualification || "",
       specialty: e.specialization || "",
+      subSpecialty: e.subSpecialization || "",
       languages: e.languagesKnown || [],
-      location: [e.city, e.state].filter(Boolean).join(", "),
+      city: e.city || "",
+      state: e.state || "",
+      country: e.country || "",
+      location: [e.city, e.state, e.country].filter(Boolean).join(", "),
+      about: e.aboutDoctor || "",
+      internationalLicenses: e.internationalLicenses || [],
+      medicalRegistrationNumber: e.medicalRegistrationNumber || "",
+      medicalCouncilName: e.medicalCouncilName || "",
       price: e.consultantFees || 0,
       feeCurrency: e.feeCurrency || "USD",
       experience: e.experience || 0,

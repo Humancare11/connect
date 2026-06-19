@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import "./PCPSection.css";
 import {
-  motion,
+  motion as Motion,
   useScroll,
   useTransform,
   useSpring,
@@ -57,7 +57,7 @@ function AnimBlock({ children, variant, className, style }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   return (
-    <motion.div
+    <Motion.div
       ref={ref}
       className={className}
       style={style}
@@ -66,7 +66,7 @@ function AnimBlock({ children, variant, className, style }) {
       animate={inView ? "visible" : "hidden"}
     >
       {children}
-    </motion.div>
+    </Motion.div>
   );
 }
 
@@ -107,7 +107,7 @@ export default function PCPSection() {
   const rightInView = useInView(rightRef, { once: true, margin: "-80px" });
 
   return (
-    <motion.section
+    <Motion.section
       className="pcp-section"
       ref={wrapperRef}
       style={{ scale, opacity, y }}
@@ -117,16 +117,16 @@ export default function PCPSection() {
         {/* ════════════ LEFT CONTENT ════════════ */}
         <div className="pcp-left" ref={leftRef}>
 
-          <motion.div
+          <Motion.div
             className="pcp-badge"
             variants={fadeUp(0)}
             initial="hidden"
             animate={leftInView ? "visible" : "hidden"}
           >
             — NO PCP? NO PROBLEM.
-          </motion.div>
+          </Motion.div>
 
-          <motion.h2
+          <Motion.h2
             className="pcp-title"
             variants={fadeUp(0.1)}
             initial="hidden"
@@ -134,9 +134,9 @@ export default function PCPSection() {
           >
             Don't have a primary care doctor?
             <span>We've got you.</span>
-          </motion.h2>
+          </Motion.h2>
 
-          <motion.p
+          <Motion.p
             className="pcp-desc"
             variants={fadeUp(0.2)}
             initial="hidden"
@@ -145,7 +145,7 @@ export default function PCPSection() {
             Millions of Americans lack access to a regular physician.
             MediLink bridges that gap — giving you instant access to
             licensed providers who can serve as your primary care team.
-          </motion.p>
+          </Motion.p>
 
           <div className="pcp-features">
             {[
@@ -165,7 +165,7 @@ export default function PCPSection() {
                 desc: "No more 3-week waits. Connect the same day — including evenings and weekends.",
               },
             ].map((f, i) => (
-              <motion.div
+              <Motion.div
                 key={f.n}
                 className="pcp-feature-card"
                 variants={fadeUp(0.3 + i * 0.12)}
@@ -178,7 +178,7 @@ export default function PCPSection() {
                   <h4>{f.title}</h4>
                   <p>{f.desc}</p>
                 </div>
-              </motion.div>
+              </Motion.div>
             ))}
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function PCPSection() {
 
           {/* Image stack — hidden on tablet/mobile via CSS */}
           <div className="pcp-image-stack">
-            <motion.img
+            <Motion.img
               src="https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=1200&auto=format&fit=crop"
               alt=""
               className="pcp-img-main"
@@ -198,7 +198,7 @@ export default function PCPSection() {
               whileInView={{ opacity: 1 }}
               style={{ originX: 1, originY: 0 }}
             />
-            <motion.img
+            <Motion.img
               src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop"
               alt=""
               className="pcp-img-small"
@@ -210,7 +210,7 @@ export default function PCPSection() {
           </div>
 
           {/* Steps card */}
-          <motion.div
+          <Motion.div
             className="pcp-steps-card"
             variants={fadeLeft(0.2)}
             initial="hidden"
@@ -223,7 +223,7 @@ export default function PCPSection() {
 
             <div className="pcp-steps">
               {STEPS.map((step, i) => (
-                <motion.div
+                <Motion.div
                   key={step.n}
                   className="pcp-step-wrap"
                   variants={fadeUp(0.35 + i * 0.08)}
@@ -231,7 +231,7 @@ export default function PCPSection() {
                   animate={rightInView ? "visible" : "hidden"}
                 >
                   <div className="pcp-step">
-                    <motion.div
+                    <Motion.div
                       className="pcp-step-num"
                       whileHover={{
                         scale: 1.12,
@@ -242,20 +242,20 @@ export default function PCPSection() {
                       }}
                     >
                       {step.n}
-                    </motion.div>
+                    </Motion.div>
                     <div>
                       <h4>{step.title}</h4>
                       <p>{step.desc}</p>
                     </div>
                   </div>
                   {i < 4 && <div className="pcp-step-line" />}
-                </motion.div>
+                </Motion.div>
               ))}
             </div>
-          </motion.div>
+          </Motion.div>
 
         </div>
       </div>
-    </motion.section>
+    </Motion.section>
   );
 }

@@ -23,12 +23,19 @@ const createAndSendOTP = async (email, type, role = "user", name) => {
 
   await OTP.deleteMany({ email: clean, type, role });
 
-  const code      = generateCode();
+  const code = generateCode();
   const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
 
-  const record = await OTP.create({ email: clean, otpHash: hashOTP(code), type, role, expiresAt });
+  const record = await OTP.create({
+    email: clean,
+    otpHash: hashOTP(code),
+    type,
+    role,
+    expiresAt
+  });
+
   try {
-    await sendOTPEmail(clean, code, type, greetingName);
+    await sendOTPEmail(clean, code, type, name);
   } catch (err) {
     await OTP.deleteOne({ _id: record._id });
     throw err;

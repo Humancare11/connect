@@ -14,7 +14,7 @@ const HCC_TREE = [
         ico: "🩺",
         live: true,
         count: "98 doctors",
-        cost: 499,
+        cost: 100,
         conds: [
           ["Fever", "🌡️"],
           ["Cold & flu", "🤧"],
@@ -107,7 +107,7 @@ const HCC_TREE = [
         ico: "🧴",
         live: true,
         count: "35 doctors",
-        cost: 899,
+        cost: 100,
         conds: [
           ["Acne", "🔴"],
           ["Eczema", "🌾"],
@@ -186,7 +186,7 @@ const HCC_TREE = [
         name: "Men's Health",
         ico: "♂️",
         count: "19 doctors",
-        cost: 799,
+        cost: 100,
         conds: [
           ["Erectile dysfunction", "💙"],
           ["Low testosterone", "📉"],

@@ -3,6 +3,7 @@ const bcrypt     = require("bcryptjs");
 const jwt        = require("jsonwebtoken");
 const User       = require("../models/User");
 const Doctor     = require("../models/Doctor");
+const { generatePatientId } = require("../utils/idSequence");
 const Enrollment = require("../models/Enrollment");
 const Consent    = require("../models/Consent");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
@@ -54,6 +55,7 @@ const validateDob = (dob) => {
 // ── helpers ───────────────────────────────────────────
 const safeUser = (user) => ({
   _id:             user._id,
+  patientId:       user.patientId,
   name:            user.name,
   email:           user.email,
   role:            user.role,
@@ -323,6 +325,16 @@ const login = async (req, res) => {
       });
       await recordFailedLogin(req, { email: clean, userId: user._id, userRole: user.role, portal: "patient" });
       return res.status(400).json({ msg: "Invalid email or password." });
+    }
+
+    if (user.role === "user" && !user.patientId) {
+      try {
+        const pid = await generatePatientId();
+        await User.collection.updateOne({ _id: user._id }, { $set: { patientId: pid } });
+        user.patientId = pid;
+      } catch (idErr) {
+        console.error("Failed to auto-assign patientId on login:", idErr.message);
+      }
     }
 
     const session = await issueAuthCookies(res, user);
@@ -757,6 +769,17 @@ const me = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found." });
+
+    if (user.role === "user" && !user.patientId) {
+      try {
+        const pid = await generatePatientId();
+        await User.collection.updateOne({ _id: user._id }, { $set: { patientId: pid } });
+        user.patientId = pid;
+      } catch (idErr) {
+        console.error("Failed to auto-assign patientId:", idErr.message);
+      }
+    }
+
     return res.json({ user: safeUser(user) });
   } catch (err) {
     return res.status(500).json({ msg: "Server error." });

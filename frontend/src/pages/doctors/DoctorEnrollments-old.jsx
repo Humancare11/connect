@@ -7,12 +7,9 @@ import PhoneInputField, {
   getFlagUrl,
   findCountryByName,
 } from "../../components/PhoneInputField";
-import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
-import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State, City } from "country-state-city";
 // ─── Constants ───
-
 
 const SPECIALTIES = [
   "General Practice",
@@ -930,14 +927,12 @@ function MultiSelect({
   searchPlaceholder,
   hasError,
   showFlags = false,
-  showFlags = false,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const wrapperRef = useRef();
   const triggerRef = useRef();
   const dropdownRef = useRef();
-  const searchInputRef = useRef();
   const searchInputRef = useRef();
   const position = useDropdownPosition(triggerRef, open);
 
@@ -1234,50 +1229,50 @@ function SingleSelect({ items, value, onChange, placeholder, hasError }) {
   const dropdown =
     open && position.width > 0
       ? createPortal(
-        <div
-          ref={dropdownRef}
-          className="ms-dropdown animate-in"
-          style={{
-            position: "absolute",
-            top: `${position.top}px`,
-            left: `${position.left}px`,
-            width: `${position.width}px`,
-          }}
-        >
-          <input
-            className="ms-search"
-            placeholder="Search specialty..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            autoFocus
-          />
-          <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
-            {filtered.length === 0 ? (
-              <div className="ms-empty">No results found</div>
-            ) : (
-              filtered.map((item) => (
-                <div
-                  key={item}
-                  className="ms-option"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    onChange(item);
-                    setOpen(false);
-                    setSearch("");
-                  }}
-                >
-                  <div className={`ms-check ${value === item ? "on" : ""}`}>
-                    {value === item && "✓"}
+          <div
+            ref={dropdownRef}
+            className="ms-dropdown animate-in"
+            style={{
+              position: "absolute",
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+              width: `${position.width}px`,
+            }}
+          >
+            <input
+              className="ms-search"
+              placeholder="Search specialty..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+            />
+            <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
+              {filtered.length === 0 ? (
+                <div className="ms-empty">No results found</div>
+              ) : (
+                filtered.map((item) => (
+                  <div
+                    key={item}
+                    className="ms-option"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onChange(item);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    <div className={`ms-check ${value === item ? "on" : ""}`}>
+                      {value === item && "✓"}
+                    </div>
+                    <span>{item}</span>
                   </div>
-                  <span>{item}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>,
-        document.body,
-      )
+                ))
+              )}
+            </div>
+          </div>,
+          document.body,
+        )
       : null;
 
   return (
@@ -1361,8 +1356,10 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
     setUploading(true);
     onFile({ name: rawFile.name, url: null });
     try {
-      const uploaded = await uploadFileDirectToS3(rawFile);
-      onFile({ name: uploaded.name || rawFile.name, url: uploaded.key || uploaded.url });
+      const fd = new FormData();
+      fd.append("file", rawFile);
+      const { data } = await api.post("/api/upload", fd);
+      onFile({ name: data.name || rawFile.name, url: data.url });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
     } finally {
@@ -1477,7 +1474,7 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
           >
             A professional headshot helps patients identify you.
             <br />
-            Accepted: JPG, PNG, Webp · Max 5 MB
+            Accepted: JPG, PNG, WebP · Max 5 MB
           </div>
           {(uploadErr || showValidationErr) && (
             <div className="field-error">
@@ -1523,7 +1520,7 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
 }
 
 // file prop shape: null | { name: string, url: string|null }
-// Uploads directly to S3 immediately when a file is picked, then calls onFile({ name, url })
+// Uploads to /api/upload immediately when a file is picked, then calls onFile({ name, url })
 function FileUpload({ label, file, onFile, onRemove, required }) {
   const ref = useRef();
   const [uploading, setUploading] = useState(false);
@@ -1536,8 +1533,10 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
     // Optimistically show the filename while uploading
     onFile({ name: rawFile.name, url: null });
     try {
-      const uploaded = await uploadFileDirectToS3(rawFile);
-      onFile({ name: uploaded.name || rawFile.name, url: uploaded.key || uploaded.url });
+      const fd = new FormData();
+      fd.append("file", rawFile);
+      const { data } = await api.post("/api/upload", fd);
+      onFile({ name: data.name || rawFile.name, url: data.url });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
       // Keep the { name, url: null } so the user sees the error state
@@ -1673,37 +1672,18 @@ export default function DoctorOnboardingWizard({
     zip: "",
     address: "",
   });
-  const [countryApi, setCountryApi] = useState(null);
-  const [stateApi, setStateApi] = useState(null);
+  const countries = Country.getAllCountries();
 
-  useEffect(() => {
-    let active = true;
-    import("country-state-city/lib/country.js").then(({ default: Country }) => {
-      if (active) setCountryApi(Country);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!s1.country || stateApi) return undefined;
-
-    let active = true;
-    import("country-state-city/lib/state.js").then(({ default: State }) => {
-      if (active) setStateApi(State);
-    });
-    return () => {
-      active = false;
-    };
-  }, [s1.country, stateApi]);
-
-  const countries = countryApi?.getAllCountries() || [];
-
-  const states = s1.country && stateApi ? stateApi.getStatesOfCountry(s1.country) : [];
+  const states = s1.country ? State.getStatesOfCountry(s1.country) : [];
   const hasStates = states.length > 0;
-  const cities = [];
-  const hasCities = false;
+  const cities = s1.country
+    ? hasStates
+      ? s1.state
+        ? City.getCitiesOfState(s1.country, s1.state)
+        : []
+      : City.getCitiesOfCountry(s1.country)
+    : [];
+  const hasCities = cities.length > 0;
 
   useEffect(() => {
     if (!hasStates && s1.state) {
@@ -1779,7 +1759,6 @@ export default function DoctorOnboardingWizard({
   const [submitSuccess, setSubmitSuccess] = useState("");
 
   const isUS = s1.country === "US";
-  const isUS = s1.country === "US";
   const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
   const otherCountryOptions = countries.filter((c) => c.isoCode !== s1.country);
   const mobileValue = `${s1.countryCode || ""}${s1.phone || ""}`;
@@ -1828,9 +1807,9 @@ export default function DoctorOnboardingWizard({
         ? rawLangs
         : typeof rawLangs === "string" && rawLangs.trim()
           ? rawLangs
-            .split(",")
-            .map((l) => l.trim())
-            .filter(Boolean)
+              .split(",")
+              .map((l) => l.trim())
+              .filter(Boolean)
           : [],
     );
     setS2({
@@ -1897,7 +1876,7 @@ export default function DoctorOnboardingWizard({
       if (Array.isArray(d.otherLicenseCountries))
         setOtherLicenseCountries(d.otherLicenseCountries);
       if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
-    } catch { }
+    } catch {}
   }, [doctorId, initialData]);
 
   // Auto-detect timezone on mount.
@@ -1928,7 +1907,7 @@ export default function DoctorOnboardingWizard({
     try {
       const iana = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (iana) setTimezone((prev) => prev || matchTz(iana));
-    } catch { }
+    } catch {}
 
     // ── Step 2: async IP-based refinement (best-effort, 3 fallback APIs) ───
     const fetchTz = async (url, extract) => {
@@ -2009,7 +1988,7 @@ export default function DoctorOnboardingWizard({
             completedSteps,
             currentStep,
           })
-          .catch(() => { });
+          .catch(() => {});
       }, 250);
     },
     [doctorId],
@@ -2040,7 +2019,7 @@ export default function DoctorOnboardingWizard({
     if (!s1.gender) e.gender = "Required";
     if (!s1.dob) e.dob = "Required";
     if (!s1.country) e.country = "Required";
-    if (s1.country === "US" && !s1.state.trim())
+    if (s1.country === "United States" && !s1.state.trim())
       e.state = "Required for US";
     if (languagesKnown.length === 0) e.languages = "Required";
     setS1Errors(e);
@@ -2106,7 +2085,7 @@ export default function DoctorOnboardingWizard({
         `hc_enroll_draft_${doctorId}`,
         JSON.stringify(draftData),
       );
-    } catch { }
+    } catch {}
     setDraftSaved(true);
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => setDraftSaved(false), 2500);
@@ -2196,14 +2175,14 @@ export default function DoctorOnboardingWizard({
       // setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
       try {
         localStorage.removeItem(`hc_enroll_draft_${doctorId}`);
-      } catch { }
+      } catch {}
       setStep(5);
       if (enrollment && typeof onComplete === "function")
         onComplete(enrollment);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-        "Failed to submit enrollment. Please try again.",
+          "Failed to submit enrollment. Please try again.",
       );
     } finally {
       setSubmitBusy(false);
@@ -2358,7 +2337,6 @@ export default function DoctorOnboardingWizard({
             <select
               className={`field-select ${s1Errors.country ? "error" : ""}`}
               value={s1.country}
-              disabled={!countryApi}
               onChange={(e) =>
                 setS1((prev) => ({
                   ...prev,
@@ -2370,11 +2348,6 @@ export default function DoctorOnboardingWizard({
             >
               <option value="">Select country...</option>
 
-              {countries.map(country => (
-                <option key={country.isoCode} value={country.isoCode}>
-                  {country.name}
-              <option value="">{countryApi ? "Select country..." : "Loading countries..."}</option>
-
               {countries.map((country) => (
                 <option key={country.isoCode} value={country.isoCode}>
                   {country.name}
@@ -2384,25 +2357,24 @@ export default function DoctorOnboardingWizard({
             {s1Errors.country && (
               <div className="field-error">{s1Errors.country}</div>
             )}
-              {!hasStates && !hasCities && s1.country && (
-  <div
-    style={{
-      fontSize: 13,
-      color: "var(--red-500)",
-      marginTop: 6,
-      
-    }}
-  >
-    This country does not have state or city data available.
-  </div>
-)}
+            {!hasStates && !hasCities && s1.country && (
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--red-500)",
+                  marginTop: 6,
+                }}
+              >
+                This country does not have state or city data available.
+              </div>
+            )}
           </div>
           <div className="location-row">
             {hasStates && (
               <div className="field-group">
                 <label className="field-label">
                   State / Province
-                  {s1.country === "US" && (
+                  {s1.country === "United States" && (
                     <span className="req">*</span>
                   )}
                   {!s1.country && (
@@ -2481,21 +2453,6 @@ export default function DoctorOnboardingWizard({
                 </select>
               </div>
             )}
-
-            <div className="field-group">
-              <label className="field-label">City</label>
-              <input
-                className="field-input"
-                placeholder="City"
-                value={s1.city}
-                onChange={(e) =>
-                  setS1((prev) => ({
-                    ...prev,
-                    city: e.target.value,
-                  }))
-                }
-              />
-            </div>
 
             <div className="field-group">
               <label className="field-label">ZIP / Postal Code</label>
@@ -3015,15 +2972,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3172,15 +3129,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3309,15 +3266,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
