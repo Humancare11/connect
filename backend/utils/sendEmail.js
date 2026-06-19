@@ -76,7 +76,7 @@ const buildEmailHTML = (otp, type, name) => {
 
   <div style="background:#dcebff;padding:20px 32px;text-align:center;;
     border-radius: 16px 16px 0 0;">
-    <img src="https://humancareconnect.co/logo-email.png" alt="Humancare Connect" width="220" height="72" style="display:block;margin:0 auto 12px;object-fit:contain;"/>
+    <img src="https://humancareconnect.co/logo-email.png" alt="Humancare Connect" style="display:block;margin:0 auto 12px;object-fit:contain; width:220px; height:72px;"/>
     <span style="display:inline-block;background:rgba(255,255,255,0.18);color: #0a1f44;;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:20px; border: 1px solid #0a1f44">${badgeText}</span>
   </div>
 
@@ -96,7 +96,7 @@ const buildEmailHTML = (otp, type, name) => {
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
       <tr>
         <td style="vertical-align:middle;width:140px;">
-          <img src="https://humancareconnect.co/logo-footer.png" alt="Humancare Connect" width="110" height="44" style="display:block;object-fit:contain;"/>
+          <img src="https://humancareconnect.co/logo-footer.png" alt="Humancare Connect"  style="display:block;object-fit:contain;width:140px;height:44px;"/>
         </td>
         <td style="vertical-align:middle;text-align:right;">
           <table cellpadding="0" cellspacing="0" border="0" style="margin-left:auto;">

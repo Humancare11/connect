@@ -327,6 +327,12 @@
   margin-top: 2px;
 }
 
+.ap-char-count {
+  font-size: 11px;
+  color: var(--ap-muted);
+  margin-top: 4px;
+}
+
 /* ── Time Slots ───────────────────────── */
 
 .ap-slots-grid {
@@ -1168,6 +1174,19 @@
 
 .ap-consent-checks {
   padding: 4px 14px 8px;
+}
+
+.ap-consent-link {
+  color: #2563eb;
+  text-decoration: None;
+}
+
+.ap-consent-link:hover {
+  color: #1d4ed8;
+}
+
+.ap-consent-link:visited {
+  color: #2563eb;
 }
 
 .ap-consent-row {
