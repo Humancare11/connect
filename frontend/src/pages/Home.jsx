@@ -22,6 +22,8 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
+import searchIndex from "../data/searchIndex.js";
+
 import { useNavigate } from "react-router-dom";
 
 const PCP = lazy(() => import("../components/PCPSection"));
@@ -125,7 +127,6 @@ const DOT_LABELS = [
   "Book Appointment",
   "Consult",
   " Rx & Complete",
-
 ];
 const TOTAL_STEPS = 5;
 const STEP_DURATION = 4000;
@@ -195,18 +196,33 @@ export default function HomePage() {
   const searchRef = useRef(null);
 
   // ── Filter search suggestions ─────────────────────────────────────────────
+  // Remove the local SEARCH_DATA array entirely, and replace the useEffect that filters it:
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredSuggestions([]);
       return;
     }
-    const query = searchQuery.toLowerCase();
-    const results = SEARCH_DATA.filter(
-      (item) =>
-        item.title.toLowerCase().includes(query) ||
-        item.keywords.some((kw) => kw.toLowerCase().includes(query))
-    );
-    setFilteredSuggestions(results);
+
+    const controller = new AbortController();
+    const delay = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: searchQuery, routes: searchIndex }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        setFilteredSuggestions(data.results || []);
+      } catch (err) {
+        if (err.name !== "AbortError") console.error("Search failed:", err);
+      }
+    }, 300); // debounce 300ms
+
+    return () => {
+      clearTimeout(delay);
+      controller.abort();
+    };
   }, [searchQuery]);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
@@ -229,7 +245,7 @@ export default function HomePage() {
       setSearchQuery("");
       setShowSuggestions(false);
     },
-    [filteredSuggestions, navigate]
+    [filteredSuggestions, navigate],
   );
 
   // ── Keyboard navigation ───────────────────────────────────────────────────
@@ -240,13 +256,13 @@ export default function HomePage() {
         case "ArrowDown":
           e.preventDefault();
           setActiveIndex((prev) =>
-            prev < filteredSuggestions.length - 1 ? prev + 1 : 0
+            prev < filteredSuggestions.length - 1 ? prev + 1 : 0,
           );
           break;
         case "ArrowUp":
           e.preventDefault();
           setActiveIndex((prev) =>
-            prev > 0 ? prev - 1 : filteredSuggestions.length - 1
+            prev > 0 ? prev - 1 : filteredSuggestions.length - 1,
           );
           break;
         case "Enter":
@@ -264,7 +280,7 @@ export default function HomePage() {
           break;
       }
     },
-    [filteredSuggestions, activeIndex, handleSearch]
+    [filteredSuggestions, activeIndex, handleSearch],
   );
 
   // ── Testimonials data ─────────────────────────────────────────────────────
@@ -309,7 +325,7 @@ export default function HomePage() {
           if (entry.isIntersecting) entry.target.classList.add("in");
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.12 },
     );
     document.querySelectorAll(".reveal").forEach((el) => ro.observe(el));
     return () => ro.disconnect();
@@ -338,8 +354,7 @@ export default function HomePage() {
     const currentIdx = currentRef.current;
     const timerOffset = timerOffsetRef.current;
     const currentStepProgress = 1 - timerOffset / CIRCUMFERENCE;
-    let progressPct =
-      ((currentIdx + currentStepProgress) / TOTAL_STEPS) * 100;
+    let progressPct = ((currentIdx + currentStepProgress) / TOTAL_STEPS) * 100;
     progressPct = Math.min(progressPct, 100);
 
     if (progressFillRef.current) {
@@ -350,7 +365,11 @@ export default function HomePage() {
       if (!el) return;
       const isActive = i === currentIdx;
       const isCompleted = i < currentIdx;
-      const progress = isActive ? timerOffset / CIRCUMFERENCE : isCompleted ? 0 : 1;
+      const progress = isActive
+        ? timerOffset / CIRCUMFERENCE
+        : isCompleted
+          ? 0
+          : 1;
       const progressOffset = progress * STEP_CIRCUMFERENCE;
       el.style.strokeDashoffset = String(progressOffset);
     });
@@ -372,7 +391,7 @@ export default function HomePage() {
       timerOffsetRef.current = CIRCUMFERENCE * (1 - inStep);
       updateVisuals();
     },
-    [updateVisuals]
+    [updateVisuals],
   );
 
   // ── Animation tick ────────────────────────────────────────────────────────
@@ -431,44 +450,44 @@ export default function HomePage() {
       if (cancelled) return;
 
       ctx = gsap.context(() => {
-      const tl = gsap.timeline();
+        const tl = gsap.timeline();
 
-      tl.fromTo(
-        headerRef.current,
-        { opacity: 0, y: 60 },
-        { opacity: 1, y: 0, duration: 1.2 }
-      );
-      tl.fromTo(
-        featuresRef.current[0],
-        { opacity: 0, x: -70 },
-        { opacity: 1, x: 0, duration: 0.8 },
-        "+=0.2"
-      );
-      tl.fromTo(
-        featuresRef.current[1],
-        { opacity: 0, x: -70 },
-        { opacity: 1, x: 0, duration: 0.8 },
-        "+=0.1"
-      );
-      tl.fromTo(
-        featuresRef.current[2],
-        { opacity: 0, x: -70 },
-        { opacity: 1, x: 0, duration: 0.8 },
-        "+=0.1"
-      );
-      tl.fromTo(
-        btnRef.current,
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.7 },
-        "+=0.1"
-      );
-      tl.fromTo(
-        rightRef.current,
-        { opacity: 0, y: 80, scale: 0.95 },
-        { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
-        "+=0.3"
-      );
-    }, wrapperRef);
+        tl.fromTo(
+          headerRef.current,
+          { opacity: 0, y: 60 },
+          { opacity: 1, y: 0, duration: 1.2 },
+        );
+        tl.fromTo(
+          featuresRef.current[0],
+          { opacity: 0, x: -70 },
+          { opacity: 1, x: 0, duration: 0.8 },
+          "+=0.2",
+        );
+        tl.fromTo(
+          featuresRef.current[1],
+          { opacity: 0, x: -70 },
+          { opacity: 1, x: 0, duration: 0.8 },
+          "+=0.1",
+        );
+        tl.fromTo(
+          featuresRef.current[2],
+          { opacity: 0, x: -70 },
+          { opacity: 1, x: 0, duration: 0.8 },
+          "+=0.1",
+        );
+        tl.fromTo(
+          btnRef.current,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.7 },
+          "+=0.1",
+        );
+        tl.fromTo(
+          rightRef.current,
+          { opacity: 0, y: 80, scale: 0.95 },
+          { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
+          "+=0.3",
+        );
+      }, wrapperRef);
     });
 
     return () => {
@@ -510,8 +529,7 @@ export default function HomePage() {
         <div className="hero-left" ref={headerRef}>
           <div className="hero-badge">
             <div className="badge-pulse" />
-            Available 24/7 Virtual Care
-            Available 24 / 7.
+            Available 24/7
           </div>
 
           <h1>
@@ -521,10 +539,67 @@ export default function HomePage() {
           </h1>
 
           <p>
-           Get fast, reliable telemedicine services from board-certified healthcare providers without leaving home. Schedule an online doctor appointment, discuss symptoms, receive treatment guidance, and get prescriptions through our secure virtual healthcare platform available across all 50 states.
-
+            Get fast, reliable telemedicine services from board-certified
+            healthcare providers without leaving home. Schedule an online doctor
+            appointment, discuss symptoms, receive treatment guidance, and get
+            prescriptions through our secure virtual healthcare platform
+            available across all 50 states.
           </p>
-
+ <div className="trust" ref={btnRef}>
+            <span className="trust-chip">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="#7CB7FF"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              HIPAA Compliant
+            </span>
+            <span className="trust-chip">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="#7CB7FF"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              GDPR Ready
+            </span>
+            <span className="trust-chip">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="#7CB7FF"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              500+ Verified Doctors
+            </span>
+            <span className="trust-chip">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="#7CB7FF"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+              Prescriptions Available
+            </span>
+          </div>
           {/* SEARCH BAR */}
           <div className="search-wrapper" ref={searchRef}>
             <div className="search-bar">
@@ -552,7 +627,9 @@ export default function HomePage() {
                   >
                     <div className="suggestion-left">
                       <span className="suggestion-title">{item.title}</span>
-                      <span className="suggestion-type">{item.type}</span>
+                      {item.type && (
+                        <span className="suggestion-type">{item.type}</span>
+                      )}
                     </div>
                     <span className="suggestion-arrow">→</span>
                   </div>
@@ -561,34 +638,7 @@ export default function HomePage() {
             )}
           </div>
 
-          <div className="trust" ref={btnRef}>
-            <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              HIPAA Compliant
-
-            </span>
-            <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              GDPR Ready
-            </span>
-            <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              500+ Verified Doctors
-            </span>
-            <span className="trust-chip">
-              <svg width="12" height="12" fill="none" stroke="#7CB7FF" strokeWidth="2.5" viewBox="0 0 24 24">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
-              </svg>
-              Prescriptions Available
-            </span>
-          </div>
+         
         </div>
 
         {/* ── RIGHT ── */}
@@ -613,11 +663,17 @@ export default function HomePage() {
             <div className="t-orb t-orb-3" />
 
             <div className="timeline-header">
-              <div className="eyebrow-hero">The Humancare Connect Experience</div>
+              <div className="eyebrow-hero">
+                The Humancare Connect Experience
+              </div>
               <h3>
                 Your Visit in <span>30 Seconds</span>
               </h3>
-              <p> From sign-up to prescription, five simple steps to care anywhere in the world.</p>
+              <p>
+                {" "}
+                From sign-up to prescription, five simple steps to care anywhere
+                in the world.
+              </p>
             </div>
 
             <div className="progress-track">
@@ -674,8 +730,12 @@ export default function HomePage() {
                         <div className="scene-metric">
                           {/* <div className="metric-icon">{scene.metricIcon}</div> */}
                           <div className="metric-text">
-                            <span className="metric-value">{scene.metricValue}</span>
-                            <span className="metric-label">{scene.metricLabel}</span>
+                            <span className="metric-value">
+                              {scene.metricValue}
+                            </span>
+                            <span className="metric-label">
+                              {scene.metricLabel}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -714,13 +774,18 @@ export default function HomePage() {
       </Suspense>
 
       {/* ════════ TESTIMONIALS ══════════════════════════════════════════════ */}
-      <section className="testimonials-section reveal reveal-stagger" ref={testimonialsRef}>
+      <section
+        className="testimonials-section reveal reveal-stagger"
+        ref={testimonialsRef}
+      >
         <div className="testi-header">
           <div className="testi-eyebrow">Testimonials</div>
-          <h2 className="testi-title">What patients are saying about Humancare Connect.
-</h2>
+          <h2 className="testi-title">
+            What patients are saying about Humancare Connect.
+          </h2>
           <p className="testi-desc">
-            Real stories. Real care. Real results from trusted virtual healthcare services and licensed online doctors. 
+            Real stories. Real care. Real results from trusted virtual
+            healthcare services and licensed online doctors.
           </p>
         </div>
 
@@ -757,36 +822,68 @@ export default function HomePage() {
             deserves better virtual care.
           </h2>
           <p className="cta-desc">
-           Affordable telehealth services, same-day online doctor consultations, prescriptions, and ongoing care all through one secure telemedicine platform. 
-
-
+            Affordable telehealth services, same-day online doctor
+            consultations, prescriptions, and ongoing care all through one
+            secure telemedicine platform.
           </p>
           <div className="cta-btns">
-            <a href="/login"><button className="cta-btn-w">Create Free Account</button></a>
-            <a href="/appointment-booking"><button className="cta-btn-g">Talk to a Doctor Now</button></a>
+            <a href="/login">
+              <button className="cta-btn-w">Create Free Account</button>
+            </a>
+            <a href="/appointment-booking">
+              <button className="cta-btn-g">Talk to a Doctor Now</button>
+            </a>
           </div>
           <div className="cta-pills">
             <span className="cta-pill">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               HIPAA Compliant
             </span>
             <span className="cta-pill">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Board-Certified Doctors
             </span>
             <span className="cta-pill">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               24/7 Available
             </span>
             <span className="cta-pill">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>

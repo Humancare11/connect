@@ -181,7 +181,7 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
   next();
 });
 
@@ -586,9 +586,15 @@ io.on("connection", (socket) => {
 
     const room = `appointment_${appointmentId}`;
 
-    // If this socket is already in the room (e.g. duplicate emit), just re-notify peers
+    // If this socket is already in the room (e.g. duplicate emit from an
+    // effect re-run), re-notify peers AND tell ourselves about any peer
+    // already present — otherwise a rejoin can leave both sides without a
+    // "peer-joined" signal (e.g. if our previous listener was detached
+    // between the original join and this duplicate emit).
     if (socket.rooms.has(room)) {
       socket.to(room).emit("peer-joined");
+      const existing = io.sockets.adapter.rooms.get(room);
+      if (existing && existing.size > 1) socket.emit("peer-joined");
       return;
     }
 
