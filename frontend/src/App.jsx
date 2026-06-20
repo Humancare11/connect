@@ -39,11 +39,11 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-import AboutPage from "./pages/AboutPage"
+import AboutPage from "./pages/AboutPage";
 import PCP from "./pages/PCP";
 
 // privacy concerns
-import PrivacyConcerns from "./pages/Privacy Policies/PrivacyConcerns"; 
+import PrivacyConcerns from "./pages/Privacy Policies/PrivacyConcerns";
 import PatientPrivacyNotice from "./pages/Privacy Policies/PatientPrivacyNotice";
 import PrivacyPolicy from "./pages/Privacy Policies/PrivacyPolicy";
 import ProviderTermsofService from "./pages/Privacy Policies/ProviderTermsofService";
@@ -71,7 +71,6 @@ import WeightNurtrition from "./pages/Categories/WeightNutrition";
 import WomenHealth from "./pages/Categories/WomenHealth";
 // Specialty pages
 import SD from "./pages/Specialty/SD";
-
 
 // condition pages
 import Arthritis from "./pages/Conditions/Arthritis";
@@ -155,9 +154,7 @@ import GrowthDevelopment from "./pages/Conditions/GrowthDevelopment";
 import VomitingDiarrheaChildren from "./pages/Conditions/VomitingDiarrheaChildren";
 import DoctorsNote from "./pages/Conditions/DoctorsNote";
 
-
-
-// Services 
+// Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
@@ -328,7 +325,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => { });
+        api.post("/api/auth/refresh").catch(() => {});
       },
       10 * 60 * 1000,
     );
@@ -402,7 +399,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -466,7 +463,6 @@ function AppLayout() {
       >
         <Routes>
           <Route path="/" element={<Home />} />
-
           <Route path="/ask-a-question" element={<AskDoctor />} />
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
@@ -480,7 +476,6 @@ function AppLayout() {
           <Route path="/home-demo" element={<Home2 />} />
           <Route path="/test" element={<Test />} />
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
-
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
@@ -488,7 +483,6 @@ function AppLayout() {
             path="/doctor/:id"
             element={<DoctorProfileForUser legacyId />}
           />
-
           <Route
             path="/user/dashboard"
             element={
@@ -561,15 +555,12 @@ function AppLayout() {
               </UserLayout>
             }
           />
-
           <Route
             path="/profile"
             element={<Navigate to="/user/dashboard" replace />}
           />
-
           {/* <Route path="/doctor-register" element={<DoctorRegister />} /> */}
           <Route path="/doctor-login" element={<DoctorLogin />} />
-
           <Route
             path="/doctor-dashboard"
             element={
@@ -647,7 +638,6 @@ function AppLayout() {
               </DoctorLayout>
             }
           />
-
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
           <Route
@@ -843,18 +833,22 @@ function AppLayout() {
             }
           />
           <Route path="/video-call/:appointmentId" element={<VideoCall />} />
-
           {/* ALL*/}
           <Route path="/categories" element={<Categories />} />
           <Route path="/specialties" element={<Specialties />} />
           <Route path="/conditions" element={<Symptoms />} />
-
           {/* categories */}
           <Route path="/child-care" element={<ChildCare />} />
           <Route path="/child-family-care" element={<ChildFamilyCare />} />
-          <Route path="/chronic-care-and-expert-opinion" element={<ChronicCareExpertOpinion />} />
+          <Route
+            path="/chronic-care-and-expert-opinion"
+            element={<ChronicCareExpertOpinion />}
+          />
           <Route path="/eye-ear-bone" element={<EyeEarBone />} />
-          <Route path="/general-everyday-care" element={<GeneralEverydayCare />} />
+          <Route
+            path="/general-everyday-care"
+            element={<GeneralEverydayCare />}
+          />
           <Route path="/men-health" element={<MenHealth />} />
           <Route path="/mental-health" element={<MentalHealth />} />
           <Route path="/sexual-health" element={<SexualHealth />} />
@@ -862,14 +856,9 @@ function AppLayout() {
           <Route path="/travel-global-care" element={<TravelGlobalCare />} />
           <Route path="/weight-nurtrition" element={<WeightNurtrition />} />
           <Route path="/women-health" element={<WomenHealth />} />
-          
-          
-          
-
           {/* specialties */}
           <Route path="/sd" element={<SD />} />
           <Route path="/ServiceDemo" element={<ServiceDemo />} />
-
           {/* condition pages */}
           <Route path="/arthritis" element={<Arthritis />} />
           <Route path="/cancer-second-opinion" element={<CancerSecond />} />
@@ -893,28 +882,38 @@ function AppLayout() {
             element={<PreOpCardiacClearance />}
           />
           <Route
-            path="/rheumatoid-arthritis" element={<RheumatoidArthritis />}
+            path="/rheumatoid-arthritis"
+            element={<RheumatoidArthritis />}
           />
           <Route
-            path="/seizures-epilepsy-follow-up" element={<SeizuresEpilepsyFollowUp />}
+            path="/seizures-epilepsy-follow-up"
+            element={<SeizuresEpilepsyFollowUp />}
           />
           <Route path="/sleep-apnea" element={<SleepApnea />} />
           <Route
-            path="/surgery-second-opinion" element={<SurgerySecondOpinion />}
+            path="/surgery-second-opinion"
+            element={<SurgerySecondOpinion />}
           />
           <Route path="/thyroid-disorders" element={<ThyroidDisorders />} />
           <Route
-            path="/treatment-plan-review" element={<TreatmentPlanReview />}
+            path="/treatment-plan-review"
+            element={<TreatmentPlanReview />}
           />
           <Route path="/tremor" element={<Tremor />} />
           <Route path="/type-2-diabetes" element={<TypeTwoDiabetes />} />
           <Route path="/abdominal-pain" element={<AbdominalPain />} />
           <Route path="/binge-eating" element={<BingeEating />} />
           <Route path="/bloating" element={<Bloating />} />
-          <Route path="/cholesterol-lowering-diet" element={<CholesterolLoweringDiet />} />
+          <Route
+            path="/cholesterol-lowering-diet"
+            element={<CholesterolLoweringDiet />}
+          />
           <Route path="/dehydration" element={<Dehydration />} />
           <Route path="/diabetic-diet" element={<DiabeticDiet />} />
-          <Route path="/diet-exercise-planning" element={<DietExercisePlanning />} />
+          <Route
+            path="/diet-exercise-planning"
+            element={<DietExercisePlanning />}
+          />
           <Route
             path="/food-intolerance-planning"
             element={<FoodIntolerancePlanning />}
@@ -964,46 +963,73 @@ function AppLayout() {
           <Route path="/childhood-allergies" element={<ChildhoodAllergies />} />
           <Route path="/ear-pain-children" element={<EarPainChildren />} />
           <Route path="/feeding-concerns" element={<FeedingConcerns />} />
-          <Route path="/mild-asthma-symptoms" element={<MildAsthmaSymptoms />}  />
+          <Route
+            path="/mild-asthma-symptoms"
+            element={<MildAsthmaSymptoms />}
+          />
           <Route path="/mood-anxiety-teens" element={<MoodAnxietyTeens />} />
           <Route path="/pediatric-cold-flu" element={<PediatricColdFlu />} />
           <Route path="/pediatric-fever" element={<PediatricFever />} />
           <Route path="/pink-eye-children" element={<PinkEyeChildren />} />
           <Route path="/puberty-concerns" element={<PubertyConcerns />} />
           <Route path="/skin-rash-children" element={<SkinRashChildren />} />
-          <Route  path="/sore-throat-children"   element={<SoreThroatChildren />} />
+          <Route
+            path="/sore-throat-children"
+            element={<SoreThroatChildren />}
+          />
           <Route path="/sports-injuries" element={<SportsInjuries />} />
-          <Route  path="/stomach-pain-children"  element={<StomachPainChildren />}  />
+          <Route
+            path="/stomach-pain-children"
+            element={<StomachPainChildren />}
+          />
           <Route path="/growth-development" element={<GrowthDevelopment />} />
-          <Route  path="/vomiting-diarrhea-children" element={<VomitingDiarrheaChildren />} />
+          <Route
+            path="/vomiting-diarrhea-children"
+            element={<VomitingDiarrheaChildren />}
+          />
           <Route path="/doctors-note" element={<DoctorsNote />} />
-
-
-
-
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
-          <Route path="/appointment-booking/form" element={<AppointmentBookingForm />}/>
-          
-          <Route path="/pcp" element={<PCP/>}/>
-
+          <Route
+            path="/appointment-booking/form"
+            element={<AppointmentBookingForm />}
+          />
+          <Route path="/pcp" element={<PCP />} />
           {/* PRIVACY  */}
-          <Route path="/privacy-concerns" element={<PrivacyConcerns />} />  {/* demo */}
-          <Route path="/patient-privacy-notice" element={<PatientPrivacyNotice />} />
+          <Route path="/privacy-concerns" element={<PrivacyConcerns />} />{" "}
+          {/* demo */}
+          <Route
+            path="/patient-privacy-notice"
+            element={<PatientPrivacyNotice />}
+          />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/provider-terms-of-service" element={<ProviderTermsofService/>} />
-          <Route path="/refund-and-cancellation-policy" element={<RefundCancellation />} />
-          <Route path="/tele-health-informed-consent" element={<TeleHealthConsent />} />
+          <Route
+            path="/provider-terms-of-service"
+            element={<ProviderTermsofService />}
+          />
+          <Route
+            path="/refund-and-cancellation-policy"
+            element={<RefundCancellation />}
+          />
+          <Route
+            path="/tele-health-informed-consent"
+            element={<TeleHealthConsent />}
+          />
           <Route path="/terms-of-service" element={<TermsService />} />
-          <Route path="/accessibility-statement" element={<AccessibilityStatement />} />
-          <Route path="/CCPA" element={<CCPA/>} />
-          <Route path="/cookie-policy" element={<CookiePolicy  />} />
-          <Route path="/notice-of-privacy-practices" element={<NoticePrivacy/>} />
-          <Route path="/patient-informed-consent-form" element={<PatientInformedConsentForm />} />
-
-
-<Route path="/about-us" element={<AboutPage />} />
-
-
+          <Route
+            path="/accessibility-statement"
+            element={<AccessibilityStatement />}
+          />
+          <Route path="/CCPA" element={<CCPA />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route
+            path="/notice-of-privacy-practices"
+            element={<NoticePrivacy />}
+          />
+          <Route
+            path="/patient-informed-consent-form"
+            element={<PatientInformedConsentForm />}
+          />
+          <Route path="/about-us" element={<AboutPage />} />
         </Routes>
         {!hideLayout && <Footer />}
       </Suspense>
