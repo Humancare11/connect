@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   Globe2,
   ArrowRight,
@@ -28,10 +30,10 @@ import {
 import "./symptoms.css";
 
 const previewSpecialties = [
-  { name: "Primary Care", icon: Stethoscope, tags: ["Cold & Flu", "Fever"] },
-  { name: "Urgent Care", icon: ClipboardPlus, tags: ["UTI", "Sore Throat"] },
-  { name: "Mental Health", icon: Brain, tags: ["Anxiety", "Depression"] },
-  { name: "Chronic Care", icon: Activity, tags: ["Diabetes", "Hypertension"] },
+  { name: "Primary Care", path: "/primary-care-provider", icon: Stethoscope, tags: ["Cold & Flu", "Fever"] },
+  { name: "Urgent Care", path: "/urgent-care", icon: ClipboardPlus, tags: ["UTI", "Sore Throat"] },
+  { name: "Mental Health", path: "/mental-health", icon: Brain, tags: ["Anxiety", "Depression"] },
+  { name: "Chronic Care", path: "/chronic-care", icon: Activity, tags: ["Diabetes", "Hypertension"] },
 ];
 
 const heroRows = [
@@ -42,15 +44,13 @@ const heroRows = [
 ];
 
 const stats = [
-  ["12", "Specialties"],
-  ["140+", "Conditions"],
-  ["6", "B2B segments"],
+  ["11", "Categories"],
+  ["30", "Specialties"],
+  ["160+", "Conditions"],
+  
 ];
 
-// -----------Hero carousel slides --------
-// Each slide pairs a "request" context (top dark card rows) with the
-// 2x2 specialty grid below it, mirroring the reference design where the
-// active specialty is highlighted and summarized in the footer row.
+
 const heroSlides = [
   {
     sub: "Virtual care request",
@@ -106,369 +106,403 @@ const heroSlides = [
 
 const conditionCategories = [
   {
-    category: "Everyday Urgent Care",
+    category: "Everyday & Urgent Symptoms",
     icon: ClipboardPlus,
     conditions: [
-      "Cold & Flu",
-      "COVID-19",
-      "Fever",
-      "Sore Throat",
-      "Strep Throat",
-      "Sinus Infection",
-      "Ear Infection",
-      "Pink Eye",
-      "Cough",
-      "Bronchitis",
-      "Seasonal Allergies",
-      "Headache",
-      "Migraine",
-      "Dizziness",
-      "Vertigo",
-      "Nausea and Vomiting",
-      "Diarrhea",
-      "Food Poisoning",
-      "Constipation",
-      "Acid Reflux / GERD",
-      "Minor Burns",
-      "Insect Bites",
+      { name: "Fever", path: "/fever" },
+      { name: "Cold & Flu", path: "/cold-and-flu" },
+      { name: "Cough & Sore Throat", path: "/cough-and-sore-throat" },
+      { name: "Body Aches", path: "/body-aches" },
+      { name: "Headache", path: "/headache" },
+      { name: "Sinus Infection", path: "/sinus-infection" },
+      { name: "Minor Infections", path: "/minor-infections" },
+      { name: "Fatigue", path: "/fatigue" },
+      { name: "Nausea & Vomiting", path: "/nausea-and-vomiting" },
+      { name: "Pink Eye", path: "/pink-eye" },
     ],
   },
   {
-    category: "Skin Conditions",
-    icon: HeartPulse,
-    conditions: [
-      "Acne",
-      "Eczema",
-      "Psoriasis",
-      "Skin Rash",
-      "Hives",
-      "Fungal Skin Infection",
-      "Ringworm",
-      "Athlete's Foot",
-      "Cellulitis",
-      "Cold Sores",
-      "Shingles",
-      "Hair Loss",
-      "Itchy Skin",
-      "Contact Dermatitis",
-      "Rosacea",
-      "Warts",
-    ],
-  },
-  {
-    category: "Respiratory Health",
-    icon: Activity,
-    conditions: [
-      "Asthma",
-      "Asthma Flare-Up",
-      "Allergic Rhinitis",
-      "COPD",
-      "Persistent Cough",
-      "Shortness of Breath",
-      "Wheezing",
-      "Upper Respiratory Infection",
-      "Pneumonia Follow-Up",
-    ],
-  },
-  {
-    category: "Digestive Health",
+    category: "Primary Care",
     icon: Stethoscope,
     conditions: [
-      "Abdominal Pain",
-      "Bloating",
-      "Gastritis",
-      "Irritable Bowel Syndrome",
-      "Indigestion",
-      "Hemorrhoids",
-      "Traveler's Diarrhea",
-      "Vomiting",
-      "Dehydration",
-    ],
-  },
-  {
-    category: "Urinary & Kidney Health",
-    icon: ShieldCheck,
-    conditions: [
-      "Urinary Tract Infection",
-      "Bladder Infection",
-      "Burning Urination",
-      "Frequent Urination",
-      "Kidney Infection",
-      "Kidney Stones",
-      "Urinary Incontinence",
-      "Blood in Urine",
-    ],
-  },
-  {
-    category: "Chronic Care",
-    icon: Activity,
-    conditions: [
-      "Type 2 Diabetes",
-      "High Blood Pressure",
-      "High Cholesterol",
-      "Thyroid Disorders",
-      "Obesity",
-      "Arthritis",
-      "Osteoarthritis",
-      "Rheumatoid Arthritis",
-      "Chronic Migraine",
-      "Chronic Kidney Disease",
-      "Heart Disease Follow-Up",
-      "Sleep Apnea",
-    ],
-  },
-  {
-    category: "Women's Health",
-    icon: Venus,
-    conditions: [
-      "Birth Control Consultation",
-      "Emergency Contraception Guidance",
-      "Menstrual Cramps",
-      "Irregular Periods",
-      "Heavy Periods",
-      "PCOS",
-      "Menopause Symptoms",
-      "Vaginal Yeast Infection",
-      "Bacterial Vaginosis",
-      "Pregnancy-Related Questions",
-      "Prenatal Consultation",
-      "Postpartum Concerns",
-    ],
-  },
-  {
-    category: "Men's Health",
-    icon: Mars,
-    conditions: [
-      "Erectile Dysfunction",
-      "Premature Ejaculation",
-      "Low Testosterone Symptoms",
-      "Hair Loss",
-      "Prostate Health",
-      "Urinary Symptoms in Men",
-      "Men's Wellness Consultation",
+      { name: "First-Line Advice For Any Symptom", path: "/first-line-advice-for-any-symptom" },
+      { name: "Undiagnosed Symptoms", path: "/undiagnosed-symptoms" },
+      { name: "Multi-System Complaints", path: "/multi-system-complaints" },
+      { name: "Preventive Screening", path: "/preventive-screening" },
+      { name: "Medication Review", path: "/medication-review" },
+      { name: "Complex Case Review", path: "/complex-case-review" },
+      { name: "Routine Check-Ups", path: "/routine-check-ups" },
+      { name: "Whole-Family Illnesses", path: "/whole-family-illnesses" },
+      { name: "Chronic-Disease Review", path: "/chronic-disease-review" },
+      { name: "Vaccination Advice", path: "/vaccination-advice" },
     ],
   },
   {
     category: "Mental & Behavioral Health",
     icon: Brain,
     conditions: [
-      "Anxiety",
-      "Depression",
-      "Stress",
-      "Burnout",
-      "Panic Attacks",
-      "Insomnia",
-      "ADHD Evaluation",
-      "PTSD",
-      "Grief and Loss",
-      "Relationship Stress",
-      "Substance Use Support",
+      { name: "Anxiety Disorders", path: "/anxiety-disorders" },
+      { name: "Depression", path: "/depression" },
+      { name: "Bipolar Disorder Follow-Up", path: "/bipolar-disorder-follow-up" },
+      { name: "OCD", path: "/ocd" },
+      { name: "PTSD", path: "/ptsd" },
+      { name: "Panic Attacks", path: "/panic-attacks" },
+      { name: "Insomnia", path: "/insomnia" },
+      { name: "ADHD Assessment & Follow-Up", path: "/adhd-assessment-and-follow-up" },
+      { name: "Medication Management", path: "/medication-management" },
+      { name: "Stress", path: "/stress" },
     ],
   },
   {
-    category: "Sexual Health",
+    category: "Talk Therapy & Counselling",
+    icon: Brain,
+    conditions: [
+      { name: "Grief & Loss", path: "/grief-and-loss" },
+      { name: "Relationship Issues", path: "/relationship-issues" },
+      { name: "Low Self-Esteem", path: "/low-self-esteem" },
+      { name: "Trauma Support", path: "/trauma-support" },
+      { name: "Anxiety (Talk Therapy)", path: "/anxiety-talk-therapy" },
+      { name: "Depression (Talk Therapy)", path: "/depression-talk-therapy" },
+      { name: "Anger Management", path: "/anger-management" },
+      { name: "Adjustment Difficulties", path: "/adjustment-difficulties" },
+      { name: "Substance-Use Concerns", path: "/substance-use-concerns" },
+      { name: "Sleep-Related Anxiety", path: "/sleep-related-anxiety" },
+    ],
+  },
+  {
+    category: "Skin Conditions",
+    icon: HeartPulse,
+    conditions: [
+      { name: "Acne", path: "/acne" },
+      { name: "Eczema", path: "/eczema" },
+      { name: "Psoriasis", path: "/psoriasis" },
+      { name: "Skin Rashes", path: "/skin-rashes" },
+      { name: "Hives", path: "/hives" },
+      { name: "Rosacea", path: "/rosacea" },
+      { name: "Fungal Infections", path: "/fungal-infections" },
+      { name: "Warts", path: "/warts" },
+      { name: "Cold Sores", path: "/cold-sores" },
+      { name: "Hair Loss", path: "/hair-loss" },
+      { name: "Nail Problems", path: "/nail-problems" },
+      { name: "Mole & Skin Checks", path: "/mole-and-skin-checks" },
+    ],
+  },
+  {
+    category: "Women's Health",
+    icon: Venus,
+    conditions: [
+      { name: "Irregular Periods", path: "/irregular-periods" },
+      { name: "Painful Periods", path: "/painful-periods" },
+      { name: "PCOS", path: "/pcos" },
+      { name: "Contraception Advice", path: "/contraception-advice" },
+      { name: "Vaginal Infections", path: "/vaginal-infections" },
+      { name: "Pelvic Pain", path: "/pelvic-pain" },
+      { name: "Prenatal Teleconsult", path: "/prenatal-teleconsult" },
+      { name: "Fertility Concerns", path: "/fertility-concerns" },
+    ],
+  },
+  {
+    category: "Menopause & Perimenopause",
+    icon: Venus,
+    conditions: [
+      { name: "Hot Flashes", path: "/hot-flashes" },
+      { name: "Perimenopausal Irregular Periods", path: "/perimenopausal-irregular-periods" },
+      { name: "Mood Changes", path: "/mood-changes" },
+      { name: "Sleep Disturbance", path: "/sleep-disturbance" },
+      { name: "HRT Guidance", path: "/hrt-guidance" },
+      { name: "Postnatal Depression", path: "/postnatal-depression" },
+      { name: "Perinatal Anxiety", path: "/perinatal-anxiety" },
+      { name: "PMDD", path: "/pmdd" },
+      { name: "Menopause-Related Mood Changes", path: "/menopause-related-mood-changes" },
+    ],
+  },
+  {
+    category: "Postpartum & Breastfeeding Support",
+    icon: Baby,
+    conditions: [
+      { name: "Low Milk Supply", path: "/low-milk-supply" },
+      { name: "Latch Problems", path: "/latch-problems" },
+      { name: "Nipple Pain", path: "/nipple-pain" },
+      { name: "Weaning Guidance", path: "/weaning-guidance" },
+    ],
+  },
+  {
+    category: "Men's Health",
+    icon: Mars,
+    conditions: [
+      { name: "Erectile Dysfunction", path: "/erectile-dysfunction" },
+      { name: "Low Testosterone", path: "/low-testosterone" },
+      { name: "Prostate Concerns", path: "/prostate-concerns" },
+      { name: "Low Libido", path: "/low-libido" },
+    ],
+  },
+  {
+    category: "Urinary & Kidney Health",
     icon: ShieldCheck,
     conditions: [
-      "STI Consultation",
-      "Chlamydia",
-      "Gonorrhea",
-      "Herpes",
-      "Genital Rash",
-      "Genital Itching",
-      "HIV Prevention / PrEP Guidance",
-      "Partner Exposure Concerns",
+      { name: "Urinary Tract Infections", path: "/urinary-tract-infections" },
+      { name: "Kidney Stones Follow-Up", path: "/kidney-stones-follow-up" },
+      { name: "Blood In Urine", path: "/blood-in-urine" },
+      { name: "Incontinence", path: "/incontinence" },
+      { name: "Bladder Problems", path: "/bladder-problems" },
     ],
   },
   {
     category: "Pediatric Care",
     icon: Baby,
     conditions: [
-      "Pediatric Fever",
-      "Pediatric Cold & Flu",
-      "Ear Pain in Children",
-      "Sore Throat in Children",
-      "Pink Eye in Children",
-      "Skin Rash in Children",
-      "Childhood Allergies",
-      "Mild Asthma Symptoms",
-      "Stomach Pain in Children",
-      "Vomiting and Diarrhea in Children",
+      { name: "Fever In Children", path: "/pediatric-fever" },
+      { name: "Cough & Cold", path: "/pediatric-cold-flu" },
+      { name: "Childhood Rashes", path: "/skin-rash-children" },
+      { name: "Ear Infections", path: "/ear-infection" },
+      { name: "Feeding Concerns", path: "/feeding-concerns" },
+      { name: "Growth & Development", path: "/growth-development" },
+      { name: "Puberty Concerns", path: "/puberty-concerns" },
+      { name: "Mood & Anxiety In Teens", path: "/mood-anxiety-teens" },
+      { name: "Menstrual Problems", path: "/menstrual-problems" },
+      { name: "Sports Injuries", path: "/sports-injuries" },
+    ],
+  },
+  {
+    category: "Weight, Metabolic & Nutrition Care",
+    icon: Activity,
+    conditions: [
+      { name: "Obesity", path: "/obesity" },
+      { name: "GLP-1 Program Eligibility", path: "/glp-program-eligibility" },
+      { name: "Metabolic Syndrome", path: "/metabolic-syndrome" },
+      { name: "Weight-Loss Planning", path: "/weight-loss-planning" },
+      { name: "Binge Eating", path: "/binge-eating" },
+      { name: "Diabetic Diet", path: "/diabetic-diet" },
+      { name: "Cholesterol-Lowering Diet", path: "/cholesterol-lowering-diet" },
+      { name: "Food-Intolerance Planning", path: "/food-intolerance-planning" },
+      { name: "Pregnancy Nutrition", path: "/pregnancy-nutrition" },
+      { name: "Sports Nutrition", path: "/sports-nutrition" },
+      { name: "Healthy-Habit Coaching", path: "/healthy-habit-coaching" },
+      { name: "Diet & Exercise Planning", path: "/diet-exercise-planning" },
+      { name: "Sleep Hygiene", path: "/sleep-hygiene" },
+      { name: "Stress Reduction", path: "/stress-reduction" },
+    ],
+  },
+  {
+    category: "Heart & Cardiovascular Health",
+    icon: HeartPulse,
+    conditions: [
+      { name: "High Blood Pressure", path: "/high-blood-pressure" },
+      { name: "Chest Pain (Non-Emergency)", path: "/chest-pain" },
+      { name: "Palpitations", path: "/palpitations" },
+      { name: "High Cholesterol", path: "/high-cholesterol" },
+      { name: "Heart Failure Follow-Up", path: "/heart-failure-follow-up" },
+      { name: "Pre-Op Cardiac Clearance", path: "/pre-op-cardiac-clearance" },
+    ],
+  },
+  {
+    category: "Chronic Disease Management",
+    icon: Activity,
+    conditions: [
+      { name: "Thyroid Disorders", path: "/thyroid-disorders" },
+      { name: "Diabetes (Type 1 & 2)", path: "/type-2-diabetes" },
+      { name: "Hormone Imbalance", path: "/hormone-imblance" },
+      { name: "Osteoporosis", path: "/osteoporosis" },
+    ],
+  },
+  {
+    category: "Digestive Health",
+    icon: Stethoscope,
+    conditions: [
+      { name: "Acid Reflux / GERD", path: "/acid-reflux-gerd" },
+      { name: "IBS", path: "/irritable-bowel-syndrome" },
+      { name: "Constipation", path: "/constipation" },
+      { name: "Stomach Pain", path: "/stomach-pain" },
+      { name: "Bloating", path: "/bloating" },
+      { name: "Fatty Liver Follow-Up", path: "/fatty-liver-follow-up" },
+    ],
+  },
+  {
+    category: "Neurological Symptoms",
+    icon: Brain,
+    conditions: [
+      { name: "Migraine & Headaches", path: "/migraine-and-headaches" },
+      { name: "Seizures / Epilepsy Follow-Up", path: "/seizures-epilepsy-follow-up" },
+      { name: "Numbness & Tingling", path: "/numbness-and-tingling" },
+      { name: "Tremor", path: "/tremor" },
+      { name: "Dizziness", path: "/dizziness" },
+      { name: "Memory Concerns", path: "/memory-concerns" },
+    ],
+  },
+  {
+    category: "Respiratory Health",
+    icon: Activity,
+    conditions: [
+      { name: "Asthma", path: "/asthma" },
+      { name: "COPD", path: "/copd" },
+      { name: "Chronic Cough", path: "/chronic-cough" },
+      { name: "Shortness Of Breath", path: "/shortness-of-breath" },
+      { name: "Sleep Apnea Screening", path: "/sleep-apnea-screening" },
+      { name: "Post-COVID Concerns", path: "/post-covid-concerns" },
+    ],
+  },
+  {
+    category: "Specialist & Second Opinions",
+    icon: ClipboardPlus,
+    conditions: [
+      { name: "Cancer Second Opinion", path: "/cancer-second-opinion" },
+      { name: "Surgery Second Opinion", path: "/surgery-second-opinion" },
+      { name: "Complex-Diagnosis Review", path: "/complex-diagnosis-review" },
+      { name: "Treatment-Plan Review", path: "/treatment-plan-review" },
+    ],
+  },
+  {
+    category: "Eye, Ear & Throat",
+    icon: Activity,
+    conditions: [
+      { name: "Red / Irritated Eyes", path: "/red-irritated-eyes" },
+      { name: "Dry Eyes", path: "/dry-eyes" },
+      { name: "Vision Changes", path: "/vision-changes" },
+      { name: "Eye Infections", path: "/eye-infections" },
+      { name: "Stye", path: "/stye" },
+      { name: "Eye-Strain Advice", path: "/eye-strain-advice" },
+      { name: "Sinusitis", path: "/sinusitis" },
+      { name: "Sore Throat / Tonsillitis", path: "/tonsillitis" },
+      { name: "Vertigo", path: "/vertigo" },
+      { name: "Nasal Congestion", path: "/nasal-congestion" },
+      { name: "Hoarseness", path: "/hoarseness" },
+    ],
+  },
+  {
+    category: "Musculoskeletal Health",
+    icon: Activity,
+    conditions: [
+      { name: "Back Pain", path: "/back-pain" },
+      { name: "Neck Pain", path: "/neck-pain" },
+      { name: "Knee & Joint Pain", path: "/knee-pain" },
+      { name: "Sprains & Strains", path: "/sprains-and-strains" },
+      { name: "Arthritis Advice", path: "/arthritis" },
+    ],
+  },
+  {
+    category: "Sexual Health",
+    icon: ShieldCheck,
+    conditions: [
+      { name: "STI Advice & Testing Guidance", path: "/sti-advice-and-testing-guidance" },
+      { name: "Confidential Care", path: "/confidential-care" },
+      { name: "Safe-Sex Counselling", path: "/safe-sex-counselling" },
     ],
   },
   {
     category: "Travel Health",
     icon: Plane,
     conditions: [
-      "Traveler's Diarrhea",
-      "Food Poisoning While Traveling",
-      "Motion Sickness",
-      "Altitude Sickness",
-      "Jet Lag",
-      "Medication Refill While Traveling",
-      "Travel-Related Fever",
-      "Travel Medical Certificate",
-      "Fitness-to-Travel Evaluation",
-      "International Medical Assistance",
-      "Emergency Teleconsultation Abroad",
-    ],
-  },
-  {
-    category: "Prescription & Continuity Care",
-    icon: Pill,
-    conditions: [
-      "Prescription Refill",
-      "Medication Review",
-      "Chronic Medication Management",
-      "Lab Result Review",
-      "Second Medical Opinion",
-      "Specialist Referral",
-      "Follow-Up Consultation",
-      "Medical Certificate",
-      "Doctor's Note",
-      "Return-to-Work Clearance",
-    ],
-  },
-  {
-    category: "Eye, Ear & Musculoskeletal",
-    icon: Activity,
-    conditions: [
-      "Eye Redness",
-      "Eye Irritation",
-      "Ear Pain",
-      "Ear Infection",
-      "Back Pain",
-      "Neck Pain",
-      "Joint Pain",
-      "Muscle Strain",
-      "Numbness and Tingling",
-      "Swollen Feet or Ankles",
+      { name: "Pre-Travel Vaccination", path: "/pre-travel-vaccination" },
+      { name: "Malaria Prevention", path: "/malaria-prevention" },
+      { name: "Altitude-Sickness Guidance", path: "/altitude-sickness-guidance" },
+      { name: "Travel-Illness Advice", path: "/travel-illness-advice" },
+      { name: "Post-Travel Symptoms", path: "/post-travel-symptoms" },
+      { name: "Cross-Border Consultation", path: "/cross-border-consultation" },
+      { name: "Care Continuity While Abroad", path: "/care-continuity-while-abroad" },
+      { name: "Referral Coordination Overseas", path: "/referral-coordination-overseas" },
+      { name: "Travel Medical Assistance", path: "/travel-medical-assistance" },
+      { name: "Prescription Continuity Abroad", path: "/prescription-continuity-abroad" },
     ],
   },
 ];
 
-// B2B
-const audiences = [
-  "Travel assistance companies",
-  "International medical assistance providers",
-  "Employers and HR teams",
-  "TPAs and insurers",
-  "Global mobility programs",
-  "Universities and student travel programs",
-];
-
-//
-const emergencyItems = [
-  "Chest pain or heart attack symptoms",
-  "Stroke-like symptoms",
-  "Severe shortness of breath",
-  "Loss of consciousness",
-  "Severe allergic reaction",
-  "Uncontrolled bleeding",
-  "Suicidal thoughts or immediate danger",
-];
 
 // -----------Care section --------
 const careFeatures = [
   {
-    title: "Personalized Medical Guidance",
-    desc: "Receive healthcare support tailored to your symptoms, concerns, and individual health needs.",
+    title: "Symptom Based Medical Guidance",
+    desc: "Understand your symptoms and receive professional medical advice to help determine the appropriate next steps for your health.",
   },
   {
-    title: "Trusted Healthcare Professionals",
-    desc: "Connect with licensed medical experts who are available across most major time zones.",
+    title: "Personalized Healthcare Support",
+    desc: "Connect with experienced healthcare professionals who provide recommendations based on your symptoms, medical history, and individual healthcare needs.",
   },
   {
-    title: "Convenient Online Consultations",
-    desc: "Access quality healthcare from the comfort of your home with simple, flexible online scheduling.",
+    title: "Quick Access to Medical Advice",
+    desc: "Consult a doctor online for symptoms and receive timely healthcare support for new, recurring, or ongoing health concerns.",
   },
   {
-    title: "Comprehensive Healthcare Support",
-    desc: "Get care for everyday concerns, specialist health needs, long-term plans, and more.",
+    title: "Expert Evaluation & Treatment Guidance",
+    desc: "Receive professional insights, treatment recommendations, and support for managing a wide range of symptoms and medical conditions.",
   },
   {
-    title: "Private & Secure Care Experience",
-    desc: "Discuss your health confidently with secure consultations that protect your privacy and confidentiality.",
+    title: "Continuous Care & Follow-Up Support",
+    desc: "Stay connected with healthcare professionals for ongoing guidance, symptom monitoring, and long-term health management.",
   },
   {
-    title: "Continuous Care & Wellness Support",
-    desc: "Stay supported with ongoing guidance that keeps your wellness goals on track at every stage.",
+    title: "Secure & Convenient Online Doctor Consultation",
+    desc: "Access trusted online doctor consultations from the comfort of your home through a private, secure, and patient-centered virtual healthcare experience.",
   },
 ];
 
 // -----------FAQ section --------
 const faqGroups = [
   {
-    group: "Appointments",
+    group: "Consult a Doctor Online for Symptoms",
     items: [
       {
-        q: "What is an online doctor consultation?",
-        a: "An online doctor consultation allows patients to connect with qualified healthcare professionals remotely through video calls for medical advice, guidance, diagnosis, and treatment recommendations.",
+        q: "What does it mean to consult a doctor online for symptoms?",
+        a: "Consulting a doctor online for symptoms allows you to discuss your health concerns with qualified healthcare professionals remotely and receive medical guidance, recommendations, and advice through secure virtual consultations.",
       },
       {
-        q: "How do I choose the right online consultation service?",
-        a: "Look for licensed providers, transparent pricing, available specialties, and verified patient reviews before booking an online consultation service.",
+        q: "How can I consult a doctor online for symptoms?",
+        a: "You can choose a virtual consultation, share your symptoms, medical history, and concerns, and healthcare professionals will guide you toward appropriate care and treatment options.",
       },
       {
-        q: "What types of online consultations are available through Humancare Connect?",
-        a: "Humancare Connect offers primary care, urgent care, chronic care, mental health, women's and men's health, and specialist follow-up consultations.",
-      },
-    ],
-  },
-  {
-    group: "Virtual Care",
-    items: [
-      {
-        q: "Can I access healthcare services online through online consultation?",
-        a: "Yes, you can access a broad range of healthcare services online, including diagnosis, treatment guidance, prescriptions, and referrals.",
+        q: "What symptoms can I discuss during an online doctor consultation?",
+        a: "You can discuss many non-emergency symptoms, including common illnesses, skin concerns, mental health concerns, chronic health symptoms, sexual health concerns, and other general medical issues.",
       },
       {
-        q: "What if I am not sure which doctor I need to consult with?",
-        a: "Our intake flow routes you to the right specialty automatically based on the symptoms and concerns you describe.",
+        q: "What if I am not sure what is causing my symptoms?",
+        a: "You do not need a confirmed diagnosis before seeking care. Healthcare professionals can evaluate your symptoms and recommend appropriate next steps or additional medical evaluation if needed.",
       },
       {
-        q: "Are online consultations suitable for different age groups?",
-        a: "Yes, we support pediatric, adult, and senior patients with care pathways tailored to each age group.",
+        q: "Can an online doctor diagnose my symptoms?",
+        a: "Healthcare professionals can assess your symptoms, review your medical history, provide medical advice, and determine whether further testing or an in-person examination may be necessary.",
       },
       {
-        q: "Can I discuss more than one health concern during an online consultation?",
-        a: "Yes, you can raise multiple concerns in a single visit and your provider will address each one or refer you onward as needed.",
+        q: "Can I receive treatment recommendations through an online consultation?",
+        a: "Yes, healthcare professionals can discuss suitable treatment options, self-care recommendations, and medical guidance when appropriate.",
+      },
+      {
+        q: "Do I need previous medical records before consulting online?",
+        a: "Medical records, test reports, and information about current medications can help healthcare professionals understand your condition, but they are not always required.",
+      },
+      {
+        q: "Can I discuss recurring or long-term symptoms during an online consultation?",
+        a: "Yes, online consultations are suitable for discussing ongoing symptoms, receiving continuous healthcare support, and monitoring long-term health concerns.",
       },
       {
         q: "Are online consultations private and secure?",
-        a: "All consultations run on encrypted, HIPAA-compliant infrastructure to keep your medical information private.",
+        a: "Yes, Humancare Connect prioritizes patient confidentiality and uses secure technology to protect your personal health information.",
       },
       {
-        q: "Do I need a referral for an online consultation?",
-        a: "No referral is required for most consultation types; you can book directly through the platform.",
+        q: "Can I discuss multiple symptoms in a single consultation?",
+        a: "Yes, sharing all your symptoms helps healthcare professionals gain a complete understanding of your health and provide more personalized guidance.",
       },
       {
-        q: "Can I receive prescriptions during an online consultation?",
-        a: "Yes, licensed providers can issue prescriptions when clinically appropriate, sent directly to your pharmacy of choice.",
-      },
-    ],
-  },
-  {
-    group: "Association Benefits & Care",
-    items: [
-      {
-        q: "Are online consultations suitable for preventive care?",
-        a: "Yes, preventive check-ins and wellness reviews are available alongside symptom-based visits.",
+        q: "When should I seek emergency care instead of an online consultation?",
+        a: "You should seek immediate emergency medical attention for severe chest pain, difficulty breathing, serious injuries, sudden weakness, uncontrolled bleeding, or any other life-threatening symptoms.",
       },
       {
         q: "How quickly can I connect with a healthcare professional?",
-        a: "Most patients connect with a provider in under two minutes during active hours.",
+        a: "Humancare Connect makes it simple to consult a doctor online for symptoms with convenient access to trusted healthcare professionals and timely medical guidance.",
       },
       {
-        q: "What are the benefits of online consultation?",
-        a: "Online consultations save travel time, reduce wait times, and make it easier to access specialists from anywhere.",
+        q: "What are the benefits of consulting a doctor online for symptoms?",
+        a: "The benefits include convenience, faster access to medical support, personalized healthcare guidance, and receiving care from the comfort of your home.",
       },
       {
-        q: "Can I receive specialized medical support through online consultation?",
-        a: "Yes, specialist consultations are available for chronic, behavioral, and condition-specific care needs.",
+        q: "Can I receive prescriptions during an online consultation?",
+        a: "When medically appropriate and permitted by applicable regulations, healthcare professionals may provide prescriptions or treatment recommendations based on your symptoms and condition.",
       },
       {
-        q: "Why choose Humancare Connect for online consultation?",
-        a: "Humancare Connect combines vetted providers, fast routing, and secure infrastructure built specifically for cross-border and US-facing care needs.",
+        q: "Can I get a second opinion for my symptoms or diagnosis?",
+        a: "Yes, you can consult healthcare professionals online to receive additional medical insights about your diagnosis, treatment plan, or ongoing health concerns.",
+      },
+      {
+        q: "Why choose Humancare Connect to consult a doctor online for symptoms?",
+        a: "Humancare Connect provides secure online doctor consultations, experienced healthcare professionals, and personalized healthcare support to help you understand your symptoms and make informed healthcare decisions with confidence.",
       },
     ],
   },
@@ -502,23 +536,28 @@ export default function Symptoms() {
   const CurrentCardIcon = current.icon;
 
   // FAQ state — track which item is open within each group (one open per group)
-  const [openFaq, setOpenFaq] = useState("appt-0");
+  const [openFaq, setOpenFaq] = useState("0-0");
   const faqRightRef = useRef(null);
 
   const allConditions = useMemo(
     () =>
       conditionCategories.flatMap(({ category, icon, conditions }) =>
-        conditions.map((condition) => ({ condition, category, icon })),
+        conditions.map((condition) => ({
+          name: condition.name,
+          path: condition.path,
+          category,
+          icon,
+        })),
       ),
     [],
   );
 
   const filtered = useMemo(
     () =>
-      allConditions.filter(({ condition, category }) => {
+      allConditions.filter(({ name, category }) => {
         const matchCat = active === "All" || category === active;
         const matchSearch =
-          condition.toLowerCase().includes(query.toLowerCase()) ||
+          name.toLowerCase().includes(query.toLowerCase()) ||
           category.toLowerCase().includes(query.toLowerCase());
         return matchCat && matchSearch;
       }),
@@ -536,6 +575,14 @@ export default function Symptoms() {
   const categories = ["All", ...conditionCategories.map((c) => c.category)];
   return (
     <>
+      <Helmet>
+        <title>Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare Connect</title>
+        <meta
+          name="description"
+          content="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
+        />
+      </Helmet>
+
       <section id="top" className="sy-hero">
         <div className="sy-hero-inner">
           {/* ── Left column ── */}
@@ -546,13 +593,11 @@ export default function Symptoms() {
             </div>
 
             <h1 className="sy-hero-title">
-              Care categories and conditions built for how US patients search.
+              Consult a Doctor Online for Symptoms and Get the Right Care
             </h1>
 
             <p className="sy-hero-copy">
-              A sample Humancare Connect structure with 12 high-value
-              specialties and a searchable condition directory for primary care,
-              urgent care, chronic care, travel health, and business partners.
+              Consult a Doctor Online for Symptoms and Get the Right Care
             </p>
 
             {/* <div className="sy-hero-ctas">
@@ -598,20 +643,24 @@ export default function Symptoms() {
               </div>
 
               <div className="sy-hero__mini-grid">
-                {previewSpecialties.map(({ name, icon: Icon, tags }, i) => (
-                  <div
+                {previewSpecialties.map(({ name, path, icon: Icon, tags }, i) => (
+                  <Link
                     key={name}
+                    to={path}
                     className={`sy-hero__mini-card${i === current.activeIndex ? " sy-hero__mini-card--active" : ""}`}
                   >
                     <Icon size={20} />
                     <div className="sy-hero__mini-name">{name}</div>
                     <div className="sy-hero__mini-tags">{tags.join(" · ")}</div>
-                  </div>
+                  </Link>
                 ))}
               </div>
 
               {/* Featured / active specialty footer row */}
-              <div className="sy-hero__feature-row">
+              <Link
+                to={previewSpecialties[current.activeIndex].path}
+                className="sy-hero__feature-row"
+              >
                 <div className="sy-hero__feature-left">
                   {(() => {
                     const Icon = previewSpecialties[current.activeIndex].icon;
@@ -626,7 +675,7 @@ export default function Symptoms() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </Link>
 
               {/* Carousel nav: arrows + dots */}
               <div className="sy-hero__nav">
@@ -712,8 +761,9 @@ export default function Symptoms() {
             {visibleConditions.map((item, i) => {
               const Icon = item.icon;
               return (
-                <div
-                  key={`${item.category}-${item.condition}`}
+                <Link
+                  key={`${item.category}-${item.name}`}
+                  to={item.path}
                   className="symptoms__item"
                   style={{ "--delay": `${Math.min(i, 30) * 20}ms` }}
                 >
@@ -721,10 +771,10 @@ export default function Symptoms() {
                     <Icon size={18} />
                   </div>
                   <div>
-                    <div className="symptoms__item-name">{item.condition}</div>
+                    <div className="symptoms__item-name">{item.name}</div>
                     <div className="symptoms__item-cat">{item.category}</div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -764,15 +814,14 @@ export default function Symptoms() {
       <section id="sy-care" className="sy-care">
         <div className="sy-care__inner">
           <div className="sy-care__left">
-            <span className="sy-care__eyebrow">Care made simple</span>
+            <span className="sy-care__eyebrow">SYMPTOM-BASED ONLINE CARE
+</span>
             <h2 className="sy-care__heading">
-              Care Designed Around Your Health Needs
+              Consult a Doctor Online for Symptoms with Confidence
+
             </h2>
             <p className="sy-care__copy">
-              Humancare Connect provides a comprehensive virtual healthcare
-              experience that takes it easier to access trusted medical
-              guidance, connect with experienced healthcare professionals, and
-              receive personalized care tailored to your unique health journey.
+              Humancare Connect helps you consult a doctor online for symptoms through secure and convenient virtual healthcare services. Whether you are experiencing a new health concern or managing ongoing symptoms, our online consultations provide access to trusted healthcare professionals who can guide you toward appropriate care.
             </p>
           </div>
 
@@ -794,10 +843,12 @@ export default function Symptoms() {
           {/* Left — sticky */}
           <div className="sy-faq__left">
             <span className="sy-faq__eyebrow">FAQ</span>
-            <h2 className="sy-faq__heading">Frequently Asked Questions</h2>
+            <h2 className="sy-faq__heading">
+              Consult a Doctor Online for Symptoms
+            </h2>
             <p className="sy-faq__copy">
-              Everything you need to know about primary care with Humancare
-              Connect. Can't find an answer?
+              Everything you need to know about consulting a doctor online for
+              symptoms with Humancare Connect. Can't find an answer?
             </p>
 
             <button type="button" className="sy-faq__chat-btn">
@@ -825,7 +876,9 @@ export default function Symptoms() {
           <div className="sy-faq__right">
             {faqGroups.map((group, gi) => (
               <div key={group.group} className="sy-faq__group">
-                <span className="sy-faq__group-label">{group.group}</span>
+                {faqGroups.length > 1 && (
+                  <span className="sy-faq__group-label">{group.group}</span>
+                )}
                 <div className="sy-faq__list">
                   {group.items.map((item, ii) => {
                     const id = `${gi}-${ii}`;
