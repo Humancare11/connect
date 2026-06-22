@@ -57,7 +57,7 @@ import CookiePolicy from "./pages/Privacy Policies/CookiePolicy";
 import PatientInformedConsentForm from "./pages/Privacy Policies/PatientInformedConsentForm";
 
 // category pages
-import ChildCare from "./pages/Categories/ChildMain";
+// import ChildCare from "./pages/Categories/ChildMain";
 import ChildFamilyCare from "./pages/Categories/ChildFamilyCare";
 import ChronicCareExpertOpinion from "./pages/Categories/ChronicCareExpertOpinion";
 import EyeEarBone from "./pages/Categories/EyeEarBone";
@@ -845,7 +845,7 @@ function AppLayout() {
           <Route path="/specialties" element={<Specialties />} />
           <Route path="/conditions" element={<Symptoms />} />
           {/* categories */}
-          <Route path="/child-care" element={<ChildCare />} />
+          {/* <Route path="/child-care" element={<ChildCare />} /> */}
           <Route path="/child-family-care" element={<ChildFamilyCare />} />
           <Route path="/chronic-care-and-expert-opinion"  element={<ChronicCareExpertOpinion />} />
           <Route path="/eye-ear-bone" element={<EyeEarBone />} />
@@ -986,6 +986,8 @@ function AppLayout() {
             path="/vomiting-diarrhea-children"
             element={<VomitingDiarrheaChildren />}
           />
+
+
           <Route path="/doctors-note" element={<DoctorsNote />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           <Route

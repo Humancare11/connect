@@ -77,9 +77,35 @@
 
 @media (max-width: 520px) {
   .step-progress {
-    gap: 10px;
+    flex-wrap: nowrap;      /* Prevent wrapping */
+    gap: 6px;
+    justify-content: space-between;
+    width: 100%;
   }
+
+  .step {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ring {
+    width: 34px;
+    height: 34px;
+  }
+
+  .progress-ring {
+    width: 34px;
+    height: 34px;
+  }
+
+  .ring-icon {
+    font-size: 12px;
+  }
+
   .step-label {
-    font-size: 11px;
+    font-size: 9px;
+    max-width: none;
+    line-height: 1.2;
+    margin-top: 4px;
   }
 }

@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Globe2,
   ArrowRight,
+  ArrowLeft,
   Plane,
   Stethoscope,
   Brain,
@@ -17,6 +18,12 @@ import {
   Building2,
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
+  MessageCircle,
+  Clock,
+  Lock,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
 import "./symptoms.css";
 
@@ -38,6 +45,61 @@ const stats = [
   ["12", "Specialties"],
   ["140+", "Conditions"],
   ["6", "B2B segments"],
+];
+
+// -----------Hero carousel slides --------
+// Each slide pairs a "request" context (top dark card rows) with the
+// 2x2 specialty grid below it, mirroring the reference design where the
+// active specialty is highlighted and summarized in the footer row.
+const heroSlides = [
+  {
+    sub: "Virtual care request",
+    title: "Traveler needs consult",
+    icon: Plane,
+    rows: [
+      ["Condition", "Food Poisoning While Traveling"],
+      ["Need", "Telehealth consult + medical report"],
+      ["Route", "English-speaking doctor"],
+      ["Status", "Non-emergency triage"],
+    ],
+    activeIndex: 0,
+  },
+  {
+    sub: "Virtual care request",
+    title: "Patient needs urgent care",
+    icon: ClipboardPlus,
+    rows: [
+      ["Condition", "UTI Symptoms Since Last Night"],
+      ["Need", "Same-day telehealth consult"],
+      ["Route", "Nearest available provider"],
+      ["Status", "Non-emergency triage"],
+    ],
+    activeIndex: 1,
+  },
+  {
+    sub: "Virtual care request",
+    title: "Member needs support",
+    icon: Brain,
+    rows: [
+      ["Condition", "Persistent Anxiety & Sleep Loss"],
+      ["Need", "Mental health consult"],
+      ["Route", "Licensed therapist match"],
+      ["Status", "Routine triage"],
+    ],
+    activeIndex: 2,
+  },
+  {
+    sub: "Virtual care request",
+    title: "Patient needs refill review",
+    icon: Activity,
+    rows: [
+      ["Condition", "Type 2 Diabetes Follow-Up"],
+      ["Need", "Medication review + refill"],
+      ["Route", "Chronic care specialist"],
+      ["Status", "Routine triage"],
+    ],
+    activeIndex: 3,
+  },
 ];
 
 // -----------Symptoms Conditions --------
@@ -305,9 +367,143 @@ const emergencyItems = [
   "Suicidal thoughts or immediate danger",
 ];
 
+// -----------Care section --------
+const careFeatures = [
+  {
+    title: "Personalized Medical Guidance",
+    desc: "Receive healthcare support tailored to your symptoms, concerns, and individual health needs.",
+  },
+  {
+    title: "Trusted Healthcare Professionals",
+    desc: "Connect with licensed medical experts who are available across most major time zones.",
+  },
+  {
+    title: "Convenient Online Consultations",
+    desc: "Access quality healthcare from the comfort of your home with simple, flexible online scheduling.",
+  },
+  {
+    title: "Comprehensive Healthcare Support",
+    desc: "Get care for everyday concerns, specialist health needs, long-term plans, and more.",
+  },
+  {
+    title: "Private & Secure Care Experience",
+    desc: "Discuss your health confidently with secure consultations that protect your privacy and confidentiality.",
+  },
+  {
+    title: "Continuous Care & Wellness Support",
+    desc: "Stay supported with ongoing guidance that keeps your wellness goals on track at every stage.",
+  },
+];
+
+// -----------FAQ section --------
+const faqGroups = [
+  {
+    group: "Appointments",
+    items: [
+      {
+        q: "What is an online doctor consultation?",
+        a: "An online doctor consultation allows patients to connect with qualified healthcare professionals remotely through video calls for medical advice, guidance, diagnosis, and treatment recommendations.",
+      },
+      {
+        q: "How do I choose the right online consultation service?",
+        a: "Look for licensed providers, transparent pricing, available specialties, and verified patient reviews before booking an online consultation service.",
+      },
+      {
+        q: "What types of online consultations are available through Humancare Connect?",
+        a: "Humancare Connect offers primary care, urgent care, chronic care, mental health, women's and men's health, and specialist follow-up consultations.",
+      },
+    ],
+  },
+  {
+    group: "Virtual Care",
+    items: [
+      {
+        q: "Can I access healthcare services online through online consultation?",
+        a: "Yes, you can access a broad range of healthcare services online, including diagnosis, treatment guidance, prescriptions, and referrals.",
+      },
+      {
+        q: "What if I am not sure which doctor I need to consult with?",
+        a: "Our intake flow routes you to the right specialty automatically based on the symptoms and concerns you describe.",
+      },
+      {
+        q: "Are online consultations suitable for different age groups?",
+        a: "Yes, we support pediatric, adult, and senior patients with care pathways tailored to each age group.",
+      },
+      {
+        q: "Can I discuss more than one health concern during an online consultation?",
+        a: "Yes, you can raise multiple concerns in a single visit and your provider will address each one or refer you onward as needed.",
+      },
+      {
+        q: "Are online consultations private and secure?",
+        a: "All consultations run on encrypted, HIPAA-compliant infrastructure to keep your medical information private.",
+      },
+      {
+        q: "Do I need a referral for an online consultation?",
+        a: "No referral is required for most consultation types; you can book directly through the platform.",
+      },
+      {
+        q: "Can I receive prescriptions during an online consultation?",
+        a: "Yes, licensed providers can issue prescriptions when clinically appropriate, sent directly to your pharmacy of choice.",
+      },
+    ],
+  },
+  {
+    group: "Association Benefits & Care",
+    items: [
+      {
+        q: "Are online consultations suitable for preventive care?",
+        a: "Yes, preventive check-ins and wellness reviews are available alongside symptom-based visits.",
+      },
+      {
+        q: "How quickly can I connect with a healthcare professional?",
+        a: "Most patients connect with a provider in under two minutes during active hours.",
+      },
+      {
+        q: "What are the benefits of online consultation?",
+        a: "Online consultations save travel time, reduce wait times, and make it easier to access specialists from anywhere.",
+      },
+      {
+        q: "Can I receive specialized medical support through online consultation?",
+        a: "Yes, specialist consultations are available for chronic, behavioral, and condition-specific care needs.",
+      },
+      {
+        q: "Why choose Humancare Connect for online consultation?",
+        a: "Humancare Connect combines vetted providers, fast routing, and secure infrastructure built specifically for cross-border and US-facing care needs.",
+      },
+    ],
+  },
+];
+
 export default function Symptoms() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState("All");
+  const [showAll, setShowAll] = useState(false);
+
+  // Hero carousel state
+  const [slide, setSlide] = useState(0);
+  const slideCount = heroSlides.length;
+  const autoplayRef = useRef(null);
+
+  useEffect(() => {
+    autoplayRef.current = setInterval(() => {
+      setSlide((s) => (s + 1) % slideCount);
+    }, 5000);
+    return () => clearInterval(autoplayRef.current);
+  }, [slideCount]);
+
+  const goTo = (i) => {
+    clearInterval(autoplayRef.current);
+    setSlide(((i % slideCount) + slideCount) % slideCount);
+  };
+  const goPrev = () => goTo(slide - 1);
+  const goNext = () => goTo(slide + 1);
+
+  const current = heroSlides[slide];
+  const CurrentCardIcon = current.icon;
+
+  // FAQ state — track which item is open within each group (one open per group)
+  const [openFaq, setOpenFaq] = useState("appt-0");
+  const faqRightRef = useRef(null);
 
   const allConditions = useMemo(
     () =>
@@ -328,6 +524,14 @@ export default function Symptoms() {
       }),
     [allConditions, active, query],
   );
+
+  // Reset the "show all" expansion whenever the result set changes
+  useEffect(() => {
+    setShowAll(false);
+  }, [query, active]);
+
+  const visibleConditions = showAll ? filtered : filtered.slice(0, 96);
+  const remainingCount = Math.max(filtered.length - 96, 0);
 
   const categories = ["All", ...conditionCategories.map((c) => c.category)];
   return (
@@ -370,23 +574,21 @@ export default function Symptoms() {
             </div>
           </div>
 
-          {/* ── Right panel ── */}
+          {/* ── Right panel: carousel ── */}
           <div className="sy-hero-panel">
             <div className="sy-hero__card">
               <div className="sy-hero__card-dark">
                 <div className="sy-hero__card-top">
                   <div>
-                    <p className="sy-hero__card-sub">Virtual care request</p>
-                    <p className="sy-hero__card-title">
-                      Traveler needs consult
-                    </p>
+                    <p className="sy-hero__card-sub">{current.sub}</p>
+                    <p className="sy-hero__card-title">{current.title}</p>
                   </div>
                   <div className="sy-hero__card-icon">
-                    <Plane size={22} />
+                    <CurrentCardIcon size={22} />
                   </div>
                 </div>
                 <div className="sy-hero__card-rows">
-                  {heroRows.map(([label, value]) => (
+                  {current.rows.map(([label, value]) => (
                     <div key={label} className="sy-hero__card-row">
                       <span>{label}</span>
                       <span>{value}</span>
@@ -396,13 +598,65 @@ export default function Symptoms() {
               </div>
 
               <div className="sy-hero__mini-grid">
-                {previewSpecialties.map(({ name, icon: Icon, tags }) => (
-                  <div key={name} className="sy-hero__mini-card">
-                    <Icon size={20} style={{ color: "var(--blue)" }} />
+                {previewSpecialties.map(({ name, icon: Icon, tags }, i) => (
+                  <div
+                    key={name}
+                    className={`sy-hero__mini-card${i === current.activeIndex ? " sy-hero__mini-card--active" : ""}`}
+                  >
+                    <Icon size={20} />
                     <div className="sy-hero__mini-name">{name}</div>
                     <div className="sy-hero__mini-tags">{tags.join(" · ")}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* Featured / active specialty footer row */}
+              <div className="sy-hero__feature-row">
+                <div className="sy-hero__feature-left">
+                  {(() => {
+                    const Icon = previewSpecialties[current.activeIndex].icon;
+                    return <Icon size={16} />;
+                  })()}
+                  <span>{previewSpecialties[current.activeIndex].name}</span>
+                </div>
+                <div className="sy-hero__feature-tags">
+                  {previewSpecialties[current.activeIndex].tags.map((t) => (
+                    <span key={t} className="sy-hero__feature-tag">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Carousel nav: arrows + dots */}
+              <div className="sy-hero__nav">
+                <button
+                  type="button"
+                  className="sy-hero__nav-arrow"
+                  onClick={goPrev}
+                  aria-label="Previous"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <div className="sy-hero__nav-dots">
+                  {heroSlides.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`sy-hero__nav-dot${i === slide ? " sy-hero__nav-dot--active" : ""}`}
+                      onClick={() => goTo(i)}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="sy-hero__nav-arrow"
+                  onClick={goNext}
+                  aria-label="Next"
+                >
+                  <ArrowRight size={16} />
+                </button>
               </div>
             </div>
           </div>
@@ -455,7 +709,7 @@ export default function Symptoms() {
 
           {/* Results */}
           <div className="symptoms__grid">
-            {filtered.slice(0, 96).map((item, i) => {
+            {visibleConditions.map((item, i) => {
               const Icon = item.icon;
               return (
                 <div
@@ -475,117 +729,159 @@ export default function Symptoms() {
             })}
           </div>
 
-          {filtered.length > 96 && (
+          {!showAll && remainingCount > 0 && (
             <div className="symptoms__overflow">
-              Showing the first 96 matching conditions. Narrow your search to
-              see more.
+              <p>
+                Showing the first 96 matching conditions. Narrow your search to
+                see more, or view all results below.
+              </p>
+              <button
+                type="button"
+                className="symptoms__view-more"
+                onClick={() => setShowAll(true)}
+              >
+                View {remainingCount} more conditions
+              </button>
+            </div>
+          )}
+
+          {showAll && filtered.length > 96 && (
+            <div className="symptoms__overflow">
+              <button
+                type="button"
+                className="symptoms__view-more symptoms__view-more--ghost"
+                onClick={() => setShowAll(false)}
+              >
+                Show fewer conditions
+              </button>
             </div>
           )}
         </div>
       </section>
 
-      {/* ===================== B2B ===================== */}
-      <section id="businesses" className="sy-b2b">
-        <div className="sy-b2b__inner">
-          {/* LEFT */}
-          <div className="sy-b2b__content">
-            <span className="sy-b2b__eyebrow">B2B positioning</span>
+      {/* --------------------(Care section)--------- */}
 
-            <h2 className="sy-b2b__heading">
-              Built for partners who need medical access across borders.
+      <section id="sy-care" className="sy-care">
+        <div className="sy-care__inner">
+          <div className="sy-care__left">
+            <span className="sy-care__eyebrow">Care made simple</span>
+            <h2 className="sy-care__heading">
+              Care Designed Around Your Health Needs
             </h2>
-
-            <p className="sy-b2b__copy">
-              Humancare Connect should not look like a generic doctor directory.
-              The strongest positioning is B2B telehealth support for assistance
-              companies, insurers, TPAs, employers, and international travelers.
+            <p className="sy-care__copy">
+              Humancare Connect provides a comprehensive virtual healthcare
+              experience that takes it easier to access trusted medical
+              guidance, connect with experienced healthcare professionals, and
+              receive personalized care tailored to your unique health journey.
             </p>
-
-            <a href="#safety" className="sy-b2b__cta">
-              View safety language <ArrowRight size={16} />
-            </a>
           </div>
 
-          {/* RIGHT */}
-          <div className="sy-b2b__grid">
-            {audiences.map((name, i) => (
-              <div
-                key={name}
-                className="sy-b2b__card"
-                style={{ "--delay": `${i * 50}ms` }}
-              >
-                <Building2 size={22} style={{ color: "var(--blue)" }} />
-
-                <div className="sy-b2b__card-name">{name}</div>
-
-                <p className="sy-b2b__card-desc">
-                  Virtual care routing, physician access, reports, and
-                  continuity care coordination.
-                </p>
+          <div className="sy-care__grid">
+            {careFeatures.map((f) => (
+              <div key={f.title} className="sy-care__card">
+                <div className="sy-care__card-name">{f.title}</div>
+                <div className="sy-care__card-desc">{f.desc}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ===================== EMERGENCY ===================== */}
-      <section id="safety" className="sy-eme">
-        <div className="sy-eme__inner">
-          {/* LEFT */}
-          <div className="sy-eme__left">
-            <AlertTriangle size={32} style={{ color: "#7CB7FF" }} />
+      {/* --------------------(FAQ section)--------- */}
 
-            <h2 className="sy-eme__title">Emergency disclaimer</h2>
-
-            <p className="sy-eme__copy">
-              For the US market, serious symptoms should be clearly routed to
-              emergency services. This protects patients and makes the website
-              more trustworthy.
+      <section id="sy-faq" className="sy-faq">
+        <div className="sy-faq__inner">
+          {/* Left — sticky */}
+          <div className="sy-faq__left">
+            <span className="sy-faq__eyebrow">FAQ</span>
+            <h2 className="sy-faq__heading">Frequently Asked Questions</h2>
+            <p className="sy-faq__copy">
+              Everything you need to know about primary care with Humancare
+              Connect. Can't find an answer?
             </p>
 
-            <div className="sy-eme__callout">
-              If you are experiencing a life-threatening emergency, call 911 or
-              go to the nearest emergency room immediately.
+            <button type="button" className="sy-faq__chat-btn">
+              <MessageCircle size={16} />
+              Chat with our team
+            </button>
+
+            <div className="sy-faq__meta">
+              <div className="sy-faq__meta-item">
+                <Clock size={14} />
+                <span>Avg. response in 2 min</span>
+              </div>
+              <div className="sy-faq__meta-item">
+                <Lock size={14} />
+                <span>HIPAA secure &amp; private</span>
+              </div>
+              <div className="sy-faq__meta-item">
+                <Globe2 size={14} />
+                <span>Available in all 50 states</span>
+              </div>
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="sy-eme__right">
-            <h3 className="sy-eme__right-title">
-              Do not market these as routine telehealth conditions
-            </h3>
-
-            <div className="sy-eme__list">
-              {emergencyItems.map((item) => (
-                <div key={item} className="sy-eme__item">
-                  <AlertTriangle
-                    size={16}
-                    style={{
-                      color: "#0B57E8",
-                      flexShrink: 0,
-                      marginTop: 2,
-                    }}
-                  />
-
-                  <span>{item}</span>
+          {/* Right — scrolls within the section as the page scrolls */}
+          <div className="sy-faq__right">
+            {faqGroups.map((group, gi) => (
+              <div key={group.group} className="sy-faq__group">
+                <span className="sy-faq__group-label">{group.group}</span>
+                <div className="sy-faq__list">
+                  {group.items.map((item, ii) => {
+                    const id = `${gi}-${ii}`;
+                    const isOpen = openFaq === id;
+                    return (
+                      <div
+                        key={id}
+                        className={`sy-faq__item${isOpen ? " sy-faq__item--open" : ""}`}
+                      >
+                        <button
+                          type="button"
+                          className="sy-faq__q"
+                          onClick={() => setOpenFaq(isOpen ? null : id)}
+                          aria-expanded={isOpen}
+                        >
+                          <span>{item.q}</span>
+                          <ChevronDown size={18} className="sy-faq__chev" />
+                        </button>
+                        {isOpen && (
+                          <div className="sy-faq__a">
+                            <p>{item.a}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-
-            <div className="sy-eme__rec">
-              <div className="sy-eme__rec-head">
-                <CheckCircle2 size={17} />
-                Recommended wording
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <p className="sy-eme__rec-body">
-                "Humancare Connect provides virtual consultations for common
-                non-emergency medical concerns, continuity care, prescription
-                refill requests, and travel health support. Availability depends
-                on physician assessment, location, regulations, and clinical
-                appropriateness."
-              </p>
-            </div>
+      {/* --------------------(CTA section)--------- */}
+
+      <section id="sy-cta" className="sy-cta">
+        <div className="sy-cta__card">
+          <span className="sy-cta__eyebrow">
+            <Sparkles size={12} />
+            Ready when you are
+          </span>
+          <h2 className="sy-cta__heading">
+            Find your specialist <span>in under 2 minutes.</span>
+          </h2>
+          <p className="sy-cta__copy">
+            Search, look, and consult with a verified physician from anywhere —
+            same-day appointments available across all categories.
+          </p>
+          <div className="sy-cta__actions">
+            <a href="#sy-conditions" className="sy-cta__btn-primary">
+              Book a consultation
+              <ArrowRight size={16} />
+            </a>
+            <a href="#sy-conditions" className="sy-cta__btn-secondary">
+              Browse specialties
+            </a>
           </div>
         </div>
       </section>

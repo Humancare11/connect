@@ -1,26 +1,27 @@
 import React from "react";
 import "./LogoMarquee.css";
 
-const companies = [
-  "FIGMA",
-  "FRAMER",
-  "WEBFLOW",
-  "RAYCAST",
-  "SUPABASE",
-  "CLERK",
+const labels = [
+  "24/7 ACCESS",
+  "LICENSED PROVIDERS",
+  "SAME-DAY APPOINTMENTS",
+  "SECURE PRESCRIPTIONS",
+  "PRIVATE CONSULTATIONS",
+  "GLOBAL SERVICES",
 ];
 
 export default function MM() {
- 
-  const items = [...companies, ...companies, ...companies, ...companies];
+  const items = [...labels, ...labels, ...labels, ...labels];
 
   return (
     <div className="logo-marquee">
-      {/* <div className="lm-label">Trusted by 1,200+ companies</div> */}
       <div className="lm-mask">
         <div className="lm-track">
           {items.map((name, i) => (
-            <span key={i}>{name}</span>
+            <React.Fragment key={i}>
+              <span>{name}</span>
+              <span className="lm-separator">•</span>
+            </React.Fragment>
           ))}
         </div>
       </div>

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   Globe2, ArrowRight, Plane, Stethoscope, Brain, Activity,
   ClipboardPlus, HeartPulse, Venus, Mars, Baby, ShieldCheck,
-  Pill, Users, Building2, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight,
-  Search, MessageCircle, Clock, Lock, MapPin, Plus, Minus, PhoneCall,
-  Soup, Sparkles, HeartHandshake, Microscope, Wind, Eye, Ear,
+  Pill, Users, CheckCircle2, ChevronLeft, ChevronRight,
+  Search, MessageCircle, Clock, Lock, MapPin, Plus, Minus,
+  Soup, Sparkles, HeartHandshake, Wind, Eye, Ear,
   Bone, Baby as BabyIcon, Scale, FileSearch, Heart
 } from "lucide-react";
 import "./Specialties.css";
@@ -79,13 +80,6 @@ const carouselSlides = [
       { name: "Medication Mgmt", icon: Pill, tags: ["Rx Refill", "Review"] },
     ],
   },
-];
-
-// ── Stats ──────────────────────────────────────────────────────────────────
-const stats = [
-  ["11", "Categories"],
-  ["30", "Specialties"],
-  ["140+", "Conditions"],
 ];
 
 // ── Full specialties list (30) ───────────────────────────────────────────────
@@ -272,6 +266,13 @@ const specialties = [
   },
 ];
 
+// ── Stats (derived from real data so copy can't drift out of sync) ──────────
+const stats = [
+  [String(specialties.length), "Specialties"],
+  ["11", "Categories"],
+  ["140+", "Conditions"],
+];
+
 const audiences = [
   {
     title: "Expert Medical Insights",
@@ -411,37 +412,80 @@ const faqGroups = [
   },
 ];
 
+// JSON-LD FAQPage structured data, built from the same FAQ content above so
+// the rich-result markup can never drift out of sync with what's on screen.
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqGroups.flatMap((group) =>
+    group.items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.a,
+      },
+    }))
+  ),
+};
+
 // ── HeroCarousel component ────────────────────────────────────────────────────
 function HeroCarousel() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [direction, setDirection] = useState("next"); // "next" | "prev"
+  const [isPaused, setIsPaused] = useState(false);
 
   const total = carouselSlides.length;
   const slide = carouselSlides[slideIndex];
 
+  // Refs keep goTo/goToOffset stable across renders so the autoplay effect
+  // below doesn't tear down and restart its timer on every animation tick.
+  const slideIndexRef = useRef(slideIndex);
+  const animatingRef = useRef(false);
+
+  useEffect(() => {
+    slideIndexRef.current = slideIndex;
+  }, [slideIndex]);
+
   const goTo = useCallback((next, dir) => {
-    if (animating) return;
+    if (animatingRef.current) return;
+    animatingRef.current = true;
     setDirection(dir);
     setAnimating(true);
     setTimeout(() => {
       setSlideIndex(next);
       setActiveTab(0);
       setAnimating(false);
+      animatingRef.current = false;
     }, 320);
-  }, [animating]);
+  }, []);
 
-  const prev = () => goTo((slideIndex - 1 + total) % total, "prev");
-  const next = () => goTo((slideIndex + 1) % total, "next");
+  const goToOffset = useCallback((offset, dir) => {
+    const current = slideIndexRef.current;
+    goTo((current + offset + total) % total, dir);
+  }, [goTo, total]);
 
-  // Auto-advance every 5 s
+  const prev = () => goToOffset(-1, "prev");
+  const next = () => goToOffset(1, "next");
+
+  const handleDotClick = (i) => {
+    if (i === slideIndex) return;
+    goTo(i, i > slideIndex ? "next" : "prev");
+  };
+
+  // Auto-advance every 5s. Pauses on hover/focus (keyboard users included)
+  // and while the tab isn't visible, per WCAG 2.2.2 (pausable auto content).
   useEffect(() => {
+    if (isPaused) return;
     const id = setInterval(() => {
-      goTo((slideIndex + 1) % total, "next");
+      if (document.visibilityState === "visible") {
+        goToOffset(1, "next");
+      }
     }, 5000);
     return () => clearInterval(id);
-  }, [slideIndex, goTo, total]);
+  }, [isPaused, goToOffset]);
 
   const SlideIcon = slide.icon;
   const activeTabData = slide.tabs[activeTab];
@@ -449,7 +493,13 @@ function HeroCarousel() {
 
   return (
     <div className="sp-hero__panel">
-      <div className="sp-hero__card">
+      <div
+        className="sp-hero__card"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onFocus={() => setIsPaused(true)}
+        onBlur={() => setIsPaused(false)}
+      >
 
         {/* ── Dark inner card (animated) ── */}
         <div
@@ -461,7 +511,7 @@ function HeroCarousel() {
               <p className="sp-hero__card-title">{slide.cardTitle}</p>
             </div>
             <div className="sp-hero__card-icon">
-              <Globe2 size={18} />
+              <SlideIcon size={18} />
             </div>
           </div>
 
@@ -480,6 +530,7 @@ function HeroCarousel() {
           {slide.tabs.map(({ name, icon: Icon, tags }, i) => (
             <button
               key={name}
+              type="button"
               className={`sp-hero__mini-card sp-hero__mini-card--btn${activeTab === i ? " sp-hero__mini-card--active" : ""}`}
               onClick={() => setActiveTab(i)}
               aria-pressed={activeTab === i}
@@ -504,22 +555,25 @@ function HeroCarousel() {
 
         {/* ── Carousel controls ── */}
         <div className="sp-carousel__controls">
-          <button className="sp-carousel__btn" onClick={prev} aria-label="Previous slide">
+          <button type="button" className="sp-carousel__btn" onClick={prev} aria-label="Previous slide">
             <ChevronLeft size={16} />
           </button>
 
-          <div className="sp-carousel__dots">
+          <div className="sp-carousel__dots" role="tablist" aria-label="Carousel slides">
             {carouselSlides.map((_, i) => (
               <button
                 key={i}
+                type="button"
+                role="tab"
+                aria-selected={slideIndex === i}
                 className={`sp-carousel__dot${slideIndex === i ? " sp-carousel__dot--active" : ""}`}
-                onClick={() => goTo(i, i > slideIndex ? "next" : "prev")}
+                onClick={() => handleDotClick(i)}
                 aria-label={`Go to slide ${i + 1}`}
               />
             ))}
           </div>
 
-          <button className="sp-carousel__btn" onClick={next} aria-label="Next slide">
+          <button type="button" className="sp-carousel__btn" onClick={next} aria-label="Next slide">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -533,7 +587,7 @@ function HeroCarousel() {
 function FaqItem({ q, a, isOpen, onToggle }) {
   return (
     <div className={`sp-faq__item${isOpen ? " sp-faq__item--open" : ""}`}>
-      <button className="sp-faq__item-head" onClick={onToggle} aria-expanded={isOpen}>
+      <button type="button" className="sp-faq__item-head" onClick={onToggle} aria-expanded={isOpen}>
         <span className="sp-faq__item-q">{q}</span>
         <span className="sp-faq__item-icon">
           {isOpen ? <Minus size={13} /> : <Plus size={13} />}
@@ -552,11 +606,48 @@ export default function Specialties() {
   const filteredSpecialties = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return specialties;
-    return specialties.filter((s) => s.name.toLowerCase().includes(q));
+    return specialties.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.tags.some((t) => t.toLowerCase().includes(q))
+    );
   }, [query]);
 
   return (
     <>
+      <Helmet>
+        <title>Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect</title>
+        <meta
+          name="description"
+          content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="canonical" href="https://www.humancareconnect.com/specialists" />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect" />
+        <meta
+          property="og:description"
+          content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
+        />
+        <meta property="og:url" content="https://www.humancareconnect.com/specialists" />
+        <meta property="og:site_name" content="Humancare Connect" />
+        {/* TODO: replace with a real, hosted OG image (1200x630) before launch */}
+        <meta property="og:image" content="https://www.humancareconnect.com/og/specialists.jpg" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect" />
+        <meta
+          name="twitter:description"
+          content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
+        />
+
+        {/* FAQPage structured data for rich results */}
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+      </Helmet>
+
       {/* hero */}
       <section id="top" className="sp-hero">
         <div className="sp-hero__inner">
@@ -574,7 +665,6 @@ export default function Specialties() {
 
             <p className="sp-hero__copy">
               Connect with an online specialist doctor through Humancare Connect and receive expert medical guidance, personalized treatment support, and secure virtual consultations designed around your specific health concerns. Our platform makes it easier to access experienced specialists from the comfort of your home.
-
             </p>
 
             <div className="sp-hero__stats">
@@ -601,15 +691,14 @@ export default function Specialties() {
             <div className="specialties__title-text">
               <span className="specialties__eyebrow">All specialties</span>
               <h2 className="specialties__heading">
-                List 12 specialties, but highlight 6 on the homepage.
+                Every Specialty, One Trusted Platform
               </h2>
-
             </div>
 
             <div className="specialties__search">
               <p className="specialties__copy">
-                This keeps the site credible and focused. Conditions should carry the SEO depth;
-                specialties should guide users quickly.
+                Browse all {specialties.length} specialties below, or search to quickly
+                find the right doctor for your specific health concern.
               </p>
 
               <Search size={16} className="specialties__search-icon" />
@@ -695,15 +784,10 @@ export default function Specialties() {
             <span className="sp-b2b__eyebrow">ONLINE SPECIALIST CARE</span>
             <h2 className="sp-b2b__heading">
               Expert Care from an Online Specialist Doctor
-
             </h2>
             <p className="sp-b2b__copy">
               Humancare Connect provides convenient access to an online specialist doctor who understands your unique healthcare needs. Whether you need expert advice for a specific condition, ongoing care, or a second opinion, our virtual specialist consultations connect you with trusted healthcare professionals.
-
             </p>
-            <a href="#faq" className="sp-b2b__cta">
-              View FAQs <ArrowRight size={16} />
-            </a>
           </div>
 
           <div className="sp-b2b__grid">
@@ -713,8 +797,6 @@ export default function Specialties() {
                 className="sp-b2b__card"
                 style={{ "--delay": `${i * 50}ms` }}
               >
-                <Building2 size={22} style={{ color: "var(--teal)" }} />
-
                 <div className="sp-b2b__card-name">
                   {item.title}
                 </div>
@@ -728,8 +810,6 @@ export default function Specialties() {
         </div>
       </section>
 
-     
-
       {/* FAQ */}
       <section id="faq" className="sp-faq">
         <div className="sp-faq__inner">
@@ -742,7 +822,7 @@ export default function Specialties() {
               Everything you need to know about primary care at Humancare Connect. Can't find an
               answer?
             </p>
-            <button className="sp-faq__chat-btn">
+            <button type="button" className="sp-faq__chat-btn">
               <MessageCircle size={16} /> Chat with our team
             </button>
 
@@ -780,33 +860,21 @@ export default function Specialties() {
           </div>
 
         </div>
-
-        {/* Still have questions strip */}
-        <div className="sp-faq__strip">
-          <div className="sp-faq__strip-inner">
-            <div>
-              <div className="sp-faq__strip-title">Still have questions?</div>
-              <div className="sp-faq__strip-sub">Our team is available 24/7.</div>
-            </div>
-            <a href="#contact" className="sp-faq__strip-cta">
-              <PhoneCall size={15} /> Book a call
-            </a>
-          </div>
-        </div>
       </section>
-
 
       {/* Bottom CTA card */}
       <section id="cta" className="sp-cta">
         <div className="sp-cta__card">
-          <span className="sp-cta__eyebrow"><Sparkles size={13} /> Ready when you are</span>
-          <h2 className="sp-cta__title">Find your <span>specialist</span> in under 2 minutes.</h2>
+          <span className="sp-cta__eyebrow">
+            <span className="sp-cta__eyebrow-dot" /> Ready when you are</span>
+          <h2 className="sp-cta__title">Find your specialist<br />
+            <em>in under 2 minutes.</em></h2>
           <p className="sp-cta__copy">
             Search, book, and consult with a verified physician from anywhere — serve any
             eligibility across all categories.
           </p>
           <div className="sp-cta__actions">
-            <a href="#book" className="sp-cta__btn sp-cta__btn--primary">
+            <a href="/appointment-booking" className="sp-cta__btn sp-cta__btn--primary">
               Book a consultation <ArrowRight size={15} />
             </a>
             <a href="#specialties" className="sp-cta__btn sp-cta__btn--secondary">

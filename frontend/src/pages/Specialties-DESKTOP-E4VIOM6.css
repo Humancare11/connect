@@ -26,6 +26,7 @@
   --slate6:    #4C5F87;
 
   --bg:        #F7FAFF;
+  --bg-2: #F7FAFF;
   --tint:      #DCE9FF;
   --white:     #ffffff;
 
@@ -36,6 +37,9 @@
   --shadow-2:  0 30px 80px -30px rgba(11,40,100,.30);
 
   --ease:      cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  --side-pad: 56px;
+  --radius-pill: 9999px;
 }
 
 @keyframes fadeUp {
@@ -1085,76 +1089,92 @@
    ============================================================ */
 
 .sp-cta {
-  padding: 56px 16px 96px;
-  background: var(--bg);
+  padding: 80px var(--side-pad);
+  background: var(--bg-2);
+  text-align: center;
 }
 
 .sp-cta__card {
+  max-width: 700px;
   margin: 0 auto;
-  max-width: 620px;
-  border-radius: 1.75rem;
-  border: 1px solid #eef1f7;
+  border-radius: 32px;
+  border: 1px solid rgba(11, 87, 232, 0.12);
   background: var(--white);
-  padding: 44px 32px;
-  text-align: center;
-  box-shadow: var(--shadow-1);
+  padding: 64px 48px;
+  box-shadow: 0 8px 40px rgba(11, 40, 100, 0.08);
 }
-
-.sp-cta__eyebrow {
-  display: inline-flex;
+.sp-cta__eyebrow{
+ display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.68rem;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  background: rgba(11, 87, 232, 0.07);
+  font-size: 0.72rem;
   font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+
+}
+.sp-cta__eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
 }
 
 .sp-cta__title {
-  margin-top: 14px;
-  font-size: clamp(1.4rem, 3vw, 1.85rem);
+ font-size: clamp(1.6rem, 3.5vw, 2.5rem);
   font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.025em;
   color: var(--navy);
+  line-height: 1.08;
+  margin-bottom: 16px;
 }
 
-.sp-cta__title span { color: var(--blue); }
+.sp-cta__title em {
+  font-style: normal;
+  color: var(--blue);
+}
 
 .sp-cta__copy {
-  margin: 12px auto 0;
-  max-width: 440px;
-  font-size: 0.875rem;
-  line-height: 1.7;
-  color: var(--slate6);
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--muted);
+  max-width: 420px;
+  margin: 0 auto 28px;
 }
 
 .sp-cta__actions {
-  margin-top: 26px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
+ display: flex;
   gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .sp-cta__btn {
-  display: inline-flex;
+   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 13px 24px;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 800;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 30px;
+  border-radius: var(--radius-pill);
+  background: #2E4A7A;
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 900;
   text-decoration: none;
-  transition: transform .2s, box-shadow .2s;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sp-cta__btn--primary {
-  background: var(--navy);
-  color: var(--white);
-  box-shadow: 0 8px 24px rgba(34,58,94,0.18);
+   transform: translateY(-2px);
+  box-shadow: var(--navy-card);
 }
 .sp-cta__btn--primary:hover { transform: translateY(-2px); }
 
@@ -1163,4 +1183,23 @@
   color: var(--navy);
   border: 1.5px solid #e3e9f5;
 }
-.sp-cta__btn--secondary:hover { transform: translateY(-2px); border-color: var(--blue); }
+.sp-cta__btn--secondary:hover { transform: translateY(-2px); border-color: var(--blue); 
+}
+
+.sp-cta__btn--secondary{
+   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 30px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(11, 87, 232, 0.25);
+  color: #2E4A7A;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}

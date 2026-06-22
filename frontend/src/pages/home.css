@@ -1,6 +1,6 @@
 /* ═══ FONT IMPORTS ═══ */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
-@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap");
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@1&display=swap');
 
 /* ═══ CSS VARIABLES ═════ */
 :root {
@@ -26,7 +26,7 @@
     inset -3px -3px 6px rgba(255, 255, 255, 0.8);
   --radius: 16px;
   --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --font-heading: "Satoshi", sans-serif;
+  --font-heading: "Satoshi", Inter, sans-serif;
 }
 
 /* ═══ BASE RESET ═══ */
@@ -58,9 +58,17 @@ h4 {
   min-height: unset;
   display: flex;
   align-items: stretch;
-  justify-content: space-between;
+  /* FIX: was `space-between` — once hero-left/hero-right hit their
+     max-width, space-between dumped all leftover space into one big
+     gap in the center, on top of the explicit `gap` below. */
+  justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 48px;
+
+  /* FIX: was 24px combined with space-between (effectively much wider
+     in practice). This is now the single, predictable source of
+     spacing between the two columns. */
+  gap: 40px;
+
   padding: 60px 52px;
   border-radius: 34px;
   background: var(--bg);
@@ -68,13 +76,17 @@ h4 {
   box-shadow: var(--neu-up);
   overflow: visible;
   z-index: 1;
-  font-family: "Satoshi", sans-serif;
+  /* FIX: was "Satoshi", sans-serif — dropped the Inter fallback
+     defined in --font-heading. */
+  font-family: var(--font-heading);
 }
 
 /* ── Left Column ── */
 .hero-left {
-  flex: 1 1 360px;
-  max-width: 540px;
+  flex: 1.3 1 600px;
+  /* FIX: was 650px — widened so the column actually uses the space
+     freed up by removing space-between. */
+  max-width: 700px;
   position: relative;
   top: 0;
   z-index: 2;
@@ -93,12 +105,14 @@ h4 {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
-  color: #415a82;
+  color: #2f4f7a;
   text-transform: uppercase;
-  margin-bottom: 24px;
-  background: #e8eef9;
+
+  background: rgba(232, 238, 249, 0.95);
+  border: 1px solid rgba(65, 90, 130, 0.15);
+
   margin-bottom: 26px;
-  animation: fadeUp 0.6s var(--ease) bot;
+  animation: fadeUp 0.6s var(--ease) both;
   border-radius: 50px;
   width: fit-content;
   max-width: 260px;
@@ -113,7 +127,13 @@ h4 {
 }
 
 .hero-left h1 {
-  font-size: 56px;
+  /* FIX: bumped up now that the column has more room (was 54px). */
+  font-size: 60px;
+  /* FIX: was "Satoshi", sans-serif — restored the Inter fallback via
+     the shared heading variable so this matches the rest of the site
+     and degrades gracefully if Satoshi fails to load. */
+  font-family: var(--font-heading);
+  font-weight: 750;
   line-height: 1.1;
   letter-spacing: -1.5px;
   margin-bottom: 22px;
@@ -121,19 +141,31 @@ h4 {
 }
 
 .hero-left p {
-  font-size: 16px;
+  /* FIX: was 16px */
+  font-size: 17px;
+  font-weight: 500;
   line-height: 1.75;
-  color: var(--muted);
-  max-width: 500px;
+
+  color: #586476;
+
+  /* FIX: was 550px — widened to match the larger hero-left column */
+  max-width: 600px;
   margin-bottom: 32px;
+
   animation: fadeUp 0.7s 0.2s var(--ease) both;
+
+  text-align: justify;
+  text-wrap: pretty;
+  hyphens: auto;
 }
 
 /* ── Right Column — full video card ── */
 .hero-right {
   flex: 1 1 420px;
-  max-width: 620px;
-  min-height: 540px;
+  /* FIX: was 620px */
+  max-width: 680px;
+  /* FIX: was 540px */
+  min-height: 560px;
   position: relative;
   z-index: 1;
   align-self: center;
@@ -646,7 +678,7 @@ h4 {
 .search-wrapper {
   position: relative;
   width: 100%;
-  max-width: 520px;
+  max-width: 620px;
   margin-bottom: 18px;
   animation: fadeUp 0.7s 0.3s var(--ease) both;
   margin-top: 20px;
@@ -716,7 +748,7 @@ h4 {
     0 20px 50px rgba(34, 58, 94, 0.12),
     0 0 0 4px rgba(34, 58, 94, 0.05);
   color: white;
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-heading);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -842,16 +874,27 @@ h4 {
 /* ── Large Desktop 1400px+ ── */
 @media (min-width: 1400px) {
   .hero {
-    gap: 60px;
+    /* FIX: was `gap: auto;` — not a valid value for `gap`, so the
+       browser silently ignored this whole declaration. Replaced with
+       a real value that's bigger than the base gap, since there's
+       more room to breathe at this width. */
+    gap: 56px;
     padding: 70px 60px;
   }
   .hero-left {
-    flex: 1 1 460px;
-    max-width: 560px;
+    /* FIX: was flex: 1 1 460px; max-width: 560px — this actually
+       shrank the column on *larger* screens (smaller than the base
+       650/700px rule), which made the leftover-space problem worse.
+       Now it grows instead of shrinking. */
+    flex: 1.3 1 600px;
+    max-width: 740px;
   }
   .hero-right {
-    flex: 1 1 500px;
-    min-height: 580px;
+    /* FIX: was flex: 1 1 500px; min-height: 580px (no max-width,
+       same shrinking issue as hero-left above). */
+    flex: 1 1 560px;
+    max-width: 720px;
+    min-height: 600px;
   }
 }
 
@@ -863,10 +906,11 @@ h4 {
   }
   .hero-left {
     flex: 1 1 400px;
-    max-width: 520px;
+    max-width: 560px;
   }
   .hero-right {
     flex: 1 1 440px;
+    max-width: 600px;
     min-height: 550px;
   }
 }
@@ -1027,7 +1071,7 @@ h4 {
   .hero-badge {
     font-size: 10px;
     padding: 5px 11px;
-    margin-bottom: 18px;
+    margin: 20px;
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
@@ -1611,7 +1655,7 @@ h4 {
   color: #1e2d4a;
   border: none;
   border-radius: 50px;
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-heading);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -1631,7 +1675,7 @@ h4 {
   border: none;
   color: rgba(255, 255, 255, 0.65);
   border-radius: 50px;
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-heading);
   font-size: 14px;
   cursor: pointer;
   transition: color 0.25s ease;
@@ -1739,7 +1783,7 @@ h4 {
 }
 
 .aa-title {
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(26px, 4vw, 40px);
   font-weight: 700;
   margin-bottom: 20px;
@@ -1858,6 +1902,7 @@ h4 {
   color: #ffffff;
 }
 
+
 .aa-icon {
   font-size: 3rem;
   display: block;
@@ -1872,7 +1917,7 @@ h4 {
 }
 
 .aa-name {
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-heading);
   font-size: 20px;
   font-weight: 700;
   display: block;

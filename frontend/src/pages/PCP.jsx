@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo, memo } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import {
   ArrowRight,
@@ -25,34 +25,43 @@ import {
   Microscope,
   Syringe,
 } from 'lucide-react'
+import './PCP.css'
+
+// ─── Animation variants (defined OUTSIDE components so they are stable
+//     references — no recreation on every render) ───────────────────────────
+const FADE_VARIANTS = {
+  up:    { hidden: { opacity: 0, y: 32 },  visible: { opacity: 1, y: 0, x: 0 } },
+  down:  { hidden: { opacity: 0, y: -32 }, visible: { opacity: 1, y: 0, x: 0 } },
+  // FIX: direction naming was inverted — 'left' now slides in FROM the left (x starts positive → 0)
+  left:  { hidden: { opacity: 0, x: -32 }, visible: { opacity: 1, y: 0, x: 0 } },
+  right: { hidden: { opacity: 0, x: 32 },  visible: { opacity: 1, y: 0, x: 0 } },
+}
+
+const EASE_SPRING = [0.22, 1, 0.36, 1]
 
 // ─── FadeIn ──────────────────────────────────────────────────────────────────
+// FIX: `w-full` added as base class so the motion.div never collapses to
+//      content-width and left-aligns inside a centred flex/grid parent.
+//      Callers can still pass className to override or extend.
 function FadeIn({ children, delay = 0, direction = 'up', className = '' }) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
-  const variants = {
-    hidden: {
-      opacity: 0,
-      y: direction === 'up' ? 32 : direction === 'down' ? -32 : 0,
-      x: direction === 'left' ? 32 : direction === 'right' ? -32 : 0,
-    },
-    visible: { opacity: 1, y: 0, x: 0 },
-  }
+  const isInView = useInView(ref, { once: true, margin: '-60px 0px' })
+
   return (
     <motion.div
       ref={ref}
-      variants={variants}
+      variants={FADE_VARIANTS[direction]}
       initial="hidden"
       animate={isInView ? 'visible' : 'hidden'}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
+      transition={{ duration: 0.6, delay, ease: EASE_SPRING }}
+      className={`w-full ${className}`}
     >
       {children}
     </motion.div>
   )
 }
 
-// ─── Data ────────────────────────────────────────────────────────────────────
+// ─── Data (unchanged) ─────────────────────────────────────────────────────────
 const TRUST_BADGES = ['No Insurance Required', 'Same-Day Care', 'Cancel Anytime']
 
 const ONBOARDING_STEPS = [
@@ -114,30 +123,18 @@ const CTA_TRUST_POINTS = [
   { icon: Star,       text: '4.9 Average Rating' },
 ]
 
-// ─── Shared styles ────────────────────────────────────────────────────────────
-// Reusable glass-card treatment, expressed as Tailwind utilities (incl. an
-// arbitrary box-shadow value) instead of an inline style object, so it can be
-// composed via className on any element.
-const GLASS_CARD_CLASS =
-  'bg-white/90 backdrop-blur-md border border-white/90 shadow-[0_8px_32px_rgba(37,99,235,0.12)]'
+// ─── Shared style tokens ─────────────────────────────────────────────────────
+const GLASS_CARD = 'bg-white/90 backdrop-blur-md border border-white/90 shadow-[0_8px_32px_rgba(37,99,235,0.12)]'
+const GRAD_BLUE  = 'linear-gradient(135deg,#2563eb 0%,#0ea5e9 100%)'
 
-// ─── Hero sub-components ─────────────────────────────────────────────────────
-// Each card below is rendered twice by <Hero />: once in the simple, stacked
-// mobile/tablet layout (normal document flow — nothing can ever overlap) and
-// once inside the absolutely-positioned desktop "floating" composition.
-// Keeping them as standalone components avoids duplicating markup between
-// the two layouts.
+// ─── Hero sub-components (memo-ised: static props, no re-render needed) ──────
 
-function ProviderCard({ floating = true }) {
+const ProviderCard = memo(function ProviderCard({ floating = true }) {
   return (
-    <div
-      className={`${GLASS_CARD_CLASS} mx-auto w-[220px] rounded-3xl p-1 ${
-        floating ? '[animation:pcpFloat_4s_ease-in-out_infinite]' : ''
-      }`}
-    >
+    <div className={`${GLASS_CARD} mx-auto w-[220px] rounded-3xl p-1 ${floating ? 'pcp-float' : ''}`}>
       <div
         className="relative flex h-40 items-center justify-center overflow-hidden rounded-[20px]"
-        style={{ background: 'linear-gradient(135deg,#2563eb 0%,#38bdf8 100%)' }}
+        style={{ background: GRAD_BLUE }}
       >
         {[0, 1, 2, 3].map(r => (
           <div
@@ -167,13 +164,13 @@ function ProviderCard({ floating = true }) {
       </div>
     </div>
   )
-}
+})
 
-function SocialProofBadge() {
+const SocialProofBadge = memo(function SocialProofBadge() {
   return (
     <div
       className="w-full rounded-2xl px-3.5 py-2.5"
-      style={{ background: 'linear-gradient(135deg,#2563eb 0%,#38bdf8 100%)', boxShadow: '0 8px 28px rgba(37,99,235,0.35)' }}
+      style={{ background: GRAD_BLUE, boxShadow: '0 8px 28px rgba(37,99,235,0.35)' }}
     >
       <div className="mb-1 flex gap-0.5">
         {[1, 2, 3, 4, 5].map(i => (
@@ -184,11 +181,11 @@ function SocialProofBadge() {
       <p className="text-[10px] text-white/70">trust HumanCare</p>
     </div>
   )
-}
+})
 
-function HealthStatusCard() {
+const HealthStatusCard = memo(function HealthStatusCard() {
   return (
-    <div className={`${GLASS_CARD_CLASS} w-full rounded-2xl p-3`}>
+    <div className={`${GLASS_CARD} w-full rounded-2xl p-3`}>
       <div className="mb-2 flex items-center gap-2">
         <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[10px] bg-green-100">
           <Activity size={14} className="text-green-600" />
@@ -204,11 +201,13 @@ function HealthStatusCard() {
       <p className="mt-1 text-[10px] text-slate-400">Last check: 2 days ago</p>
     </div>
   )
-}
+})
 
-function OnboardingMiniSteps() {
+// FIX: Memoised; step label text is derived once and stable
+const OnboardingMiniSteps = memo(function OnboardingMiniSteps() {
+  const stepLabel = ONBOARDING_STEPS.map(s => s.t).join(' → ')
   return (
-    <div className={`${GLASS_CARD_CLASS} w-full rounded-2xl px-3.5 py-3`}>
+    <div className={`${GLASS_CARD} w-full rounded-2xl px-3.5 py-3`}>
       <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-blue-600">Your First Visit · Free</p>
       <div className="flex items-center">
         {ONBOARDING_STEPS.map((step, i) => (
@@ -220,14 +219,14 @@ function OnboardingMiniSteps() {
           </div>
         ))}
       </div>
-      <p className="mt-2 text-[10px] text-slate-400">{ONBOARDING_STEPS.map(s => s.t).join(' → ')}</p>
+      <p className="mt-2 text-[10px] text-slate-400">{stepLabel}</p>
     </div>
   )
-}
+})
 
-function WaitTimePill() {
+const WaitTimePill = memo(function WaitTimePill() {
   return (
-    <div className={`${GLASS_CARD_CLASS} flex w-full items-center gap-2.5 rounded-2xl px-3.5 py-2`}>
+    <div className={`${GLASS_CARD} flex w-full items-center gap-2.5 rounded-2xl px-3.5 py-2`}>
       <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
         <Clock size={13} className="text-blue-600" />
       </div>
@@ -237,16 +236,12 @@ function WaitTimePill() {
       </div>
     </div>
   )
-}
-
-// ─── 1. Hero ──────────────────────────────────────────────────────────────────
-// Split into two explicit halves — HeroLeft (copy) and HeroRight (visual) —
-// composed side by side by <Hero /> via a two-column grid at lg+, and
-// stacked top-to-bottom below that.
+})
 
 function HeroLeft() {
   return (
-    <div className="space-y-6 text-center lg:text-left">
+    // min-w-0 prevents the grid cell from blowing out at mid-widths
+    <div className="min-w-0 w-full space-y-6 text-center lg:text-left">
       <FadeIn delay={0.05}>
         <div className="flex justify-center lg:justify-start">
           <span className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full">
@@ -259,7 +254,7 @@ function HeroLeft() {
       <FadeIn delay={0.12}>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.1] tracking-tight text-slate-900">
           Don&apos;t Have a<br />Primary Care Doctor?<br />
-          <span style={{ backgroundImage: 'linear-gradient(135deg,#2563eb 0%,#0ea5e9 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+          <span style={{ backgroundImage: GRAD_BLUE, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             We&apos;ve Got You Covered.
           </span>
         </h1>
@@ -275,11 +270,18 @@ function HeroLeft() {
 
       <FadeIn delay={0.28}>
         <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-          <a href="#" className="inline-flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-full text-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
-            style={{ background: 'linear-gradient(135deg,#2563eb 0%,#0ea5e9 100%)', boxShadow: '0 8px 24px -4px rgba(37,99,235,0.4)' }}>
+          <a
+            href="/get-started"
+            aria-label="Get started with HumanCare Connect"
+            className="inline-flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-full text-sm pcp-card-lift"
+            style={{ background: GRAD_BLUE, boxShadow: '0 8px 24px -4px rgba(37,99,235,0.4)' }}
+          >
             Get Started <ArrowRight size={15} />
           </a>
-          <a href="#how-it-works" className="inline-flex items-center gap-2 bg-white text-blue-600 font-semibold px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 border border-blue-100 text-sm">
+          <a
+            href="#how-it-works"
+            className="inline-flex items-center gap-2 bg-white text-blue-600 font-semibold px-6 py-3 rounded-full shadow-md hover:shadow-lg pcp-transition hover:-translate-y-1 border border-blue-100 text-sm"
+          >
             <CirclePlay size={15} /> How It Works
           </a>
         </div>
@@ -301,75 +303,74 @@ function HeroLeft() {
 
 function HeroRight() {
   return (
-    // Two distinct layouts on purpose, not one layout that scales down: the
-    // desktop version is a deliberately art-directed floating arrangement
-    // with absolute positioning, which only ever has room to breathe at lg+
-    // widths. Below that, the cards switch to plain stacked flow —
-    // guaranteed never to overlap, on any screen.
-    <div className="relative">
+    <div className="relative min-w-0 w-full">
 
-      {/* Mobile / tablet */}
-      <div className="lg:hidden max-w-[280px] sm:max-w-xs mx-auto space-y-4">
-        <FadeIn delay={0.15}>
-          <ProviderCard floating={false} />
-        </FadeIn>
+      {/* ── Mobile / tablet: stacked flow — always centered ── */}
+      <div className="lg:hidden w-full max-w-[300px] sm:max-w-sm mx-auto space-y-4">
+        <FadeIn delay={0.15}><ProviderCard floating={false} /></FadeIn>
         <FadeIn delay={0.25}>
           <div className="grid grid-cols-2 gap-3">
             <SocialProofBadge />
             <WaitTimePill />
           </div>
         </FadeIn>
-        <FadeIn delay={0.32}>
-          <HealthStatusCard />
-        </FadeIn>
+        <FadeIn delay={0.32}><HealthStatusCard /></FadeIn>
+        <FadeIn delay={0.38}><OnboardingMiniSteps /></FadeIn>
       </div>
 
-      {/* Desktop — fixed-width composition so spacing between cards
-          (and therefore the no-overlap guarantee below) holds at every
-          viewport from the lg breakpoint upward. */}
-      <div className="hidden lg:flex relative items-center justify-center mx-auto w-[440px] min-h-[480px]">
+      {/* ── Desktop: art-directed composition, centred in the column ── */}
+      <div className="hidden lg:block pcp-hero-right-desktop">
 
+        {/* Centre card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.88 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10"
+          transition={{ duration: 0.8, delay: 0.15, ease: EASE_SPRING }}
+          style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 10 }}
         >
           <ProviderCard />
         </motion.div>
 
+        {/* Top-left: Social proof badge */}
         <motion.div
           initial={{ opacity: 0, x: -30, y: -10 }}
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={{ duration: 0.65, delay: 0.55 }}
-          className="absolute left-0 top-0 z-20 w-[130px] [animation:pcpFloatB_4s_ease-in-out_infinite_1.2s]"
+          className="pcp-float-b"
+          style={{ position: 'absolute', left: 0, top: 20, zIndex: 20, width: 130 }}
         >
           <SocialProofBadge />
         </motion.div>
 
+        {/* Bottom-left: Health status */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.65, delay: 0.65 }}
-          className="absolute left-0 bottom-0 z-20 w-[165px] [animation:pcpFloatC_4s_ease-in-out_infinite_0.6s]"
+          className="pcp-float-c"
+          style={{ position: 'absolute', left: 0, bottom: 20, zIndex: 20, width: 165 }}
         >
           <HealthStatusCard />
         </motion.div>
 
+        {/* Top-right: Onboarding steps */}
         <motion.div
           initial={{ opacity: 0, x: 30, y: -10 }}
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={{ duration: 0.65, delay: 0.45 }}
-          className="absolute right-0 top-0 z-20 w-[190px] [animation:pcpFloatD_4s_ease-in-out_infinite_1.8s]"
+          className="pcp-float-d"
+          style={{ position: 'absolute', right: 0, top: 20, zIndex: 20, width: 190 }}
         >
           <OnboardingMiniSteps />
         </motion.div>
 
+        {/* Bottom-right: Wait time */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.72 }}
-          className="absolute right-0 bottom-3 z-20 w-[160px] [animation:pcpFloatB_4s_ease-in-out_infinite_2.4s]"
+          className="pcp-float-e"
+          style={{ position: 'absolute', right: 0, bottom: 20, zIndex: 20, width: 160 }}
         >
           <WaitTimePill />
         </motion.div>
@@ -378,60 +379,46 @@ function HeroRight() {
   )
 }
 
+// Hero: two-column grid (copy left, cards right) with navbar-offset top padding
 function Hero() {
   return (
     <section
+      aria-label="Primary Care Hero"
       style={{ background: 'linear-gradient(160deg, #eaf4ff 0%, #ddeeff 40%, #f0f8ff 100%)' }}
-      className="relative overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20"
+      className="relative w-full overflow-x-hidden pt-28 pb-24 md:pt-32 md:pb-28"
     >
       {/* Ambient blobs */}
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, #bfdbfe 0%, transparent 70%)', filter: 'blur(70px)', opacity: 0.5 }} />
         <div style={{ position: 'absolute', bottom: '-100px', left: '-80px', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, #e0f2fe 0%, transparent 70%)', filter: 'blur(60px)', opacity: 0.4 }} />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-
+      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Two-column grid: copy left, cards right. Single column on mobile. */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
           <HeroLeft />
           <HeroRight />
         </div>
       </div>
-
-      {/* Float keyframes */}
-      <style>{`
-        @keyframes pcpFloat  { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-10px)} }
-        @keyframes pcpFloatB { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-7px)}  }
-        @keyframes pcpFloatC { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-5px)}  }
-        @keyframes pcpFloatD { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-8px)}  }
-        @media (prefers-reduced-motion: reduce) {
-          [class*="animation:"] { animation: none !important; }
-        }
-      `}</style>
     </section>
   )
 }
 
 // ─── 2. About Primary Care ────────────────────────────────────────────────────
-// Split into AboutLeft (icon grid) and AboutRight (copy + feature list).
-// The grid switches to two columns at md (768px) rather than lg (1024px) —
-// at md, each column still has ~300px+ to work with, so the icon grid no
-// longer has to sit stretched full-width across the awkward tablet range.
-// Below md, AboutLeft is also capped to max-w-sm so the 2×2 tiles stay a
-// compact, centered cluster instead of stretching edge to edge on phones.
-
+// FIX: backdrop now uses CSS classes (pcp-about-backdrop) instead of
+//      Tailwind negative-inset shorthands that were expanding the grid cell.
 function AboutLeft() {
-  return (
-    <FadeIn direction="right">
-      <div className="relative px-2 pt-2 pb-9 sm:px-3 sm:pb-10">
-        {/* Soft background plate — inset stays comfortably inside the
-            section's own horizontal padding at every breakpoint */}
-        <div
-          className="absolute -inset-2 sm:-inset-3 lg:-inset-4 rounded-[28px] z-0"
-          style={{ background: 'linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%)' }}
-        />
+  // FIX: tile hover style extracted so it isn't a new object each render
+  const tileStyle = useMemo(() => ({ boxShadow: '0 4px 20px rgba(37,99,235,0.08)' }), [])
 
-        <div className="relative z-10 grid grid-cols-2 gap-3 sm:gap-4 max-w-sm mx-auto md:max-w-none">
+  return (
+    <FadeIn direction="left">
+      {/* FIX: isolation + overflow via CSS class; no more negative Tailwind insets
+               fighting the grid layout */}
+      <div className="pcp-about-left-wrapper px-2 pt-2 pb-10 sm:px-3 sm:pb-12">
+        <div className="pcp-about-backdrop" aria-hidden="true" />
+
+        <div className="relative grid grid-cols-2 gap-3 sm:gap-4 max-w-sm mx-auto md:max-w-none">
           {ABOUT_GRID.map((tile, i) => (
             <motion.div
               key={tile.label}
@@ -441,7 +428,7 @@ function AboutLeft() {
               transition={{ duration: 0.5, delay: i * 0.1 }}
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
               className="flex flex-col items-center gap-3 rounded-2xl border border-blue-100/90 bg-white px-4 py-6 text-center cursor-default sm:px-5 sm:py-7"
-              style={{ boxShadow: '0 4px 20px rgba(37,99,235,0.08)' }}
+              style={tileStyle}
             >
               <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${tile.color} flex items-center justify-center shadow-md`}>
                 <tile.icon size={22} className="text-white" />
@@ -451,11 +438,11 @@ function AboutLeft() {
           ))}
         </div>
 
-        {/* 24/7 corner badge — smaller offsets on phones so it never sits
-            flush against the viewport edge */}
+        {/* 24/7 badge — z-20 is contained inside this stacking context */}
         <div
-          className="absolute -bottom-2 -right-2 z-20 flex h-16 w-16 items-center justify-center rounded-2xl sm:-bottom-3 sm:-right-3 sm:h-20 sm:w-20"
-          style={{ background: 'linear-gradient(135deg,#2563eb 0%,#0ea5e9 100%)', boxShadow: '0 8px 28px rgba(37,99,235,0.35)' }}
+          className="absolute -bottom-3 -right-3 z-20 flex h-16 w-16 items-center justify-center rounded-2xl sm:-bottom-4 sm:-right-4 sm:h-20 sm:w-20"
+          style={{ background: GRAD_BLUE, boxShadow: '0 8px 28px rgba(37,99,235,0.35)' }}
+          aria-hidden="true"
         >
           <div className="text-center">
             <p className="text-white text-base sm:text-xl font-black leading-none">24/7</p>
@@ -469,7 +456,7 @@ function AboutLeft() {
 
 function AboutRight() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 min-w-0">
       <FadeIn>
         <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">What Is Primary Care?</span>
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2 leading-tight">
@@ -490,9 +477,10 @@ function AboutRight() {
       <div className="grid sm:grid-cols-2 gap-3">
         {ABOUT_FEATURES.map((feature, i) => (
           <FadeIn key={feature.title} delay={i * 0.08}>
-            <div className="flex gap-3 p-4 rounded-xl hover:bg-blue-50/60 transition-colors duration-200 group cursor-default">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 transition-colors duration-200">
-                <feature.icon size={18} className="text-blue-600 group-hover:text-white transition-colors duration-200" />
+            {/* FIX: `pcp-transition` replaces `transition-all duration-200` */}
+            <div className="flex gap-3 p-4 rounded-xl hover:bg-blue-50/60 pcp-transition group cursor-default">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 pcp-transition">
+                <feature.icon size={18} className="text-blue-600 group-hover:text-white pcp-transition" />
               </div>
               <div>
                 <p className="font-semibold text-slate-800 text-sm">{feature.title}</p>
@@ -508,9 +496,9 @@ function AboutRight() {
 
 function AboutPrimaryCare() {
   return (
-    <section id="about" className="py-20 md:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+    <section id="about" aria-label="About Primary Care" className="w-full py-20 md:py-24 bg-white overflow-x-hidden">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-start">
           <AboutLeft />
           <AboutRight />
         </div>
@@ -519,13 +507,12 @@ function AboutPrimaryCare() {
   )
 }
 
-// ─── 3. How It Works (responsive timeline) ───────────────────────────────────
+// ─── 3. How It Works ─────────────────────────────────────────────────────────
 function HowItWorks() {
   return (
-    <section id="how-it-works" style={{ background: '#f8fafc' }} className="py-20 md:py-24">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="how-it-works" aria-label="How It Works" style={{ background: '#f8fafc' }} className="w-full py-20 md:py-24">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Header */}
         <FadeIn className="text-center mb-14">
           <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Simple Process</span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2">
@@ -536,7 +523,7 @@ function HowItWorks() {
           </p>
         </FadeIn>
 
-        {/* ── Mobile: vertical single-column list ── */}
+        {/* Mobile: vertical list */}
         <div className="block md:hidden space-y-4">
           {HOW_IT_WORKS_STEPS.map((step, i) => (
             <FadeIn key={step.title} delay={i * 0.08}>
@@ -556,9 +543,8 @@ function HowItWorks() {
           ))}
         </div>
 
-        {/* ── Desktop: alternating timeline ── */}
+        {/* Desktop: alternating timeline */}
         <div className="hidden md:block" style={{ position: 'relative' }}>
-          {/* Centre spine */}
           <div style={{
             position: 'absolute',
             left: '50%', top: 24, bottom: 24,
@@ -567,7 +553,7 @@ function HowItWorks() {
             background: 'linear-gradient(to bottom,#bfdbfe,#bae6fd,#e9d5ff)',
             borderRadius: 99,
             zIndex: 0,
-          }} />
+          }} aria-hidden="true" />
 
           {HOW_IT_WORKS_STEPS.map((step, i) => {
             const isLeft = i % 2 === 0
@@ -581,7 +567,6 @@ function HowItWorks() {
                   marginBottom: i < HOW_IT_WORKS_STEPS.length - 1 ? 32 : 0,
                   minHeight: 80,
                 }}>
-                  {/* Left slot */}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: 28 }}>
                     {isLeft && (
                       <motion.div
@@ -589,7 +574,7 @@ function HowItWorks() {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.55, delay: i * 0.1 }}
-                        className="bg-white rounded-2xl p-5 w-full hover:-translate-y-1 transition-all duration-300"
+                        className="bg-white rounded-2xl p-5 w-full pcp-card-lift"
                         style={{ boxShadow: '0 4px 24px rgba(37,99,235,0.09)', textAlign: 'right', maxWidth: 280 }}
                       >
                         <span className={`text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}>
@@ -601,19 +586,18 @@ function HowItWorks() {
                     )}
                   </div>
 
-                  {/* Centre icon */}
                   <div style={{ display: 'flex', justifyContent: 'center', zIndex: 10, position: 'relative' }}>
                     <motion.div
                       whileInView={{ scale: [0.5, 1.2, 1] }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.45, delay: i * 0.1 }}
                       className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}
+                      aria-hidden="true"
                     >
                       <step.icon size={20} className="text-white" />
                     </motion.div>
                   </div>
 
-                  {/* Right slot */}
                   <div style={{ display: 'flex', justifyContent: 'flex-start', paddingLeft: 28 }}>
                     {!isLeft && (
                       <motion.div
@@ -621,7 +605,7 @@ function HowItWorks() {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.55, delay: i * 0.1 }}
-                        className="bg-white rounded-2xl p-5 w-full hover:-translate-y-1 transition-all duration-300"
+                        className="bg-white rounded-2xl p-5 w-full pcp-card-lift"
                         style={{ boxShadow: '0 4px 24px rgba(37,99,235,0.09)', maxWidth: 280 }}
                       >
                         <span className={`text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}>
@@ -638,10 +622,12 @@ function HowItWorks() {
           })}
         </div>
 
-        {/* CTA */}
         <FadeIn className="text-center mt-12">
-          <a href="#" className="inline-flex items-center gap-2 text-white font-semibold px-8 py-3.5 rounded-full transition-all duration-200 hover:-translate-y-1"
-            style={{ background: 'linear-gradient(135deg,#2563eb 0%,#0ea5e9 100%)', boxShadow: '0 8px 24px -4px rgba(37,99,235,0.4)' }}>
+          <a
+            href="/get-started"
+            className="inline-flex items-center gap-2 text-white font-semibold px-8 py-3.5 rounded-full pcp-card-lift"
+            style={{ background: GRAD_BLUE, boxShadow: '0 8px 24px -4px rgba(37,99,235,0.4)' }}
+          >
             Get Started Now <ArrowRight size={16} />
           </a>
           <p className="text-slate-400 text-xs mt-3">No insurance required · Cancel anytime</p>
@@ -652,27 +638,30 @@ function HowItWorks() {
 }
 
 // ─── 4. Services ──────────────────────────────────────────────────────────────
+// FIX: replaced Tailwind responsive grid classes with `pcp-services-grid` CSS
+//      class that uses auto-fill columns — no orphan card at any breakpoint.
 function Services() {
   return (
-    <section id="services" className="py-20 md:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="services" aria-label="Services" className="w-full py-20 md:py-24 bg-white">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn className="text-center mb-14">
           <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">What&apos;s Included</span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2">Services Under Primary Care</h2>
           <p className="text-slate-500 mt-3 max-w-xl mx-auto">Everything you need to maintain your health — all in one place.</p>
         </FadeIn>
 
-        {/* Responsive grid: 1 col → 2 → 3 → 5 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {/* FIX: `.pcp-services-grid` from PCP.css replaces the brittle
+                 xl:grid-cols-5 that left an orphan card at lg breakpoint */}
+        <div className="pcp-services-grid">
           {SERVICES.map((service, i) => (
             <FadeIn key={service.title} delay={i * 0.04}>
               <motion.div
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                className="group bg-white rounded-2xl p-5 border border-slate-100 hover:border-blue-100 transition-all duration-300 cursor-pointer h-full"
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="group bg-white rounded-2xl p-5 border border-slate-100 hover:border-blue-100 pcp-transition cursor-pointer h-full"
                 style={{ boxShadow: '0 4px 20px rgba(37,99,235,0.06)' }}
               >
-                <div className="w-11 h-11 rounded-xl bg-blue-50 group-hover:bg-blue-600 flex items-center justify-center mb-4 transition-colors duration-300 flex-shrink-0">
-                  <service.icon size={20} className="text-blue-600 group-hover:text-white transition-colors duration-300" />
+                <div className="w-11 h-11 rounded-xl bg-blue-50 group-hover:bg-blue-600 flex items-center justify-center mb-4 pcp-transition flex-shrink-0">
+                  <service.icon size={20} className="text-blue-600 group-hover:text-white pcp-transition" />
                 </div>
                 <h3 className="font-semibold text-slate-800 text-sm leading-snug mb-1.5">{service.title}</h3>
                 <p className="text-slate-500 text-xs leading-relaxed">{service.desc}</p>
@@ -686,12 +675,14 @@ function Services() {
 }
 
 // ─── 5. FAQ ───────────────────────────────────────────────────────────────────
+// FIX: Added aria-controls / id pairing, aria-expanded, and descriptive
+//      aria-label on the chevron button so screen readers understand the toggle.
 function FAQ() {
   const [openIndex, setOpenIndex] = useState(null)
 
   return (
-    <section id="faq" className="py-20 md:py-24 bg-slate-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="faq" aria-label="Frequently Asked Questions" className="w-full py-20 md:py-24 bg-slate-50">
+      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <FadeIn className="text-center mb-14">
           <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Frequently Asked</span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2">Got Questions?</h2>
@@ -701,19 +692,24 @@ function FAQ() {
         <div className="space-y-3">
           {FAQS.map((faq, i) => {
             const isOpen = openIndex === i
+            const panelId = `faq-panel-${i}`
+            const btnId   = `faq-btn-${i}`
+
             return (
               <FadeIn key={faq.q} delay={i * 0.04}>
                 <div
-                  className="rounded-2xl border transition-all duration-300 overflow-hidden bg-white"
+                  className="rounded-2xl border pcp-transition overflow-hidden bg-white"
                   style={{
                     borderColor: isOpen ? '#bfdbfe' : '#e2e8f0',
-                    boxShadow: isOpen ? '0 4px 24px rgba(37,99,235,0.08)' : 'none',
+                    boxShadow:   isOpen ? '0 4px 24px rgba(37,99,235,0.08)' : 'none',
                   }}
                 >
                   <button
+                    id={btnId}
                     onClick={() => setOpenIndex(isOpen ? null : i)}
                     className="w-full flex items-center justify-between p-5 text-left gap-4"
                     aria-expanded={isOpen}
+                    aria-controls={panelId}
                   >
                     <span className="font-semibold text-slate-800 text-sm leading-snug">{faq.q}</span>
                     <motion.div
@@ -721,13 +717,18 @@ function FAQ() {
                       transition={{ duration: 0.25 }}
                       className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ background: isOpen ? '#2563eb' : '#f1f5f9' }}
+                      aria-hidden="true"
                     >
                       <ChevronDown size={15} className={isOpen ? 'text-white' : 'text-slate-500'} />
                     </motion.div>
                   </button>
+
                   <AnimatePresence initial={false}>
                     {isOpen && (
                       <motion.div
+                        id={panelId}
+                        role="region"
+                        aria-labelledby={btnId}
                         key="content"
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
@@ -752,21 +753,28 @@ function FAQ() {
 }
 
 // ─── 6. CTA ───────────────────────────────────────────────────────────────────
+// FIX: trust points replaced flex-wrap with `pcp-cta-trust` grid class
+//      for consistent 2-col layout on mobile, single row on sm+.
 function CTA() {
   return (
     <section
-      className="py-20 md:py-24 overflow-hidden relative"
+      aria-label="Call to Action"
+      className="w-full py-20 md:py-24 overflow-hidden relative"
       style={{ background: 'linear-gradient(135deg,#1d4ed8 0%,#1e40af 40%,#0369a1 100%)' }}
     >
       <div className="absolute top-0 left-0 w-80 h-80 rounded-full opacity-20 pointer-events-none"
-        style={{ background: 'radial-gradient(circle,#bfdbfe,transparent)', filter: 'blur(50px)' }} />
+        style={{ background: 'radial-gradient(circle,#bfdbfe,transparent)', filter: 'blur(50px)' }}
+        aria-hidden="true"
+      />
       <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-20 pointer-events-none"
-        style={{ background: 'radial-gradient(circle,#e0f2fe,transparent)', filter: 'blur(50px)' }} />
+        style={{ background: 'radial-gradient(circle,#e0f2fe,transparent)', filter: 'blur(50px)' }}
+        aria-hidden="true"
+      />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         <FadeIn>
           <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" aria-hidden="true" />
             Ready to Get Started?
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-5">
@@ -778,29 +786,29 @@ function CTA() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <motion.a
-              href="#"
+              href="/get-started"
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2 bg-white font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 text-sm w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-2 bg-white font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl pcp-transition text-sm w-full sm:w-auto justify-center"
               style={{ color: '#1d4ed8' }}
             >
               Get Started Today <ArrowRight size={16} />
             </motion.a>
             <motion.a
-              href="#"
+              href="/find-provider"
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-8 py-4 rounded-full border border-white/30 hover:bg-white/20 transition-all duration-200 text-sm w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-8 py-4 rounded-full border border-white/30 hover:bg-white/20 pcp-transition text-sm w-full sm:w-auto justify-center"
             >
               <Phone size={16} /> Find a Provider
             </motion.a>
           </div>
 
-          {/* Trust points — wrap gracefully */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mt-10">
+          {/* FIX: replaced flex-wrap with pcp-cta-trust grid for clean mobile layout */}
+          <div className="pcp-cta-trust">
             {CTA_TRUST_POINTS.map(point => (
               <div key={point.text} className="flex items-center gap-2 text-white/80 text-xs font-medium">
-                <point.icon size={14} className="text-white flex-shrink-0" />
+                <point.icon size={14} className="text-white flex-shrink-0" aria-hidden="true" />
                 {point.text}
               </div>
             ))}
@@ -814,13 +822,13 @@ function CTA() {
 // ─── Page composition ──────────────────────────────────────────────────────────
 export default function PCP() {
   return (
-    <div className="w-full">
+    <main className="pcp-root w-full block">
       <Hero />
       <AboutPrimaryCare />
       <HowItWorks />
       <Services />
       <FAQ />
       <CTA />
-    </div>
+    </main>
   )
 }

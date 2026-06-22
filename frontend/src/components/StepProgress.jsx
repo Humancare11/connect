@@ -18,7 +18,7 @@ const DEFAULT_STEPS = [
   { label: "Choose Service", icon: <FiUserCheck /> },
   { label: "Book Appointment", icon: <FiClock /> },
   { label: "Consult", icon: <FiVideo /> },
-  { label: " Rx & Complete", icon: <FiFileText /> },
+  { label: "Rx & Complete", icon: <FiFileText /> },
 ];
 
 export default function StepProgress({
