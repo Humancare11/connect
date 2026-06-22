@@ -69,7 +69,9 @@ import TravelGlobalCare from "./pages/Categories/TravelGlobalCare";
 import WeightNurtrition from "./pages/Categories/WeightNutrition";
 import WomenHealth from "./pages/Categories/WomenHealth";
 // Specialty pages
-import SD from "./pages/Specialty/SD";
+import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
+import Pediatrics from "./pages/Specialty/Children&FamilyCare/Pediatrics";
+import Cardiology from "./pages/Specialty/ChronicCare&ExpertOpinion/Cardiology";
 
 // condition pages
 import Arthritis from "./pages/Conditions/Arthritis";
@@ -332,7 +334,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -406,7 +408,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -864,7 +866,13 @@ function AppLayout() {
           <Route path="/weight-nurtrition" element={<WeightNurtrition />} />
           <Route path="/women-health" element={<WomenHealth />} />
           {/* specialties */}
-          <Route path="/sd" element={<SD />} />
+          <Route path="/adolescent-medicine" element={<AdolescentMedicine />} />
+          <Route path="/pediatrics" element={<Pediatrics />} />
+          <Route path="/cardiology" element={<Cardiology />} />
+         
+
+
+
           <Route path="/ServiceDemo" element={<ServiceDemo />} />
           {/* condition pages */}
           <Route path="/arthritis" element={<Arthritis />} />
