@@ -1003,6 +1003,7 @@ function AppLayout() {
             element={<VomitingDiarrheaChildren />}
           />
           <Route path="/doctors-note" element={<DoctorsNote />} />
+          
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           <Route
             path="/appointment-booking/form"
