@@ -26,30 +26,30 @@ import "./categoriesGlobal.css";
 // but clicking does nothing).
 
 const cat = {
-  label: "ENT (Ear, Nose & Throat)",
-  tagline: "ENT ",
-  headline: "Expert Eye, Ear & Bone Care ",
-  headlineAccent: " Designed Around Your Health",
+  label: "Sexual Health",
+  tagline: "Sexual Health",
+  headline: "Confidential Sexual Health Care, ",
+  headlineAccent: " Designed Around Your Needs",
   subheadline:
-    "Connect with experienced healthcare professionals for personalized care for vision concerns, hearing issues, ear conditions, and bone and joint health providing expert medical guidance to support your comfort, mobility, and overall well-being.",
-  bookingSpecialtyPlaceholder: "e.g. ENT",
+    "Connect with experienced healthcare professionals for personalized sexual health support, intimate health concerns, preventive care, and medical guidance through secure online doctor consultations.",
+  bookingSpecialtyPlaceholder: "e.g. Sexual Health",
 
   specialties: [
     {
-      name: "ENT (Ear, Nose & Throat)",
-      desc: "ENT specialists diagnose and treat conditions affecting the ears, nose, throat, sinuses, voice, and balance system.  ",
-      path: "/eye-ear-bone",
+      name: " Sexual Health",
+      desc: " Confidential care for STI concerns, HIV prevention, PrEP guidance, herpes, chlamydia, gonorrhea, partner exposure risks, and overall sexual wellness. ",
+      path: "/sexual-health",
     },
-    {
-      name: "Ophthalmology",
-      desc: "Ophthalmology specialists diagnose, treat, and manage conditions affecting the eyes, vision, and overall eye health.",
-      path: "/ophthalmology",
-    },
-    {
-      name: "Orthopedics",
-      desc: "Orthopedic specialists diagnose and treat conditions affecting the bones, joints, muscles, ligaments, tendons, and spine.",
-      path: "/orthopedics",
-    },
+    // {
+    //   name: "Psychiatry",
+    //   desc: "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support. ",
+    //   path: "/psychiatry",
+    // },
+    // {
+    //   name: "Psychology Counseling",
+    //   desc: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
+    //   path: "/psychology-counseling",
+    // },
     // {
     //   name: "Gastroenterology",
     //   desc: "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. ",
@@ -69,39 +69,39 @@ const cat = {
 
   conditions: [
     {
-      name: "Ear Infection",
-      desc: "Pain, pressure, and ear discomfort",
-      path: "/ear-infection",
+      name: "Chlamydia",
+      desc: "Common sexually transmitted bacterial infection",
+      path: "/chlamydia",
     },
     {
-      name: "Ear Pain",
-      desc: "Pain, pressure, and ear discomfort",
-      path: "/ear-pain",
+      name: "Gonorrhea",
+      desc: "Common bacterial sexually transmitted infection",
+      path: "/gonorrhea",
     },
     {
-      name: "Hoarseness",
-      desc: "Relief for voice and throat changes",
-      path: "/hoarseness",
-    },
-        {
-      name: "Nasal Congestion",
-      desc: "Relief for a blocked nose",
-      path: "/nasal-congestion",
+      name: "Herpes",
+      desc: "Viral infection causing painful sores",
+      path: "/herpes",
     },
     {
-      name: "Sore Throat",
-      desc: "Pain, irritation, or a scratchy throat",
-      path: "/sore-throat",
+      name: "HIV Prevention / PrEP Guidance",
+      desc: "Preventive care for HIV protection",
+      path: "/HIV-prevention",
     },
     {
-      name: "Tonsillitis",
-      desc: "Relief for sore throat and swollen tonsils",
-      path: "/tonsillitis",
+      name: "Partner Exposure Concerns",
+      desc: "Concerns after sexual exposure",
+      path: "/partner-exposure-concerns",
     },
     {
-      name: "Vertigo",
-      desc: "Spinning sensation and balance issues",
-      path: "/vertigo",
+      name: "Safe Sex Counseling",
+      desc: "Guidance for healthier intimate relationships",
+      path: "/safe-sex-counseling",
+    },
+    {
+      name: "STI Consultation",
+      desc: "Testing, treatment, and sexual health support",
+      path: "/STI-consultation",
     },
 
     // {
@@ -150,115 +150,89 @@ const cat = {
   ],
 
   faqGroups: [
+  {
+  label: "Sexual Health",
+  items: [
     {
-      label: "Chronic Care Management",
-      items: [
-        {
-          q: "What is chronic care management?",
-          a: "Chronic care management involves ongoing medical support for individuals living with long-term health conditions such as diabetes, high blood pressure, heart disease, asthma, arthritis, and other chronic illnesses. It focuses on monitoring symptoms, managing treatment plans, and improving overall quality of life.",
-        },
-        {
-          q: "What conditions can be managed through virtual chronic care?",
-          a: "Virtual chronic care can support a wide range of long-term conditions, including diabetes, hypertension, thyroid disorders, respiratory conditions, digestive disorders, chronic pain, and other ongoing health concerns.",
-        },
-        {
-          q: "How can online doctor consultations help manage chronic conditions?",
-          a: "Online doctor consultations provide convenient access to healthcare professionals who can review symptoms, discuss treatment options, monitor progress, and provide personalized medical guidance as part of your long-term care plan.",
-        },
-        {
-          q: "Are online chronic care consultations effective?",
-          a: "Yes, virtual chronic care can be an effective way to manage many ongoing health conditions by providing regular medical guidance, treatment follow-ups, and easier access to healthcare professionals.",
-        },
-        {
-          q: "How often should I schedule chronic care appointments?",
-          a: "The frequency of appointments depends on your specific health condition, symptoms, and your healthcare professional’s recommendations for ongoing care.",
-        },
-      ],
+      q: "What is sexual health care?",
+      a: "Sexual health care focuses on maintaining physical, emotional, and reproductive well-being related to sexuality. It includes prevention, diagnosis, treatment guidance, and support for a wide range of sexual health concerns.",
     },
-
     {
-      label: "Expert Medical Opinions",
-      items: [
-        {
-          q: "What is an expert medical opinion?",
-          a: "An expert medical opinion allows you to consult with an experienced healthcare professional to gain additional insight about a diagnosis, treatment recommendation, or complex health concern.",
-        },
-        {
-          q: "When should I seek a second medical opinion?",
-          a: "You may consider a second medical opinion when facing a new diagnosis, considering surgery, managing a complex condition, experiencing ongoing symptoms, or wanting more confidence in your treatment decisions.",
-        },
-        {
-          q: "Can I get a second opinion without visiting a clinic?",
-          a: "Yes, virtual healthcare makes it possible to connect with qualified healthcare professionals online and receive expert medical guidance from the comfort of your home.",
-        },
-        {
-          q: "Can I consult a specialist for a complex health condition?",
-          a: "Yes, Humancare Connect provides access to experienced healthcare professionals and specialists who can offer expert insights and personalized recommendations for complex medical concerns.",
-        },
-      ],
+      q: "What sexual health concerns can be discussed during an online consultation?",
+      a: "Virtual consultations can help address concerns such as sexually transmitted infections (STIs), changes in sexual function, discomfort during intimacy, reproductive health questions, and other sexual wellness concerns.",
     },
-
     {
-      label: "Consultations & Treatment",
-      items: [
-        {
-          q: "Can doctors adjust my treatment plan during an online consultation?",
-          a: "Healthcare professionals can review your current treatment plan, discuss your progress, and provide recommendations or adjustments when medically appropriate and permitted by applicable regulations.",
-        },
-        {
-          q: "What information should I prepare for a chronic care consultation?",
-          a: "Before your appointment, prepare details about your medical history, current symptoms, medications, previous test results, and any questions or concerns you would like to discuss.",
-        },
-        {
-          q: "Can virtual chronic care help prevent complications?",
-          a: "Regular follow-ups and proper medical guidance can help patients better understand their condition, follow treatment recommendations, and identify potential concerns that may require further evaluation.",
-        },
-        {
-          q: "Can I discuss multiple health concerns during one consultation?",
-          a: "Yes, patients can discuss multiple symptoms or health concerns during a consultation, allowing healthcare professionals to better understand their overall health needs.",
-        },
-        {
-          q: "What happens if my condition requires in-person treatment?",
-          a: "If your healthcare professional determines that physical examinations, diagnostic tests, or emergency treatment are necessary, they will advise you to seek appropriate in-person medical care.",
-        },
-      ],
+      q: "Can I talk to a doctor online about sexually transmitted infections (STIs)?",
+      a: "Yes, healthcare professionals can discuss STI symptoms, risk factors, testing recommendations, treatment options, and steps to protect your sexual health.",
     },
-
     {
-      label: "Patient Support & Benefits",
-      items: [
-        {
-          q: "What are the benefits of online chronic care management?",
-          a: "Virtual chronic care offers convenience, continuous medical support, easier access to healthcare professionals, personalized care plans, and reduced barriers to receiving regular healthcare.",
-        },
-        {
-          q: "Can chronic care consultations include lifestyle and wellness advice?",
-          a: "Yes, healthcare professionals may provide guidance related to nutrition, physical activity, sleep habits, stress management, and healthy lifestyle choices that support long-term health.",
-        },
-        {
-          q: "Is virtual chronic care suitable for older adults?",
-          a: "Yes, virtual chronic care can be a convenient option for older adults who require ongoing medical guidance, medication reviews, and routine health monitoring.",
-        },
-        {
-          q: "How quickly can I connect with a healthcare professional for chronic care?",
-          a: "Humancare Connect offers convenient access to healthcare professionals, helping patients receive timely medical guidance without unnecessary delays.",
-        },
-        {
-          q: "Is my medical information secure during virtual consultations?",
-          a: "Yes, Humancare Connect prioritizes patient privacy and uses secure virtual healthcare technology to protect your personal health information and maintain confidentiality.",
-        },
-        {
-          q: "Why choose Humancare Connect for chronic care and expert medical opinions?",
-          a: "Humancare Connect provides secure online doctor consultations, access to trusted healthcare professionals, personalized chronic condition support, and expert medical opinions to help you take control of your long-term health with confidence.",
-        },
-      ],
+      q: "Is online sexual health care private and confidential?",
+      a: "Yes, Humancare Connect prioritizes patient confidentiality and uses secure virtual healthcare technology to protect your personal health information.",
+    },
+    {
+      q: "Can I receive treatment recommendations for sexual health concerns?",
+      a: "Yes, healthcare professionals can evaluate symptoms, provide medical guidance, and recommend appropriate treatment options when necessary.",
+    },
+    {
+      q: "Can I discuss concerns about sexual performance or desire?",
+      a: "Yes, online consultations provide a private, judgment-free space to discuss concerns related to sexual desire, performance, satisfaction, and overall sexual wellness.",
+    },
+    {
+      q: "Can virtual consultations help with erectile dysfunction or other sexual function concerns?",
+      a: "Yes, healthcare professionals can assess symptoms, discuss possible causes, and recommend appropriate treatment options or next steps for sexual function concerns.",
+    },
+    {
+      q: "Can I get advice about safe sex and sexual wellness?",
+      a: "Yes, healthcare professionals can provide education on safe sexual practices, contraception, STI prevention, and maintaining healthy sexual relationships.",
+    },
+    {
+      q: "What should I prepare before a sexual health consultation?",
+      a: "Be ready to discuss your symptoms, medical history, medications, sexual health concerns, and any questions you want to ask your healthcare professional.",
+    },
+    {
+      q: "Can I discuss birth control or contraception during an online consultation?",
+      a: "Yes, healthcare professionals can guide you on birth control methods, contraception options, and help determine what may be suitable for your needs.",
+    },
+    {
+      q: "Can online consultations help with pain or discomfort during intimacy?",
+      a: "Yes, doctors can evaluate symptoms, identify possible causes, and recommend appropriate care or further medical evaluation if needed.",
+    },
+    {
+      q: "Can I receive prescriptions through an online sexual health consultation?",
+      a: "When medically appropriate and permitted by applicable regulations, healthcare professionals may provide prescriptions or treatment recommendations based on your condition.",
+    },
+    {
+      q: "How often should I get sexual health checkups?",
+      a: "The frequency of sexual health screenings depends on your age, medical history, sexual activity, and individual risk factors as advised by your healthcare professional.",
+    },
+    {
+      q: "Can I seek a second opinion for a sexual health condition?",
+      a: "Yes, Humancare Connect allows you to connect with experienced healthcare professionals for additional medical guidance and expert opinions.",
+    },
+    {
+      q: "Are sexual health concerns common?",
+      a: "Yes, sexual health concerns are common and can affect people of different ages. Consulting a healthcare professional can help you understand symptoms and treatment options.",
+    },
+    {
+      q: "What are the benefits of virtual sexual health care?",
+      a: "Virtual sexual health consultations provide privacy, convenience, easy access to healthcare professionals, and a comfortable environment to discuss sensitive concerns.",
+    },
+    {
+      q: "When should I seek immediate medical attention instead of an online consultation?",
+      a: "You should seek urgent in-person medical care for severe pain, heavy bleeding, serious injuries, or any symptoms that require emergency evaluation.",
+    },
+    {
+      q: "Why choose Humancare Connect for sexual health care?",
+      a: "Humancare Connect provides secure online consultations with trusted healthcare professionals, offering confidential, compassionate, and personalized sexual healthcare support.",
     },
   ],
+}
+],
 
-  ctaHeadline: "Expert Chronic Care Support, Wherever You Are",
+ctaHeadline: "Care That Supports Your Mind & Body",
 
-  ctaBody:
-    "Manage long-term health conditions with confidence through continuous medical support, specialist guidance, personalized care plans, and expert medical opinions—all from the comfort of your home.",
+ctaBody:
+  "Get trusted online support for everyday healthcare needs and mental wellness through secure consultations with experienced healthcare professionals. Whether it's physical symptoms or emotional well-being, we're here to help you feel better, every day.",
 
 };
 
@@ -501,7 +475,7 @@ function FaqSection({ faqGroups, catLabel }) {
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
-export default function EyeEarBone() {
+export default function  SexualHealth() {
   const navigate = useNavigate();
   const goToBooking = () => navigate("/appointment-booking");
 
@@ -509,8 +483,10 @@ export default function EyeEarBone() {
     <div style={{ fontFamily: "'Satoshi', sans-serif", background: "var(--bg)", color: "var(--navy)", minHeight: "100vh" }}>
 
       <Helmet>
-        <title>Online Chronic Care Management & Expert Medical Opinions | Humancare Connect</title>
-        <meta name="description" content="Get expert online chronic care management and medical opinions from trusted healthcare professionals. Receive personalized treatment guidance, ongoing support, and virtual consultations from home." />
+        <title>Online Sexual Health Care | Confidential Doctor Consultation | Humancare Connect
+
+        </title>
+        <meta name="description" content=" Online Sexual Health Care | Confidential Doctor Consultation | Humancare Connect " />
       </Helmet>
 
       {/* ── Hero ── */}
@@ -636,4 +612,4 @@ export default function EyeEarBone() {
 
     </div>
   );
-}
+} 
