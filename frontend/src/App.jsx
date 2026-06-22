@@ -40,9 +40,9 @@ import {
 } from "./utils/session";
 
 import AboutUs from "./pages/AboutPage"; // about us page
-import PrivacyConcerns from "./pages/PrivacyConcerns"; // privacy concerns
+// import PrivacyConcerns from "./pages/PrivacyConcerns"; // privacy concerns
 // Specialty pages
-import SPdemo from "./pages/Specialty/SPeDemo";
+// import SPdemo from "./pages/Specialty/SPeDemo";
 import AboutPage from "./pages/AboutPage";
 import PCP from "./pages/PCP";
 
@@ -191,7 +191,7 @@ import ColdSores from "./pages/Conditions/ColdSores";
 import ContactDermatitis from "./pages/Conditions/ContactDermatitis";
 import Eczema from "./pages/Conditions/Conditions/Eczema";
 import FungalSkinInfection from "./pages/Conditions/Conditions/FungalSkinInfection";
-import HairLoss from "./pages/Conditions/Conditions/HairLoss";
+import HairLoss1 from "./pages/Conditions/Conditions/HairLoss";
 import Hives from "./pages/Conditions/Conditions/Hives";
 import ItchySkin from "./pages/Conditions/Conditions/ItchySkin";
 import MoleSkinChecks from "./pages/Conditions/Conditions/MoleSkinChecks";
@@ -275,18 +275,23 @@ import PregnancyRelatedQuestions from "./pages/Conditions/Conditions/PregnancyRe
 import PrenatalConsultation from "./pages/Conditions/Conditions/PrenatalConsultation";
 import VaginalYeastInfection from "./pages/Conditions/Conditions/VaginalYeastInfection";
 import WeaningGuidance from "./pages/Conditions/Conditions/WeaningGuidance";
-import BladderProblems from "./pages/Conditions/Conditions/BladderProblems";
-import ErectileDysfunction from "./pages/Conditions/Conditions/ErectileDysfunction";
+import BladderProblems1 from "./pages/Conditions/Conditions/BladderProblems";
+import ErectileDysfunction1 from "./pages/Conditions/Conditions/ErectileDysfunction";
 import HairLossMensHealth from "./pages/Conditions/Conditions/HairLossMensHealth";
-import LowLibido from "./pages/Conditions/Conditions/LowLibido";
-import LowTestosteroneSymptoms from "./pages/Conditions/Conditions/LowTestosteroneSymptoms";
-import MensWellnessConsultation from "./pages/Conditions/Conditions/MensWellnessConsultation";
-import PrematureEjaculation from "./pages/Conditions/Conditions/PrematureEjaculation";
-import ProstateHealth from "./pages/Conditions/Conditions/ProstateHealth";
-import UrinarySymptomsMen from "./pages/Conditions/Conditions/UrinarySymptomsMen";
+import LowLibido1 from "./pages/Conditions/Conditions/LowLibido";
+import LowTestosteroneSymptoms1 from "./pages/Conditions/Conditions/LowTestosteroneSymptoms";
+import MensWellnessConsultation1 from "./pages/Conditions/Conditions/MensWellnessConsultation";
+import PrematureEjaculation1 from "./pages/Conditions/Conditions/PrematureEjaculation";
+import ProstateHealth1 from "./pages/Conditions/Conditions/ProstateHealth";
+import UrinarySymptomsMen1 from "./pages/Conditions/Conditions/UrinarySymptomsMen";
 
+// ----------Speciality Pages-------------------
+import ExpertMedicalOpinion from "./pages/Specialty/ChronicCare&ExpertOpinion/ExpertMedicalOpinion";
+import Gastroenterology from "./pages/Specialty/ChronicCare&ExpertOpinion/Gastroenterology";
+import Neurology from "./pages/Specialty/ChronicCare&ExpertOpinion/Neurology";
+import Pulmonology from "./pages/Specialty/ChronicCare&ExpertOpinion/Pulmonology";
 // -------------------------Services Pages-------------------------
-import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
+// import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
 import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
 
 // -------------------------Services Pages-------------------------
@@ -297,15 +302,15 @@ import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
 import Vertigo from "./pages/Conditions/Conditions/Vertigo";
 
-import BladderProblems from "./pages/Conditions/BladderProblems";
-import ErectileDysfunction from "./pages/Conditions/ErectileDysfunction";
-import HairLoss from "./pages/Conditions/HairLoss";
-import LowLibido from "./pages/Conditions/LowLibido";
-import LowTestosteroneSymptoms from "./pages/Conditions/LowTestosteroneSymptoms";
-import MensWellnessConsultation from "./pages/Conditions/MensWellnessConsultation";
-import PrematureEjaculation from "./pages/Conditions/PrematureEjaculation";
-import ProstateHealth from "./pages/Conditions/ProstateHealth";
-import UrinarySymptomsMen from "./pages/Conditions/UrinarySymptomsMen";
+// import BladderProblems from "./pages/Conditions/BladderProblems";
+// import ErectileDysfunction from "./pages/Conditions/ErectileDysfunction";
+// import HairLoss from "./pages/Conditions/HairLoss";
+// import LowLibido from "./pages/Conditions/LowLibido";
+// import LowTestosteroneSymptoms from "./pages/Conditions/LowTestosteroneSymptoms";
+// import MensWellnessConsultation from "./pages/Conditions/MensWellnessConsultation";
+// import PrematureEjaculation from "./pages/Conditions/PrematureEjaculation";
+// import ProstateHealth from "./pages/Conditions/ProstateHealth";
+// import UrinarySymptomsMen from "./pages/Conditions/UrinarySymptomsMen";
 
 // Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
@@ -1014,7 +1019,7 @@ function AppLayout() {
           <Route path="/weight-nurtrition" element={<WeightNurtrition />} />
           <Route path="/women-health" element={<WomenHealth />} />
           {/* specialties */}
-          <Route path="/sd" element={<SD />} />
+          {/* <Route path="/sd" element={<SD />} /> */}
           <Route path="/adolescent-medicine" element={<AdolescentMedicine />} />
           <Route path="/pediatrics" element={<Pediatrics />} />
           <Route path="/cardiology" element={<Cardiology />} />
@@ -1209,7 +1214,7 @@ function AppLayout() {
             path="/fungal-skin-infection"
             element={<FungalSkinInfection />}
           />
-          <Route path="/hair-loss" element={<HairLoss />} />
+          {/* <Route path="/hair-loss" element={<HairLoss />} /> */}
           <Route path="/hives" element={<Hives />} />
           <Route path="/itchy-skin" element={<ItchySkin />} />
           <Route path="/mole-skin-checks" element={<MoleSkinChecks />} />
@@ -1364,62 +1369,62 @@ function AppLayout() {
             element={<VaginalYeastInfection />}
           />
           <Route path="/weaning-guidance" element={<WeaningGuidance />} />
-          <Route path="/bladder-problems" element={<BladderProblems />} />
-          <Route
+          {/* <Route path="/bladder-problems" element={<BladderProblems />} /> */}
+          {/* <Route
             path="/erectile-dysfunction"
             element={<ErectileDysfunction />}
-          />
+          /> */}
           <Route
             path="/hair-loss-mens-health"
             element={<HairLossMensHealth />}
           />
-          <Route path="/low-libido" element={<LowLibido />} />
-          <Route
+          {/* <Route path="/low-libido" element={<LowLibido />} /> */}
+          {/* <Route
             path="/low-testosterone-symptoms"
             element={<LowTestosteroneSymptoms />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/mens-wellness-consultation"
             element={<MensWellnessConsultation />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/premature-ejaculation"
             element={<PrematureEjaculation />}
-          />
-          <Route path="/prostate-health" element={<ProstateHealth />} />
-          <Route
+          /> */}
+          {/* <Route path="/prostate-health" element={<ProstateHealth />} /> */}
+          {/* <Route
             path="/urinary-symptoms-men"
             element={<UrinarySymptomsMen />}
-          />
-          <Route path="/bladder-problems" element={<BladderProblems />} />
+          /> */}
+          <Route path="/bladder-problems" element={<BladderProblems1 />} />
           <Route
             path="/erectile-dysfunction"
-            element={<ErectileDysfunction />}
+            element={<ErectileDysfunction1 />}
           />
-          <Route path="/hair-loss" element={<HairLoss />} />
-          <Route path="/low-libido" element={<LowLibido />} />
+          {/* <Route path="/hair-loss" element={<HairLoss />} /> */}
+          <Route path="/low-libido" element={<LowLibido1 />} />
           <Route
             path="/low-testosterone-symptoms"
-            element={<LowTestosteroneSymptoms />}
+            element={<LowTestosteroneSymptoms1 />}
           />
           <Route
             path="/mens-wellness-consultation"
-            element={<MensWellnessConsultation />}
+            element={<MensWellnessConsultation1 />}
           />
           <Route
             path="/premature-ejaculation"
-            element={<PrematureEjaculation />}
+            element={<PrematureEjaculation1 />}
           />
-          <Route path="/prostate-health" element={<ProstateHealth />} />
+          <Route path="/prostate-health" element={<ProstateHealth1 />} />
           <Route
             path="/urinary-symptoms-in-men"
-            element={<UrinarySymptomsMen />}
+            element={<UrinarySymptomsMen1 />}
           />
-          <Route path="/ADHD-evaluation" element={<ADHDEvaluation />} />
-          <Route
+          {/* <Route path="/ADHD-evaluation" element={<ADHDEvaluation />} /> */}
+          {/* <Route
             path="/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
-          />
+          /> */}
           <Route path="/doctors-note" element={<DoctorsNote />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           <Route
@@ -1486,6 +1491,13 @@ function AppLayout() {
             path="/weight-loss-programs"
             element={<WeightLossPrograms />}
           />
+          <Route
+            path="/export-medical-opinion"
+            element={<ExpertMedicalOpinion />}
+          />
+          <Route path="/gastroenterology" element={<Gastroenterology />} />
+          <Route path="/neurology" element={<Neurology />} />
+          <Route path="/pulmonology" element={<Pulmonology />} />
         </Routes>
 
         {!hideLayout && <Footer />}
