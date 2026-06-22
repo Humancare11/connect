@@ -20,13 +20,16 @@
   padding: 30px 0;
 }
 
-/* .lm-label {
-  flex: 0 0 auto;
-  padding-left: 8px;
-  font-size: 13px;
-  color: var(--muted);
-  font-weight: 500;
-} */
+.lm-track {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.lm-separator {
+  font-size: 1.2rem;
+  opacity: 0.6;
+}
 
 .lm-mask {
   flex: 1;
