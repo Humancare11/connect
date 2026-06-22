@@ -227,8 +227,31 @@ export default function PatientPrivacyNotice() {
               We collect only the minimum information necessary to provide your
               requested service.
             </p>
-
+</SectionCard >
             {/* <div style={{ border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
+
+                    {/* Privacy Rights */}
+                    <SectionCard icon={Lock} title="Who We Are">
+                        <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.8, margin: 0 }}>
+                            Humancare Connect, Inc. is a telehealth platform incorporated in Delaware, USA, providing teleconsultation, prescription management, medical report handling, appointment booking, and wellness programs including mental health, sexual health, and weight management services. We operate as a   Business Associate and handle your PHI in accordance with applicable law.
+                        </p>
+                    </SectionCard>
+
+                    {/* Information We Collect */}
+                    <SectionCard icon={Database} title="What Information We Collect">
+                        <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.8, margin: "0 0 20px" }}>
+                            We may collect and use the following categories of information: </p>
+                        <ul>
+                            <li>• Identity information: full name, date of birth, email address, phone number</li>
+                            <li>• Health information: symptoms, medical history relevant to your consultation, diagnoses, prescriptions, consultation notes, medical reports, lab results</li>
+                            <li>• Program information: information related to mental health, sexual health, or weight loss programs you enroll in</li>
+                            <li>• Payment information: payment status and invoice details (no medical information is stored in payment records)</li>
+                            <li>Technical information: IP address, device type, browser, session data for platform security purposes</li>
+                        </ul>
+                        <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.8, margin: "0 0 20px" }}>We collect only the minimum information necessary to provide your requested service.</p>
+
+                        {/* <div style={{ border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
+
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
                                 <colgroup>
                                     <col style={{ width: "22%" }} />

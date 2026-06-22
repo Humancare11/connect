@@ -7,7 +7,7 @@ import PhoneInputField, {
   getFlagUrl,
   findCountryByName,
 } from "../../components/PhoneInputField";
-import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
+// import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State, City } from "country-state-city";
@@ -929,7 +929,6 @@ function MultiSelect({
   placeholder,
   searchPlaceholder,
   hasError,
-  showFlags = false,
   showFlags = false,
 }) {
   const [open, setOpen] = useState(false);

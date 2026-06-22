@@ -309,6 +309,9 @@
 }
 
 .sy-hero__mini-card {
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
   border-radius: 1.5rem;
   border: 1px solid rgba(11,87,232,.08);
   background: rgba(255,255,255,.92);
@@ -345,6 +348,9 @@
 
 /* Featured / active specialty footer row */
 .sy-hero__feature-row {
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease;
   margin-top: 10px;
   display: flex;
   align-items: center;
@@ -355,6 +361,10 @@
   background: rgba(255,255,255,.92);
   border: 1px solid rgba(11,87,232,.08);
   padding: 14px 16px;
+}
+.sy-hero__feature-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(11,40,100,.08);
 }
 
 .sy-hero__feature-left {
@@ -598,6 +608,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
   border-radius: 1.5rem;
   border: 1px solid rgba(11,87,232,.08);
   background: rgba(255,255,255,.82);
