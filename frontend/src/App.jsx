@@ -72,6 +72,7 @@ import WomenHealth from "./pages/Categories/WomenHealth";
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
 import Pediatrics from "./pages/Specialty/Children&FamilyCare/Pediatrics";
 import Cardiology from "./pages/Specialty/ChronicCare&ExpertOpinion/Cardiology";
+       
 
 // condition pages
 import Arthritis from "./pages/Conditions/Arthritis";
