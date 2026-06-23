@@ -40,7 +40,7 @@ import {
 } from "./utils/session";
 
 import AboutUs from "./pages/AboutPage"; // about us page
-// import PrivacyConcerns from "./pages/PrivacyConcerns"; // privacy concerns
+
 // Specialty pages
 // import SPdemo from "./pages/Specialty/SPeDemo";
 import AboutPage from "./pages/AboutPage";
@@ -59,6 +59,10 @@ import CCPA from "./pages/Privacy Policies/CCPA";
 import NOTICE from "./pages/Privacy Policies/NoticePrivacy";
 import CookiePolicy from "./pages/Privacy Policies/CookiePolicy";
 import PatientInformedConsentForm from "./pages/Privacy Policies/PatientInformedConsentForm";
+import PhysicianCredentialingPolicy from "./pages/Privacy Policies/PhysicianCredentialingPolicy";
+import TeleconsultationWorkflowPolicy from "./pages/Privacy Policies/TeleconsultationWorkflowPolicy";
+import PrescriptionHandlingPolicy from "./pages/Privacy Policies/PrescriptionHandlingPolicy";
+import TelehealthProviderAgreement from "./pages/Privacy Policies/TelehealthProviderAgreement";
 
 // category pages
 // import ChildCare from "./pages/Categories/ChildMain";
@@ -309,23 +313,24 @@ import NutritionAndDietetics from "./pages/Specialty/WeightAndNutrition/Nutritio
 // import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
 import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
 
+// General & Everyday Care
+import FamilyMedicine from "./pages/Specialty/General&EverydayCare/FamilyMedicine";
+import GeneralPhysician from "./pages/Specialty/General&EverydayCare/GeneralPhysician";
+import InternalMedicine from "./pages/Specialty/General&EverydayCare/InternalMedicine";
+// Women's Health
+import MenopauseCare from "./pages/Specialty/Women'sHealth/MenopauseCare";
+import WomenMentalHealth from "./pages/Specialty/Women'sHealth/WomenMentalHealth";
+import LactationConsulting from "./pages/Specialty/Women'sHealth/LactationConsulting";
+import ObstetricsGynaecology from "./pages/Specialty/Women'sHealth/ObstetricsGynaecology";
+
 // -------------------------Services Pages-------------------------
+import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
 import ChronicCareManagement from "./pages/NewServices/ChronicCareManagment";
 import GeneralConsultation from "./pages/NewServices/GeneralConsultation";
 import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
 import Vertigo from "./pages/Conditions/Conditions/Vertigo";
-
-// import BladderProblems from "./pages/Conditions/BladderProblems";
-// import ErectileDysfunction from "./pages/Conditions/ErectileDysfunction";
-// import HairLoss from "./pages/Conditions/HairLoss";
-// import LowLibido from "./pages/Conditions/LowLibido";
-// import LowTestosteroneSymptoms from "./pages/Conditions/LowTestosteroneSymptoms";
-// import MensWellnessConsultation from "./pages/Conditions/MensWellnessConsultation";
-// import PrematureEjaculation from "./pages/Conditions/PrematureEjaculation";
-// import ProstateHealth from "./pages/Conditions/ProstateHealth";
-// import UrinarySymptomsMen from "./pages/Conditions/UrinarySymptomsMen";
 
 // Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
@@ -1038,6 +1043,26 @@ function AppLayout() {
           <Route path="/adolescent-medicine" element={<AdolescentMedicine />} />
           <Route path="/pediatrics" element={<Pediatrics />} />
           <Route path="/cardiology" element={<Cardiology />} />
+          <Route
+            path="/export-medical-opinion"
+            element={<ExpertMedicalOpinion />}
+          />
+          <Route path="/gastroenterology" element={<Gastroenterology />} />
+          <Route path="/neurology" element={<Neurology />} />
+          <Route path="/pulmonology" element={<Pulmonology />} />
+          <Route path="/family-medicine" element={<FamilyMedicine />} />
+          <Route path="/general-physician" element={<GeneralPhysician />} />
+          <Route path="/internal-medicine" element={<InternalMedicine />} />
+          <Route path="/menopause-care" element={<MenopauseCare />} />
+          <Route
+            path="/obstetrics-and-gynaecology"
+            element={<ObstetricsGynaecology />}
+          />
+          <Route path="/women-mental-health" element={<WomenMentalHealth />} />
+          <Route
+            path="/lactation-consulting"
+            element={<LactationConsulting />}
+          />
           {/* condition pages */}
           <Route path="/arthritis" element={<Arthritis />} />
           <Route path="/cancer-second-opinion" element={<CancerSecond />} />
@@ -1056,14 +1081,6 @@ function AppLayout() {
           <Route path="/osteoporosis" element={<Osteoporosis />} />
           <Route path="/palpitations" element={<Palpitations />} />
           <Route path="/post-covid-concerns" element={<PostCovidConcerns />} />
-          <Route
-            path="/pre-op-cardiac-clearance"
-            element={<PreOpCardiacClearance />}
-          />
-          <Route
-            path="/rheumatoid-arthritis"
-            element={<RheumatoidArthritis />}
-          />
           <Route
             path="/pre-op-cardiac-clearance"
             element={<PreOpCardiacClearance />}
@@ -1263,7 +1280,6 @@ function AppLayout() {
           />
           <Route path="/malaria-prevention" element={<MalariaPrevention />} />
           <Route path="/jet-lag" element={<JetLag />} />
-          <Route path="/malaria-prevention" element={<MalariaPrevention />} />
           <Route
             path="/medication-refills-traveling"
             element={<MedicationRefillTraveling />}
@@ -1410,6 +1426,9 @@ function AppLayout() {
           {/* <Route
             path="/urinary-symptoms-men"
             element={<UrinarySymptomsMen />}
+          />
+          <Route path="/ADHD-evaluation" element={<ADHDEvaluation />} />
+          <Route
           /> */}
           <Route path="/bladder-problems" element={<BladderProblems1 />} />
           <Route
@@ -1448,7 +1467,7 @@ function AppLayout() {
           />
           <Route path="/primary-care-provider" element={<PCP />} /> {/* PCP */}
           {/* PRIVACY  */}
-          <Route path="/privacy-concerns" element={<PrivacyConcerns />} />{" "}
+          <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
           {/* demo */}
           <Route
             path="/patient-privacy-notice"
@@ -1481,6 +1500,22 @@ function AppLayout() {
           <Route
             path="/patient-informed-consent-form"
             element={<PatientInformedConsentForm />}
+          />
+          <Route
+            path="/physician-credentialing-policy"
+            element={<PhysicianCredentialingPolicy />}
+          />
+          <Route
+            path="/teleconsultation-workflow-policy"
+            element={<TeleconsultationWorkflowPolicy />}
+          />
+          <Route
+            path="/prescription-handling-policy"
+            element={<PrescriptionHandlingPolicy />}
+          />
+          <Route
+            path="/tele-health-provider-agreement"
+            element={<TelehealthProviderAgreement />}
           />
           <Route path="/about-us" element={<AboutPage />} />
           {/* ---------------------Service Pages---------------------------- */}
@@ -1536,7 +1571,7 @@ function AppLayout() {
           <Route path="/travel-medicine" element={<TravelMedicine />} />
           <Route path="/weight-management" element={<WeightManagement />} />
           <Route path="/lifestyle-medicine" element={<LifestyleMedicine />} />
-          <Route
+          <Routes
             path="/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
