@@ -39,13 +39,10 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-<<<<<<< HEAD
-=======
 import AboutUs from "./pages/AboutPage"; // about us page
 // import PrivacyConcerns from "./pages/PrivacyConcerns"; // privacy concerns
 // Specialty pages
 // import SPdemo from "./pages/Specialty/SPeDemo";
->>>>>>> uat
 import AboutPage from "./pages/AboutPage";
 import PCP from "./pages/PCP";
 
@@ -78,11 +75,7 @@ import TravelGlobalCare from "./pages/Categories/TravelGlobalCare";
 import WeightNurtrition from "./pages/Categories/WeightNutrition";
 import WomenHealth from "./pages/Categories/WomenHealth";
 // Specialty pages
-<<<<<<< HEAD
-import SD from "./pages/Specialty/SD";
-=======
 // import SD from "./pages/Specialty/SD";
->>>>>>> uat
 
 // condition pages
 import Arthritis from "./pages/Conditions/Arthritis";
@@ -292,8 +285,6 @@ import PrematureEjaculation1 from "./pages/Conditions/Conditions/PrematureEjacul
 import ProstateHealth1 from "./pages/Conditions/Conditions/ProstateHealth";
 import UrinarySymptomsMen1 from "./pages/Conditions/Conditions/UrinarySymptomsMen";
 
-<<<<<<< HEAD
-=======
 // ----------Speciality Pages-------------------
 import ExpertMedicalOpinion from "./pages/Specialty/ChronicCare&ExpertOpinion/ExpertMedicalOpinion";
 import Gastroenterology from "./pages/Specialty/ChronicCare&ExpertOpinion/Gastroenterology";
@@ -322,7 +313,6 @@ import Vertigo from "./pages/Conditions/Conditions/Vertigo";
 // import ProstateHealth from "./pages/Conditions/ProstateHealth";
 // import UrinarySymptomsMen from "./pages/Conditions/UrinarySymptomsMen";
 
->>>>>>> uat
 // Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
 
