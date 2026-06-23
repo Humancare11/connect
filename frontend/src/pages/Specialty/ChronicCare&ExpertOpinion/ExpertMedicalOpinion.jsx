@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -59,252 +60,258 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "cardiology",
-  name: "Cardiology",
-  tagline: "Protecting Your Heart with Expert Cardiovascular Care.",
+  slug: "export-medical-opinion",
+  name: "Expert Medical Opinion",
+  tagline: "Confidence in Every Healthcare Decision.",
   heroDescription:
-    "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. From routine heart screenings and blood pressure management to treating heart disease, chest pain, and irregular heart rhythms, cardiologists are dedicated to supporting lifelong heart health.",
+    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
   heroImage:
-    "https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
-    "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Cardiology is a medical specialty focused on the diagnosis, treatment, and prevention of conditions affecting the heart and circulatory system. Cardiologists use advanced evaluations, diagnostic testing, and personalized treatment plans to manage heart-related conditions and reduce the risk of serious cardiovascular complications.",
+    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
   overviewImportance:
-    "Through preventive heart care, lifestyle guidance, medication management, and ongoing monitoring, cardiology specialists help patients maintain optimal heart function, improve their quality of life, and achieve long-term cardiovascular wellness.",
+    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
   conditionsTreated:
-    "Cardiology specialists diagnose and treat a wide range of heart and vascular conditions, including high blood pressure, high cholesterol, heart disease, chest pain, palpitations, heart rhythm disorders, and other cardiovascular concerns.",
+    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
   whenToConsult:
-    "Schedule a visit with a cardiology specialist if you experience chest discomfort, shortness of breath, heart palpitations, elevated blood pressure, abnormal cholesterol levels, a family history of heart disease, or need a heart health evaluation before surgery.",
+    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Comprehensive Heart Evaluations",
+      title: "Second Medical Opinions",
       description:
-        "Detailed cardiovascular assessments, heart screenings, and diagnostic testing to evaluate heart function and identify potential concerns.",
+        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
     },
     {
-      Icon: FiTarget,
-      title: "Blood Pressure Management",
+      Icon: FiThermometer,
+      title: "Cancer Case Reviews",
       description:
-        "Personalized care plans to monitor and control high blood pressure through medication, lifestyle changes, and regular follow-up care.",
+        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
     },
     {
-      Icon: MdOutlineBloodtype,
-      title: "Cholesterol & Lipid Management",
+      Icon: MdOutlineVaccines,
+      title: "Complex Diagnosis Evaluation",
       description:
-        "Evaluation and treatment of high cholesterol and other lipid disorders to reduce the risk of heart attack and stroke.",
+        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
     },
     {
-      Icon: GiHeartOrgan,
-      title: "Heart Disease Monitoring & Treatment",
+      Icon: FiDroplet,
+      title: "Surgery Recommendation Review",
       description:
-        "Ongoing management of coronary artery disease, heart failure, and other chronic heart conditions to improve cardiovascular health.",
+        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
     },
     {
-      Icon: FiZap,
-      title: "Heart Rhythm Evaluation",
+      Icon: MdOutlineSpa,
+      title: "Treatment Plan Assessments",
       description:
-        "Assessment and treatment of palpitations, irregular heartbeats, and other cardiac rhythm concerns.",
+        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
     },
     {
-      Icon: FiShield,
-      title: "Preventive Cardiac Care",
+      Icon: FiUsers,
+      title: "Medical Record Analysis",
       description:
-        "Heart health education, risk assessment, lifestyle counseling, and screenings designed to prevent future cardiovascular disease.",
+        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Early Detection of Heart Conditions",
+      title: "Greater Confidence in Care Decisions",
       description:
-        "Identifies cardiovascular risks and heart problems before they progress into serious complications.",
-    },
-    {
-      Icon: FiHeart,
-      title: "Improved Heart Health Management",
-      description:
-        "Provides personalized treatment plans that help control heart disease risk factors and support better heart function.",
-    },
-    {
-      Icon: FiShield,
-      title: "Reduced Risk of Cardiac Emergencies",
-      description:
-        "Proactive monitoring and preventive care help lower the chances of heart attacks, strokes, and other serious cardiovascular events.",
+        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Long-Term Cardiovascular Wellness",
+      title: "Access to Specialized Expertise",
       description:
-        "Supports lifelong heart health through ongoing care, healthy lifestyle recommendations, and regular monitoring.",
+        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+    },
+    {
+      Icon: FiShield,
+      title: "Improved Treatment Understanding",
+      description:
+        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+    },
+    {
+      Icon: FiHeart,
+      title: "Personalized Healthcare Guidance",
+      description:
+        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
     },
   ],
 
   conditions: [
     {
       Icon: FiAlertCircle,
-      name: "Chest Pain (Non-Emergency)",
+      name: "Cancer Second Opinion",
       description:
-        "Evaluation of ongoing or recurring chest discomfort to identify possible heart-related causes and provide appropriate treatment.",
+        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
     },
     {
-      Icon: GiHeartOrgan,
-      name: "Heart Disease Follow-Up",
+      Icon: FiDroplet,
+      name: "Complex Diagnosis Review",
       description:
-        "Continuous monitoring and management of existing heart conditions to support better heart function and long-term health.",
-    },
-    {
-      Icon: FiActivity,
-      name: "High Blood Pressure",
-      description:
-        "Diagnosis and treatment of hypertension through lifestyle modifications, medication management, and routine monitoring.",
-    },
-    {
-      Icon: MdOutlineBloodtype,
-      name: "High Cholesterol",
-      description:
-        "Care for elevated cholesterol levels and lipid disorders to reduce the risk of cardiovascular disease and stroke.",
-    },
-    {
-      Icon: FiZap,
-      name: "Palpitations",
-      description:
-        "Evaluation of irregular, rapid, or pounding heartbeats to determine the cause and provide appropriate cardiac care.",
-    },
-    {
-      Icon: FiClipboard,
-      name: "Pre-Operative Cardiac Clearance",
-      description:
-        "Heart evaluations before surgery to assess cardiovascular risk and ensure safe surgical planning.",
-    },
-    {
-      Icon: FiTarget,
-      name: "Coronary Artery Disease",
-      description:
-        "Management of narrowed or blocked heart arteries that may cause chest pain, heart attacks, or reduced blood flow.",
-    },
-    {
-      Icon: FiRefreshCw,
-      name: "Heart Rhythm Disorders",
-      description:
-        "Diagnosis and treatment of arrhythmias, including abnormal heart rhythms that affect heart performance.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Heart Failure Management",
-      description:
-        "Comprehensive care for weakened heart function, including symptom management and long-term treatment strategies.",
+        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
     },
     {
       Icon: FiWind,
-      name: "Shortness of Breath & Exercise Intolerance",
+      name: "Second Medical Opinion",
       description:
-        "Assessment of breathing difficulties, fatigue, and reduced physical capacity that may be related to heart conditions.",
+        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
+    },
+    {
+      Icon: FiThermometer,
+      name: "Surgery Second Opinion",
+      description:
+        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
+    },
+    {
+      Icon: MdOutlineSpa,
+      name: "Treatment Plan Review",
+      description:
+        "Evaluation of current treatment strategies to ensure patients understand all available options.",
+    },
+    {
+      Icon: FiFeather,
+      name: "Chronic Disease Management Reviews",
+      description:
+        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
+    },
+    {
+      Icon: GiLungs,
+      name: "Rare Disease Evaluations",
+      description:
+        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
+    },
+    {
+      Icon: FiActivity,
+      name: "Neurological Condition Reviews",
+      description:
+        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+    },
+    {
+      Icon: FiTrendingUp,
+      name: "Cardiovascular Condition Reviews",
+      description:
+        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+    },
+    {
+      Icon: FiClock,
+      name: "Orthopedic Treatment Reviews",
+      description:
+        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
     },
     {
       Icon: FiBarChart2,
-      name: "Preventive Heart Screenings",
+      name: "Gastrointestinal Disorder Reviews",
       description:
-        "Routine cardiovascular evaluations to detect risk factors such as hypertension, cholesterol abnormalities, and inherited heart conditions.",
+        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
     },
     {
-      Icon: FiEye,
-      name: "Cardiovascular Risk Assessment",
+      Icon: MdOutlineHealthAndSafety,
+      name: "Complex Multispecialty Cases",
       description:
-        "Evaluation of personal and family health history, lifestyle factors, and medical conditions that may increase heart disease risk.",
+        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
     },
   ],
 
   faqs: [
     {
-      question: "What is cardiology?",
+      question: "What is an expert medical opinion?",
       answer:
-        "Cardiology is the medical specialty focused on the prevention, diagnosis, and treatment of diseases affecting the heart and blood vessels.",
+        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
     },
     {
-      question: "What conditions do cardiologists treat?",
+      question: "Why should I seek a second medical opinion?",
       answer:
-        "Cardiologists treat high blood pressure, high cholesterol, heart disease, arrhythmias, chest pain, heart failure, and other cardiovascular conditions.",
-    },
-    {
-      question: "When should I see a cardiologist?",
-      answer:
-        "You should see a cardiologist if you have chest pain, shortness of breath, heart palpitations, abnormal blood pressure, high cholesterol, or a family history of heart disease.",
-    },
-    {
-      question: "What happens during a cardiology appointment?",
-      answer:
-        "A cardiology visit may include reviewing your medical history, assessing symptoms, performing a physical examination, and recommending heart tests or treatments.",
-    },
-    {
-      question: "Do cardiologists treat high blood pressure?",
-      answer:
-        "Yes. Cardiologists diagnose and manage hypertension using medications, lifestyle recommendations, and ongoing monitoring.",
-    },
-    {
-      question: "Is high cholesterol dangerous?",
-      answer:
-        "Yes. High cholesterol can increase the risk of heart attack, stroke, and other cardiovascular complications if left untreated.",
-    },
-    {
-      question: "What causes chest pain related to the heart?",
-      answer:
-        "Heart-related chest pain may result from reduced blood flow to the heart muscle, coronary artery disease, or other cardiovascular problems.",
-    },
-    {
-      question: "Are heart palpitations always serious?",
-      answer:
-        "Not always. Some palpitations are harmless, but persistent, frequent, or concerning episodes should be evaluated by a cardiologist.",
-    },
-    {
-      question: "What tests do cardiologists use to diagnose heart conditions?",
-      answer:
-        "Common tests include electrocardiograms (ECG), echocardiograms, stress tests, blood tests, and heart monitoring devices.",
-    },
-    {
-      question: "Can heart disease be prevented?",
-      answer:
-        "Many heart diseases can be prevented or delayed through healthy lifestyle choices, regular screenings, and proper management of risk factors.",
+        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
     },
     {
       question:
-        "What is the difference between a heart attack and heart disease?",
+        "What conditions can be reviewed through an expert medical opinion?",
       answer:
-        "Heart disease refers to various conditions affecting the heart, while a heart attack is a medical emergency caused by blocked blood flow to the heart muscle.",
+        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
     },
     {
-      question: "Do I need a referral to see a cardiologist?",
+      question: "Is seeking a second opinion common?",
       answer:
-        "Referral requirements depend on your insurance plan and healthcare provider policies.",
+        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
     },
     {
-      question: "Are virtual cardiology appointments available?",
+      question: "Can an expert medical opinion change my diagnosis?",
       answer:
-        "Yes. Telehealth visits may be available for consultations, medication reviews, follow-up care, and certain heart health concerns.",
+        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
     },
     {
-      question: "How often should I have my heart checked?",
+      question: "What information is needed for a medical review?",
       answer:
-        "The frequency of heart evaluations depends on your age, medical history, risk factors, and your healthcare provider's recommendations.",
+        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
     },
     {
-      question: "What lifestyle changes improve heart health?",
+      question: "Can cancer diagnoses be reviewed?",
       answer:
-        "Regular exercise, a heart-healthy diet, maintaining a healthy weight, managing stress, avoiding tobacco, and controlling blood pressure and cholesterol support cardiovascular wellness.",
+        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
     },
     {
-      question: "What are the warning signs of a heart problem?",
+      question: "Are surgery second opinions helpful?",
       answer:
-        "Symptoms may include chest pain, shortness of breath, dizziness, unusual fatigue, swelling in the legs, or irregular heartbeats.",
+        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
+    },
+    {
+      question: "What is a treatment plan review?",
+      answer:
+        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
+    },
+    {
+      question: "Can expert opinions help with rare diseases?",
+      answer:
+        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
+    },
+    {
+      question: "How long does an expert medical opinion take?",
+      answer:
+        "Timelines vary depending on the complexity of the case and the records being reviewed.",
+    },
+    {
+      question: "Are expert medical opinions available through telehealth?",
+      answer:
+        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
     },
     {
       question:
-        "How can I schedule an appointment with a cardiology specialist?",
+        "Will my current doctor be offended if I seek a second opinion?",
       answer:
-        "You can schedule a cardiology appointment online, through telehealth services, or by contacting the healthcare team for personalized assistance.",
+        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
+    },
+    {
+      question: "Is an expert medical opinion confidential?",
+      answer:
+        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
+    },
+    {
+      question:
+        "Can expert medical opinions help avoid unnecessary treatments?",
+      answer:
+        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
+    },
+    {
+      question: "How much does a second medical opinion cost?",
+      answer:
+        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
+    },
+    {
+      question: "Can I get a second opinion before surgery?",
+      answer:
+        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
+    },
+    {
+      question: "How can I schedule an expert medical opinion consultation?",
+      answer:
+        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
     },
   ],
 };
@@ -319,39 +326,39 @@ const TRUST_STATS = [
 const TRUST_CARDS = [
   {
     Icon: FiAward,
-    title: " Board-Certified Specialists",
+    title: "Board-Certified Specialists",
     description:
-      "Receive care from experienced, credentialed providers who meet high standards of medical expertise and patient care.",
+      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Schedule appointments quickly with convenient availability, including timely care for urgent health concerns.",
+      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect with healthcare providers from the comfort of your home through secure, convenient virtual visits.",
+      "Connect securely with specialists through virtual consultations from anywhere.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Get assistance understanding insurance coverage, benefits, authorizations, and billing questions.",
+      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
   },
   {
     Icon: FiHeart,
-    title: "Personalised Care",
+    title: "Personalized Care",
     description:
-      "Receive customized treatment recommendations designed around your medical history, lifestyle, health needs, and goals.",
+      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
   },
   {
     Icon: FiGlobe,
     title: "Global Provider Network",
     description:
-      "Access a broad network of healthcare specialists and coordinated care services wherever you need support.",
+      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
   },
 ];
 
@@ -535,7 +542,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
+export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -544,281 +551,294 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
   }, []);
 
   return (
-    <main className="sp-page">
-      {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
-      <section className="sp-hero">
-        <div className="sp-hero__bg">
-          <img
-            src={data.heroImage}
-            alt={`${data.name} — HumanCare Connect`}
-            className="sp-hero__img"
-            loading="eager"
-          />
-          <div className="sp-hero__overlay" />
-        </div>
+    <>
+      <HelmetProvider>
+        <title>
+          Expert Medical Opinion Services | Trusted Healthcare Guidance
+        </title>
+        <meta
+          name="description"
+          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+        />
+      </HelmetProvider>
+      <main className="sp-page">
+        {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
+        <section className="sp-hero">
+          <div className="sp-hero__bg">
+            <img
+              src={data.heroImage}
+              alt={`${data.name} — HumanCare Connect`}
+              className="sp-hero__img"
+              loading="eager"
+            />
+            <div className="sp-hero__overlay" />
+          </div>
 
-        <div className="sp-hero__content">
-          <div
-            className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-          >
-            <span className="sp-hero__badge">HumanCare Connect</span>
-            <h1 className="sp-hero__title">{data.name}</h1>
-            <p className="sp-hero__tagline">{data.tagline}</p>
-            <p className="sp-hero__description">{data.heroDescription}</p>
+          <div className="sp-hero__content">
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">HumanCare Connect</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-            <div className="sp-hero__actions">
-              <a
-                href={`/specialties/${data.slug}/doctors`}
-                className="sp-btn sp-btn--primary"
-              >
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a
-                href={`/specialties/${data.slug}/book`}
-                className="sp-btn sp-btn--ghost"
-              >
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
+              <div className="sp-hero__actions">
+                <a
+                  href={`/specialties/${data.slug}/doctors`}
+                  className="sp-btn sp-btn--primary"
+                >
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a
+                  href={`/specialties/${data.slug}/book`}
+                  className="sp-btn sp-btn--ghost"
+                >
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
-      <section className="sp-overview">
-        <div className="sp-container">
-          <div className="sp-overview__grid">
-            {/* Image column */}
-            <Reveal>
-              <div className="sp-overview__img-wrap">
-                <img
-                  src={data.overviewImage}
-                  alt={`${data.name} specialists`}
-                  className="sp-overview__img"
-                  loading="lazy"
-                />
-                <div className="sp-overview__badge">
-                  <div className="sp-overview__badge-icon">
-                    <FiCheckCircle size={20} />
-                  </div>
-                  <div>
-                    <p className="sp-overview__badge-title">Board-Certified</p>
-                    <p className="sp-overview__badge-sub">
-                      {data.name} Specialists
-                    </p>
+        {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
+        <section className="sp-overview">
+          <div className="sp-container">
+            <div className="sp-overview__grid">
+              {/* Image column */}
+              <Reveal>
+                <div className="sp-overview__img-wrap">
+                  <img
+                    src={data.overviewImage}
+                    alt={`${data.name} specialists`}
+                    className="sp-overview__img"
+                    loading="lazy"
+                  />
+                  <div className="sp-overview__badge">
+                    <div className="sp-overview__badge-icon">
+                      <FiCheckCircle size={20} />
+                    </div>
+                    <div>
+                      <p className="sp-overview__badge-title">
+                        Board-Certified
+                      </p>
+                      <p className="sp-overview__badge-sub">
+                        {data.name} Specialists
+                      </p>
+                    </div>
                   </div>
                 </div>
+              </Reveal>
+
+              {/* Text column */}
+              <div className="sp-overview__text">
+                <Reveal>
+                  <SectionLabel>About the Specialty</SectionLabel>
+                  <h2 className="sp-overview__heading">What Is {data.name}?</h2>
+                  <p className="sp-overview__para">
+                    {data.overviewDescription}
+                  </p>
+                  <p className="sp-overview__para">{data.overviewImportance}</p>
+                </Reveal>
+
+                <Reveal delay={80}>
+                  <div className="sp-info-box sp-info-box--blue">
+                    <h3 className="sp-info-box__heading">
+                      <FiActivity size={15} color="#083EBD" />
+                      Conditions Treated
+                    </h3>
+                    <p className="sp-info-box__text">
+                      {data.conditionsTreated}
+                    </p>
+                  </div>
+                </Reveal>
+
+                <Reveal delay={140}>
+                  <div className="sp-info-box sp-info-box--gray">
+                    <h3 className="sp-info-box__heading">
+                      <FiAlertCircle size={15} color="#64748b" />
+                      When to Consult
+                    </h3>
+                    <p className="sp-info-box__text">{data.whenToConsult}</p>
+                  </div>
+                </Reveal>
+              </div>
+            </div>
+
+            {/* Key Services */}
+            <Reveal>
+              <div className="sp-section-head">
+                <SectionLabel>What We Offer</SectionLabel>
+                <h3>Key Services</h3>
+              </div>
+            </Reveal>
+            <div className="sp-services-grid">
+              {data.keyServices.map((s, i) => (
+                <ServiceCard key={i} {...s} delay={i * 55} />
+              ))}
+            </div>
+
+            {/* Benefits */}
+            <Reveal>
+              <div className="sp-section-head">
+                <SectionLabel>Why It Matters</SectionLabel>
+                <h3>Benefits of {data.name}</h3>
+              </div>
+            </Reveal>
+            <div className="sp-benefits-grid">
+              {data.benefits.map((b, i) => (
+                <BenefitCard key={i} {...b} delay={i * 65} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 3. CONDITIONS ──────────────────────────────────────────────────── */}
+        <section className="sp-conditions">
+          <div className="sp-container">
+            <Reveal>
+              <div className="sp-conditions__head">
+                <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
+                <h2>What We Treat</h2>
+                <p>
+                  Our {data.name.toLowerCase()} specialists are experienced in
+                  diagnosing and treating a wide range of conditions across all
+                  age groups.
+                </p>
               </div>
             </Reveal>
 
-            {/* Text column */}
-            <div className="sp-overview__text">
-              <Reveal>
-                <SectionLabel>About the Specialty</SectionLabel>
-                <h2 className="sp-overview__heading">What Is {data.name}?</h2>
-                <p className="sp-overview__para">{data.overviewDescription}</p>
-                <p className="sp-overview__para">{data.overviewImportance}</p>
-              </Reveal>
-
-              <Reveal delay={80}>
-                <div className="sp-info-box sp-info-box--blue">
-                  <h3 className="sp-info-box__heading">
-                    <FiActivity size={15} color="#083EBD" />
-                    Conditions Treated
-                  </h3>
-                  <p className="sp-info-box__text">{data.conditionsTreated}</p>
-                </div>
-              </Reveal>
-
-              <Reveal delay={140}>
-                <div className="sp-info-box sp-info-box--gray">
-                  <h3 className="sp-info-box__heading">
-                    <FiAlertCircle size={15} color="#64748b" />
-                    When to Consult
-                  </h3>
-                  <p className="sp-info-box__text">{data.whenToConsult}</p>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-
-          {/* Key Services */}
-          <Reveal>
-            <div className="sp-section-head">
-              <SectionLabel>What We Offer</SectionLabel>
-              <h3>Key Services</h3>
-            </div>
-          </Reveal>
-          <div className="sp-services-grid">
-            {data.keyServices.map((s, i) => (
-              <ServiceCard key={i} {...s} delay={i * 55} />
-            ))}
-          </div>
-
-          {/* Benefits */}
-          <Reveal>
-            <div className="sp-section-head">
-              <SectionLabel>Why It Matters</SectionLabel>
-              <h3>Benefits of {data.name}</h3>
-            </div>
-          </Reveal>
-          <div className="sp-benefits-grid">
-            {data.benefits.map((b, i) => (
-              <BenefitCard key={i} {...b} delay={i * 65} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 3. CONDITIONS ──────────────────────────────────────────────────── */}
-      <section className="sp-conditions">
-        <div className="sp-container">
-          <Reveal>
-            <div className="sp-conditions__head">
-              <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
-              <h2>What We Treat</h2>
-              <p>
-                Our {data.name.toLowerCase()} specialists are experienced in
-                diagnosing and treating a wide range of conditions across all
-                age groups.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-conditions__grid">
-            {data.conditions.map((c, i) => (
-              <ConditionCard key={i} {...c} delay={Math.min(i, 7) * 45} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. WHY HUMANCARE ───────────────────────────────────────────────── */}
-      <section className="sp-trust">
-        <div className="sp-container">
-          <div className="sp-stats-grid">
-            {TRUST_STATS.map((s, i) => (
-              <AnimatedStat key={i} {...s} />
-            ))}
-          </div>
-
-          <Reveal>
-            <div className="sp-trust__head">
-              <SectionLabel>Why HumanCare Connect</SectionLabel>
-              <h2>Care You Can Trust</h2>
-              <p>
-                We combine experienced medical professionals with advanced
-                technology to make accessing quality healthcare simpler, faster,
-                and more personalized.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-trust-grid">
-            {TRUST_CARDS.map((c, i) => (
-              <TrustCard key={i} {...c} delay={i * 55} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="sp-faq">
-        <div className="sp-container--narrow">
-          <Reveal>
-            <div className="sp-faq__head">
-              <SectionLabel>FAQ</SectionLabel>
-              <h2>Frequently Asked Questions</h2>
-              <p>
-                Everything you need to know about {data.name.toLowerCase()} at
-                HumanCare Connect.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-faq__list">
-            {data.faqs.map((faq, i) => (
-              <Reveal key={i} delay={i * 45}>
-                <FAQItem question={faq.question} answer={faq.answer} />
-              </Reveal>
-            ))}
-          </div>
-
-          <Reveal delay={80}>
-            <p className="sp-faq__footer">
-              Still have questions?{" "}
-              <a href="/contact">Chat with our care team →</a>
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── 6. CTA ─────────────────────────────────────────────────────────── */}
-      <section className="sp-cta">
-        <div className="sp-cta__glow-top" aria-hidden="true" />
-        <div className="sp-cta__glow-bottom" aria-hidden="true" />
-
-        <div className="sp-cta__inner">
-          <Reveal>
-            <span className="sp-cta__eyebrow">Get Started Today</span>
-            <h2 className="sp-cta__heading">
-              Ready to Connect with a <span>{data.name}</span> Specialist?
-            </h2>
-            <p className="sp-cta__sub">
-              Take the next step toward better heart health with expert
-              cardiology care, convenient appointments, and personalized
-              treatment plans to prevent, diagnose, and manage cardiovascular
-              conditions.
-            </p>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <div className="sp-cta__actions">
-              <a
-                href={`/specialties/${data.slug}/doctors`}
-                className="sp-btn sp-btn--primary-lg"
-              >
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a
-                href={`/specialties/${data.slug}/book`}
-                className="sp-btn sp-btn--ghost-lg"
-              >
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
-          </Reveal>
-
-          <Reveal delay={130}>
-            <div className="sp-cta__badges">
-              {[
-                { Icon: FiLock, label: "HIPAA Compliant" },
-                { Icon: FiStar, label: "4.9/5 Patient Rating" },
-                { Icon: FiCheckCircle, label: "Verified Providers" },
-                { Icon: FiShield, label: "100% Secure Platform" },
-              ].map((badge, i) => (
-                <div key={i} className="sp-cta__badge">
-                  <badge.Icon size={15} className="sp-cta__badge-icon" />
-                  <span>{badge.label}</span>
-                </div>
+            <div className="sp-conditions__grid">
+              {data.conditions.map((c, i) => (
+                <ConditionCard key={i} {...c} delay={Math.min(i, 7) * 45} />
               ))}
             </div>
-          </Reveal>
+          </div>
+        </section>
 
-          <Reveal delay={170}>
+        {/* ── 4. WHY HUMANCARE ───────────────────────────────────────────────── */}
+        <section className="sp-trust">
+          <div className="sp-container">
+            <div className="sp-stats-grid">
+              {TRUST_STATS.map((s, i) => (
+                <AnimatedStat key={i} {...s} />
+              ))}
+            </div>
+
+            <Reveal>
+              <div className="sp-trust__head">
+                <SectionLabel>Why HumanCare Connect</SectionLabel>
+                <h2>Care You Can Trust</h2>
+                <p>
+                  We combine experienced medical specialists with advanced
+                  technology to provide reliable, accessible, and personalized
+                  expert healthcare guidance.
+                </p>
+              </div>
+            </Reveal>
+
+            <div className="sp-trust-grid">
+              {TRUST_CARDS.map((c, i) => (
+                <TrustCard key={i} {...c} delay={i * 55} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
+        <section className="sp-faq">
+          <div className="sp-container--narrow">
+            <Reveal>
+              <div className="sp-faq__head">
+                <SectionLabel>FAQ</SectionLabel>
+                <h2>Frequently Asked Questions</h2>
+                <p>
+                  Everything you need to know about {data.name.toLowerCase()} at
+                  HumanCare Connect.
+                </p>
+              </div>
+            </Reveal>
+
+            <div className="sp-faq__list">
+              {data.faqs.map((faq, i) => (
+                <Reveal key={i} delay={i * 45}>
+                  <FAQItem question={faq.question} answer={faq.answer} />
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal delay={80}>
+              <p className="sp-faq__footer">
+                Still have questions?{" "}
+                <a href="/contact">Chat with our care team →</a>
+              </p>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── 6. CTA ─────────────────────────────────────────────────────────── */}
+        <section className="sp-cta">
+          <div className="sp-cta__glow-top" aria-hidden="true" />
+          <div className="sp-cta__glow-bottom" aria-hidden="true" />
+
+          <div className="sp-cta__inner">
+            <Reveal>
+              <span className="sp-cta__eyebrow">Get Started Today</span>
+              <h2 className="sp-cta__heading">
+                Ready to Connect with a <span>{data.name}</span> Specialist?
+              </h2>
+              <p className="sp-cta__sub">
+                Gain clarity, confidence, and peace of mind before making
+                important healthcare decisions. Schedule an expert medical
+                opinion consultation today and receive trusted guidance from
+                experienced specialists.
+              </p>
+            </Reveal>
+
+            <Reveal delay={80}>
+              <div className="sp-cta__actions">
+                <a
+                  href={`/specialties/${data.slug}/doctors`}
+                  className="sp-btn sp-btn--primary-lg"
+                >
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href={`/specialties/${data.slug}/book`}
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
+            </Reveal>
+
+            <Reveal delay={130}>
+              <div className="sp-cta__badges">
+                {[
+                  { Icon: FiLock, label: "HIPAA Compliant" },
+                  { Icon: FiStar, label: "Highly Rated Providers" },
+                  { Icon: FiCheckCircle, label: "Verified Specialists" },
+                  { Icon: FiShield, label: "Secure Telehealth Platform" },
+                ].map((badge, i) => (
+                  <div key={i} className="sp-cta__badge">
+                    <badge.Icon size={15} className="sp-cta__badge-icon" />
+                    <span>{badge.label}</span>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
+            {/* <Reveal delay={170}>
             <div className="sp-cta__contact">
               <a href="tel:+918008001234" className="sp-cta__contact-link">
                 <FiPhone size={14} />
                 +91 800 800 1234
               </a>
-              <a
-                href="mailto:care@humancareconnect.co"
-                className="sp-cta__contact-link"
-              >
+              <a href="mailto:care@humancareconnect.co" className="sp-cta__contact-link">
                 <FiMail size={14} />
                 care@humancareconnect.co
               </a>
@@ -827,10 +847,11 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                 Mon – Sun, 8 AM – 10 PM IST
               </span>
             </div>
-          </Reveal>
-        </div>
-      </section>
-    </main>
+          </Reveal> */}
+          </div>
+        </section>
+      </main>
+    </>
   );
 }
 
@@ -966,33 +987,6 @@ export const CARDIOLOGY_DATA = {
       name: "Pericarditis",
       description:
         "Inflammation of the pericardium: acute, recurrent, and constrictive forms treated.",
-    },
-  ],
-  faqs: [
-    {
-      question: "When should I see a cardiologist?",
-      answer:
-        "See a cardiologist if you have chest pain, palpitations, shortness of breath, dizziness, or known cardiac risk factors such as hypertension, diabetes, or a family history of early heart disease.",
-    },
-    {
-      question: "What does a cardiologist do on a first visit?",
-      answer:
-        "Your first cardiology visit typically includes a detailed history, physical examination, ECG, and sometimes an echocardiogram or blood tests. The cardiologist will discuss your risk factors and create an initial management plan.",
-    },
-    {
-      question: "Is cardiology only for older adults?",
-      answer:
-        "No. Heart conditions can affect people of all ages, including children (congenital defects) and young adults (arrhythmias, cardiomyopathy). If you have symptoms, age is not a barrier to seeing a cardiologist.",
-    },
-    {
-      question: "Can I see a cardiologist via telehealth?",
-      answer:
-        "Yes. Follow-up consultations, medication reviews, and risk factor management can be handled via telehealth. Initial diagnostic visits may require in-person tests, which your cardiologist will organise.",
-    },
-    {
-      question: "What lifestyle changes reduce heart disease risk?",
-      answer:
-        "A heart-healthy diet low in saturated fats and sodium, regular aerobic exercise (150 minutes/week), not smoking, moderate alcohol intake, maintaining a healthy weight, and managing stress are all evidence-based strategies.",
     },
   ],
 };
