@@ -27,22 +27,17 @@ import {
 } from 'lucide-react'
 import './PCP.css'
 
-// ─── Animation variants (defined OUTSIDE components so they are stable
-//     references — no recreation on every render) ───────────────────────────
+// ─── Animation variants ───────────────────────────────────────────────────────
 const FADE_VARIANTS = {
-  up:    { hidden: { opacity: 0, y: 32 },  visible: { opacity: 1, y: 0, x: 0 } },
-  down:  { hidden: { opacity: 0, y: -32 }, visible: { opacity: 1, y: 0, x: 0 } },
-  // FIX: direction naming was inverted — 'left' now slides in FROM the left (x starts positive → 0)
-  left:  { hidden: { opacity: 0, x: -32 }, visible: { opacity: 1, y: 0, x: 0 } },
-  right: { hidden: { opacity: 0, x: 32 },  visible: { opacity: 1, y: 0, x: 0 } },
+  up:    { hidden: { opacity: 0, y: 28 },  visible: { opacity: 1, y: 0, x: 0 } },
+  down:  { hidden: { opacity: 0, y: -28 }, visible: { opacity: 1, y: 0, x: 0 } },
+  left:  { hidden: { opacity: 0, x: -28 }, visible: { opacity: 1, y: 0, x: 0 } },
+  right: { hidden: { opacity: 0, x: 28 },  visible: { opacity: 1, y: 0, x: 0 } },
 }
 
 const EASE_SPRING = [0.22, 1, 0.36, 1]
 
-// ─── FadeIn ──────────────────────────────────────────────────────────────────
-// FIX: `w-full` added as base class so the motion.div never collapses to
-//      content-width and left-aligns inside a centred flex/grid parent.
-//      Callers can still pass className to override or extend.
+// ─── FadeIn ───────────────────────────────────────────────────────────────────
 function FadeIn({ children, delay = 0, direction = 'up', className = '' }) {
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true, margin: '-60px 0px' })
@@ -53,7 +48,7 @@ function FadeIn({ children, delay = 0, direction = 'up', className = '' }) {
       variants={FADE_VARIANTS[direction]}
       initial="hidden"
       animate={isInView ? 'visible' : 'hidden'}
-      transition={{ duration: 0.6, delay, ease: EASE_SPRING }}
+      transition={{ duration: 0.55, delay, ease: EASE_SPRING }}
       className={`w-full ${className}`}
     >
       {children}
@@ -61,8 +56,8 @@ function FadeIn({ children, delay = 0, direction = 'up', className = '' }) {
   )
 }
 
-// ─── Data (unchanged) ─────────────────────────────────────────────────────────
-const TRUST_BADGES = ['No Insurance Required', 'Same-Day Care', 'Cancel Anytime']
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const TRUST_BADGES = [' No Insurance Required', ' Same-Day Appointments', ' Connect Anytime']
 
 const ONBOARDING_STEPS = [
   { n: 1, t: 'Create account' },
@@ -72,93 +67,174 @@ const ONBOARDING_STEPS = [
 ]
 
 const ABOUT_GRID = [
-  { icon: Stethoscope,    label: 'Diagnosis',      color: 'from-blue-500 to-blue-600' },
-  { icon: Shield,         label: 'Prevention',     color: 'from-sky-400 to-sky-500' },
-  { icon: HeartHandshake, label: 'Long-term Care', color: 'from-teal-500 to-teal-600' },
-  { icon: ClipboardList,  label: 'Referrals',      color: 'from-indigo-500 to-indigo-600' },
+  { icon: Stethoscope,    label: 'Diagnosis',      gradClass: 'pcp-tile-grad-1' },
+  { icon: Shield,         label: 'Prevention',     gradClass: 'pcp-tile-grad-2' },
+  { icon: HeartHandshake, label: 'Long-term Care', gradClass: 'pcp-tile-grad-3' },
+  { icon: ClipboardList,  label: 'Referrals',      gradClass: 'pcp-tile-grad-4' },
 ]
 
 const ABOUT_FEATURES = [
-  { icon: Shield,   title: 'Preventive Care',            desc: 'Regular screenings and vaccinations to catch issues before they start.' },
-  { icon: Calendar, title: 'Annual Checkups',            desc: 'Comprehensive yearly wellness exams to track your overall health.' },
-  { icon: Activity, title: 'Chronic Disease Management', desc: 'Ongoing support for diabetes, hypertension, asthma, and more.' },
-  { icon: Eye,      title: 'Health Screenings',          desc: 'Targeted tests based on your age, gender, and health history.' },
+  { icon: Shield,   title: 'Preventive Care',            desc: 'Stay proactive with wellness visits, vaccinations, and personalized health guidance designed to help prevent future health concerns.' },
+  { icon: Calendar, title: 'Annual Wellness Visits',            desc: 'Monitor your overall health through routine checkups and regular assessments that support long-term well-being.' },
+  { icon: Activity, title: 'Chronic Condition Management', desc: 'Receive ongoing support for conditions such as diabetes, high blood pressure, asthma, high cholesterol, and other long-term health concerns.' },
+  { icon: Eye,      title: 'Health Screenings & Referrals',          desc: 'Get guidance on recommended screenings and specialist referrals based on your health needs, age, and medical history.' },
 ]
 
 const HOW_IT_WORKS_STEPS = [
-  { icon: UserCheck,     title: 'Create Your Free Account',    desc: 'Sign up in under 2 minutes. No credit card required to get started.',             color: 'from-blue-500 to-blue-600' },
-  { icon: ClipboardList, title: 'Complete Health Intake',      desc: 'Share your medical history and current concerns through our secure form.',          color: 'from-sky-500 to-sky-600' },
-  { icon: Users,         title: 'Get Matched With a Provider', desc: 'We surface the best licensed PCP for your needs, location, and schedule.',          color: 'from-teal-500 to-teal-600' },
-  { icon: Calendar,      title: 'Schedule Your Visit',         desc: 'Book a same-day telehealth or in-person appointment that fits your life.',           color: 'from-indigo-500 to-indigo-600' },
-  { icon: Heart,         title: 'Receive Ongoing Care',        desc: 'Get prescriptions, referrals, follow-ups, and continuous health support.',           color: 'from-purple-500 to-purple-600' },
+  { icon: UserCheck,     title: 'Create Your Free Account',    desc: 'Sign up in under 2 minutes. No credit card required to get started.',             stepClass: 'pcp-step-1', textClass: 'pcp-step-text-1' },
+  { icon: ClipboardList, title: 'Complete Health Intake',      desc: 'Share your medical history and current concerns through our secure form.',          stepClass: 'pcp-step-2', textClass: 'pcp-step-text-2' },
+  { icon: Users,         title: 'Get Matched With a Provider', desc: 'We surface the best licensed PCP for your needs, location, and schedule.',          stepClass: 'pcp-step-3', textClass: 'pcp-step-text-3' },
+  { icon: Calendar,      title: 'Schedule Your Visit',         desc: 'Book a same-day telehealth or in-person appointment that fits your life.',           stepClass: 'pcp-step-4', textClass: 'pcp-step-text-4' },
+  { icon: Heart,         title: 'Receive Ongoing Care',        desc: 'Get prescriptions, referrals, follow-ups, and continuous health support.',           stepClass: 'pcp-step-5', textClass: 'pcp-step-text-5' },
 ]
 
 const SERVICES = [
-  { icon: Activity,    title: 'Annual Wellness Exams',      desc: 'Comprehensive head-to-toe physical evaluations to monitor your overall health.' },
-  { icon: Thermometer, title: 'Sick Visits',                desc: 'Quick consultations for infections, fevers, colds, sore throats, and more.' },
-  { icon: Shield,      title: 'Preventive Screenings',      desc: 'Blood pressure, cholesterol, diabetes, and cancer screening tests.' },
-  { icon: RefreshCw,   title: 'Chronic Disease Management', desc: 'Ongoing care plans for diabetes, hypertension, heart disease, and asthma.' },
-  { icon: Pill,        title: 'Prescription Refills',       desc: 'Convenient medication management and prescription renewals.' },
-  { icon: Microscope,  title: 'Lab Orders',                 desc: 'Order blood work, urinalysis, and diagnostic tests from any lab.' },
-  { icon: Users,       title: 'Specialist Referrals',       desc: 'Coordinated referrals to trusted specialists within our network.' },
-  { icon: Heart,       title: "Women's Health",             desc: 'Pap smears, reproductive health, prenatal guidance, and hormone checks.' },
-  { icon: Stethoscope, title: "Men's Health",               desc: "Prostate screenings, testosterone panels, and targeted men's wellness care." },
-  { icon: Syringe,     title: 'Vaccinations',               desc: 'Flu shots, COVID boosters, travel vaccines, and full immunization records.' },
+  { icon: Activity,    title: 'Annual Wellness Visits',      desc: 'Routine health evaluations that help monitor your overall well-being and identify potential concerns early.' },
+  { icon: Thermometer, title: 'Sick Visits',                desc: 'Get care for common illnesses, infections, cold and flu symptoms, allergies, minor injuries, and everyday health concerns.' },
+  { icon: Shield,      title: 'Preventive Health Screenings',      desc: 'Stay proactive with recommended screenings and health assessments based on your age, lifestyle, and medical history.' },
+  { icon: RefreshCw,   title: 'Chronic Condition Management', desc: 'Receive ongoing support for diabetes, high blood pressure, asthma, high cholesterol, and other long-term health conditions.' },
+  { icon: Pill,        title: 'Prescription Refills',       desc: 'Manage medications and request prescription renewals when clinically appropriate through convenient online consultations.' },
+  { icon: Microscope,  title: 'Lab Orders & Diagnostic Testing',                 desc: 'Get lab requests for blood work and other diagnostic tests, with guidance on understanding your results.' },
+  { icon: Users,       title: 'Specialist Referrals',       desc: 'When additional care is needed, your provider can help connect you with the appropriate specialist.' },
+  { icon: Heart,       title: "Women's Health Support",             desc: 'Access care for reproductive health, hormonal concerns, wellness needs, and preventive screenings.' },
+  { icon: Stethoscope, title: "Men's Health Support",               desc: "Get personalized care for men's wellness, preventive health, and age-related health concerns." },
+  // { icon: Syringe,     title: 'Vaccinations',               desc: 'Flu shots, COVID boosters, travel vaccines, and full immunization records.' },
 ]
 
 const FAQS = [
-  { q: 'What does a primary care physician (PCP) do?',           a: 'A PCP provides comprehensive, ongoing medical care — including preventive checkups, diagnosis of new conditions, management of chronic diseases, referrals to specialists, prescription management, and coordination of all your healthcare needs.' },
-  { q: 'How often should I see a primary care doctor?',          a: 'Most adults should schedule at least one annual wellness visit. If you have chronic conditions like diabetes, hypertension, or asthma, your PCP may recommend check-ins every 3–6 months to monitor your health and adjust treatment plans.' },
-  { q: 'Can a primary care physician prescribe medications?',    a: 'Yes. PCPs can prescribe a wide range of medications — antibiotics, blood pressure medications, diabetes management drugs, mental health medications (within their scope), and much more. Certain controlled substances may require specialist involvement.' },
-  { q: 'Do I need insurance to use HumanCare Connect?',          a: "No. HumanCare Connect accepts most major insurance plans, but we also offer transparent self-pay pricing. You'll see the full cost before you book — no surprise bills, ever." },
-  { q: 'Can I use telehealth for primary care visits?',          a: 'Absolutely. The majority of primary care visits — wellness checkups, sick visits, chronic disease management, prescription refills, and mental health screenings — can be handled entirely through video or phone consultations.' },
-  { q: 'What conditions can a PCP treat?',                       a: "PCPs treat a broad spectrum: infections, high blood pressure, diabetes, anxiety, depression, asthma, allergies, high cholesterol, thyroid disorders, skin conditions, obesity, and much more. They're your first stop for nearly every health concern." },
-  { q: 'How quickly can I see a provider on HumanCare Connect?', a: 'Most patients are matched with an available provider within minutes and can start a telehealth visit the same day. In-person appointments are typically available within 24–48 hours.' },
-]
+  {
+    q: "What is a Primary Care Provider (PCP)?",
+    a: "A Primary Care Provider is a healthcare professional who helps manage your overall health, preventive care, routine medical concerns, and chronic conditions.",
+  },
+  {
+    q: "Why is primary care important?",
+    a: "Primary care helps detect health issues early, manage ongoing conditions, coordinate specialist care, and support long-term wellness.",
+  },
+  {
+    q: "Can I see a primary care doctor online?",
+    a: "Yes. Humancare Connect allows patients to connect with licensed providers through secure telemedicine services for many primary care needs.",
+  },
+  {
+    q: "What conditions can a PCP treat?",
+    a: "PCPs can help with common illnesses, preventive care, medication management, chronic conditions, minor infections, allergies, and many everyday health concerns.",
+  },
+  {
+    q: "Can I get same-day appointments?",
+    a: "Yes. Same-day and convenient appointment options may be available based on provider availability.",
+  },
+  {
+    q: "Can a PCP prescribe medication online?",
+    a: "Providers may prescribe medications when medically appropriate and permitted by applicable laws and regulations.",
+  },
+  {
+    q: "Can I request prescription refills?",
+    a: "Yes. Providers can review your medical history and determine whether a prescription refill is appropriate.",
+  },
+  {
+    q: "Can a PCP order lab tests?",
+    a: "Yes. Providers may order laboratory tests when medically necessary to help evaluate your health concerns.",
+  },
+  {
+    q: "Can I discuss test results online?",
+    a: "Yes. Providers can review and explain lab results during your virtual appointment.",
+  },
+  {
+    q: "Can I get referrals to specialists?",
+    a: "Yes. Your provider can recommend specialist care when additional evaluation or treatment is needed.",
+  },
+  {
+    q: "Do I need insurance to use Humancare Connect?",
+    a: "No. Patients can access care regardless of insurance status.",
+  },
+  {
+    q: "What is included in a primary care visit?",
+    a: "Visits may include symptom evaluation, treatment recommendations, preventive care guidance, medication review, and follow-up planning.",
+  },
+  {
+    q: "Is virtual primary care effective?",
+    a: "Virtual primary care can effectively address many routine healthcare needs, ongoing condition management, and preventive care discussions.",
+  },
+  {
+    q: "How long does an online appointment take?",
+    a: "Appointment length varies depending on your needs, but most visits are completed within a reasonable timeframe.",
+  },
+  {
+    q: "Can I discuss chronic conditions with a PCP?",
+    a: "Yes. Providers can help monitor and manage conditions such as diabetes, hypertension, asthma, and high cholesterol.",
+  },
+  {
+    q: "Can primary care help with preventive healthcare?",
+    a: "Yes. Preventive care is one of the most important roles of a primary care provider.",
+  },
+  {
+    q: "Is my health information secure?",
+    a: "Yes. Humancare Connect uses secure technology designed to protect patient privacy and health information.",
+  },
+  {
+    q: "Can I use primary care services while traveling?",
+    a: "Yes. Availability may depend on provider licensing requirements and your location at the time of service.",
+  },
+  {
+    q: "What should I prepare before my appointment?",
+    a: "Have a list of symptoms, medications, medical history, and any questions you would like to discuss.",
+  },
+  {
+    q: "Can a PCP help with high blood pressure?",
+    a: "Yes. Primary care providers commonly diagnose, monitor, and manage hypertension.",
+  },
+  {
+    q: "Can a PCP help with diabetes management?",
+    a: "Yes. Providers can help monitor diabetes, review medications, and support ongoing treatment plans.",
+  },
+  {
+    q: "Can I receive follow-up care online?",
+    a: "Yes. Many follow-up appointments can be completed through virtual consultations.",
+  },
+  {
+    q: "What if I need specialized care?",
+    a: "Your provider can discuss treatment options and refer you to a specialist when appropriate.",
+  },
+  {
+    q: "When should I see a primary care doctor?",
+    a: "You should see a PCP for preventive care, routine health concerns, medication management, chronic condition support, and non-emergency medical issues.",
+  },
+  {
+    q: "Is Humancare Connect available year-round?",
+    a: "Yes. Patients can access primary care services throughout the year based on provider availability.",
+  },
+];
 
 const CTA_TRUST_POINTS = [
-  { icon: BadgeCheck, text: 'Board-Certified Providers' },
-  { icon: Shield,     text: 'HIPAA Compliant' },
-  { icon: Clock,      text: 'Same-Day Care' },
-  { icon: Star,       text: '4.9 Average Rating' },
+  { icon: BadgeCheck, text: "Licensed Providers" },
+  { icon: Shield, text: "Secure Telemedicine" },
+  { icon: Clock, text: "Convenient Appointments" },
+  { icon: Star, text: "Patient-Centered Care" },
 ]
-
-// ─── Shared style tokens ─────────────────────────────────────────────────────
-const GLASS_CARD = 'bg-white/90 backdrop-blur-md border border-white/90 shadow-[0_8px_32px_rgba(37,99,235,0.12)]'
-const GRAD_BLUE  = 'linear-gradient(135deg,#2563eb 0%,#0ea5e9 100%)'
-
-// ─── Hero sub-components (memo-ised: static props, no re-render needed) ──────
+// ─── Hero Sub-Components ──────────────────────────────────────────────────────
 
 const ProviderCard = memo(function ProviderCard({ floating = true }) {
   return (
-    <div className={`${GLASS_CARD} mx-auto w-[220px] rounded-3xl p-1 ${floating ? 'pcp-float' : ''}`}>
-      <div
-        className="relative flex h-40 items-center justify-center overflow-hidden rounded-[20px]"
-        style={{ background: GRAD_BLUE }}
-      >
+    <div className={`pcp-glass pcp-provider-card mx-auto ${floating ? 'pcp-float' : ''}`}>
+      <div className="pcp-provider-card__image">
         {[0, 1, 2, 3].map(r => (
           <div
             key={r}
-            className="absolute rounded-full border border-white/25"
+            className="pcp-provider-card__ring"
             style={{ width: 60 + r * 48, height: 60 + r * 48 }}
           />
         ))}
-        <Stethoscope
-          size={60}
-          className="relative z-10 text-white/90"
-          style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))' }}
-        />
+        <Stethoscope size={60} className="pcp-provider-card__icon" />
       </div>
-      <div className="flex flex-col gap-1 px-3.5 pb-3.5 pt-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">Dr. Sarah Mitchell</span>
-          <span className="flex items-center gap-0.5 text-[11px] font-bold text-amber-500">
+      <div className="pcp-provider-card__body">
+        <div className="pcp-provider-card__name-row">
+          <span className="pcp-provider-card__name">Dr. Sarah Mitchell</span>
+          <span className="pcp-provider-card__rating">
             <Star size={11} fill="currentColor" /> 4.9
           </span>
         </div>
-        <p className="text-[11px] font-semibold text-slate-600">Family Medicine · 12 yrs</p>
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-green-600">
-          <span className="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-green-500" />
+        <p className="pcp-provider-card__specialty">Family Medicine · 12 yrs</p>
+        <div className="pcp-provider-card__avail">
+          <span className="pcp-provider-card__avail-dot" />
           Available Today · Telehealth
         </div>
       </div>
@@ -168,130 +244,114 @@ const ProviderCard = memo(function ProviderCard({ floating = true }) {
 
 const SocialProofBadge = memo(function SocialProofBadge() {
   return (
-    <div
-      className="w-full rounded-2xl px-3.5 py-2.5"
-      style={{ background: GRAD_BLUE, boxShadow: '0 8px 28px rgba(37,99,235,0.35)' }}
-    >
-      <div className="mb-1 flex gap-0.5">
+    <div className="pcp-social-proof">
+      <div className="pcp-social-proof__stars">
         {[1, 2, 3, 4, 5].map(i => (
-          <Star key={i} size={10} fill="#fde047" className="text-amber-300" />
+          <Star key={i} size={10} fill="#fde047" color="#f59e0b" />
         ))}
       </div>
-      <p className="text-xs font-bold leading-tight text-white">50k+ patients</p>
-      <p className="text-[10px] text-white/70">trust HumanCare</p>
+      <p className="pcp-social-proof__count">50k+ patients</p>
+      <p className="pcp-social-proof__label">trust HumanCare</p>
     </div>
   )
 })
 
 const HealthStatusCard = memo(function HealthStatusCard() {
   return (
-    <div className={`${GLASS_CARD} w-full rounded-2xl p-3`}>
-      <div className="mb-2 flex items-center gap-2">
-        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[10px] bg-green-100">
-          <Activity size={14} className="text-green-600" />
+    <div className="pcp-glass pcp-health-status">
+      <div className="pcp-health-status__header">
+        <div className="pcp-health-status__icon-wrap">
+          <Activity size={14} color="#16a34a" />
         </div>
         <div>
-          <p className="text-[10px] font-medium text-slate-400">Health Status</p>
-          <p className="text-xs font-bold text-slate-800">Excellent</p>
+          <p className="pcp-health-status__label">Health Status</p>
+          <p className="pcp-health-status__value">Excellent</p>
         </div>
       </div>
-      <div className="h-1.5 rounded-full bg-slate-100">
-        <div className="h-full w-4/5 rounded-full" style={{ background: 'linear-gradient(90deg,#4ade80,#14b8a6)' }} />
+      <div className="pcp-health-status__bar-bg">
+        <div className="pcp-health-status__bar-fill" />
       </div>
-      <p className="mt-1 text-[10px] text-slate-400">Last check: 2 days ago</p>
+      <p className="pcp-health-status__date">Last check: 2 days ago</p>
     </div>
   )
 })
 
-// FIX: Memoised; step label text is derived once and stable
 const OnboardingMiniSteps = memo(function OnboardingMiniSteps() {
   const stepLabel = ONBOARDING_STEPS.map(s => s.t).join(' → ')
   return (
-    <div className={`${GLASS_CARD} w-full rounded-2xl px-3.5 py-3`}>
-      <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-blue-600">Your First Visit · Free</p>
-      <div className="flex items-center">
+    <div className="pcp-glass pcp-onboarding">
+      <p className="pcp-onboarding__eyebrow">Your First Visit · Free</p>
+      <div className="pcp-onboarding__steps">
         {ONBOARDING_STEPS.map((step, i) => (
-          <div key={step.n} className={`flex items-center ${i < ONBOARDING_STEPS.length - 1 ? 'flex-1' : ''}`}>
-            <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
-              {step.n}
-            </span>
-            {i < ONBOARDING_STEPS.length - 1 && <span className="mx-1 h-0.5 flex-1 bg-blue-100" />}
+          <div key={step.n} className={`pcp-onboarding__step-wrap ${i < ONBOARDING_STEPS.length - 1 ? 'flex-1' : ''}`}>
+            <span className="pcp-onboarding__dot">{step.n}</span>
+            {i < ONBOARDING_STEPS.length - 1 && <span className="pcp-onboarding__line" />}
           </div>
         ))}
       </div>
-      <p className="mt-2 text-[10px] text-slate-400">{stepLabel}</p>
+      <p className="pcp-onboarding__label">{stepLabel}</p>
     </div>
   )
 })
 
 const WaitTimePill = memo(function WaitTimePill() {
   return (
-    <div className={`${GLASS_CARD} flex w-full items-center gap-2.5 rounded-2xl px-3.5 py-2`}>
-      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
-        <Clock size={13} className="text-blue-600" />
+    <div className="pcp-glass pcp-wait-time">
+      <div className="pcp-wait-time__icon">
+        <Clock size={13} color="var(--blue)" />
       </div>
       <div>
-        <p className="text-[10px] text-slate-400">Wait time</p>
-        <p className="text-xs font-bold text-slate-800">Under 15 min</p>
+        <p className="pcp-wait-time__label">Wait time</p>
+        <p className="pcp-wait-time__value">Under 15 min</p>
       </div>
     </div>
   )
 })
 
+// ─── Hero ─────────────────────────────────────────────────────────────────────
+
 function HeroLeft() {
   return (
-    // min-w-0 prevents the grid cell from blowing out at mid-widths
-    <div className="min-w-0 w-full space-y-6 text-center lg:text-left">
+    <div className="pcp-hero__left">
       <FadeIn delay={0.05}>
-        <div className="flex justify-center lg:justify-start">
-          <span className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-            No PCP? No Problem.
+        <div className="pcp-hero__badge-wrap">
+          <span className="pcp-hero__badge">
+            <span className="pcp-hero__badge-dot" />
+            NO PCP? NO PROBLEM.
           </span>
         </div>
       </FadeIn>
 
       <FadeIn delay={0.12}>
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.1] tracking-tight text-slate-900">
-          Don&apos;t Have a<br />Primary Care Doctor?<br />
-          <span style={{ backgroundImage: GRAD_BLUE, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            We&apos;ve Got You Covered.
-          </span>
+        <h1 className="pcp-hero__h1">
+          Primary Care That Fits Your Life<br />
+          <span className="pcp-grad-text"> Connect with a Licensed Provider in Minutes.
+ </span>
         </h1>
       </FadeIn>
 
       <FadeIn delay={0.2}>
-        <p className="text-base text-slate-500 leading-relaxed mx-auto lg:mx-0 max-w-lg">
-          Whether you&apos;re new to the area, between providers, or simply need care today —
-          HumanCare Connect helps you reach licensed primary care providers quickly,
-          conveniently, and without the wait.
+        <p className="pcp-hero__sub">
+         Skip the wait and get the care you need with secure telemedicine services. Humancare Connect is your primary care destination for preventive care, prescription refills, daily health concerns and ongoing support wherever you are.
         </p>
       </FadeIn>
 
       <FadeIn delay={0.28}>
-        <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-          <a
-            href="/get-started"
-            aria-label="Get started with HumanCare Connect"
-            className="inline-flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-full text-sm pcp-card-lift"
-            style={{ background: GRAD_BLUE, boxShadow: '0 8px 24px -4px rgba(37,99,235,0.4)' }}
-          >
-            Get Started <ArrowRight size={15} />
+        <div className="pcp-hero__ctas">
+          <a href="/appointment-booking" aria-label="Get started with HumanCare Connect" className="pcp-btn-primary">
+           Get Started <ArrowRight size={15} />
           </a>
-          <a
-            href="#how-it-works"
-            className="inline-flex items-center gap-2 bg-white text-blue-600 font-semibold px-6 py-3 rounded-full shadow-md hover:shadow-lg pcp-transition hover:-translate-y-1 border border-blue-100 text-sm"
-          >
+          <a href="#how-it-works" className="pcp-btn-secondary">
             <CirclePlay size={15} /> How It Works
           </a>
         </div>
       </FadeIn>
 
       <FadeIn delay={0.33}>
-        <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start pt-1">
+        <div className="pcp-hero__trust">
           {TRUST_BADGES.map(badge => (
-            <div key={badge} className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-              <CircleCheckBig size={13} className="text-blue-500 flex-shrink-0" />
+            <div key={badge} className="pcp-hero__trust-item">
+              <CircleCheckBig size={13} color="var(--blue)" className="pcp-flex-shrink-0" />
               {badge}
             </div>
           ))}
@@ -303,13 +363,12 @@ function HeroLeft() {
 
 function HeroRight() {
   return (
-    <div className="relative min-w-0 w-full">
-
-      {/* ── Mobile / tablet: stacked flow — always centered ── */}
-      <div className="lg:hidden w-full max-w-[300px] sm:max-w-sm mx-auto space-y-4">
+    <div className="pcp-hero__right">
+      {/* Mobile / tablet: stacked flow */}
+      <div className="pcp-hero__right-mobile">
         <FadeIn delay={0.15}><ProviderCard floating={false} /></FadeIn>
         <FadeIn delay={0.25}>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="pcp-hero__right-mobile-row">
             <SocialProofBadge />
             <WaitTimePill />
           </div>
@@ -318,26 +377,25 @@ function HeroRight() {
         <FadeIn delay={0.38}><OnboardingMiniSteps /></FadeIn>
       </div>
 
-      {/* ── Desktop: art-directed composition, centred in the column ── */}
-      <div className="hidden lg:block pcp-hero-right-desktop">
-
+      {/* Desktop: art-directed composition */}
+      <div className="pcp-hero__right-desktop">
         {/* Centre card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.88 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.15, ease: EASE_SPRING }}
-          style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 10 }}
-        >
-          <ProviderCard />
-        </motion.div>
+        <div className="pcp-hero-card-anchor">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.88 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.15, ease: EASE_SPRING }}
+          >
+            <ProviderCard />
+          </motion.div>
+        </div>
 
         {/* Top-left: Social proof badge */}
         <motion.div
           initial={{ opacity: 0, x: -30, y: -10 }}
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={{ duration: 0.65, delay: 0.55 }}
-          className="pcp-float-b"
-          style={{ position: 'absolute', left: 0, top: 20, zIndex: 20, width: 130 }}
+          className="pcp-widget pcp-widget--tl pcp-float-b"
         >
           <SocialProofBadge />
         </motion.div>
@@ -347,8 +405,7 @@ function HeroRight() {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.65, delay: 0.65 }}
-          className="pcp-float-c"
-          style={{ position: 'absolute', left: 0, bottom: 20, zIndex: 20, width: 165 }}
+          className="pcp-widget pcp-widget--bl pcp-float-c"
         >
           <HealthStatusCard />
         </motion.div>
@@ -358,8 +415,7 @@ function HeroRight() {
           initial={{ opacity: 0, x: 30, y: -10 }}
           animate={{ opacity: 1, x: 0, y: 0 }}
           transition={{ duration: 0.65, delay: 0.45 }}
-          className="pcp-float-d"
-          style={{ position: 'absolute', right: 0, top: 20, zIndex: 20, width: 190 }}
+          className="pcp-widget pcp-widget--tr pcp-float-d"
         >
           <OnboardingMiniSteps />
         </motion.div>
@@ -369,8 +425,7 @@ function HeroRight() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.72 }}
-          className="pcp-float-e"
-          style={{ position: 'absolute', right: 0, bottom: 20, zIndex: 20, width: 160 }}
+          className="pcp-widget pcp-widget--br pcp-float-e"
         >
           <WaitTimePill />
         </motion.div>
@@ -379,23 +434,14 @@ function HeroRight() {
   )
 }
 
-// Hero: two-column grid (copy left, cards right) with navbar-offset top padding
 function Hero() {
   return (
-    <section
-      aria-label="Primary Care Hero"
-      style={{ background: 'linear-gradient(160deg, #eaf4ff 0%, #ddeeff 40%, #f0f8ff 100%)' }}
-      className="relative w-full overflow-x-hidden pt-28 pb-24 md:pt-32 md:pb-28"
-    >
-      {/* Ambient blobs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: 480, height: 480, borderRadius: '50%', background: 'radial-gradient(circle, #bfdbfe 0%, transparent 70%)', filter: 'blur(70px)', opacity: 0.5 }} />
-        <div style={{ position: 'absolute', bottom: '-100px', left: '-80px', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, #e0f2fe 0%, transparent 70%)', filter: 'blur(60px)', opacity: 0.4 }} />
-      </div>
+    <section aria-label="Primary Care Hero" className="pcp-hero">
+      <div className="pcp-hero__blob pcp-hero__blob--tr" aria-hidden="true" />
+      <div className="pcp-hero__blob pcp-hero__blob--bl" aria-hidden="true" />
 
-      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Two-column grid: copy left, cards right. Single column on mobile. */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+      <div className="pcp-container">
+        <div className="pcp-hero__grid">
           <HeroLeft />
           <HeroRight />
         </div>
@@ -404,21 +450,15 @@ function Hero() {
   )
 }
 
-// ─── 2. About Primary Care ────────────────────────────────────────────────────
-// FIX: backdrop now uses CSS classes (pcp-about-backdrop) instead of
-//      Tailwind negative-inset shorthands that were expanding the grid cell.
-function AboutLeft() {
-  // FIX: tile hover style extracted so it isn't a new object each render
-  const tileStyle = useMemo(() => ({ boxShadow: '0 4px 20px rgba(37,99,235,0.08)' }), [])
+// ─── About Primary Care ───────────────────────────────────────────────────────
 
+function AboutLeft() {
   return (
     <FadeIn direction="left">
-      {/* FIX: isolation + overflow via CSS class; no more negative Tailwind insets
-               fighting the grid layout */}
-      <div className="pcp-about-left-wrapper px-2 pt-2 pb-10 sm:px-3 sm:pb-12">
-        <div className="pcp-about-backdrop" aria-hidden="true" />
+      <div className="pcp-about__left">
+        <div className="pcp-about__backdrop" aria-hidden="true" />
 
-        <div className="relative grid grid-cols-2 gap-3 sm:gap-4 max-w-sm mx-auto md:max-w-none">
+        <div className="pcp-about__tiles">
           {ABOUT_GRID.map((tile, i) => (
             <motion.div
               key={tile.label}
@@ -426,27 +466,20 @@ function AboutLeft() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className="flex flex-col items-center gap-3 rounded-2xl border border-blue-100/90 bg-white px-4 py-6 text-center cursor-default sm:px-5 sm:py-7"
-              style={tileStyle}
+              className="pcp-about__tile"
             >
-              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br ${tile.color} flex items-center justify-center shadow-md`}>
-                <tile.icon size={22} className="text-white" />
+              <div className={`pcp-about__tile-icon ${tile.gradClass}`}>
+                <tile.icon size={22} color="#fff" />
               </div>
-              <p className="font-bold text-sm text-slate-800">{tile.label}</p>
+              <p className="pcp-about__tile-label">{tile.label}</p>
             </motion.div>
           ))}
         </div>
 
-        {/* 24/7 badge — z-20 is contained inside this stacking context */}
-        <div
-          className="absolute -bottom-3 -right-3 z-20 flex h-16 w-16 items-center justify-center rounded-2xl sm:-bottom-4 sm:-right-4 sm:h-20 sm:w-20"
-          style={{ background: GRAD_BLUE, boxShadow: '0 8px 28px rgba(37,99,235,0.35)' }}
-          aria-hidden="true"
-        >
-          <div className="text-center">
-            <p className="text-white text-base sm:text-xl font-black leading-none">24/7</p>
-            <p className="text-white/75 text-[9px] sm:text-[10px] font-medium">Access</p>
+        <div className="pcp-about__badge" aria-hidden="true">
+          <div>
+            <p className="pcp-about__badge-main">24/7</p>
+            <p className="pcp-about__badge-sub">Access</p>
           </div>
         </div>
       </div>
@@ -456,35 +489,31 @@ function AboutLeft() {
 
 function AboutRight() {
   return (
-    <div className="space-y-8 min-w-0">
+    <div className="pcp-about__right">
       <FadeIn>
-        <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">What Is Primary Care?</span>
-        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2 leading-tight">
-          Your First Line of Defense<br />for Lifelong Health
+        <span className="pcp-eyebrow">WHAT IS PRIMARY CARE?</span>
+        <h2 className="pcp-about__intro-title">
+          Your Partner for Better Everyday Health
         </h2>
-        <p className="text-slate-500 leading-relaxed mt-4">
-          A primary care physician (PCP) is your main healthcare partner — the doctor you see
-          for routine visits, preventive care, and when you&apos;re not feeling well. They
-          coordinate all aspects of your medical care and refer you to specialists when needed.
+        <p className="pcp-about__intro-p">
+        Primary care is the foundation of long-term health and wellness. A Primary Care Provider (PCP) helps you stay healthy through preventive care, routine checkups, treatment for common illnesses, prescription management, and ongoing support for chronic conditions.
+
         </p>
-        <p className="text-slate-500 leading-relaxed mt-3">
-          Studies show people with a regular PCP have better health outcomes, lower medical
-          costs, and longer lives. Yet millions of Americans lack access to one. That&apos;s
-          exactly the gap HumanCare Connect was built to close.
+        <p className="pcp-about__intro-p">
+         At Humancare Connect, you can access licensed healthcare providers through secure telemedicine services without the hassle of long wait times or scheduling barriers. Whether you need help managing your health, addressing new symptoms, or staying on top of preventive care, we're here to make quality healthcare more accessible.
         </p>
       </FadeIn>
 
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="pcp-about__features">
         {ABOUT_FEATURES.map((feature, i) => (
           <FadeIn key={feature.title} delay={i * 0.08}>
-            {/* FIX: `pcp-transition` replaces `transition-all duration-200` */}
-            <div className="flex gap-3 p-4 rounded-xl hover:bg-blue-50/60 pcp-transition group cursor-default">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600 pcp-transition">
-                <feature.icon size={18} className="text-blue-600 group-hover:text-white pcp-transition" />
+            <div className="pcp-about__feature">
+              <div className="pcp-about__feature-icon">
+                <feature.icon size={18} />
               </div>
               <div>
-                <p className="font-semibold text-slate-800 text-sm">{feature.title}</p>
-                <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">{feature.desc}</p>
+                <p className="pcp-about__feature-title">{feature.title}</p>
+                <p className="pcp-about__feature-desc">{feature.desc}</p>
               </div>
             </div>
           </FadeIn>
@@ -496,9 +525,9 @@ function AboutRight() {
 
 function AboutPrimaryCare() {
   return (
-    <section id="about" aria-label="About Primary Care" className="w-full py-20 md:py-24 bg-white overflow-x-hidden">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-start">
+    <section id="about" aria-label="About Primary Care" className="pcp-section pcp-about">
+      <div className="pcp-container">
+        <div className="pcp-about__grid">
           <AboutLeft />
           <AboutRight />
         </div>
@@ -507,36 +536,36 @@ function AboutPrimaryCare() {
   )
 }
 
-// ─── 3. How It Works ─────────────────────────────────────────────────────────
+// ─── How It Works ─────────────────────────────────────────────────────────────
+
 function HowItWorks() {
   return (
-    <section id="how-it-works" aria-label="How It Works" style={{ background: '#f8fafc' }} className="w-full py-20 md:py-24">
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        <FadeIn className="text-center mb-14">
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Simple Process</span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2">
-            Your First Visit, Step by Step
-          </h2>
-          <p className="text-slate-500 mt-3 max-w-xl mx-auto">
-            From sign-up to care in minutes. No referrals, no lengthy waits, no insurance required.
-          </p>
+    <section id="how-it-works" aria-label="How It Works" className="pcp-section pcp-hiw">
+      <div className="pcp-container--narrow">
+        <FadeIn>
+          <div className="pcp-section-header">
+            <span className="pcp-eyebrow">Simple Process</span>
+            <h2 className="pcp-section-title">Your First Visit, Step by Step</h2>
+            <p className="pcp-section-sub">
+              From sign-up to care in minutes. No referrals, no lengthy waits, no insurance required.
+            </p>
+          </div>
         </FadeIn>
 
         {/* Mobile: vertical list */}
-        <div className="block md:hidden space-y-4">
+        <div className="pcp-hiw__mobile">
           {HOW_IT_WORKS_STEPS.map((step, i) => (
             <FadeIn key={step.title} delay={i * 0.08}>
-              <div className="flex gap-4 bg-white rounded-2xl p-5" style={{ boxShadow: '0 4px 20px rgba(37,99,235,0.08)' }}>
-                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center flex-shrink-0 shadow-md`}>
-                  <step.icon size={20} className="text-white" />
+              <div className="pcp-hiw__mobile-card">
+                <div className={`pcp-step-icon ${step.stepClass}`}>
+                  <step.icon size={20} color="#fff" />
                 </div>
                 <div>
-                  <span className={`text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}>
+                  <span className={`pcp-timeline-card__step ${step.textClass}`}>
                     Step {i + 1}
                   </span>
-                  <h3 className="font-bold text-slate-800 text-sm mt-0.5">{step.title}</h3>
-                  <p className="text-slate-500 text-xs mt-1 leading-relaxed">{step.desc}</p>
+                  <h3 className="pcp-timeline-card__title">{step.title}</h3>
+                  <p className="pcp-timeline-card__desc">{step.desc}</p>
                 </div>
               </div>
             </FadeIn>
@@ -544,75 +573,58 @@ function HowItWorks() {
         </div>
 
         {/* Desktop: alternating timeline */}
-        <div className="hidden md:block" style={{ position: 'relative' }}>
-          <div style={{
-            position: 'absolute',
-            left: '50%', top: 24, bottom: 24,
-            width: 2,
-            transform: 'translateX(-50%)',
-            background: 'linear-gradient(to bottom,#bfdbfe,#bae6fd,#e9d5ff)',
-            borderRadius: 99,
-            zIndex: 0,
-          }} aria-hidden="true" />
+        <div className="pcp-hiw__desktop pcp-timeline-container">
+          <div className="pcp-timeline-line" aria-hidden="true" />
 
           {HOW_IT_WORKS_STEPS.map((step, i) => {
             const isLeft = i % 2 === 0
             return (
               <FadeIn key={step.title} delay={i * 0.1}>
-                <div style={{
-                  position: 'relative',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 56px 1fr',
-                  alignItems: 'center',
-                  marginBottom: i < HOW_IT_WORKS_STEPS.length - 1 ? 32 : 0,
-                  minHeight: 80,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', paddingRight: 28 }}>
+                <div className="pcp-timeline-row">
+                  <div className="pcp-timeline-left">
                     {isLeft && (
                       <motion.div
                         initial={{ opacity: 0, x: -32 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.55, delay: i * 0.1 }}
-                        className="bg-white rounded-2xl p-5 w-full pcp-card-lift"
-                        style={{ boxShadow: '0 4px 24px rgba(37,99,235,0.09)', textAlign: 'right', maxWidth: 280 }}
+                        className="pcp-timeline-card pcp-timeline-card--left pcp-card-lift"
                       >
-                        <span className={`text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}>
+                        <span className={`pcp-timeline-card__step ${step.textClass}`}>
                           Step {i + 1}
                         </span>
-                        <h3 className="font-bold text-slate-800 text-sm mt-1">{step.title}</h3>
-                        <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">{step.desc}</p>
+                        <h3 className="pcp-timeline-card__title">{step.title}</h3>
+                        <p className="pcp-timeline-card__desc">{step.desc}</p>
                       </motion.div>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'center', zIndex: 10, position: 'relative' }}>
+                  <div className="pcp-timeline-center">
                     <motion.div
                       whileInView={{ scale: [0.5, 1.2, 1] }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.45, delay: i * 0.1 }}
-                      className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}
+                      className={`pcp-step-icon ${step.stepClass}`}
                       aria-hidden="true"
                     >
-                      <step.icon size={20} className="text-white" />
+                      <step.icon size={20} color="#fff" />
                     </motion.div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'flex-start', paddingLeft: 28 }}>
+                  <div className="pcp-timeline-right">
                     {!isLeft && (
                       <motion.div
                         initial={{ opacity: 0, x: 32 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.55, delay: i * 0.1 }}
-                        className="bg-white rounded-2xl p-5 w-full pcp-card-lift"
-                        style={{ boxShadow: '0 4px 24px rgba(37,99,235,0.09)', maxWidth: 280 }}
+                        className="pcp-timeline-card pcp-timeline-card--right pcp-card-lift"
                       >
-                        <span className={`text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r ${step.color} bg-clip-text text-transparent`}>
+                        <span className={`pcp-timeline-card__step ${step.textClass}`}>
                           Step {i + 1}
                         </span>
-                        <h3 className="font-bold text-slate-800 text-sm mt-1">{step.title}</h3>
-                        <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">{step.desc}</p>
+                        <h3 className="pcp-timeline-card__title">{step.title}</h3>
+                        <p className="pcp-timeline-card__desc">{step.desc}</p>
                       </motion.div>
                     )}
                   </div>
@@ -622,49 +634,48 @@ function HowItWorks() {
           })}
         </div>
 
-        <FadeIn className="text-center mt-12">
-          <a
-            href="/get-started"
-            className="inline-flex items-center gap-2 text-white font-semibold px-8 py-3.5 rounded-full pcp-card-lift"
-            style={{ background: GRAD_BLUE, boxShadow: '0 8px 24px -4px rgba(37,99,235,0.4)' }}
-          >
-            Get Started Now <ArrowRight size={16} />
-          </a>
-          <p className="text-slate-400 text-xs mt-3">No insurance required · Cancel anytime</p>
+        <FadeIn>
+          <div className="pcp-hiw__footer">
+            <a href="/get-started" className="pcp-btn-primary pcp-btn-inline">
+              Get Started Now <ArrowRight size={16} />
+            </a>
+            <p className="pcp-hiw__footer-note">No insurance required · Cancel anytime</p>
+          </div>
         </FadeIn>
       </div>
     </section>
   )
 }
 
-// ─── 4. Services ──────────────────────────────────────────────────────────────
-// FIX: replaced Tailwind responsive grid classes with `pcp-services-grid` CSS
-//      class that uses auto-fill columns — no orphan card at any breakpoint.
+// ─── Services ─────────────────────────────────────────────────────────────────
+
 function Services() {
   return (
-    <section id="services" aria-label="Services" className="w-full py-20 md:py-24 bg-white">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn className="text-center mb-14">
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">What&apos;s Included</span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2">Services Under Primary Care</h2>
-          <p className="text-slate-500 mt-3 max-w-xl mx-auto">Everything you need to maintain your health — all in one place.</p>
+    <section id="services" aria-label="Services" className="pcp-section pcp-services">
+      <div className="pcp-container">
+        <FadeIn>
+          <div className="pcp-section-header">
+            <span className="pcp-eyebrow">WHAT'S INCLUDED</span>
+            <h2 className="pcp-section-title">Comprehensive Primary Care Services
+</h2>
+            <p className="pcp-section-sub">Everyday Healthcare, All Here</p>
+            <p className="pcp-section-sub-1">From preventive care and routine wellness visits to prescription management and chronic condition support, Humancare Connect makes it easy to access essential primary care services through secure virtual appointments.
+</p>
+          </div>
         </FadeIn>
 
-        {/* FIX: `.pcp-services-grid` from PCP.css replaces the brittle
-                 xl:grid-cols-5 that left an orphan card at lg breakpoint */}
         <div className="pcp-services-grid">
           {SERVICES.map((service, i) => (
             <FadeIn key={service.title} delay={i * 0.04}>
               <motion.div
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="group bg-white rounded-2xl p-5 border border-slate-100 hover:border-blue-100 pcp-transition cursor-pointer h-full"
-                style={{ boxShadow: '0 4px 20px rgba(37,99,235,0.06)' }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="pcp-service-card"
               >
-                <div className="w-11 h-11 rounded-xl bg-blue-50 group-hover:bg-blue-600 flex items-center justify-center mb-4 pcp-transition flex-shrink-0">
-                  <service.icon size={20} className="text-blue-600 group-hover:text-white pcp-transition" />
+                <div className="pcp-service-card__icon">
+                  <service.icon size={20} />
                 </div>
-                <h3 className="font-semibold text-slate-800 text-sm leading-snug mb-1.5">{service.title}</h3>
-                <p className="text-slate-500 text-xs leading-relaxed">{service.desc}</p>
+                <h3 className="pcp-service-card__title">{service.title}</h3>
+                <p className="pcp-service-card__desc">{service.desc}</p>
               </motion.div>
             </FadeIn>
           ))}
@@ -674,22 +685,25 @@ function Services() {
   )
 }
 
-// ─── 5. FAQ ───────────────────────────────────────────────────────────────────
-// FIX: Added aria-controls / id pairing, aria-expanded, and descriptive
-//      aria-label on the chevron button so screen readers understand the toggle.
+// ─── FAQ ──────────────────────────────────────────────────────────────────────
+
 function FAQ() {
   const [openIndex, setOpenIndex] = useState(null)
 
   return (
-    <section id="faq" aria-label="Frequently Asked Questions" className="w-full py-20 md:py-24 bg-slate-50">
-      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FadeIn className="text-center mb-14">
-          <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Frequently Asked</span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-2">Got Questions?</h2>
-          <p className="text-slate-500 mt-3">Everything you need to know about primary care and HumanCare Connect.</p>
+    <section id="faq" aria-label="Frequently Asked Questions" className="pcp-section pcp-faq">
+      <div className="pcp-container--narrow">
+        <FadeIn>
+          <div className="pcp-section-header">
+            <span className="pcp-eyebrow">Frequently Asked</span>
+            <h2 className="pcp-section-title">Got Questions?</h2>
+            <p className="pcp-section-sub">
+              Everything you need to know about primary care and HumanCare Connect.
+            </p>
+          </div>
         </FadeIn>
 
-        <div className="space-y-3">
+        <div className="pcp-faq__list">
           {FAQS.map((faq, i) => {
             const isOpen = openIndex === i
             const panelId = `faq-panel-${i}`
@@ -697,29 +711,25 @@ function FAQ() {
 
             return (
               <FadeIn key={faq.q} delay={i * 0.04}>
-                <div
-                  className="rounded-2xl border pcp-transition overflow-hidden bg-white"
-                  style={{
-                    borderColor: isOpen ? '#bfdbfe' : '#e2e8f0',
-                    boxShadow:   isOpen ? '0 4px 24px rgba(37,99,235,0.08)' : 'none',
-                  }}
-                >
+                <div className={`pcp-faq__item ${isOpen ? 'pcp-faq__item--open' : ''}`}>
                   <button
                     id={btnId}
                     onClick={() => setOpenIndex(isOpen ? null : i)}
-                    className="w-full flex items-center justify-between p-5 text-left gap-4"
+                    className="pcp-faq__btn"
                     aria-expanded={isOpen}
                     aria-controls={panelId}
                   >
-                    <span className="font-semibold text-slate-800 text-sm leading-snug">{faq.q}</span>
+                    <span className="pcp-faq__question">{faq.q}</span>
                     <motion.div
                       animate={{ rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.25 }}
-                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: isOpen ? '#2563eb' : '#f1f5f9' }}
+                      className={`pcp-faq__chevron-wrap ${isOpen ? 'pcp-faq__chevron-wrap--open' : 'pcp-faq__chevron-wrap--closed'}`}
                       aria-hidden="true"
                     >
-                      <ChevronDown size={15} className={isOpen ? 'text-white' : 'text-slate-500'} />
+                      <ChevronDown
+                        size={15}
+                        className={isOpen ? 'pcp-faq__chevron--open' : 'pcp-faq__chevron--closed'}
+                      />
                     </motion.div>
                   </button>
 
@@ -734,11 +744,9 @@ function FAQ() {
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        style={{ overflow: 'hidden' }}
+                        className="pcp-faq-panel"
                       >
-                        <div className="px-5 pb-5 text-slate-500 text-sm leading-relaxed border-t border-slate-100 pt-4">
-                          {faq.a}
-                        </div>
+                        <div className="pcp-faq__answer">{faq.a}</div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -752,45 +760,37 @@ function FAQ() {
   )
 }
 
-// ─── 6. CTA ───────────────────────────────────────────────────────────────────
-// FIX: trust points replaced flex-wrap with `pcp-cta-trust` grid class
-//      for consistent 2-col layout on mobile, single row on sm+.
+// ─── CTA ──────────────────────────────────────────────────────────────────────
+
 function CTA() {
   return (
-    <section
-      aria-label="Call to Action"
-      className="w-full py-20 md:py-24 overflow-hidden relative"
-      style={{ background: 'linear-gradient(135deg,#1d4ed8 0%,#1e40af 40%,#0369a1 100%)' }}
-    >
-      <div className="absolute top-0 left-0 w-80 h-80 rounded-full opacity-20 pointer-events-none"
-        style={{ background: 'radial-gradient(circle,#bfdbfe,transparent)', filter: 'blur(50px)' }}
-        aria-hidden="true"
-      />
-      <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-20 pointer-events-none"
-        style={{ background: 'radial-gradient(circle,#e0f2fe,transparent)', filter: 'blur(50px)' }}
-        aria-hidden="true"
-      />
+    <section aria-label="Call to Action" className="pcp-section pcp-cta">
+      <div className="pcp-cta__blob pcp-cta__blob--tl" aria-hidden="true" />
+      <div className="pcp-cta__blob pcp-cta__blob--br" aria-hidden="true" />
 
-      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+      <div className="pcp-container--narrow pcp-cta__inner">
         <FadeIn>
-          <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" aria-hidden="true" />
-            Ready to Get Started?
+          <div className="pcp-cta__live-badge">
+            <span className="pcp-cta__live-dot" aria-hidden="true" />
+           Ready to Take Charge of Your Health?
+
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-5">
+
+          <h2 className="pcp-cta__title">
             Ready to Find Your<br />Primary Care Provider?
           </h2>
-          <p className="text-white/80 text-base md:text-lg leading-relaxed mb-10 max-w-xl mx-auto">
-            Get connected with trusted, licensed healthcare professionals and receive the care you need —
-            without the wait, without the confusion.
+
+          <p className="pcp-cta__sub">
+            Whether you need preventive care, help managing a chronic condition, prescription support, or treatment for everyday health concerns, Humancare Connect makes quality primary care simple and accessible. <br /><br />
+            Connect with a licensed provider through secure telemedicine services and get the care you need when and where it works best for you.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+
+          <div className="pcp-cta__actions">
             <motion.a
               href="/get-started"
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2 bg-white font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl pcp-transition text-sm w-full sm:w-auto justify-center"
-              style={{ color: '#1d4ed8' }}
+              className="pcp-btn-cta-white"
             >
               Get Started Today <ArrowRight size={16} />
             </motion.a>
@@ -798,17 +798,16 @@ function CTA() {
               href="/find-provider"
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2 bg-white/10 text-white font-semibold px-8 py-4 rounded-full border border-white/30 hover:bg-white/20 pcp-transition text-sm w-full sm:w-auto justify-center"
+              className="pcp-btn-cta-ghost"
             >
               <Phone size={16} /> Find a Provider
             </motion.a>
           </div>
 
-          {/* FIX: replaced flex-wrap with pcp-cta-trust grid for clean mobile layout */}
           <div className="pcp-cta-trust">
             {CTA_TRUST_POINTS.map(point => (
-              <div key={point.text} className="flex items-center gap-2 text-white/80 text-xs font-medium">
-                <point.icon size={14} className="text-white flex-shrink-0" aria-hidden="true" />
+              <div key={point.text} className="pcp-cta-trust__item">
+                <point.icon size={14} color="rgba(255,255,255,0.85)" aria-hidden="true" />
                 {point.text}
               </div>
             ))}
@@ -822,7 +821,7 @@ function CTA() {
 // ─── Page composition ──────────────────────────────────────────────────────────
 export default function PCP() {
   return (
-    <main className="pcp-root w-full block">
+    <main className="pcp-root">
       <Hero />
       <AboutPrimaryCare />
       <HowItWorks />
