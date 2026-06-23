@@ -36,6 +36,15 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +54,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +66,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +75,256 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "psychiatry",
+  name: "Psychiatry",
+  tagline: "Compassionate Mental Health Care Designed Around You.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Psychiatry specialists diagnose, treat, and manage mental health conditions that affect emotions, thoughts, behaviors, relationships, and overall well-being. Whether you're experiencing anxiety, depression, sleep difficulties, attention challenges, or mood disorders, psychiatric care provides personalized support to help you feel better and improve your quality of life.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Psychiatry is a medical specialty focused on the diagnosis, treatment, prevention, and management of mental health conditions. Psychiatrists are medical doctors trained to evaluate emotional, psychological, and behavioral concerns while providing comprehensive treatment plans tailored to individual needs.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Mental health conditions can affect every aspect of life, including work performance, relationships, sleep quality, physical health, and overall happiness. Through early intervention, ongoing support, and personalized treatment, psychiatric care helps individuals manage symptoms and improve daily functioning.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Psychiatry specialists diagnose and manage anxiety, depression, ADHD, bipolar disorder, PTSD, insomnia, OCD, panic attacks, and other mental health conditions.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a psychiatric consultation if you experience persistent sadness, excessive worry, panic attacks, mood changes, sleep disturbances, concentration difficulties, emotional distress, or symptoms affecting daily life.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Psychiatric Evaluations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Comprehensive mental health assessments to understand symptoms, concerns, and treatment needs.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Medication Management",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Personalized medication evaluations, adjustments, monitoring, and ongoing psychiatric care.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Anxiety & Mood Disorder Treatment",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Evidence-based treatment plans for anxiety, depression, bipolar disorder, and related conditions.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "ADHD Assessments & Support",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Evaluation and treatment options for attention, focus, impulsivity, and executive functioning challenges.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Sleep & Behavioral Health Support",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Care for insomnia, sleep-related concerns, emotional wellness, and mental health conditions.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Ongoing Mental Health Care",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Long-term support, symptom monitoring, and personalized treatment planning.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Improved Emotional Well-Being",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Reduce symptoms and improve emotional balance, resilience, and overall wellness.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Better Daily Functioning",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Support work performance, relationships, focus, productivity, and quality of life.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Personalized Treatment",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Receive individualized care plans based on your symptoms, goals, and health history.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Long-Term Mental Health Support",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Build sustainable strategies to manage symptoms and maintain mental wellness.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
-      description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
       Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      name: "ADHD Evaluation",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Assessment and treatment of attention difficulties, hyperactivity, impulsivity, and executive function challenges.",
+    },
+    {
+      Icon: FiZap,
+      name: "Anxiety",
+      description:
+        "Management of excessive worry, nervousness, fear, racing thoughts, and anxiety-related symptoms.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Bipolar Disorder Follow-Up",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Ongoing monitoring and treatment of mood fluctuations, emotional stability, and bipolar disorder symptoms.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiHeart,
+      name: "Depression",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Evaluation and treatment of persistent sadness, low motivation, hopelessness, and mood-related concerns.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiMoon,
+      name: "Insomnia",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Support for difficulty falling asleep, staying asleep, poor sleep quality, and sleep-related challenges.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiShield,
+      name: "OCD (Obsessive-Compulsive Disorder)",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Treatment for obsessive thoughts, compulsive behaviors, repetitive actions, and anxiety-driven routines.",
+    },
+    {
+      Icon: FiAlertCircle,
+      name: "Panic Attacks",
+      description:
+        "Care for sudden episodes of intense fear, rapid heartbeat, shortness of breath, and panic symptoms.",
+    },
+    {
+      Icon: FiCompass,
+      name: "PTSD (Post-Traumatic Stress Disorder)",
+      description:
+        "Support for trauma-related symptoms, flashbacks, emotional distress, and post-traumatic challenges.",
+    },
+    {
+      Icon: FiBriefcase,
+      name: "Stress & Burnout",
+      description:
+        "Evaluation and treatment of chronic stress, emotional exhaustion, and work-related burnout.",
+    },
+    {
+      Icon: FiTarget,
+      name: "Emotional Regulation Difficulties",
+      description:
+        "Support for managing strong emotions, irritability, impulsive reactions, and emotional balance.",
+    },
+    {
+      Icon: FiLayers,
+      name: "Mood Disorders",
+      description:
+        "Assessment and treatment of mood-related conditions affecting emotional well-being and daily functioning.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Mental Wellness Support",
+      description:
+        "Comprehensive care focused on maintaining emotional health, resilience, and overall psychological wellness.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is psychiatry?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Psychiatry is the medical specialty focused on diagnosing, treating, and preventing mental health conditions.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What conditions do psychiatrists treat?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Psychiatrists commonly treat anxiety, depression, ADHD, bipolar disorder, PTSD, OCD, insomnia, panic attacks, and other mental health concerns.",
+    },
+    {
+      question: "How is a psychiatrist different from a therapist?",
+      answer:
+        "Psychiatrists are medical doctors who can diagnose conditions, prescribe medications, and provide treatment plans, while therapists primarily provide counseling and psychotherapy.",
+    },
+    {
+      question: "When should I see a psychiatrist?",
+      answer:
+        "Consider seeing a psychiatrist if symptoms are affecting your daily life, relationships, work performance, sleep, or emotional well-being.",
+    },
+    {
+      question: "Can psychiatrists prescribe medication?",
+      answer:
+        "Yes. Psychiatrists are licensed medical doctors who can prescribe and manage medications when appropriate.",
+    },
+    {
+      question: "What is ADHD?",
+      answer:
+        "ADHD is a condition that can affect attention, focus, organization, impulse control, and executive functioning.",
+    },
+    {
+      question: "What are common symptoms of anxiety?",
+      answer:
+        "Symptoms may include excessive worry, nervousness, racing thoughts, restlessness, and physical tension.",
+    },
+    {
+      question: "What causes depression?",
+      answer:
+        "Depression can result from a combination of biological, psychological, environmental, and life-related factors.",
+    },
+    {
+      question: "What is bipolar disorder?",
+      answer:
+        "Bipolar disorder is a mood condition characterized by episodes of elevated mood and periods of depression.",
+    },
+    {
+      question: "What is PTSD?",
+      answer:
+        "PTSD is a condition that may develop after experiencing or witnessing a traumatic event.",
+    },
+    {
+      question: "What are panic attacks?",
+      answer:
+        "Panic attacks are sudden episodes of intense fear that may cause rapid heartbeat, dizziness, sweating, and shortness of breath.",
+    },
+    {
+      question: "Can insomnia affect mental health?",
+      answer:
+        "Yes. Poor sleep can significantly impact mood, concentration, stress levels, and emotional well-being.",
+    },
+    {
+      question: "What is OCD?",
+      answer:
+        "Obsessive-Compulsive Disorder involves recurring unwanted thoughts and repetitive behaviors performed to reduce anxiety.",
+    },
+    {
+      question: "Are psychiatric appointments confidential?",
+      answer:
+        "Yes. Psychiatric services follow strict privacy and confidentiality standards.",
+    },
+    {
+      question: "Can telehealth be used for psychiatry appointments?",
+      answer:
+        "Yes. Many psychiatric evaluations, medication reviews, and follow-up visits can be conducted virtually.",
+    },
+    {
+      question: "How long does psychiatric treatment take?",
+      answer:
+        "Treatment duration varies depending on individual needs, symptoms, treatment goals, and progress.",
+    },
+    {
+      question: "Can psychiatry help improve quality of life?",
+      answer:
+        "Yes. Effective treatment can improve emotional wellness, relationships, productivity, and overall daily functioning.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "How can I schedule an appointment with a psychiatry specialist?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
-    },
-    {
-      question: "Is seeking a second opinion common?",
-      answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
-    },
-    {
-      question: "Can an expert medical opinion change my diagnosis?",
-      answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with a qualified psychiatry specialist through virtual or in-person care options.",
     },
   ],
 };
@@ -328,37 +341,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced psychiatry providers dedicated to evidence-based mental healthcare.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with psychiatry specialists from the comfort and privacy of your home.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from treatment plans tailored to your symptoms, goals, and mental health needs.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted mental health professionals and coordinated specialty care services.",
   },
 ];
 
@@ -542,7 +555,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function Psychiatry({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +567,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Psychiatry Specialists | Mental Health, Medication Management &
+          Emotional Wellness
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with experienced psychiatry specialists for anxiety, depression, ADHD, PTSD, insomnia, bipolar disorder, panic attacks, OCD, and personalized mental health care."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +717,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists provide expert care
+                  for a wide range of mental health, emotional wellness, and
+                  behavioral health concerns.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +746,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced psychiatry specialists with advanced
+                  technology to make mental healthcare more accessible,
+                  convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +804,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Take the first step toward better mental health and emotional
+                well-being. Schedule an appointment with a psychiatry specialist
+                and receive personalized care designed to support your goals,
+                symptoms, and overall quality of life.
               </p>
             </Reveal>
 

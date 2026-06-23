@@ -36,6 +36,9 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +48,8 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +58,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +67,255 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "ent",
+  name: "ENT (Ear, Nose & Throat)",
+  tagline: "Specialized Care for Better Ear, Nose, and Throat Health.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "ENT specialists diagnose and treat conditions affecting the ears, nose, throat, sinuses, voice, and balance system. From ear infections and sore throats to nasal congestion, hoarseness, and vertigo, ENT specialists provide comprehensive care to improve comfort, communication, breathing, and overall quality of life.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Otolaryngology, commonly known as ENT (Ear, Nose & Throat), is a medical specialty focused on diagnosing and treating conditions affecting the ears, nose, throat, sinuses, voice box, and related structures of the head and neck. ENT specialists help patients manage infections, hearing concerns, breathing difficulties, balance disorders, and throat-related conditions.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Through comprehensive evaluations, personalized treatment plans, medication management, and preventive care, ENT specialists help patients find relief from symptoms, improve daily function, and maintain long-term ear, nose, and throat health.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "ENT specialists diagnose and manage ear infections, ear pain, sore throat, tonsillitis, nasal congestion, hoarseness, vertigo, sinus conditions, and other disorders affecting the ear, nose, and throat.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a visit with an ENT specialist if you experience recurring ear infections, chronic nasal congestion, sore throat, hoarseness, dizziness, balance issues, hearing concerns, or persistent symptoms affecting the ears, nose, or throat.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Ear Health Evaluations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Comprehensive assessments for ear infections, ear pain, hearing concerns, and ear-related conditions.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Nasal & Sinus Care",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Diagnosis and treatment of nasal congestion, sinus pressure, allergies, and breathing difficulties.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Throat & Voice Disorder Management",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Care for sore throat, hoarseness, voice changes, tonsillitis, and swallowing concerns.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Vertigo & Balance Assessments",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Evaluation and treatment of dizziness, vertigo, and balance-related disorders.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Infection Diagnosis & Treatment",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Management of ear, nose, throat, and sinus infections affecting adults and children.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Preventive ENT Care",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Ongoing monitoring, lifestyle guidance, and treatment plans to support long-term ENT health.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Improved Breathing & Comfort",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Helps relieve nasal congestion, sinus pressure, and airway-related symptoms.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Better Hearing & Ear Health",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Supports healthy ear function while addressing infections, pain, and hearing concerns.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Enhanced Voice & Throat Function",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Improves communication, swallowing, and vocal health through specialized treatment.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Better Balance & Daily Function",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Addresses vertigo and dizziness symptoms that may interfere with everyday activities.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: GiHumanEar,
+      name: "Ear Infection",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
+        "Diagnosis and treatment of bacterial and viral ear infections causing pain, pressure, and discomfort.",
     },
     {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
+      Icon: GiHumanEar,
+      name: "Ear Pain",
       description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
+        "Evaluation of ear discomfort, pressure, inflammation, infection, and underlying ENT conditions.",
     },
     {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
+      Icon: FiVolume2,
+      name: "Hoarseness",
       description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
+        "Management of voice changes, vocal strain, throat irritation, and vocal cord-related concerns.",
     },
     {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
+      Icon: GiNoseSide,
+      name: "Nasal Congestion",
       description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
+        "Treatment for blocked nasal passages, sinus pressure, breathing difficulties, and congestion symptoms.",
     },
     {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
+      Icon: FiZap,
+      name: "Sore Throat",
       description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
+        "Care for throat irritation, pain, inflammation, infections, and swallowing discomfort.",
     },
     {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
+      Icon: MdOutlineSick,
+      name: "Tonsillitis",
       description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
+        "Diagnosis and treatment of inflamed tonsils causing throat pain, fever, and difficulty swallowing.",
     },
     {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
+      Icon: FiCompass,
+      name: "Vertigo",
       description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
+        "Evaluation and management of dizziness, spinning sensations, balance problems, and vestibular disorders.",
     },
     {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      Icon: FiShield,
+      name: "Sinus Infections",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Treatment for sinus inflammation, facial pressure, nasal discharge, and chronic sinus symptoms.",
+    },
+    {
+      Icon: MdOutlineHearing,
+      name: "Hearing Concerns",
+      description:
+        "Assessment of hearing changes, ear-related symptoms, and conditions affecting auditory health.",
+    },
+    {
+      Icon: FiVolume,
+      name: "Tinnitus",
+      description:
+        "Management of ringing, buzzing, or other sounds in the ears affecting daily life.",
+    },
+    {
+      Icon: GiNoseSide,
+      name: "Allergic Rhinitis",
+      description:
+        "Treatment for allergy-related nasal symptoms, sneezing, congestion, and sinus discomfort.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Swallowing Difficulties",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
-    },
-    {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
-      description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
-    },
-    {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
-      description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
-    },
-    {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
-      description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Evaluation of throat-related conditions that affect swallowing, eating, and daily comfort.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is an ENT specialist?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "An ENT specialist, also known as an otolaryngologist, diagnoses and treats conditions affecting the ears, nose, throat, sinuses, voice, and balance system.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What conditions do ENT specialists treat?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "ENT specialists treat ear infections, ear pain, sinus issues, nasal congestion, sore throat, tonsillitis, vertigo, hearing concerns, and voice disorders.",
     },
     {
-      question:
-        "What conditions can be reviewed through an expert medical opinion?",
+      question: "When should I see an ENT specialist?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "You should seek ENT care for recurring ear infections, persistent sore throat, chronic congestion, dizziness, hearing problems, or voice changes.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "What causes ear infections?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Ear infections are commonly caused by bacterial or viral infections that affect the middle ear and surrounding structures.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "Why does my ear hurt?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
+        "Ear pain may result from infection, inflammation, pressure changes, injury, sinus conditions, or throat-related issues.",
     },
     {
-      question: "What information is needed for a medical review?",
+      question: "What causes chronic nasal congestion?",
       answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
+        "Chronic congestion may be caused by allergies, sinus infections, nasal inflammation, structural issues, or environmental irritants.",
     },
     {
-      question: "Can cancer diagnoses be reviewed?",
+      question: "What is tonsillitis?",
       answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
+        "Tonsillitis is inflammation of the tonsils, often caused by viral or bacterial infections, leading to sore throat and difficulty swallowing.",
     },
     {
-      question: "Are surgery second opinions helpful?",
+      question: "When should a sore throat be evaluated?",
       answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
+        "A sore throat should be evaluated if symptoms are severe, persistent, recurrent, or accompanied by fever or swallowing difficulties.",
     },
     {
-      question: "What is a treatment plan review?",
+      question: "What causes hoarseness?",
       answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
+        "Hoarseness can result from voice strain, infections, allergies, acid reflux, vocal cord irritation, or other throat conditions.",
     },
     {
-      question: "Can expert opinions help with rare diseases?",
+      question: "What is vertigo?",
       answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
+        "Vertigo is a sensation of spinning or movement often caused by inner ear or balance system disorders.",
     },
     {
-      question: "How long does an expert medical opinion take?",
+      question: "Can ENT specialists treat dizziness?",
       answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
+        "Yes. ENT specialists evaluate dizziness, vertigo, and balance-related conditions affecting the inner ear.",
     },
     {
-      question: "Are expert medical opinions available through telehealth?",
+      question: "What is tinnitus?",
       answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
+        "Tinnitus is the perception of ringing, buzzing, or other sounds in the ears without an external source.",
     },
     {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
+      question: "Can allergies affect the ears, nose, and throat?",
       answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
+        "Yes. Allergies commonly cause congestion, sinus pressure, throat irritation, ear discomfort, and other ENT symptoms.",
     },
     {
-      question: "Is an expert medical opinion confidential?",
+      question: "Are telehealth ENT appointments available?",
       answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
+        "Yes. Many ENT consultations, follow-ups, and treatment discussions can be conducted through secure telehealth visits.",
     },
     {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
+      question: "What are common signs of sinus problems?",
       answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
+        "Facial pressure, congestion, headache, nasal discharge, reduced smell, and breathing difficulties may indicate sinus issues.",
     },
     {
-      question: "How much does a second medical opinion cost?",
+      question: "How can I maintain good ENT health?",
       answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
+        "Avoid smoking, manage allergies, stay hydrated, practice good hygiene, and seek medical care for persistent symptoms.",
     },
     {
-      question: "Can I get a second opinion before surgery?",
+      question: "Can children see ENT specialists?",
       answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
+        "Yes. ENT specialists commonly treat ear infections, tonsillitis, hearing concerns, and other ENT conditions in children.",
     },
     {
-      question: "How can I schedule an expert medical opinion consultation?",
+      question: "How can I schedule an appointment with an ENT specialist?",
       answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
     },
   ],
 };
@@ -328,37 +332,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced ENT providers dedicated to evidence-based diagnosis and treatment.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule ENT consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with ENT specialists through virtual consultations and follow-up visits.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from individualized treatment plans based on your symptoms, diagnosis, and healthcare goals.",
   },
   {
     Icon: FiGlobe,
     title: "Global Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access a broad network of ENT specialists and coordinated healthcare services.",
   },
 ];
 
@@ -542,7 +546,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function Ent({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -553,12 +557,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
   return (
     <>
       <HelmetProvider>
-        <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
-        </title>
+        <title>ENT Specialists | Ear, Nose & Throat Care Services</title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Get expert ENT care for ear infections, ear pain, sore throat, tonsillitis, nasal congestion, hoarseness, vertigo, and other ear, nose, and throat conditions."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +705,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists diagnose and manage
+                  a wide range of conditions affecting the ears, nose, throat,
+                  sinuses, voice, and balance system.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +734,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced ENT specialists with advanced
+                  technology to make ear, nose, and throat care more accessible,
+                  convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +792,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Get expert ear, nose, and throat care with convenient
+                appointments, personalized treatment plans, and ongoing support.
+                Schedule an in-person or virtual visit with an ENT specialist
+                today.
               </p>
             </Reveal>
 

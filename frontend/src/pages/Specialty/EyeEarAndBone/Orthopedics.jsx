@@ -36,6 +36,12 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +51,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +63,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +72,256 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "orthopedics",
+  name: "Orthopedics",
+  tagline: "Expert Care for Bones, Joints, Muscles, and Mobility.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Orthopedic specialists diagnose and treat conditions affecting the bones, joints, muscles, ligaments, tendons, and spine. From arthritis and back pain to knee injuries and muscle strains, orthopedic care focuses on reducing pain, restoring mobility, improving function, and helping patients maintain an active lifestyle.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Orthopedics is a medical specialty focused on the prevention, diagnosis, treatment, and rehabilitation of conditions affecting the musculoskeletal system. Orthopedic specialists care for injuries, chronic pain conditions, joint disorders, arthritis, and mobility-related concerns that impact daily activities and overall quality of life.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Through comprehensive evaluations, personalized treatment plans, rehabilitation guidance, and ongoing care, orthopedic specialists help patients improve movement, reduce discomfort, and achieve long-term musculoskeletal health.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Orthopedic specialists diagnose and manage arthritis, osteoarthritis, back pain, knee pain, neck pain, muscle strains, joint injuries, and other conditions affecting bones, muscles, and joints.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a visit with an orthopedic specialist if you experience persistent joint pain, stiffness, swelling, limited mobility, back pain, neck pain, sports injuries, muscle strains, or musculoskeletal discomfort that affects your daily activities.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Joint Pain Evaluation & Treatment",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Comprehensive assessments and treatment plans for joint pain, stiffness, inflammation, and mobility concerns.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Spine & Back Pain Management",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Diagnosis and care for back pain, neck pain, spinal conditions, and musculoskeletal discomfort.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Arthritis & Osteoarthritis Care",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Long-term management strategies to reduce pain, improve joint function, and maintain mobility.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Sports & Muscle Injury Treatment",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Evaluation and treatment of muscle strains, soft tissue injuries, and activity-related orthopedic conditions.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Mobility & Rehabilitation Support",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Personalized recommendations to improve movement, flexibility, strength, and overall physical function.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Preventive Orthopedic Care",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Ongoing monitoring and lifestyle guidance to help prevent future injuries and joint complications.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Reduced Pain & Discomfort",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Helps manage chronic and acute musculoskeletal pain through personalized treatment plans.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Improved Mobility & Function",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Supports healthy movement and restores physical function for daily activities.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Faster Recovery from Injuries",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Provides targeted treatment strategies to promote healing and rehabilitation.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Long-Term Joint & Bone Health",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Helps protect bones, joints, and muscles from future complications and degeneration.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
-      description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
       Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      name: "Arthritis",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Management of joint pain, stiffness, inflammation, swelling, and reduced mobility caused by arthritis.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Back Pain",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Diagnosis and treatment of lower back pain, upper back pain, spinal discomfort, and movement-related pain.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiShield,
+      name: "Knee Pain",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Evaluation and care for knee injuries, arthritis-related knee pain, ligament concerns, and mobility issues.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiZap,
+      name: "Muscle Strain",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Treatment for muscle injuries, overuse conditions, muscle tightness, and soft tissue damage.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiCompass,
+      name: "Neck Pain",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Management of neck stiffness, pain, muscle tension, posture-related issues, and cervical spine conditions.",
+    },
+    {
+      Icon: FiLayers,
+      name: "Osteoarthritis",
+      description:
+        "Comprehensive care for joint degeneration, cartilage wear, chronic pain, and stiffness.",
+    },
+    {
+      Icon: FiAlertCircle,
+      name: "Joint Injuries",
+      description:
+        "Assessment and treatment of sprains, ligament injuries, and joint-related trauma.",
+    },
+    {
+      Icon: FiTool,
+      name: "Tendon Disorders",
+      description:
+        "Care for tendon inflammation, tendon injuries, repetitive strain conditions, and overuse injuries.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Shoulder Pain",
+      description:
+        "Diagnosis and management of shoulder discomfort, reduced mobility, and musculoskeletal injuries.",
+    },
+    {
+      Icon: FiMove,
+      name: "Hip Pain",
+      description:
+        "Evaluation of hip joint pain, stiffness, arthritis, and mobility limitations.",
+    },
+    {
+      Icon: FiTarget,
+      name: "Sports Injuries",
+      description:
+        "Treatment for athletic injuries affecting muscles, joints, ligaments, tendons, and bones.",
+    },
+    {
+      Icon: FiUsers,
+      name: "Mobility & Movement Disorders",
+      description:
+        "Assessment of movement limitations, flexibility concerns, balance issues, and functional impairments.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is orthopedics?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Orthopedics is the medical specialty focused on diagnosing and treating conditions affecting bones, joints, muscles, ligaments, tendons, and the spine.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What conditions do orthopedic specialists treat?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Orthopedic specialists treat arthritis, osteoarthritis, back pain, neck pain, knee pain, sports injuries, muscle strains, and joint disorders.",
+    },
+    {
+      question: "When should I see an orthopedic specialist?",
+      answer:
+        "You should seek orthopedic care if you experience persistent joint pain, stiffness, swelling, reduced mobility, or musculoskeletal injuries.",
+    },
+    {
+      question: "What is arthritis?",
+      answer:
+        "Arthritis is a condition that causes joint inflammation, pain, stiffness, and reduced movement.",
+    },
+    {
+      question: "What is osteoarthritis?",
+      answer:
+        "Osteoarthritis is a degenerative joint condition that occurs when protective cartilage gradually wears down over time.",
+    },
+    {
+      question: "What causes back pain?",
+      answer:
+        "Back pain may result from muscle strain, poor posture, spinal conditions, arthritis, injuries, or repetitive movements.",
+    },
+    {
+      question: "What causes knee pain?",
+      answer:
+        "Knee pain can be caused by arthritis, ligament injuries, tendon problems, cartilage damage, overuse, or trauma.",
+    },
+    {
+      question: "What is a muscle strain?",
+      answer:
+        "A muscle strain occurs when muscle fibers are overstretched or torn due to overuse, improper movement, or injury.",
+    },
+    {
+      question: "When should neck pain be evaluated?",
+      answer:
+        "Neck pain should be evaluated if it persists, worsens, limits movement, or is associated with numbness, weakness, or neurological symptoms.",
+    },
+    {
+      question: "Can orthopedic specialists help with sports injuries?",
+      answer:
+        "Yes. Orthopedic specialists diagnose and treat injuries affecting muscles, joints, ligaments, tendons, and bones related to sports and physical activity.",
+    },
+    {
+      question: "What treatments are commonly used in orthopedics?",
+      answer:
+        "Treatment may include physical therapy, medications, activity modification, rehabilitation, injections, and preventive care strategies.",
+    },
+    {
+      question: "Can arthritis be cured?",
+      answer:
+        "While most forms of arthritis cannot be cured, symptoms can often be effectively managed to improve quality of life and mobility.",
+    },
+    {
+      question: "Are telehealth orthopedic appointments available?",
+      answer:
+        "Yes. Many consultations, follow-up visits, treatment discussions, and rehabilitation guidance can be provided through telehealth.",
+    },
+    {
+      question: "How can I improve joint health?",
+      answer:
+        "Regular exercise, maintaining a healthy weight, proper posture, stretching, and following medical recommendations can support joint health.",
+    },
+    {
+      question: "What are common signs of joint problems?",
+      answer:
+        "Symptoms may include pain, swelling, stiffness, reduced mobility, weakness, instability, and difficulty performing daily activities.",
+    },
+    {
+      question: "Can orthopedic conditions affect mobility?",
+      answer:
+        "Yes. Many musculoskeletal conditions can impact movement, balance, flexibility, strength, and overall physical function.",
+    },
+    {
+      question: "How can I prevent orthopedic injuries?",
+      answer:
+        "Proper warm-ups, strength training, safe exercise techniques, good posture, and injury prevention strategies can reduce risk.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "How can I schedule an appointment with an orthopedic specialist?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
-    },
-    {
-      question: "Is seeking a second opinion common?",
-      answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
-    },
-    {
-      question: "Can an expert medical opinion change my diagnosis?",
-      answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
     },
   ],
 };
@@ -328,37 +338,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced orthopedic providers dedicated to evidence-based musculoskeletal treatment.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule orthopedic consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with orthopedic specialists through virtual consultations and follow-up visits.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from individualized treatment plans tailored to your symptoms, activity level, and health goals.",
   },
   {
     Icon: FiGlobe,
     title: "Global Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access a broad network of orthopedic specialists and coordinated healthcare services.",
   },
 ];
 
@@ -542,7 +552,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function Orthopedics({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +564,11 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Ophthalmology Specialists | Eye Care & Vision Health Services
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Get expert ophthalmology care for dry eyes, eye irritation, eye redness, vision changes, styes, eye strain, and comprehensive vision health support."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +713,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists diagnose and manage
+                  a wide range of eye and vision conditions to help protect your
+                  sight and improve overall eye health.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +742,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced orthopedic specialists with advanced
+                  technology to make musculoskeletal care more accessible,
+                  convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +800,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Take the next step toward better mobility, reduced pain, and
+                improved musculoskeletal health. Schedule an in-person or
+                virtual visit with an orthopedic specialist today and receive
+                personalized care designed to keep you moving.
               </p>
             </Reveal>
 

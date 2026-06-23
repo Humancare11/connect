@@ -36,6 +36,10 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +49,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +61,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +70,256 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "ophthalmology",
+  name: "Ophthalmology",
+  tagline: "Protecting Your Vision with Expert Eye Care.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Ophthalmology specialists diagnose, treat, and manage conditions affecting the eyes, vision, and overall eye health. From dry eyes and eye irritation to vision changes and eye infections, ophthalmologists provide comprehensive care designed to protect sight, relieve discomfort, and support long-term visual wellness.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Ophthalmology is a medical specialty focused on the diagnosis, treatment, prevention, and management of eye diseases and vision-related conditions. Ophthalmologists are trained to evaluate a wide range of eye concerns, from common irritations and infections to more complex vision disorders affecting daily life.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Through comprehensive eye evaluations, personalized treatment plans, preventive care, and ongoing monitoring, ophthalmology specialists help patients maintain healthy vision, identify eye conditions early, and protect long-term eye health.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Ophthalmology specialists diagnose and manage dry eyes, eye irritation, eye redness, vision changes, styes, eye strain, and a wide range of eye and vision-related conditions.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a visit with an ophthalmology specialist if you experience persistent eye discomfort, blurry vision, redness, dryness, irritation, sensitivity to light, eye pain, or sudden changes in vision.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Comprehensive Eye Evaluations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Thorough eye examinations to assess vision, eye health, and identify potential eye conditions.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Dry Eye Treatment",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Personalized care for chronic dry eyes, eye discomfort, irritation, and tear production issues.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Vision Change Assessments",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Evaluation of blurry vision, difficulty focusing, and other visual disturbances affecting daily activities.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Eye Infection & Inflammation Care",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Diagnosis and treatment of eye infections, redness, styes, and inflammatory eye conditions.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Digital Eye Strain Management",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Support for screen-related eye fatigue, discomfort, headaches, and vision strain.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Preventive Eye Health Care",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Routine eye health monitoring and preventive strategies to protect long-term vision.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Early Detection of Eye Conditions",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Identifies vision and eye health concerns before they affect long-term eyesight.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Improved Visual Comfort",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Helps reduce eye irritation, dryness, redness, and vision-related discomfort.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Better Vision & Daily Function",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Supports clearer vision and improved performance in everyday activities.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Long-Term Eye Health Protection",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Provides ongoing monitoring and preventive care to preserve healthy eyesight.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: FiDroplet,
+      name: "Dry Eyes",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
+        "Treatment for eye dryness, burning, irritation, discomfort, and reduced tear production.",
+    },
+    {
+      Icon: FiEye,
+      name: "Eye Irritation",
+      description:
+        "Evaluation and management of itchy, burning, watery, or uncomfortable eyes.",
+    },
+    {
+      Icon: FiAlertCircle,
+      name: "Eye Redness",
+      description:
+        "Care for red, inflamed, irritated eyes caused by infections, allergies, dryness, or other eye conditions.",
+    },
+    {
+      Icon: FiMonitor,
+      name: "Eye Strain",
+      description:
+        "Treatment for tired eyes, digital eye strain, focusing difficulties, and screen-related vision discomfort.",
+    },
+    {
+      Icon: MdOutlineVisibility,
+      name: "Stye",
+      description:
+        "Diagnosis and treatment of painful eyelid bumps, eyelid infections, and gland blockages.",
+    },
+    {
+      Icon: FiEye,
+      name: "Vision Changes",
+      description:
+        "Evaluation of blurry vision, reduced visual clarity, focusing problems, and sudden vision concerns.",
+    },
+    {
+      Icon: FiShield,
+      name: "Allergic Eye Conditions",
+      description:
+        "Management of eye symptoms caused by allergies, environmental triggers, and seasonal factors.",
+    },
+    {
+      Icon: FiSun,
+      name: "Light Sensitivity",
+      description:
+        "Assessment of discomfort caused by bright lights and underlying eye health conditions.",
     },
     {
       Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
+      name: "Watery Eyes",
       description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
+        "Diagnosis and treatment of excessive tearing, tear drainage issues, and eye irritation.",
     },
     {
       Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      name: "Eye Fatigue",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Care for tired, strained eyes associated with reading, computer use, and prolonged visual tasks.",
     },
     {
-      Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      Icon: MdOutlineRemoveRedEye,
+      name: "Eyelid Conditions",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Evaluation of eyelid inflammation, swelling, irritation, and related eye concerns.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiCheckCircle,
+      name: "Preventive Vision Care",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
-    },
-    {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
-      description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
-    },
-    {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
-      description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Routine eye health assessments and preventive care to maintain healthy eyesight.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is ophthalmology?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Ophthalmology is the medical specialty focused on diagnosing, treating, and preventing eye diseases and vision-related conditions.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What conditions do ophthalmologists treat?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Ophthalmologists treat dry eyes, eye irritation, eye redness, vision changes, styes, eye infections, and many other eye health concerns.",
+    },
+    {
+      question: "When should I see an ophthalmologist?",
+      answer:
+        "You should seek eye care if you experience vision changes, eye pain, redness, irritation, dryness, sensitivity to light, or other persistent eye symptoms.",
+    },
+    {
+      question: "What causes dry eyes?",
+      answer:
+        "Dry eyes may result from reduced tear production, aging, environmental factors, screen use, medications, or underlying medical conditions.",
+    },
+    {
+      question: "Why are my eyes red?",
+      answer:
+        "Eye redness can be caused by irritation, allergies, infections, dryness, inflammation, or eye strain.",
+    },
+    {
+      question: "What is eye strain?",
+      answer:
+        "Eye strain occurs when the eyes become tired due to prolonged screen time, reading, driving, or focusing on visual tasks.",
+    },
+    {
+      question: "Can digital screens affect eye health?",
+      answer:
+        "Extended screen use can contribute to eye strain, dryness, blurred vision, headaches, and visual fatigue.",
+    },
+    {
+      question: "What is a stye?",
+      answer:
+        "A stye is a painful bump on the eyelid caused by a blocked or infected oil gland.",
+    },
+    {
+      question: "Are sudden vision changes serious?",
+      answer:
+        "Yes. Sudden vision changes should be evaluated promptly by an eye specialist to determine the underlying cause.",
+    },
+    {
+      question: "What causes blurry vision?",
+      answer:
+        "Blurry vision may result from refractive errors, dry eyes, eye strain, infections, or more serious eye conditions.",
+    },
+    {
+      question: "How often should I have an eye examination?",
+      answer:
+        "Eye examination frequency depends on age, risk factors, vision needs, and existing eye health conditions.",
+    },
+    {
+      question: "Can allergies affect my eyes?",
+      answer:
+        "Yes. Allergies commonly cause itching, redness, watering, irritation, and eye discomfort.",
+    },
+    {
+      question: "What are common symptoms of eye infections?",
+      answer:
+        "Symptoms may include redness, pain, discharge, swelling, irritation, and sensitivity to light.",
+    },
+    {
+      question: "Are telehealth ophthalmology appointments available?",
+      answer:
+        "Yes. Certain eye concerns, consultations, follow-up appointments, and treatment discussions may be available through telehealth.",
+    },
+    {
+      question: "How can I reduce eye strain?",
+      answer:
+        "Taking regular screen breaks, adjusting lighting, staying hydrated, and following healthy eye habits can help reduce eye strain.",
+    },
+    {
+      question: "What are signs of a serious eye problem?",
+      answer:
+        "Severe eye pain, sudden vision loss, flashes of light, significant redness, or sudden visual changes require immediate medical attention.",
+    },
+    {
+      question: "Can dry eyes affect vision?",
+      answer:
+        "Yes. Chronic dry eyes can cause blurry vision, irritation, discomfort, and reduced visual quality.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "How can I schedule an appointment with an ophthalmology specialist?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
-    },
-    {
-      question: "Is seeking a second opinion common?",
-      answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
-    },
-    {
-      question: "Can an expert medical opinion change my diagnosis?",
-      answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
     },
   ],
 };
@@ -328,37 +336,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced eye specialists dedicated to protecting and improving vision health.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule eye care consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with ophthalmology specialists through virtual consultations and follow-up visits.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from individualized eye care treatment plans based on your symptoms and vision needs.",
   },
   {
     Icon: FiGlobe,
     title: "Global Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access a broad network of ophthalmology specialists and coordinated eye care services.",
   },
 ];
 
@@ -542,7 +550,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function Ophthalmology({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +562,11 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Ophthalmology Specialists | Eye Care & Vision Health Services
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Get expert ophthalmology care for dry eyes, eye irritation, eye redness, vision changes, styes, eye strain, and comprehensive vision health support."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +711,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists diagnose and manage
+                  a wide range of eye and vision conditions to help protect your
+                  sight and improve overall eye health.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +740,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced ophthalmology specialists with advanced
+                  technology to make eye care more accessible, convenient, and
+                  personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +798,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Protect your vision with expert eye care, personalized treatment
+                plans, and convenient appointment options. Schedule an in-person
+                or virtual visit with an ophthalmology specialist today.
               </p>
             </Reveal>
 

@@ -36,6 +36,17 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
+  FiHome,
+  FiFileText,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +56,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +68,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +77,257 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "travel-medicine",
+  name: "Travel Medicine",
+  tagline: "Stay Healthy Before, During, and After Your Journey.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Travel Medicine focuses on preventing, identifying, and managing health concerns related to domestic and international travel. Whether you're planning a vacation, business trip, adventure travel, or long-term relocation, travel medicine specialists help you prepare for potential health risks and stay healthy throughout your journey.From travel vaccinations and preventive health planning to post-travel illness evaluations, our specialists provide personalized guidance based on your destination, activities, and health history.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Travel Medicine is a healthcare specialty dedicated to helping travelers prevent and manage health risks associated with domestic and international travel. This includes vaccination recommendations, infectious disease prevention, travel-related illness management, food and water safety guidance, and post-travel health evaluations.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Travel medicine specialists help individuals understand destination-specific risks, prepare for environmental challenges, and access medical support before, during, and after travel.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Travel medicine specialists evaluate and manage altitude sickness, traveler's diarrhea, malaria prevention needs, travel-related fever, food poisoning, post-travel symptoms, and travel vaccination requirements.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Consider a travel medicine consultation before international travel, when visiting high-risk destinations, after returning with unexplained symptoms, or if you need destination-specific vaccination and prevention guidance.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Pre-Travel Health Consultations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Personalized travel health planning based on your destination, itinerary, and medical history.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Travel Vaccination Guidance",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Recommendations for destination-specific vaccines and preventive health measures.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Infectious Disease Prevention",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Strategies to reduce exposure to travel-related illnesses and infectious diseases.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Travel Illness Evaluations",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Assessment and treatment guidance for symptoms experienced during or after travel.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Medication & Prevention Planning",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Travel medication recommendations and preventive healthcare support.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Post-Travel Health Assessments",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Evaluation of symptoms and health concerns following domestic or international travel.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Reduced Health Risks",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
-    },
-    {
-      Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
-      description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Prepare for destination-specific health concerns before you travel.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Better Disease Prevention",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Protect yourself from travel-related infections and illnesses.",
+    },
+    {
+      Icon: FiGlobe,
+      title: "Safer Travel Experiences",
+      description:
+        "Receive expert guidance for healthier and more enjoyable travel.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Faster Recovery Support",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Access professional medical advice if symptoms develop during or after travel.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: FiActivity,
+      name: "Altitude Sickness",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
+        "Evaluation and management of symptoms caused by high-altitude travel, including headaches, nausea, and dizziness.",
     },
     {
       Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
+      name: "Food Poisoning While Traveling",
       description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
+        "Care for gastrointestinal symptoms caused by contaminated food or water during travel.",
     },
     {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
+      Icon: FiShield,
+      name: "Malaria Prevention",
       description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
+        "Risk assessments, prevention strategies, and travel health guidance for malaria-prone destinations.",
     },
     {
       Icon: FiThermometer,
-      name: "Surgery Second Opinion",
+      name: "Post-Travel Symptoms",
       description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
+        "Evaluation of unexplained symptoms that develop after returning from travel.",
     },
     {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
+      Icon: MdOutlineVaccines,
+      name: "Pre-Travel Vaccination",
       description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
+        "Vaccination recommendations and preparation for domestic and international travel.",
     },
     {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
+      Icon: FiAlertCircle,
+      name: "Travel-Related Fever",
       description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
-      description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Assessment of fever occurring during or after travel, including potential infectious causes.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Traveler's Diarrhea",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Treatment recommendations and prevention strategies for common travel-related digestive illnesses.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiCompass,
+      name: "Motion Sickness",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Guidance for preventing and managing nausea, dizziness, and discomfort during travel.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiUsers,
+      name: "Insect Bite Prevention",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Strategies to reduce exposure to mosquito-borne and insect-related illnesses.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiHeart,
+      name: "Travel Medication Planning",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Personalized recommendations for travel medications and emergency health preparedness.",
+    },
+    {
+      Icon: FiMap,
+      name: "Destination-Specific Health Risks",
+      description:
+        "Guidance regarding environmental, infectious, and regional health concerns.",
+    },
+    {
+      Icon: FiGlobe,
+      name: "International Travel Health Support",
+      description:
+        "Comprehensive healthcare planning and support for international travelers.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is travel medicine?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Travel medicine is a healthcare specialty focused on preventing and managing travel-related health concerns.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "When should I schedule a travel medicine appointment?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Ideally, you should schedule an appointment several weeks before your trip to allow time for vaccinations and preparation.",
     },
     {
-      question:
-        "What conditions can be reviewed through an expert medical opinion?",
+      question: "Do I need vaccines before international travel?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "Vaccine recommendations vary depending on your destination, planned activities, and medical history.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "What is traveler's diarrhea?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Traveler's diarrhea is a common digestive illness caused by consuming contaminated food or water while traveling.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "What causes altitude sickness?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
+        "Altitude sickness occurs when the body struggles to adapt to lower oxygen levels at high elevations.",
     },
     {
-      question: "What information is needed for a medical review?",
+      question: "How can I prevent food poisoning while traveling?",
       answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
+        "Practice food and water safety, choose reputable dining options, and follow travel health recommendations.",
     },
     {
-      question: "Can cancer diagnoses be reviewed?",
+      question: "What is malaria?",
       answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
+        "Malaria is a mosquito-borne disease found in certain regions of the world and may require preventive measures.",
     },
     {
-      question: "Are surgery second opinions helpful?",
+      question: "Should I see a doctor if I become sick after travel?",
       answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
+        "Yes. Any unexplained symptoms after travel should be evaluated by a healthcare professional.",
     },
     {
-      question: "What is a treatment plan review?",
+      question: "What are common post-travel symptoms?",
       answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
+        "Common symptoms include fever, diarrhea, fatigue, respiratory symptoms, and unexplained illness.",
     },
     {
-      question: "Can expert opinions help with rare diseases?",
+      question: "Can telehealth be used for travel medicine consultations?",
       answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
+        "Yes. Many travel medicine consultations can be conducted through secure telehealth services.",
     },
     {
-      question: "How long does an expert medical opinion take?",
+      question: "What is a pre-travel consultation?",
       answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
+        "A pre-travel consultation evaluates health risks, vaccination needs, and preventive measures before travel.",
     },
     {
       question:
-        "Will my current doctor be offended if I seek a second opinion?",
+        "Can travel medicine specialists help with prescription medications?",
       answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
+        "Yes. They can provide guidance regarding medication planning and travel health preparedness.",
     },
     {
       question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
+        "What should I do if I develop a fever after international travel?",
       answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
+        "Seek medical advice promptly, especially if you visited areas with infectious disease risks.",
     },
     {
-      question: "How much does a second medical opinion cost?",
+      question: "Are travel vaccinations mandatory?",
       answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
+        "Some destinations require specific vaccinations, while others are strongly recommended.",
     },
     {
-      question: "Can I get a second opinion before surgery?",
+      question: "Can travel medicine help business travelers?",
       answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
+        "Yes. Travel medicine services are valuable for leisure travelers, business travelers, students, and expatriates.",
     },
     {
-      question: "How can I schedule an expert medical opinion consultation?",
+      question: "What health risks vary by destination?",
       answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "Risks may include infectious diseases, environmental hazards, altitude exposure, foodborne illnesses, and insect-borne diseases.",
+    },
+    {
+      question: "How can I reduce my risk of illness while traveling?",
+      answer:
+        "Follow vaccination recommendations, practice hygiene, drink safe water, and follow travel health advice.",
+    },
+    {
+      question: "How can I schedule a travel medicine appointment?",
+      answer:
+        "You can book an appointment online and connect with a travel medicine specialist through virtual or in-person care options.",
     },
   ],
 };
@@ -328,37 +344,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced providers with expertise in travel-related healthcare.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly before departure or after returning home.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with healthcare professionals from anywhere.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage and travel-related medical concerns.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from travel health recommendations tailored to your destination and needs.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted healthcare professionals and coordinated specialty care services.",
   },
 ];
 
@@ -542,7 +558,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function TravelMedicine({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +570,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Global Cross-Border Care | International Telemedicine & Medical
+          Support
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Access global healthcare support through international telemedicine services, cross-border consultations, medication refill assistance, referral coordination, and medical guidance while traveling abroad."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +720,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists provide expert
+                  guidance and care for a wide range of travel-related health
+                  concerns.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +749,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced travel medicine specialists with
+                  advanced telemedicine technology to help travelers stay
+                  healthy wherever their journey takes them.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +807,11 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Connect with a travel medicine specialist for personalized
+                travel health planning, vaccination guidance, illness prevention
+                strategies, and post-travel medical support. Travel confidently
+                with expert healthcare guidance before, during, and after your
+                journey.
               </p>
             </Reveal>
 

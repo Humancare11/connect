@@ -36,6 +36,16 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
+  FiHome,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +55,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +67,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +76,256 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "dermatology",
+  name: "Dermatology",
+  tagline: "Expert Care for Healthy Skin, Hair, and Nails.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Dermatology specialists diagnose, treat, and manage conditions affecting the skin, hair, and nails. Whether you're dealing with acne, eczema, psoriasis, hair loss, skin infections, or chronic skin concerns, dermatology care helps restore skin health, improve confidence, and support overall wellness. Using evidence-based treatments and personalized care plans, dermatologists help patients manage symptoms, prevent complications, and achieve healthier skin, hair, and nails at every stage of life.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Dermatology is the medical specialty focused on diagnosing and treating conditions affecting the skin, hair, nails, and related structures. Skin is the body's largest organ and plays an important role in protecting overall health, making early diagnosis and treatment essential.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Dermatology specialists evaluate both common and complex skin concerns, helping patients manage chronic conditions, treat infections, improve cosmetic concerns, and maintain long-term skin health through preventive care and personalized treatment plans.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Dermatologists diagnose and manage acne, eczema, psoriasis, rosacea, hair loss, hives, fungal skin infections, nail disorders, cold sores, and skin growth concerns.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a dermatology consultation if you experience persistent rashes, acne breakouts, skin irritation, itching, hair thinning, nail changes, suspicious skin growths, or any skin condition affecting your quality of life.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Skin Condition Evaluations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Comprehensive assessments for rashes, skin irritation, infections, and chronic skin concerns.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Acne & Scar Management",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Personalized treatment plans for acne breakouts, blemishes, and acne-related skin concerns.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Hair Loss Evaluations",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Assessment of hair thinning, scalp conditions, and hair growth concerns.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Nail Health Consultations",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Diagnosis and treatment recommendations for nail infections, damage, and abnormalities.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Skin Lesion & Mole Assessments",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Evaluation of moles, skin growths, and changes in skin appearance.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Chronic Skin Disease Management",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Ongoing care for eczema, psoriasis, rosacea, and other long-term skin conditions.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Healthier Skin",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Receive expert treatment that improves skin health, appearance, and comfort.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Early Detection",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Identify skin conditions and concerns before they become more serious.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Improved Confidence",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Address visible skin concerns that may impact self-esteem and daily life.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Long-Term Skin Wellness",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Develop preventive strategies to maintain healthy skin, hair, and nails.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: FiActivity,
+      name: "Acne",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
+        "Treatment for pimples, blackheads, whiteheads, cystic acne, and acne-related skin concerns.",
+    },
+    {
+      Icon: FiZap,
+      name: "Cold Sores",
+      description:
+        "Management of recurring cold sores, lip lesions, and herpes-related skin symptoms.",
     },
     {
       Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
+      name: "Eczema",
       description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
+        "Care for dry, itchy, inflamed skin and chronic eczema flare-ups.",
     },
     {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
+      Icon: FiShield,
+      name: "Fungal Skin Infection",
       description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
-      description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Diagnosis and treatment of fungal infections affecting the skin, scalp, or nails.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Hair Loss",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Evaluation and management of hair thinning, excessive shedding, and scalp-related hair concerns.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiAlertCircle,
+      name: "Hives",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Treatment for itchy, raised skin welts caused by allergic reactions and other triggers.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiSearch,
+      name: "Mole & Skin Checks",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Assessment of moles, skin growths, pigmentation changes, and skin abnormalities.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiTarget,
+      name: "Nail Problems",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Care for nail infections, discoloration, thickened nails, brittle nails, and nail injuries.",
+    },
+    {
+      Icon: FiLayers,
+      name: "Psoriasis",
+      description:
+        "Management of chronic inflammatory skin conditions causing scaling, redness, and irritation.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Rosacea",
+      description:
+        "Treatment for facial redness, visible blood vessels, skin sensitivity, and rosacea flare-ups.",
+    },
+    {
+      Icon: FiCompass,
+      name: "Skin Rashes",
+      description:
+        "Evaluation of unexplained rashes, redness, irritation, itching, and allergic skin reactions.",
+    },
+    {
+      Icon: FiUsers,
+      name: "Sensitive Skin Concerns",
+      description:
+        "Support for skin sensitivity, irritation, and reactions to environmental or skincare triggers.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is dermatology?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Dermatology is the medical specialty focused on diagnosing and treating conditions affecting the skin, hair, and nails.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What conditions do dermatologists treat?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Dermatologists commonly treat acne, eczema, psoriasis, rosacea, fungal infections, hair loss, nail disorders, and skin growth concerns.",
+    },
+    {
+      question: "When should I see a dermatologist?",
+      answer:
+        "You should seek dermatology care if you experience persistent skin symptoms, unusual skin changes, hair loss, or nail concerns.",
+    },
+    {
+      question: "What causes acne?",
+      answer:
+        "Acne can be influenced by hormones, genetics, stress, skincare products, and excess oil production.",
+    },
+    {
+      question: "What is eczema?",
+      answer:
+        "Eczema is a chronic skin condition that causes dry, itchy, inflamed, and irritated skin.",
+    },
+    {
+      question: "Is psoriasis contagious?",
+      answer:
+        "No. Psoriasis is an immune-related skin condition and cannot be spread from person to person.",
+    },
+    {
+      question: "What causes hair loss?",
+      answer:
+        "Hair loss may be related to genetics, hormonal changes, stress, nutritional factors, medical conditions, or scalp disorders.",
+    },
+    {
+      question: "What are hives?",
+      answer:
+        "Hives are itchy, raised welts that may occur due to allergies, infections, medications, or other triggers.",
+    },
+    {
+      question: "What is rosacea?",
+      answer:
+        "Rosacea is a chronic skin condition that commonly causes facial redness, visible blood vessels, and skin sensitivity.",
+    },
+    {
+      question: "Should I be concerned about changing moles?",
+      answer:
+        "Any new or changing mole should be evaluated by a healthcare professional.",
+    },
+    {
+      question: "Can dermatologists treat nail problems?",
+      answer:
+        "Yes. Dermatologists diagnose and manage a wide variety of nail conditions and infections.",
+    },
+    {
+      question: "What causes fungal skin infections?",
+      answer:
+        "Fungal infections are caused by fungi that grow on the skin, scalp, or nails, often in warm and moist environments.",
+    },
+    {
+      question: "Are telehealth dermatology appointments effective?",
+      answer:
+        "Many skin conditions can be evaluated through secure virtual consultations, especially for initial assessments and follow-up care.",
+    },
+    {
+      question: "How can I keep my skin healthy?",
+      answer:
+        "Healthy skin habits include sun protection, hydration, proper skincare, and routine health evaluations.",
+    },
+    {
+      question: "What is a skin check?",
+      answer:
+        "A skin check is an examination of the skin to identify suspicious lesions, moles, growths, or skin changes.",
+    },
+    {
+      question: "Can dermatologists help with cosmetic skin concerns?",
+      answer:
+        "Yes. Many dermatologists provide guidance for acne scars, pigmentation issues, and overall skin appearance.",
+    },
+    {
+      question: "How often should I have my skin evaluated?",
+      answer:
+        "The frequency depends on your age, skin type, family history, and personal risk factors.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "How can I schedule an appointment with a dermatology specialist?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
-    },
-    {
-      question: "Is seeking a second opinion common?",
-      answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
-    },
-    {
-      question: "Can an expert medical opinion change my diagnosis?",
-      answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with a qualified dermatology specialist through virtual or in-person care options.",
     },
   ],
 };
@@ -328,37 +342,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced providers trained in dermatology and skin health.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with dermatology specialists from anywhere using virtual healthcare services.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from treatment plans tailored to your skin type, symptoms, and health goals.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted dermatology professionals and coordinated specialty care services.",
   },
 ];
 
@@ -542,7 +556,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function Dermatology({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -553,12 +567,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
   return (
     <>
       <HelmetProvider>
-        <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
-        </title>
+        <title>Dermatology Specialists | Skin, Hair & Nail Care Online</title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with experienced dermatology specialists for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail problems, and personalized skin care treatment."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +715,8 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists provide expert care
+                  for a wide range of skin, hair, and nail conditions.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +743,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced dermatology specialists with advanced
+                  technology to make skin care more accessible, convenient, and
+                  personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +801,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Get expert care for acne, eczema, psoriasis, hair loss, skin
+                infections, and other dermatology concerns. Schedule an
+                appointment today and receive personalized treatment designed to
+                help you look and feel your best.
               </p>
             </Reveal>
 

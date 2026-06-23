@@ -36,6 +36,17 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
+  FiHome,
+  FiFileText,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +56,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +68,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +77,257 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "lifestyle-medicine",
+  name: "Lifestyle Medicine",
+  tagline: "Build Healthier Habits for a Better Life.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Lifestyle Medicine focuses on preventing, managing, and improving health through sustainable lifestyle changes. By addressing nutrition, physical activity, sleep quality, stress management, and healthy daily habits, lifestyle medicine helps individuals achieve long-term wellness and reduce the risk of chronic disease. Whether your goal is weight management, increased energy, better sleep, improved fitness, or overall health optimization, lifestyle medicine provides personalized guidance designed around your unique needs and goals.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Lifestyle Medicine is a medical specialty that uses evidence-based lifestyle interventions to prevent, manage, and sometimes reverse chronic health conditions. Rather than focusing only on symptoms, lifestyle medicine addresses the root causes of many health concerns through healthier daily choices and sustainable behavior changes.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "This specialty emphasizes nutrition, exercise, sleep, stress reduction, and healthy habits to improve overall well-being, physical health, mental wellness, and quality of life.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Lifestyle medicine specialists help individuals improve nutrition, physical activity, sleep habits, stress management, weight concerns, and overall wellness while supporting chronic disease prevention and long-term health goals.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Consider a lifestyle medicine consultation if you want to improve your overall health, develop healthier habits, lose weight, increase energy, sleep better, prevent chronic disease, or create a personalized wellness plan.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Diet & Exercise Planning",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Personalized nutrition and physical activity plans designed around your health goals and lifestyle.",
     },
     {
-      Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      Icon: FiTrendingUp,
+      title: "Healthy Habit Coaching",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Support for creating sustainable routines that promote long-term wellness and behavior change.",
     },
     {
-      Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      Icon: FiMoon,
+      title: "Sleep Improvement Guidance",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Evidence-based strategies to improve sleep quality, recovery, and overall health.",
     },
     {
-      Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      Icon: FiShield,
+      title: "Preventive Health Planning",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Wellness-focused care designed to reduce future health risks and improve longevity.",
     },
     {
-      Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      Icon: FiHeart,
+      title: "Weight Management Support",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Personalized approaches to healthy weight loss, maintenance, and metabolic wellness.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Lifestyle Optimization Programs",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Comprehensive wellness strategies focused on physical, mental, and emotional health.",
     },
   ],
 
   benefits: [
     {
-      Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      Icon: FiHeart,
+      title: "Better Long-Term Health",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Reduce risk factors associated with chronic conditions through healthier daily habits.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Increased Energy",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Improve physical performance, focus, and daily productivity through lifestyle improvements.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Disease Prevention",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Support healthier outcomes through nutrition, movement, sleep, and preventive care.",
     },
     {
-      Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      Icon: FiSearch,
+      title: "Improved Quality of Life",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Enhance physical, mental, and emotional well-being through sustainable lifestyle changes.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
-      description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
       Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      name: "Diet & Exercise Planning",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Personalized nutrition and fitness strategies designed to support long-term health goals.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Healthy Habit Coaching",
+      description:
+        "Guidance for creating and maintaining healthy daily routines and sustainable behavior changes.",
+    },
+    {
+      Icon: FiMoon,
+      name: "Sleep Hygiene",
+      description:
+        "Support for improving sleep habits, sleep quality, recovery, and overall wellness.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Weight Management",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Personalized approaches to healthy weight loss, weight maintenance, and metabolic health.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiShield,
+      name: "Nutrition Concerns",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Support for improving eating habits, nutritional balance, and overall dietary wellness.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiActivity,
+      name: "Physical Activity Planning",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Customized exercise recommendations designed around fitness levels and health goals.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiZap,
+      name: "Stress Management",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Evidence-based strategies to reduce stress and improve emotional resilience.",
+    },
+    {
+      Icon: FiCompass,
+      name: "Healthy Aging Support",
+      description:
+        "Lifestyle recommendations that promote longevity, vitality, and healthy aging.",
+    },
+    {
+      Icon: FiShield,
+      name: "Chronic Disease Prevention",
+      description:
+        "Preventive health planning focused on reducing risk factors for chronic conditions.",
+    },
+    {
+      Icon: FiDroplet,
+      name: "Energy & Fatigue Concerns",
+      description:
+        "Lifestyle interventions designed to improve energy levels and daily performance.",
+    },
+    {
+      Icon: FiTarget,
+      name: "Wellness Goal Coaching",
+      description:
+        "Personalized support for achieving health, fitness, and wellness objectives.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Preventive Lifestyle Care",
+      description:
+        "Comprehensive health optimization focused on long-term wellness and disease prevention.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is lifestyle medicine?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
-    },
-    {
-      question: "Why should I seek a second medical opinion?",
-      answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Lifestyle medicine is a healthcare specialty focused on improving health through nutrition, exercise, sleep, stress management, and healthy habits.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "How is lifestyle medicine different from traditional healthcare?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "Lifestyle medicine focuses on addressing the root causes of health concerns through sustainable lifestyle changes alongside medical care when appropriate.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "Who can benefit from lifestyle medicine?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Anyone interested in improving wellness, preventing disease, managing chronic conditions, or building healthier habits can benefit.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "What is healthy habit coaching?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
+        "Healthy habit coaching helps individuals create sustainable routines that support long-term health and wellness goals.",
     },
     {
-      question: "What information is needed for a medical review?",
+      question: "Can lifestyle medicine help with weight management?",
       answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
+        "Yes. Lifestyle medicine often includes personalized nutrition, activity, and behavior-change strategies for healthy weight management.",
     },
     {
-      question: "Can cancer diagnoses be reviewed?",
+      question: "What is sleep hygiene?",
       answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
+        "Sleep hygiene refers to healthy sleep habits and practices that improve sleep quality and overall health.",
     },
     {
-      question: "Are surgery second opinions helpful?",
+      question: "Can lifestyle medicine help prevent chronic diseases?",
       answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
+        "Yes. Lifestyle interventions can reduce risk factors associated with many chronic health conditions.",
     },
     {
-      question: "What is a treatment plan review?",
+      question: "What happens during a lifestyle medicine consultation?",
       answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
+        "Providers review your health history, goals, habits, and lifestyle factors to create a personalized wellness plan.",
     },
     {
-      question: "Can expert opinions help with rare diseases?",
+      question: "Can lifestyle medicine improve energy levels?",
       answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
+        "Healthy nutrition, exercise, sleep, and stress management often contribute to improved energy and daily performance.",
     },
     {
       question:
-        "Will my current doctor be offended if I seek a second opinion?",
+        "Is lifestyle medicine only for people with medical conditions?",
       answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
+        "No. Many people use lifestyle medicine to improve wellness and maintain good health.",
     },
     {
-      question: "Is an expert medical opinion confidential?",
+      question: "Can nutrition changes improve overall health?",
       answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
+        "Yes. Nutrition plays a major role in supporting physical health, mental wellness, and disease prevention.",
     },
     {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
+      question: "How important is exercise for long-term health?",
       answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
+        "Regular physical activity supports cardiovascular health, strength, mobility, mental wellness, and longevity.",
     },
     {
-      question: "How much does a second medical opinion cost?",
+      question: "Can telehealth be used for lifestyle medicine consultations?",
       answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
+        "Yes. Many lifestyle medicine appointments can be conducted through secure virtual healthcare services.",
     },
     {
-      question: "Can I get a second opinion before surgery?",
+      question: "What is preventive lifestyle care?",
       answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
+        "Preventive lifestyle care focuses on reducing health risks and promoting long-term wellness before health problems develop.",
     },
     {
-      question: "How can I schedule an expert medical opinion consultation?",
+      question: "How long does it take to see results from lifestyle changes?",
       answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "Results vary depending on goals, consistency, health status, and individual circumstances.",
+    },
+    {
+      question: "Can lifestyle medicine support healthy aging?",
+      answer:
+        "Yes. Healthy lifestyle habits play an important role in maintaining vitality and quality of life as people age.",
+    },
+    {
+      question: "Is lifestyle medicine evidence-based?",
+      answer:
+        "Yes. Lifestyle medicine is based on scientific research supporting nutrition, physical activity, sleep, stress management, and behavior change.",
+    },
+    {
+      question: "How can I schedule a lifestyle medicine consultation?",
+      answer:
+        "You can book an appointment online and connect with a lifestyle medicine specialist through virtual or in-person care options.",
     },
   ],
 };
@@ -328,37 +344,36 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive guidance from experienced providers focused on evidence-based lifestyle interventions.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly and conveniently around your busy schedule.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
-    description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+    description: "Access personalized wellness support securely from anywhere.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage and wellness-related services.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from customized lifestyle recommendations designed around your goals and health history.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted healthcare professionals and coordinated wellness support services.",
   },
 ];
 
@@ -542,7 +557,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +569,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Lifestyle Medicine Specialists | Healthy Habits, Nutrition & Wellness
+          Care
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with lifestyle medicine specialists for diet and exercise planning, healthy habit coaching, sleep improvement, preventive wellness care, and long-term health optimization."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +719,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists help patients
+                  improve overall wellness through healthy habits, preventive
+                  care, and personalized lifestyle interventions.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +748,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced healthcare professionals with advanced
+                  telemedicine technology to help patients build healthier
+                  lifestyles and achieve lasting wellness.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +806,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Take the first step toward a healthier future with personalized
+                lifestyle medicine support. Connect with a specialist to improve
+                nutrition, fitness, sleep, wellness habits, and long-term health
+                outcomes.
               </p>
             </Reveal>
 
