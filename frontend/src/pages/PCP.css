@@ -1,0 +1,170 @@
+/* ─── PCP Page Styles ───────────────────────────────────────────────────────
+   All keyframes, animation utilities, and structural overrides live here so
+   the JSX never injects a <style> tag into the DOM.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Root layout guarantee ── */
+/* <main> can be inline-level in some browser/reset combinations.
+   Force it to be a full-width block so mx-auto containers centre correctly. */
+.pcp-root {
+  display: block;
+  width: 100%;
+}
+
+/* Ensure every section inside PCP fills its track */
+.pcp-root > section {
+  display: block;
+  width: 100%;
+}
+
+/* ── Float keyframes (hero provider card + floating badges) ── */
+@keyframes pcpFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes pcpFloatB {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-7px); }
+}
+
+@keyframes pcpFloatC {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+@keyframes pcpFloatD {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ── Animation utility classes (replace Tailwind arbitrary [animation:…]) ── */
+.pcp-float   { animation: pcpFloat  4s ease-in-out infinite; }
+.pcp-float-b { animation: pcpFloatB 4s ease-in-out infinite 1.2s; }
+.pcp-float-c { animation: pcpFloatC 4s ease-in-out infinite 0.6s; }
+.pcp-float-d { animation: pcpFloatD 4s ease-in-out infinite 1.8s; }
+.pcp-float-e { animation: pcpFloatB 4s ease-in-out infinite 2.4s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pcp-float,
+  .pcp-float-b,
+  .pcp-float-c,
+  .pcp-float-d,
+  .pcp-float-e {
+    animation: none;
+  }
+}
+
+/* ── Hero ── */
+
+/* Desktop hero card composition — centred inside the flex column.
+   min(440px,100%) prevents overflow on lg viewports. */
+.pcp-hero-right-desktop {
+  position: relative;
+  width: min(440px, 100%);
+  height: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── About section left column ── */
+
+/* The negative-inset backdrop plate was leaking outside the grid cell.
+   Scoping overflow to the wrapper stops layout bleed without hiding content. */
+.pcp-about-left-wrapper {
+  position: relative;
+  isolation: isolate;    /* own stacking context — z-20 badge stays inside */
+  overflow: visible;     /* cards can still pop on hover */
+}
+
+/* The backdrop sits at -z-10 inside its own stacking context, so it's
+   always below the tile grid and badge regardless of external z-indices. */
+.pcp-about-backdrop {
+  position: absolute;
+  inset: -8px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+  z-index: -1;
+}
+
+@media (min-width: 640px) {
+  .pcp-about-backdrop { inset: -12px; }
+}
+
+@media (min-width: 1024px) {
+  .pcp-about-backdrop { inset: -16px; }
+}
+
+/* ── Services grid ── */
+
+/* 10 items at lg:3col = 1 orphan card on the last row.
+   `justify-items: stretch` + centering the last item via grid auto-placement
+   is tricky — instead we use auto-fill with minmax so the grid always fills
+   its track evenly, and the last partial row is left-aligned. */
+.pcp-services-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .pcp-services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .pcp-services-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  /* 5 columns, 10 cards = two perfect rows */
+  .pcp-services-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* ── CTA trust points ── */
+
+/* On narrow mobile flex-wrap creates an odd line break midway.
+   Force a consistent 2-column grid on xs, row on sm+. */
+.pcp-cta-trust {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  justify-content: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .pcp-cta-trust {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem 1.5rem;
+  }
+}
+
+/* ── Hover micro-interaction consistency ── */
+
+/* Unified lift across all interactive cards — previously mixed
+   -translate-y-0.5 and -translate-y-1 (2px vs 4px). Using 4px everywhere. */
+.pcp-card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.pcp-card-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* ── Transition scope guard ── */
+
+/* Replace `transition-all` (which animates every CSS property) with
+   targeted properties only. Applied via class to avoid duplicating inline. */
+.pcp-transition {
+  transition: color 0.2s ease, background-color 0.2s ease,
+              border-color 0.2s ease, box-shadow 0.2s ease,
+              transform 0.2s ease, opacity 0.2s ease;
+}

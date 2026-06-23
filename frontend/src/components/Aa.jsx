@@ -16,14 +16,14 @@ import cat4 from "../assets/CATEGORIES/4.png";
 import cat5 from "../assets/CATEGORIES/5.png";
 import cat6 from "../assets/CATEGORIES/6.png";
 
-// specilities
+// specialties
 import sp1 from "../assets/SPECIALITIES/1.png";
 import sp2 from "../assets/SPECIALITIES/2.png";
 import sp3 from "../assets/SPECIALITIES/3.png";
 import sp4 from "../assets/SPECIALITIES/4.png";
 import sp5 from "../assets/SPECIALITIES/5.png";
 import sp6 from "../assets/SPECIALITIES/6.png";
-import sp7 from "../assets/SPECIALITIES/7.png";
+import sp7 from "../assets/SPECIALITIES/7.png"; // was imported but unused — now used
 
 // conditions
 import cod1 from "../assets/CONDITIONS/1.png";
@@ -44,7 +44,8 @@ export default function SpecialtiesSection() {
   /* ── Sliding pill position ── */
   useEffect(() => {
     const pill = pillRef.current;
-    const idx = activeTab === "categories" ? 0 : activeTab === "specialties" ? 1 : 2;
+    const idx =
+      activeTab === "categories" ? 0 : activeTab === "specialties" ? 1 : 2;
     const tab = tabRefs.current[idx];
 
     const updatePill = () => {
@@ -54,10 +55,7 @@ export default function SpecialtiesSection() {
       }
     };
 
-    // rAF ensures the DOM has reflowed (critical on mobile where tabs go full-width)
     const raf = requestAnimationFrame(updatePill);
-
-    // ResizeObserver keeps pill in sync if the tab bar changes width (orientation change, resize)
     const ro = new ResizeObserver(() => requestAnimationFrame(updatePill));
     if (pill && pill.parentElement) ro.observe(pill.parentElement);
 
@@ -88,39 +86,127 @@ export default function SpecialtiesSection() {
     setActiveTab(tab);
   };
 
-const categories = [
-  { img: cat1, name: "Heart & Vascular", count: "52 doctors" },
-  { img: cat2, name: "Brain & Nerves", count: "36 doctors" },
-  { img: cat3, name: "Mental Wellness", count: "76 doctors" },
-  { img: cat4, name: "Child Health", count: "41 doctors" },
-  { img: cat5, name: "Bones & Joints", count: "29 doctors" },
-  { img: cat6, name: "Respiratory", count: "33 doctors" },
-  { img: cat1, name: "Women's Health", count: "44 doctors" },
-  { img: cat2, name: "Genetics & Labs", count: "18 doctors" },
-];
+  const categories = [
+    {
+      img: cat1,
+      name: "Child & Family Care",
+      specialties: "2 Specialties",
+      conditions: "8 Conditions",
+      path: "/child-family-care",
+    },
+    {
+      img: cat2,
+      name: "Chronic Care & Expert Opinion",
+      specialties: "6 Specialties",
+      conditions: "34 Conditions",
+      path: "/chronic-care-export-opinion",
+    },
+    {
+      img: cat3,
+      name: "Eye Ear Bone",
+      specialties: "3 Specialties",
+      conditions: "19 Conditions",
+      path: "/eye-ear-bone",
+    },
+    {
+      img: cat4,
+      name: "General Everyday Care",
+      specialties: "3 Specialties",
+      conditions: "17 Conditions",
+      path: "/general-everyday-care",
+    },
+    {
+      img: cat5,
+      name: "Men Health",
+      specialties: "2 Specialties",
+      conditions: "10 Conditions",
+      path: "/men-health",
+    },
+    {
+      img: cat6,
+      name: "Women Health",
+      specialties: "4 Specialties",
+      conditions: "19 Conditions",
+      path: "/women-health",
+    },
+    {
+      img: cat1,
+      name: "Sexual Health",
+      specialties: "1 Specialties",
+      conditions: "7 Conditions",
+      path: "/sexual-health",
+    },
+    {
+      img: cat2,
+      name: "Mental Health",
+      specialties: "3 Specialties",
+      conditions: "17 Conditions",
+      path: "/mental-health",
+    },
+  ];
 
-const specialties = [
-  { img: sp1, name: "Primary Care", count: "48 doctors", path: "/primary-care" },
-  { img: sp2, name: "Neurology", count: "32 doctors" },
-  { img: sp3, name: "Mental Health", count: "76 doctors" },
-  { img: sp4, name: "Pediatrics", count: "41 doctors" },
-  { img: sp5, name: "Orthopedics", count: "29 doctors" },
-  { img: sp6, name: "Ophthalmology", count: "22 doctors" },
-  { img: sp7, name: "Cardiology", count: "98 doctors" },
+  const specialties = [
+    {
+      img: sp1,
+      name: "Adolescent Medicine",
+      conditions: "8 Conditions",
+      path: "/adolescent-medicine",
+    },
+    {
+      img: sp2,
+      name: "Pediatrics",
+      conditions: "32 Conditions",
+      path: "/pediatrics",
+    },
+    {
+      img: sp3,
+      name: "Ear, Nose, Throat",
+      conditions: "7 Conditions",
+      path: "/ear-nose-throat",
+    },
+    {
+      img: sp4,
+      name: "Opthalmology",
+      conditions: "6 Conditions",
+      path: "/opthalmology",
+    },
+    {
+      img: sp5,
+      name: "Orthopedics",
+      conditions: "6 Conditions",
+      path: "/orthopedics",
+    },
+    {
+      img: sp6,
+      name: "Brain & Nerves",
+      conditions: "32 Conditions",
+      path: "/care/brain-and-nerves",
+    },
+    {
+      img: sp7,
+      name: "Behaviorial Health",
+      conditions: "4 Conditions",
+      path: "/cardiology",
+    },
+    {
+      img: sp2,
+      name: "Dermatology",
+      conditions: "12 Conditions",
+      path: "/dermatology",
+    },
+  ];
 
-  { img: cod8, name: "Dermatology", count: "35 doctors" },
-];
+  const condition = [
+    { img: cod1, name: "Fever", count: "120 doctors", path: "/fever" },
+    { img: cod2, name: "Headache", count: "95 doctors", path: "/headache" },
+    { img: cod3, name: "Cold & Cough", count: "110 doctors", path: "/cold-cough" },
+    { img: cod4, name: "Chest Pain", count: "60 doctors", path: "/chest-pain" },
+    { img: cod5, name: "Joint Pain", count: "70 doctors", path: "/joint-pain" },
+    { img: cod6, name: "Eye Problems", count: "40 doctors", path: "/eye-problems" },
+    { img: cod7, name: "Stress", count: "85 doctors", path: "/stress" },
+    { img: cod8, name: "Skin Issues", count: "55 doctors", path: "/skin-issues" },
+  ];
 
-const condition = [
-  { img: cod1, name: "Fever", count: "120 doctors" },
-  { img: cod2, name: "Headache", count: "95 doctors" },
-  { img: cod3, name: "Cold & Cough", count: "110 doctors" },
-  { img: cod4, name: "Chest Pain", count: "60 doctors" },
-  { img: cod5, name: "Joint Pain", count: "70 doctors" },
-  { img: cod6, name: "Eye Problems", count: "40 doctors" },
-  { img: cod7, name: "Stress", count: "85 doctors" },
-  { img: cod8, name: "Skin Issues", count: "55 doctors" },
-];
   const data =
     activeTab === "categories"
       ? categories
@@ -149,15 +235,13 @@ const condition = [
       id="specialties"
       style={{ scale, opacity, y }}
     >
-
-
       <div className="aa-container">
 
         {/* ── Header ── */}
         <div className="aa-header">
           <div className="aa-header-content">
-            <span className="aa-eyebrow">Discover Specialties</span>
-            <h2 className="aa-title">Care for every part of you.</h2>
+            <span className="aa-eyebrow">Discover Care</span>
+            <h2 className="aa-title">Discover the Care That's Right for You.</h2>
           </div>
 
           <div className="aa-tabs">
@@ -190,7 +274,9 @@ const condition = [
         <div className="aa-grid-wrapper">
           <div className="aa-grid">
             {data.map((item, index) => (
-              <div
+              // ✅ fix #1 — wrap card in Link so clicking navigates
+              <Link
+                to={item.path || "#"}
                 className="aa-card"
                 key={`${activeTab}-${index}`}
                 style={{ animationDelay: `${index * 55}ms` }}
@@ -204,17 +290,31 @@ const condition = [
                 <div className="aa-card-gradient" />
 
                 {/* Glass panel — slides up on hover */}
+                {/* ✅ fix #3 — show correct fields per tab on hover panel */}
                 <div className="aa-card-glass">
                   <h3 className="aa-name">{item.name}</h3>
-                  <p className="aa-count">{item.count}</p>
+                  <div className="aa-count-wrap">
+                    {activeTab === "conditions" ? (
+                      <p className="aa-count">{item.count}</p>
+                    ) : (
+                      <>
+                        <p className="aa-count">{item.specialties}</p>
+                        <p className="aa-count">{item.conditions}</p>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                {/* Resting text — always visible, fades out on hover */}
+                {/* ✅ fix #2 + #6 — resting body: show name + correct meta field only */}
                 <div className="aa-card-body">
                   <h3 className="aa-name">{item.name}</h3>
-                  <p className="aa-count">{item.count}</p>
+                  {activeTab === "conditions" ? (
+                    <p className="aa-count">{item.count}</p>
+                  ) : (
+                    <p className="aa-count">{item.conditions}</p>
+                  )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

@@ -131,7 +131,7 @@ export default function ServicesSection() {
                   Need a medication refill without the wait? Connect with a licensed provider through a fast online doctor appointment and receive prescription refill support the same day through our secure virtual healthcare services.
 
                 </p>
-                <a href="#" className="services-card-cta-link">
+                <a href="/online-prescription-refills" className="services-card-cta-link">
                   Refill Prescription →
                 </a>
               </div>
@@ -160,7 +160,6 @@ export default function ServicesSection() {
             <h3 className="services-card-title">Weight Loss Programs</h3>
             <p className="services-card-description">
               Personalized virtual weight loss programs with licensed providers, GLP-1 treatment support, lifestyle coaching, and ongoing telehealth services designed to help you reach long-term health goals safely.
-
             </p>
 
             <div className="services-weight-stat-block">

@@ -15,18 +15,57 @@ import {
   BookOpen,
   RefreshCw,
   Mail,
-  ShieldAlert
+  ShieldAlert,
+  MapPin,
 } from "lucide-react";
-
 
 function SectionCard({ icon: Icon, title, children }) {
   return (
-    <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", padding: "28px", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", paddingBottom: "20px", marginBottom: "20px", borderBottom: "1px solid #f1f5f9" }}>
-        <div style={{ width: "36px", height: "36px", flexShrink: 0, borderRadius: "10px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid #e2e8f0",
+        borderRadius: "16px",
+        padding: "28px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          paddingBottom: "20px",
+          marginBottom: "20px",
+          borderBottom: "1px solid #f1f5f9",
+        }}
+      >
+        <div
+          style={{
+            width: "36px",
+            height: "36px",
+            flexShrink: 0,
+            borderRadius: "10px",
+            background: "#f1f5f9",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#64748b",
+          }}
+        >
           <Icon size={17} strokeWidth={1.75} />
         </div>
-        <h2 style={{ fontSize: "16px", fontWeight: 600, color: "#0f172a", margin: 0, letterSpacing: "-0.01em" }}>{title}</h2>
+        <h2
+          style={{
+            fontSize: "16px",
+            fontWeight: 600,
+            color: "#0f172a",
+            margin: 0,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {title}
+        </h2>
       </div>
       {children}
     </div>
@@ -35,12 +74,47 @@ function SectionCard({ icon: Icon, title, children }) {
 
 export default function ProviderTermsofService() {
   return (
-    <div style={{ width: "100%", minHeight: "100vh", background: "#f1f5f9", fontFamily: "system-ui, -apple-system, sans-serif", boxSizing: "border-box" }}>
-
+    <div
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        background: "#f1f5f9",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        boxSizing: "border-box",
+      }}
+    >
       {/* ── Banner — */}
-      <div style={{ width: "100%", background: "#fff", borderBottom: "1px solid #e2e8f0" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "28px 150px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "#94a3b8", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 10px", margin: "80px 0 12px" }}>
+      <div
+        style={{
+          width: "100%",
+          background: "#fff",
+          borderBottom: "1px solid #e2e8f0",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "28px 150px",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "11px",
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#94a3b8",
+              background: "#f1f5f9",
+              border: "1px solid #e2e8f0",
+              borderRadius: "6px",
+              padding: "4px 10px",
+              margin: "80px 0 12px",
+            }}
+          >
             <ShieldCheck size={11} />
             HUMANCARE CONNECT, INC.
           </div>
@@ -52,7 +126,7 @@ export default function ProviderTermsofService() {
               margin: "15px 0 4px",
             }}
           >
-           Provider Terms of Service
+            Provider Terms of Service
           </h1>
 
           <p
@@ -69,8 +143,16 @@ export default function ProviderTermsofService() {
 
       {/* ── Main Content  ── */}
       <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: "750px", padding: "36px 24px 60px", display: "flex", flexDirection: "column", gap: "16px" }}>
-
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "750px",
+            padding: "36px 24px 60px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
           {/* Notice */}
           <div
             style={{
@@ -92,9 +174,9 @@ export default function ProviderTermsofService() {
           {/* Agreement and acceptance*/}
           <SectionCard icon={ShieldCheck} title=" Agreement and Acceptance">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
-              These Provider Terms of Service ("Provider Agreement") constitute a
-              legally binding agreement between you ("Provider," "Physician," or
-              "you") and Humancare Connect, Inc.
+              These Provider Terms of Service ("Provider Agreement") constitute
+              a legally binding agreement between you ("Provider," "Physician,"
+              or "you") and Humancare Connect, Inc.
             </p>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
@@ -105,43 +187,74 @@ export default function ProviderTermsofService() {
           </SectionCard>
 
           {/* Provider Eligibility and Credentials */}
-          <SectionCard icon={UserCheck} title=" Provider Eligibility and Credentials">
+          <SectionCard
+            icon={UserCheck}
+            title=" Provider Eligibility and Credentials"
+          >
             <ul>
               <li>• Hold a current unrestricted U.S. medical license</li>
-              <li>• Maintain board certification or eligibility where applicable</li>
-              <li>• Carry malpractice insurance with minimum coverage of $1M / $3M</li>
+              <li>
+                • Maintain board certification or eligibility where applicable
+              </li>
+              <li>
+                • Carry malpractice insurance with minimum coverage of $1M / $3M
+              </li>
               <li>• Have no suspended or revoked license</li>
-              <li>• Not be excluded from Medicare, Medicaid, or healthcare programs</li>
-              <li>• Be authorized to work and practice medicine in the United States</li>
+              <li>
+                • Not be excluded from Medicare, Medicaid, or healthcare
+                programs
+              </li>
+              <li>
+                • Be authorized to work and practice medicine in the United
+                States
+              </li>
               <li>• Be at least 18 years old</li>
             </ul>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               Humancare Connect reserves the right to verify credentials and
-              conduct ongoing monitoring through NPDB and state licensing boards.
+              conduct ongoing monitoring through NPDB and state licensing
+              boards.
             </p>
           </SectionCard>
 
           {/* Independent Contractor Relationship */}
-          <SectionCard icon={UserCheck} title=" Provider Eligibility and Credentials">
+          <SectionCard
+            icon={UserCheck}
+            title=" Provider Eligibility and Credentials"
+          >
             <ul>
               <li>• Hold a current unrestricted U.S. medical license</li>
-              <li>• Maintain board certification or eligibility where applicable</li>
-              <li>• Carry malpractice insurance with minimum coverage of $1M / $3M</li>
+              <li>
+                • Maintain board certification or eligibility where applicable
+              </li>
+              <li>
+                • Carry malpractice insurance with minimum coverage of $1M / $3M
+              </li>
               <li>• Have no suspended or revoked license</li>
-              <li>• Not be excluded from Medicare, Medicaid, or healthcare programs</li>
-              <li>• Be authorized to work and practice medicine in the United States</li>
+              <li>
+                • Not be excluded from Medicare, Medicaid, or healthcare
+                programs
+              </li>
+              <li>
+                • Be authorized to work and practice medicine in the United
+                States
+              </li>
               <li>• Be at least 18 years old</li>
             </ul>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               Humancare Connect reserves the right to verify credentials and
-              conduct ongoing monitoring through NPDB and state licensing boards.
+              conduct ongoing monitoring through NPDB and state licensing
+              boards.
             </p>
           </SectionCard>
 
           {/* Independent  */}
-          <SectionCard icon={Briefcase} title=" Independent Contractor Relationship">
+          <SectionCard
+            icon={Briefcase}
+            title=" Independent Contractor Relationship"
+          >
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               Providers are independent contractors and not employees, agents,
               partners, or representatives of Humancare Connect.
@@ -155,8 +268,8 @@ export default function ProviderTermsofService() {
             </ul>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
-              Humancare Connect provides technology infrastructure only. Clinical
-              judgment remains solely yours.
+              Humancare Connect provides technology infrastructure only.
+              Clinical judgment remains solely yours.
             </p>
           </SectionCard>
           {/* Scope of service */}
@@ -188,14 +301,14 @@ export default function ProviderTermsofService() {
           <SectionCard icon={DollarSign} title="Compensation">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               Compensation rates, payment schedules, and reimbursement terms are
-              governed by your separate Provider Compensation Agreement or provider
-              dashboard.
+              governed by your separate Provider Compensation Agreement or
+              provider dashboard.
             </p>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
-              Humancare Connect reserves the right to withhold payment for services
-              that violate applicable law, professional standards, or this
-              Agreement.
+              Humancare Connect reserves the right to withhold payment for
+              services that violate applicable law, professional standards, or
+              this Agreement.
             </p>
           </SectionCard>
           {/* Platform use and conduct */}
@@ -235,16 +348,16 @@ export default function ProviderTermsofService() {
           {/* quick assurance */}
           <SectionCard icon={ShieldCheck} title="Quality Assurance">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
-              Humancare Connect may conduct quality assurance reviews for platform
-              compliance and service quality purposes.
+              Humancare Connect may conduct quality assurance reviews for
+              platform compliance and service quality purposes.
             </p>
           </SectionCard>
           {/* intellectual property */}
           <SectionCard icon={Copyright} title="Intellectual Property">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               Providers grant Humancare Connect a non-exclusive, royalty-free
-              license to use their name, credentials, biography, and likeness for
-              platform operations and marketing.
+              license to use their name, credentials, biography, and likeness
+              for platform operations and marketing.
             </p>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
@@ -255,8 +368,9 @@ export default function ProviderTermsofService() {
           {/* confidentiality */}
           <SectionCard icon={Lock} title="Confidentiality">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
-              Providers must keep confidential all non-public information relating
-              to Humancare Connect's business, technology, and operations.
+              Providers must keep confidential all non-public information
+              relating to Humancare Connect's business, technology, and
+              operations.
             </p>
           </SectionCard>
           {/* terms and trmination */}
@@ -278,16 +392,16 @@ export default function ProviderTermsofService() {
           <SectionCard icon={ShieldAlert} title=" Limitation of Liability">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               To the maximum extent permitted by law, Humancare Connect's total
-              liability shall not exceed the fees paid to the Provider during the
-              three months preceding the claim.
+              liability shall not exceed the fees paid to the Provider during
+              the three months preceding the claim.
             </p>
           </SectionCard>
           {/* indemnification */}
           <SectionCard icon={Scale} title=" Indemnification">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
-              Providers agree to indemnify and hold harmless Humancare Connect and
-              its affiliates from claims arising from medical services, legal
-              violations, professional conduct, or patient claims.
+              Providers agree to indemnify and hold harmless Humancare Connect
+              and its affiliates from claims arising from medical services,
+              legal violations, professional conduct, or patient claims.
             </p>
           </SectionCard>
           {/* dispute Resolution */}
@@ -314,42 +428,138 @@ export default function ProviderTermsofService() {
           </SectionCard>
           {/* Contact */}
           {/* Contact */}
-                    <SectionCard icon={Mail} title="Contact & privacy requests">
-                      <p style={{ fontSize: "14px", color: "#64748b", lineHeight: 1.8, margin: "0 0 20px" }}>
-                        Questions about this policy or want to exercise your rights? Reach out to our privacy team — we respond
-                        to all verified requests within 30 days.
-                      </p>
-          
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "20px" }}>
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "16px" }}>
-                          <div style={{ width: "32px", height: "32px", flexShrink: 0, borderRadius: "8px", background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
-                            <Mail size={14} strokeWidth={1.75} />
-                          </div>
-                          <div>
-                            <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#94a3b8", margin: "0 0 3px" }}>Email</p>
-                            <a href="mailto:support@humancareconnect.com" style={{ fontSize: "13px", color: "#2563eb", textDecoration: "none" }}>
-                              support@humancareconnect.com
-                            </a>
-                          </div>
-                        </div>
-          
-                        <div style={{ height: "1px", background: "#e2e8f0", margin: "0 0 16px" }} />
-          
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
-                          <div style={{ width: "32px", height: "32px", flexShrink: 0, borderRadius: "8px", background: "#fff", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
-                            <MapPin size={14} strokeWidth={1.75} />
-                          </div>
-                          <div>
-                            <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#94a3b8", margin: "0 0 3px" }}>Mailing address</p>
-                            <p style={{ fontSize: "13px", color: "#334155", lineHeight: 1.65, margin: 0 }}>
-                              131 Continental Dr, Suite 305<br />Newark, DE 19713
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </SectionCard>
-          
+          <SectionCard icon={Mail} title="Contact & privacy requests">
+            <p
+              style={{
+                fontSize: "14px",
+                color: "#64748b",
+                lineHeight: 1.8,
+                margin: "0 0 20px",
+              }}
+            >
+              Questions about this policy or want to exercise your rights? Reach
+              out to our privacy team — we respond to all verified requests
+              within 30 days.
+            </p>
 
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "12px",
+                padding: "20px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "14px",
+                  marginBottom: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    flexShrink: 0,
+                    borderRadius: "8px",
+                    background: "#fff",
+                    border: "1px solid #e2e8f0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#94a3b8",
+                  }}
+                >
+                  <Mail size={14} strokeWidth={1.75} />
+                </div>
+                <div>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.07em",
+                      color: "#94a3b8",
+                      margin: "0 0 3px",
+                    }}
+                  >
+                    Email
+                  </p>
+                  <a
+                    href="mailto:support@humancareconnect.com"
+                    style={{
+                      fontSize: "13px",
+                      color: "#2563eb",
+                      textDecoration: "none",
+                    }}
+                  >
+                    support@humancareconnect.com
+                  </a>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  height: "1px",
+                  background: "#e2e8f0",
+                  margin: "0 0 16px",
+                }}
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "14px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    flexShrink: 0,
+                    borderRadius: "8px",
+                    background: "#fff",
+                    border: "1px solid #e2e8f0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#94a3b8",
+                  }}
+                >
+                  <MapPin size={14} strokeWidth={1.75} />
+                </div>
+                <div>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.07em",
+                      color: "#94a3b8",
+                      margin: "0 0 3px",
+                    }}
+                  >
+                    Mailing address
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: "#334155",
+                      lineHeight: 1.65,
+                      margin: 0,
+                    }}
+                  >
+                    131 Continental Dr, Suite 305
+                    <br />
+                    Newark, DE 19713
+                  </p>
+                </div>
+              </div>
+            </div>
+          </SectionCard>
         </div>
       </div>
     </div>
