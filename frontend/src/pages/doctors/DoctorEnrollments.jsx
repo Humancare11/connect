@@ -7,9 +7,12 @@ import PhoneInputField, {
   getFlagUrl,
   findCountryByName,
 } from "../../components/PhoneInputField";
+// import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
+import { Country, State, City } from "country-state-city";
 // ─── Constants ───
+
 
 const SPECIALTIES = [
   "General Practice",
@@ -934,6 +937,7 @@ function MultiSelect({
   const triggerRef = useRef();
   const dropdownRef = useRef();
   const searchInputRef = useRef();
+  const searchInputRef = useRef();
   const position = useDropdownPosition(triggerRef, open);
 
   useEffect(() => {
@@ -1779,6 +1783,7 @@ export default function DoctorOnboardingWizard({
   const [submitSuccess, setSubmitSuccess] = useState("");
 
   const isUS = s1.country === "US";
+  const isUS = s1.country === "US";
   const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
   const otherCountryOptions = countries.filter((c) => c.isoCode !== s1.country);
   const mobileValue = `${s1.countryCode || ""}${s1.phone || ""}`;
@@ -1827,9 +1832,9 @@ export default function DoctorOnboardingWizard({
         ? rawLangs
         : typeof rawLangs === "string" && rawLangs.trim()
           ? rawLangs
-              .split(",")
-              .map((l) => l.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((l) => l.trim())
+            .filter(Boolean)
           : [],
     );
     setS2({
@@ -1896,7 +1901,7 @@ export default function DoctorOnboardingWizard({
       if (Array.isArray(d.otherLicenseCountries))
         setOtherLicenseCountries(d.otherLicenseCountries);
       if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
-    } catch {}
+    } catch { }
   }, [doctorId, initialData]);
 
   // Auto-detect timezone on mount.
@@ -1927,7 +1932,7 @@ export default function DoctorOnboardingWizard({
     try {
       const iana = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (iana) setTimezone((prev) => prev || matchTz(iana));
-    } catch {}
+    } catch { }
 
     // ── Step 2: async IP-based refinement (best-effort, 3 fallback APIs) ───
     const fetchTz = async (url, extract) => {
@@ -2008,7 +2013,7 @@ export default function DoctorOnboardingWizard({
             completedSteps,
             currentStep,
           })
-          .catch(() => {});
+          .catch(() => { });
       }, 250);
     },
     [doctorId],
@@ -2104,7 +2109,7 @@ export default function DoctorOnboardingWizard({
         `hc_enroll_draft_${doctorId}`,
         JSON.stringify(draftData),
       );
-    } catch {}
+    } catch { }
     setDraftSaved(true);
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => setDraftSaved(false), 2500);
@@ -2194,14 +2199,14 @@ export default function DoctorOnboardingWizard({
       // setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
       try {
         localStorage.removeItem(`hc_enroll_draft_${doctorId}`);
-      } catch {}
+      } catch { }
       setStep(5);
       if (enrollment && typeof onComplete === "function")
         onComplete(enrollment);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-          "Failed to submit enrollment. Please try again.",
+        "Failed to submit enrollment. Please try again.",
       );
     } finally {
       setSubmitBusy(false);
@@ -2352,25 +2357,20 @@ export default function DoctorOnboardingWizard({
             <label className="field-label">
               Country <span className="req">*</span>
             </label>
-
             <select
               className={`field-select ${s1Errors.country ? "error" : ""}`}
               value={s1.country}
-              disabled={!countryApi}
-              onChange={(e) =>
-                setS1((prev) => ({
-                  ...prev,
-                  country: e.target.value,
-                  state: "",
-                  city: "",
-                }))
-              }
+              onChange={(e) => {
+                setS1({ ...s1, country: e.target.value, state: "", city: "" });
+                setLicensedStates([]);
+                setOtherLicenseCountries([]);
+              }}
             >
               <option value="">
                 {countryApi ? "Select country..." : "Loading countries..."}
               </option>
 
-              {countries.map((country) => (
+              {countries.map(country => (
                 <option key={country.isoCode} value={country.isoCode}>
                   {country.name}
                 </option>
@@ -2379,6 +2379,18 @@ export default function DoctorOnboardingWizard({
             {s1Errors.country && (
               <div className="field-error">{s1Errors.country}</div>
             )}
+              {!hasStates && !hasCities && s1.country && (
+  <div
+    style={{
+      fontSize: 13,
+      color: "var(--red-500)",
+      marginTop: 6,
+      
+    }}
+  >
+    This country does not have state or city data available.
+  </div>
+)}
           </div>
           <div className="location-row">
             {hasStates && (
@@ -3052,15 +3064,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3209,15 +3221,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3346,15 +3358,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}

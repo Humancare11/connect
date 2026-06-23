@@ -9,7 +9,8 @@ import React, {
 import "./home.css";
 const Sa = lazy(() => import("../components/Sa"));
 const Aa = lazy(() => import("../components/Aa"));
-import sceneVideo from "../assets/gifts/scene-card-bg-video.mp4";
+// import sceneVideo from "../assets/gifts/scene-card-bg-video.mp4";
+import sceneVideo from "../assets/gifts/HeroVideo.mp4";
 import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
 const LogoMarquee = lazy(() => import("../components/LogoMarquee"));
@@ -543,8 +544,8 @@ export default function HomePage() {
           </div>
 
           <h1>
-            Talk to a <span className="fancy-underline">licensed doctor</span>
-            <br />
+            Talk to a <span className="fancy-underline">licensed doctor </span>
+            {/* <br /> */}
             in minutes.
           </h1>
 
@@ -593,8 +594,9 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              500+ Verified Doctors
+              Board-certified
             </span>
+
             <span className="trust-chip">
               <svg
                 width="12"
@@ -604,10 +606,9 @@ export default function HomePage() {
                 strokeWidth="2.5"
                 viewBox="0 0 24 24"
               >
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Prescriptions Available
+              Rx/Doctor's Note
             </span>
           </div>
           {/* SEARCH BAR */}

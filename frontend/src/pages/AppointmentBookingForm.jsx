@@ -276,7 +276,9 @@ function PaymentStage({
     }
     setStripeCreating(true);
     try {
-      const res = await api.post("/api/payments/create-intent-by-amount", { amountUsd: amount });
+      const res = await api.post("/api/payments/create-intent-by-amount", {
+        amountUsd: amount,
+      });
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
@@ -290,7 +292,9 @@ function PaymentStage({
   };
 
   const createPaypalOrder = async () => {
-    const res = await api.post("/api/paypal/create-order-by-amount", { amountUsd: amount });
+    const res = await api.post("/api/paypal/create-order-by-amount", {
+      amountUsd: amount,
+    });
     return res.data.orderId;
   };
 
@@ -313,7 +317,13 @@ function PaymentStage({
   };
 
   return (
-    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "INR", intent: "capture" }}>
+    <PayPalScriptProvider
+      options={{
+        "client-id": PAYPAL_CLIENT_ID,
+        currency: "INR",
+        intent: "capture",
+      }}
+    >
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
           <svg
@@ -357,7 +367,9 @@ function PaymentStage({
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">${amount?.toLocaleString("en-IN")}</strong>
+            <strong className="ap-pay-fee-amount">
+              ${amount?.toLocaleString("en-IN")}
+            </strong>
           </div>
         </div>
 
@@ -610,6 +622,9 @@ export default function AppointmentBookingForm() {
     const e = {};
     if (!form.date) e.date = "Please select a date.";
     if (!form.time) e.time = "Please choose a time slot.";
+    if (!form.notes.trim()) {
+      e.notes = "Please describe your problem.";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -904,7 +919,7 @@ export default function AppointmentBookingForm() {
             <div className="ap-divider" />
 
             {/* ── Step 3: Problem description ── */}
-            <div className="ap-step">
+            {/* <div className="ap-step">
               <div className="ap-step-header">
                 <span className="ap-step-num">3</span>
                 <div className="ap-step-title">Describe Your Problem</div>
@@ -918,6 +933,36 @@ export default function AppointmentBookingForm() {
                   setForm((f) => ({ ...f, notes: e.target.value }))
                 }
               />
+            </div> */}
+            <div className="ap-step">
+              <div className="ap-step-header">
+                <span className="ap-step-num">3</span>
+                <div className="ap-step-title">Describe Your Problem</div>
+              </div>
+
+              <textarea
+                className="ap-textarea"
+                rows={4}
+                placeholder="Briefly describe your symptoms or reason for visit…"
+                value={form.notes}
+                required
+                maxLength={1000}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, notes: e.target.value }));
+
+                  if (errors.notes) {
+                    setErrors((prev) => ({
+                      ...prev,
+                      notes: "",
+                    }));
+                  }
+                }}
+              />
+
+              <div className="ap-char-count">
+                {form.notes.length}/1000 characters
+              </div>
+              {errors.notes && <p className="ap-error">{errors.notes}</p>}
             </div>
 
             {/* ── Step 4: Medical reports ── */}
@@ -1163,36 +1208,76 @@ export default function AppointmentBookingForm() {
                     our Telehealth Informed Consent policy.
                   </p>
                 </div>
-
                 <div className="ap-consent-checks" style={{ marginTop: 12 }}>
                   {[
                     {
                       key: "telehealth",
-                      label:
-                        "I have read and agree to the Telehealth Informed Consent",
+                      label: "I have read and agree to the ",
+                      linkText: "Telehealth Informed Consent",
+                      href: "/tele-health-informed-consent",
                     },
                     {
                       key: "terms",
-                      label:
-                        "I agree to the Terms of Service and Privacy Policy",
+                      label: "I agree to the ",
+                      linkText: "Terms of Service",
+                      href: "/terms-of-service",
+                      extra: " and ",
+                      linkText2: "Privacy Policy",
+                      href2: "/privacy-policy",
                     },
                     {
                       key: "hipaa",
-                      label:
-                        "I have read the HIPAA Notice of Privacy Practices",
+                      label: "I have read the ",
+                      linkText: "HIPAA Notice of Privacy Practices",
+                      href: "/notice-of-privacy-practices",
                     },
                     { key: "age", label: "I am 18 years of age or older" },
-                  ].map(({ key, label }) => (
-                    <label key={key} className="ap-consent-row">
-                      <input
-                        type="checkbox"
-                        className="ap-consent-checkbox"
-                        checked={consents[key]}
-                        onChange={() => toggleConsent(key)}
-                      />
-                      <span className="ap-consent-label">{label}</span>
-                    </label>
-                  ))}
+                  ].map(
+                    ({
+                      key,
+                      label,
+                      linkText,
+                      href,
+                      extra,
+                      linkText2,
+                      href2,
+                    }) => (
+                      <label key={key} className="ap-consent-row">
+                        <input
+                          type="checkbox"
+                          className="ap-consent-checkbox"
+                          checked={consents[key]}
+                          onChange={() => toggleConsent(key)}
+                        />
+                        <span className="ap-consent-label">
+                          {label}
+                          {linkText && href && (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ap-consent-link"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {linkText}
+                            </a>
+                          )}
+                          {extra}
+                          {linkText2 && href2 && (
+                            <a
+                              href={href2}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ap-consent-link"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {linkText2}
+                            </a>
+                          )}
+                        </span>
+                      </label>
+                    ),
+                  )}
                 </div>
               </div>
 

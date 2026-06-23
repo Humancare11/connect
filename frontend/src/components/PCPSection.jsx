@@ -270,7 +270,7 @@ export default function PCPSection() {
               }}
               whileTap={{ scale: 0.97 }}
             >
-              <a href="/appointment-booking">
+              <a href="/primary-care-provider">
               Know More
               <span className="pcp-btn-arrow" aria-hidden="true">→</span></a>
             </Motion.button>
@@ -285,8 +285,8 @@ export default function PCPSection() {
             </Motion.p>
           </Motion.div>
 
-        </div>{/* /pcp-right */}
-      </div>{/* /pcp-container */}
+        </div>
+      </div>
     </Motion.section>
   );
 }
