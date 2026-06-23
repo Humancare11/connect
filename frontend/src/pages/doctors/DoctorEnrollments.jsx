@@ -937,7 +937,6 @@ function MultiSelect({
   const triggerRef = useRef();
   const dropdownRef = useRef();
   const searchInputRef = useRef();
-  const searchInputRef = useRef();
   const position = useDropdownPosition(triggerRef, open);
 
   useEffect(() => {
@@ -1782,7 +1781,6 @@ export default function DoctorOnboardingWizard({
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
-  const isUS = s1.country === "US";
   const isUS = s1.country === "US";
   const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
   const otherCountryOptions = countries.filter((c) => c.isoCode !== s1.country);
