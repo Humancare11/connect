@@ -4,10 +4,10 @@
 
 .footer {
   position: relative;
-  overflow: hidden; /* clips ALL children — watermark MUST stay inside */
+  overflow: hidden;
   background: #0a1f44;
   color: rgba(255, 255, 255, 0.6);
-  padding: 72px 80px 0; /* desktop: 80px horizontal */
+  padding: 72px 80px 0;
   border-top: 1px solid rgba(124, 183, 255, 0.12);
 }
 
@@ -33,6 +33,7 @@
   width: 0 auto;
   object-fit: contain;
 }
+
 /* ── BRAND ─────────────────────────────────── */
 
 .footer-brand h2 {
@@ -80,7 +81,7 @@
 }
 
 .footer-hippa {
-  margin: 27px 0px ;
+  margin: 27px 0px;
   height: 7rem;
   width: auto;
   object-fit: contain;
@@ -130,39 +131,29 @@
   padding-left: 6px;
 }
 
-/* ════════════════════════════════════════════════
-   WATERMARK — "HUMANCARE CONNECT"
+/* ══════════════════════════════════════════════
+   WATERMARK — centered on all devices
 
-   FIX #1 — Negative margin must exactly equal the
-   footer's horizontal padding so the wrap stretches
-   edge-to-edge without escaping the overflow:hidden
-   boundary. Desktop padding = 80px → margin = -80px.
-   Each breakpoint below mirrors its own padding value.
-
-   FIX #2 — font-size was clamp(10px, 20vw, 150px).
-   At 1440px: 20vw = 288px → text wraps / overflows.
-   New values are calculated to keep "HUMANCARE CONNECT"
-   (18 chars, Satoshi 900, ~0.56 average char-width ratio)
-   on ONE line at ≥768px and naturally wrap to TWO lines
-   at <768px.
-
-   Char-width math (Satoshi 900, letter-spacing -9px):
-     available_width ≈ viewport − 0px (wrap fills footer)
-     fontSize_max = available_width / (chars × 0.56)
-     At 1440px → 1440 / (18 × 0.56) ≈ 143px  → cap at 120px (safe)
-     At 1024px → 1024 / (18 × 0.56) ≈ 101px  → cap at  88px
-     At 900px  →  900 / (18 × 0.56) ≈  89px  → cap at  78px
-     At 768px  →  768 / (18 × 0.56) ≈  76px  → border line; keep nowrap
-     At 600px  →  600 / 2-line     ≈  58px  → allow wrap, two lines fine
-     At 400px  →  400 / 2-line     ≈  44px  → reduce further
-════════════════════════════════════════════════ */
+   Strategy:
+   - .footer-watermark-wrap stretches edge-to-edge
+     via negative margins that mirror the footer's
+     horizontal padding at each breakpoint.
+   - .footer-bg-text is positioned with
+     left: 50% + translateX(-50%) so it always
+     sits in the middle of the footer width,
+     regardless of text length or viewport size.
+   - white-space: nowrap is kept at ≥600 px so
+     the single line doesn't split awkwardly.
+   - Below 600 px we allow wrapping; text-align:center
+     keeps both wrapped lines centred.
+══════════════════════════════════════════════ */
 
 .footer-watermark-wrap {
   position: relative;
   z-index: 1;
-  height: 120px; /* enough room for the capped font size */
+  height: 120px;
   overflow: hidden;
-  /* FIX #1: match footer's desktop padding exactly */
+  /* match footer's desktop 80px horizontal padding */
   margin: 0 -80px;
   pointer-events: none;
   user-select: none;
@@ -171,20 +162,19 @@
 .footer-bg-text {
   position: absolute;
   bottom: 0;
-  left: 0;
-  padding-left: 80px; /* restore visual left-edge alignment */
+  /* CENTER — replaces left:0 + padding-left approach */
+  left: 50%;
+  transform: translateX(-50%);
+
   font-family: "Satoshi", sans-serif;
-
-  /* FIX #2: safe clamp — single line guaranteed at desktop/laptop */
   font-size: clamp(56px, 8.5vw, 120px);
-
   font-weight: 900;
   letter-spacing: -6px;
-  /* FIX #3: lock to single line at all laptop/desktop sizes */
-  white-space: nowrap;
+  white-space: nowrap;        /* single line at desktop/laptop */
   text-transform: uppercase;
   line-height: 1;
   color: rgba(255, 255, 255, 1);
+  text-align: center;
 
   -webkit-mask-image: linear-gradient(
     to bottom,
@@ -255,14 +245,12 @@
 /* ══════════════════════════════════════════════
    RESPONSIVE
    Rule: watermark margin = -(footer horizontal padding)
-   This keeps the wrap flush to the viewport edge while
-   footer overflow:hidden prevents any actual escape.
 ══════════════════════════════════════════════ */
 
 /* ── Laptop / large tablet — 1024px ── */
 @media (max-width: 1024px) {
   .footer {
-    padding: 64px 48px 0; /* horizontal padding → 48px */
+    padding: 64px 48px 0;
   }
 
   .footer-container {
@@ -270,24 +258,22 @@
     gap: 36px;
   }
 
-  /* FIX: match -48px to the 48px padding above */
   .footer-watermark-wrap {
     height: 100px;
     margin: 0 -48px;
   }
 
   .footer-bg-text {
-    padding-left: 48px;
-    /* 8.5vw at 1024px = ~87px — still single line ✓ */
     font-size: clamp(48px, 8.5vw, 88px);
     letter-spacing: -5px;
+    /* left/transform already set above — no override needed */
   }
 }
 
 /* ── Tablet — 900px ── */
 @media (max-width: 900px) {
   .footer {
-    padding: 56px 40px 0; /* horizontal padding → 40px */
+    padding: 56px 40px 0;
   }
 
   .footer-container {
@@ -299,24 +285,18 @@
     grid-column: 1 / -1;
   }
 
-  /* FIX: match -40px to the 40px padding above */
   .footer-watermark-wrap {
     height: 90px;
     margin: 0 -40px;
   }
 
   .footer-bg-text {
-    padding-left: 40px;
-    /* 8.5vw at 900px = ~76px — just fits single line ✓ */
     font-size: clamp(44px, 8.5vw, 78px);
     letter-spacing: -4px;
   }
 }
 
 /* ── Small tablet — 768px ── */
-/* At this width 8.5vw ≈ 65px — 18 chars × 65px × 0.56 ≈ 654px
-   which fits in 768px, so single line still holds.
-   Below 768px we intentionally switch to two lines. */
 @media (max-width: 768px) {
   .footer-bg-text {
     font-size: clamp(42px, 8.5vw, 68px);
@@ -326,7 +306,7 @@
 /* ── Mobile — 600px ── */
 @media (max-width: 600px) {
   .footer {
-    padding: 48px 24px 0; /* horizontal padding → 24px */
+    padding: 48px 24px 0;
   }
 
   .footer-container {
@@ -334,21 +314,21 @@
     gap: 40px;
   }
 
-  /* FIX: match -24px to the 24px padding above */
   .footer-watermark-wrap {
-    height: 120px; /* taller to accommodate two text lines */
+    height: 120px;
     margin: 0 -24px;
   }
 
   .footer-bg-text {
-    padding-left: 24px;
-    /* FIX: allow wrap onto two lines at small screens */
+    /* allow two-line wrap; text-align:center keeps both lines centred */
     white-space: normal;
     word-break: break-word;
     width: 100%;
     line-height: 1.05;
     font-size: clamp(38px, 12vw, 56px);
     letter-spacing: -2px;
+    text-align: center;
+    /* re-anchor: left:50% + translateX(-50%) still centres the block */
   }
 
   .footer-bottom {
@@ -366,7 +346,6 @@
 @media (max-width: 400px) {
   .footer-watermark-wrap {
     height: 100px;
-    /* margin already -24px from 600px rule — footer padding unchanged */
   }
 
   .footer-bg-text {

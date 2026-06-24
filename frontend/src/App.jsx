@@ -290,6 +290,9 @@ import ProstateHealth1 from "./pages/Conditions/Conditions/ProstateHealth";
 import UrinarySymptomsMen1 from "./pages/Conditions/Conditions/UrinarySymptomsMen";
 
 // ----------Speciality Pages-------------------
+import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
+import Pediatrics from "./pages/Specialty/Children&FamilyCare/Pediatrics";
+import Cardiology from "./pages/Specialty/ChronicCare&ExpertOpinion/Cardiology";
 import ExpertMedicalOpinion from "./pages/Specialty/ChronicCare&ExpertOpinion/ExpertMedicalOpinion";
 import Gastroenterology from "./pages/Specialty/ChronicCare&ExpertOpinion/Gastroenterology";
 import Neurology from "./pages/Specialty/ChronicCare&ExpertOpinion/Neurology";
@@ -309,19 +312,18 @@ import TravelMedicine from "./pages/Specialty/TravelAndGlobalCare/TravelMedicine
 import WeightManagement from "./pages/Specialty/WeightAndNutrition/WeightManagement";
 import LifestyleMedicine from "./pages/Specialty/WeightAndNutrition/LifestyleMedicine";
 import NutritionAndDietetics from "./pages/Specialty/WeightAndNutrition/NutritionAndDietetics";
-// -------------------------Services Pages-------------------------
-// import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
-import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
-
-// General & Everyday Care
 import FamilyMedicine from "./pages/Specialty/General&EverydayCare/FamilyMedicine";
 import GeneralPhysician from "./pages/Specialty/General&EverydayCare/GeneralPhysician";
 import InternalMedicine from "./pages/Specialty/General&EverydayCare/InternalMedicine";
-// Women's Health
 import MenopauseCare from "./pages/Specialty/Women'sHealth/MenopauseCare";
 import WomenMentalHealth from "./pages/Specialty/Women'sHealth/WomenMentalHealth";
 import LactationConsulting from "./pages/Specialty/Women'sHealth/LactationConsulting";
 import ObstetricsGynaecology from "./pages/Specialty/Women'sHealth/ObstetricsGynaecology";
+
+// -------------------------Services Pages-------------------------
+// import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
+// import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
+
 
 // -------------------------Services Pages-------------------------
 import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
@@ -397,7 +399,7 @@ const ChangePassword = lazy(() => import("./pages/user/ChangePassword"));
 const MyRecords = lazy(() => import("./pages/user/MyRecords"));
 const UserRaiseTicket = lazy(() => import("./pages/user/RaiseTicket"));
 
-const Home2 = lazy(() => import("./pages/Home-2"));
+
 const Test = lazy(() => import("./pages/Test"));
 const PaymentLinkCheckout = lazy(() => import("./pages/PaymentLinkCheckout"));
 
@@ -406,9 +408,7 @@ const Specialties = lazy(() => import("./pages/Specialties"));
 const Symptoms = lazy(() => import("./pages/Symptoms"));
 const Categories = lazy(() => import("./pages/Categories"));
 
-import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
-import Pediatrics from "./pages/Specialty/Children&FamilyCare/Pediatrics";
-import Cardiology from "./pages/Specialty/ChronicCare&ExpertOpinion/Cardiology";
+
 
 const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
 const AppointmentBookingForm = lazy(
@@ -507,7 +507,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -581,7 +581,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -654,7 +654,7 @@ function AppLayout() {
           <Route path="/login" element={<Login />} />
           {/* <Route path="/register" element={<Register />} /> */}
           <Route path="/book-appointment" element={<BookAppointment />} />
-          <Route path="/home-demo" element={<Home2 />} />
+
           <Route path="/test" element={<Test />} />
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
@@ -1020,15 +1020,11 @@ function AppLayout() {
           <Route path="/conditions" element={<Symptoms />} />
           {/* categories */}
           {/* <Route path="/child-care" element={<ChildCare />} /> */}
-          <Route path="/child-family-care" element={<ChildFamilyCare />} />
-          <Route
-            path="/chronic-care-and-expert-opinion"
-            element={<ChronicCareExpertOpinion />}
+          <Route path="/child-and-family-care" element={<ChildFamilyCare />} />
+          <Route path="/chronic-care-and-expert-opinion" element={<ChronicCareExpertOpinion />}
           />
           <Route path="/eye-ear-bone" element={<EyeEarBone />} />
-          <Route
-            path="/general-everyday-care"
-            element={<GeneralEverydayCare />}
+          <Route path="/general-and-everyday-care" element={<GeneralEverydayCare />}
           />
           <Route path="/men-health" element={<MenHealth />} />
           <Route path="/mental-health" element={<MentalHealth />} />
@@ -1036,7 +1032,7 @@ function AppLayout() {
           <Route path="/categories-sexual-health" element={<Sexual_Health />} />
           <Route path="/skin-and-hair-care" element={<SkinHair />} />
           <Route path="/travel-global-care" element={<TravelGlobalCare />} />
-          <Route path="/weight-nurtrition" element={<WeightNurtrition />} />
+          <Route path="/weight-and-nurtrition" element={<WeightNurtrition />} />
           <Route path="/women-health" element={<WomenHealth />} />
           {/* specialties */}
           {/* <Route path="/sd" element={<SD />} /> */}
@@ -1054,15 +1050,32 @@ function AppLayout() {
           <Route path="/general-physician" element={<GeneralPhysician />} />
           <Route path="/internal-medicine" element={<InternalMedicine />} />
           <Route path="/menopause-care" element={<MenopauseCare />} />
-          <Route
-            path="/obstetrics-and-gynaecology"
-            element={<ObstetricsGynaecology />}
-          />
+          <Route path="/obstetrics-and-gynaecology" element={<ObstetricsGynaecology />} />
           <Route path="/women-mental-health" element={<WomenMentalHealth />} />
+          <Route path="/lactation-consulting" element={<LactationConsulting />}  />
           <Route
-            path="/lactation-consulting"
-            element={<LactationConsulting />}
+            path="/export-medical-opinion"
+            element={<ExpertMedicalOpinion />}
           />
+          <Route path="/gastroenterology" element={<Gastroenterology />} />
+          <Route path="/neurology" element={<Neurology />} />
+          <Route path="/pulmonology" element={<Pulmonology />} />
+          <Route path="/ent" element={<Ent />} />
+          <Route path="/ophthalmology" element={<Ophthalmology />} />
+          <Route path="/orthopedics" element={<Orthopedics />} />
+          <Route path="/mens-health" element={<MensHealth />} />
+          <Route path="/urology" element={<Urology />} />
+          <Route path="/behavioral-health" element={<BehavioralHealth />} />
+          <Route path="/psychiatry" element={<Psychiatry />} />
+          <Route path="/psychology-counseling" element={<PsychologyCounseling />} />
+          <Route path="/sexual-health-speciality" element={<SexualHealthSpeciality />} />
+          <Route path="/dermatology" element={<Dermatology />} />
+          <Route path="/global-cross-border-care" element={<GlobalCrossBorderCare />} />
+          <Route path="/travel-medicine" element={<TravelMedicine />} />
+          <Route path="/weight-management" element={<WeightManagement />} />
+          <Route path="/lifestyle-medicine" element={<LifestyleMedicine />} />
+          <Route path="/nutrition-and-dietetics" element={<NutritionAndDietetics />} />
+          
           {/* condition pages */}
           <Route path="/arthritis" element={<Arthritis />} />
           <Route path="/cancer-second-opinion" element={<CancerSecond />} />
@@ -1344,7 +1357,7 @@ function AppLayout() {
             element={<UndiagnosedSymptoms />}
           />
           <Route path="/vaccination-advice" element={<VaccinationAdvice />} />
-          <Route path="/vertigo" element={<Vertigo />} />
+          
           <Route
             path="/whole-family-illnesses"
             element={<WholeFamilyIllnesses />}
@@ -1541,40 +1554,8 @@ function AppLayout() {
             path="/weight-loss-programs"
             element={<WeightLossPrograms />}
           />
-          <Route
-            path="/export-medical-opinion"
-            element={<ExpertMedicalOpinion />}
-          />
-          <Route path="/gastroenterology" element={<Gastroenterology />} />
-          <Route path="/neurology" element={<Neurology />} />
-          <Route path="/pulmonology" element={<Pulmonology />} />
-          <Route path="/ent" element={<Ent />} />
-          <Route path="/ophthalmology" element={<Ophthalmology />} />
-          <Route path="/orthopedics" element={<Orthopedics />} />
-          <Route path="/mens-health" element={<MensHealth />} />
-          <Route path="/urology" element={<Urology />} />
-          <Route path="/behavioral-health" element={<BehavioralHealth />} />
-          <Route path="/psychiatry" element={<Psychiatry />} />
-          <Route
-            path="/psychology-counseling"
-            element={<PsychologyCounseling />}
-          />
-          <Route
-            path="/sexual-health-speciality"
-            element={<SexualHealthSpeciality />}
-          />
-          <Route path="/dermatology" element={<Dermatology />} />
-          <Route
-            path="/global-cross-border-care"
-            element={<GlobalCrossBorderCare />}
-          />
-          <Route path="/travel-medicine" element={<TravelMedicine />} />
-          <Route path="/weight-management" element={<WeightManagement />} />
-          <Route path="/lifestyle-medicine" element={<LifestyleMedicine />} />
-          <Routes
-            path="/nutrition-and-dietetics"
-            element={<NutritionAndDietetics />}
-          />
+          <Route path="/vertigo" element={<Vertigo />} />
+          
         </Routes>
 
         {!hideLayout && <Footer />}

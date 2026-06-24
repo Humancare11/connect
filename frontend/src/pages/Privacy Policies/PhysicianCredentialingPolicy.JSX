@@ -1,5 +1,44 @@
-import { ShieldCheck, Lock, Database, ShieldAlert, SlidersHorizontal, Mail, MapPin } from "lucide-react";
+import {
+  ShieldCheck,
+  Lock,
+  Database,
+  ShieldAlert,
+  SlidersHorizontal,
+  Mail,
+  MapPin,
+  FileText,
+  Target,
+  Users,
+  FileCheck,
+  SearchCheck,
+  GitBranch,
+  RefreshCw,
+  Activity,
+  Ban,
+  Gavel,
+  Archive,
+  ClipboardCheck,
+} from "lucide-react";
 
+const documentInfo = [
+  {
+    label: "Document Owner",
+    value: "Head of Operations, Humancare Connect, Inc.",
+  },
+  {
+    label: "Effective Date",
+    value: "June 2026",
+  },
+  {
+    label: "Review Cycle",
+    value: "Annual",
+  },
+  {
+    label: "Applies To",
+    value:
+      "All physicians, nurse practitioners, and licensed prescribers onboarding to or practicing on the Humancare Connect platform",
+  },
+];
 const privacyTableData = [
     {
         area: "Account info",
@@ -110,28 +149,7 @@ export default function PhysicianCredentialingPolicy() {
 
 
 
-                    {/* Information We Collect */}
-                    import {FileText} from "lucide-react";
-
-                    const documentInfo = [
-                    {
-                        label: "Document Owner",
-                    value: "Head of Operations, Humancare Connect, Inc.",
-  },
-                    {
-                        label: "Effective Date",
-                    value: "June 2026",
-  },
-                    {
-                        label: "Review Cycle",
-                    value: "Annual",
-  },
-                    {
-                        label: "Applies To",
-                    value:
-                    "All physicians, nurse practitioners, and licensed prescribers onboarding to or practicing on the Humancare Connect platform",
-  },
-                    ];
+                
 
                     <SectionCard icon={FileText} title="Document Information">
                         <div
