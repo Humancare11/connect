@@ -36,6 +36,15 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +54,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +66,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +75,257 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "behavioral-health",
+  name: "Behavioral Health",
+  tagline: "Supporting Mental, Emotional, and Behavioral Well-Being.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Behavioral Health specialists help individuals navigate emotional challenges, behavioral concerns, life transitions, stress, and mental health conditions. Through personalized care, evidence-based treatment plans, and compassionate support, behavioral health services empower individuals to improve emotional resilience, develop healthier coping strategies, and achieve overall well-being.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Behavioral Health focuses on the connection between thoughts, emotions, behaviors, and overall wellness. This specialty addresses emotional and behavioral challenges that can impact relationships, work performance, sleep, daily functioning, and quality of life.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Behavioral health specialists work with individuals experiencing stress, emotional difficulties, behavioral concerns, anxiety-related symptoms, life transitions, and substance use challenges. Through comprehensive evaluations and personalized care plans, patients receive support tailored to their unique needs and goals.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Behavioral health specialists diagnose and manage adjustment difficulties, anger management concerns, sleep-related anxiety, substance use challenges, stress-related symptoms, and emotional wellness concerns.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Consider a behavioral health consultation if you are experiencing emotional distress, difficulty coping with life changes, anger concerns, anxiety symptoms, sleep issues, stress, or challenges related to substance use and behavioral health.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Behavioral Health Evaluations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Comprehensive assessments to understand emotional, behavioral, and mental wellness concerns.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Stress & Life Transition Support",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Guidance for managing major life changes, personal challenges, and adjustment-related concerns.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Emotional Wellness Counseling",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Personalized strategies to improve emotional resilience, self-awareness, and coping skills.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Sleep & Anxiety Management",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Support for anxiety-related sleep issues, stress-related insomnia, and emotional well-being.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Substance Use Support Services",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Compassionate care and guidance for individuals seeking support with substance-related concerns.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Ongoing Behavioral Health Care",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Continuous monitoring and personalized treatment plans designed to support long-term wellness.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Improved Emotional Well-Being",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Develop healthier coping strategies and improve emotional resilience.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Better Stress Management",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Learn practical tools to manage everyday stress and challenging situations.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Stronger Relationships",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Improve communication skills, emotional awareness, and relationship dynamics.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Enhanced Quality of Life",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Support overall mental wellness, personal growth, and long-term well-being.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
-      description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
       Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      name: "Adjustment Difficulties",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Support for emotional challenges associated with life transitions, personal changes, and stressful events.",
+    },
+    {
+      Icon: FiZap,
+      name: "Anger Management",
+      description:
+        "Strategies to help manage frustration, emotional reactions, and healthy expression of emotions.",
+    },
+    {
+      Icon: FiMoon,
+      name: "Sleep-Related Anxiety",
+      description:
+        "Care for anxiety affecting sleep quality, bedtime worries, racing thoughts, and sleep disturbances.",
+    },
+    {
+      Icon: FiShield,
+      name: "Substance Use Support",
+      description:
+        "Guidance and support for individuals seeking help with substance-related concerns and recovery goals.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Stress Management",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Evaluation and treatment strategies for chronic stress, burnout, and overwhelming life demands.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiCompass,
+      name: "Emotional Regulation Challenges",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Support for managing intense emotions and developing healthier coping mechanisms.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiBriefcase,
+      name: "Work & Career Stress",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Assistance navigating workplace stress, professional burnout, and performance-related concerns.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiUsers,
+      name: "Relationship Concerns",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Guidance for communication challenges, interpersonal conflicts, and emotional relationship stress.",
+    },
+    {
+      Icon: FiMap,
+      name: "Life Transition Support",
+      description:
+        "Care for major life events including career changes, relocation, parenting, and personal transitions.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Self-Esteem & Confidence Issues",
+      description:
+        "Support for building self-confidence, self-worth, and emotional resilience.",
+    },
+    {
+      Icon: FiTarget,
+      name: "Behavioral Wellness Coaching",
+      description:
+        "Personalized strategies to improve daily habits, emotional health, and overall wellness.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Mental Wellness Support",
+      description:
+        "Comprehensive care focused on maintaining emotional balance and psychological well-being.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is behavioral health?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Behavioral health focuses on emotional well-being, behaviors, habits, coping skills, and their impact on overall health.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What conditions do behavioral health specialists treat?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "They commonly help with adjustment difficulties, anger management, stress, sleep-related anxiety, substance use concerns, and emotional wellness challenges.",
+    },
+    {
+      question: "How is behavioral health different from mental health?",
+      answer:
+        "Behavioral health includes mental health while also addressing behaviors, habits, lifestyle factors, and emotional wellness.",
+    },
+    {
+      question: "When should I seek behavioral health support?",
+      answer:
+        "You should consider support if emotional or behavioral challenges are affecting your daily life, relationships, work, or overall well-being.",
+    },
+    {
+      question: "Can behavioral health specialists help with stress?",
+      answer:
+        "Yes. Specialists provide strategies to manage stress, improve resilience, and reduce its impact on daily life.",
+    },
+    {
+      question: "What are adjustment difficulties?",
+      answer:
+        "Adjustment difficulties occur when emotional or behavioral responses to life changes become overwhelming or difficult to manage.",
+    },
+    {
+      question: "What is anger management?",
+      answer:
+        "Anger management focuses on understanding triggers, developing coping strategies, and improving emotional regulation.",
+    },
+    {
+      question: "Can anxiety affect sleep?",
+      answer:
+        "Yes. Anxiety can contribute to difficulty falling asleep, staying asleep, and achieving restful sleep.",
+    },
+    {
+      question: "What is substance use support?",
+      answer:
+        "Substance use support provides guidance, resources, and treatment strategies for individuals seeking help with substance-related concerns.",
+    },
+    {
+      question: "Are behavioral health services confidential?",
+      answer:
+        "Yes. Behavioral health services are provided with strict privacy and confidentiality standards.",
+    },
+    {
+      question: "Can telehealth be used for behavioral health appointments?",
+      answer:
+        "Yes. Many behavioral health consultations and follow-up appointments can be conducted through secure virtual visits.",
+    },
+    {
+      question: "How can behavioral health improve quality of life?",
+      answer:
+        "It helps individuals build coping skills, improve emotional wellness, strengthen relationships, and manage challenges more effectively.",
+    },
+    {
+      question: "What happens during a behavioral health evaluation?",
+      answer:
+        "A specialist will discuss symptoms, personal concerns, health history, goals, and recommend an appropriate care plan.",
+    },
+    {
+      question: "Can behavioral health specialists help with burnout?",
+      answer:
+        "Yes. They provide support for stress, exhaustion, work-related burnout, and emotional fatigue.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "Is behavioral health care only for serious mental health conditions?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "No. Behavioral health care can benefit anyone experiencing stress, emotional challenges, life transitions, or wellness concerns.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "How long does behavioral health treatment last?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Treatment varies depending on individual goals, symptoms, progress, and personal needs.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "Can behavioral health support help relationships?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
+        "Yes. Improved communication skills, emotional awareness, and coping strategies can strengthen relationships.",
     },
     {
       question:
-        "Will my current doctor be offended if I seek a second opinion?",
+        "How can I schedule an appointment with a behavioral health specialist?",
       answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with a qualified behavioral health specialist through virtual or in-person care options.",
     },
   ],
 };
@@ -328,37 +342,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced professionals trained in behavioral and emotional health.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with specialists from the comfort and privacy of your home.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from customized treatment plans tailored to your individual needs and goals.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted behavioral health professionals and coordinated healthcare services.",
   },
 ];
 
@@ -542,7 +556,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +568,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Behavioral Health Specialists | Mental Health & Emotional Wellness
+          Support
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with experienced behavioral health specialists for adjustment difficulties, anger management, sleep-related anxiety, substance use support, stress management, and emotional wellness care."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +718,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists provide
+                  compassionate care for a wide range of emotional, behavioral,
+                  and mental wellness concerns.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +747,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced behavioral health specialists with
+                  advanced technology to make mental and emotional wellness care
+                  more accessible, convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +805,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Take the next step toward better emotional wellness, healthier
+                coping strategies, and improved quality of life. Schedule an
+                appointment with a behavioral health specialist and receive
+                personalized support designed around your needs.
               </p>
             </Reveal>
 

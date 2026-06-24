@@ -36,6 +36,17 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
+  FiHome,
+  FiFileText,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +56,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +68,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +77,265 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "weight-management",
+  name: "Weight Management",
+  tagline: "Sustainable Weight Loss and Healthier Living Starts Here.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Weight Management focuses on helping individuals achieve and maintain a healthy weight through personalized care, evidence-based treatment plans, nutrition guidance, lifestyle modifications, and ongoing support. Whether you're struggling with obesity, emotional eating, weight-related health concerns, or simply want a structured weight loss plan, our specialists can help you build a healthier future. Successful weight management goes beyond dieting. It involves understanding your health, habits, lifestyle, and personal goals to create a realistic and sustainable path toward long-term wellness. ",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Weight Management is a healthcare specialty focused on helping patients reach and maintain a healthy body weight while improving overall health and reducing obesity-related risks. Specialists evaluate factors such as nutrition, physical activity, medical conditions, medications, metabolism, and behavioral patterns to create personalized treatment plans.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Through comprehensive care, patients receive support for healthy weight loss, obesity treatment, appetite control, emotional eating, and long-term lifestyle changes that promote lasting success.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Weight management specialists help patients address obesity, excess weight gain, binge eating behaviors, weight-related health concerns, appetite management, and long-term weight maintenance.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Consider a weight management consultation if you're struggling to lose weight, experiencing weight-related health issues, interested in GLP-1 treatment options, or need professional support to achieve sustainable weight loss.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Weight Loss Planning",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Personalized weight loss programs designed around your health goals and lifestyle.",
     },
     {
-      Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      Icon: FiTrendingUp,
+      title: "Obesity Management",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Comprehensive treatment strategies for obesity and weight-related health concerns.",
     },
     {
-      Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      Icon: FiShield,
+      title: "GLP-1 Eligibility Assessments",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Professional evaluation to determine whether GLP-1 medications may be appropriate for your goals.",
     },
     {
-      Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      Icon: FiHeart,
+      title: "Nutrition & Meal Planning",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Evidence-based dietary guidance designed to support healthy and sustainable weight loss.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Behavioral Health Support",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Strategies to address emotional eating patterns and long-term habit formation.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Long-Term Weight Maintenance",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Ongoing support focused on maintaining progress and preventing weight regain.",
     },
   ],
 
   benefits: [
     {
-      Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      Icon: FiHeart,
+      title: "Improved Overall Health",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
-    },
-    {
-      Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
-      description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Healthy weight management can support cardiovascular, metabolic, and overall wellness.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Reduced Chronic Disease Risk",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Lower risk factors associated with obesity-related health conditions.",
     },
     {
-      Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      Icon: FiTrendingUp,
+      title: "Increased Energy Levels",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Better physical performance, mobility, and day-to-day functioning.",
+    },
+    {
+      Icon: FiSearch,
+      title: "Sustainable Lifestyle Changes",
+      description:
+        "Build healthy habits that support long-term success rather than short-term results.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
-      description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
       Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      name: "Binge Eating",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Support for managing episodes of overeating, emotional eating, and unhealthy eating behaviors.",
+    },
+    {
+      Icon: FiShield,
+      name: "GLP-1 Program Eligibility",
+      description:
+        "Professional assessments for patients exploring medically supervised weight management options.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Obesity",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Comprehensive care for individuals living with obesity and obesity-related health risks.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiHeart,
+      name: "Weight-Loss Planning",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Personalized weight reduction strategies based on health history and individual goals.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiSearch,
+      name: "Weight Gain Concerns",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Evaluation of factors contributing to unexpected or difficult-to-manage weight gain.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: MdOutlineSpa,
+      name: "Emotional Eating",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Support for stress-related eating patterns and behavioral challenges.",
+    },
+    {
+      Icon: FiCompass,
+      name: "Appetite Management",
+      description:
+        "Strategies designed to improve hunger awareness and eating habits.",
+    },
+    {
+      Icon: FiActivity,
+      name: "Metabolic Health",
+      description:
+        "Assessment of factors affecting metabolism and overall weight regulation.",
+    },
+    {
+      Icon: FiUsers,
+      name: "Weight Maintenance",
+      description:
+        "Long-term support for maintaining weight loss achievements and healthy routines.",
+    },
+    {
+      Icon: FiMap,
+      name: "Lifestyle Modification",
+      description:
+        "Guidance for nutrition, activity, sleep, and wellness habits that support healthy weight management.",
+    },
+    {
+      Icon: FiDroplet,
+      name: "Nutrition Counseling",
+      description:
+        "Personalized dietary recommendations to support healthy weight goals.",
+    },
+    {
+      Icon: FiGlobe,
+      name: "Preventive Wellness Support",
+      description:
+        "Comprehensive approaches to improving health through sustainable lifestyle changes.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is weight management?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Weight management is a healthcare approach focused on achieving and maintaining a healthy body weight through personalized care and lifestyle changes.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "Who can benefit from weight management services?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Anyone looking to lose weight, maintain weight loss, improve health, or address obesity-related concerns can benefit.",
     },
     {
-      question:
-        "What conditions can be reviewed through an expert medical opinion?",
+      question: "What causes weight gain?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "Weight gain can result from diet, lifestyle habits, genetics, medical conditions, medications, stress, and hormonal factors.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "What is obesity?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Obesity is a complex health condition involving excess body weight that may increase the risk of certain health concerns.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "How does a weight management specialist help?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
+        "Specialists create personalized plans that may include nutrition guidance, activity recommendations, behavioral support, and medical evaluations.",
     },
     {
-      question: "What information is needed for a medical review?",
+      question: "What is binge eating?",
       answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
+        "Binge eating involves consuming unusually large amounts of food while feeling a loss of control during eating episodes.",
     },
     {
-      question: "Can cancer diagnoses be reviewed?",
+      question: "What are GLP-1 medications?",
       answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
+        "GLP-1 medications are prescription treatments that may support weight management for eligible individuals.",
     },
     {
-      question: "Are surgery second opinions helpful?",
+      question: "Am I eligible for a GLP-1 program?",
       answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
+        "Eligibility depends on factors such as weight, health history, medical conditions, and individual treatment goals.",
     },
     {
-      question: "What is a treatment plan review?",
+      question: "Can telehealth be used for weight management?",
       answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
+        "Yes. Many consultations, follow-ups, and treatment discussions can be conducted through secure virtual healthcare services.",
     },
     {
-      question: "Can expert opinions help with rare diseases?",
+      question: "How long does healthy weight loss take?",
       answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
+        "Results vary depending on individual goals, health status, consistency, and treatment approach.",
     },
     {
-      question: "How long does an expert medical opinion take?",
+      question: "Can weight management improve overall health?",
       answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
+        "Yes. Healthy weight management often supports cardiovascular health, mobility, energy levels, and overall wellness.",
     },
     {
-      question: "Are expert medical opinions available through telehealth?",
+      question: "What role does nutrition play in weight loss?",
       answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
+        "Nutrition is one of the most important factors in achieving and maintaining healthy weight goals.",
     },
     {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
+      question: "Can emotional eating affect weight?",
       answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
+        "Yes. Emotional eating patterns can contribute to weight gain and make weight management more challenging.",
     },
     {
-      question: "Is an expert medical opinion confidential?",
+      question: "Is exercise required for weight loss?",
       answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
+        "Physical activity is often an important component of a comprehensive weight management plan.",
     },
     {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
+      question: "What is weight maintenance?",
       answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
+        "Weight maintenance focuses on sustaining healthy habits and preventing weight regain after achieving weight loss goals.",
     },
     {
-      question: "How much does a second medical opinion cost?",
+      question: "Can weight management help reduce health risks?",
       answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
+        "Yes. Healthy weight reduction may help lower risk factors associated with obesity-related health concerns.",
     },
     {
-      question: "Can I get a second opinion before surgery?",
+      question: "Are weight loss plans personalized?",
       answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
+        "Yes. Effective weight management programs should be tailored to each individual's needs and health goals.",
     },
     {
-      question: "How can I schedule an expert medical opinion consultation?",
+      question: "How can I schedule a weight management consultation?",
       answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with a weight management specialist through secure telemedicine services.",
+    },
+    {
+      question: "What makes sustainable weight loss different from dieting?",
+      answer:
+        "Sustainable weight loss focuses on long-term lifestyle changes rather than temporary restrictions.",
+    },
+    {
+      question: "Can weight management support long-term wellness?",
+      answer:
+        "Yes. Weight management is often an important part of improving overall health, confidence, and quality of life.",
     },
   ],
 };
@@ -326,39 +350,39 @@ const TRUST_STATS = [
 const TRUST_CARDS = [
   {
     Icon: FiAward,
-    title: "Board-Certified Specialists",
+    title: "Board-Certified Providers",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced professionals focused on evidence-based weight management.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly and conveniently around your schedule.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Access personalized care securely from home through virtual healthcare services.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage and treatment options.",
   },
   {
     Icon: FiHeart,
-    title: "Personalized Care",
+    title: "Personalized Care Plans",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Every treatment plan is tailored to your unique health history, goals, and lifestyle.",
   },
   {
-    Icon: FiGlobe,
-    title: "Global Provider Network",
+    Icon: FiUsers,
+    title: "Ongoing Support",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Receive continued guidance and accountability throughout your weight management journey.",
   },
 ];
 
@@ -542,7 +566,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function WeightManagement({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +578,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Weight Management Specialists | Personalized Weight Loss & Obesity
+          Care
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with weight management specialists for obesity care, weight loss planning, binge eating support, GLP-1 eligibility assessments, nutrition guidance, and long-term weight management solutions."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +728,8 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists provide support for
+                  a variety of weight-related concerns and health goals.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +756,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced healthcare professionals with advanced
+                  telemedicine technology to make weight management support more
+                  accessible, personalized, and effective.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +814,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Connect with a weight management specialist to receive
+                personalized guidance, sustainable weight loss support, obesity
+                care, nutrition counseling, and long-term wellness strategies
+                designed for lasting success.
               </p>
             </Reveal>
 

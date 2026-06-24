@@ -60,260 +60,258 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "familymedicine",
+  name: "Family Medicine",
+  tagline: "Comprehensive Healthcare for Every Stage of Life.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Family Medicine specialists provide continuous, personalized healthcare for individuals and families of all ages. From preventive care and routine wellness visits to managing common illnesses and chronic conditions, family medicine focuses on building long-term relationships that support lifelong health and well-being.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Family Medicine is a medical specialty dedicated to providing comprehensive healthcare for patients of all ages, from children and adolescents to adults and seniors. Family medicine physicians serve as primary healthcare providers who diagnose, treat, prevent, and manage a wide range of health concerns while focusing on long-term wellness.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "By understanding your medical history, lifestyle, and family health needs, family medicine specialists provide coordinated, patient-centered care that helps prevent illness, detect conditions early, and support better health outcomes throughout life.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Family medicine specialists provide preventive care, routine health screenings, vaccinations, acute illness treatment, chronic disease management, and healthcare support for individuals and families.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a visit with a family medicine specialist for annual wellness exams, routine healthcare needs, vaccinations, common illnesses, chronic disease management, preventive screenings, or ongoing primary care support.",
 
-  keyServices: [
-    {
-      Icon: FiActivity,
-      title: "Second Medical Opinions",
-      description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
-    },
-    {
-      Icon: FiThermometer,
-      title: "Cancer Case Reviews",
-      description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
-    },
-    {
-      Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
-      description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
-    },
-    {
-      Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
-      description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
-      description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
-    },
-    {
-      Icon: FiUsers,
-      title: "Medical Record Analysis",
-      description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
-    },
-  ],
+keyServices: [
+  {
+    Icon: FiActivity,
+    title: "Routine Wellness Exams",
+    description:
+      "Comprehensive health evaluations, preventive screenings, and annual check-ups to monitor overall health and wellness.",
+  },
+  {
+    Icon: MdOutlineVaccines,
+    title: "Vaccination & Immunization Services",
+    description:
+      "Guidance and administration of age-appropriate vaccinations to help prevent serious illnesses.",
+  },
+  {
+    Icon: FiUsers,
+    title: "Family Healthcare Management",
+    description:
+      "Coordinated medical care for children, adults, and seniors within the same family.",
+  },
+  {
+    Icon: FiThermometer,
+    title: "Acute Illness Treatment",
+    description:
+      "Diagnosis and treatment of common illnesses, infections, and short-term health concerns.",
+  },
+  {
+    Icon: FiDroplet,
+    title: "Chronic Disease Management",
+    description:
+      "Ongoing care for conditions such as hypertension, diabetes, asthma, and other chronic health issues.",
+  },
+  {
+    Icon: MdOutlineSpa,
+    title: "Preventive Healthcare Services",
+    description:
+      "Health education, screenings, lifestyle counseling, and wellness planning to support long-term health.",
+  },
+],
 
-  benefits: [
-    {
-      Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
-      description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
-    },
-    {
-      Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
-      description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
-    },
-    {
-      Icon: FiShield,
-      title: "Improved Treatment Understanding",
-      description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
-    },
-    {
-      Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
-      description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
-    },
-  ],
+ benefits: [
+  {
+    Icon: FiSearch,
+    title: "Continuity of Care",
+    description:
+      "Build long-term relationships with a trusted healthcare provider who understands your health history and needs.",
+  },
+  {
+    Icon: FiTrendingUp,
+    title: "Preventive Health Focus",
+    description:
+      "Identify potential health risks early through regular screenings, wellness visits, and preventive care.",
+  },
+  {
+    Icon: FiShield,
+    title: "Care for the Entire Family",
+    description:
+      "Receive coordinated healthcare services for children, adults, and seniors from a single healthcare team.",
+  },
+  {
+    Icon: FiHeart,
+    title: "Personalized Healthcare Plans",
+    description:
+      "Benefit from treatment and wellness strategies tailored to your unique health goals and lifestyle.",
+  },
+],
 
-  conditions: [
-    {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
-      description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
-      description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
-    },
-    {
-      Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
-      description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
-    },
-    {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
-      description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
-    },
-    {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
-      description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
-    },
-    {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
-      description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
-    },
-  ],
+conditions: [
+  {
+    Icon: FiCalendar,
+    name: "Routine Check-Ups",
+    description:
+      "Annual wellness visits, preventive screenings, health assessments, and ongoing wellness monitoring.",
+  },
+  {
+    Icon: MdOutlineVaccines,
+    name: "Vaccination Advice",
+    description:
+      "Guidance on recommended immunizations for children, adults, seniors, travel needs, and preventive healthcare.",
+  },
+  {
+    Icon: FiUsers,
+    name: "Whole-Family Illnesses",
+    description:
+      "Diagnosis and treatment of common illnesses that affect multiple family members, including viral and seasonal infections.",
+  },
+  {
+    Icon: FiThermometer,
+    name: "Common Cold & Flu",
+    description:
+      "Evaluation and treatment of cold symptoms, influenza, cough, congestion, fever, and seasonal illnesses.",
+  },
+  {
+    Icon: FiShield,
+    name: "Minor Infections",
+    description:
+      "Care for common infections affecting the respiratory system, skin, urinary tract, and other areas of the body.",
+  },
+  {
+    Icon: FiHeart,
+    name: "Hypertension Management",
+    description:
+      "Monitoring and treatment of high blood pressure to support cardiovascular health.",
+  },
+  {
+    Icon: MdOutlineBloodtype,
+    name: "Diabetes Follow-Up",
+    description:
+      "Ongoing management and monitoring of blood sugar levels and diabetes-related health concerns.",
+  },
+  {
+    Icon: GiLungs,
+    name: "Asthma & Respiratory Conditions",
+    description:
+      "Care for asthma symptoms, breathing concerns, allergies, and chronic respiratory conditions.",
+  },
+  {
+    Icon: FiSearch,
+    name: "Preventive Health Screenings",
+    description:
+      "Routine screenings designed to identify health risks and detect conditions early.",
+  },
+  {
+    Icon: FiTrendingUp,
+    name: "Lifestyle & Wellness Counseling",
+    description:
+      "Support for nutrition, exercise, weight management, stress reduction, and healthy living.",
+  },
+  {
+    Icon: FiActivity,
+    name: "Minor Injuries & Health Concerns",
+    description:
+      "Evaluation of minor injuries, strains, aches, and common non-emergency medical issues.",
+  },
+  {
+    Icon: FiTarget,
+    name: "General Primary Care Needs",
+    description:
+      "Comprehensive healthcare services addressing everyday health concerns and long-term wellness goals.",
+  },
+],
 
   faqs: [
-    {
-      question: "What is an expert medical opinion?",
-      answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
-    },
-    {
-      question: "Why should I seek a second medical opinion?",
-      answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
-    },
-    {
-      question:
-        "What conditions can be reviewed through an expert medical opinion?",
-      answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
-    },
-    {
-      question: "Is seeking a second opinion common?",
-      answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
-    },
-    {
-      question: "Can an expert medical opinion change my diagnosis?",
-      answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
-    },
-  ],
+  {
+    question: "What is family medicine?",
+    answer:
+      "Family medicine is a medical specialty that provides comprehensive healthcare for patients of all ages, focusing on prevention, diagnosis, treatment, and long-term wellness.",
+  },
+  {
+    question: "What conditions do family medicine specialists treat?",
+    answer:
+      "Family medicine specialists treat common illnesses, chronic diseases, preventive health needs, routine check-ups, and a wide variety of primary care concerns.",
+  },
+  {
+    question: "How is family medicine different from primary care?",
+    answer:
+      "Family medicine is a type of primary care that provides healthcare for people of all ages, including children, adults, and seniors.",
+  },
+  {
+    question: "Can family medicine doctors treat children?",
+    answer:
+      "Yes. Family medicine physicians are trained to care for children, adolescents, adults, and older adults.",
+  },
+  {
+    question: "How often should I schedule a routine check-up?",
+    answer:
+      "Most adults benefit from annual wellness visits, although frequency may vary based on age, health conditions, and risk factors.",
+  },
+  {
+    question: "What happens during a routine wellness exam?",
+    answer:
+      "A wellness visit may include a physical examination, health history review, screenings, vaccinations, and preventive care recommendations.",
+  },
+  {
+    question: "Can family medicine specialists manage chronic conditions?",
+    answer:
+      "Yes. They commonly manage conditions such as diabetes, hypertension, asthma, high cholesterol, and other chronic illnesses.",
+  },
+  {
+    question: "What vaccinations do adults need?",
+    answer:
+      "Recommended vaccines vary by age, health status, lifestyle, and travel plans. Your provider can recommend an appropriate schedule.",
+  },
+  {
+    question: "Can family medicine physicians prescribe medications?",
+    answer:
+      "Yes. Family medicine providers diagnose conditions and prescribe medications when appropriate.",
+  },
+  {
+    question: "Do family medicine doctors provide preventive care?",
+    answer:
+      "Yes. Preventive care is a major focus and includes screenings, wellness exams, vaccinations, and health education.",
+  },
+  {
+    question: "Can I use telehealth for family medicine appointments?",
+    answer:
+      "Yes. Many routine consultations, follow-ups, medication reviews, and non-emergency healthcare concerns can be managed through telehealth.",
+  },
+  {
+    question: "What types of screenings are offered?",
+    answer:
+      "Screenings may include blood pressure checks, cholesterol testing, diabetes screening, cancer screenings, and other preventive evaluations.",
+  },
+  {
+    question: "Can family medicine providers coordinate specialist care?",
+    answer:
+      "Yes. Family medicine physicians often coordinate referrals and communicate with specialists when advanced care is needed.",
+  },
+  {
+    question: "Is family medicine suitable for older adults?",
+    answer:
+      "Yes. Family medicine specialists provide healthcare for patients throughout every stage of life, including seniors.",
+  },
+  {
+    question: "Can family medicine help with lifestyle changes?",
+    answer:
+      "Yes. Providers offer guidance on nutrition, exercise, weight management, stress reduction, and healthy habits.",
+  },
+  {
+    question: "When should I choose family medicine instead of urgent care?",
+    answer:
+      "Family medicine is ideal for ongoing healthcare needs, preventive care, chronic condition management, and non-emergency medical concerns.",
+  },
+  {
+    question: "Why is preventive care important?",
+    answer:
+      "Preventive care helps identify health risks early, reduce complications, and support long-term health and wellness.",
+  },
+  {
+    question: "How can I schedule an appointment with a family medicine specialist?",
+    answer:
+      "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
+  },
+],
+  
 };
 
 const TRUST_STATS = [
@@ -328,37 +326,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced family medicine providers committed to comprehensive, patient-centered healthcare.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule healthcare consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with family medicine providers through virtual consultations and follow-up visits.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from healthcare plans tailored to your medical history, family needs, and wellness goals.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access a broad network of healthcare professionals and coordinated medical services wherever you are.",
   },
 ];
 
@@ -542,7 +540,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -553,12 +551,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
   return (
     <>
       <HelmetProvider>
-        <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
-        </title>
+        <title>Family Medicine Specialists | Comprehensive Care for All Ages</title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Get personalized family medicine care for routine check-ups, vaccinations, preventive care, and common illnesses for individuals and families."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -700,12 +696,11 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
           <div className="sp-container">
             <Reveal>
               <div className="sp-conditions__head">
-                <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
+                <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                 Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
+
                 </p>
               </div>
             </Reveal>
@@ -732,9 +727,8 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                 We combine experienced family medicine providers with advanced technology to make primary healthcare more accessible, convenient, and personalized.
+
                 </p>
               </div>
             </Reveal>
@@ -785,15 +779,14 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
 
           <div className="sp-cta__inner">
             <Reveal>
-              <span className="sp-cta__eyebrow">Get Started Today</span>
+              <span className="sp-cta__eyebrow">GET STARTED TODAY
+</span>
               <h2 className="sp-cta__heading">
-                Ready to Connect with a <span>{data.name}</span> Specialist?
+               Ready to Connect with a 
+ <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+               Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
               </p>
             </Reveal>
 

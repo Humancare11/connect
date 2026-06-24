@@ -36,6 +36,17 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
+  FiHome,
+  FiFileText,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +56,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +68,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +77,256 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "global-cross-border-care",
+  name: "Global Cross-Border Care",
+  tagline: "Healthcare Support Wherever Life Takes You.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Global Cross-Border Care helps patients access trusted medical guidance, specialist consultations, medication support, and healthcare coordination across countries and regions. Whether you're traveling, living abroad, relocating internationally, or seeking medical guidance from another country, our healthcare professionals provide convenient access to quality care through secure telemedicine services. With personalized support and international care coordination, patients can stay connected to healthcare providers no matter where they are in the world.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Global Cross-Border Care is designed to support individuals who need healthcare access while traveling internationally, living overseas, relocating to a new country, or managing healthcare needs across multiple locations. Through virtual healthcare services and telemedicine consultations, patients can receive medical guidance, treatment recommendations, medication assistance, and referral support from experienced providers.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "This specialty helps bridge healthcare gaps by making medical expertise more accessible regardless of geographic location, ensuring continuity of care and peace of mind wherever you may be.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Providers offer support for general medical concerns, medication management, travel-related health needs, chronic condition follow-ups, referral coordination, and healthcare navigation while abroad.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Consider a cross-border consultation if you need medical advice while traveling, require medication support overseas, need specialist referrals, or want continuity of care across different countries.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Cross-Border Medical Consultations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Virtual consultations with healthcare providers while traveling or living internationally.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "International Medical Assistance",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Medical guidance and healthcare navigation support for patients abroad.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Medication Refill Assistance",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Help with ongoing medication management and refill planning during international travel.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Referral Coordination Services",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Support connecting with specialists, healthcare facilities, and medical resources across regions.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Chronic Care Continuity",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Ongoing monitoring and support for chronic health conditions while away from home.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Travel Health Guidance",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Personalized healthcare recommendations related to international travel and wellness.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Continuity of Care",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Maintain access to trusted healthcare support regardless of location.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Convenient Access",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Receive professional medical guidance without geographic limitations.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Better Healthcare Navigation",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Get assistance understanding healthcare systems and resources abroad.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Peace of Mind",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Travel and live internationally with confidence knowing healthcare support is available.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: FiActivity,
+      name: "Cross-Border Consultation",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
+        "Medical consultations designed for individuals seeking healthcare guidance across countries.",
+    },
+    {
+      Icon: FiGlobe,
+      name: "International Medical Assistance",
+      description:
+        "Support navigating healthcare needs while living, working, or traveling abroad.",
     },
     {
       Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
+      name: "Medication Refill While Traveling",
       description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
+        "Guidance for managing prescription medications and continuity of treatment overseas.",
     },
     {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
+      Icon: FiCompass,
+      name: "Referral Coordination Overseas",
       description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
+        "Assistance connecting with specialists, healthcare providers, and medical facilities internationally.",
     },
     {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
+      Icon: FiHeart,
+      name: "Chronic Disease Follow-Up",
       description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
+        "Ongoing monitoring and support for chronic health conditions while abroad.",
     },
     {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
+      Icon: FiMap,
+      name: "Travel-Related Health Concerns",
       description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
+        "Medical guidance for common health issues experienced during international travel.",
     },
     {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
+      Icon: FiShield,
+      name: "Preventive Health Consultations",
       description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
+        "Wellness assessments and preventive care recommendations for global travelers.",
     },
     {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
+      Icon: FiFileText,
+      name: "Medical Record Review",
       description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
+        "Support reviewing healthcare documentation and treatment history across locations.",
     },
     {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      Icon: FiRepeat,
+      name: "Post-Treatment Follow-Up",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Continuity care after procedures, treatments, or hospitalizations received internationally.",
     },
     {
-      Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      Icon: FiSearch,
+      name: "International Second Opinions",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Access to experienced healthcare professionals for additional medical guidance.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiUsers,
+      name: "Relocation Health Support",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Healthcare assistance for individuals moving to a new country or region.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiTarget,
+      name: "Global Healthcare Navigation",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
-    },
-    {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
-      description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Guidance understanding healthcare systems, referrals, insurance coordination, and treatment options abroad.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is Global Cross-Border Care?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Global Cross-Border Care provides healthcare support for individuals traveling, living, or receiving care across different countries.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "Can I speak with a doctor while traveling internationally?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Yes. Telemedicine consultations allow patients to connect with healthcare providers from many locations worldwide.",
+    },
+    {
+      question: "What is a cross-border consultation?",
+      answer:
+        "A cross-border consultation is a virtual healthcare appointment designed for patients seeking medical guidance from another country or region.",
+    },
+    {
+      question: "Can I get medical advice while living abroad?",
+      answer:
+        "Yes. Healthcare professionals can provide guidance, follow-up care, and continuity-of-care support remotely.",
+    },
+    {
+      question: "Can I receive help with medication refills while traveling?",
+      answer:
+        "Providers can assist with medication management, refill planning, and treatment continuity discussions.",
+    },
+    {
+      question: "What is international medical assistance?",
+      answer:
+        "International medical assistance helps patients navigate healthcare concerns, treatment needs, and healthcare systems while abroad.",
+    },
+    {
+      question: "Can I get a second medical opinion internationally?",
+      answer:
+        "Yes. Virtual consultations can provide additional medical perspectives and guidance.",
+    },
+    {
+      question: "How does referral coordination work?",
+      answer:
+        "Healthcare providers can help connect patients with specialists, healthcare facilities, and appropriate medical resources.",
+    },
+    {
+      question: "Is telemedicine useful for travelers?",
+      answer:
+        "Yes. Telemedicine offers convenient access to healthcare support without requiring in-person visits.",
+    },
+    {
+      question: "Can I manage chronic conditions while overseas?",
+      answer:
+        "Yes. Ongoing follow-up care and chronic disease monitoring can often be supported through telehealth services.",
+    },
+    {
+      question: "What types of health concerns can be discussed?",
+      answer:
+        "Patients can discuss many non-emergency medical concerns, ongoing treatments, wellness questions, and healthcare planning needs.",
+    },
+    {
+      question: "Can providers review my medical records?",
+      answer:
+        "Yes. Medical documentation can often be reviewed to support continuity of care and treatment planning.",
+    },
+    {
+      question: "Is Global Cross-Border Care confidential?",
+      answer:
+        "Yes. All consultations follow strict privacy and security standards.",
+    },
+    {
+      question: "Can I use these services before relocating internationally?",
+      answer:
+        "Yes. Healthcare professionals can provide guidance and preparation support before relocation.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "How does telehealth improve healthcare access internationally?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "Telehealth removes geographic barriers and helps patients stay connected with healthcare professionals from virtually anywhere.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "Can I access care from different time zones?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Appointment availability may vary, but flexible scheduling options are often available.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "Is Global Cross-Border Care appropriate for emergencies?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
+        "No. Medical emergencies should always be addressed through local emergency services immediately.",
     },
     {
-      question: "What information is needed for a medical review?",
+      question: "How can I schedule a Global Cross-Border Care appointment?",
       answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with an experienced healthcare provider through secure telemedicine services.",
     },
   ],
 };
@@ -326,39 +341,38 @@ const TRUST_STATS = [
 const TRUST_CARDS = [
   {
     Icon: FiAward,
-    title: "Board-Certified Specialists",
+    title: "Board-Certified Providers",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Connect with experienced healthcare professionals dedicated to quality patient care.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
-    description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+    description: "Schedule consultations quickly regardless of your location.",
   },
   {
     Icon: FiMonitor,
-    title: "Telehealth Access",
+    title: "Secure Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Access healthcare services through secure, encrypted virtual consultations.",
   },
   {
     Icon: FiShield,
-    title: "Insurance Support",
+    title: "Care Coordination Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance with referrals, records, treatment planning, and healthcare navigation.",
   },
   {
     Icon: FiHeart,
-    title: "Personalized Care",
+    title: "Personalized Healthcare",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from treatment recommendations tailored to your health history and needs.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Global Accessibility",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Stay connected to professional healthcare support wherever you are in the world.",
   },
 ];
 
@@ -542,7 +556,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +568,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Global Cross-Border Care | International Telemedicine & Medical
+          Support
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Access global healthcare support through international telemedicine services, cross-border consultations, medication refill assistance, referral coordination, and medical guidance while traveling abroad."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +718,8 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists support a wide range
+                  of international healthcare and continuity-of-care needs.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +746,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced healthcare professionals with advanced
+                  telemedicine technology to provide seamless global healthcare
+                  access and personalized medical support.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +804,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Connect with experienced healthcare professionals for
+                international medical assistance, cross-border consultations,
+                medication support, and healthcare coordination. Receive trusted
+                medical guidance wherever life takes you.
               </p>
             </Reveal>
 

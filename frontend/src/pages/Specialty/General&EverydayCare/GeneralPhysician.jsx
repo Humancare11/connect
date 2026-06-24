@@ -1,19 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
+
 import {
-  FiActivity,
+  FiAward,
+  FiGlobe,
   FiHeart,
+  FiMonitor,
   FiShield,
+  FiZap,
+  FiActivity,
   FiUsers,
   FiClock,
-  FiGlobe,
   FiSearch,
   FiCalendar,
   FiPhone,
   FiMail,
-  FiAward,
-  FiZap,
-  FiMonitor,
   FiDollarSign,
   FiCheckCircle,
   FiStar,
@@ -36,7 +37,11 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiBatteryCharging,
+  FiCloud,
+  FiUserCheck,
 } from "react-icons/fi";
+
 import {
   MdOutlineVaccines,
   MdOutlineBloodtype,
@@ -46,6 +51,7 @@ import {
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
 } from "react-icons/md";
+
 import {
   GiHeartOrgan,
   GiLungs,
@@ -54,266 +60,263 @@ import {
   GiMedicines,
   GiBodySwapping,
 } from "react-icons/gi";
-import "../SpecialtyPage.css";
 
+import "../SpecialtyPage.css";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "generalphysician",
+  name: "General Physician (GP)",
+  tagline: "Your First Point of Contact for Everyday Healthcare.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "General Physicians (GPs) provide comprehensive primary healthcare for common illnesses, preventive care, and ongoing health management. Whether you're experiencing a fever, cough, headache, fatigue, or other everyday health concerns, a General Physician can diagnose symptoms, recommend treatment, and guide you toward better overall health.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "A General Physician (GP) is a primary care doctor trained to diagnose, treat, and manage a wide range of common medical conditions affecting adults and adolescents. They serve as the first point of contact for most health concerns, helping patients receive timely care, preventive services, and referrals when specialized treatment is needed.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "General Physicians focus on whole-person care, addressing acute illnesses, chronic health conditions, preventive screenings, and overall wellness. By understanding your medical history and health goals, they provide personalized care that supports long-term well-being.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "General Physicians diagnose and manage common illnesses including fever, cough, cold and flu, headaches, fatigue, body aches, minor infections, sinus infections, nausea, vomiting, and other everyday health concerns.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a visit with a General Physician if you experience symptoms such as fever, persistent cough, fatigue, headaches, body aches, digestive issues, infections, or any non-emergency health concern requiring medical attention.",
 
-  keyServices: [
-    {
-      Icon: FiActivity,
-      title: "Second Medical Opinions",
-      description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
-    },
-    {
-      Icon: FiThermometer,
-      title: "Cancer Case Reviews",
-      description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
-    },
-    {
-      Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
-      description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
-    },
-    {
-      Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
-      description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
-      description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
-    },
-    {
-      Icon: FiUsers,
-      title: "Medical Record Analysis",
-      description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
-    },
-  ],
+keyServices: [
+  {
+    Icon: FiThermometer,
+    title: "Acute Illness Diagnosis & Treatment",
+    description:
+      "Evaluation and treatment of common illnesses such as colds, flu, infections, coughs, and fever.",
+  },
+  {
+    Icon: FiShield,
+    title: "Preventive Healthcare Services",
+    description:
+      "Routine health screenings, wellness assessments, vaccinations, and preventive care recommendations.",
+  },
+  {
+    Icon: FiHeart,
+    title: "Chronic Disease Monitoring",
+    description:
+      "Ongoing care for common chronic conditions such as hypertension, diabetes, asthma, and high cholesterol.",
+  },
+  {
+    Icon: FiSearch,
+    title: "Symptom Evaluation & Management",
+    description:
+      "Assessment of unexplained symptoms and development of personalized treatment plans.",
+  },
+  {
+    Icon: FiTrendingUp,
+    title: "Health Education & Lifestyle Guidance",
+    description:
+      "Support for nutrition, exercise, stress management, and healthy lifestyle habits.",
+  },
+  {
+    Icon: FiUsers,
+    title: "Care Coordination & Referrals",
+    description:
+      "Referrals to specialists and coordination of care when advanced medical evaluation is needed.",
+  },
+],
 
-  benefits: [
-    {
-      Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
-      description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
-    },
-    {
-      Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
-      description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
-    },
-    {
-      Icon: FiShield,
-      title: "Improved Treatment Understanding",
-      description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
-    },
-    {
-      Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
-      description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
-    },
-  ],
+ benefits: [
+  {
+    Icon: FiSearch,
+    title: "Early Diagnosis & Treatment",
+    description:
+      "Identifies health concerns quickly and helps prevent minor conditions from becoming more serious.",
+  },
+  {
+    Icon: FiShield,
+    title: "Convenient Everyday Care",
+    description:
+      "Provides accessible healthcare for common illnesses, routine needs, and preventive services.",
+  },
+  {
+    Icon: FiUsers,
+    title: "Continuity of Care",
+    description:
+      "Builds long-term relationships that support better health outcomes and personalized treatment.",
+  },
+  {
+    Icon: FiHeart,
+    title: "Whole-Person Healthcare",
+    description:
+      "Addresses physical health, preventive care, lifestyle factors, and overall wellness in one place.",
+  },
+],
 
-  conditions: [
-    {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
-      description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
-      description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
-    },
-    {
-      Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
-      description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
-    },
-    {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
-      description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
-    },
-    {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
-      description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
-    },
-    {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
-      description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
-    },
-  ],
-
-  faqs: [
-    {
-      question: "What is an expert medical opinion?",
-      answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
-    },
-    {
-      question: "Why should I seek a second medical opinion?",
-      answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
-    },
-    {
-      question:
-        "What conditions can be reviewed through an expert medical opinion?",
-      answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
-    },
-    {
-      question: "Is seeking a second opinion common?",
-      answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
-    },
-    {
-      question: "Can an expert medical opinion change my diagnosis?",
-      answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
-    },
-  ],
+conditions: [
+  {
+    Icon: FiActivity,
+    name: "Body Aches",
+    description:
+      "Evaluation and treatment of muscle pain, body soreness, aches, and discomfort associated with illness or physical strain.",
+  },
+  {
+    Icon: FiThermometer,
+    name: "Cold & Flu",
+    description:
+      "Diagnosis and management of cold symptoms, influenza, congestion, sore throat, cough, and seasonal illnesses.",
+  },
+  {
+    Icon: FiWind,
+    name: "Cough",
+    description:
+      "Assessment and treatment of acute and persistent cough caused by infections, allergies, or respiratory conditions.",
+  },
+  {
+    Icon: FiBatteryCharging,
+    name: "Fatigue",
+    description:
+      "Evaluation of ongoing tiredness, low energy levels, weakness, and unexplained fatigue.",
+  },
+  {
+    Icon: FiAlertCircle,
+    name: "Fever",
+    description:
+      "Diagnosis and treatment of fever, chills, infection-related symptoms, and illness-related temperature changes.",
+  },
+  {
+    Icon: FiTarget,
+    name: "Headache",
+    description:
+      "Management of tension headaches, illness-related headaches, and common headache symptoms.",
+  },
+  {
+    Icon: FiShield,
+    name: "Minor Infections",
+    description:
+      "Treatment for common bacterial and viral infections affecting the respiratory system, skin, urinary tract, and more.",
+  },
+  {
+    Icon: FiDroplet,
+    name: "Nausea & Vomiting",
+    description:
+      "Care for digestive symptoms, stomach discomfort, nausea, vomiting, and related health concerns.",
+  },
+  {
+    Icon: FiEye,
+    name: "Pink Eye",
+    description:
+      "Diagnosis and treatment of conjunctivitis causing redness, irritation, discharge, and eye discomfort.",
+  },
+  {
+    Icon: FiCloud,
+    name: "Sinus Infection",
+    description:
+      "Evaluation and management of sinus pressure, facial pain, congestion, and sinus-related symptoms.",
+  },
+  {
+    Icon: FiCalendar,
+    name: "Seasonal Illnesses",
+    description:
+      "Treatment for common viral illnesses, seasonal infections, and flu-related conditions.",
+  },
+  {
+    Icon: FiHeart,
+    name: "General Health Concerns",
+    description:
+      "Comprehensive evaluation of everyday symptoms, wellness concerns, and non-emergency medical conditions.",
+  },
+],
+faqs: [
+  {
+    question: "What does a General Physician do?",
+    answer:
+      "A General Physician diagnoses, treats, and manages a wide range of common illnesses, chronic conditions, and preventive healthcare needs.",
+  },
+  {
+    question: "When should I see a General Physician?",
+    answer:
+      "You should see a General Physician for common illnesses, routine check-ups, fever, cough, headaches, fatigue, infections, and preventive healthcare.",
+  },
+  {
+    question: "Can a General Physician treat cold and flu symptoms?",
+    answer:
+      "Yes. General Physicians diagnose and treat colds, influenza, cough, congestion, sore throat, and related symptoms.",
+  },
+  {
+    question: "Can a General Physician prescribe medications?",
+    answer:
+      "Yes. They can prescribe medications when appropriate for diagnosed conditions and treatment plans.",
+  },
+  {
+    question: "What should I do if I have a persistent fever?",
+    answer:
+      "A persistent fever should be evaluated by a healthcare provider to determine the underlying cause and appropriate treatment.",
+  },
+  {
+    question: "Can a General Physician treat headaches?",
+    answer:
+      "Yes. General Physicians evaluate common headache causes and recommend treatment based on symptoms and medical history.",
+  },
+  {
+    question: "What causes fatigue?",
+    answer:
+      "Fatigue can result from illness, stress, poor sleep, nutritional deficiencies, chronic conditions, or lifestyle factors.",
+  },
+  {
+    question: "Can a General Physician treat minor infections?",
+    answer:
+      "Yes. They diagnose and manage many common bacterial and viral infections.",
+  },
+  {
+    question: "What is pink eye?",
+    answer:
+      "Pink eye, or conjunctivitis, is an inflammation of the eye causing redness, irritation, discharge, and discomfort.",
+  },
+  {
+    question: "Can a General Physician help with sinus infections?",
+    answer:
+      "Yes. They evaluate sinus symptoms and recommend appropriate treatment options.",
+  },
+  {
+    question: "What happens during a General Physician appointment?",
+    answer:
+      "Your provider will review symptoms, medical history, perform an evaluation, discuss treatment options, and recommend follow-up care if needed.",
+  },
+  {
+    question: "Can General Physicians manage chronic diseases?",
+    answer:
+      "Yes. They commonly manage conditions such as diabetes, hypertension, asthma, and high cholesterol.",
+  },
+  {
+    question: "Are telehealth appointments available?",
+    answer:
+      "Yes. Many consultations for common illnesses, follow-ups, and routine healthcare needs can be completed through telehealth.",
+  },
+  {
+    question: "Can I see a General Physician for preventive care?",
+    answer:
+      "Absolutely. Preventive services such as wellness exams, screenings, vaccinations, and health counseling are important parts of primary care.",
+  },
+  {
+    question: "What symptoms require immediate medical attention?",
+    answer:
+      "Severe chest pain, difficulty breathing, sudden weakness, loss of consciousness, or other emergency symptoms require urgent medical care.",
+  },
+  {
+    question: "How often should I have a routine health check-up?",
+    answer:
+      "Most adults benefit from annual wellness visits, though recommendations may vary based on age and health status.",
+  },
+  {
+    question: "Can a General Physician refer me to a specialist?",
+    answer:
+      "Yes. If specialized care is needed, your General Physician can coordinate referrals and ongoing care.",
+  },
+  {
+    question: "How can I schedule an appointment with a General Physician?",
+    answer:
+      "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
+  },
+],
+  
 };
 
 const TRUST_STATS = [
@@ -326,40 +329,41 @@ const TRUST_STATS = [
 const TRUST_CARDS = [
   {
     Icon: FiAward,
-    title: "Board-Certified Specialists",
+    title: "Board-Certified Providers",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced General Physicians dedicated to evidence-based medical care.",
   },
   {
-    Icon: FiZap,
+    Icon: FiClock,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Get timely access to healthcare consultations for routine and urgent medical concerns.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with healthcare providers from home through convenient virtual consultations.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding coverage, benefits, authorizations, and billing questions.",
   },
   {
-    Icon: FiHeart,
+    Icon: FiUserCheck,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from treatment plans tailored to your symptoms, health history, and personal goals.",
   },
   {
-    Icon: FiGlobe,
-    title: "Global Provider Network",
+    Icon: FiUsers,
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access a broad network of healthcare professionals and coordinated medical services.",
   },
+
 ];
 
 // ── Scroll reveal hook ────────────────────────────────────────────────────────
@@ -542,7 +546,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -553,12 +557,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
   return (
     <>
       <HelmetProvider>
-        <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
-        </title>
+        <title>General Physician (GP) | Primary Care & Everyday Healthcare</title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with experienced General Physicians for cold and flu, fever, cough, headaches, minor infections, fatigue, body aches, and everyday healthcare needs."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -700,12 +702,11 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
           <div className="sp-container">
             <Reveal>
               <div className="sp-conditions__head">
-                <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
+                <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                 Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
+
                 </p>
               </div>
             </Reveal>
@@ -732,9 +733,8 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced family medicine providers with advanced technology to make primary healthcare more accessible, convenient, and personalized.
+
                 </p>
               </div>
             </Reveal>
@@ -785,15 +785,14 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
 
           <div className="sp-cta__inner">
             <Reveal>
-              <span className="sp-cta__eyebrow">Get Started Today</span>
+              <span className="sp-cta__eyebrow">GET STARTED TODAY
+</span>
               <h2 className="sp-cta__heading">
-                Ready to Connect with a <span>{data.name}</span> Specialist?
+               Ready to Connect with a 
+ <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+               Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
               </p>
             </Reveal>
 
