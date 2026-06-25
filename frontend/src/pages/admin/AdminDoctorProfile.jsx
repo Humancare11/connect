@@ -1188,6 +1188,12 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     clinicName: e.clinicName || "",
     clinicAddress: e.clinicAddress || "",
     aboutDoctor: e.aboutDoctor || "",
+    licensedStates: Array.isArray(e.licensedStates)
+      ? e.licensedStates.join(", ")
+      : e.licensedStates || e.state || "",
+    internationalLicenses: Array.isArray(e.internationalLicenses)
+      ? e.internationalLicenses.join(", ")
+      : e.internationalLicenses || "",
     bankName: e.bankName || "",
     accountHolderName: e.accountHolderName || "",
     accountNumber: e.accountNumber || "",
@@ -1284,6 +1290,18 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         experience: d.experience ? Number(d.experience) : undefined,
         consultantFees: d.consultantFees ? Number(d.consultantFees) : undefined,
         languagesKnown,
+        licensedStates: d.licensedStates
+          ? d.licensedStates
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+        internationalLicenses: d.internationalLicenses
+          ? d.internationalLicenses
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
         ...urls,
         timezone,
         availability: avail,
@@ -1647,6 +1665,22 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                 </option>
               ))}
             </select>
+          </FG>
+          <FG label="State/Territory Licensing (comma-separated)" full>
+            <input
+              style={INP}
+              value={d.licensedStates}
+              onChange={f("licensedStates")}
+              placeholder="New South Wales, Victoria"
+            />
+          </FG>
+          <FG label="International Medical Licenses (comma-separated)" full>
+            <input
+              style={INP}
+              value={d.internationalLicenses}
+              onChange={f("internationalLicenses")}
+              placeholder="India, United Kingdom"
+            />
           </FG>
         </div>
       </Section>
@@ -2898,6 +2932,53 @@ export default function AdminDoctorProfile() {
                 >
                   <Field label="Clinic Name" value={e.clinicName} />
                   <Field label="Clinic Address" value={e.clinicAddress} full />
+                </div>
+              </div>
+            )}
+            {(Array.isArray(e.licensedStates) ? e.licensedStates : e.state ? [e.state] : []).length > 0 && (
+              <div
+                style={{
+                  marginTop: 16,
+                  paddingTop: 16,
+                  borderTop: "1px solid #f1f5f9",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    marginBottom: 10,
+                  }}
+                >
+                  🏛️ State/Territory Licensing (AU)
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {(Array.isArray(e.licensedStates)
+                    ? e.licensedStates
+                    : e.state
+                      ? [e.state]
+                      : []).map((stateName) => (
+                    <span
+                      key={stateName}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "4px 12px",
+                        background: "#f8fafc",
+                        border: "1px solid #cbd5e1",
+                        borderRadius: 20,
+                        fontSize: 13,
+                        color: "#334155",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {stateName}
+                    </span>
+                  ))}
                 </div>
               </div>
             )}
