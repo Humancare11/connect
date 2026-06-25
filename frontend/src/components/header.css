@@ -108,6 +108,10 @@
 .help-slider-wrap {
   position: relative;
   flex-shrink: 0;
+  /* Pushes this element (and everything after it: help slider,
+     nav menu, auth, hamburger) to the right of the logo,
+     creating an auto-filling gap between logo and the rest. */
+  margin-left: auto;
 }
 
 /* ============================================================
@@ -349,7 +353,11 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  flex: 1;
+  /* CHANGED: no longer flex:1 — the nav menu now sizes to its
+     content instead of stretching to fill the row. The gap
+     between the logo and everything else is created by
+     .help-slider-wrap's margin-left: auto instead. */
+  flex: 0 0 auto;
   min-width: 0;
   height: 42px;
   padding: 0 4px;

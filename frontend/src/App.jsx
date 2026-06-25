@@ -288,6 +288,7 @@ import MensWellnessConsultation1 from "./pages/Conditions/Conditions/MensWellnes
 import PrematureEjaculation1 from "./pages/Conditions/Conditions/PrematureEjaculation";
 import ProstateHealth1 from "./pages/Conditions/Conditions/ProstateHealth";
 import UrinarySymptomsMen1 from "./pages/Conditions/Conditions/UrinarySymptomsMen";
+import Vertigo from "./pages/Conditions/Conditions/Vertigo";
 
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
@@ -332,8 +333,10 @@ import GeneralConsultation from "./pages/NewServices/GeneralConsultation";
 import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
-import Vertigo from "./pages/Conditions/Conditions/Vertigo";
 
+import FittoFly from "./pages/NewServices/FittoFly";
+import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
+import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
 
@@ -1554,6 +1557,12 @@ function AppLayout() {
             path="/weight-loss-programs"
             element={<WeightLossPrograms />}
           />
+          <Route path="/fit-to-fly" element={<FittoFly />} />
+          <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
+          <Route path="/doctor-note" element={<DoctorNote />} />
+
+
+
           <Route path="/vertigo" element={<Vertigo />} />
           
         </Routes>

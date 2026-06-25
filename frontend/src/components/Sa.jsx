@@ -151,7 +151,7 @@ export default function ServicesSection() {
           </RevealCard>
 
           {/* ── Weight Loss (2-col) ── */}
-          <RevealCard
+          {/* <RevealCard
             className="services-card-item services-bento-small-weightloss"
             delay={D[1]}
             to="/weight-loss-programs"
@@ -174,10 +174,31 @@ export default function ServicesSection() {
                 Start Program <span className="cta-arrow">→</span>
               </span>
             </div>
+          </RevealCard> */}
+
+          {/* Doctors Notes */}
+          <RevealCard
+            className="services-card-item services-bento-small-weightloss"
+            delay={D[1]}
+            to="/doctor-note"
+          >
+            <div className="services-icon-box">
+              <FaBalanceScale />
+            </div>
+            <h3 className="services-card-title">Doctor Note or Sick Note</h3>
+            <p className="services-card-description">
+              Doctor Notes and Sick Notes are medical documents that may be provided by a healthcare professional after evaluating a patient's health condition. These documents are commonly used to verify an illness, medical condition, or healthcare visit for employers, schools, universities, or other organizations.
+            </p>
+            <div className="services-weight-stat-block">
+              <span className="services-card-cta-link services-weight-cta">
+                Get Started  <span className="cta-arrow">→</span>
+              </span>
+            </div>
+
           </RevealCard>
 
           {/* ── Mental Health (2-col tall) ── */}
-          <RevealCard
+          {/* <RevealCard
             className="services-card-item services-bento-smal-1"
             delay={D[2]}
             to="/mental-health-support"
@@ -192,8 +213,26 @@ export default function ServicesSection() {
             <span className="services-card-cta-link">
               Get support <span className="cta-arrow">→</span>
             </span>
-          </RevealCard>
+          </RevealCard> */}
 
+          {/* Fit to Fly  */}
+          <RevealCard
+            className="services-card-item services-bento-smal-1"
+            delay={D[2]}
+            to="/fit-to-fly"
+          >
+            <div className="services-icon-box">
+              <FaBrain />
+            </div>
+            <h3 className="services-card-title"> Fit to Fly Certificate</h3>
+            <p className="services-card-description">
+              A Fit to Fly Certificate is a medical document that may be required by airlines for passengers with certain health conditions, recent surgeries, pregnancy-related travel considerations, or ongoing medical concerns. The certificate confirms that a healthcare provider has reviewed your condition and assessed your ability to travel safely by air.
+
+            </p>
+            <span className="services-card-cta-link">
+              Get support <span className="cta-arrow">→</span>
+            </span>
+          </RevealCard>
           {/* ── General Consultation (2-col) ── */}
           <RevealCard
             className="services-card-item services-bento-small"
@@ -213,7 +252,7 @@ export default function ServicesSection() {
           </RevealCard>
 
           {/* ── Sexual Health (2-col) ── */}
-          <RevealCard
+          {/* <RevealCard
             className="services-card-item services-bento-small-0"
             delay={D[4]}
             to="/sexual-health"
@@ -224,6 +263,22 @@ export default function ServicesSection() {
             <h3 className="services-card-title">Sexual Health</h3>
             <p className="services-card-description">
               Confidential online sexual health consultations for STI concerns, ED treatment, birth control guidance, prescriptions, and preventive virtual healthcare services with licensed providers.
+            </p>
+            <span className="services-card-cta-link">
+              Learn more <span className="cta-arrow">→</span>
+            </span>
+          </RevealCard> */}
+            <RevealCard
+            className="services-card-item services-bento-small-0"
+            delay={D[4]}
+            to="/lab-requisitions"
+          >
+            <div className="services-icon-box">
+              <FaHeart />
+            </div>
+            <h3 className="services-card-title"> Lab Requisition</h3>
+            <p className="services-card-description">
+             A Lab Requisition is a medical order provided by a healthcare professional that authorizes laboratory testing. These tests can help evaluate symptoms, monitor chronic conditions, assess overall health, and provide important information for diagnosis and treatment planning. 
             </p>
             <span className="services-card-cta-link">
               Learn more <span className="cta-arrow">→</span>
