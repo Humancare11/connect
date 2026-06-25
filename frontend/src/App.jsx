@@ -47,22 +47,22 @@ import AboutPage from "./pages/AboutPage";
 import PCP from "./pages/PCP";
 
 // privacy concerns
-import PrivacyConcerns from "./pages/Privacy Policies/PrivacyConcerns";
-import PatientPrivacyNotice from "./pages/Privacy Policies/PatientPrivacyNotice";
-import PrivacyPolicy from "./pages/Privacy Policies/PrivacyPolicy";
-import ProviderTermsofService from "./pages/Privacy Policies/ProviderTermsofService";
-import RefundCancellation from "./pages/Privacy Policies/RefundCancellation";
-import TeleHealthConsent from "./pages/Privacy Policies/TeleHealthConsent";
-import TermsService from "./pages/Privacy Policies/TermsService";
-import AccessibilityStatement from "./pages/Privacy Policies/AccessibilityStatement";
-import CCPA from "./pages/Privacy Policies/CCPA";
-import NOTICE from "./pages/Privacy Policies/NoticePrivacy";
-import CookiePolicy from "./pages/Privacy Policies/CookiePolicy";
-import PatientInformedConsentForm from "./pages/Privacy Policies/PatientInformedConsentForm";
-import PhysicianCredentialingPolicy from "./pages/Privacy Policies/PhysicianCredentialingPolicy";
-import TeleconsultationWorkflowPolicy from "./pages/Privacy Policies/TeleconsultationWorkflowPolicy";
-import PrescriptionHandlingPolicy from "./pages/Privacy Policies/PrescriptionHandlingPolicy";
-import TelehealthProviderAgreement from "./pages/Privacy Policies/TelehealthProviderAgreement";
+import PrivacyConcerns from "./pages/PrivacyPolicies/PrivacyConcerns";
+import PatientPrivacyNotice from "./pages/PrivacyPolicies/PatientPrivacyNotice";
+import PrivacyPolicy from "./pages/PrivacyPolicies/PrivacyPolicy";
+import ProviderTermsofService from "./pages/PrivacyPolicies/ProviderTermsofService";
+import RefundCancellation from "./pages/PrivacyPolicies/RefundCancellation";
+import TeleHealthConsent from "./pages/PrivacyPolicies/TeleHealthConsent";
+import TermsService from "./pages/PrivacyPolicies/TermsService";
+import AccessibilityStatement from "./pages/PrivacyPolicies/AccessibilityStatement";
+import CCPA from "./pages/PrivacyPolicies/CCPA";
+import NOTICE from "./pages/PrivacyPolicies/NoticePrivacy";
+import CookiePolicy from "./pages/PrivacyPolicies/CookiePolicy";
+import PatientInformedConsentForm from "./pages/PrivacyPolicies/PatientInformedConsentForm";
+import PhysicianCredentialingPolicy from "./pages/PrivacyPolicies/PhysicianCredentialingPolicy";
+import TeleconsultationWorkflowPolicy from "./pages/PrivacyPolicies/TeleconsultationWorkflowPolicy";
+import PrescriptionHandlingPolicy from "./pages/PrivacyPolicies/PrescriptionHandlingPolicy";
+import TelehealthProviderAgreement from "./pages/PrivacyPolicies/TelehealthProviderAgreement";
 
 // category pages
 // import ChildCare from "./pages/Categories/ChildMain";
@@ -348,7 +348,7 @@ const DoctorEnrollments = lazy(
   () => import("./pages/doctors/DoctorEnrollments"),
 );
 import { useDoctorAuth } from "./context/DoctorAuthContext";
-import NoticePrivacy from "./pages/Privacy Policies/NoticePrivacy";
+import NoticePrivacy from "./pages/PrivacyPolicies/NoticePrivacy";
 const DoctorProfile = lazy(() => import("./pages/doctors/DoctorProfile"));
 // import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
 const DoctorAppointments = lazy(
