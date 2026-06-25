@@ -108,6 +108,10 @@
 .help-slider-wrap {
   position: relative;
   flex-shrink: 0;
+  /* Pushes this element (and everything after it: help slider,
+     nav menu, auth, hamburger) to the right of the logo,
+     creating an auto-filling gap between logo and the rest. */
+  margin-left: auto;
 }
 
 /* ============================================================
@@ -216,18 +220,16 @@
 
 /* ============================================================
    HELP DROPDOWN
-   FIX: enlarged the panel and switched the list to a proper
-   4 x 3 = 12 cell grid (one cell per help item) so the box
-   reads as a deliberate grid instead of an odd 3-column wrap.
+ 
 ============================================================ */
 .help-dropdown {
   position: absolute;
   top: calc(100% + 15px);
 
-  left: 0;
+  left: -50px;
   transform: none;
 
-  width: clamp(620px, 56vw, 860px);
+  width: 1100px;
 
   z-index: 90;
 
@@ -236,7 +238,7 @@
   -webkit-backdrop-filter: blur(28px) saturate(160%);
   border: 1px solid rgba(200,215,255,.50);
   border-radius: 26px;
-  padding: 22px 20px 20px;
+  padding: 20px 20px 20px;
   box-shadow:
     0 16px 48px rgba(11,40,100,.14),
     0 4px 12px  rgba(11,40,100,.07),
@@ -261,7 +263,7 @@
 }
 
 .help-dropdown-heading {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -271,7 +273,6 @@
   border-bottom: 1px solid rgba(11,40,100,.07);
 }
 
-/* 4-column x 3-row grid = 12 cells, one per help item */
 .help-dropdown-list {
   list-style: none;
   margin: 0;
@@ -352,7 +353,11 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  flex: 1;
+  /* CHANGED: no longer flex:1 — the nav menu now sizes to its
+     content instead of stretching to fill the row. The gap
+     between the logo and everything else is created by
+     .help-slider-wrap's margin-left: auto instead. */
+  flex: 0 0 auto;
   min-width: 0;
   height: 42px;
   padding: 0 4px;

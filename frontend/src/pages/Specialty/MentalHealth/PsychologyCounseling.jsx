@@ -36,6 +36,16 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
+  FiHome,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +55,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +67,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +76,256 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "psychology-counseling",
+  name: "Psychology Counseling",
+  tagline: "Compassionate Support for Life's Emotional Challenges.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Psychology counseling provides a safe, supportive space to explore thoughts, emotions, behaviors, and life experiences. Whether you're facing stress, grief, relationship difficulties, trauma, or self-esteem concerns, counseling can help you develop healthier coping strategies, improve emotional well-being, and build resilience for everyday life. Through personalized counseling and evidence-based therapeutic approaches, psychology specialists help individuals navigate challenges, strengthen emotional health, and achieve personal growth.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Psychology counseling focuses on helping individuals understand and manage emotional, behavioral, and interpersonal challenges. Licensed counselors and psychologists provide professional support for life transitions, stress, grief, relationships, trauma, self-esteem concerns, and emotional well-being.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Counseling is not only for mental health conditions. Many people seek counseling to improve coping skills, strengthen relationships, build confidence, process difficult experiences, and develop healthier ways of managing life's challenges.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Psychology counselors help individuals manage grief and loss, low self-esteem, relationship stress, trauma, emotional distress, stress management concerns, and personal growth challenges.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Consider counseling if you're experiencing emotional difficulties, relationship challenges, overwhelming stress, low confidence, grief, trauma, or life changes that are affecting your daily well-being.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Individual Counseling",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "One-on-one sessions focused on emotional wellness, self-discovery, and personal growth.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Stress Management Counseling",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Support for managing everyday stress, burnout, and overwhelming life demands.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Relationship Counseling Support",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Guidance for communication challenges, interpersonal conflicts, and relationship concerns.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Trauma-Informed Care",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Compassionate support for processing difficult experiences and emotional healing.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Self-Esteem & Confidence Building",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Strategies to improve self-worth, confidence, resilience, and emotional well-being.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Life Transition Counseling",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Support for navigating major life changes, career shifts, family changes, and personal challenges.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Improved Emotional Health",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Develop healthier ways to manage emotions and life's challenges.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Stronger Relationships",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Improve communication, emotional awareness, and interpersonal connections.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Better Stress Management",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Learn practical coping strategies for stress and emotional resilience.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Personal Growth & Self-Confidence",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Build self-awareness, confidence, and skills for long-term well-being.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: FiHeart,
+      name: "Grief and Loss",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
-      description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Support for coping with the emotional impact of losing a loved one, major life changes, or significant personal losses.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Low Self-Esteem",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Guidance to improve self-confidence, self-worth, self-acceptance, and emotional resilience.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiUsers,
+      name: "Relationship Stress",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Support for communication challenges, relationship conflicts, emotional disconnection, and interpersonal difficulties.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiZap,
+      name: "Stress",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Strategies for managing daily stress, work-related pressures, emotional overwhelm, and burnout.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiShield,
+      name: "Trauma Support",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Compassionate counseling for individuals processing difficult, distressing, or traumatic experiences.",
+    },
+    {
+      Icon: FiCompass,
+      name: "Life Transitions",
+      description:
+        "Guidance through major life events such as career changes, relocation, divorce, or family transitions.",
+    },
+    {
+      Icon: FiActivity,
+      name: "Emotional Regulation Challenges",
+      description:
+        "Support for understanding and managing strong emotions in healthy ways.",
+    },
+    {
+      Icon: FiTarget,
+      name: "Confidence & Self-Worth Issues",
+      description:
+        "Counseling focused on building self-belief, self-respect, and positive self-image.",
+    },
+    {
+      Icon: FiBriefcase,
+      name: "Workplace Stress & Burnout",
+      description:
+        "Support for professional stress, emotional exhaustion, and work-life balance concerns.",
+    },
+    {
+      Icon: FiHome,
+      name: "Family Relationship Challenges",
+      description:
+        "Guidance for navigating family dynamics, conflicts, and communication difficulties.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Personal Growth & Self-Discovery",
+      description:
+        "Counseling designed to help individuals gain clarity, purpose, and emotional insight.",
+    },
+    {
+      Icon: FiLayers,
+      name: "Coping Skills Development",
+      description:
+        "Practical strategies to improve resilience, adaptability, and emotional well-being.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is psychology counseling?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Psychology counseling is a professional service that helps individuals manage emotional, behavioral, and life-related challenges.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What issues can counseling help with?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Counseling can help with stress, grief, relationship concerns, trauma, self-esteem issues, life transitions, and emotional wellness.",
+    },
+    {
+      question: "Do I need a mental health diagnosis to see a counselor?",
+      answer:
+        "No. Many people seek counseling for personal growth, stress management, and life challenges without having a mental health diagnosis.",
+    },
+    {
+      question: "What is grief counseling?",
+      answer:
+        "Grief counseling helps individuals process loss, cope with emotions, and adapt to life after significant changes or bereavement.",
+    },
+    {
+      question: "Can counseling improve self-esteem?",
+      answer:
+        "Yes. Counseling can help identify negative thought patterns and develop healthier self-confidence and self-worth.",
+    },
+    {
+      question: "How can counseling help with stress?",
+      answer:
+        "Counselors provide coping strategies, emotional support, and practical tools to manage stress effectively.",
+    },
+    {
+      question: "What is trauma-informed counseling?",
+      answer:
+        "Trauma-informed counseling provides compassionate care that recognizes and addresses the impact of difficult experiences.",
+    },
+    {
+      question: "Can counseling help relationship problems?",
+      answer:
+        "Yes. Counseling can improve communication, conflict resolution, emotional understanding, and relationship dynamics.",
+    },
+    {
+      question: "Is counseling confidential?",
+      answer:
+        "Yes. Counseling sessions follow strict privacy and confidentiality standards.",
+    },
+    {
+      question: "How long does counseling take?",
+      answer:
+        "The length of counseling varies depending on individual goals, concerns, and progress.",
+    },
+    {
+      question: "Can counseling help with life transitions?",
+      answer:
+        "Yes. Counselors often help individuals navigate major personal, professional, and family life changes.",
+    },
+    {
+      question: "What happens during the first counseling session?",
+      answer:
+        "The counselor will discuss your concerns, goals, personal history, and determine the best approach for support.",
+    },
+    {
+      question: "Can counseling help with workplace stress?",
+      answer:
+        "Yes. Counseling can provide strategies for managing stress, burnout, workplace challenges, and work-life balance.",
+    },
+    {
+      question: "Is telehealth counseling effective?",
+      answer:
+        "Many individuals find virtual counseling convenient, effective, and comfortable for ongoing support.",
+    },
+    {
+      question: "Can counseling help build confidence?",
+      answer:
+        "Yes. Counselors help individuals develop self-awareness, challenge negative beliefs, and improve confidence.",
+    },
+    {
+      question: "What are healthy coping skills?",
+      answer:
+        "Healthy coping skills include stress management techniques, emotional regulation strategies, mindfulness, and problem-solving approaches.",
+    },
+    {
+      question: "How often should I attend counseling sessions?",
+      answer:
+        "Session frequency depends on your goals, concerns, and recommendations from your counselor.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "How can I schedule an appointment with a psychology counselor?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
-    },
-    {
-      question: "Is seeking a second opinion common?",
-      answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
-    },
-    {
-      question: "Can an expert medical opinion change my diagnosis?",
-      answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with a licensed psychology counselor through virtual or in-person care options.",
     },
   ],
 };
@@ -326,39 +340,39 @@ const TRUST_STATS = [
 const TRUST_CARDS = [
   {
     Icon: FiAward,
-    title: "Board-Certified Specialists",
+    title: "Licensed Mental Health Professionals",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced counselors trained in emotional wellness and personal growth.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule counseling sessions quickly with flexible appointment options.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with counselors from the comfort and privacy of your home.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from counseling plans tailored to your personal experiences, goals, and challenges.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted mental health professionals and coordinated support services.",
   },
 ];
 
@@ -542,7 +556,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +568,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Psychology Counseling Services | Stress, Trauma, Relationships &
+          Emotional Support
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with licensed psychology counselors for stress, grief and loss, trauma support, relationship challenges, self-esteem concerns, and emotional wellness counseling."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +718,8 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} provide support for a wide range
+                  of emotional, behavioral, and life-related challenges.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +746,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced psychology counselors with advanced
+                  technology to make emotional wellness support more accessible,
+                  convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +804,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Take the next step toward emotional wellness, personal growth,
+                and healthier coping strategies. Schedule a counseling session
+                and receive compassionate support designed around your unique
+                needs and goals.
               </p>
             </Reveal>
 

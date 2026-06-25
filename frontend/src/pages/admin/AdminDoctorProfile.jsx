@@ -941,6 +941,23 @@ function AdminDocUpload({
 
   const handleFile = async (raw) => {
     if (!raw) return;
+
+    // Client-side validation — PDF only
+    const ext = raw.name.split(".").pop().toLowerCase();
+    const BLOCKED = ["php", "html", "htm", "js", "exe", "bat", "cmd", "sh", "py", "rb", "dll", "vbs", "msi", "ps1", "jar", "svg", "xml", "ts", "jsx", "tsx"];
+    if (BLOCKED.includes(ext)) {
+      setErr(`".${ext}" files are not allowed. Only PDF files may be uploaded.`);
+      return;
+    }
+    if (ext !== "pdf") {
+      setErr(`".${ext}" files are not accepted. Only PDF files may be uploaded.`);
+      return;
+    }
+    if (raw.type && raw.type !== "application/pdf") {
+      setErr("Only PDF files are accepted. Please select a valid PDF document.");
+      return;
+    }
+
     setErr("");
     setUploading(true);
     try {
@@ -950,8 +967,9 @@ function AdminDocUpload({
       });
       setLocalUrl(uploaded.key);
       onChange(uploaded.key);
-    } catch {
-      setErr("Upload failed — please try again.");
+    } catch (uploadErr) {
+      const apiMsg = uploadErr?.response?.data?.msg;
+      setErr(apiMsg || "Upload failed — please try again.");
     } finally {
       setUploading(false);
     }
@@ -1129,7 +1147,7 @@ function AdminDocUpload({
         ref={ref}
         type="file"
         hidden
-        accept={accept || ".pdf,.jpg,.jpeg,.png,.doc,.docx"}
+        accept={accept || "application/pdf,.pdf"}
         onChange={(e) => handleFile(e.target.files[0])}
       />
     </div>

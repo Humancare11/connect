@@ -1,19 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
+
 import {
-  FiActivity,
+  FiAward,
+  FiGlobe,
   FiHeart,
+  FiMonitor,
   FiShield,
+  FiZap,
+  FiActivity,
   FiUsers,
   FiClock,
-  FiGlobe,
   FiSearch,
   FiCalendar,
   FiPhone,
   FiMail,
-  FiAward,
-  FiZap,
-  FiMonitor,
   FiDollarSign,
   FiCheckCircle,
   FiStar,
@@ -36,7 +37,11 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiBatteryCharging,
+  FiCloud,
+  FiUserCheck,
 } from "react-icons/fi";
+
 import {
   MdOutlineVaccines,
   MdOutlineBloodtype,
@@ -46,6 +51,7 @@ import {
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
 } from "react-icons/md";
+
 import {
   GiHeartOrgan,
   GiLungs,
@@ -54,266 +60,265 @@ import {
   GiMedicines,
   GiBodySwapping,
 } from "react-icons/gi";
-import "../SpecialtyPage.css";
 
+import "../SpecialtyPage.css";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "internal-medicine",
+  name: "Internal Medicine",
+  tagline: "Comprehensive Adult Healthcare for Complex Medical Needs.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Internal Medicine specialists focus on the prevention, diagnosis, and treatment of adult health conditions, ranging from routine wellness care to complex medical concerns involving multiple body systems. Internists provide comprehensive, evidence-based care designed to help adults maintain optimal health and manage both acute and chronic conditions.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Internal Medicine is a medical specialty dedicated to the comprehensive care of adults. Internal medicine physicians, also known as internists, are highly trained in diagnosing, treating, and preventing a broad range of medical conditions that affect adults throughout every stage of life.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Internists specialize in managing complex health issues, chronic diseases, unexplained symptoms, and conditions involving multiple organ systems. Their expertise allows them to coordinate care, interpret diagnostic findings, review medications, and provide personalized treatment plans that support long-term health and wellness.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Internal medicine specialists evaluate chronic illnesses, complex medical conditions, unexplained symptoms, medication-related concerns, preventive health needs, and conditions affecting multiple body systems.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a visit with an internal medicine specialist if you have multiple health conditions, unexplained symptoms, chronic diseases, medication concerns, preventive care needs, or require a comprehensive adult health evaluation.",
 
-  keyServices: [
-    {
-      Icon: FiActivity,
-      title: "Second Medical Opinions",
-      description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
-    },
-    {
-      Icon: FiThermometer,
-      title: "Cancer Case Reviews",
-      description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
-    },
-    {
-      Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
-      description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
-    },
-    {
-      Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
-      description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
-      description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
-    },
-    {
-      Icon: FiUsers,
-      title: "Medical Record Analysis",
-      description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
-    },
-  ],
+    keyServices: [
+  {
+    Icon: FiClipboard,
+    title: "Comprehensive Adult Health Evaluations",
+    description:
+      "Detailed assessments of overall health, medical history, risk factors, and ongoing healthcare needs.",
+  },
+  {
+    Icon: FiHeart,
+    title: "Chronic Disease Management",
+    description:
+      "Long-term care for conditions such as hypertension, diabetes, high cholesterol, thyroid disorders, and other chronic illnesses.",
+  },
+  {
+    Icon: FiTool,
+    title: "Medication Review & Optimization",
+    description:
+      "Evaluation of medications to ensure safety, effectiveness, and appropriate management of treatment plans.",
+  },
+  {
+    Icon: FiShield,
+    title: "Preventive Health Screenings",
+    description:
+      "Routine health screenings, risk assessments, and wellness services designed to prevent disease and detect health issues early.",
+  },
+  {
+    Icon: FiSearch,
+    title: "Diagnostic Evaluation of Complex Symptoms",
+    description:
+      "Investigation of unexplained symptoms and conditions involving multiple body systems.",
+  },
+  {
+    Icon: FiUsers,
+    title: "Coordinated Specialty Care",
+    description:
+      "Collaboration with specialists and healthcare providers to ensure comprehensive patient care and treatment continuity.",
+  },
+],
 
-  benefits: [
-    {
-      Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
-      description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
-    },
-    {
-      Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
-      description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
-    },
-    {
-      Icon: FiShield,
-      title: "Improved Treatment Understanding",
-      description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
-    },
-    {
-      Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
-      description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
-    },
-  ],
+ benefits: [
+  {
+    Icon: FiUserCheck,
+    title: "Expert Adult Healthcare",
+    description:
+      "Provides specialized medical care focused exclusively on adult health concerns.",
+  },
+  {
+    Icon: FiHeart,
+    title: "Comprehensive Disease Management",
+    description:
+      "Helps patients effectively manage chronic conditions and complex medical issues.",
+  },
+  {
+    Icon: FiSearch,
+    title: "Early Detection & Prevention",
+    description:
+      "Identifies health risks early through screenings, evaluations, and preventive care strategies.",
+  },
+  {
+    Icon: FiUsers,
+    title: "Personalized Long-Term Care",
+    description:
+      "Builds ongoing relationships that support better health outcomes and continuity of care.",
+  },
+],
 
-  conditions: [
-    {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
-      description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
-      description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
-    },
-    {
-      Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
-      description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
-    },
-    {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
-      description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
-    },
-    {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
-      description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
-    },
-    {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
-      description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
-    },
-  ],
+conditions: [
+  {
+    Icon: FiTool,
+    name: "Medication Review",
+    description:
+      "Comprehensive evaluation of medications to ensure safe use, identify interactions, and optimize treatment effectiveness.",
+  },
+  {
+    Icon: FiCrosshair,
+    name: "Multi-System Complaints",
+    description:
+      "Assessment of symptoms affecting multiple organs or body systems that require a coordinated medical evaluation.",
+  },
+  {
+    Icon: FiSearch,
+    name: "Preventive Screening",
+    description:
+      "Routine screenings and risk assessments to detect disease early and support long-term health.",
+  },
+  {
+    Icon: FiAlertCircle,
+    name: "Undiagnosed Symptoms",
+    description:
+      "Investigation of persistent symptoms that have not yet received a clear diagnosis.",
+  },
+  {
+    Icon: FiHeart,
+    name: "Hypertension",
+    description:
+      "Management of high blood pressure to reduce cardiovascular risks and support overall health.",
+  },
+  {
+    Icon: MdOutlineBloodtype,
+    name: "Type 2 Diabetes",
+    description:
+      "Long-term monitoring and treatment to maintain healthy blood sugar levels and prevent complications.",
+  },
+  {
+    Icon: FiTrendingUp,
+    name: "High Cholesterol",
+    description:
+      "Evaluation and treatment of cholesterol disorders to support heart and vascular health.",
+  },
+  {
+    Icon: MdOutlineBiotech,
+    name: "Thyroid Disorders",
+    description:
+      "Diagnosis and management of thyroid-related conditions affecting metabolism, energy levels, and overall wellness.",
+  },
+  {
+    Icon: FiBatteryCharging,
+    name: "Chronic Fatigue",
+    description:
+      "Assessment of persistent tiredness, low energy, and underlying medical causes.",
+  },
+  {
+    Icon: FiActivity,
+    name: "Unexplained Weight Changes",
+    description:
+      "Evaluation of unexpected weight gain or loss and associated medical concerns.",
+  },
+  {
+    Icon: FiUsers,
+    name: "Multiple Chronic Conditions",
+    description:
+      "Coordinated care for patients managing several health conditions simultaneously.",
+  },
+  {
+    Icon: FiHeart,
+    name: "General Adult Health Concerns",
+    description:
+      "Comprehensive care for non-emergency medical issues affecting adults across all stages of life.",
+  },
+],
 
-  faqs: [
-    {
-      question: "What is an expert medical opinion?",
-      answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
-    },
-    {
-      question: "Why should I seek a second medical opinion?",
-      answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
-    },
-    {
-      question:
-        "What conditions can be reviewed through an expert medical opinion?",
-      answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
-    },
-    {
-      question: "Is seeking a second opinion common?",
-      answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
-    },
-    {
-      question: "Can an expert medical opinion change my diagnosis?",
-      answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
-    },
-  ],
+
+faqs: [
+  {
+    question: "What is internal medicine?",
+    answer:
+      "Internal medicine is a medical specialty focused on the prevention, diagnosis, and treatment of diseases affecting adults.",
+  },
+  {
+    question: "What does an internal medicine specialist treat?",
+    answer:
+      "Internal medicine specialists treat chronic diseases, complex medical conditions, preventive health concerns, unexplained symptoms, and adult healthcare needs.",
+  },
+  {
+    question: "How is internal medicine different from family medicine?",
+    answer:
+      "Internal medicine focuses exclusively on adult healthcare, while family medicine provides care for patients of all ages.",
+  },
+  {
+    question: "When should I see an internal medicine specialist?",
+    answer:
+      "You should consider seeing an internist for chronic disease management, complex symptoms, preventive care, or ongoing adult healthcare needs.",
+  },
+  {
+    question: "What is a medication review?",
+    answer:
+      "A medication review evaluates prescriptions, supplements, and treatment plans to ensure safety, effectiveness, and proper use.",
+  },
+  {
+    question: "Why are preventive screenings important?",
+    answer:
+      "Preventive screenings help identify health conditions early, often before symptoms develop, allowing for earlier treatment and better outcomes.",
+  },
+  {
+    question: "What are multi-system complaints?",
+    answer:
+      "Multi-system complaints involve symptoms affecting multiple organs or body systems and often require a comprehensive medical evaluation.",
+  },
+  {
+    question: "Can internal medicine specialists diagnose unexplained symptoms?",
+    answer:
+      "Yes. Internists are trained to investigate complex and undiagnosed symptoms through detailed evaluations and testing.",
+  },
+  {
+    question: "Can an internist manage diabetes?",
+    answer:
+      "Yes. Internal medicine specialists commonly manage diabetes and related health concerns.",
+  },
+  {
+    question: "Do internal medicine physicians treat hypertension?",
+    answer:
+      "Yes. They diagnose, monitor, and manage high blood pressure and cardiovascular risk factors.",
+  },
+  {
+    question: "Can internal medicine specialists coordinate specialist care?",
+    answer:
+      "Yes. Internists frequently work with specialists and coordinate treatment plans for patients with complex conditions.",
+  },
+  {
+    question: "What happens during an internal medicine appointment?",
+    answer:
+      "Your provider will review your medical history, symptoms, medications, health risks, and recommend appropriate testing or treatment.",
+  },
+  {
+    question: "Are telehealth appointments available?",
+    answer:
+      "Yes. Many consultations, follow-up visits, medication reviews, and chronic disease management appointments can be conducted virtually.",
+  },
+  {
+    question: "Can internal medicine specialists treat thyroid disorders?",
+    answer:
+      "Yes. Internists commonly diagnose and manage hypothyroidism, hyperthyroidism, and other thyroid-related conditions.",
+  },
+  {
+    question: "How often should adults have preventive screenings?",
+    answer:
+      "Screening recommendations vary based on age, health history, risk factors, and medical guidelines.",
+  },
+  {
+    question: "Can internal medicine specialists help with chronic fatigue?",
+    answer:
+      "Yes. They evaluate potential medical causes of fatigue and develop personalized treatment strategies.",
+  },
+  {
+    question: "Why is continuity of care important?",
+    answer:
+      "Long-term relationships with a healthcare provider help improve disease management, preventive care, and overall health outcomes.",
+  },
+  {
+    question: "How can I schedule an appointment with an internal medicine specialist?",
+    answer:
+      "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
+  },
+],
+  
 };
 
 const TRUST_STATS = [
@@ -324,41 +329,41 @@ const TRUST_STATS = [
 ];
 
 const TRUST_CARDS = [
-  {
+    {
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced internists dedicated to comprehensive adult healthcare.",
   },
   {
-    Icon: FiZap,
+    Icon: FiClock,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with internal medicine specialists through virtual consultations and follow-up visits.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
-    Icon: FiHeart,
+    Icon: FiUserCheck,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from individualized treatment plans based on your medical history, symptoms, and health goals.",
   },
   {
-    Icon: FiGlobe,
-    title: "Global Provider Network",
+    Icon: FiUsers,
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access a broad network of healthcare professionals and coordinated specialty care services.",
   },
 ];
 
@@ -542,7 +547,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function InternalMedicine({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -553,12 +558,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
   return (
     <>
       <HelmetProvider>
-        <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
-        </title>
+        <title>Internal Medicine Specialists | Adult Health & Complex Care</title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Get expert internal medicine care for medication reviews, preventive screenings, unexplained symptoms, chronic conditions, and complex adult health concerns."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -700,12 +703,11 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
           <div className="sp-container">
             <Reveal>
               <div className="sp-conditions__head">
-                <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
+                <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                 Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
+
                 </p>
               </div>
             </Reveal>
@@ -732,9 +734,8 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced family medicine providers with advanced technology to make primary healthcare more accessible, convenient, and personalized.
+
                 </p>
               </div>
             </Reveal>
@@ -785,15 +786,14 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
 
           <div className="sp-cta__inner">
             <Reveal>
-              <span className="sp-cta__eyebrow">Get Started Today</span>
+              <span className="sp-cta__eyebrow">GET STARTED TODAY
+</span>
               <h2 className="sp-cta__heading">
-                Ready to Connect with a <span>{data.name}</span> Specialist?
+               Ready to Connect with a 
+ <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+               Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
               </p>
             </Reveal>
 

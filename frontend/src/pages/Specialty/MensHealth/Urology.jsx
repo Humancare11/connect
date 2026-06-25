@@ -36,6 +36,13 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +52,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +64,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +73,255 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "urology",
+  name: "Urology",
+  tagline: "Expert Care for Urinary and Reproductive Health.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Urology specialists diagnose and treat conditions affecting the urinary tract, kidneys, bladder, and male reproductive system. From urinary tract infections and kidney stones to bladder concerns and urinary incontinence, urology care helps patients maintain healthy urinary function, prevent complications, and improve overall quality of life.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Urology is a medical specialty focused on diagnosing, treating, and preventing conditions affecting the urinary system, including the kidneys, bladder, ureters, and urethra. Urologists also provide care for male reproductive health concerns and urinary conditions that can impact daily comfort and overall wellness.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Through comprehensive evaluations, diagnostic testing, personalized treatment plans, and preventive care, urology specialists help patients manage urinary symptoms, protect kidney health, and improve long-term urinary function.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Urology specialists diagnose and manage bladder problems, kidney stones, urinary tract infections, urinary incontinence, blood in urine, and other urinary health conditions.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a consultation if you experience painful urination, blood in urine, urinary leakage, frequent urination, kidney stone symptoms, bladder concerns, or recurring urinary tract infections.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Urinary Health Evaluations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Comprehensive assessments for urinary symptoms, bladder concerns, and kidney-related conditions.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "Kidney Stone Management",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Diagnosis, treatment recommendations, and preventive strategies for kidney stone care.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Bladder Function Assessment",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Evaluation of bladder control issues, urinary frequency, urgency, and urinary retention.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "UTI Diagnosis & Treatment",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Care for urinary tract infections and recurrent urinary symptoms.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "Male Urological Health Support",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Evaluation and management of urinary and reproductive health concerns affecting men.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Preventive Urology Care",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Routine screenings and wellness strategies to maintain urinary tract and kidney health.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Early Detection",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Identify urinary and kidney conditions before they become more serious.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Improved Comfort",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Reduce symptoms such as pain, urgency, frequency, and urinary discomfort.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Better Kidney Health",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Protect kidney function through early diagnosis and ongoing monitoring.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Enhanced Quality of Life",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Improve daily comfort, confidence, and overall urinary health.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: FiActivity,
+      name: "Bladder Problems",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
+        "Evaluation and treatment of bladder discomfort, urgency, frequent urination, and bladder dysfunction.",
     },
     {
       Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
+      name: "Blood in Urine",
       description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
+        "Assessment of visible or microscopic blood in urine to identify potential underlying causes.",
     },
     {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
+      Icon: FiShield,
+      name: "Kidney Stones",
       description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
+        "Diagnosis and management of kidney stones causing pain, urinary symptoms, and urinary tract complications.",
     },
     {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
+      Icon: FiTarget,
+      name: "Urinary Incontinence",
       description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
+        "Treatment for loss of bladder control, urinary leakage, and related quality-of-life concerns.",
     },
     {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
+      Icon: FiAlertCircle,
+      name: "Urinary Tract Infection (UTI)",
       description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
-      description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Diagnosis and treatment of bacterial infections affecting the urinary tract.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Frequent Urination",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Evaluation of increased urinary frequency and underlying urinary system concerns.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiZap,
+      name: "Painful Urination",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Assessment of burning, discomfort, or pain while urinating.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiCompass,
+      name: "Urinary Urgency",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Management of sudden, difficult-to-control urges to urinate.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiRepeat,
+      name: "Recurrent UTIs",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Investigation and treatment planning for repeated urinary tract infections.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Kidney Health Concerns",
+      description:
+        "Evaluation of kidney-related symptoms and conditions affecting urinary function.",
+    },
+    {
+      Icon: FiUsers,
+      name: "Male Urinary Health",
+      description:
+        "Assessment of urinary symptoms commonly affecting men's health and wellness.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Preventive Urology Screening",
+      description:
+        "Routine evaluations designed to identify risks and support long-term urinary health.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is urology?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Urology is the medical specialty focused on conditions affecting the urinary tract, kidneys, bladder, and male reproductive system.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What conditions do urologists treat?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Urologists commonly treat kidney stones, urinary tract infections, urinary incontinence, bladder problems, blood in urine, and urinary symptoms.",
     },
     {
-      question:
-        "What conditions can be reviewed through an expert medical opinion?",
+      question: "When should I see a urologist?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "You should consult a urologist if you experience urinary symptoms, blood in urine, kidney stone symptoms, urinary leakage, or recurrent infections.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "What causes blood in urine?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Blood in urine can be caused by infections, kidney stones, bladder conditions, or other urinary tract disorders.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "What are the symptoms of kidney stones?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
+        "Symptoms may include severe side pain, nausea, blood in urine, painful urination, and urinary urgency.",
     },
     {
-      question: "What information is needed for a medical review?",
+      question: "What is urinary incontinence?",
       answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
+        "Urinary incontinence is the loss of bladder control that may cause accidental urine leakage.",
     },
     {
-      question: "Can cancer diagnoses be reviewed?",
+      question: "What causes urinary tract infections?",
       answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
+        "UTIs are usually caused by bacteria entering the urinary tract and multiplying within the system.",
     },
     {
-      question: "Are surgery second opinions helpful?",
+      question: "Are urinary tract infections common?",
       answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
+        "Yes. UTIs are among the most common urinary conditions and can affect both men and women.",
     },
     {
-      question: "What is a treatment plan review?",
+      question: "Why do I urinate frequently?",
       answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
+        "Frequent urination may be related to infections, bladder conditions, medications, diabetes, or other health concerns.",
     },
     {
-      question: "Can expert opinions help with rare diseases?",
+      question: "Can kidney stones be prevented?",
       answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
+        "In many cases, hydration, dietary changes, and medical guidance can help reduce the risk of kidney stones.",
     },
     {
-      question: "How long does an expert medical opinion take?",
+      question: "What causes urinary urgency?",
       answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
+        "Urinary urgency may result from infections, bladder irritation, overactive bladder, or other urinary conditions.",
     },
     {
-      question: "Are expert medical opinions available through telehealth?",
+      question: "Can urologists treat recurring UTIs?",
       answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
+        "Yes. Urologists can evaluate underlying causes and develop treatment plans to reduce recurrence.",
     },
     {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
+      question: "Are telehealth appointments available for urology?",
       answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
+        "Yes. Many consultations, follow-up visits, and symptom evaluations can be conducted through secure telehealth appointments.",
     },
     {
-      question: "Is an expert medical opinion confidential?",
+      question: "How are bladder problems diagnosed?",
       answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
+        "Diagnosis may include medical history review, symptom evaluation, physical examination, and diagnostic testing.",
     },
     {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
+      question: "Can urology specialists help with men's health concerns?",
       answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
+        "Yes. Urologists commonly evaluate and manage male urinary and reproductive health conditions.",
     },
     {
-      question: "How much does a second medical opinion cost?",
+      question: "What are common signs of urinary problems?",
       answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
+        "Common symptoms include painful urination, urgency, frequency, blood in urine, leakage, and pelvic discomfort.",
     },
     {
-      question: "Can I get a second opinion before surgery?",
+      question: "How can I maintain urinary health?",
       answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
+        "Stay hydrated, practice healthy lifestyle habits, seek prompt treatment for infections, and attend regular health screenings.",
     },
     {
-      question: "How can I schedule an expert medical opinion consultation?",
+      question: "How can I schedule an appointment with a urology specialist?",
       answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with a qualified urology specialist through virtual or in-person care options.",
     },
   ],
 };
@@ -328,37 +338,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced providers specializing in urinary and kidney health.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly with convenient appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with specialists through virtual consultations and follow-up visits.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from individualized treatment plans tailored to your symptoms and health goals.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted healthcare professionals and coordinated specialty care services.",
   },
 ];
 
@@ -542,7 +552,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function Urology({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +564,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Men's Health Specialists | Sexual Wellness, Hormone Health &
+          Preventive Care
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with experienced men's health specialists for erectile dysfunction, low testosterone, low libido, prostate health, hair loss, fertility concerns, and preventive wellness care."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +714,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists diagnose and manage
+                  a wide range of urinary tract, kidney, bladder, and male
+                  reproductive health conditions.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +743,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced urology specialists with advanced
+                  technology to make urinary healthcare more accessible,
+                  convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +801,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Get expert care for urinary symptoms, kidney concerns, bladder
+                health, and preventive urological care. Schedule an appointment
+                today and receive personalized treatment designed to improve
+                your health and quality of life.
               </p>
             </Reveal>
 

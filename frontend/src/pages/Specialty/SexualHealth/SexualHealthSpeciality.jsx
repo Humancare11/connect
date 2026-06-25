@@ -36,6 +36,16 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
+  FiHome,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +55,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +67,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +76,258 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "sexual-health-speciality",
+  name: "Sexual Health",
+  tagline: "Confidential Care for Your Sexual Health and Wellness.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Sexual health is an important part of overall well-being. Sexual health specialists provide confidential, judgment-free care for sexually transmitted infections (STIs), HIV prevention, sexual wellness concerns, partner exposure risks, and preventive sexual healthcare. Through personalized treatment plans and evidence-based medical care, patients receive the support they need to protect their health and make informed decisions. Whether you need testing guidance, treatment support, prevention counseling, or answers to sexual health questions, our specialists are here to help.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Sexual Health is a healthcare specialty focused on preventing, diagnosing, treating, and managing conditions related to sexual wellness and reproductive health. This includes STI evaluations, HIV prevention strategies, sexual health education, risk reduction counseling, and treatment for common sexually transmitted infections.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "Regular sexual health care promotes early detection, effective treatment, healthier relationships, and improved overall wellness. Access to confidential care helps patients take proactive steps toward protecting their health and the health of their partners.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Sexual health specialists diagnose and manage chlamydia, gonorrhea, herpes, STI-related concerns, HIV prevention needs, partner exposure concerns, and sexual wellness issues.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Schedule a sexual health consultation if you have symptoms of an STI, concerns after sexual exposure, questions about HIV prevention, sexual wellness concerns, or need confidential sexual health guidance.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "STI Evaluations",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Assessment of symptoms, risk factors, and concerns related to sexually transmitted infections.",
     },
     {
       Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      title: "HIV Prevention & PrEP Guidance",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Personalized guidance on HIV prevention strategies, PrEP eligibility, and sexual health protection.",
     },
     {
       Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      title: "Sexual Wellness Consultations",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Confidential discussions about sexual health concerns, wellness goals, and preventive care.",
     },
     {
       Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      title: "Partner Exposure Counseling",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Support and guidance after potential exposure to sexually transmitted infections.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      title: "STI Treatment Support",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Evidence-based treatment recommendations and follow-up care for common sexually transmitted infections.",
     },
     {
       Icon: FiUsers,
-      title: "Medical Record Analysis",
+      title: "Preventive Sexual Health Care",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Education, screening recommendations, and risk-reduction strategies for long-term sexual wellness.",
     },
   ],
 
   benefits: [
     {
       Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      title: "Early Detection",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
+        "Identify infections and concerns early for faster treatment and better outcomes.",
     },
     {
       Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
+      title: "Confidential Care",
       description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Receive professional medical support in a safe, private, and judgment-free environment.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Reduced Health Risks",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Prevent complications through timely diagnosis, treatment, and prevention strategies.",
     },
     {
       Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      title: "Better Sexual Wellness",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Support healthy relationships, informed decisions, and long-term sexual health.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: FiHeart,
+      name: "Chlamydia",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Neurological Condition Reviews",
-      description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Diagnosis, treatment guidance, and follow-up care for one of the most common sexually transmitted infections.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Gonorrhea",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Evaluation and management of gonorrhea symptoms, testing concerns, and treatment support.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiUsers,
+      name: "Herpes",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Care for herpes-related symptoms, outbreak management, and sexual health education.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiZap,
+      name: "HIV Prevention & PrEP Guidance",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Assessment of HIV risk and personalized recommendations regarding PrEP and prevention strategies.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiShield,
+      name: "Partner Exposure Concerns",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Support for individuals concerned about potential exposure to sexually transmitted infections.",
+    },
+    {
+      Icon: FiCompass,
+      name: "Safe Sex Counseling",
+      description:
+        "Education and practical guidance for reducing risks and maintaining sexual wellness.",
+    },
+    {
+      Icon: FiActivity,
+      name: "STI Consultation",
+      description:
+        "Evaluation of symptoms, testing recommendations, treatment options, and prevention planning.",
+    },
+    {
+      Icon: FiTarget,
+      name: "HPV Concerns",
+      description:
+        "Guidance regarding HPV-related symptoms, risks, prevention, and sexual health education.",
+    },
+    {
+      Icon: FiBriefcase,
+      name: "Sexual Wellness Questions",
+      description:
+        "Professional support for general sexual health concerns and preventive care discussions.",
+    },
+    {
+      Icon: FiHome,
+      name: "STI Prevention Planning",
+      description:
+        "Personalized recommendations to reduce infection risks and support healthy sexual practices.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Recurrent STI Concerns",
+      description:
+        "Evaluation and management strategies for individuals experiencing recurring infections.",
+    },
+    {
+      Icon: FiLayers,
+      name: "Preventive Sexual Health Screening",
+      description:
+        "Routine sexual health evaluations designed to support long-term wellness and early detection.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is sexual health care?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Sexual health care focuses on preventing, diagnosing, and treating conditions related to sexual wellness and sexually transmitted infections.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "What conditions do sexual health specialists treat?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "They commonly address STIs, HIV prevention concerns, herpes, chlamydia, gonorrhea, partner exposure risks, and sexual wellness issues.",
     },
     {
-      question:
-        "What conditions can be reviewed through an expert medical opinion?",
+      question: "What is PrEP?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "PrEP is a preventive medication that can significantly reduce the risk of HIV infection in eligible individuals.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "When should I get tested for an STI?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Testing may be recommended if you have symptoms, a new partner, potential exposure, or concerns about your sexual health.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "What are common STI symptoms?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
+        "Symptoms may include unusual discharge, pain during urination, sores, itching, rashes, or pelvic discomfort, although many infections have no symptoms.",
     },
     {
-      question: "What information is needed for a medical review?",
+      question: "Is sexual health care confidential?",
       answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
+        "Yes. Sexual health services follow strict privacy and confidentiality standards.",
     },
     {
-      question: "Can cancer diagnoses be reviewed?",
+      question: "Can chlamydia be treated?",
       answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
+        "Yes. Chlamydia is typically treatable when diagnosed and managed appropriately.",
     },
     {
-      question: "Are surgery second opinions helpful?",
+      question: "What is gonorrhea?",
       answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
+        "Gonorrhea is a common sexually transmitted infection that can affect multiple parts of the body.",
     },
     {
-      question: "What is a treatment plan review?",
+      question: "Can herpes be cured?",
       answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
+        "While herpes cannot currently be cured, symptoms can often be effectively managed with medical care.",
     },
     {
-      question: "Can expert opinions help with rare diseases?",
+      question: "What should I do after possible STI exposure?",
       answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
+        "Seek medical guidance as soon as possible to discuss testing, prevention options, and treatment recommendations.",
     },
     {
-      question: "How long does an expert medical opinion take?",
+      question: "What is safe sex counseling?",
       answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
+        "Safe sex counseling provides education and guidance to help reduce risks and support sexual wellness.",
     },
     {
       question:
-        "Will my current doctor be offended if I seek a second opinion?",
+        "Are telehealth appointments available for sexual health concerns?",
       answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
+        "Yes. Many sexual health consultations can be conducted securely through telehealth services.",
     },
     {
-      question: "Is an expert medical opinion confidential?",
+      question: "How often should I have sexual health screenings?",
       answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
+        "Screening frequency depends on your age, risk factors, sexual activity, and healthcare provider recommendations.",
+    },
+    {
+      question: "What is HPV?",
+      answer:
+        "HPV is a common virus that can affect sexual health and may require monitoring or preventive care.",
+    },
+    {
+      question: "Can I discuss sexual wellness concerns during a consultation?",
+      answer:
+        "Yes. Sexual health specialists provide confidential guidance on a wide range of wellness concerns.",
     },
     {
       question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
+        "Can sexual health specialists help with prevention strategies?",
       answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
+        "Yes. Prevention education, risk reduction planning, and sexual wellness guidance are key parts of sexual healthcare.",
     },
     {
-      question: "How much does a second medical opinion cost?",
+      question: "Why is early STI detection important?",
       answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
+        "Early diagnosis can help prevent complications, reduce transmission risks, and improve treatment outcomes.",
     },
     {
-      question: "Can I get a second opinion before surgery?",
+      question:
+        "How can I schedule an appointment with a sexual health specialist?",
       answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with a qualified sexual health specialist through virtual or in-person care options.",
     },
   ],
 };
@@ -328,37 +344,37 @@ const TRUST_CARDS = [
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive care from experienced healthcare providers trained in sexual health and wellness.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly with flexible appointment availability.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+      "Connect securely with specialists from the privacy and comfort of your home.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from treatment plans tailored to your symptoms, concerns, and wellness goals.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted healthcare professionals and coordinated specialty care services.",
   },
 ];
 
@@ -542,7 +558,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function SexualHealth({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +570,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Psychology Counseling Services | Stress, Trauma, Relationships &
+          Emotional Support
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with licensed psychology counselors for stress, grief and loss, trauma support, relationship challenges, self-esteem concerns, and emotional wellness counseling."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +720,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists provide confidential
+                  care for a wide range of sexual wellness and sexually
+                  transmitted infection concerns.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +749,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced sexual health specialists with advanced
+                  technology to make confidential healthcare more accessible,
+                  convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -790,10 +807,10 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 Ready to Connect with a <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Take control of your sexual health with confidential,
+                professional care. Schedule an appointment with a sexual health
+                specialist and receive personalized support for STI concerns,
+                prevention strategies, and long-term wellness.
               </p>
             </Reveal>
 

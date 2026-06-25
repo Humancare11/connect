@@ -36,6 +36,17 @@ import {
   FiCpu,
   FiBriefcase,
   FiClipboard,
+  FiVolume2,
+  FiVolume,
+  FiCompass,
+  FiSun,
+  FiLayers,
+  FiMove,
+  FiRepeat,
+  FiMoon,
+  FiMap,
+  FiHome,
+  FiFileText,
 } from "react-icons/fi";
 import {
   MdOutlineVaccines,
@@ -45,6 +56,10 @@ import {
   MdOutlineSpa,
   MdOutlineMonitorHeart,
   MdOutlineBiotech,
+  MdOutlineSick,
+  MdOutlineHearing,
+  MdOutlineVisibility,
+  MdOutlineRemoveRedEye,
 } from "react-icons/md";
 import {
   GiHeartOrgan,
@@ -53,6 +68,8 @@ import {
   GiBoneKnife,
   GiMedicines,
   GiBodySwapping,
+  GiHumanEar,
+  GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
@@ -60,258 +77,256 @@ import "../SpecialtyPage.css";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "export-medical-opinion",
-  name: "Expert Medical Opinion",
-  tagline: "Confidence in Every Healthcare Decision.",
+  slug: "nutrition-and-dietetics",
+  name: "Nutrition & Dietetics",
+  tagline: "Personalized Nutrition for Better Health and Wellness.",
   heroDescription:
-    "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
+    "Nutrition & Dietetics focuses on helping individuals improve their health through evidence-based nutrition guidance and personalized dietary planning. Whether you're managing a chronic condition, pursuing weight goals, improving athletic performance, supporting a healthy pregnancy, or simply wanting to eat better, nutrition specialists provide expert guidance tailored to your unique needs. Good nutrition plays a critical role in overall wellness, disease prevention, energy levels, and long-term health. Through customized meal planning and lifestyle-focused support, patients can build healthier eating habits that last.",
   heroImage:
     "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
   overviewImage:
     "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
   overviewDescription:
-    "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
+    "Nutrition & Dietetics is a healthcare specialty dedicated to understanding how food and nutrition affect health, wellness, disease prevention, and recovery. Registered dietitians and nutrition specialists help individuals make informed dietary choices that support specific health goals and medical needs.",
   overviewImportance:
-    "By reviewing medical records, diagnostic reports, imaging studies, pathology findings, and treatment plans, experienced specialists offer objective recommendations that help patients gain clarity, confidence, and peace of mind. Expert medical opinions can improve decision-making and ensure patients receive the most appropriate care for their unique situation.",
+    "This specialty combines nutrition science with personalized care to help patients improve eating habits, manage chronic conditions, optimize performance, and achieve long-term wellness outcomes through sustainable dietary changes.",
   conditionsTreated:
-    "Expert Medical Opinion services support patients seeking additional guidance for cancer diagnoses, complex medical conditions, treatment plans, surgery recommendations, chronic illnesses, and uncertain diagnoses.",
+    "Nutrition specialists provide guidance for cholesterol management, diabetes nutrition, food intolerances, pregnancy nutrition, sports nutrition, weight management, and preventive wellness.",
   whenToConsult:
-    "Consider an expert medical opinion if you've received a new diagnosis, are facing major surgery, have a complex medical condition, want to confirm a treatment recommendation, or are seeking additional clarity before making important healthcare decisions.",
+    "Consider a nutrition consultation if you want to improve eating habits, manage a health condition, lose weight, improve athletic performance, support a healthy pregnancy, or receive personalized nutrition guidance.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Second Medical Opinions",
+      title: "Personalized Nutrition Assessments",
       description:
-        "Independent reviews of diagnoses and treatment recommendations to help patients make informed healthcare decisions.",
+        "Comprehensive evaluations of dietary habits, nutritional needs, and wellness goals.",
     },
     {
-      Icon: FiThermometer,
-      title: "Cancer Case Reviews",
+      Icon: FiShield,
+      title: "Medical Nutrition Therapy",
       description:
-        "Specialist evaluation of cancer diagnoses, pathology reports, treatment options, and ongoing cancer care plans.",
+        "Evidence-based nutrition support for chronic conditions and disease management.",
     },
     {
-      Icon: MdOutlineVaccines,
-      title: "Complex Diagnosis Evaluation",
+      Icon: FiTarget,
+      title: "Meal Planning Guidance",
       description:
-        "Expert assessment of difficult, rare, or unresolved medical conditions requiring specialized review.",
+        "Customized nutrition strategies designed around individual health objectives.",
     },
     {
-      Icon: FiDroplet,
-      title: "Surgery Recommendation Review",
+      Icon: FiTrendingUp,
+      title: "Weight Management Support",
       description:
-        "Independent evaluation of proposed surgical procedures, risks, benefits, and alternative treatment options.",
+        "Healthy approaches to weight loss, maintenance, and long-term success.",
     },
     {
-      Icon: MdOutlineSpa,
-      title: "Treatment Plan Assessments",
+      Icon: FiSearch,
+      title: "Preventive Nutrition Counseling",
       description:
-        "Comprehensive reviews of current treatment strategies to ensure patients understand available options and expected outcomes.",
+        "Dietary recommendations focused on disease prevention and wellness promotion.",
     },
     {
-      Icon: FiUsers,
-      title: "Medical Record Analysis",
+      Icon: FiHeart,
+      title: "Lifestyle Nutrition Coaching",
       description:
-        "Detailed review of laboratory results, imaging studies, pathology reports, and clinical documentation.",
+        "Ongoing support for building healthier eating habits and sustainable lifestyle changes.",
     },
   ],
 
   benefits: [
     {
-      Icon: FiSearch,
-      title: "Greater Confidence in Care Decisions",
+      Icon: FiHeart,
+      title: "Improved Overall Health",
       description:
-        "Gain reassurance and clarity before proceeding with major healthcare decisions.",
-    },
-    {
-      Icon: FiTrendingUp,
-      title: "Access to Specialized Expertise",
-      description:
-        "Receive guidance from experienced specialists with expertise in specific medical conditions.",
+        "Support better wellness through balanced nutrition and healthy eating habits.",
     },
     {
       Icon: FiShield,
-      title: "Improved Treatment Understanding",
+      title: "Chronic Disease Management",
       description:
-        "Better understand diagnoses, treatment options, expected outcomes, and potential alternatives.",
+        "Use nutrition as a tool to manage and improve health conditions.",
     },
     {
-      Icon: FiHeart,
-      title: "Personalized Healthcare Guidance",
+      Icon: FiZap,
+      title: "Better Energy Levels",
       description:
-        "Receive recommendations tailored to your individual medical history, condition, and healthcare goals.",
+        "Optimize nutrition to improve physical performance, focus, and daily productivity.",
+    },
+    {
+      Icon: FiTrendingUp,
+      title: "Long-Term Wellness",
+      description:
+        "Develop sustainable dietary habits that support lifelong health goals.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Cancer Second Opinion",
+      Icon: FiHeart,
+      name: "Cholesterol-Lowering Diet",
       description:
-        "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Complex Diagnosis Review",
-      description:
-        "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
-    },
-    {
-      Icon: FiWind,
-      name: "Second Medical Opinion",
-      description:
-        "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Surgery Second Opinion",
-      description:
-        "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Treatment Plan Review",
-      description:
-        "Evaluation of current treatment strategies to ensure patients understand all available options.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Chronic Disease Management Reviews",
-      description:
-        "Assessment of treatment approaches for long-term conditions requiring ongoing medical care.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Rare Disease Evaluations",
-      description:
-        "Specialized review of uncommon conditions requiring expert interpretation and recommendations.",
+        "Nutrition plans designed to support healthy cholesterol levels and cardiovascular wellness.",
     },
     {
       Icon: FiActivity,
-      name: "Neurological Condition Reviews",
+      name: "Diabetic Diet",
       description:
-        "Second opinions for neurological diagnoses, symptoms, treatment plans, and specialist recommendations.",
+        "Personalized dietary guidance to help manage blood sugar levels and diabetes-related health goals.",
+    },
+    {
+      Icon: FiShield,
+      name: "Food Intolerance Planning",
+      description:
+        "Nutrition strategies for managing food sensitivities, digestive concerns, and dietary restrictions.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Pregnancy Nutrition",
+      description:
+        "Healthy eating guidance that supports maternal wellness and fetal development during pregnancy.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Cardiovascular Condition Reviews",
+      name: "Sports Nutrition",
       description:
-        "Independent assessment of heart-related diagnoses, procedures, and cardiovascular treatment options.",
+        "Nutrition plans focused on athletic performance, recovery, endurance, and strength goals.",
     },
     {
-      Icon: FiClock,
-      name: "Orthopedic Treatment Reviews",
+      Icon: FiTarget,
+      name: "Weight Management",
       description:
-        "Evaluation of musculoskeletal diagnoses, surgery recommendations, and rehabilitation plans.",
+        "Evidence-based dietary strategies for healthy weight loss and long-term weight maintenance.",
     },
     {
-      Icon: FiBarChart2,
-      name: "Gastrointestinal Disorder Reviews",
+      Icon: FiHeart,
+      name: "Heart-Healthy Nutrition",
       description:
-        "Expert review of digestive health diagnoses, testing results, and treatment recommendations.",
+        "Nutrition recommendations designed to support cardiovascular health and wellness.",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Complex Multispecialty Cases",
+      Icon: FiDroplet,
+      name: "Digestive Health Nutrition",
       description:
-        "Comprehensive review of medical conditions involving multiple specialists and treatment approaches.",
+        "Dietary support for bloating, digestive discomfort, and gastrointestinal wellness.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Preventive Nutrition Counseling",
+      description:
+        "Healthy eating strategies focused on reducing future health risks.",
+    },
+    {
+      Icon: FiActivity,
+      name: "Healthy Eating Education",
+      description:
+        "Guidance for making informed food choices and improving daily nutrition habits.",
+    },
+    {
+      Icon: FiZap,
+      name: "Energy & Performance Nutrition",
+      description:
+        "Nutrition planning to support physical activity, recovery, and overall energy levels.",
+    },
+    {
+      Icon: FiCompass,
+      name: "Wellness Nutrition Programs",
+      description:
+        "Comprehensive nutrition support designed to promote long-term health and well-being.",
     },
   ],
 
   faqs: [
     {
-      question: "What is an expert medical opinion?",
+      question: "What is nutrition and dietetics?",
       answer:
-        "An expert medical opinion is an independent review of a diagnosis, treatment plan, or medical condition provided by a qualified specialist.",
+        "Nutrition and dietetics is the healthcare specialty focused on food, nutrition, wellness, and disease prevention.",
     },
     {
-      question: "Why should I seek a second medical opinion?",
+      question: "Who should see a nutrition specialist?",
       answer:
-        "A second opinion can help confirm a diagnosis, explore alternative treatments, and provide confidence before making important healthcare decisions.",
+        "Anyone looking to improve health, manage a medical condition, achieve weight goals, or optimize nutrition can benefit.",
+    },
+    {
+      question: "What is medical nutrition therapy?",
+      answer:
+        "Medical nutrition therapy uses evidence-based dietary interventions to help manage health conditions.",
+    },
+    {
+      question: "Can nutrition help lower cholesterol?",
+      answer:
+        "Yes. Dietary changes can play an important role in supporting healthy cholesterol levels.",
+    },
+    {
+      question: "How does a diabetic diet help?",
+      answer:
+        "A diabetic diet helps support healthy blood sugar control and overall diabetes management.",
+    },
+    {
+      question: "What are food intolerances?",
+      answer:
+        "Food intolerances occur when certain foods cause digestive symptoms or discomfort without an allergic immune response.",
+    },
+    {
+      question: "Why is nutrition important during pregnancy?",
+      answer:
+        "Proper nutrition supports maternal health and healthy fetal development throughout pregnancy.",
+    },
+    {
+      question: "What is sports nutrition?",
+      answer:
+        "Sports nutrition focuses on fueling athletic performance, recovery, strength, and endurance.",
+    },
+    {
+      question: "Can nutrition support weight loss?",
+      answer:
+        "Yes. Personalized nutrition plans can help support healthy and sustainable weight management.",
+    },
+    {
+      question: "What happens during a nutrition consultation?",
+      answer:
+        "A specialist reviews your health history, eating habits, goals, and nutritional needs to create a personalized plan.",
+    },
+    {
+      question: "Can telehealth be used for nutrition appointments?",
+      answer:
+        "Yes. Many nutrition consultations can be conducted through secure virtual healthcare services.",
+    },
+    {
+      question: "How often should I meet with a nutrition specialist?",
+      answer:
+        "Frequency depends on your goals, health conditions, and recommended follow-up plan.",
+    },
+    {
+      question: "Can nutrition improve energy levels?",
+      answer:
+        "Balanced nutrition can help support energy production, focus, and physical performance.",
+    },
+    {
+      question: "What is preventive nutrition counseling?",
+      answer:
+        "Preventive nutrition focuses on reducing disease risk and promoting long-term wellness through healthy eating.",
+    },
+    {
+      question: "Can nutrition help support heart health?",
+      answer:
+        "Yes. Heart-healthy dietary strategies can support cardiovascular wellness and risk reduction.",
     },
     {
       question:
-        "What conditions can be reviewed through an expert medical opinion?",
+        "Is nutrition counseling only for people with medical conditions?",
       answer:
-        "Cancer diagnoses, surgical recommendations, chronic illnesses, complex conditions, rare diseases, and treatment plans can all be reviewed.",
+        "No. Nutrition counseling can benefit anyone seeking healthier eating habits and wellness improvements.",
     },
     {
-      question: "Is seeking a second opinion common?",
+      question: "How long does it take to see results from dietary changes?",
       answer:
-        "Yes. Many patients seek second opinions to better understand their condition and ensure they are receiving appropriate care.",
+        "Results vary depending on goals, consistency, health status, and individual circumstances.",
     },
     {
-      question: "Can an expert medical opinion change my diagnosis?",
+      question: "How can I schedule a nutrition consultation?",
       answer:
-        "In some cases, additional review may confirm, refine, or identify alternative explanations for a diagnosis.",
-    },
-    {
-      question: "What information is needed for a medical review?",
-      answer:
-        "Medical records, imaging reports, pathology reports, laboratory results, treatment plans, and physician notes are often required.",
-    },
-    {
-      question: "Can cancer diagnoses be reviewed?",
-      answer:
-        "Yes. Cancer second opinions commonly include pathology review, treatment recommendations, and care planning.",
-    },
-    {
-      question: "Are surgery second opinions helpful?",
-      answer:
-        "Yes. They can help patients understand the necessity of surgery, alternative treatments, potential risks, and expected outcomes.",
-    },
-    {
-      question: "What is a treatment plan review?",
-      answer:
-        "A treatment plan review evaluates whether the recommended care aligns with current medical standards and patient needs.",
-    },
-    {
-      question: "Can expert opinions help with rare diseases?",
-      answer:
-        "Yes. Specialists can provide valuable insights into uncommon conditions and complex diagnoses.",
-    },
-    {
-      question: "How long does an expert medical opinion take?",
-      answer:
-        "Timelines vary depending on the complexity of the case and the records being reviewed.",
-    },
-    {
-      question: "Are expert medical opinions available through telehealth?",
-      answer:
-        "Yes. Many expert reviews and consultations can be conducted securely through virtual appointments.",
-    },
-    {
-      question:
-        "Will my current doctor be offended if I seek a second opinion?",
-      answer:
-        "Most healthcare providers understand and support patients who want additional information before making important decisions.",
-    },
-    {
-      question: "Is an expert medical opinion confidential?",
-      answer:
-        "Yes. Medical information is reviewed securely and handled according to privacy and healthcare regulations.",
-    },
-    {
-      question:
-        "Can expert medical opinions help avoid unnecessary treatments?",
-      answer:
-        "In some cases, an independent review may identify alternative treatment options or confirm the most appropriate care path.",
-    },
-    {
-      question: "How much does a second medical opinion cost?",
-      answer:
-        "Costs vary depending on the complexity of the case, specialist involvement, and healthcare coverage.",
-    },
-    {
-      question: "Can I get a second opinion before surgery?",
-      answer:
-        "Yes. Many patients seek expert guidance before undergoing major or elective surgical procedures.",
-    },
-    {
-      question: "How can I schedule an expert medical opinion consultation?",
-      answer:
-        "You can schedule an appointment online or contact the healthcare team to begin the review process and connect with an appropriate specialist.",
+        "You can book an appointment online and connect with a nutrition and dietetics specialist through virtual or in-person care options.",
     },
   ],
 };
@@ -326,39 +341,38 @@ const TRUST_STATS = [
 const TRUST_CARDS = [
   {
     Icon: FiAward,
-    title: "Board-Certified Specialists",
+    title: "Registered Nutrition Specialists",
     description:
-      "Receive reviews from experienced, credentialed specialists with expertise across multiple medical disciplines.",
+      "Receive guidance from experienced professionals trained in evidence-based nutrition care.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Access expert medical reviews quickly when important healthcare decisions cannot wait.",
+      "Schedule consultations quickly and conveniently around your lifestyle.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
-    description:
-      "Connect securely with specialists through virtual consultations from anywhere.",
+    description: "Connect securely with nutrition experts from anywhere.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Receive assistance understanding healthcare coverage, authorizations, and medical documentation requirements.",
+      "Receive assistance understanding healthcare coverage and nutrition-related services.",
   },
   {
     Icon: FiHeart,
     title: "Personalized Care",
     description:
-      "Benefit from recommendations tailored to your medical history, diagnosis, and treatment goals.",
+      "Benefit from customized nutrition plans tailored to your goals and health needs.",
   },
   {
     Icon: FiGlobe,
-    title: "Global Provider Network",
+    title: "Nationwide Provider Network",
     description:
-      "Access a broad network of specialists and multidisciplinary expertise across numerous healthcare specialties.",
+      "Access trusted healthcare professionals and coordinated wellness support services.",
   },
 ];
 
@@ -542,7 +556,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
+export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -554,11 +568,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
     <>
       <HelmetProvider>
         <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
+          Lifestyle Medicine Specialists | Healthy Habits, Nutrition & Wellness
+          Care
         </title>
         <meta
           name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+          content="Connect with lifestyle medicine specialists for diet and exercise planning, healthy habit coaching, sleep improvement, preventive wellness care, and long-term health optimization."
         />
       </HelmetProvider>
       <main className="sp-page">
@@ -703,9 +718,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our {data.name.toLowerCase()} specialists are experienced in
-                  diagnosing and treating a wide range of conditions across all
-                  age groups.
+                  Our {data.name.toLowerCase()} specialists provide personalized
+                  nutrition support for a wide range of health and wellness
+                  goals.
                 </p>
               </div>
             </Reveal>
@@ -732,9 +747,9 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced medical specialists with advanced
-                  technology to provide reliable, accessible, and personalized
-                  expert healthcare guidance.
+                  We combine experienced nutrition specialists with advanced
+                  telemedicine technology to make expert nutrition care more
+                  accessible, convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -787,13 +802,13 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
             <Reveal>
               <span className="sp-cta__eyebrow">Get Started Today</span>
               <h2 className="sp-cta__heading">
-                Ready to Connect with a <span>{data.name}</span> Specialist?
+                Ready to Improve Your <span>{data.name}</span> Health?
               </h2>
               <p className="sp-cta__sub">
-                Gain clarity, confidence, and peace of mind before making
-                important healthcare decisions. Schedule an expert medical
-                opinion consultation today and receive trusted guidance from
-                experienced specialists.
+                Connect with a nutrition and dietetics specialist to receive
+                personalized nutrition guidance, healthier eating strategies,
+                and support for your wellness goals. Build a healthier future
+                through evidence-based nutrition care.
               </p>
             </Reveal>
 
