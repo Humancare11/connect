@@ -316,6 +316,15 @@ function Field({ label, value, full }) {
   );
 }
 
+const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"]);
+const DOCUMENT_FIELDS = new Set([
+  "profilePhoto",
+  "idProof",
+  "degreeFile",
+  "medicalLicenseFile",
+  "malpracticeInsuranceFile",
+]);
+
 function formatChangeValue(value) {
   if (value === undefined || value === null || value === "") return "—";
   if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
@@ -325,6 +334,12 @@ function formatChangeValue(value) {
 
 function ProfileChangeSummary({ changes = [], requestedAt }) {
   if (!Array.isArray(changes) || changes.length === 0) return null;
+  const AVAIL_FIELDS = new Set(["availability", "timezone"]);
+  const docChanges = changes.filter((c) => DOCUMENT_FIELDS.has(c.field));
+  const availChanges = changes.filter((c) => AVAIL_FIELDS.has(c.field));
+  const textChanges = changes.filter((c) => !DOCUMENT_FIELDS.has(c.field) && !AVAIL_FIELDS.has(c.field));
+  // Display count: text fields individually + 1 per group (availability, documents) if any changed
+  const displayCount = textChanges.length + (availChanges.length > 0 ? 1 : 0) + (docChanges.length > 0 ? 1 : 0);
   return (
     <Section icon="📝" title="Profile Changes Submitted by Doctor">
       <div
@@ -337,7 +352,7 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>
-          {changes.length} field{changes.length === 1 ? "" : "s"} changed
+          {displayCount} field{displayCount === 1 ? "" : "s"} changed
         </div>
         {requestedAt && (
           <div style={{ fontSize: 12, color: "#a16207", marginTop: 3 }}>
@@ -346,7 +361,7 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
         )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {changes.map((change) => (
+        {textChanges.map((change) => (
           <div
             key={change.field}
             style={{
@@ -431,18 +446,62 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
             </div>
           </div>
         ))}
+        {availChanges.length > 0 && (
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              overflow: "hidden",
+              background: "#fff",
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 14px",
+                borderBottom: "1px solid #f1f5f9",
+                background: "#f8fafc",
+                fontSize: 13,
+                fontWeight: 800,
+                color: "#334155",
+              }}
+            >
+              Availability Schedule Updated
+            </div>
+            <div style={{ padding: "12px 14px", fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+              {availChanges.map((c) => c.label || c.field).join(", ")} — new schedule submitted.
+            </div>
+          </div>
+        )}
+        {docChanges.length > 0 && (
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              overflow: "hidden",
+              background: "#fff",
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 14px",
+                borderBottom: "1px solid #f1f5f9",
+                background: "#f8fafc",
+                fontSize: 13,
+                fontWeight: 800,
+                color: "#334155",
+              }}
+            >
+              Uploaded Files Edited
+            </div>
+            <div style={{ padding: "12px 14px", fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+              {docChanges.map((c) => c.label || c.field).join(", ")} — new file(s) submitted.
+            </div>
+          </div>
+        )}
       </div>
     </Section>
   );
 }
-const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"]);
-const DOCUMENT_FIELDS = new Set([
-  "profilePhoto",
-  "idProof",
-  "degreeFile",
-  "medicalLicenseFile",
-  "malpracticeInsuranceFile",
-]);
 function getFileType(url) {
   if (!url) return "other";
   const ext = url.split("?")[0].split(".").pop().toLowerCase();

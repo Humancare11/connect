@@ -84,6 +84,39 @@ const DOCUMENT_FIELDS = new Set([
   "medicalLicenseFile",
   "malpracticeInsuranceFile",
 ]);
+const TIMEZONES = [
+  "America/New_York (EST/EDT)","America/Chicago (CST/CDT)","America/Denver (MST/MDT)",
+  "America/Los_Angeles (PST/PDT)","America/Anchorage (AKST)","Pacific/Honolulu (HST)",
+  "America/Toronto (EST/EDT)","America/Vancouver (PST/PDT)","America/Sao_Paulo (BRT)",
+  "America/Argentina/Buenos_Aires (ART)","America/Mexico_City (CST/CDT)",
+  "America/Bogota (COT)","America/Lima (PET)",
+  "Europe/London (GMT/BST)","Europe/Paris (CET/CEST)","Europe/Berlin (CET/CEST)",
+  "Europe/Madrid (CET/CEST)","Europe/Rome (CET/CEST)","Europe/Amsterdam (CET/CEST)",
+  "Europe/Stockholm (CET/CEST)","Europe/Moscow (MSK)","Europe/Istanbul (TRT)",
+  "Europe/Athens (EET/EEST)","Europe/Bucharest (EET/EEST)","Europe/Warsaw (CET/CEST)",
+  "Africa/Cairo (EET)","Africa/Lagos (WAT)","Africa/Nairobi (EAT)",
+  "Africa/Johannesburg (SAST)","Africa/Casablanca (WET)","Africa/Accra (GMT)",
+  "Africa/Abidjan (GMT)","Africa/Addis_Ababa (EAT)","Africa/Dar_es_Salaam (EAT)",
+  "Asia/Dubai (GST)","Asia/Riyadh (AST)","Asia/Baghdad (AST)","Asia/Tehran (IRST)",
+  "Asia/Kuwait (AST)","Asia/Muscat (GST)","Asia/Bahrain (AST)",
+  "Asia/Kolkata (IST)","Asia/Kathmandu (NPT)","Asia/Dhaka (BST)",
+  "Asia/Karachi (PKT)","Asia/Colombo (IST)","Asia/Kabul (AFT)",
+  "Asia/Bangkok (ICT)","Asia/Jakarta (WIB)","Asia/Yangon (MMT)",
+  "Asia/Singapore (SGT)","Asia/Kuala_Lumpur (MYT)","Asia/Manila (PHT)",
+  "Asia/Phnom_Penh (ICT)","Asia/Ho_Chi_Minh (ICT)","Asia/Vientiane (ICT)",
+  "Asia/Hong_Kong (HKT)","Asia/Shanghai (CST)","Asia/Taipei (CST)",
+  "Asia/Seoul (KST)","Asia/Tokyo (JST)",
+  "Asia/Tashkent (UZT)","Asia/Almaty (ALMT)","Asia/Yekaterinburg (YEKT)",
+  "Australia/Sydney (AEST/AEDT)","Australia/Melbourne (AEST/AEDT)",
+  "Australia/Brisbane (AEST)","Australia/Adelaide (ACST/ACDT)","Australia/Perth (AWST)",
+  "Pacific/Auckland (NZST/NZDT)","Pacific/Fiji (FJT)","Pacific/Guam (ChST)",
+  "Other",
+];
+const DEFAULT_DAY_BLOCK = { enabled: false, blocks: [{ start: "09:00", end: "17:00" }] };
+const buildDefaultAvailability = (existing = {}) =>
+  Object.fromEntries(
+    DAYS.map((d) => [d, existing[d] ?? { ...DEFAULT_DAY_BLOCK, blocks: [{ start: "09:00", end: "17:00" }] }])
+  );
 
 const STATUS_META = {
   pending: { label: "Pending", bg: "#fef3c7", color: "#92400e" },
@@ -262,6 +295,20 @@ const CSS = `
   letter-spacing:.06em; padding-top:18px; margin-top:4px; margin-bottom:14px;
   border-top:1px solid #f1f5f9;
 }
+
+/* Availability editor */
+.drprofile__avail-day { background:#f8fafc; border-radius:10px; padding:14px 16px; margin-bottom:10px; border:1.5px solid #e2e8f0; }
+.drprofile__avail-day-on { border-color:#bfdbfe !important; background:#eff6ff !important; }
+.drprofile__avail-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.drprofile__avail-name { font-size:14px; font-weight:700; color:#1e293b; }
+.drprofile__avail-toggle { position:relative; width:40px; height:22px; background:#cbd5e1; border-radius:11px; cursor:pointer; border:none; flex-shrink:0; transition:background .2s; }
+.drprofile__avail-toggle.on { background:#2563eb; }
+.drprofile__avail-toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .2s; }
+.drprofile__avail-toggle.on::after { left:20px; }
+.drprofile__time-block { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.drprofile__time-input { padding:7px 10px; border:1.5px solid #e2e8f0; border-radius:8px; font:inherit; font-size:13px; outline:none; transition:border-color .2s; width:115px; }
+.drprofile__time-input:focus { border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.drprofile__time-sep { font-size:12px; font-weight:700; color:#94a3b8; }
 
 /* Spinner */
 .drprofile__spinner { width:36px; height:36px; border-radius:50%; border:3px solid #e2e8f0; border-top-color:#2563eb; animation:drprofileSpin .8s linear infinite; }
@@ -624,6 +671,7 @@ function DocumentCard({ label, value, doctorId, field, editable, onChange }) {
       <input
         ref={ref}
         type="file"
+        accept=".pdf"
         style={{ display: "none" }}
         onChange={(e) => upload(e.target.files?.[0])}
       />
@@ -775,28 +823,55 @@ function ProfileUpdateStatus({ enrollment }) {
           {new Date(enrollment.profileUpdateRequestedAt).toLocaleString()}
         </p>
       )}
-      {status === "pending" &&
-        changes.map((change) => (
-          <div key={change.field} className="drprofile__change">
-            <div className="drprofile__change-head">
-              {change.label || change.field}
-            </div>
-            <div className="drprofile__change-cols">
-              <div className="drprofile__change-col">
-                <div className="drprofile__doc-label">Current approved</div>
-                <div className="drprofile__doc-name">
-                  {displayValue(change.previousValue) || "-"}
+      {status === "pending" && (() => {
+        const AVAIL_FIELDS = new Set(["availability", "timezone"]);
+        const docChanges = changes.filter((c) => DOCUMENT_FIELDS.has(c.field));
+        const availChanges = changes.filter((c) => AVAIL_FIELDS.has(c.field));
+        const textChanges = changes.filter((c) => !DOCUMENT_FIELDS.has(c.field) && !AVAIL_FIELDS.has(c.field));
+        return (
+          <>
+            {textChanges.map((change) => (
+              <div key={change.field} className="drprofile__change">
+                <div className="drprofile__change-head">
+                  {change.label || change.field}
+                </div>
+                <div className="drprofile__change-cols">
+                  <div className="drprofile__change-col">
+                    <div className="drprofile__doc-label">Current approved</div>
+                    <div className="drprofile__doc-name">
+                      {displayValue(change.previousValue) || "-"}
+                    </div>
+                  </div>
+                  <div className="drprofile__change-col">
+                    <div className="drprofile__doc-label">Submitted update</div>
+                    <div className="drprofile__doc-name">
+                      {displayValue(change.newValue) || "-"}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="drprofile__change-col">
-                <div className="drprofile__doc-label">Submitted update</div>
-                <div className="drprofile__doc-name">
-                  {displayValue(change.newValue) || "-"}
+            ))}
+            {availChanges.length > 0 && (
+              <div className="drprofile__change">
+                <div className="drprofile__change-head">Availability Schedule Updated</div>
+                <div style={{ padding: "10px 12px", fontSize: 13, color: "#475569" }}>
+                  {availChanges.map((c) => c.label || c.field).join(", ")} updated.
+                  Your new schedule is pending admin review.
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
+            )}
+            {docChanges.length > 0 && (
+              <div className="drprofile__change">
+                <div className="drprofile__change-head">Uploaded Files Edited</div>
+                <div style={{ padding: "10px 12px", fontSize: 13, color: "#475569" }}>
+                  {docChanges.map((c) => c.label || c.field).join(", ")} updated.
+                  The new file(s) are pending admin review.
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }
@@ -894,11 +969,46 @@ export default function DoctorProfile() {
   }, [enrollment]);
 
   const beginEdit = () => {
-    setForm(initialForm);
+    setForm({ ...initialForm, availability: buildDefaultAvailability(initialForm.availability) });
     setToast(null);
     setEditMode(true);
   };
   const update = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
+
+  // ── Availability helpers ──────────────────────────────────────────────────
+  const toggleAvailDay = (day) =>
+    setForm((prev) => ({
+      ...prev,
+      availability: {
+        ...prev.availability,
+        [day]: { ...prev.availability[day], enabled: !prev.availability[day].enabled },
+      },
+    }));
+  const updateAvailBlock = (day, idx, field, val) =>
+    setForm((prev) => {
+      const blocks = [...prev.availability[day].blocks];
+      blocks[idx] = { ...blocks[idx], [field]: val };
+      return { ...prev, availability: { ...prev.availability, [day]: { ...prev.availability[day], blocks } } };
+    });
+  const addAvailBlock = (day) =>
+    setForm((prev) => ({
+      ...prev,
+      availability: {
+        ...prev.availability,
+        [day]: { ...prev.availability[day], blocks: [...prev.availability[day].blocks, { start: "09:00", end: "17:00" }] },
+      },
+    }));
+  const removeAvailBlock = (day, idx) =>
+    setForm((prev) => {
+      const blocks = prev.availability[day].blocks.filter((_, i) => i !== idx);
+      return {
+        ...prev,
+        availability: {
+          ...prev.availability,
+          [day]: { ...prev.availability[day], blocks: blocks.length ? blocks : [{ start: "09:00", end: "17:00" }] },
+        },
+      };
+    });
 
   const save = async () => {
     setSaving(true);
@@ -1391,7 +1501,83 @@ export default function DoctorProfile() {
               </div>
             </EditSection>
 
-            <EditSection icon="💳" title="Payout Information">
+            <EditSection icon="�️" title="Availability Schedule">
+              <div className="drprofile__field" style={{ marginBottom: 18 }}>
+                <label>Timezone</label>
+                <select
+                  value={form.timezone || ""}
+                  onChange={(e) => update("timezone", e.target.value)}
+                >
+                  <option value="">Select timezone...</option>
+                  {form.timezone && !TIMEZONES.includes(form.timezone) && (
+                    <option value={form.timezone}>🌐 {form.timezone} (current)</option>
+                  )}
+                  {TIMEZONES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              {DAYS.map((day) => {
+                const d = form.availability?.[day] ?? DEFAULT_DAY_BLOCK;
+                return (
+                  <div
+                    key={day}
+                    className={`drprofile__avail-day${d.enabled ? " drprofile__avail-day-on" : ""}`}
+                  >
+                    <div className="drprofile__avail-header">
+                      <span className="drprofile__avail-name">{day}</span>
+                      <button
+                        type="button"
+                        className={`drprofile__avail-toggle${d.enabled ? " on" : ""}`}
+                        onClick={() => toggleAvailDay(day)}
+                        aria-label={`Toggle ${day}`}
+                      />
+                    </div>
+                    {d.enabled && (
+                      <div>
+                        {d.blocks.map((block, i) => (
+                          <div key={i} className="drprofile__time-block">
+                            <input
+                              type="time"
+                              className="drprofile__time-input"
+                              value={block.start}
+                              onChange={(e) => updateAvailBlock(day, i, "start", e.target.value)}
+                            />
+                            <span className="drprofile__time-sep">to</span>
+                            <input
+                              type="time"
+                              className="drprofile__time-input"
+                              value={block.end}
+                              onChange={(e) => updateAvailBlock(day, i, "end", e.target.value)}
+                            />
+                            {d.blocks.length > 1 && (
+                              <button
+                                type="button"
+                                className="drprofile__btn drprofile__btn-secondary"
+                                style={{ padding: "4px 10px", fontSize: 12 }}
+                                onClick={() => removeAvailBlock(day, i)}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="drprofile__btn drprofile__btn-soft"
+                          style={{ marginTop: 4, padding: "5px 12px", fontSize: 12 }}
+                          onClick={() => addAvailBlock(day)}
+                        >
+                          + Add Time Block
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </EditSection>
+
+            <EditSection icon="�💳" title="Payout Information">
               <div className="drprofile__grid-wide">
                 <InputField label="Bank Name">
                   {inp("bankName", "Bank name")}
