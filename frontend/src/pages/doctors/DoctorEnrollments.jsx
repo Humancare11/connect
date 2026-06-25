@@ -1863,7 +1863,17 @@ export default function DoctorOnboardingWizard({
       paypalId: data.paypalId || "",
     });
     if (data.timezone) setTimezone(data.timezone);
-    if (data.state) setLicensedStates([data.state]);
+    if (Array.isArray(data.licensedStates) && data.licensedStates.length) {
+      setLicensedStates(data.licensedStates);
+    } else if (data.state) {
+      setLicensedStates([data.state]);
+    }
+    if (
+      Array.isArray(data.internationalLicenses) &&
+      data.internationalLicenses.length
+    ) {
+      setOtherLicenseCountries(data.internationalLicenses);
+    }
 
     const makeFileRef = (nameOrUrl) => {
       if (!nameOrUrl) return null;
@@ -2148,6 +2158,8 @@ export default function DoctorOnboardingWizard({
       dob: s1.dob,
       country: s1.country,
       state: licensedStates[0] || s1.state,
+      licensedStates,
+      internationalLicenses: otherLicenseCountries,
       city: s1.city.trim(),
       zip: s1.zip.trim(),
       address: s1.address.trim(),

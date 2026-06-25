@@ -5,12 +5,9 @@
   max-width: 1500px;
   margin: 80px auto;
   padding: 70px 50px;
-
   border-radius: 36px;
-
   overflow: hidden;
   isolation: isolate;
-
   background:
     linear-gradient(
       90deg,
@@ -19,16 +16,13 @@
       #10284e 70%,
       #0a1d3b 100%
     );
-
   box-shadow:
     0 35px 80px rgba(0, 0, 0, 0.30),
     0 15px 35px rgba(8, 22, 50, 0.25);
-
   will-change: transform, opacity;
   transform-origin: center bottom;
 }
 
-/* Subtle top-left brightening */
 .services-section-wrapper::before {
   content: "";
   position: absolute;
@@ -58,7 +52,7 @@
 }
 
 .services-eyebrow-label {
-   display: inline-flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
@@ -67,26 +61,14 @@
   letter-spacing: 0.16em;
   color: #2f4f7a;
   text-transform: uppercase;
-
   background: rgba(232, 238, 249, 0.95);
   border: 1px solid rgba(65, 90, 130, 0.15);
-
   margin-bottom: 26px;
   animation: fadeUp 0.6s var(--ease) both;
   border-radius: 50px;
   width: fit-content;
   max-width: 260px;
 }
-/* 
-.services-eyebrow-label::before {
-  content: "";
-  display: inline-block;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  flex-shrink: 0;
-} */
-
 
 .services-main-heading,
 .services-heading-highlight {
@@ -106,39 +88,76 @@
 }
 
 /* ══════════════════════════════════════════════
-   CARD BASE
+   CLICKABLE CARD WRAPPER
+   The Motion.div keeps grid placement; the Link
+   fills it 100% and owns hover/focus styles.
 ══════════════════════════════════════════════ */
-.services-card-item {
+.services-card-link-wrapper {
+  /* grid sizing classes attach here */
+  display: flex;
+  flex-direction: column;
+}
+
+.services-card-inner-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 18px;
+  outline: none;
+
+  /* pass-through so card base styles render on the link itself */
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.09);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: 18px;
   padding: 22px;
-
-  transition:
-    border-color 0.3s ease,
-    box-shadow 0.3s ease,
-    transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    background 0.3s ease;
+  gap: 10px;
 
   position: relative;
   overflow: hidden;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    background 0.3s ease;
 }
 
-.services-card-item:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+/* Hover — lift + brighten */
+.services-card-inner-link:hover {
+  border-color: rgba(255, 255, 255, 0.22);
   box-shadow:
-    0 20px 48px rgba(0, 0, 0, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.075);
+    0 24px 56px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transform: translateY(-6px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Focus-visible keyboard ring */
+.services-card-inner-link:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 3px;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Arrow slides right on hover */
+.services-card-inner-link:hover .cta-arrow {
+  transform: translateX(5px);
+}
+
+/* ══════════════════════════════════════════════
+   CARD BASE  (kept on .services-card-item for
+   any padding overrides via bento classes)
+══════════════════════════════════════════════ */
+.services-card-item {
+  /* sizing/padding overrides only — visual chrome lives on .services-card-inner-link */
 }
 
 /* ── Badge row ── */
@@ -162,25 +181,18 @@
   border: 1px solid rgba(255, 255, 255, 0.13);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   color: rgba(255, 255, 255, 0.85);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.services-card-inner-link:hover .services-icon-box {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .services-icon-box svg {
   width: 18px;
   height: 18px;
   color: rgba(255, 255, 255, 0.85);
-}
-
-.services-feature-badge {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 20px;
-  padding: 4px 10px;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 
 /* ── Card Title ── */
@@ -202,26 +214,26 @@
   flex-grow: 1;
 }
 
-/* ── CTA Link ── */
+/* ── CTA Link (now a <span>, not an <a>) ── */
 .services-card-cta-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
-  text-decoration: none;
-  transition:
-    color 0.25s ease,
-    gap 0.25s ease;
-  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.7);
   margin-top: auto;
   width: fit-content;
+  transition: color 0.25s ease;
 }
 
-.services-card-cta-link:hover {
+.services-card-inner-link:hover .services-card-cta-link {
   color: #ffffff;
-  gap: 8px;
+}
+
+.cta-arrow {
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ── Stats mini ── */
@@ -241,10 +253,9 @@
     transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.services-stat-mini:hover {
+.services-card-inner-link:hover .services-stat-mini {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.18);
-  transform: translateY(-2px);
 }
 
 .services-stat-value-text {
@@ -344,6 +355,8 @@
 /* Prescription Refills — 4 cols */
 .services-bento-large {
   grid-column: span 4;
+}
+.services-bento-large .services-card-inner-link {
   min-height: 175px;
   padding: 22px 24px;
 }
@@ -351,14 +364,17 @@
 /* Weight Loss — 2 cols */
 .services-bento-small-weightloss {
   grid-column: span 2;
+}
+.services-bento-small-weightloss .services-card-inner-link {
   min-height: 175px;
-  padding: 22px;
 }
 
 /* Mental Health — 2 cols, 2 rows (tall) */
 .services-bento-smal-1 {
   grid-column: span 2;
   grid-row: span 2;
+}
+.services-bento-smal-1 .services-card-inner-link {
   min-height: 360px;
   padding: 24px;
 }
@@ -366,20 +382,24 @@
 /* General Consultation — 2 cols */
 .services-bento-small {
   grid-column: span 2;
+}
+.services-bento-small .services-card-inner-link {
   min-height: 170px;
-  padding: 22px;
 }
 
 /* Sexual Health — 2 cols */
 .services-bento-small-0 {
   grid-column: span 2;
+}
+.services-bento-small-0 .services-card-inner-link {
   min-height: 170px;
-  padding: 22px;
 }
 
 /* Chronic Care — 4 cols */
 .services-bento-wide {
   grid-column: span 4;
+}
+.services-bento-wide .services-card-inner-link {
   min-height: 170px;
   padding: 22px 24px;
 }
@@ -406,30 +426,47 @@
   .services-bento-grid {
     grid-template-columns: repeat(4, 1fr);
     grid-auto-rows: minmax(180px, auto);
-    gap: 10px;
+    gap: 12px;
   }
+  /* Row 1: Prescription (2) + Weight Loss (2) */
   .services-bento-large {
     grid-column: span 2;
-    grid-row: span 2;
+    grid-row: span 1;
+  }
+  .services-bento-large .services-card-inner-link {
     min-height: auto;
   }
   .services-bento-small-weightloss {
     grid-column: span 2;
-    grid-row: span 2;
+    grid-row: span 1;
+  }
+  .services-bento-small-weightloss .services-card-inner-link {
     min-height: auto;
   }
+  /* Mental Health tall — 2 cols × 2 rows */
   .services-bento-smal-1 {
     grid-column: span 2;
     grid-row: span 2;
+  }
+  .services-bento-smal-1 .services-card-inner-link {
     min-height: auto;
   }
+  /* General + Sexual — 2 cols each */
   .services-bento-small,
   .services-bento-small-0 {
     grid-column: span 2;
+    grid-row: span 1;
+  }
+  .services-bento-small .services-card-inner-link,
+  .services-bento-small-0 .services-card-inner-link {
     min-height: auto;
   }
+  /* Chronic Care — full 4-col width */
   .services-bento-wide {
     grid-column: span 4;
+    grid-row: span 1;
+  }
+  .services-bento-wide .services-card-inner-link {
     min-height: auto;
   }
   .services-content-right {
@@ -462,6 +499,13 @@
   .services-bento-wide {
     grid-column: span 2;
     grid-row: span 1;
+  }
+  .services-bento-large .services-card-inner-link,
+  .services-bento-small-weightloss .services-card-inner-link,
+  .services-bento-smal-1 .services-card-inner-link,
+  .services-bento-small .services-card-inner-link,
+  .services-bento-small-0 .services-card-inner-link,
+  .services-bento-wide .services-card-inner-link {
     min-height: auto;
   }
   .services-content-split {
@@ -495,6 +539,13 @@
   .services-bento-wide {
     grid-column: span 1;
     grid-row: span 1;
+  }
+  .services-bento-large .services-card-inner-link,
+  .services-bento-small-weightloss .services-card-inner-link,
+  .services-bento-smal-1 .services-card-inner-link,
+  .services-bento-small .services-card-inner-link,
+  .services-bento-small-0 .services-card-inner-link,
+  .services-bento-wide .services-card-inner-link {
     min-height: auto;
   }
   .services-content-split {
@@ -526,6 +577,13 @@
   .services-bento-wide {
     grid-column: span 1;
     grid-row: span 1;
+  }
+  .services-bento-large .services-card-inner-link,
+  .services-bento-small-weightloss .services-card-inner-link,
+  .services-bento-smal-1 .services-card-inner-link,
+  .services-bento-small .services-card-inner-link,
+  .services-bento-small-0 .services-card-inner-link,
+  .services-bento-wide .services-card-inner-link {
     min-height: auto;
     padding: 18px;
   }
@@ -564,6 +622,13 @@
   .services-bento-wide {
     grid-column: span 1;
     grid-row: span 1;
+  }
+  .services-bento-large .services-card-inner-link,
+  .services-bento-small-weightloss .services-card-inner-link,
+  .services-bento-smal-1 .services-card-inner-link,
+  .services-bento-small .services-card-inner-link,
+  .services-bento-small-0 .services-card-inner-link,
+  .services-bento-wide .services-card-inner-link {
     min-height: auto;
     padding: 16px;
   }
@@ -580,5 +645,15 @@
   }
   .services-weight-stat-number {
     font-size: 22px;
+  }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .services-card-inner-link,
+  .services-card-inner-link:hover,
+  .cta-arrow {
+    transition: none;
+    transform: none;
   }
 }

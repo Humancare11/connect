@@ -676,6 +676,8 @@ const updateDoctorByAdmin = async (req, res) => {
       clinicName, clinicAddress, aboutDoctor,
       // Languages (array or CSV string)
       languagesKnown,
+      licensedStates,
+      internationalLicenses,
       // File URLs (uploaded separately by admin)
       profilePhoto, idProof, degreeFile, medicalLicenseFile, malpracticeInsuranceFile,
       // Payout
@@ -723,6 +725,18 @@ const updateDoctorByAdmin = async (req, res) => {
         : String(languagesKnown).split(",").map(l => l.trim()).filter(Boolean);
     }
 
+    if (licensedStates !== undefined) {
+      updates.licensedStates = Array.isArray(licensedStates)
+        ? licensedStates.filter(Boolean)
+        : String(licensedStates).split(",").map(s => s.trim()).filter(Boolean);
+    }
+
+    if (internationalLicenses !== undefined) {
+      updates.internationalLicenses = Array.isArray(internationalLicenses)
+        ? internationalLicenses.filter(Boolean)
+        : String(internationalLicenses).split(",").map(s => s.trim()).filter(Boolean);
+    }
+
     // ── Availability (Mixed) ──────────────────────────────────────────
     if (availability !== undefined && typeof availability === "object") {
       updates.availability = availability;
@@ -742,6 +756,8 @@ const updateDoctorByAdmin = async (req, res) => {
 
     enrollment.set(updates);
     enrollment.markModified("languagesKnown");
+    if (licensedStates !== undefined) enrollment.markModified("licensedStates");
+    if (internationalLicenses !== undefined) enrollment.markModified("internationalLicenses");
     if (availability !== undefined) enrollment.markModified("availability");
     const syncedApprovalStatus = approvalStatusFromApplicationStatus(enrollment.applicationStatus);
     if (syncedApprovalStatus) {

@@ -642,6 +642,12 @@ export default function DoctorProfile() {
       languagesKnown: Array.isArray(e.languagesKnown)
         ? e.languagesKnown.join(", ")
         : e.languagesKnown || "",
+      licensedStates: Array.isArray(e.licensedStates)
+        ? e.licensedStates.join(", ")
+        : e.licensedStates || e.state || "",
+      internationalLicenses: Array.isArray(e.internationalLicenses)
+        ? e.internationalLicenses.join(", ")
+        : e.internationalLicenses || "",
       country: e.country || "",
       state: e.state || "",
       city: e.city || "",
@@ -695,6 +701,18 @@ export default function DoctorProfile() {
         ...form,
         languagesKnown: form.languagesKnown
           ? form.languagesKnown
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+        licensedStates: form.licensedStates
+          ? form.licensedStates
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+        internationalLicenses: form.internationalLicenses
+          ? form.internationalLicenses
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean)
@@ -1103,6 +1121,21 @@ export default function DoctorProfile() {
                     onChange={(e) => update("aboutDoctor", e.target.value)}
                   />
                 </InputField>
+                <InputField
+                  label="State/Territory Licensing (comma-separated)"
+                  full
+                >
+                  {inp(
+                    "licensedStates",
+                    "New South Wales, Victoria, Queensland",
+                  )}
+                </InputField>
+                <InputField
+                  label="International Medical Licenses (comma-separated)"
+                  full
+                >
+                  {inp("internationalLicenses", "India, United Kingdom")}
+                </InputField>
               </div>
             </EditSection>
 
@@ -1332,6 +1365,95 @@ export default function DoctorProfile() {
                   }
                 />
               </div>
+              {(Array.isArray(e.licensedStates) ? e.licensedStates : e.state ? [e.state] : []).length > 0 && (
+                <div style={{ marginTop: 6, marginBottom: 16 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: "#64748b",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      marginBottom: 8,
+                    }}
+                  >
+                    State/Territory Licensing
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 8,
+                    }}
+                  >
+                    {(Array.isArray(e.licensedStates)
+                      ? e.licensedStates
+                      : e.state
+                        ? [e.state]
+                        : []).map((stateName) => (
+                      <span
+                        key={stateName}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "4px 12px",
+                          background: "#f8fafc",
+                          border: "1px solid #cbd5e1",
+                          borderRadius: 20,
+                          fontSize: 13,
+                          color: "#334155",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {stateName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {Array.isArray(e.internationalLicenses) &&
+                e.internationalLicenses.length > 0 && (
+                  <div style={{ marginTop: 6, marginBottom: 16 }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: "#64748b",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        marginBottom: 8,
+                      }}
+                    >
+                      International Medical Licenses
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                      }}
+                    >
+                      {e.internationalLicenses.map((country) => (
+                        <span
+                          key={country}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "4px 12px",
+                            background: "#eff6ff",
+                            border: "1px solid #bfdbfe",
+                            borderRadius: 20,
+                            fontSize: 13,
+                            color: "#1d4ed8",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {country}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               <div className="drprofile__subsec">Clinic / Practice</div>
               <div className="drprofile__grid-read">
                 <ReadField label="Clinic Name" value={e.clinicName} />

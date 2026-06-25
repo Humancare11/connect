@@ -11,7 +11,7 @@ import {
 import { FaThreads } from "react-icons/fa6";
 import { FaXTwitter } from "react-icons/fa6";
 import logo from "../assets/Logo.png";
-import FooterHippa from "../assets/new-hippa.png";
+// import FooterHippa from "../assets/new-hippa.png";
 
 import { Link } from "react-router-dom";
 
@@ -24,7 +24,6 @@ export default function Footer() {
       <div className="footer-container">
         {/* BRAND SECTION */}
         <div className="footer-brand">
-          {/* <h2>Humancare Connect</h2> */}
           <Link to="/">
             <img
               src={logo}
@@ -41,42 +40,33 @@ export default function Footer() {
 
           {/* COMPLIANCE BADGES */}
           <div className="footer-badges">
-            {/* <span className="footer-badge">HIPAA</span> */}
-
             <span className="footer-badge">GDPR</span>
             <span className="footer-badge">SOC 2 Type II</span>
             <span className="footer-badge">HITRUST R2</span>
           </div>
-          <img src={FooterHippa} alt="HITRUST Logo" className="footer-hippa" />
         </div>
 
         {/* PLATFORM */}
         <div className="footer-col">
           <h5>Navigation </h5>
-
-          <a href="/find-a-doctor">About Us</a>
-          <a href="/book-appointment">Services</a>
-          <a href="/medical-services">Online Doctor</a>
-          <a href="/blogs">Refer a Friend</a>
+          <a href="/about-us">About Us</a>
+          <a href="/book-appointment">Book Appointment</a>
+          <a href="/corporates">Corporate</a>
           <a href="/blogs">Blog</a>
-          <a href="/blogs">Partners</a>
-          {/* <a href="/blogs">Careers</a> */}
-          {/* <a href="/blogs">Contact Us</a> */}
         </div>
 
         {/* Services Quick Links */}
         <div className="footer-col">
           <h5>Services </h5>
-
-          <a href="/find-a-doctor">Prescription Refill</a>
-          <a href="/book-appointment">Online Doctor Consultation</a>
-          <a href="/medical-services">Weight Loss</a>
-          <a href="/ask-a-question">Urgent Care</a>
-          <a href="/blogs">Sick Notes</a>
-          <a href="/blogs">Doctor’s Letter</a>
-          <a href="/blogs">Lab Orders</a>
-          <a href="/blogs">Medical Questions</a>
+          <a href="/online-prescription-refills">Online Prescription Refill</a>
+          <a href="/chronic-care-management">Chronic Care Management</a>
+          <a href="/general-consultation">General Consultation</a>
+          <a href="/mental-health-support">Mental Health Support</a>
+          <a href="/sexual-health">Sexual Health</a>
+          <a href="/weight-loss-programs">Weight Loss Programs</a>
+          <a href="/vertigo">Vertigo</a>
         </div>
+
         <div className="footer-col footer-col-dropdown">
           <h5>Legal & Company Compliance</h5>
 
@@ -86,14 +76,8 @@ export default function Footer() {
               label: "Privacy Policy",
               children: [
                 { label: "Privacy Policy", href: "/privacy-policy" },
-                {
-                  label: "Patient Privacy Notice",
-                  href: "/patient-privacy-notice",
-                },
-                {
-                  label: "Notice of Privacy Practices",
-                  href: "/notice-of-privacy-practices",
-                },
+                { label: "Patient Privacy Notice", href: "/patient-privacy-notice" },
+                { label: "Notice of Privacy Practices", href: "/notice-of-privacy-practices" },
                 { label: "CCPA Compliance", href: "/CCPA" },
                 { label: "Privacy Concerns", href: "/privacy-concerns" },
               ],
@@ -103,24 +87,15 @@ export default function Footer() {
               label: "Terms & Conditions",
               children: [
                 { label: "Terms of Service", href: "/terms-of-service" },
-                {
-                  label: "Provider Terms of Service",
-                  href: "/provider-terms-of-service",
-                },
+                { label: "Provider Terms of Service", href: "/provider-terms-of-service" },
               ],
             },
             {
               key: "consent",
               label: "Consent Forms",
               children: [
-                {
-                  label: "TeleHealth Consent",
-                  href: "/tele-health-informed-consent",
-                },
-                {
-                  label: "Patient Informed Consent Form",
-                  href: "/patient-informed-consent-form",
-                },
+                { label: "TeleHealth Consent", href: "/tele-health-informed-consent" },
+                { label: "Patient Informed Consent Form", href: "/patient-informed-consent-form" },
               ],
             },
             {
@@ -128,14 +103,8 @@ export default function Footer() {
               label: "Policies",
               children: [
                 { label: "Cookie Policy", href: "/cookie-policy" },
-                {
-                  label: "Refund & Cancellation Policy",
-                  href: "/refund-and-cancellation-policy",
-                },
-                {
-                  label: "Accessibility Statement",
-                  href: "/accessibility-statement",
-                },
+                { label: "Refund & Cancellation Policy", href: "/refund-and-cancellation-policy" },
+                { label: "Accessibility Statement", href: "/accessibility-statement" },
               ],
             },
           ].map(({ key, label, children }) => (
@@ -194,16 +163,15 @@ export default function Footer() {
         {/* SUPPORT */}
         <div className="footer-col">
           <h5>Support</h5>
-
           <a href="/doctor-login">Doctor Login</a>
           <a href="#">Help Center</a>
           <a href="#">FAQs</a>
-          <a href="/blogs">Careers</a>
-          <a href="/blogs">Contact Us</a>
+          <a href="#">Careers</a>
+          <a href="/contact">Contact Us</a>
         </div>
       </div>
 
-      {/* WATERMARK — glass fade effect pinned above bottom border */}
+      {/* WATERMARK */}
       <div className="footer-watermark-wrap" aria-hidden="true">
         <div className="footer-bg-text">HUMANCARE CONNECT</div>
       </div>
@@ -217,6 +185,8 @@ export default function Footer() {
             href="https://x.com/HCCofficial_"
             className="soc-btn"
             aria-label="X / Twitter"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <FaXTwitter />
           </a>
@@ -224,6 +194,8 @@ export default function Footer() {
             href="https://www.linkedin.com/company/122144245"
             className="soc-btn"
             aria-label="LinkedIn"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <FaLinkedinIn />
           </a>
@@ -231,6 +203,8 @@ export default function Footer() {
             href="https://www.youtube.com/@HumancareConncect"
             className="soc-btn"
             aria-label="YouTube"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <FaYoutube />
           </a>
@@ -238,6 +212,8 @@ export default function Footer() {
             href="https://www.facebook.com/profile.php?id=61589783051065"
             className="soc-btn"
             aria-label="Facebook"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <FaFacebookF />
           </a>
@@ -245,6 +221,8 @@ export default function Footer() {
             href="https://www.instagram.com/humancareconnect/"
             className="soc-btn"
             aria-label="Instagram"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <FaInstagram />
           </a>
@@ -252,6 +230,8 @@ export default function Footer() {
             href="https://www.threads.com/@humancareconnect"
             className="soc-btn"
             aria-label="Threads"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <FaThreads />
           </a>
