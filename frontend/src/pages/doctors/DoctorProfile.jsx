@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import api, { normalizeFileUrl } from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
@@ -281,7 +282,214 @@ const CSS = `
 @media (max-width:480px) {
   .drprofile__grid-read { grid-template-columns: 1fr 1fr; }
 }
+
+/* MultiSelect */
+.ms-wrapper { position: relative; }
+.ms-trigger {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px;
+  border: 1.5px solid #e2e8f0; border-radius: 8px;
+  min-height: 44px; align-items: center; cursor: pointer;
+  background: #fff; box-sizing: border-box; width: 100%;
+}
+.ms-trigger:hover { border-color: #cbd5e1; }
+.ms-trigger.open { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.ms-placeholder { font-size: 14px; color: #94a3b8; }
+.ms-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; background: rgba(37,99,235,0.1);
+  color: #2563eb; border-radius: 6px; font-size: 12px; font-weight: 600;
+}
+.ms-tag button {
+  background: none; border: none; color: #2563eb;
+  cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px;
+}
+.ms-tag button:hover { color: #dc2626; }
+.ms-overflow {
+  font-size: 11px; font-weight: 600; color: #2563eb;
+  background: rgba(37,99,235,0.08); padding: 3px 8px; border-radius: 50px;
+}
 `;
+
+/* ─── State licensing data (mirrors DoctorEnrollments) ─── */
+const STATE_LICENSING_COUNTRIES = {
+  US: {
+    label: "State", plural: "States",
+    items: ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","District of Columbia","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"],
+  },
+  IN: {
+    label: "State/UT", plural: "States/UTs",
+    items: ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu & Kashmir","Jharkhand","Karnataka","Kerala","Ladakh","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Chandigarh"],
+  },
+  AU: {
+    label: "State/Territory", plural: "States/Territories",
+    items: ["New South Wales","Victoria","Queensland","South Australia","Western Australia","Tasmania","Northern Territory","Australian Capital Territory"],
+  },
+  CA: {
+    label: "Province/Territory", plural: "Provinces/Territories",
+    items: ["Alberta","British Columbia","Manitoba","New Brunswick","Newfoundland and Labrador","Northwest Territories","Nova Scotia","Nunavut","Ontario","Prince Edward Island","Quebec","Saskatchewan","Yukon"],
+  },
+  DE: {
+    label: "Bundesland", plural: "Bundesländer",
+    items: ["Baden-Württemberg","Bavaria","Berlin","Brandenburg","Bremen","Hamburg","Hesse","Lower Saxony","Mecklenburg-Vorpommern","North Rhine-Westphalia","Rhineland-Palatinate","Saarland","Saxony","Saxony-Anhalt","Schleswig-Holstein","Thuringia"],
+  },
+  BR: {
+    label: "State", plural: "States",
+    items: ["Acre","Alagoas","Amapá","Amazonas","Bahia","Ceará","Distrito Federal","Espírito Santo","Goiás","Maranhão","Mato Grosso","Mato Grosso do Sul","Minas Gerais","Pará","Paraíba","Paraná","Pernambuco","Piauí","Rio de Janeiro","Rio Grande do Norte","Rio Grande do Sul","Rondônia","Roraima","Santa Catarina","São Paulo","Sergipe","Tocantins"],
+  },
+  MX: {
+    label: "State", plural: "States",
+    items: ["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Guanajuato","Guerrero","Hidalgo","Jalisco","México","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"],
+  },
+  NG: {
+    label: "State", plural: "States",
+    items: ["Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT Abuja","Gombe","Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara"],
+  },
+};
+const COUNTRY_NAME_TO_ISO = {
+  "United States": "US", "India": "IN", "Australia": "AU", "Canada": "CA",
+  "Germany": "DE", "Brazil": "BR", "Mexico": "MX", "Nigeria": "NG",
+};
+
+/* ─── useDropdownPosition ─── */
+function useDropdownPosition(triggerRef, open) {
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+  useEffect(() => {
+    if (!open || !triggerRef.current) return undefined;
+    const update = () => {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({ top: rect.bottom + window.scrollY + 4, left: rect.left + window.scrollX, width: rect.width });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [open, triggerRef]);
+  return position;
+}
+
+/* ─── MultiSelect ─── */
+function MultiSelect({ items, selected, onChange, placeholder, searchPlaceholder }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const wrapperRef = useRef();
+  const triggerRef = useRef();
+  const dropdownRef = useRef();
+  const searchInputRef = useRef();
+  const position = useDropdownPosition(triggerRef, open);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(e.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target)
+      ) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    if (open && searchInputRef.current) setTimeout(() => searchInputRef.current?.focus(), 50);
+  }, [open]);
+
+  const filtered = items.filter((item) =>
+    item.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const toggle = (item) => {
+    onChange(selected.includes(item) ? selected.filter((s) => s !== item) : [...selected, item]);
+  };
+
+  const dropdown = open ? createPortal(
+    <div
+      ref={dropdownRef}
+      style={{
+        position: "fixed",
+        top: `${position.top - window.scrollY}px`,
+        left: `${position.left}px`,
+        width: `${position.width}px`,
+        background: "#fff",
+        border: "1.5px solid #e2e8f0",
+        borderRadius: 12,
+        boxShadow: "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
+        zIndex: 9999,
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ padding: "10px 10px 6px", borderBottom: "1px solid #f1f5f9" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "#f8fafc", border: "1.5px solid #e8edf2", borderRadius: 10 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder={searchPlaceholder || "Search..."}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            style={{ flex: 1, border: "none", background: "transparent", fontSize: 13, fontFamily: "inherit", color: "#1e293b", outline: "none" }}
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "#cbd5e1", fontSize: 14, lineHeight: 1 }}>
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+      <div style={{ maxHeight: 260, overflowY: "auto" }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: "18px 16px", textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No results found</div>
+        ) : (
+          filtered.map((item) => {
+            const isSelected = selected.includes(item);
+            return (
+              <div
+                key={item}
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: isSelected ? "#f0fdf4" : "transparent", cursor: "pointer", transition: "background 0.1s" }}
+                onMouseDown={(e) => { e.preventDefault(); toggle(item); }}
+                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "#f8fafc"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isSelected ? "#f0fdf4" : "transparent"; }}
+              >
+                <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>{item}</span>
+                <div style={{ width: 16, height: 16, border: "1.5px solid #cbd5e1", borderRadius: 3, background: isSelected ? "#10b981" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {isSelected && <span style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>✓</span>}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>,
+    document.body
+  ) : null;
+
+  return (
+    <>
+      <div className="ms-wrapper" ref={wrapperRef}>
+        <div ref={triggerRef} className={`ms-trigger${open ? " open" : ""}`} onClick={() => setOpen(!open)}>
+          {selected.length === 0 ? (
+            <span className="ms-placeholder">{placeholder}</span>
+          ) : (
+            <>
+              {selected.slice(0, 3).map((s) => (
+                <span key={s} className="ms-tag">
+                  {s}
+                  <button type="button" onClick={(e) => { e.stopPropagation(); toggle(s); }}>×</button>
+                </span>
+              ))}
+              {selected.length > 3 && <span className="ms-overflow">+{selected.length - 3} more</span>}
+            </>
+          )}
+        </div>
+      </div>
+      {dropdown}
+    </>
+  );
+}
 
 /* ─── helpers ─── */
 function slugifyDoctorName(name) {
@@ -643,11 +851,11 @@ export default function DoctorProfile() {
         ? e.languagesKnown.join(", ")
         : e.languagesKnown || "",
       licensedStates: Array.isArray(e.licensedStates)
-        ? e.licensedStates.join(", ")
-        : e.licensedStates || e.state || "",
+        ? e.licensedStates
+        : e.state ? [e.state] : [],
       internationalLicenses: Array.isArray(e.internationalLicenses)
-        ? e.internationalLicenses.join(", ")
-        : e.internationalLicenses || "",
+        ? e.internationalLicenses
+        : [],
       country: e.country || "",
       state: e.state || "",
       city: e.city || "",
@@ -705,18 +913,8 @@ export default function DoctorProfile() {
               .map((s) => s.trim())
               .filter(Boolean)
           : [],
-        licensedStates: form.licensedStates
-          ? form.licensedStates
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : [],
-        internationalLicenses: form.internationalLicenses
-          ? form.internationalLicenses
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : [],
+        licensedStates: Array.isArray(form.licensedStates) ? form.licensedStates : [],
+        internationalLicenses: Array.isArray(form.internationalLicenses) ? form.internationalLicenses : [],
         experience:
           form.experience === "" ? undefined : Number(form.experience),
         consultantFees:
@@ -803,6 +1001,8 @@ export default function DoctorProfile() {
   const languages = Array.isArray(e.languagesKnown)
     ? e.languagesKnown.join(", ")
     : e.languagesKnown;
+  const editStateIso = editMode ? (COUNTRY_NAME_TO_ISO[form.country] || null) : null;
+  const editStateConfig = editStateIso ? STATE_LICENSING_COUNTRIES[editStateIso] : null;
 
   // ── NEW: Status banner visibility logic ─────────────────────────────────
   //
@@ -1121,20 +1321,35 @@ export default function DoctorProfile() {
                     onChange={(e) => update("aboutDoctor", e.target.value)}
                   />
                 </InputField>
-                <InputField
-                  label="State/Territory Licensing (comma-separated)"
-                  full
-                >
-                  {inp(
-                    "licensedStates",
-                    "New South Wales, Victoria, Queensland",
-                  )}
-                </InputField>
-                <InputField
-                  label="International Medical Licenses (comma-separated)"
-                  full
-                >
-                  {inp("internationalLicenses", "India, United Kingdom")}
+                {editStateConfig ? (
+                  <InputField label={`${editStateConfig.plural} Licensing`} full>
+                    <MultiSelect
+                      items={editStateConfig.items}
+                      selected={Array.isArray(form.licensedStates) ? form.licensedStates : []}
+                      onChange={(v) => update("licensedStates", v)}
+                      placeholder={`Select ${editStateConfig.plural.toLowerCase()}...`}
+                      searchPlaceholder={`Search ${editStateConfig.plural.toLowerCase()}...`}
+                    />
+                  </InputField>
+                ) : (
+                  <InputField label="State/Territory Licensing" full>
+                    <MultiSelect
+                      items={[]}
+                      selected={Array.isArray(form.licensedStates) ? form.licensedStates : []}
+                      onChange={(v) => update("licensedStates", v)}
+                      placeholder="Select a country above to see states/territories..."
+                      searchPlaceholder="Search..."
+                    />
+                  </InputField>
+                )}
+                <InputField label="International Medical Licenses" full>
+                  <MultiSelect
+                    items={COUNTRIES.filter((c) => c !== "Other" && c !== form.country)}
+                    selected={Array.isArray(form.internationalLicenses) ? form.internationalLicenses : []}
+                    onChange={(v) => update("internationalLicenses", v)}
+                    placeholder="Select countries..."
+                    searchPlaceholder="Search countries..."
+                  />
                 </InputField>
               </div>
             </EditSection>

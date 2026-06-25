@@ -52,6 +52,8 @@ const PROFILE_CHANGE_LABELS = {
   zip: "ZIP / Postal Code",
   address: "Address",
   languagesKnown: "Languages Known",
+  licensedStates: "State/Territory Licensing",
+  internationalLicenses: "International Medical Licenses",
   specialization: "Specialization",
   subSpecialization: "Sub-Specialization",
   qualification: "Qualification",
