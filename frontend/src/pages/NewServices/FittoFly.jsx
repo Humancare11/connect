@@ -54,10 +54,7 @@ import {
 import { Helmet } from "react-helmet-async";
 
 /* ──────────────────────────────────────────────────────────────────────────
-   DESIGN TOKENS — light theme
-   Body copy uses solid slate, never low-opacity white-on-white, so contrast
-   stays readable (point 6). Accent color is the only saturated color on the
-   page; everything else is neutral.
+   DESIGN TOKENS 
 ────────────────────────────────────────────────────────────────────────── */
 const BG_BASE = "#FFFFFF"; // Page background
 const BG_SURFACE = "#F8FAFC"; // Alternating section background
@@ -73,26 +70,26 @@ const BORDER_HOVER = "#CBD5E1";
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
-    slug: "telehealth-services",
-    name: "GENERAL CONSULTATION",
-    tagline: "Trusted healthcare guidance for everyday health concerns.",
+    slug: "fit-to-fly",
+    name: "FIT TO FLY CERTIFICATE",
+    tagline: "Medical travel clearance for a smoother journey.",
     intro:
-      "Connect with a licensed healthcare provider through secure telemedicine services for personalized medical advice, symptom evaluation, and treatment recommendations. General consultations offer a convenient way to discuss non emergency health concerns and receive professional care from the comfort of home.",
+      "Request a Fit to Fly Certificate through secure telemedicine services. Connect with a licensed healthcare provider, discuss your travel plans and health status, and receive medical documentation when clinically appropriate to support airline travel requirements.",
     accentColor: "#2563EB",
     accentGlow: "#2563EB20",
     heroIcon: FiMonitor,
     heroEmoji: "🖥️",
     description:
-      "General consultations provide patients with convenient access to healthcare providers for a wide range of everyday medical concerns. Through Humancare Connect, patients can discuss symptoms, receive medical guidance, review treatment options, and get recommendations for appropriate next steps through secure virtual healthcare services.",
+      "A Fit to Fly Certificate is a medical document that may be required by airlines for passengers with certain health conditions, recent surgeries, pregnancy-related travel considerations, or ongoing medical concerns. The certificate confirms that a healthcare provider has reviewed your condition and assessed your ability to travel safely by air.Through Humancare Connect, eligible travelers can complete a virtual consultation with a licensed healthcare provider, discuss airline requirements, and obtain travel-related medical documentation when appropriate. Our telemedicine platform offers a convenient way to address travel health requirements without the need for an in-person clinic visit.",
     whyItMatters:
-      "Many health concerns can be addressed early through timely medical advice and evaluation. General consultations help patients better understand their symptoms, make informed healthcare decisions, and access professional support without the need for unnecessary clinic visits.",
+      "Unexpected airline documentation requirements can delay or disrupt travel plans. A Fit to Fly assessment helps travelers understand whether medical clearance may be needed before departure and provides an opportunity to address health concerns before boarding.",
     whoBenefits: [
-      "Adults experiencing new or ongoing health concerns",
-      "Patients managing common illnesses or minor conditions",
-      "Busy professionals looking for convenient healthcare access",
-      "Individuals with heart disease or high cholesterol",
-      " Anyone seeking trusted healthcare guidance from licensed providers",
-    ],
+  "Travelers recovering from surgery or hospitalization",
+  "Passengers with chronic medical conditions",
+  "Pregnant individuals requiring airline documentation",
+  "Travelers with recent illnesses or injuries",
+  "International travelers needing medical travel clearance",
+],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
       "E-prescriptions sent directly to your pharmacy",
@@ -100,27 +97,27 @@ const SERVICES = {
       "Integrated health records across visits",
     ],
     steps: [
-      {
-        Icon: FiSearch,
-        title: "Share Your Health Concerns",
-        body: "Tell us about your symptoms, medical history, current medications, and healthcare questions through our secure intake process.",
-      },
-      {
-        Icon: FiFileText,
-        title: "Connect With a Healthcare Provider",
-        body: "Meet with a licensed healthcare provider who will review your concerns and discuss your symptoms.",
-      },
-      {
-        Icon: FiVideo,
-        title: "Receive Personalized Medical Guidance",
-        body: "Your provider will offer recommendations, discuss treatment options, and help determine the most appropriate next steps for your care.",
-      },
-      {
-        Icon: FiPackage,
-        title: "Follow Your Care Plan",
-        body: "Receive guidance for ongoing care, symptom management, follow up recommendations, or referrals when needed.",
-      },
-    ],
+  {
+    Icon: FiSearch,
+    title: "Share Your Travel & Health Information",
+    body: "Tell us about your upcoming trip, airline requirements, medical history, recent treatments, and any health concerns that may impact your travel plans.",
+  },
+  {
+    Icon: FiFileText,
+    title: "Connect With a Healthcare Provider",
+    body: "A licensed healthcare provider will review your information, discuss your condition, and assess any factors that could affect your ability to travel safely.",
+  },
+  {
+    Icon: FiVideo,
+    title: "Complete Your Virtual Assessment",
+    body: "Join a secure online consultation from your phone, tablet, or computer and discuss your travel needs with your provider.",
+  },
+  {
+    Icon: FiPackage,
+    title: "Receive Your Travel Documentation",
+    body: "If medically appropriate, your provider will issue the required travel clearance documentation or fit-to-fly certificate to help support your travel plans.",
+  },
+],
     features: [
       {
         Icon: FiLock,
@@ -160,80 +157,88 @@ const SERVICES = {
       { value: 98, suffix: "%", label: "Satisfaction Rate" },
       { value: 14, suffix: " min", label: "Avg. Wait Time" },
     ],
-    faqs: [
-      {
-        q: "What is a general consultation?",
-        a: "A general consultation is a virtual appointment with a licensed healthcare provider to discuss symptoms, health concerns, treatment options, and medical questions.",
-      },
-      {
-        q: "What health concerns can be discussed during a general consultation?",
-        a: "Patients can discuss common illnesses, minor injuries, allergies, digestive concerns, headaches, fatigue, skin conditions, medication questions, and other non emergency health issues.",
-      },
-      {
-        q: "Can I speak with a healthcare provider online?",
-        a: "Yes. Humancare Connect offers secure telemedicine services that allow patients to connect with licensed healthcare providers remotely.",
-      },
-      {
-        q: "Are virtual general consultations effective?",
-        a: "Yes. Many common health concerns can be evaluated and managed through telehealth services when clinically appropriate.",
-      },
-      {
-        q: "Do I need an appointment for a general consultation?",
-        a: "Yes. Patients can schedule an online appointment at a convenient time.",
-      },
-      {
-        q: "Can a provider diagnose my condition during a virtual visit?",
-        a: "Healthcare providers can assess symptoms, discuss concerns, and provide recommendations based on the information available during the consultation.",
-      },
-      {
-        q: "What happens during a general consultation?",
-        a: "Your provider will review your symptoms, medical history, medications, and healthcare concerns before discussing appropriate recommendations.",
-      },
-      {
-        q: "Can I ask questions about my medications?",
-        a: "Yes. General consultations are a convenient opportunity to discuss medications, side effects, and treatment plans.",
-      },
-      {
-        q: "Is a general consultation confidential?",
-        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and confidentiality.",
-      },
-      {
-        q: "Can I receive treatment recommendations during a consultation?",
-        a: "Yes. Healthcare providers can discuss treatment options, symptom management strategies, and next steps for care.",
-      },
-      {
-        q: "Are general consultations suitable for preventive care?",
-        a: "Yes. Patients can discuss wellness goals, preventive healthcare measures, and healthy lifestyle recommendations.",
-      },
-      {
-        q: "Can I get a referral during a general consultation?",
-        a: "When appropriate, healthcare providers may recommend referrals for additional evaluation or specialty care.",
-      },
-      {
-        q: "What are the benefits of telemedicine consultations?",
-        a: "Telemedicine services provide convenient access to healthcare providers, flexible scheduling, and care from the comfort of home.",
-      },
-      {
-        q: "Can I discuss multiple health concerns in one appointment?",
-        a: "Yes. Patients may discuss multiple non emergency healthcare concerns during a consultation.",
-      },
-      {
-        q: "Who can benefit from a general consultation?",
-        a: "Anyone seeking medical advice, symptom evaluation, treatment guidance, or healthcare support may benefit from a general consultation.",
-      },
-      {
-        q: "Can virtual consultations help save time?",
-        a: "Yes. Telehealth services eliminate travel time and provide convenient access to healthcare providers.",
-      },
-      {
-        q: "What should I prepare before my appointment?",
-        a: "Patients should be prepared to discuss symptoms, medications, medical history, and any questions they would like addressed.",
-      },
-      {
-        q: "When should I seek emergency medical care instead?",
-        a: "Emergency symptoms such as chest pain, severe breathing difficulties, stroke symptoms, or serious injuries require immediate emergency medical attention.",
-      },
-    ],
+   faqs: [
+  {
+    q: "What is a Fit to Fly Certificate?",
+    a: "A Fit to Fly Certificate is a medical document issued by a healthcare provider after assessing a traveler's health status. It may be used to confirm that a person is medically suitable for air travel based on their current condition.",
+  },
+  {
+    q: "Why might an airline require a Fit to Fly Certificate?",
+    a: "Airlines may request medical clearance for passengers recovering from illness, surgery, injury, pregnancy-related conditions, or certain ongoing health concerns that could affect travel.",
+  },
+  {
+    q: "Who may benefit from a Fit to Fly assessment?",
+    a: "Travelers with recent medical procedures, chronic health conditions, respiratory concerns, pregnancy-related travel needs, or other health issues that could require airline approval may benefit from an assessment.",
+  },
+  {
+    q: "Can I request a Fit to Fly Certificate online?",
+    a: "Yes. Eligible travelers can complete a virtual consultation with a licensed healthcare provider through secure telemedicine services and discuss their travel requirements.",
+  },
+  {
+    q: "What health conditions commonly require travel clearance?",
+    a: "Conditions involving recent surgery, cardiovascular concerns, respiratory illnesses, pregnancy, mobility limitations, or ongoing medical treatment may require additional review before travel.",
+  },
+  {
+    q: "How soon should I arrange my Fit to Fly assessment?",
+    a: "It is best to schedule your assessment several days before departure to allow sufficient time for evaluation and any necessary documentation.",
+  },
+  {
+    q: "Can I obtain a Fit to Fly Certificate after surgery?",
+    a: "Many travelers seek medical clearance after surgery. Eligibility depends on the type of procedure, recovery progress, current symptoms, and provider assessment.",
+  },
+  {
+    q: "Is a Fit to Fly assessment available for pregnant travelers?",
+    a: "Yes. Pregnant travelers may request an assessment, especially when airline policies require medical documentation during certain stages of pregnancy.",
+  },
+  {
+    q: "Can travelers with chronic medical conditions request a certificate?",
+    a: "Yes. Individuals managing stable chronic conditions may be eligible for assessment based on their medical history, current health status, and travel plans.",
+  },
+  {
+    q: "What information should I prepare before my consultation?",
+    a: "You may be asked to provide details about your medical history, medications, recent treatments, travel itinerary, airline requirements, and current symptoms.",
+  },
+  {
+    q: "How is eligibility for a Fit to Fly Certificate determined?",
+    a: "A healthcare provider reviews your medical information, travel plans, and overall condition before determining whether medical clearance is appropriate.",
+  },
+  {
+    q: "What happens during a Fit to Fly consultation?",
+    a: "During the consultation, a provider may discuss your health history, recent medical events, current symptoms, medications, and travel-related concerns.",
+  },
+  {
+    q: "Can a healthcare provider recommend postponing travel?",
+    a: "Yes. If a provider believes air travel could pose a health risk, they may recommend delaying travel or seeking additional medical evaluation.",
+  },
+  {
+    q: "Are Fit to Fly Certificates accepted for international travel?",
+    a: "Many travelers use Fit to Fly Certificates for international travel when requested by airlines or destination-specific travel requirements.",
+  },
+  {
+    q: "Does a Fit to Fly Certificate guarantee boarding approval?",
+    a: "No. Final travel decisions remain subject to airline policies, operational procedures, and any additional documentation requirements.",
+  },
+  {
+    q: "What should I do if my health condition changes before departure?",
+    a: "If you experience new symptoms or changes in your condition after receiving medical clearance, you should seek further medical advice before traveling.",
+  },
+  {
+    q: "Can I discuss travel-related health concerns during my appointment?",
+    a: "Yes. Providers can discuss travel health considerations, medication management, mobility concerns, and precautions that may help support safer travel.",
+  },
+  {
+    q: "Are online Fit to Fly consultations secure?",
+    a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and healthcare information.",
+  },
+  {
+    q: "Why choose Humancare Connect for a Fit to Fly assessment?",
+    a: "Humancare Connect provides convenient access to licensed healthcare providers, secure virtual consultations, and professional travel health support from wherever you are.",
+  },
+  {
+    q: "How do I get started?",
+    a: "Simply schedule an appointment, share your travel details, complete your virtual consultation, and discuss your eligibility for a Fit to Fly Certificate with a healthcare provider.",
+  },
+],
   },
 };
 /* ──────────────────────────────────────────────────────────────────────────
@@ -775,7 +780,7 @@ const Overview = ({ s }) => (
                 marginBottom: 20,
               }}
             >
-              Your First Step Toward Better Health
+              What Is a Fit to Fly Certificate?
             </h2>
           </motion.div>
           <motion.p
@@ -809,7 +814,8 @@ const Overview = ({ s }) => (
                 marginBottom: 6,
               }}
             >
-              Why It Matters
+              WHY IT MATTERS
+
             </div>
             <p
               style={{
@@ -922,11 +928,8 @@ const Overview = ({ s }) => (
 );
 
 /* ──────────────────────────────────────────────────────────────────────────
-   OUR SERVICES (was "How It Works")
-   Fix 3: heading text changed only — content (the 4-step process) is
-   unchanged since it's still accurate underneath the new label.
-   Fix 5: sticky card glass effect removed — flat surface, no backdrop-filter,
-   no glow blob.
+   OUR SERVICES 
+  
 ────────────────────────────────────────────────────────────────────────── */
 const HowItWorks = ({ s }) => (
   <section
@@ -962,7 +965,7 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 8,
               }}
             >
-              Getting started is{" "}
+             Getting started is simple.{" "}
               <span style={{ color: s.accentColor }}>simple.</span>
             </h2>
             <p
@@ -973,8 +976,8 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 36,
               }}
             >
-              Accessing a general consultation through Humancare Connect is
-              quick, secure, and designed around your healthcare needs.
+              Obtaining a Fit to Fly Certificate through Humancare Connect is quick, secure, and designed to fit your travel schedule.
+
             </p>
           </motion.div>
 
@@ -1091,9 +1094,8 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 24,
               }}
             >
-              Get convenient access to professional healthcare guidance through
-              trusted telemedicine services. Receive personalized support
-              without leaving home.
+              Get professional travel health support from licensed healthcare providers through secure telemedicine services. Complete your assessment online and prepare for your journey with confidence.
+
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
               <a href="/login">Get Started Today</a>
@@ -1136,10 +1138,7 @@ const HowItWorks = ({ s }) => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    FEATURES & BENEFITS
-   Fix 4: the 6 separate small cards are consolidated into a single large
-   card. Each feature is now a row inside one bordered container rather than
-   its own tile, so it reads as one consolidated "service details" panel.
-   Fix 5: no glass effect, no hover glow-shadow — flat row dividers instead.
+ 
 ────────────────────────────────────────────────────────────────────────── */
 const Features = ({ s }) => (
   <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
@@ -1163,13 +1162,15 @@ const Features = ({ s }) => (
             marginBottom: 10,
           }}
         >
-          Comprehensive Care for
+          Understanding Fit to Fly Certificates
           <br />
-          <span style={{ color: s.accentColor }}>Everyday Health Concerns</span>
+          {/* <span style={{ color: s.accentColor }}>
+            Through Virtual Healthcare
+          </span> */}
         </h2>
-        <p style={{ color: TEXT_DIM, fontSize: 15 }}>
+        {/* <p style={{ color: TEXT_DIM, fontSize: 15 }}>
           Every feature is designed around one goal: better outcomes for you.
-        </p>
+        </p> */}
       </motion.div>
 
       <motion.div
@@ -1190,12 +1191,8 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            General consultations are one of the most common ways patients
-            access healthcare services. Whether you are experiencing new
-            symptoms, managing an ongoing condition, seeking preventive health
-            advice, or looking for professional medical guidance, a general
-            consultation provides an opportunity to discuss your concerns with a
-            licensed healthcare provider.
+           A Fit to Fly Certificate is often requested when an airline requires confirmation that a passenger can safely travel despite a recent illness, injury, surgery, pregnancy-related concern, or ongoing medical condition. The purpose of the certificate is to provide medical clearance based on an assessment of the traveler's current health status and travel plans.
+
           </p>
           <p
             style={{
@@ -1205,12 +1202,8 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            At Humancare Connect, our virtual healthcare services make it easier
-            for patients to access quality care from virtually anywhere.
-            Healthcare providers can evaluate symptoms, review health history,
-            discuss treatment options, and recommend appropriate next steps
-            based on individual needs. This convenient approach helps patients
-            receive timely support while avoiding unnecessary delays in care.
+          Through Humancare Connect, travelers can access telemedicine services to discuss their health concerns and airline requirements with a licensed healthcare provider. During the consultation, providers may review medical history, recent treatments, medications, symptoms, recovery progress, and travel details to determine whether additional precautions or documentation may be necessary before travel.
+
           </p>
           <p
             style={{
@@ -1220,12 +1213,9 @@ const Features = ({ s }) => (
               margin: 0,
             }}
           >
-            General consultations may address a wide range of concerns,
-            including cold and flu symptoms, allergies, minor infections,
-            digestive issues, headaches, fatigue, skin concerns, medication
-            questions, and overall wellness discussions. Through secure
-            telehealth services, patients can access professional healthcare
-            support when they need it most.
+           Fit to Fly assessments are commonly requested by travelers recovering from surgery, managing chronic health conditions, traveling during pregnancy, or returning to travel after a recent medical event. By combining convenient online doctor appointments with professional medical review, Humancare Connect helps travelers access virtual healthcare services that support informed travel decisions and help reduce unexpected disruptions before departure.
+
+
           </p>
         </div>
       </motion.div>
@@ -1633,9 +1623,9 @@ const FinalCTA = ({ s }) => (
             marginBottom: 14,
           }}
         >
-          Ready to Speak With a
+          Ready to Travel 
           <br />
-          <span style={{ color: s.accentColor }}>Healthcare Provider?</span>
+          <span style={{ color: s.accentColor }}>With Confidence?</span>
         </h2>
         <p
           style={{
@@ -1646,10 +1636,10 @@ const FinalCTA = ({ s }) => (
             fontSize: 16,
           }}
         >
-          Connect with a licensed healthcare provider through secure
-          telemedicine services and receive personalized medical guidance for
-          your health concerns. Get the care and answers you need from the
-          comfort of home.
+         Whether you're preparing for an upcoming flight, recovering from a recent medical condition, or need documentation for airline requirements, Humancare Connect makes it simple to access professional travel health support.<br /><br />
+         Connect with a licensed healthcare provider through secure telemedicine services, complete your Fit to Fly assessment online, and receive medical clearance documentation when clinically appropriate.<br /><br />
+         Travel smarter with convenient virtual healthcare services designed around your schedule.
+
         </p>
         <div
           style={{
@@ -1662,7 +1652,8 @@ const FinalCTA = ({ s }) => (
           }}
         >
           <PrimaryBtn ac={s.accentColor}><a href="/login">Get Started</a></PrimaryBtn>
-          <GhostBtn><a href="/appointment-booking">Book Appointment</a></GhostBtn>
+          <GhostBtn><a href="/appointment-booking">Book Your Fit to Fly Assessment Today</a>
+</GhostBtn>
           <button
             style={{
               padding: "13px 24px",
@@ -1719,7 +1710,7 @@ const FinalCTA = ({ s }) => (
    Fix 6: wrapper background now matches the token system used throughout
    every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
-export default function GeneralConsultation() {
+export default function FittoFly() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
@@ -1728,12 +1719,12 @@ export default function GeneralConsultation() {
     <>
       <Helmet>
         <title>
-          General Consultation Online | Virtual Doctor Consultation | Humancare
-          Connect
+          Fit to Fly Certificate Online | Medical Clearance for Air Travel | Humancare Connect
+
         </title>
         <meta
           name="description"
-          content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
+          content="Need a Fit to Fly Certificate? Connect with a licensed healthcare provider online for travel health assessments and medical clearance documentation when clinically appropriate."
         />
       </Helmet>
       <div
@@ -1764,3 +1755,4 @@ export default function GeneralConsultation() {
     </>
   );
 }
+ 

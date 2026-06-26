@@ -58,17 +58,9 @@ h4 {
   min-height: unset;
   display: flex;
   align-items: stretch;
-  /* FIX: was `space-between` — once hero-left/hero-right hit their
-     max-width, space-between dumped all leftover space into one big
-     gap in the center, on top of the explicit `gap` below. */
   justify-content: flex-start;
   flex-wrap: wrap;
-
-  /* FIX: was 24px combined with space-between (effectively much wider
-     in practice). This is now the single, predictable source of
-     spacing between the two columns. */
   gap: 40px;
-
   padding: 60px 52px;
   border-radius: 34px;
   background: var(--bg);
@@ -76,16 +68,12 @@ h4 {
   box-shadow: var(--neu-up);
   overflow: visible;
   z-index: 1;
-  /* FIX: was "Satoshi", sans-serif — dropped the Inter fallback
-     defined in --font-heading. */
   font-family: var(--font-heading);
 }
 
 /* ── Left Column ── */
 .hero-left {
   flex: 1.3 1 600px;
-  /* FIX: was 650px — widened so the column actually uses the space
-     freed up by removing space-between. */
   max-width: 700px;
   position: relative;
   top: 0;
@@ -107,10 +95,8 @@ h4 {
   letter-spacing: 0.16em;
   color: #2f4f7a;
   text-transform: uppercase;
-
   background: rgba(232, 238, 249, 0.95);
   border: 1px solid rgba(65, 90, 130, 0.15);
-
   margin-bottom: 26px;
   animation: fadeUp 0.6s var(--ease) both;
   border-radius: 50px;
@@ -124,14 +110,11 @@ h4 {
   background: #6b89b8;
   border-radius: 50%;
   animation: pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .hero-left h1 {
-  /* FIX: bumped up now that the column has more room (was 54px). */
   font-size: 60px;
-  /* FIX: was "Satoshi", sans-serif — restored the Inter fallback via
-     the shared heading variable so this matches the rest of the site
-     and degrades gracefully if Satoshi fails to load. */
   font-family: var(--font-heading);
   font-weight: 750;
   line-height: 1.1;
@@ -141,30 +124,22 @@ h4 {
 }
 
 .hero-left p {
-  /* FIX: was 16px */
   font-size: 17px;
   font-weight: 500;
   line-height: 1.75;
-
   color: #586476;
-
-  /* FIX: was 550px — widened to match the larger hero-left column */
   max-width: 600px;
   margin-bottom: 32px;
-
   animation: fadeUp 0.7s 0.2s var(--ease) both;
-
   text-align: justify;
   text-wrap: pretty;
   hyphens: auto;
 }
 
-/* ── Right Column — full video card ── */
+/* ── Right Column ── */
 .hero-right {
   flex: 1 1 420px;
-  /* FIX: was 620px */
   max-width: 680px;
-  /* FIX: was 540px */
   min-height: 560px;
   position: relative;
   z-index: 1;
@@ -198,7 +173,6 @@ h4 {
   z-index: 1;
   border-radius: inherit;
   pointer-events: none;
-
   background: linear-gradient(
     180deg,
     rgba(240, 246, 255, 0.72) 0%,
@@ -210,7 +184,7 @@ h4 {
   -webkit-backdrop-filter: blur(1.5px);
 }
 
-/* ── Timeline container — floats above video+overlay ── */
+/* ── Timeline container ── */
 .timeline-container {
   width: 100%;
   position: relative;
@@ -305,9 +279,13 @@ h4 {
 .step-dots {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   margin: 0 0 16px;
   position: relative;
   z-index: 1;
+  /* FIX: allow wrapping on very narrow screens */
+  flex-wrap: nowrap;
+  gap: 2px;
 }
 
 .step-dot {
@@ -317,6 +295,9 @@ h4 {
   cursor: pointer;
   gap: 8px;
   transition: all 0.3s;
+  /* FIX: prevent dots from growing and pushing each other off-screen */
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .step-dot .ring {
@@ -330,6 +311,8 @@ h4 {
   justify-content: center;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  /* FIX: prevent rings from shrinking below their design size */
+  flex-shrink: 0;
 }
 
 .step-dot .ring .progress-ring {
@@ -406,6 +389,10 @@ h4 {
   text-align: center;
   line-height: 1.2;
   color: var(--text);
+  /* FIX: clip overflowing labels instead of breaking layout */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .step-dot.active .dot-label {
@@ -427,7 +414,7 @@ h4 {
   margin: 0 2px;
 }
 
-/* ── Scene Card — no video inside anymore, just the flip container ── */
+/* ── Scene Card ── */
 .scene-card {
   margin-top: 30px;
   position: absolute;
@@ -442,12 +429,10 @@ h4 {
   isolation: isolate;
 }
 
-/* ✅ Removed: .scene-card::before white overlay — it was hiding the video */
 .scene-card::before {
   display: none;
 }
 
-/* ✅ Removed: .scene-video-bg — video now lives on .hero-right */
 .scene-video-bg {
   display: none;
 }
@@ -468,7 +453,6 @@ h4 {
   transform: rotateX(90deg) translateZ(140px);
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  /* Subtle glass per-slide so text is crisp against video */
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -522,6 +506,7 @@ h4 {
   font-size: 10px;
   font-weight: 800;
   color: white;
+  flex-shrink: 0;
 }
 
 .scene-title {
@@ -553,6 +538,8 @@ h4 {
   border-radius: 12px;
   padding: 10px 16px;
   width: fit-content;
+  /* FIX: constrain to avoid overflowing narrow containers */
+  max-width: 100%;
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
@@ -566,6 +553,7 @@ h4 {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(12, 139, 122, 0.25);
+  flex-shrink: 0;
 }
 
 .scene-metric .metric-icon svg {
@@ -576,6 +564,7 @@ h4 {
 .metric-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .metric-value {
@@ -619,18 +608,6 @@ h4 {
 
 .searching-pulse {
   animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(0.95);
-  }
 }
 
 .search-state-title {
@@ -767,15 +744,18 @@ h4 {
   position: absolute;
   top: calc(100% + 12px);
   left: 0;
+  /* FIX: cap to viewport width so dropdown never overflows on mobile */
   width: 100%;
-  max-height: 320px; /* limit height */
-  overflow-y: auto; /* enable scrolling */
+  max-width: min(100vw - 32px, 620px);
+  max-height: 320px;
+  overflow-y: auto;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(22px) saturate(180%);
   -webkit-backdrop-filter: blur(22px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 22px;
-  z-index: 100;
+  /* FIX: must sit above hero-right (z-index: 1) and step dots */
+  z-index: 200;
   box-shadow:
     0 20px 60px rgba(15, 23, 42, 0.12),
     0 4px 18px rgba(15, 23, 42, 0.08);
@@ -805,12 +785,17 @@ h4 {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .suggestion-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--primary);
+  /* FIX: prevent very long titles from breaking layout */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .suggestion-type {
@@ -826,6 +811,8 @@ h4 {
   color: var(--primary);
   opacity: 0.5;
   transition: all 0.25s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .suggestion-item:hover .suggestion-arrow {
@@ -865,6 +852,8 @@ h4 {
   font-size: 11.5px;
   color: var(--text);
   font-weight: 500;
+  /* FIX: don't allow chips to grow and break rows on narrow screens */
+  flex-shrink: 0;
 }
 
 /* ══════════════════════════════════════════════
@@ -874,24 +863,14 @@ h4 {
 /* ── Large Desktop 1400px+ ── */
 @media (min-width: 1400px) {
   .hero {
-    /* FIX: was `gap: auto;` — not a valid value for `gap`, so the
-       browser silently ignored this whole declaration. Replaced with
-       a real value that's bigger than the base gap, since there's
-       more room to breathe at this width. */
     gap: 56px;
     padding: 70px 60px;
   }
   .hero-left {
-    /* FIX: was flex: 1 1 460px; max-width: 560px — this actually
-       shrank the column on *larger* screens (smaller than the base
-       650/700px rule), which made the leftover-space problem worse.
-       Now it grows instead of shrinking. */
     flex: 1.3 1 600px;
     max-width: 740px;
   }
   .hero-right {
-    /* FIX: was flex: 1 1 500px; min-height: 580px (no max-width,
-       same shrinking issue as hero-left above). */
     flex: 1 1 560px;
     max-width: 720px;
     min-height: 600px;
@@ -972,6 +951,9 @@ h4 {
     max-width: 100%;
     min-height: 480px;
   }
+  .search-wrapper {
+    max-width: 100%;
+  }
   .timeline-container {
     padding: 24px 20px 18px;
   }
@@ -983,12 +965,6 @@ h4 {
   }
   .scene-desc {
     font-size: 13px;
-  }
-  .why-grid {
-    grid-template-columns: 1fr;
-  }
-  .why-visual {
-    display: none;
   }
 }
 
@@ -1050,6 +1026,14 @@ h4 {
   .cta-band {
     padding: 60px 24px;
   }
+  /* FIX: trust chips wrap more aggressively on tablet portrait */
+  .trust {
+    gap: 8px;
+  }
+  .trust-chip {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
 }
 
 /* ── Mobile Portrait <600px ── */
@@ -1068,10 +1052,13 @@ h4 {
     max-width: 100%;
     top: 0;
   }
+  /* FIX: was margin: 20px (all sides) — only bottom margin makes sense here */
   .hero-badge {
     font-size: 10px;
     padding: 5px 11px;
-    margin: 20px;
+    margin-bottom: 16px;
+    margin-left: 0;
+    margin-top: 0;
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
@@ -1100,6 +1087,8 @@ h4 {
     padding: 10px;
     border-radius: 16px;
     gap: 8px;
+    /* FIX: remove overflow:hidden so border-radius shows on stacked layout */
+    overflow: visible;
   }
   .search-bar input {
     padding: 11px 12px;
@@ -1114,6 +1103,11 @@ h4 {
     padding: 12px 24px;
     border-radius: 12px;
     font-size: 14px;
+  }
+  /* FIX: suggestions width on mobile so it doesn't overflow viewport */
+  .search-suggestions {
+    max-width: calc(100vw - 40px);
+    border-radius: 16px;
   }
   .trust {
     gap: 7px;
@@ -1131,6 +1125,7 @@ h4 {
     max-width: 100%;
     min-height: 460px;
   }
+  /* FIX: scale(1.06) causes bleed on mobile where overflow:hidden is less reliable */
   .hero-right-video-bg {
     transform: scale(1);
   }
@@ -1147,6 +1142,7 @@ h4 {
   .progress-track {
     margin: 0 2px 18px;
   }
+  /* FIX: ring size reduced so 5 dots fit comfortably in ~340px */
   .step-dot .ring {
     width: 30px;
     height: 30px;
@@ -1167,12 +1163,12 @@ h4 {
   }
   .scene-title {
     font-size: 15px;
-    text-shadow: none !important;
+    text-shadow: none;
   }
   .scene-desc {
     font-size: 12px;
     line-height: 1.5;
-    text-shadow: none !important;
+    text-shadow: none;
   }
   .scene-step-badge {
     font-size: 9px;
@@ -1211,6 +1207,7 @@ h4 {
   .timeline-header h3 {
     font-size: 13px;
   }
+  /* FIX: further reduce ring size for <400px to fit 5 dots */
   .step-dot .ring {
     width: 26px;
     height: 26px;
@@ -1231,6 +1228,20 @@ h4 {
   }
   .scene-desc {
     font-size: 11px;
+  }
+  .trust-chip {
+    font-size: 9.5px;
+    padding: 3px 8px;
+  }
+  /* FIX: CTA buttons go full-width on very small screens */
+  .cta-btns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cta-btn-w,
+  .cta-btn-g {
+    width: 100%;
+    text-align: center;
   }
 }
 
@@ -1330,6 +1341,7 @@ h4 {
   height: 6px;
   border-radius: 50%;
   background: #415a82;
+  flex-shrink: 0;
 }
 
 .testi-title {
@@ -1390,21 +1402,13 @@ h4 {
 }
 
 @keyframes marqueeLeft {
-  from {
-    transform: translateX(0%);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+  from { transform: translateX(0%); }
+  to   { transform: translateX(-50%); }
 }
 
 @keyframes marqueeRight {
-  from {
-    transform: translateX(-50%);
-  }
-  to {
-    transform: translateX(0%);
-  }
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0%); }
 }
 
 .testi-card-v2 {
@@ -1449,13 +1453,6 @@ h4 {
   box-shadow: 0 18px 50px rgba(15, 31, 61, 0.1);
 }
 
-.marquee-left .testi-quote {
-  color: linear-gradient(135deg, #436dba 0%, #5e86d1 100%);
-}
-.marquee-left .testi-author-simple {
-  color: #70819b;
-}
-
 .marquee-right .testi-card-v2 {
   background: linear-gradient(135deg, #233d72 0%, #284985 100%);
   box-shadow: 0 12px 40px rgba(19, 36, 68, 0.16);
@@ -1467,12 +1464,10 @@ h4 {
   box-shadow: 0 24px 60px rgba(15, 31, 61, 0.24);
 }
 
-.marquee-right .testi-quote {
-  color: rgba(255, 255, 255, 0.96);
-}
-.marquee-right .testi-author-simple {
-  color: rgba(255, 255, 255, 0.72);
-}
+.marquee-left .testi-quote  { color: #1e3461; }
+.marquee-left .testi-author-simple { color: #70819b; }
+.marquee-right .testi-quote { color: rgba(255, 255, 255, 0.96); }
+.marquee-right .testi-author-simple { color: rgba(255, 255, 255, 0.72); }
 
 .testi-quote {
   font-size: 15px;
@@ -1522,8 +1517,9 @@ h4 {
     margin-bottom: 36px;
     padding: 0 16px;
   }
+  /* FIX: narrower cards on small phones so the mask edge fade still works */
   .testi-card-v2 {
-    width: 260px;
+    width: 240px;
     min-height: 120px;
     padding: 18px 20px;
     border-radius: 18px;
@@ -1537,6 +1533,7 @@ h4 {
     font-size: 11px;
   }
 }
+
 /* ══════════════════════════════════════════════
    CTA BAND
 ══════════════════════════════════════════════ */
@@ -1548,6 +1545,7 @@ h4 {
   position: relative;
   z-index: 1;
 }
+
 .cta-inner {
   position: relative;
   z-index: 1;
@@ -1625,6 +1623,7 @@ h4 {
   height: 5px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
 }
 
 .cta-title {
@@ -1666,7 +1665,6 @@ h4 {
 
 .cta-btn-w:hover {
   transform: translateY(-2px);
-  /* box-shadow: 0 12px 36px rgba(255, 255, 255, 0.18); */
 }
 
 .cta-btn-g {
@@ -1735,10 +1733,19 @@ h4 {
   .cta-desc {
     font-size: 14px;
   }
+  /* FIX: stack CTA buttons vertically on small screens */
+  .cta-btns {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
   .cta-btn-w,
   .cta-btn-g {
+    width: 100%;
+    max-width: 280px;
     padding: 13px 24px;
     font-size: 13px;
+    text-align: center;
   }
   .cta-pills {
     gap: 12px;
@@ -1747,255 +1754,34 @@ h4 {
     font-size: 11px;
   }
 }
+
 /* ══════════════════════════════════════════════
-   SPECIALTIES (AA) COMPONENT
+   REDUCED MOTION
 ══════════════════════════════════════════════ */
 
-.aa-section {
-  background: #e0e5ec;
-  padding: 40px 20px;
-}
-
-.aa-container {
-  max-width: 1500px;
-  margin: 0 auto;
-  overflow: hidden;
-  position: relative;
-}
-
-.aa-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 44px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.aa-eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: var(--primary);
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  opacity: 0.7;
-}
-
-.aa-title {
-  font-family: var(--font-heading);
-  font-size: clamp(26px, 4vw, 40px);
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.aa-tabs {
-  width: 100%;
-  max-width: 475px;
-  background: white;
-  border-radius: 12px;
-  display: flex;
-  overflow: hidden;
-  position: relative;
-}
-
-.aa-pill {
-  position: absolute;
-  top: 0px;
-  left: 0;
-  height: 100%;
-  width: 0;
-  background: #0b1f3adb;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1;
-}
-
-.aa-tab {
-  flex: 1;
-  padding: 12px 0;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  color: #6b7280;
-  transition: color 0.25s ease;
-  border-radius: 8px;
-  position: relative;
-  z-index: 2;
-}
-
-.aa-tab-active {
-  font-weight: 600;
-}
-.aa-tab:hover {
-  color: white;
-}
-.aa-tab-hovered,
-.aa-tab-active:not(.aa-tab-inactive) {
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.aa-grid-wrapper {
-  position: relative;
-  width: 100%;
-  min-height: 500px;
-  overflow: hidden;
-}
-
-.aa-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 25px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  padding: 25px;
-  justify-items: center;
-}
-
-.aa-card {
-  background: #e0e5ec;
-  border-radius: 28px;
-  padding: 36px;
-  width: 100%;
-  max-width: 339px;
-  box-shadow:
-    8px 8px 16px rgba(34, 58, 94, 0.12),
-    -11px -8px 20px rgba(255, 255, 255, 0.5);
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  transition: box-shadow 0.3s ease;
-}
-
-.aa-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #6687b7 0%, #ffffff 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 0;
-}
-
-.aa-card:hover {
-  box-shadow:
-    12px 12px 24px rgba(34, 58, 94, 0.18),
-    -12px -12px 24px rgba(255, 255, 255, 0.9);
-  border-color: transparent;
-}
-
-.aa-card:hover::before {
-  opacity: 1;
-}
-.aa-card:hover .aa-icon,
-.aa-card:hover .aa-name,
-.aa-card:hover .aa-count {
-  color: #ffffff;
-}
-.aa-card:hover .aa-icon svg {
-  color: #ffffff;
-}
-
-
-.aa-icon {
-  font-size: 3rem;
-  display: block;
-  margin-bottom: 16px;
-  position: relative;
-  z-index: 1;
-}
-.aa-icon svg {
-  font-size: 2.5rem;
-  color: #526b91;
-  transition: color 0.3s ease;
-}
-
-.aa-name {
-  font-family: var(--font-heading);
-  font-size: 20px;
-  font-weight: 700;
-  display: block;
-  margin-bottom: 6px;
-  position: relative;
-  z-index: 1;
-  color: var(--text);
-  transition: color 0.3s ease;
-}
-
-.aa-count {
-  font-size: 15px;
-  color: var(--muted);
-  position: relative;
-  z-index: 1;
-  transition: color 0.3s ease;
-  display: block;
-}
-
-/* AA Responsive */
-@media (min-width: 1200px) {
-  .aa-grid {
-    grid-template-columns: repeat(4, 1fr);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
-@media (min-width: 992px) and (max-width: 1199px) {
-  .aa-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+  .t-orb {
+    animation: none;
   }
-  .aa-grid-wrapper {
-    min-height: 650px;
+  .badge-pulse {
+    animation: none;
   }
-}
-@media (min-width: 768px) and (max-width: 991px) {
-  .aa-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-    padding: 20px;
+  .marquee-left,
+  .marquee-right {
+    animation: none;
   }
-  .aa-grid-wrapper {
-    min-height: 550px;
-  }
-  .aa-card {
-    padding: 28px;
-  }
-}
-@media (min-width: 600px) and (max-width: 767px) {
-  .aa-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    padding: 16px;
-  }
-  .aa-grid-wrapper {
-    min-height: 850px;
-  }
-  .aa-card {
-    padding: 26px;
-  }
-}
-@media (max-width: 599px) {
-  .aa-section {
-    padding: 40px 16px;
-  }
-  .aa-title {
-    font-size: 22px;
-  }
-  .aa-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 12px;
-  }
-  .aa-grid-wrapper {
-    min-height: 1150px;
-  }
-  .aa-card {
-    padding: 22px;
-    border-radius: 22px;
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 
@@ -2015,8 +1801,7 @@ h4 {
 }
 
 @keyframes pulse {
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
     opacity: 1;
   }
@@ -2027,55 +1812,29 @@ h4 {
 }
 
 @keyframes orbDrift {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  33% {
-    transform: translate(20px, -25px);
-  }
-  66% {
-    transform: translate(-15px, 18px);
-  }
+  0%, 100% { transform: translate(0, 0); }
+  33%       { transform: translate(20px, -25px); }
+  66%       { transform: translate(-15px, 18px); }
 }
 
 @keyframes iconPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.1); }
 }
 
 @keyframes progressPulse {
-  0% {
-    filter: drop-shadow(0 0 4px rgba(12, 139, 122, 0.5));
-  }
-  100% {
-    filter: drop-shadow(0 0 8px rgba(12, 139, 122, 0.9));
-  }
+  0%   { filter: drop-shadow(0 0 4px rgba(12, 139, 122, 0.5)); }
+  100% { filter: drop-shadow(0 0 8px rgba(12, 139, 122, 0.9)); }
 }
 
 @keyframes floatA {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
 }
 
 @keyframes floatB {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(10px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(10px); }
 }
 
 /* ═══════════════════════════════════════════════

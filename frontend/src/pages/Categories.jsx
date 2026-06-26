@@ -248,62 +248,28 @@ function HeroCarousel() {
    STATIC DATA
 ───────────────────────────────────────────────────────────── */
 const CATEGORIES = [
-  { slug: "child-family-care", path: "/child-family-care", icon: "child", name: "Child & Family Care", tagline: "Pediatrics, parenting support & whole-family health", specialtyCount: 3, conditions: ["Vaccinations", "Growth checks", "Fever", "Allergies"], color: "#059669", bgTint: "rgba(5,150,105,0.07)" },
+  { slug: "child-and-family-care", path: "/child-and-family-care", icon: "child", name: "Child & Family Care", tagline: "Pediatrics, parenting support & whole-family health", specialtyCount: 3, conditions: ["Vaccinations", "Growth checks", "Fever", "Allergies"], color: "#059669", bgTint: "rgba(5,150,105,0.07)" },
   { slug: "chronic-care-and-expert-opinion", path: "/chronic-care-and-expert-opinion", icon: "activity", name: "Chronic Care & Expert Opinion", tagline: "Ongoing condition management & specialist second opinions", specialtyCount: 4, conditions: ["Diabetes", "Hypertension", "Heart disease", "Second opinion"], color: "#0B57E8", bgTint: "rgba(11,87,232,0.07)" },
   { slug: "eye-ear-bone", path: "/eye-ear-bone", icon: "eye", name: "Eye, Ear & Bone", tagline: "Ophthalmology, ENT & musculoskeletal care", specialtyCount: 3, conditions: ["Vision screening", "Hearing loss", "Joint pain", "Fractures"], color: "#0EA5E9", bgTint: "rgba(14,165,233,0.07)" },
-  { slug: "general-everyday-care", path: "/general-everyday-care", icon: "stethoscope", name: "General & Everyday Care", tagline: "Primary care for common, everyday health concerns", specialtyCount: 3, conditions: ["Cold & flu", "Fever", "Infections", "Check-ups"], color: "#4C5F87", bgTint: "rgba(76,95,135,0.07)" },
+  { slug: "general-everyday-care", path: "/general-and-everyday-care", icon: "stethoscope", name: "General & Everyday Care", tagline: "Primary care for common, everyday health concerns", specialtyCount: 3, conditions: ["Cold & flu", "Fever", "Infections", "Check-ups"], color: "#4C5F87", bgTint: "rgba(76,95,135,0.07)" },
   { slug: "men-health", path: "/men-health", icon: "activity", name: "Men's Health", tagline: "Men's wellness, screening & specialized care", specialtyCount: 3, conditions: ["Prostate health", "Hormone health", "Fitness", "Screenings"], color: "#D97706", bgTint: "rgba(217,119,6,0.07)" },
   { slug: "mental-health", path: "/mental-health", icon: "mental", name: "Mental Health", tagline: "Psychiatry, therapy & emotional wellbeing", specialtyCount: 5, conditions: ["Anxiety", "Depression", "PTSD", "Sleep disorders"], color: "#7C3AED", bgTint: "rgba(124,58,237,0.07)" },
   { slug: "sexual-health", path: "/sexual-health", icon: "heart", name: "Sexual Health", tagline: "Confidential sexual & reproductive health care", specialtyCount: 2, conditions: ["STI testing", "Contraception", "Fertility", "Counseling"], color: "#DB2777", bgTint: "rgba(219,39,119,0.07)" },
   { slug: "skin-and-hair-care", path: "/skin-and-hair-care", icon: "skin", name: "Skin & Hair Care", tagline: "Dermatology, hair loss & skin condition care", specialtyCount: 3, conditions: ["Acne", "Eczema", "Hair loss", "Psoriasis"], color: "#C026D3", bgTint: "rgba(192,38,211,0.07)" },
   { slug: "travel-global-care", path: "/travel-global-care", icon: "globe", name: "Travel & Global Care", tagline: "Telehealth support for travelers, anywhere", specialtyCount: 2, conditions: ["Food poisoning", "Travel vaccines", "Jet lag", "Altitude sickness"], color: "#0891B2", bgTint: "rgba(8,145,178,0.07)" },
-  { slug: "weight-nurtrition", path: "/weight-nurtrition", icon: "pill", name: "Weight & Nutrition", tagline: "Nutrition guidance & weight management support", specialtyCount: 2, conditions: ["Weight management", "Diet planning", "Metabolic health", "Obesity"], color: "#65A30D", bgTint: "rgba(101,163,13,0.07)" },
+  { slug: "weight-and-nurtrition", path: "/weight-and-nurtrition", icon: "pill", name: "Weight & Nutrition", tagline: "Nutrition guidance & weight management support", specialtyCount: 2, conditions: ["Weight management", "Diet planning", "Metabolic health", "Obesity"], color: "#65A30D", bgTint: "rgba(101,163,13,0.07)" },
   { slug: "women-health", path: "/women-health", icon: "women", name: "Women's Health", tagline: "Gynaecology, obstetrics & reproductive care", specialtyCount: 4, conditions: ["Prenatal care", "PCOS", "Menopause", "Fertility"], color: "#E8470B", bgTint: "rgba(232,71,11,0.07)" },
 ];
 
 const SPECIALTIES = [
-  { slug: "general-physician-gp", path: "/general-physician-gp", icon: "stethoscope", name: "General Physician (GP)", featured: true },
+  { slug: "general-physician", path: "/general-physician", icon: "stethoscope", name: "General Physician (GP)", featured: true },
   { slug: "internal-medicine", path: "/internal-medicine", icon: "activity", name: "Internal Medicine", featured: false },
   { slug: "psychiatry", path: "/psychiatry", icon: "mental", name: "Psychiatry", featured: false },
   { slug: "dermatology", path: "/dermatology", icon: "skin", name: "Dermatology", featured: false },
-  { slug: "obstetrics-gynaecology-ob-gyn", path: "/obstetrics-gynaecology-ob-gyn", icon: "women", name: "Obstetrics & Gynaecology (OB-GYN)", featured: false },
+  { slug: "obstetrics-gynaecology-ob-gyn", path: "/obstetrics-and-gynaecology", icon: "women", name: "Obstetrics & Gynaecology (OB-GYN)", featured: false },
   { slug: "pediatrics", path: "/pediatrics", icon: "child", name: "Pediatrics", featured: false },
   { slug: "cardiology", path: "/cardiology", icon: "heart", name: "Cardiology", featured: false },
   { slug: "ophthalmology", path: "/ophthalmology", icon: "eye", name: "Ophthalmology", featured: false },
-];
-
-/* Full specialty list — used for "Know more Specialities" overview page */
-const ALL_SPECIALTIES = [
-  { slug: "general-physician-gp", path: "/general-physician-gp", name: "General Physician (GP)" },
-  { slug: "internal-medicine", path: "/internal-medicine", name: "Internal Medicine" },
-  { slug: "family-medicine", path: "/family-medicine", name: "Family Medicine" },
-  { slug: "psychiatry", path: "/psychiatry", name: "Psychiatry" },
-  { slug: "psychology-counselling", path: "/psychology-counselling", name: "Psychology / Counselling" },
-  { slug: "behavioral-health", path: "/behavioral-health", name: "Behavioral Health" },
-  { slug: "dermatology", path: "/dermatology", name: "Dermatology" },
-  { slug: "obstetrics-gynaecology-ob-gyn", path: "/obstetrics-gynaecology-ob-gyn", name: "Obstetrics & Gynaecology (OB-GYN)" },
-  { slug: "menopause-care", path: "/menopause-care", name: "Menopause Care" },
-  { slug: "womens-mental-health", path: "/womens-mental-health", name: "Women's Mental Health" },
-  { slug: "lactation-consulting", path: "/lactation-consulting", name: "Lactation Consulting" },
-  { slug: "mens-health", path: "/mens-health", name: "Men's Health" },
-  { slug: "urology", path: "/urology", name: "Urology" },
-  { slug: "pediatrics", path: "/pediatrics", name: "Pediatrics" },
-  { slug: "adolescent-medicine", path: "/adolescent-medicine", name: "Adolescent Medicine" },
-  { slug: "weight-management", path: "/weight-management", name: "Weight Management" },
-  { slug: "nutrition-dietetics", path: "/nutrition-dietetics", name: "Nutrition & Dietetics" },
-  { slug: "lifestyle-medicine", path: "/lifestyle-medicine", name: "Lifestyle Medicine" },
-  { slug: "cardiology", path: "/cardiology", name: "Cardiology" },
-  { slug: "endocrinology", path: "/endocrinology", name: "Endocrinology" },
-  { slug: "gastroenterology", path: "/gastroenterology", name: "Gastroenterology" },
-  { slug: "neurology", path: "/neurology", name: "Neurology" },
-  { slug: "pulmonology", path: "/pulmonology", name: "Pulmonology" },
-  { slug: "expert-medical-opinion", path: "/expert-medical-opinion", name: "Expert Medical Opinion" },
-  { slug: "ophthalmology", path: "/ophthalmology", name: "Ophthalmology" },
-  { slug: "ent-ear-nose-throat", path: "/ent-ear-nose-throat", name: "ENT (Ear, Nose & Throat)" },
-  { slug: "orthopedics", path: "/orthopedics", name: "Orthopedics" },
-  { slug: "sexual-health", path: "/sexual-health", name: "Sexual Health" },
-  { slug: "travel-medicine", path: "/travel-medicine", name: "Travel Medicine" },
-  { slug: "global-cross-border-care", path: "/global-cross-border-care", name: "Global / Cross-Border Care" },
 ];
 
 /* Conditions data — real routes */
@@ -443,7 +409,7 @@ function CareSection() {
     <section className="cat-b2b">
       <div className="cat-section__wrap">
         <div className="cat-b2b__grid">
-          
+
           <div className="cat-b2b__left">
             <span className="cat-b2b__eyebrow">
               CARE MADE SIMPLE
@@ -451,12 +417,12 @@ function CareSection() {
             </span>
 
             <h2 className="cat-b2b__title">
-             Care Designed Around Your Health Needs
+              Care Designed Around Your Health Needs
 
             </h2>
 
             <p className="cat-b2b__copy">
-             Humancare Connect provides a comprehensive virtual healthcare experience that makes it easier to access trusted medical guidance, connect with experienced healthcare professionals, and receive personalized care tailored to your unique health journey.
+              Humancare Connect provides a comprehensive virtual healthcare experience that makes it easier to access trusted medical guidance, connect with experienced healthcare professionals, and receive personalized care tailored to your unique health journey.
 
             </p>
 
@@ -739,7 +705,7 @@ export default function Categories() {
             ))}
           </div>
           <div className="cat-section__footer-link">
-            <Link to="/specialty" className="cat-link-more">
+            <Link to="/specialties" className="cat-link-more">
               Know more Specialities
               <Icon name="arrowRight" size={14} />
             </Link>
@@ -778,11 +744,11 @@ export default function Categories() {
           </div>
         </div>
       </section>
-      
-<CareSection />
+
+      <CareSection />
       {/* ── FAQ ─────────────────────────────────────────────── */}
       <FaqSection />
-      
+
       {/* ── CTA ─────────────────────────────────────────────── */}
       <section className="cat-cta">
         <div className="cat-cta__card">

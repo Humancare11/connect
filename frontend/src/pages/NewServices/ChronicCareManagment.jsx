@@ -68,6 +68,8 @@ const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
 const BORDER = "#E2E8F0";
 const BORDER_HOVER = "#CBD5E1";
 
+
+
 /* ──────────────────────────────────────────────────────────────────────────
    DATA
 ────────────────────────────────────────────────────────────────────────── */
@@ -503,10 +505,10 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
-          <GhostBtn>
+          <PrimaryBtn ac={s.accentColor}> <a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
+          {/* <GhostBtn>
             Contact Care Team <FiArrowRight />
-          </GhostBtn>
+          </GhostBtn> */}
         </motion.div>
       </motion.div>
     </section>
@@ -1100,7 +1102,7 @@ const HowItWorks = ({ s }) => (
               healthcare providers.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
-              Get Started Today
+              <a href="/login">Get Started Today</a>
             </PrimaryBtn>
             <div
               style={{
@@ -1490,7 +1492,7 @@ const FAQ = ({ s }) => {
             We've answered the most common questions below. Our care team is one
             message away if yours isn't listed.
           </p>
-          <button
+          {/* <button
             style={{
               padding: "11px 20px",
               borderRadius: 12,
@@ -1513,7 +1515,7 @@ const FAQ = ({ s }) => {
             }
           >
             <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button>
+          </button> */}
         </motion.div>
 
         <motion.div
@@ -1670,8 +1672,8 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}>Get Started</PrimaryBtn>
-          <GhostBtn>Book Appointment</GhostBtn>
+          <PrimaryBtn ac={s.accentColor}><a href="/login">Get Started</a></PrimaryBtn>
+          <GhostBtn><a href="/appointment-booking">Book Appointment</a></GhostBtn>
           <button
             style={{
               padding: "13px 24px",
