@@ -309,9 +309,6 @@ import TravelMedicine from "./pages/Specialty/TravelAndGlobalCare/TravelMedicine
 import WeightManagement from "./pages/Specialty/WeightAndNutrition/WeightManagement";
 import LifestyleMedicine from "./pages/Specialty/WeightAndNutrition/LifestyleMedicine";
 import NutritionAndDietetics from "./pages/Specialty/WeightAndNutrition/NutritionAndDietetics";
-// -------------------------Services Pages-------------------------
-// import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
-import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
 
 // General & Everyday Care
 import FamilyMedicine from "./pages/Specialty/General&EverydayCare/FamilyMedicine";
@@ -1571,7 +1568,7 @@ function AppLayout() {
           <Route path="/travel-medicine" element={<TravelMedicine />} />
           <Route path="/weight-management" element={<WeightManagement />} />
           <Route path="/lifestyle-medicine" element={<LifestyleMedicine />} />
-          <Routes
+          <Route
             path="/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
