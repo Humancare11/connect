@@ -65,6 +65,15 @@ const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
 const BORDER = "#E2E8F0";
 const BORDER_HOVER = "#CBD5E1";
 
+import heroBanner from "../../assets/MedicalServices/fit-to-fly-medical-certificate.webp";
+
+const HERO_IMAGE = {
+  src: heroBanner, // ← imported path, bundler handles it
+  alt: "Licensed healthcare provider conducting a virtual fit to fly certificate consultation for airline medical clearance",
+  width: 1920,
+  height: 700,
+};
+
 /* ──────────────────────────────────────────────────────────────────────────
    DATA
 ────────────────────────────────────────────────────────────────────────── */
@@ -84,12 +93,12 @@ const SERVICES = {
     whyItMatters:
       "Unexpected airline documentation requirements can delay or disrupt travel plans. A Fit to Fly assessment helps travelers understand whether medical clearance may be needed before departure and provides an opportunity to address health concerns before boarding.",
     whoBenefits: [
-  "Travelers recovering from surgery or hospitalization",
-  "Passengers with chronic medical conditions",
-  "Pregnant individuals requiring airline documentation",
-  "Travelers with recent illnesses or injuries",
-  "International travelers needing medical travel clearance",
-],
+      "Travelers recovering from surgery or hospitalization",
+      "Passengers with chronic medical conditions",
+      "Pregnant individuals requiring airline documentation",
+      "Travelers with recent illnesses or injuries",
+      "International travelers needing medical travel clearance",
+    ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
       "E-prescriptions sent directly to your pharmacy",
@@ -97,27 +106,27 @@ const SERVICES = {
       "Integrated health records across visits",
     ],
     steps: [
-  {
-    Icon: FiSearch,
-    title: "Share Your Travel & Health Information",
-    body: "Tell us about your upcoming trip, airline requirements, medical history, recent treatments, and any health concerns that may impact your travel plans.",
-  },
-  {
-    Icon: FiFileText,
-    title: "Connect With a Healthcare Provider",
-    body: "A licensed healthcare provider will review your information, discuss your condition, and assess any factors that could affect your ability to travel safely.",
-  },
-  {
-    Icon: FiVideo,
-    title: "Complete Your Virtual Assessment",
-    body: "Join a secure online consultation from your phone, tablet, or computer and discuss your travel needs with your provider.",
-  },
-  {
-    Icon: FiPackage,
-    title: "Receive Your Travel Documentation",
-    body: "If medically appropriate, your provider will issue the required travel clearance documentation or fit-to-fly certificate to help support your travel plans.",
-  },
-],
+      {
+        Icon: FiSearch,
+        title: "Share Your Travel & Health Information",
+        body: "Tell us about your upcoming trip, airline requirements, medical history, recent treatments, and any health concerns that may impact your travel plans.",
+      },
+      {
+        Icon: FiFileText,
+        title: "Connect With a Healthcare Provider",
+        body: "A licensed healthcare provider will review your information, discuss your condition, and assess any factors that could affect your ability to travel safely.",
+      },
+      {
+        Icon: FiVideo,
+        title: "Complete Your Virtual Assessment",
+        body: "Join a secure online consultation from your phone, tablet, or computer and discuss your travel needs with your provider.",
+      },
+      {
+        Icon: FiPackage,
+        title: "Receive Your Travel Documentation",
+        body: "If medically appropriate, your provider will issue the required travel clearance documentation or fit-to-fly certificate to help support your travel plans.",
+      },
+    ],
     features: [
       {
         Icon: FiLock,
@@ -157,88 +166,88 @@ const SERVICES = {
       { value: 98, suffix: "%", label: "Satisfaction Rate" },
       { value: 14, suffix: " min", label: "Avg. Wait Time" },
     ],
-   faqs: [
-  {
-    q: "What is a Fit to Fly Certificate?",
-    a: "A Fit to Fly Certificate is a medical document issued by a healthcare provider after assessing a traveler's health status. It may be used to confirm that a person is medically suitable for air travel based on their current condition.",
-  },
-  {
-    q: "Why might an airline require a Fit to Fly Certificate?",
-    a: "Airlines may request medical clearance for passengers recovering from illness, surgery, injury, pregnancy-related conditions, or certain ongoing health concerns that could affect travel.",
-  },
-  {
-    q: "Who may benefit from a Fit to Fly assessment?",
-    a: "Travelers with recent medical procedures, chronic health conditions, respiratory concerns, pregnancy-related travel needs, or other health issues that could require airline approval may benefit from an assessment.",
-  },
-  {
-    q: "Can I request a Fit to Fly Certificate online?",
-    a: "Yes. Eligible travelers can complete a virtual consultation with a licensed healthcare provider through secure telemedicine services and discuss their travel requirements.",
-  },
-  {
-    q: "What health conditions commonly require travel clearance?",
-    a: "Conditions involving recent surgery, cardiovascular concerns, respiratory illnesses, pregnancy, mobility limitations, or ongoing medical treatment may require additional review before travel.",
-  },
-  {
-    q: "How soon should I arrange my Fit to Fly assessment?",
-    a: "It is best to schedule your assessment several days before departure to allow sufficient time for evaluation and any necessary documentation.",
-  },
-  {
-    q: "Can I obtain a Fit to Fly Certificate after surgery?",
-    a: "Many travelers seek medical clearance after surgery. Eligibility depends on the type of procedure, recovery progress, current symptoms, and provider assessment.",
-  },
-  {
-    q: "Is a Fit to Fly assessment available for pregnant travelers?",
-    a: "Yes. Pregnant travelers may request an assessment, especially when airline policies require medical documentation during certain stages of pregnancy.",
-  },
-  {
-    q: "Can travelers with chronic medical conditions request a certificate?",
-    a: "Yes. Individuals managing stable chronic conditions may be eligible for assessment based on their medical history, current health status, and travel plans.",
-  },
-  {
-    q: "What information should I prepare before my consultation?",
-    a: "You may be asked to provide details about your medical history, medications, recent treatments, travel itinerary, airline requirements, and current symptoms.",
-  },
-  {
-    q: "How is eligibility for a Fit to Fly Certificate determined?",
-    a: "A healthcare provider reviews your medical information, travel plans, and overall condition before determining whether medical clearance is appropriate.",
-  },
-  {
-    q: "What happens during a Fit to Fly consultation?",
-    a: "During the consultation, a provider may discuss your health history, recent medical events, current symptoms, medications, and travel-related concerns.",
-  },
-  {
-    q: "Can a healthcare provider recommend postponing travel?",
-    a: "Yes. If a provider believes air travel could pose a health risk, they may recommend delaying travel or seeking additional medical evaluation.",
-  },
-  {
-    q: "Are Fit to Fly Certificates accepted for international travel?",
-    a: "Many travelers use Fit to Fly Certificates for international travel when requested by airlines or destination-specific travel requirements.",
-  },
-  {
-    q: "Does a Fit to Fly Certificate guarantee boarding approval?",
-    a: "No. Final travel decisions remain subject to airline policies, operational procedures, and any additional documentation requirements.",
-  },
-  {
-    q: "What should I do if my health condition changes before departure?",
-    a: "If you experience new symptoms or changes in your condition after receiving medical clearance, you should seek further medical advice before traveling.",
-  },
-  {
-    q: "Can I discuss travel-related health concerns during my appointment?",
-    a: "Yes. Providers can discuss travel health considerations, medication management, mobility concerns, and precautions that may help support safer travel.",
-  },
-  {
-    q: "Are online Fit to Fly consultations secure?",
-    a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and healthcare information.",
-  },
-  {
-    q: "Why choose Humancare Connect for a Fit to Fly assessment?",
-    a: "Humancare Connect provides convenient access to licensed healthcare providers, secure virtual consultations, and professional travel health support from wherever you are.",
-  },
-  {
-    q: "How do I get started?",
-    a: "Simply schedule an appointment, share your travel details, complete your virtual consultation, and discuss your eligibility for a Fit to Fly Certificate with a healthcare provider.",
-  },
-],
+    faqs: [
+      {
+        q: "What is a Fit to Fly Certificate?",
+        a: "A Fit to Fly Certificate is a medical document issued by a healthcare provider after assessing a traveler's health status. It may be used to confirm that a person is medically suitable for air travel based on their current condition.",
+      },
+      {
+        q: "Why might an airline require a Fit to Fly Certificate?",
+        a: "Airlines may request medical clearance for passengers recovering from illness, surgery, injury, pregnancy-related conditions, or certain ongoing health concerns that could affect travel.",
+      },
+      {
+        q: "Who may benefit from a Fit to Fly assessment?",
+        a: "Travelers with recent medical procedures, chronic health conditions, respiratory concerns, pregnancy-related travel needs, or other health issues that could require airline approval may benefit from an assessment.",
+      },
+      {
+        q: "Can I request a Fit to Fly Certificate online?",
+        a: "Yes. Eligible travelers can complete a virtual consultation with a licensed healthcare provider through secure telemedicine services and discuss their travel requirements.",
+      },
+      {
+        q: "What health conditions commonly require travel clearance?",
+        a: "Conditions involving recent surgery, cardiovascular concerns, respiratory illnesses, pregnancy, mobility limitations, or ongoing medical treatment may require additional review before travel.",
+      },
+      {
+        q: "How soon should I arrange my Fit to Fly assessment?",
+        a: "It is best to schedule your assessment several days before departure to allow sufficient time for evaluation and any necessary documentation.",
+      },
+      {
+        q: "Can I obtain a Fit to Fly Certificate after surgery?",
+        a: "Many travelers seek medical clearance after surgery. Eligibility depends on the type of procedure, recovery progress, current symptoms, and provider assessment.",
+      },
+      {
+        q: "Is a Fit to Fly assessment available for pregnant travelers?",
+        a: "Yes. Pregnant travelers may request an assessment, especially when airline policies require medical documentation during certain stages of pregnancy.",
+      },
+      {
+        q: "Can travelers with chronic medical conditions request a certificate?",
+        a: "Yes. Individuals managing stable chronic conditions may be eligible for assessment based on their medical history, current health status, and travel plans.",
+      },
+      {
+        q: "What information should I prepare before my consultation?",
+        a: "You may be asked to provide details about your medical history, medications, recent treatments, travel itinerary, airline requirements, and current symptoms.",
+      },
+      {
+        q: "How is eligibility for a Fit to Fly Certificate determined?",
+        a: "A healthcare provider reviews your medical information, travel plans, and overall condition before determining whether medical clearance is appropriate.",
+      },
+      {
+        q: "What happens during a Fit to Fly consultation?",
+        a: "During the consultation, a provider may discuss your health history, recent medical events, current symptoms, medications, and travel-related concerns.",
+      },
+      {
+        q: "Can a healthcare provider recommend postponing travel?",
+        a: "Yes. If a provider believes air travel could pose a health risk, they may recommend delaying travel or seeking additional medical evaluation.",
+      },
+      {
+        q: "Are Fit to Fly Certificates accepted for international travel?",
+        a: "Many travelers use Fit to Fly Certificates for international travel when requested by airlines or destination-specific travel requirements.",
+      },
+      {
+        q: "Does a Fit to Fly Certificate guarantee boarding approval?",
+        a: "No. Final travel decisions remain subject to airline policies, operational procedures, and any additional documentation requirements.",
+      },
+      {
+        q: "What should I do if my health condition changes before departure?",
+        a: "If you experience new symptoms or changes in your condition after receiving medical clearance, you should seek further medical advice before traveling.",
+      },
+      {
+        q: "Can I discuss travel-related health concerns during my appointment?",
+        a: "Yes. Providers can discuss travel health considerations, medication management, mobility concerns, and precautions that may help support safer travel.",
+      },
+      {
+        q: "Are online Fit to Fly consultations secure?",
+        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and healthcare information.",
+      },
+      {
+        q: "Why choose Humancare Connect for a Fit to Fly assessment?",
+        a: "Humancare Connect provides convenient access to licensed healthcare providers, secure virtual consultations, and professional travel health support from wherever you are.",
+      },
+      {
+        q: "How do I get started?",
+        a: "Simply schedule an appointment, share your travel details, complete your virtual consultation, and discuss your eligibility for a Fit to Fly Certificate with a healthcare provider.",
+      },
+    ],
   },
 };
 /* ──────────────────────────────────────────────────────────────────────────
@@ -311,8 +320,8 @@ const darken = (hex, amount) => {
   return `#${[dr, dg, db].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 };
 
-const Pill = ({ children, ac }) => {
-  const textColor = darken(ac, 0.18); // verified >7:1 contrast at this font size, vs ~4.5:1 for the raw accent
+const Pill = ({ children, ac, onDark = false }) => {
+  const textColor = onDark ? "#ffffff" : darken(ac, 0.18);
   return (
     <div
       style={{
@@ -321,9 +330,11 @@ const Pill = ({ children, ac }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: `${ac}12`,
+        background: onDark ? "rgba(255,255,255,0.15)" : `${ac}12`,
         color: textColor,
-        border: `1px solid ${ac}30`,
+        border: onDark
+          ? "1px solid rgba(255,255,255,0.35)"
+          : `1px solid ${ac}30`,
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: "0.1em",
@@ -332,7 +343,12 @@ const Pill = ({ children, ac }) => {
       }}
     >
       <span
-        style={{ width: 6, height: 6, borderRadius: "50%", background: ac }}
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: onDark ? "#ffffff" : ac,
+        }}
       />
       {children}
     </div>
@@ -425,6 +441,38 @@ const Hero = ({ s }) => {
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        fetchPriority="high"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          zIndex: 0,
+        }}
+      />
+
+      {/* ── Layer 1: Dark overlay for text legibility ───────────────────────
+              Adjust rgba alpha:
+                0.40 → lighter overlay, more image visible
+                0.58 → balanced (default)
+                0.70 → darker, maximum text contrast
+          ───────────────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(15, 23, 42, 0.58)",
+          zIndex: 1,
+        }}
+      />
       <motion.div
         style={{
           position: "relative",
@@ -441,7 +489,10 @@ const Hero = ({ s }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
         >
-          <Pill ac={s.accentColor}>HumanCare Connect</Pill>
+          {/* onDark=true → white pill border + text instead of accent tint */}
+          <Pill ac={s.accentColor} onDark>
+            HumanCare Connect
+          </Pill>
         </motion.div>
 
         <motion.h1
@@ -451,7 +502,7 @@ const Hero = ({ s }) => {
           style={{
             fontSize: "clamp(36px, 5.5vw, 60px)",
             fontWeight: 900,
-            color: TEXT_PRIMARY,
+            color: "#FFFFFF" /* white on dark overlay */,
             lineHeight: 1.08,
             letterSpacing: "-0.03em",
             marginBottom: 18,
@@ -461,7 +512,15 @@ const Hero = ({ s }) => {
           {s.name.split(" ").map((w, i, arr) => (
             <span key={i}>
               {i === Math.floor(arr.length / 2) ? (
-                <span style={{ color: s.accentColor }}>{w} </span>
+                /* Keep accent color on one word — stays readable on dark bg */
+                <span
+                  style={{
+                    color:
+                      s.accentColor === "#2563EB" ? "#60A5FA" : s.accentColor,
+                  }}
+                >
+                  {w}{" "}
+                </span>
               ) : (
                 <span>{w} </span>
               )}
@@ -475,7 +534,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.5, delay: 0.26 }}
           style={{
             fontSize: 18,
-            color: TEXT_DIM,
+            color: "rgba(255,255,255,0.80)" /* was TEXT_DIM */,
             fontStyle: "italic",
             marginBottom: 10,
           }}
@@ -489,7 +548,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.45, delay: 0.32 }}
           style={{
             fontSize: 16,
-            color: TEXT_BODY,
+            color: "rgba(255,255,255,0.88)" /* was TEXT_BODY */,
             lineHeight: 1.7,
             maxWidth: 560,
             marginBottom: 28,
@@ -504,10 +563,11 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
-          {/* <GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
+          {/* onDark=true → white ghost button style */}
+          <GhostBtn onDark>
             Contact Care Team <FiArrowRight />
-          </GhostBtn> */}
+          </GhostBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -815,7 +875,6 @@ const Overview = ({ s }) => (
               }}
             >
               WHY IT MATTERS
-
             </div>
             <p
               style={{
@@ -965,7 +1024,7 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 8,
               }}
             >
-             Getting started is simple.{" "}
+              Getting started is simple.{" "}
               <span style={{ color: s.accentColor }}>simple.</span>
             </h2>
             <p
@@ -976,8 +1035,8 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 36,
               }}
             >
-              Obtaining a Fit to Fly Certificate through Humancare Connect is quick, secure, and designed to fit your travel schedule.
-
+              Obtaining a Fit to Fly Certificate through Humancare Connect is
+              quick, secure, and designed to fit your travel schedule.
             </p>
           </motion.div>
 
@@ -1094,8 +1153,9 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 24,
               }}
             >
-              Get professional travel health support from licensed healthcare providers through secure telemedicine services. Complete your assessment online and prepare for your journey with confidence.
-
+              Get professional travel health support from licensed healthcare
+              providers through secure telemedicine services. Complete your
+              assessment online and prepare for your journey with confidence.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
               <a href="/login">Get Started Today</a>
@@ -1191,8 +1251,12 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-           A Fit to Fly Certificate is often requested when an airline requires confirmation that a passenger can safely travel despite a recent illness, injury, surgery, pregnancy-related concern, or ongoing medical condition. The purpose of the certificate is to provide medical clearance based on an assessment of the traveler's current health status and travel plans.
-
+            A Fit to Fly Certificate is often requested when an airline requires
+            confirmation that a passenger can safely travel despite a recent
+            illness, injury, surgery, pregnancy-related concern, or ongoing
+            medical condition. The purpose of the certificate is to provide
+            medical clearance based on an assessment of the traveler's current
+            health status and travel plans.
           </p>
           <p
             style={{
@@ -1202,8 +1266,13 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-          Through Humancare Connect, travelers can access telemedicine services to discuss their health concerns and airline requirements with a licensed healthcare provider. During the consultation, providers may review medical history, recent treatments, medications, symptoms, recovery progress, and travel details to determine whether additional precautions or documentation may be necessary before travel.
-
+            Through Humancare Connect, travelers can access telemedicine
+            services to discuss their health concerns and airline requirements
+            with a licensed healthcare provider. During the consultation,
+            providers may review medical history, recent treatments,
+            medications, symptoms, recovery progress, and travel details to
+            determine whether additional precautions or documentation may be
+            necessary before travel.
           </p>
           <p
             style={{
@@ -1213,9 +1282,13 @@ const Features = ({ s }) => (
               margin: 0,
             }}
           >
-           Fit to Fly assessments are commonly requested by travelers recovering from surgery, managing chronic health conditions, traveling during pregnancy, or returning to travel after a recent medical event. By combining convenient online doctor appointments with professional medical review, Humancare Connect helps travelers access virtual healthcare services that support informed travel decisions and help reduce unexpected disruptions before departure.
-
-
+            Fit to Fly assessments are commonly requested by travelers
+            recovering from surgery, managing chronic health conditions,
+            traveling during pregnancy, or returning to travel after a recent
+            medical event. By combining convenient online doctor appointments
+            with professional medical review, Humancare Connect helps travelers
+            access virtual healthcare services that support informed travel
+            decisions and help reduce unexpected disruptions before departure.
           </p>
         </div>
       </motion.div>
@@ -1623,7 +1696,7 @@ const FinalCTA = ({ s }) => (
             marginBottom: 14,
           }}
         >
-          Ready to Travel 
+          Ready to Travel
           <br />
           <span style={{ color: s.accentColor }}>With Confidence?</span>
         </h2>
@@ -1636,10 +1709,19 @@ const FinalCTA = ({ s }) => (
             fontSize: 16,
           }}
         >
-         Whether you're preparing for an upcoming flight, recovering from a recent medical condition, or need documentation for airline requirements, Humancare Connect makes it simple to access professional travel health support.<br /><br />
-         Connect with a licensed healthcare provider through secure telemedicine services, complete your Fit to Fly assessment online, and receive medical clearance documentation when clinically appropriate.<br /><br />
-         Travel smarter with convenient virtual healthcare services designed around your schedule.
-
+          Whether you're preparing for an upcoming flight, recovering from a
+          recent medical condition, or need documentation for airline
+          requirements, Humancare Connect makes it simple to access professional
+          travel health support.
+          <br />
+          <br />
+          Connect with a licensed healthcare provider through secure
+          telemedicine services, complete your Fit to Fly assessment online, and
+          receive medical clearance documentation when clinically appropriate.
+          <br />
+          <br />
+          Travel smarter with convenient virtual healthcare services designed
+          around your schedule.
         </p>
         <div
           style={{
@@ -1651,9 +1733,14 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/login">Get Started</a></PrimaryBtn>
-          <GhostBtn><a href="/appointment-booking">Book Your Fit to Fly Assessment Today</a>
-</GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>
+            <a href="/login">Get Started</a>
+          </PrimaryBtn>
+          <GhostBtn>
+            <a href="/appointment-booking">
+              Book Your Fit to Fly Assessment Today
+            </a>
+          </GhostBtn>
           <button
             style={{
               padding: "13px 24px",
@@ -1719,8 +1806,8 @@ export default function FittoFly() {
     <>
       <Helmet>
         <title>
-          Fit to Fly Certificate Online | Medical Clearance for Air Travel | Humancare Connect
-
+          Fit to Fly Certificate Online | Medical Clearance for Air Travel |
+          Humancare Connect
         </title>
         <meta
           name="description"
@@ -1755,4 +1842,3 @@ export default function FittoFly() {
     </>
   );
 }
- 

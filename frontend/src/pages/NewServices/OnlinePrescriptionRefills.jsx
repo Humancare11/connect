@@ -53,9 +53,11 @@ import {
 
 import { Helmet } from "react-helmet-async";
 
-/* ─────────────────────────────────────────────────────────────────────────
-   DESIGN TOKENS
-───────────────────────────────────────────────────────────────────────── */
+import heroBanner from "../../assets/MedicalServices/telemedicine-solutions-for-business-industries.webp";
+
+/* ──────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — light theme
+────────────────────────────────────────────────────────────────────────── */
 const BG_BASE = "#FFFFFF";
 const BG_SURFACE = "#F8FAFC";
 const BG_ELEVATED = "#FFFFFF";
@@ -65,30 +67,27 @@ const TEXT_DIM = "#64748B";
 const BORDER = "#E2E8F0";
 const BORDER_HOVER = "#CBD5E1";
 
-/* ─────────────────────────────────────────────────────────────────────────
-   BREAKPOINT HOOK
-   Returns { isMobile, isTablet, isDesktop }
-   isMobile  < 640px
-   isTablet  640–1023px
-   isDesktop ≥ 1024px
-───────────────────────────────────────────────────────────────────────── */
-const useBreakpoint = () => {
-  const getBreakpoint = () => {
-    const w = typeof window !== "undefined" ? window.innerWidth : 1200;
-    return { isMobile: w < 640, isTablet: w >= 640 && w < 1024, isDesktop: w >= 1024 };
-  };
-  const [bp, setBp] = useState(getBreakpoint);
-  useEffect(() => {
-    const handler = () => setBp(getBreakpoint());
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return bp;
+/* ──────────────────────────────────────────────────────────────────────────
+   SEO HERO IMAGE CONFIG
+   - Filename: keyword-rich, hyphen-separated, describes the image content
+   - Alt:      descriptive sentence, includes primary keyword naturally,
+               no keyword stuffing
+   - loading="eager" + fetchPriority="high" → improves LCP (Core Web Vitals)
+   - Explicit width + height → prevents CLS (layout shift)
+   TIP: Use .webp format for best performance
+        e.g. online-prescription-refills-telehealth-service.webp
+────────────────────────────────────────────────────────────────────────── */
+
+const HERO_IMAGE = {
+  src: heroBanner, // ← imported path, bundler handles it
+  alt: "Healthcare professionals providing telemedicine and virtual healthcare solutions for businesses across corporate, insurance, maritime, legal, and hospitality industries",
+  width: 1920,
+  height: 700,
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    DATA
-───────────────────────────────────────────────────────────────────────── */
+────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
     slug: "telehealth-services",
@@ -258,9 +257,9 @@ const SERVICES = {
   },
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    HOOKS & UTILS
-───────────────────────────────────────────────────────────────────────── */
+────────────────────────────────────────────────────────────────────────── */
 const useCountUp = (target, duration = 2200, start = false) => {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -293,11 +292,13 @@ const fadeUp = {
 };
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    MICRO COMPONENTS
-───────────────────────────────────────────────────────────────────────── */
+────────────────────────────────────────────────────────────────────────── */
 const SLabel = ({ text, ac }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+  <div
+    style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}
+  >
     <div style={{ width: 24, height: 1, background: ac }} />
     <span
       style={{
@@ -324,8 +325,8 @@ const darken = (hex, amount) => {
   return `#${[dr, dg, db].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 };
 
-const Pill = ({ children, ac }) => {
-  const textColor = darken(ac, 0.18);
+const Pill = ({ children, ac, onDark = false }) => {
+  const textColor = onDark ? "#ffffff" : darken(ac, 0.18);
   return (
     <div
       style={{
@@ -334,9 +335,11 @@ const Pill = ({ children, ac }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: `${ac}12`,
+        background: onDark ? "rgba(255,255,255,0.15)" : `${ac}12`,
         color: textColor,
-        border: `1px solid ${ac}30`,
+        border: onDark
+          ? "1px solid rgba(255,255,255,0.35)"
+          : `1px solid ${ac}30`,
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: "0.1em",
@@ -344,7 +347,14 @@ const Pill = ({ children, ac }) => {
         marginBottom: 22,
       }}
     >
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: ac }} />
+      <span
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: onDark ? "#ffffff" : ac,
+        }}
+      />
       {children}
     </div>
   );
@@ -380,7 +390,7 @@ const PrimaryBtn = ({ children, ac, onClick, fullWidth, type = "button" }) => (
   </button>
 );
 
-const GhostBtn = ({ children, onClick }) => (
+const GhostBtn = ({ children, onClick, onDark = false }) => (
   <button
     onClick={onClick}
     style={{
@@ -388,32 +398,49 @@ const GhostBtn = ({ children, onClick }) => (
       borderRadius: 12,
       fontWeight: 600,
       fontSize: 14,
-      color: TEXT_PRIMARY,
+      color: onDark ? "#ffffff" : TEXT_PRIMARY,
       cursor: "pointer",
-      background: "#fff",
-      border: `1px solid ${BORDER_HOVER}`,
+      background: onDark ? "rgba(255,255,255,0.12)" : "#fff",
+      border: onDark
+        ? "1px solid rgba(255,255,255,0.35)"
+        : `1px solid ${BORDER_HOVER}`,
       transition: "background 0.2s, border-color 0.2s",
       display: "inline-flex",
       alignItems: "center",
       gap: 6,
     }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.background = BG_SURFACE;
-      e.currentTarget.style.borderColor = "#94A3B8";
+      e.currentTarget.style.background = onDark
+        ? "rgba(255,255,255,0.22)"
+        : BG_SURFACE;
+      e.currentTarget.style.borderColor = onDark
+        ? "rgba(255,255,255,0.6)"
+        : "#94A3B8";
     }}
     onMouseLeave={(e) => {
-      e.currentTarget.style.background = "#fff";
-      e.currentTarget.style.borderColor = BORDER_HOVER;
+      e.currentTarget.style.background = onDark
+        ? "rgba(255,255,255,0.12)"
+        : "#fff";
+      e.currentTarget.style.borderColor = onDark
+        ? "rgba(255,255,255,0.35)"
+        : BORDER_HOVER;
     }}
   >
     {children}
   </button>
 );
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    HERO
-───────────────────────────────────────────────────────────────────────── */
-const Hero = ({ s, bp }) => {
+   Changes:
+   1. Section has NO background color — image fills it instead
+   2. <img> tag with SEO filename + alt is the actual background layer (z-0)
+      → Google can crawl it; screen readers can read the alt text
+   3. Dark overlay div sits on top of image (z-1) for text legibility
+   4. Content motion.div stays at z-10 (unchanged)
+   5. All text colors switched to white / rgba-white for contrast on dark bg
+────────────────────────────────────────────────────────────────────────── */
+const Hero = ({ s }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -426,24 +453,68 @@ const Hero = ({ s, bp }) => {
       ref={ref}
       style={{
         position: "relative",
-        minHeight: bp.isMobile ? "auto" : "62vh",
+        minHeight: "62vh",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         overflow: "hidden",
-        background: BG_SURFACE,
+        /* No background color here — the <img> below fills it */
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
+      {/* ── Layer 0: SEO background image ──────────────────────────────────
+          Using a real <img> tag (not CSS background-image) so that:
+          • Google Images can index the image
+          • Screen readers can read the alt text
+          • Lighthouse counts it as an LCP candidate with eager + fetchPriority
+          width/height prevent Cumulative Layout Shift (CLS)
+      ───────────────────────────────────────────────────────────────────── */}
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        fetchPriority="high"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          zIndex: 0,
+        }}
+      />
+
+      {/* ── Layer 1: Dark overlay for text legibility ───────────────────────
+          Adjust rgba alpha:
+            0.40 → lighter overlay, more image visible
+            0.58 → balanced (default)
+            0.70 → darker, maximum text contrast
+      ───────────────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(15, 23, 42, 0.58)",
+          zIndex: 1,
+        }}
+      />
+
+      {/* ── Layer 2: Content ────────────────────────────────────────────────
+          zIndex: 10 was already set — no change needed here.
+          Text colors updated to white variants for contrast on dark overlay.
+      ───────────────────────────────────────────────────────────────────── */}
       <motion.div
         style={{
           position: "relative",
           zIndex: 10,
           maxWidth: 1200,
-          margin: "80px auto",
-          padding: bp.isMobile ? "48px 20px" : "64px 24px",
+          margin: "0 auto",
+          padding: "64px 24px",
           width: "100%",
-          opacity: bp.isMobile ? 1 : op,
+          opacity: op,
         }}
       >
         <motion.div
@@ -451,7 +522,10 @@ const Hero = ({ s, bp }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
         >
-          <Pill ac={s.accentColor}>HumanCare Connect</Pill>
+          {/* onDark=true → white pill border + text instead of accent tint */}
+          <Pill ac={s.accentColor} onDark>
+            HumanCare Connect
+          </Pill>
         </motion.div>
 
         <motion.h1
@@ -459,9 +533,9 @@ const Hero = ({ s, bp }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.18 }}
           style={{
-            fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(36px, 5.5vw, 60px)",
+            fontSize: "clamp(36px, 5.5vw, 60px)",
             fontWeight: 900,
-            color: TEXT_PRIMARY,
+            color: "#FFFFFF" /* white on dark overlay */,
             lineHeight: 1.08,
             letterSpacing: "-0.03em",
             marginBottom: 18,
@@ -471,7 +545,15 @@ const Hero = ({ s, bp }) => {
           {s.name.split(" ").map((w, i, arr) => (
             <span key={i}>
               {i === Math.floor(arr.length / 2) ? (
-                <span style={{ color: s.accentColor }}>{w} </span>
+                /* Keep accent color on one word — stays readable on dark bg */
+                <span
+                  style={{
+                    color:
+                      s.accentColor === "#2563EB" ? "#60A5FA" : s.accentColor,
+                  }}
+                >
+                  {w}{" "}
+                </span>
               ) : (
                 <span>{w} </span>
               )}
@@ -484,8 +566,8 @@ const Hero = ({ s, bp }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.26 }}
           style={{
-            fontSize: bp.isMobile ? 16 : 18,
-            color: TEXT_DIM,
+            fontSize: 18,
+            color: "rgba(255,255,255,0.80)" /* was TEXT_DIM */,
             fontStyle: "italic",
             marginBottom: 10,
           }}
@@ -499,7 +581,7 @@ const Hero = ({ s, bp }) => {
           transition={{ duration: 0.45, delay: 0.32 }}
           style={{
             fontSize: 16,
-            color: TEXT_BODY,
+            color: "rgba(255,255,255,0.88)" /* was TEXT_BODY */,
             lineHeight: 1.7,
             maxWidth: 560,
             marginBottom: 28,
@@ -512,26 +594,22 @@ const Hero = ({ s, bp }) => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.38 }}
-          style={{
-            display: "flex",
-            gap: 12,
-            flexWrap: "wrap",
-            flexDirection: bp.isMobile ? "column" : "row",
-          }}
+          style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-         <PrimaryBtn ac={s.accentColor}><a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
-          {/* <GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
+          {/* onDark=true → white ghost button style */}
+          <GhostBtn onDark>
             Contact Care Team <FiArrowRight />
-          </GhostBtn> */}
+          </GhostBtn>
         </motion.div>
       </motion.div>
     </section>
   );
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    CONSULTATION FORM
-───────────────────────────────────────────────────────────────────────── */
+────────────────────────────────────────────────────────────────────────── */
 const ConsultationForm = ({ s }) => {
   const [values, setValues] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
@@ -555,7 +633,6 @@ const ConsultationForm = ({ s }) => {
     outline: "none",
     transition: "border-color 0.2s, box-shadow 0.2s",
     fontFamily: "inherit",
-    boxSizing: "border-box",
   };
 
   const labelStyle = {
@@ -602,11 +679,26 @@ const ConsultationForm = ({ s }) => {
           >
             <FiCheckCircle style={{ fontSize: 24, color: s.accentColor }} />
           </div>
-          <h3 style={{ color: TEXT_PRIMARY, fontSize: 18, fontWeight: 800, marginBottom: 8 }}>
+          <h3
+            style={{
+              color: TEXT_PRIMARY,
+              fontSize: 18,
+              fontWeight: 800,
+              marginBottom: 8,
+            }}
+          >
             Request received
           </h3>
-          <p style={{ color: TEXT_BODY, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
-            A member of our care team will reach out to {values.email || "you"} shortly.
+          <p
+            style={{
+              color: TEXT_BODY,
+              fontSize: 14,
+              lineHeight: 1.6,
+              marginBottom: 20,
+            }}
+          >
+            A member of our care team will reach out to {values.email || "you"}{" "}
+            shortly.
           </p>
           <button
             onClick={() => {
@@ -641,12 +733,26 @@ const ConsultationForm = ({ s }) => {
           >
             <FiMessageSquare style={{ fontSize: 20, color: s.accentColor }} />
           </div>
-          <h3 style={{ color: TEXT_PRIMARY, fontSize: 19, fontWeight: 800, marginBottom: 6 }}>
+          <h3
+            style={{
+              color: TEXT_PRIMARY,
+              fontSize: 19,
+              fontWeight: 800,
+              marginBottom: 6,
+            }}
+          >
             Request a Consultation
           </h3>
-          <p style={{ color: TEXT_DIM, fontSize: 13.5, lineHeight: 1.6, marginBottom: 22 }}>
-            Tell us a little about what you need, and a care coordinator will follow up within one
-            business day.
+          <p
+            style={{
+              color: TEXT_DIM,
+              fontSize: 13.5,
+              lineHeight: 1.6,
+              marginBottom: 22,
+            }}
+          >
+            Tell us a little about what you need, and a care coordinator will
+            follow up within one business day.
           </p>
 
           <form onSubmit={handleSubmit}>
@@ -691,7 +797,11 @@ const ConsultationForm = ({ s }) => {
                 placeholder="Briefly describe your symptoms or what you'd like to discuss…"
                 value={values.message}
                 onChange={handleChange("message")}
-                style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
+                style={{
+                  ...inputStyle,
+                  resize: "vertical",
+                  fontFamily: "inherit",
+                }}
                 {...focusHandlers}
               />
             </div>
@@ -718,365 +828,409 @@ const ConsultationForm = ({ s }) => {
   );
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    OVERVIEW
-───────────────────────────────────────────────────────────────────────── */
-const Overview = ({ s, bp }) => {
-  const sectionPadding = bp.isMobile ? "52px 20px" : "88px 24px";
-
-  // Outcomes grid: 4-col desktop → 2-col tablet → 1-col mobile
-  const outcomesColumns = bp.isMobile
-    ? "1fr"
-    : bp.isTablet
-    ? "repeat(2, 1fr)"
-    : "repeat(4, 1fr)";
-
-  return (
-    <section style={{ background: BG_BASE, width: "100%" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: sectionPadding }}>
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
-          style={{
-            display: "grid",
-            gridTemplateColumns: bp.isMobile || bp.isTablet ? "1fr" : "1.1fr 0.9fr",
-            gap: bp.isMobile ? 32 : 64,
-            alignItems: "start",
-          }}
-        >
-          {/* Text */}
-          <div>
-            <motion.div variants={fadeUp}>
-              <SLabel text="Service Overview" ac={s.accentColor} />
-              <h2
-                style={{
-                  fontSize: "clamp(26px, 3.5vw, 36px)",
-                  fontWeight: 900,
-                  color: TEXT_PRIMARY,
-                  lineHeight: 1.15,
-                  marginBottom: 20,
-                }}
-              >
-                What Are Online Prescription Refills?
-              </h2>
-            </motion.div>
-            <motion.p
-              variants={fadeUp}
-              style={{ color: TEXT_BODY, lineHeight: 1.75, marginBottom: 20, fontSize: 15.5 }}
-            >
-              {s.description}
-            </motion.p>
-            <motion.div
-              variants={fadeUp}
-              style={{
-                padding: "16px 18px",
-                borderRadius: 14,
-                marginBottom: 20,
-                background: `${s.accentColor}0A`,
-                border: `1px solid ${s.accentColor}25`,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: s.accentColor,
-                  marginBottom: 6,
-                }}
-              >
-                Why It Matters
-              </div>
-              <p style={{ color: TEXT_BODY, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
-                {s.whyItMatters}
-              </p>
-            </motion.div>
-            <motion.div variants={fadeUp}>
-              <div style={{ color: TEXT_PRIMARY, fontWeight: 700, fontSize: 14, marginBottom: 12 }}>
-                Who Can Benefit
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {s.whoBenefits.map((item, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 10,
-                      color: TEXT_BODY,
-                      fontSize: 14,
-                    }}
-                  >
-                    <FiCheckCircle
-                      style={{ color: s.accentColor, fontSize: 16, marginTop: 1, flexShrink: 0 }}
-                    />
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Form — sticky only on desktop */}
-          <motion.div
-            variants={fadeUp}
-            style={{ position: bp.isDesktop ? "sticky" : "static", top: 96 }}
-          >
-            <ConsultationForm s={s} />
-          </motion.div>
-        </motion.div>
-
-        {/* Outcomes strip */}
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          style={{
-            display: "grid",
-            gridTemplateColumns: outcomesColumns,
-            gap: 12,
-            marginTop: bp.isMobile ? 32 : 52,
-          }}
-        >
-          {s.keyOutcomes.map((o, i) => (
-            <motion.div
-              key={i}
-              variants={fadeUp}
-              custom={i}
-              style={{
-                display: "flex",
-                gap: 12,
-                alignItems: "flex-start",
-                padding: 16,
-                borderRadius: 14,
-                background: BG_ELEVATED,
-                border: `1px solid ${BORDER}`,
-              }}
-            >
-              <div
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: s.accentColor,
-                  marginTop: 5,
-                  flexShrink: 0,
-                }}
-              />
-              <p style={{ color: TEXT_BODY, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{o}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
-};
-
-/* ─────────────────────────────────────────────────────────────────────────
-   HOW IT WORKS
-───────────────────────────────────────────────────────────────────────── */
-const HowItWorks = ({ s, bp }) => {
-  const sectionPadding = bp.isMobile ? "52px 0" : "88px 0";
-
-  return (
-    <section
+────────────────────────────────────────────────────────────────────────── */
+const Overview = ({ s }) => (
+  <section
+    style={{
+      background: BG_BASE,
+      width: "100%",
+    }}
+  >
+    <div
       style={{
-        padding: sectionPadding,
-        background: BG_SURFACE,
-        borderTop: `1px solid ${BORDER}`,
-        borderBottom: `1px solid ${BORDER}`,
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: "88px 24px",
       }}
     >
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "0 20px" : "0 24px" }}>
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
-          style={{
-            display: "grid",
-            gridTemplateColumns: bp.isMobile || bp.isTablet ? "1fr" : "1fr 1fr",
-            gap: bp.isMobile ? 32 : 64,
-            alignItems: "start",
-          }}
-        >
-          <div>
-            <motion.div variants={fadeUp}>
-              <SLabel text="Our Services" ac={s.accentColor} />
-              <h2
-                style={{
-                  fontSize: "clamp(26px, 3.5vw, 36px)",
-                  fontWeight: 900,
-                  color: TEXT_PRIMARY,
-                  lineHeight: 1.15,
-                  marginBottom: 8,
-                }}
-              >
-                Getting started is{" "}
-                <span style={{ color: s.accentColor }}>simple.</span>
-              </h2>
-              <p style={{ color: TEXT_DIM, fontSize: 15, lineHeight: 1.7, marginBottom: 36 }}>
-                Requesting an online prescription refill through Humancare Connect is quick, secure,
-                and convenient.
-              </p>
-            </motion.div>
-
-            <motion.div
-              variants={stagger}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-60px" }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.1fr 0.9fr",
+          gap: 64,
+          alignItems: "start",
+        }}
+      >
+        {/* Text — left column */}
+        <div>
+          <motion.div variants={fadeUp}>
+            <SLabel text="Service Overview" ac={s.accentColor} />
+            <h2
+              style={{
+                fontSize: "clamp(26px, 3.5vw, 36px)",
+                fontWeight: 900,
+                color: TEXT_PRIMARY,
+                lineHeight: 1.15,
+                marginBottom: 20,
+              }}
             >
-              {s.steps.map((step, i) => (
-                <motion.div
-                  key={i}
-                  variants={fadeUp}
-                  custom={i}
-                  style={{ position: "relative", display: "flex", gap: 18 }}
-                >
-                  {i < s.steps.length - 1 && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: 19,
-                        top: 46,
-                        width: 1,
-                        height: "calc(100% - 8px)",
-                        background: BORDER_HOVER,
-                      }}
-                    />
-                  )}
-                  <div
-                    style={{
-                      position: "relative",
-                      zIndex: 1,
-                      flexShrink: 0,
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: s.accentColor,
-                    }}
-                  >
-                    {React.createElement(step.Icon, {
-                      style: { fontSize: 18, color: "#fff" },
-                    })}
-                  </div>
-                  <div style={{ paddingBottom: 28, flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        color: s.accentColor,
-                        marginBottom: 4,
-                      }}
-                    >
-                      Step {i + 1}
-                    </div>
-                    <div
-                      style={{
-                        color: TEXT_PRIMARY,
-                        fontWeight: 700,
-                        fontSize: 15,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {step.title}
-                    </div>
-                    <p style={{ color: TEXT_DIM, fontSize: 14, lineHeight: 1.65, margin: 0 }}>
-                      {step.body}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Sticky card — static on mobile/tablet */}
+              What Are Online Prescription Refills?
+            </h2>
+          </motion.div>
+          <motion.p
+            variants={fadeUp}
+            style={{
+              color: TEXT_BODY,
+              lineHeight: 1.75,
+              marginBottom: 20,
+              fontSize: 15.5,
+            }}
+          >
+            {s.description}
+          </motion.p>
           <motion.div
             variants={fadeUp}
-            style={{ position: bp.isDesktop ? "sticky" : "static", top: 96 }}
+            style={{
+              padding: "16px 18px",
+              borderRadius: 14,
+              marginBottom: 20,
+              background: `${s.accentColor}0A`,
+              border: `1px solid ${s.accentColor}25`,
+            }}
           >
             <div
               style={{
-                borderRadius: 24,
-                padding: bp.isMobile ? 24 : 36,
-                background: "#fff",
-                border: `1px solid ${BORDER}`,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: s.accentColor,
+                marginBottom: 6,
               }}
             >
-              {React.createElement(s.heroIcon, {
-                style: { fontSize: 44, color: s.accentColor, marginBottom: 16 },
-              })}
-              <h3
-                style={{ color: TEXT_PRIMARY, fontSize: 20, fontWeight: 800, marginBottom: 8 }}
-              >
-                Ready to begin?
-              </h3>
-              <p style={{ color: TEXT_DIM, fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                Get convenient access to online prescription refills through trusted telemedicine
-                services. Most appointments take just a few minutes, helping you stay on track with
-                your medications and ongoing care.
-              </p>
-              <PrimaryBtn ac={s.accentColor} fullWidth>
-                <a href="/login"> Get Started Today</a>
-              </PrimaryBtn>
-              <div
-                style={{
-                  marginTop: 20,
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 8,
-                }}
-              >
-                {[
-                  [FiLock, "Secure & Private"],
-                  [FiZap, "Fast Response"],
-                  [FiUserCheck, "Verified Providers"],
-                  [FiFileText, "Insurance Accepted"],
-                ].map(([Icon, lb], i) => (
-                  <div
-                    key={i}
+              Why It Matters
+            </div>
+            <p
+              style={{
+                color: TEXT_BODY,
+                fontSize: 14,
+                lineHeight: 1.7,
+                margin: 0,
+              }}
+            >
+              {s.whyItMatters}
+            </p>
+          </motion.div>
+          <motion.div variants={fadeUp}>
+            <div
+              style={{
+                color: TEXT_PRIMARY,
+                fontWeight: 700,
+                fontSize: 14,
+                marginBottom: 12,
+              }}
+            >
+              Who Can Benefit
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {s.whoBenefits.map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 10,
+                    color: TEXT_BODY,
+                    fontSize: 14,
+                  }}
+                >
+                  <FiCheckCircle
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      color: TEXT_DIM,
-                      fontSize: 12,
+                      color: s.accentColor,
+                      fontSize: 16,
+                      marginTop: 1,
+                      flexShrink: 0,
                     }}
-                  >
-                    <Icon style={{ fontSize: 13, color: s.accentColor }} />
-                    {lb}
-                  </div>
-                ))}
-              </div>
+                  />
+                  {item}
+                </div>
+              ))}
             </div>
           </motion.div>
-        </motion.div>
-      </div>
-    </section>
-  );
-};
+        </div>
 
-/* ─────────────────────────────────────────────────────────────────────────
-   FEATURES & BENEFITS
-───────────────────────────────────────────────────────────────────────── */
-const Features = ({ s, bp }) => (
+        {/* Form — right column */}
+        <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
+          <ConsultationForm s={s} />
+        </motion.div>
+      </motion.div>
+
+      {/* Outcomes strip */}
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 12,
+          marginTop: 52,
+        }}
+      >
+        {s.keyOutcomes.map((o, i) => (
+          <motion.div
+            key={i}
+            variants={fadeUp}
+            custom={i}
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "flex-start",
+              padding: 16,
+              borderRadius: 14,
+              background: BG_ELEVATED,
+              border: `1px solid ${BORDER}`,
+            }}
+          >
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: s.accentColor,
+                marginTop: 5,
+                flexShrink: 0,
+              }}
+            />
+            <p
+              style={{
+                color: TEXT_BODY,
+                fontSize: 13,
+                lineHeight: 1.6,
+                margin: 0,
+              }}
+            >
+              {o}
+            </p>
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
+  </section>
+);
+
+/* ──────────────────────────────────────────────────────────────────────────
+   HOW IT WORKS
+────────────────────────────────────────────────────────────────────────── */
+const HowItWorks = ({ s }) => (
   <section
     style={{
-      maxWidth: 1200,
-      margin: "0 auto",
-      padding: bp.isMobile ? "52px 20px" : "88px 24px",
+      padding: "88px 0",
+      background: BG_SURFACE,
+      borderTop: `1px solid ${BORDER}`,
+      borderBottom: `1px solid ${BORDER}`,
     }}
   >
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-60px" }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 64,
+          alignItems: "start",
+        }}
+      >
+        <div>
+          <motion.div variants={fadeUp}>
+            <SLabel text="Our Services" ac={s.accentColor} />
+            <h2
+              style={{
+                fontSize: "clamp(26px, 3.5vw, 36px)",
+                fontWeight: 900,
+                color: TEXT_PRIMARY,
+                lineHeight: 1.15,
+                marginBottom: 8,
+              }}
+            >
+              Getting started is{" "}
+              <span style={{ color: s.accentColor }}>simple.</span>
+            </h2>
+            <p
+              style={{
+                color: TEXT_DIM,
+                fontSize: 15,
+                lineHeight: 1.7,
+                marginBottom: 36,
+              }}
+            >
+              Requesting an online prescription refill through Humancare Connect
+              is quick, secure, and convenient.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {s.steps.map((step, i) => (
+              <motion.div
+                key={i}
+                variants={fadeUp}
+                custom={i}
+                style={{ position: "relative", display: "flex", gap: 18 }}
+              >
+                {i < s.steps.length - 1 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 19,
+                      top: 46,
+                      width: 1,
+                      height: "calc(100% - 8px)",
+                      background: BORDER_HOVER,
+                    }}
+                  />
+                )}
+                <div
+                  style={{
+                    position: "relative",
+                    zIndex: 1,
+                    flexShrink: 0,
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: s.accentColor,
+                  }}
+                >
+                  {React.createElement(step.Icon, {
+                    style: { fontSize: 18, color: "#fff" },
+                  })}
+                </div>
+                <div style={{ paddingBottom: 28, flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: s.accentColor,
+                      marginBottom: 4,
+                    }}
+                  >
+                    Step {i + 1}
+                  </div>
+                  <div
+                    style={{
+                      color: TEXT_PRIMARY,
+                      fontWeight: 700,
+                      fontSize: 15,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {step.title}
+                  </div>
+                  <p
+                    style={{
+                      color: TEXT_DIM,
+                      fontSize: 14,
+                      lineHeight: 1.65,
+                      margin: 0,
+                    }}
+                  >
+                    {step.body}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* Sticky card */}
+        <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
+          <div
+            style={{
+              borderRadius: 24,
+              padding: 36,
+              background: "#fff",
+              border: `1px solid ${BORDER}`,
+            }}
+          >
+            {React.createElement(s.heroIcon, {
+              style: { fontSize: 44, color: s.accentColor, marginBottom: 16 },
+            })}
+            <h3
+              style={{
+                color: TEXT_PRIMARY,
+                fontSize: 20,
+                fontWeight: 800,
+                marginBottom: 8,
+              }}
+            >
+              Ready to begin?
+            </h3>
+            <p
+              style={{
+                color: TEXT_DIM,
+                fontSize: 14,
+                lineHeight: 1.7,
+                marginBottom: 24,
+              }}
+            >
+              Get convenient access to online prescription refills through
+              trusted telemedicine services. Most appointments take just a few
+              minutes, helping you stay on track with your medications and
+              ongoing care.
+            </p>
+            <PrimaryBtn ac={s.accentColor} fullWidth>
+              Get Started Today
+            </PrimaryBtn>
+            <div
+              style={{
+                marginTop: 20,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 8,
+              }}
+            >
+              {[
+                [FiLock, "Secure & Private"],
+                [FiZap, "Fast Response"],
+                [FiUserCheck, "Verified Providers"],
+                [FiFileText, "Insurance Accepted"],
+              ].map(([Icon, lb], i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    color: TEXT_DIM,
+                    fontSize: 12,
+                  }}
+                >
+                  <Icon style={{ fontSize: 13, color: s.accentColor }} />
+                  {lb}
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </div>
+  </section>
+);
+
+/* ──────────────────────────────────────────────────────────────────────────
+   FEATURES & BENEFITS
+────────────────────────────────────────────────────────────────────────── */
+const Features = ({ s }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
     <motion.div
       variants={stagger}
       initial="hidden"
@@ -1115,31 +1269,56 @@ const Features = ({ s, bp }) => (
           overflow: "hidden",
         }}
       >
-        <div style={{ padding: bp.isMobile ? 20 : 28 }}>
-          <p style={{ color: TEXT_BODY, fontSize: 15, lineHeight: 1.75, margin: "0 0 18px 0" }}>
-            Online prescription refills allow eligible patients to renew ongoing medications through
-            a secure telemedicine consultation with a licensed healthcare provider. This service is
-            designed for individuals who are managing chronic health conditions, maintaining long
-            term treatment plans, or requiring continued access to prescribed medications. Instead of
-            scheduling an in person appointment for routine medication renewals, patients can connect
-            with a healthcare provider remotely and receive professional guidance from the comfort of
-            home.
+        <div style={{ padding: 28 }}>
+          <p
+            style={{
+              color: TEXT_BODY,
+              fontSize: 15,
+              lineHeight: 1.75,
+              margin: "0 0 18px 0",
+            }}
+          >
+            Online prescription refills allow eligible patients to renew ongoing
+            medications through a secure telemedicine consultation with a
+            licensed healthcare provider. This service is designed for
+            individuals who are managing chronic health conditions, maintaining
+            long term treatment plans, or requiring continued access to
+            prescribed medications. Instead of scheduling an in person
+            appointment for routine medication renewals, patients can connect
+            with a healthcare provider remotely and receive professional
+            guidance from the comfort of home.
           </p>
-          <p style={{ color: TEXT_BODY, fontSize: 15, lineHeight: 1.75, margin: "0 0 18px 0" }}>
-            At Humancare Connect, our online prescription refill service helps simplify medication
-            management while supporting continuity of care. Healthcare providers can review your
-            medical history, current medications, treatment progress, and ongoing healthcare needs to
-            determine whether a prescription renewal is appropriate. This approach helps patients
-            stay consistent with their treatment plans while reducing delays that could impact their
-            health outcomes.
+          <p
+            style={{
+              color: TEXT_BODY,
+              fontSize: 15,
+              lineHeight: 1.75,
+              margin: "0 0 18px 0",
+            }}
+          >
+            At Humancare Connect, our online prescription refill service helps
+            simplify medication management while supporting continuity of care.
+            Healthcare providers can review your medical history, current
+            medications, treatment progress, and ongoing healthcare needs to
+            determine whether a prescription renewal is appropriate. This
+            approach helps patients stay consistent with their treatment plans
+            while reducing delays that could impact their health outcomes.
           </p>
-          <p style={{ color: TEXT_BODY, fontSize: 15, lineHeight: 1.75, margin: 0 }}>
-            Online prescription refills are commonly requested for conditions such as high blood
-            pressure, diabetes, asthma, allergies, thyroid disorders, high cholesterol, migraine
-            management, and other ongoing health concerns. By combining convenient access to
-            telemedicine services with professional clinical oversight, Humancare Connect helps
-            patients maintain their healthcare journey through secure, accessible, and patient
-            centered virtual healthcare services.
+          <p
+            style={{
+              color: TEXT_BODY,
+              fontSize: 15,
+              lineHeight: 1.75,
+              margin: 0,
+            }}
+          >
+            Online prescription refills are commonly requested for conditions
+            such as high blood pressure, diabetes, asthma, allergies, thyroid
+            disorders, high cholesterol, migraine management, and other ongoing
+            health concerns. By combining convenient access to telemedicine
+            services with professional clinical oversight, Humancare Connect
+            helps patients maintain their healthcare journey through secure,
+            accessible, and patient centered virtual healthcare services.
           </p>
         </div>
       </motion.div>
@@ -1147,9 +1326,9 @@ const Features = ({ s, bp }) => (
   </section>
 );
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    STATS / WHY US
-───────────────────────────────────────────────────────────────────────── */
+────────────────────────────────────────────────────────────────────────── */
 const StatCard = ({ value, suffix, label, ac, go }) => {
   const c = useCountUp(value, 2200, go);
   return (
@@ -1210,7 +1389,11 @@ const whyUsItems = [
     "Nationwide Access",
     "Care without geographic limits — from metro centres to remote districts.",
   ],
-  [FiZap, "Fast Scheduling", "From first contact to first appointment in hours, not weeks."],
+  [
+    FiZap,
+    "Fast Scheduling",
+    "From first contact to first appointment in hours, not weeks.",
+  ],
   [
     FiLock,
     "Secure Platform",
@@ -1223,7 +1406,7 @@ const whyUsItems = [
   ],
 ];
 
-const WhyUs = ({ s, bp }) => {
+const WhyUs = ({ s }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
@@ -1231,25 +1414,16 @@ const WhyUs = ({ s, bp }) => {
       ([e]) => {
         if (e.isIntersecting) setInView(true);
       },
-      { threshold: 0.2 }
+      { threshold: 0.2 },
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
 
-  // Stats: 4-col desktop → 2-col tablet+mobile
-  const statsColumns = bp.isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)";
-  // Why-us items: 3-col desktop → 2-col tablet → 1-col mobile
-  const whyColumns = bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
-
   return (
     <section
       ref={ref}
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: bp.isMobile ? "52px 20px" : "88px 24px",
-      }}
+      style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}
     >
       <motion.div
         variants={stagger}
@@ -1271,7 +1445,8 @@ const WhyUs = ({ s, bp }) => {
               marginBottom: 10,
             }}
           >
-            Results you can <span style={{ color: s.accentColor }}>measure.</span>
+            Results you can{" "}
+            <span style={{ color: s.accentColor }}>measure.</span>
           </h2>
           <p style={{ color: TEXT_DIM, fontSize: 15 }}>
             Numbers that represent real patients, real outcomes.
@@ -1281,7 +1456,7 @@ const WhyUs = ({ s, bp }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: statsColumns,
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 12,
             marginBottom: 44,
           }}
@@ -1301,7 +1476,7 @@ const WhyUs = ({ s, bp }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: whyColumns,
+            gridTemplateColumns: "repeat(3, 1fr)",
             gap: 12,
           }}
         >
@@ -1336,11 +1511,18 @@ const WhyUs = ({ s, bp }) => {
               </div>
               <div>
                 <div
-                  style={{ color: TEXT_PRIMARY, fontWeight: 700, fontSize: 14, marginBottom: 4 }}
+                  style={{
+                    color: TEXT_PRIMARY,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    marginBottom: 4,
+                  }}
                 >
                   {title}
                 </div>
-                <div style={{ color: TEXT_DIM, fontSize: 13, lineHeight: 1.6 }}>{desc}</div>
+                <div style={{ color: TEXT_DIM, fontSize: 13, lineHeight: 1.6 }}>
+                  {desc}
+                </div>
               </div>
             </motion.div>
           ))}
@@ -1350,29 +1532,19 @@ const WhyUs = ({ s, bp }) => {
   );
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    FAQ
-───────────────────────────────────────────────────────────────────────── */
-const FAQ = ({ s, bp }) => {
+────────────────────────────────────────────────────────────────────────── */
+const FAQ = ({ s }) => {
   const [open, setOpen] = useState(null);
   return (
-    <section
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: bp.isMobile ? "52px 20px" : "88px 24px",
-      }}
-    >
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: bp.isMobile || bp.isTablet ? "1fr" : "1fr 1fr",
-          gap: bp.isMobile ? 32 : 64,
-        }}
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}
       >
         <motion.div variants={fadeUp}>
           <SLabel text="FAQ" ac={s.accentColor} />
@@ -1389,11 +1561,18 @@ const FAQ = ({ s, bp }) => {
             <br />
             <span style={{ color: s.accentColor }}>{s.name}?</span>
           </h2>
-          <p style={{ color: TEXT_DIM, fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>
-            We've answered the most common questions below. Our care team is one message away if
-            yours isn't listed.
+          <p
+            style={{
+              color: TEXT_DIM,
+              fontSize: 15,
+              lineHeight: 1.7,
+              marginBottom: 24,
+            }}
+          >
+            We've answered the most common questions below. Our care team is one
+            message away if yours isn't listed.
           </p>
-          {/* <button
+          <button
             style={{
               padding: "11px 20px",
               borderRadius: 12,
@@ -1416,13 +1595,13 @@ const FAQ = ({ s, bp }) => {
             }
           >
             <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button> */}
+          </button>
         </motion.div>
 
         <motion.div
           variants={fadeUp}
           style={{
-            padding: bp.isMobile ? 16 : 20,
+            padding: 20,
             borderRadius: 22,
             background: "#fff",
             border: `1px solid ${BORDER}`,
@@ -1432,7 +1611,8 @@ const FAQ = ({ s, bp }) => {
             <div
               key={i}
               style={{
-                borderBottom: i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
+                borderBottom:
+                  i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
               }}
             >
               <button
@@ -1453,7 +1633,7 @@ const FAQ = ({ s, bp }) => {
                   style={{
                     color: TEXT_PRIMARY,
                     fontWeight: 700,
-                    fontSize: bp.isMobile ? 13 : 14,
+                    fontSize: 14,
                     paddingRight: 16,
                   }}
                 >
@@ -1473,7 +1653,12 @@ const FAQ = ({ s, bp }) => {
                     transform: open === i ? "rotate(45deg)" : "none",
                   }}
                 >
-                  <FiPlus style={{ fontSize: 14, color: open === i ? "#fff" : TEXT_DIM }} />
+                  <FiPlus
+                    style={{
+                      fontSize: 14,
+                      color: open === i ? "#fff" : TEXT_DIM,
+                    }}
+                  />
                 </div>
               </button>
               <AnimatePresence>
@@ -1488,7 +1673,7 @@ const FAQ = ({ s, bp }) => {
                     <div
                       style={{
                         paddingBottom: 16,
-                        paddingRight: bp.isMobile ? 8 : 40,
+                        paddingRight: 40,
                         color: TEXT_BODY,
                         fontSize: 14,
                         lineHeight: 1.7,
@@ -1507,17 +1692,11 @@ const FAQ = ({ s, bp }) => {
   );
 };
 
-/* ─────────────────────────────────────────────────────────────────────────
+/* ──────────────────────────────────────────────────────────────────────────
    FINAL CTA
-───────────────────────────────────────────────────────────────────────── */
-const FinalCTA = ({ s, bp }) => (
-  <section
-    style={{
-      maxWidth: 1200,
-      margin: "0 auto",
-      padding: bp.isMobile ? "52px 20px" : "88px 24px",
-    }}
-  >
+────────────────────────────────────────────────────────────────────────── */
+const FinalCTA = ({ s }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -1526,7 +1705,7 @@ const FinalCTA = ({ s, bp }) => (
       style={{
         position: "relative",
         borderRadius: 28,
-        padding: bp.isMobile ? "44px 24px" : "72px 48px",
+        padding: "72px 48px",
         textAlign: "center",
         background: `${s.accentColor}08`,
         border: `1px solid ${s.accentColor}25`,
@@ -1536,7 +1715,7 @@ const FinalCTA = ({ s, bp }) => (
         <Pill ac={s.accentColor}>Start Today</Pill>
         <h2
           style={{
-            fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(32px, 5vw, 52px)",
+            fontSize: "clamp(32px, 5vw, 52px)",
             fontWeight: 900,
             color: TEXT_PRIMARY,
             lineHeight: 1.1,
@@ -1553,12 +1732,13 @@ const FinalCTA = ({ s, bp }) => (
             lineHeight: 1.7,
             maxWidth: 500,
             margin: "0 auto 36px",
-            fontSize: bp.isMobile ? 15 : 16,
+            fontSize: 16,
           }}
         >
-          Stay on track with your treatment plan through secure online prescription refill services.
-          Connect with a licensed healthcare provider, request medication renewals when clinically
-          appropriate, and access convenient telehealth services from wherever you are.
+          Stay on track with your treatment plan through secure online
+          prescription refill services. Connect with a licensed healthcare
+          provider, request medication renewals when clinically appropriate, and
+          access convenient telehealth services from wherever you are.
         </p>
         <div
           style={{
@@ -1568,14 +1748,11 @@ const FinalCTA = ({ s, bp }) => (
             gap: 12,
             marginBottom: 36,
             flexWrap: "wrap",
-            flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
-          <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
-         <a href="/login"> Get Started Today</a>
-          </PrimaryBtn>
-          <GhostBtn> <a href="/login"> Book Appointment </a></GhostBtn>
-          {/* <button
+          <PrimaryBtn ac={s.accentColor}>Get Started</PrimaryBtn>
+          <GhostBtn>Book Appointment</GhostBtn>
+          <button
             style={{
               padding: "13px 24px",
               borderRadius: 12,
@@ -1585,11 +1762,10 @@ const FinalCTA = ({ s, bp }) => (
               color: TEXT_DIM,
               border: `1px solid ${BORDER_HOVER}`,
               cursor: "pointer",
-              width: bp.isMobile ? "100%" : "auto",
             }}
           >
             Contact Us
-          </button> */}
+          </button>
         </div>
         <div
           style={{
@@ -1597,7 +1773,7 @@ const FinalCTA = ({ s, bp }) => (
             flexWrap: "wrap",
             alignItems: "center",
             justifyContent: "center",
-            gap: bp.isMobile ? 16 : 28,
+            gap: 28,
           }}
         >
           {[
@@ -1627,20 +1803,20 @@ const FinalCTA = ({ s, bp }) => (
   </section>
 );
 
-/* ─────────────────────────────────────────────────────────────────────────
-   ROOT
-───────────────────────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────────────────
+   ROOT APP
+────────────────────────────────────────────────────────────────────────── */
 export default function OnlinePrescriptionRefills() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
-  const bp = useBreakpoint();
 
   return (
     <>
       <Helmet>
         <title>
-          Online Prescription Refills | Renew Medications Online | Humancare Connect
+          Online Prescription Refills | Renew Medications Online | Humancare
+          Connect
         </title>
         <meta
           name="description"
@@ -1656,13 +1832,13 @@ export default function OnlinePrescriptionRefills() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} bp={bp} />
-            <Overview s={s} bp={bp} />
-            <HowItWorks s={s} bp={bp} />
-            <Features s={s} bp={bp} />
-            <WhyUs s={s} bp={bp} />
-            <FAQ s={s} bp={bp} />
-            <FinalCTA s={s} bp={bp} />
+            <Hero s={s} />
+            <Overview s={s} />
+            <HowItWorks s={s} />
+            <Features s={s} />
+            <WhyUs s={s} />
+            <FAQ s={s} />
+            <FinalCTA s={s} />
           </motion.div>
         </AnimatePresence>
       </div>

@@ -68,6 +68,15 @@ const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
 const BORDER = "#E2E8F0";
 const BORDER_HOVER = "#CBD5E1";
 
+import heroBanner from "../../assets/MedicalServices/general-consultation-online.webp";
+
+const HERO_IMAGE = {
+  src: heroBanner,
+  alt: "Licensed healthcare provider conducting an online general consultation with a patient through secure telemedicine services",
+  width: 1920,
+  height: 700,
+};
+
 /* ──────────────────────────────────────────────────────────────────────────
    DATA
 ────────────────────────────────────────────────────────────────────────── */
@@ -306,8 +315,8 @@ const darken = (hex, amount) => {
   return `#${[dr, dg, db].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 };
 
-const Pill = ({ children, ac }) => {
-  const textColor = darken(ac, 0.18); // verified >7:1 contrast at this font size, vs ~4.5:1 for the raw accent
+const Pill = ({ children, ac, onDark = false }) => {
+  const textColor = onDark ? "#ffffff" : darken(ac, 0.18);
   return (
     <div
       style={{
@@ -316,9 +325,11 @@ const Pill = ({ children, ac }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: `${ac}12`,
+        background: onDark ? "rgba(255,255,255,0.15)" : `${ac}12`,
         color: textColor,
-        border: `1px solid ${ac}30`,
+        border: onDark
+          ? "1px solid rgba(255,255,255,0.35)"
+          : `1px solid ${ac}30`,
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: "0.1em",
@@ -327,7 +338,12 @@ const Pill = ({ children, ac }) => {
       }}
     >
       <span
-        style={{ width: 6, height: 6, borderRadius: "50%", background: ac }}
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: onDark ? "#ffffff" : ac,
+        }}
       />
       {children}
     </div>
@@ -420,6 +436,38 @@ const Hero = ({ s }) => {
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        fetchPriority="high"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          zIndex: 0,
+        }}
+      />
+
+      {/* ── Layer 1: Dark overlay for text legibility ───────────────────────
+                  Adjust rgba alpha:
+                    0.40 → lighter overlay, more image visible
+                    0.58 → balanced (default)
+                    0.70 → darker, maximum text contrast
+              ───────────────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(15, 23, 42, 0.58)",
+          zIndex: 1,
+        }}
+      />
       <motion.div
         style={{
           position: "relative",
@@ -436,7 +484,10 @@ const Hero = ({ s }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
         >
-          <Pill ac={s.accentColor}>HumanCare Connect</Pill>
+          {/* onDark=true → white pill border + text instead of accent tint */}
+          <Pill ac={s.accentColor} onDark>
+            HumanCare Connect
+          </Pill>
         </motion.div>
 
         <motion.h1
@@ -446,7 +497,7 @@ const Hero = ({ s }) => {
           style={{
             fontSize: "clamp(36px, 5.5vw, 60px)",
             fontWeight: 900,
-            color: TEXT_PRIMARY,
+            color: "#FFFFFF" /* white on dark overlay */,
             lineHeight: 1.08,
             letterSpacing: "-0.03em",
             marginBottom: 18,
@@ -456,7 +507,15 @@ const Hero = ({ s }) => {
           {s.name.split(" ").map((w, i, arr) => (
             <span key={i}>
               {i === Math.floor(arr.length / 2) ? (
-                <span style={{ color: s.accentColor }}>{w} </span>
+                /* Keep accent color on one word — stays readable on dark bg */
+                <span
+                  style={{
+                    color:
+                      s.accentColor === "#2563EB" ? "#60A5FA" : s.accentColor,
+                  }}
+                >
+                  {w}{" "}
+                </span>
               ) : (
                 <span>{w} </span>
               )}
@@ -470,7 +529,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.5, delay: 0.26 }}
           style={{
             fontSize: 18,
-            color: TEXT_DIM,
+            color: "rgba(255,255,255,0.80)" /* was TEXT_DIM */,
             fontStyle: "italic",
             marginBottom: 10,
           }}
@@ -484,7 +543,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.45, delay: 0.32 }}
           style={{
             fontSize: 16,
-            color: TEXT_BODY,
+            color: "rgba(255,255,255,0.88)" /* was TEXT_BODY */,
             lineHeight: 1.7,
             maxWidth: 560,
             marginBottom: 28,
@@ -499,10 +558,11 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
-          {/* <GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
+          {/* onDark=true → white ghost button style */}
+          <GhostBtn onDark>
             Contact Care Team <FiArrowRight />
-          </GhostBtn> */}
+          </GhostBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -1661,8 +1721,12 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/login">Get Started</a></PrimaryBtn>
-          <GhostBtn><a href="/appointment-booking">Book Appointment</a></GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>
+            <a href="/login">Get Started</a>
+          </PrimaryBtn>
+          <GhostBtn>
+            <a href="/appointment-booking">Book Appointment</a>
+          </GhostBtn>
           <button
             style={{
               padding: "13px 24px",
