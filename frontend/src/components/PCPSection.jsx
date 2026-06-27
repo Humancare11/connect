@@ -8,6 +8,9 @@ import {
   useInView,
 } from "framer-motion";
 
+import pcpConsultation from "../assets/HomeImages/primary-care-doctor-online-consultation.webp";
+import telehealthEquipment from "../assets/HomeImages/primary-care-telehealth-medical-services.webp";
+
 /* ─────────────────────────────────────────
    Shared animation variants
 ───────────────────────────────────────── */
@@ -74,11 +77,31 @@ function AnimBlock({ children, variant, className, style }) {
    Steps data
 ───────────────────────────────────────── */
 const STEPS = [
-  { n: 1, title: "Create your free account",   desc: "Under 2 minutes. No credit card required." },
-  { n: 2, title: "Complete a health intake",    desc: "Share your medical history and current medications." },
-  { n: 3, title: "Match with a provider",       desc: "We surface the best-fit doctor for your needs and state." },
-  { n: 4, title: "Start your video visit",      desc: "Meet face-to-face from anywhere, on any device." },
-  { n: 5, title: "Receive care instantly",      desc: "Prescription sent to your pharmacy within minutes." },
+  {
+    n: 1,
+    title: "Create your free account",
+    desc: "Under 2 minutes. No credit card required.",
+  },
+  {
+    n: 2,
+    title: "Complete a health intake",
+    desc: "Share your medical history and current medications.",
+  },
+  {
+    n: 3,
+    title: "Match with a provider",
+    desc: "We surface the best-fit doctor for your needs and state.",
+  },
+  {
+    n: 4,
+    title: "Start your video visit",
+    desc: "Meet face-to-face from anywhere, on any device.",
+  },
+  {
+    n: 5,
+    title: "Receive care instantly",
+    desc: "Prescription sent to your pharmacy within minutes.",
+  },
 ];
 
 /* ─────────────────────────────────────────
@@ -96,14 +119,14 @@ export default function PCPSection() {
     damping: 18,
     restDelta: 0.001,
   });
-  const scale   = useTransform(smoothProgress, [0, 1], [0.87, 1]);
+  const scale = useTransform(smoothProgress, [0, 1], [0.87, 1]);
   const opacity = useTransform(smoothProgress, [0, 0.3, 1], [0, 0.5, 1]);
-  const y       = useTransform(smoothProgress, [0, 1], [56, 0]);
+  const y = useTransform(smoothProgress, [0, 1], [56, 0]);
 
   /* ── Left / right column inView triggers ── */
-  const leftRef  = useRef(null);
+  const leftRef = useRef(null);
   const rightRef = useRef(null);
-  const leftInView  = useInView(leftRef,  { once: true, margin: "-80px" });
+  const leftInView = useInView(leftRef, { once: true, margin: "-80px" });
   const rightInView = useInView(rightRef, { once: true, margin: "-80px" });
 
   return (
@@ -113,10 +136,8 @@ export default function PCPSection() {
       style={{ scale, opacity, y }}
     >
       <div className="pcp-container">
-
         {/* ════════════ LEFT CONTENT ════════════ */}
         <div className="pcp-left" ref={leftRef}>
-
           <Motion.div
             className="pcp-badge"
             variants={fadeUp(0)}
@@ -124,7 +145,6 @@ export default function PCPSection() {
             animate={leftInView ? "visible" : "hidden"}
           >
             NO PCP? NO PROBLEM.
-
           </Motion.div>
 
           <Motion.h2
@@ -133,7 +153,7 @@ export default function PCPSection() {
             initial="hidden"
             animate={leftInView ? "visible" : "hidden"}
           >
-           Don’t have a primary care doctor?
+            Don’t have a primary care doctor?
             <span>We've got you.</span>
           </Motion.h2>
 
@@ -143,8 +163,10 @@ export default function PCPSection() {
             initial="hidden"
             animate={leftInView ? "visible" : "hidden"}
           >
-           Whether you’re between doctors, new to an area, or simply can’t get an appointment soon enough, Humancare Connect gives you fast access to licensed providers for the care you need today, without the long wait.
-
+            Whether you’re between doctors, new to an area, or simply can’t get
+            an appointment soon enough, Humancare Connect gives you fast access
+            to licensed providers for the care you need today, without the long
+            wait.
           </Motion.p>
 
           <div className="pcp-features">
@@ -171,7 +193,10 @@ export default function PCPSection() {
                 variants={fadeUp(0.3 + i * 0.12)}
                 initial="hidden"
                 animate={leftInView ? "visible" : "hidden"}
-                whileHover={{ y: -6, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } }}
+                whileHover={{
+                  y: -6,
+                  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+                }}
               >
                 <div className="pcp-icon">{f.n}</div>
                 <div>
@@ -185,22 +210,25 @@ export default function PCPSection() {
 
         {/* ════════════ RIGHT SIDE ════════════ */}
         <div className="pcp-right" ref={rightRef}>
-
           {/* Image stack — hidden on tablet/mobile via CSS */}
           <div className="pcp-image-stack">
             <Motion.img
-              src="https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=1200&auto=format&fit=crop"
-              alt=""
+              src={pcpConsultation}
+              alt="Primary care doctor providing virtual healthcare consultation to a patient"
               className="pcp-img-main"
               variants={scaleIn(0.15)}
               initial="hidden"
               animate={rightInView ? "visible" : "hidden"}
               whileInView={{ opacity: 1 }}
               style={{ originX: 1, originY: 0 }}
+              loading="lazy"
+              decoding="async"
             />
             <Motion.img
-              src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1200&auto=format&fit=crop"
-              alt=""
+              src={telehealthEquipment}
+              alt="Telehealth medical services with stethoscope and laptop for primary care support"
+              loading="lazy"
+              decoding="async"
               className="pcp-img-small"
               variants={scaleIn(0.3)}
               initial="hidden"
@@ -217,7 +245,9 @@ export default function PCPSection() {
             animate={rightInView ? "visible" : "hidden"}
           >
             <div className="pcp-step-head">
-              <span className="pcp-mini">Get a doctor today — free to start</span>
+              <span className="pcp-mini">
+                Get a doctor today — free to start
+              </span>
               <h3>Your first visit, step by step</h3>
             </div>
 
@@ -271,8 +301,11 @@ export default function PCPSection() {
               whileTap={{ scale: 0.97 }}
             >
               <a href="/primary-care-provider">
-              Know More
-              <span className="pcp-btn-arrow" aria-hidden="true">→</span></a>
+                Know More
+                <span className="pcp-btn-arrow" aria-hidden="true">
+                  →
+                </span>
+              </a>
             </Motion.button>
 
             <Motion.p
@@ -284,7 +317,6 @@ export default function PCPSection() {
               No insurance needed · Cancel anytime
             </Motion.p>
           </Motion.div>
-
         </div>
       </div>
     </Motion.section>

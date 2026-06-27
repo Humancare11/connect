@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   motion,
   useScroll,
@@ -29,11 +29,19 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 
-/* Import the shared stylesheet — same file for every service page */
 import "./newservices.css";
 
+import heroBanner from "../../assets/MedicalServices/chronic-care-management-telemedicine.webp";
+
+const HERO_IMAGE = {
+  src: heroBanner,
+  alt: "Licensed healthcare provider conducting a virtual chronic care management consultation with a patient through telemedicine.",
+  width: 1920,
+  height: 700,
+};
+
 /* ──────────────────────────────────────────────────────────────────────────
-   DATA — one entry per service slug
+   DATA
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
@@ -171,7 +179,7 @@ const SERVICES = {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   WHY US ITEMS (static, shared across pages)
+   WHY US ITEMS
 ────────────────────────────────────────────────────────────────────────── */
 const WHY_US_ITEMS = [
   [
@@ -207,6 +215,26 @@ const WHY_US_ITEMS = [
 ];
 
 /* ──────────────────────────────────────────────────────────────────────────
+   ANIMATION VARIANTS
+────────────────────────────────────────────────────────────────────────── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      delay: i * 0.07,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  }),
+};
+
+const stagger = {
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
    HOOKS
 ────────────────────────────────────────────────────────────────────────── */
 const useCountUp = (target, duration = 2200, start = false) => {
@@ -228,30 +256,8 @@ const useCountUp = (target, duration = 2200, start = false) => {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   ANIMATION VARIANTS
-────────────────────────────────────────────────────────────────────────── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      delay: i * 0.07,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
-  }),
-};
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
-/* ──────────────────────────────────────────────────────────────────────────
    MICRO COMPONENTS
 ────────────────────────────────────────────────────────────────────────── */
-
-/** Eyebrow label with accent line */
 const SLabel = ({ text }) => (
   <div className="sp-label">
     <div className="sp-label__line" />
@@ -259,7 +265,6 @@ const SLabel = ({ text }) => (
   </div>
 );
 
-/** Accent pill badge */
 const Pill = ({ children }) => (
   <div className="sp-pill">
     <span className="sp-pill__dot" />
@@ -267,15 +272,10 @@ const Pill = ({ children }) => (
   </div>
 );
 
-/** Primary filled button — wraps an anchor when href is provided */
 const PrimaryBtn = ({ children, href, fullWidth, type = "button", onClick }) => {
   const cls = ["sp-btn sp-btn--primary", fullWidth ? "sp-btn--full" : ""].join(" ").trim();
   if (href) {
-    return (
-      <a href={href} className={cls}>
-        {children}
-      </a>
-    );
+    return <a href={href} className={cls}>{children}</a>;
   }
   return (
     <button type={type} className={cls} onClick={onClick}>
@@ -284,14 +284,9 @@ const PrimaryBtn = ({ children, href, fullWidth, type = "button", onClick }) => 
   );
 };
 
-/** Ghost / outlined button */
 const GhostBtn = ({ children, href, onClick }) => {
   if (href) {
-    return (
-      <a href={href} className="sp-btn sp-btn--ghost">
-        {children}
-      </a>
-    );
+    return <a href={href} className="sp-btn sp-btn--ghost">{children}</a>;
   }
   return (
     <button className="sp-btn sp-btn--ghost" onClick={onClick}>
@@ -316,6 +311,17 @@ const Hero = ({ s }) => {
 
   return (
     <section className="sp-hero" ref={ref}>
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        fetchPriority="high"
+        className="sp-hero__bg-img"
+      />
+      <div className="sp-hero__overlay" />
+
       <motion.div className="sp-hero__inner" style={{ opacity: op }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -530,7 +536,7 @@ const Overview = ({ s }) => (
 
         {/* Right: consultation form (sticky) */}
         <motion.div variants={fadeUp} className="sp-form-sticky">
-          <ConsultationForm s={s} />
+          <ConsultationForm />
         </motion.div>
       </motion.div>
 
@@ -556,83 +562,86 @@ const Overview = ({ s }) => (
 /* ──────────────────────────────────────────────────────────────────────────
    HOW IT WORKS / OUR SERVICES
 ────────────────────────────────────────────────────────────────────────── */
-const HowItWorks = ({ s }) => (
-  <section className="sp-hiw">
-    <div className="sp-hiw__inner">
-      {/* Left: steps */}
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-      >
-        <motion.div variants={fadeUp}>
-          <SLabel text="Our Services" />
-          <h2 className="sp-hiw__heading">
-            Getting started is{" "}
-            <span className="sp-hiw__heading--accent">simple.</span>
-          </h2>
-          <p className="sp-hiw__sub">
-            Accessing chronic care management through Humancare Connect is
-            convenient, secure, and designed around your healthcare needs.
-          </p>
-        </motion.div>
+const HowItWorks = ({ s }) => {
+  const HeroIcon = s.heroIcon;
+  return (
+    <section className="sp-hiw">
+      <div className="sp-hiw__inner">
+        {/* Left: steps */}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+        >
+          <motion.div variants={fadeUp}>
+            <SLabel text="Our Services" />
+            <h2 className="sp-hiw__heading">
+              Getting started is{" "}
+              <span className="sp-hiw__heading--accent">simple.</span>
+            </h2>
+            <p className="sp-hiw__sub">
+              Accessing chronic care management through Humancare Connect is
+              convenient, secure, and designed around your healthcare needs.
+            </p>
+          </motion.div>
 
-        <div className="sp-steps">
-          {s.steps.map((step, i) => (
-            <motion.div key={i} variants={fadeUp} custom={i} className="sp-step">
-              {i < s.steps.length - 1 && (
-                <div className="sp-step__connector" />
-              )}
-              <div className="sp-step__icon-wrap">
-                <step.Icon className="sp-step__icon" />
-              </div>
-              <div className="sp-step__body">
-                <div className="sp-step__num">Step {i + 1}</div>
-                <div className="sp-step__title">{step.title}</div>
-                <p className="sp-step__desc">{step.body}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Right: sticky ready card */}
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <div className="sp-ready-card">
-          <s.heroIcon className="sp-ready-card__hero-icon" />
-          <h3 className="sp-ready-card__heading">Ready to begin?</h3>
-          <p className="sp-ready-card__desc">
-            Get convenient access to chronic care management through trusted
-            telemedicine services and receive ongoing support from licensed
-            healthcare providers.
-          </p>
-          <PrimaryBtn href="/login" fullWidth>
-            Get Started Today
-          </PrimaryBtn>
-          <div className="sp-ready-card__badges">
-            {[
-              [FiLock, "Secure & Private"],
-              [FiZap, "Fast Response"],
-              [FiUserCheck, "Verified Providers"],
-              [FiFileText, "Insurance Accepted"],
-            ].map(([Icon, lb], i) => (
-              <div key={i} className="sp-badge">
-                <Icon className="sp-badge__icon" />
-                {lb}
-              </div>
+          <div className="sp-steps">
+            {s.steps.map((step, i) => (
+              <motion.div key={i} variants={fadeUp} custom={i} className="sp-step">
+                {i < s.steps.length - 1 && (
+                  <div className="sp-step__connector" />
+                )}
+                <div className="sp-step__icon-wrap">
+                  <step.Icon className="sp-step__icon" />
+                </div>
+                <div className="sp-step__body">
+                  <div className="sp-step__num">Step {i + 1}</div>
+                  <div className="sp-step__title">{step.title}</div>
+                  <p className="sp-step__desc">{step.body}</p>
+                </div>
+              </motion.div>
             ))}
           </div>
-        </div>
-      </motion.div>
-    </div>
-  </section>
-);
+        </motion.div>
+
+        {/* Right: sticky ready card */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
+          <div className="sp-ready-card">
+            <HeroIcon className="sp-ready-card__hero-icon" />
+            <h3 className="sp-ready-card__heading">Ready to begin?</h3>
+            <p className="sp-ready-card__desc">
+              Get convenient access to chronic care management through trusted
+              telemedicine services and receive ongoing support from licensed
+              healthcare providers.
+            </p>
+            <PrimaryBtn href="/login" fullWidth>
+              Get Started Today
+            </PrimaryBtn>
+            <div className="sp-ready-card__badges">
+              {[
+                [FiLock, "Secure & Private"],
+                [FiZap, "Fast Response"],
+                [FiUserCheck, "Verified Providers"],
+                [FiFileText, "Insurance Accepted"],
+              ].map(([Icon, lb], i) => (
+                <div key={i} className="sp-badge">
+                  <Icon className="sp-badge__icon" />
+                  {lb}
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 /* ──────────────────────────────────────────────────────────────────────────
    FEATURES & BENEFITS
@@ -719,7 +728,9 @@ const WhyUs = ({ s }) => {
 
   useEffect(() => {
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setInView(true); },
+      ([e]) => {
+        if (e.isIntersecting) setInView(true);
+      },
       { threshold: 0.2 }
     );
     if (ref.current) obs.observe(ref.current);
@@ -807,10 +818,7 @@ const FAQ = ({ s }) => {
         {/* Right: accordion */}
         <motion.div variants={fadeUp} className="sp-faq__panel">
           {s.faqs.map((faq, i) => (
-            <div
-              key={i}
-              className="sp-faq__item"
-            >
+            <div key={i} className="sp-faq__item">
               <button
                 className="sp-faq__trigger"
                 onClick={() => setOpen(open === i ? null : i)}
@@ -882,9 +890,6 @@ const FinalCTA = () => (
       <div className="sp-cta__actions">
         <PrimaryBtn href="/login">Get Started</PrimaryBtn>
         <GhostBtn href="/appointment-booking">Book Appointment</GhostBtn>
-        {/* <a href="/contact" className="sp-btn sp-btn--muted">
-          Contact Us
-        </a> */}
       </div>
 
       <div className="sp-cta__trust">
@@ -907,14 +912,11 @@ const FinalCTA = () => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    ROOT COMPONENT
-   Sets --accent CSS custom property on the root element so every
-   color-mix() reference in the shared CSS resolves to the correct hue.
 ────────────────────────────────────────────────────────────────────────── */
 export default function ChronicCareManagement() {
   const [slug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
 
-  /* Inject the per-page accent color as a CSS variable */
   useEffect(() => {
     document.documentElement.style.setProperty("--accent", s.accentColor);
     return () => {
@@ -950,7 +952,7 @@ export default function ChronicCareManagement() {
             <Features s={s} />
             <WhyUs s={s} />
             <FAQ s={s} />
-            <FinalCTA s={s} />
+            <FinalCTA />
           </motion.div>
         </AnimatePresence>
       </div>

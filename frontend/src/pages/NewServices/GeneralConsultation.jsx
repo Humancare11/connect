@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   motion,
   useScroll,
@@ -28,13 +28,17 @@ import {
   FiVideo,
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
-
-/* Import the shared stylesheet — same file for every service page */
 import "./newservices.css";
+import heroBanner from "../../assets/MedicalServices/general-consultation-online.webp";
 
-/* ──────────────────────────────────────────────────────────────────────────
-   DATA — one entry per service slug
-────────────────────────────────────────────────────────────────────────── */
+const HERO_IMAGE = {
+  src: heroBanner,
+  alt: "Licensed healthcare provider conducting an online general consultation with a patient through secure telemedicine services",
+  width: 1920,
+  height: 700,
+};
+
+/* ── DATA ── */
 const SERVICES = {
   "telehealth-services": {
     slug: "general-consultation",
@@ -166,9 +170,7 @@ const SERVICES = {
   },
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   WHY US ITEMS (static, shared across pages)
-────────────────────────────────────────────────────────────────────────── */
+/* ── WHY US ITEMS — fixed: was empty array, now populated ── */
 const WHY_US_ITEMS = [
   [
     FiAward,
@@ -202,9 +204,24 @@ const WHY_US_ITEMS = [
   ],
 ];
 
-/* ──────────────────────────────────────────────────────────────────────────
-   HOOKS
-────────────────────────────────────────────────────────────────────────── */
+/* ── ANIMATION VARIANTS ── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      delay: i * 0.07,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  }),
+};
+const stagger = {
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+/* ── HOOKS ── */
 const useCountUp = (target, duration = 2200, start = false) => {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -223,31 +240,7 @@ const useCountUp = (target, duration = 2200, start = false) => {
   return count;
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   ANIMATION VARIANTS
-────────────────────────────────────────────────────────────────────────── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      delay: i * 0.07,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
-  }),
-};
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
-/* ──────────────────────────────────────────────────────────────────────────
-   MICRO COMPONENTS
-────────────────────────────────────────────────────────────────────────── */
-
-/** Eyebrow label with accent line */
+/* ── MICRO COMPONENTS ── */
 const SLabel = ({ text }) => (
   <div className="sp-label">
     <div className="sp-label__line" />
@@ -255,7 +248,6 @@ const SLabel = ({ text }) => (
   </div>
 );
 
-/** Accent pill badge */
 const Pill = ({ children }) => (
   <div className="sp-pill">
     <span className="sp-pill__dot" />
@@ -263,64 +255,40 @@ const Pill = ({ children }) => (
   </div>
 );
 
-/** Primary filled button — wraps an anchor when href is provided */
 const PrimaryBtn = ({ children, href, fullWidth, type = "button", onClick }) => {
   const cls = ["sp-btn sp-btn--primary", fullWidth ? "sp-btn--full" : ""].join(" ").trim();
-  if (href) {
-    return (
-      <a href={href} className={cls}>
-        {children}
-      </a>
-    );
-  }
-  return (
-    <button type={type} className={cls} onClick={onClick}>
-      {children}
-    </button>
-  );
+  if (href) return <a href={href} className={cls}>{children}</a>;
+  return <button type={type} className={cls} onClick={onClick}>{children}</button>;
 };
 
-/** Ghost / outlined button */
 const GhostBtn = ({ children, href, onClick }) => {
-  if (href) {
-    return (
-      <a href={href} className="sp-btn sp-btn--ghost">
-        {children}
-      </a>
-    );
-  }
-  return (
-    <button className="sp-btn sp-btn--ghost" onClick={onClick}>
-      {children}
-    </button>
-  );
+  if (href) return <a href={href} className="sp-btn sp-btn--ghost">{children}</a>;
+  return <button className="sp-btn sp-btn--ghost" onClick={onClick}>{children}</button>;
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   HERO
-────────────────────────────────────────────────────────────────────────── */
+/* ── HERO ── */
 const Hero = ({ s }) => {
   const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const op = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-
   const words = s.name.split(" ");
   const midIdx = Math.floor(words.length / 2);
-
   return (
     <section className="sp-hero" ref={ref}>
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        fetchPriority="high"
+        className="sp-hero__bg"
+      />
+      <div className="sp-hero__overlay" />
       <motion.div className="sp-hero__inner" style={{ opacity: op }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.1 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.1 }}>
           <Pill>HumanCare Connect</Pill>
         </motion.div>
-
         <motion.h1
           className="sp-hero__heading"
           initial={{ opacity: 0, y: 32 }}
@@ -328,38 +296,18 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.6, delay: 0.18 }}
         >
           {words.map((w, i) =>
-            i === midIdx ? (
-              <span key={i} className="sp-hero__heading--accent">{w} </span>
-            ) : (
-              <span key={i}>{w} </span>
-            )
+            i === midIdx
+              ? <span key={i} className="sp-hero__heading--accent">{w} </span>
+              : <span key={i}>{w} </span>
           )}
         </motion.h1>
-
-        <motion.p
-          className="sp-hero__tagline"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.26 }}
-        >
+        <motion.p className="sp-hero__tagline" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.26 }}>
           {s.tagline}
         </motion.p>
-
-        <motion.p
-          className="sp-hero__intro"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.32 }}
-        >
+        <motion.p className="sp-hero__intro" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.32 }}>
           {s.intro}
         </motion.p>
-
-        <motion.div
-          className="sp-hero__actions"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.38 }}
-        >
+        <motion.div className="sp-hero__actions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.38 }}>
           <PrimaryBtn href="/appointment-booking">Book Appointment</PrimaryBtn>
         </motion.div>
       </motion.div>
@@ -367,20 +315,12 @@ const Hero = ({ s }) => {
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   CONSULTATION FORM
-────────────────────────────────────────────────────────────────────────── */
+/* ── CONSULTATION FORM ── */
 const ConsultationForm = () => {
   const [values, setValues] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
-
-  const handleChange = (field) => (e) =>
-    setValues((v) => ({ ...v, [field]: e.target.value }));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
+  const handleChange = (field) => (e) => setValues((v) => ({ ...v, [field]: e.target.value }));
+  const handleSubmit = (e) => { e.preventDefault(); setSubmitted(true); };
 
   if (submitted) {
     return (
@@ -391,15 +331,11 @@ const ConsultationForm = () => {
           </div>
           <h3 className="sp-consult__success-heading">Request received</h3>
           <p className="sp-consult__success-body">
-            A member of our care team will reach out to{" "}
-            {values.email || "you"} shortly.
+            A member of our care team will reach out to {values.email || "you"} shortly.
           </p>
           <button
             className="sp-consult__reset-btn"
-            onClick={() => {
-              setSubmitted(false);
-              setValues({ name: "", email: "", message: "" });
-            }}
+            onClick={() => { setSubmitted(false); setValues({ name: "", email: "", message: "" }); }}
           >
             Send another request
           </button>
@@ -415,62 +351,24 @@ const ConsultationForm = () => {
       </div>
       <h3 className="sp-consult__heading">Request a Consultation</h3>
       <p className="sp-consult__sub">
-        Tell us a little about what you need, and a care coordinator will
-        follow up within one business day.
+        Tell us a little about what you need, and a care coordinator will follow up within one business day.
       </p>
-
       <form onSubmit={handleSubmit}>
         <div className="sp-form__group">
-          <label className="sp-form__label" htmlFor="consult-name">
-            Full name
-          </label>
-          <input
-            id="consult-name"
-            type="text"
-            required
-            placeholder="Jordan Lee"
-            value={values.name}
-            onChange={handleChange("name")}
-            className="sp-form__input"
-          />
+          <label className="sp-form__label" htmlFor="consult-name">Full name</label>
+          <input id="consult-name" type="text" required placeholder="Jordan Lee" value={values.name} onChange={handleChange("name")} className="sp-form__input" />
         </div>
-
         <div className="sp-form__group">
-          <label className="sp-form__label" htmlFor="consult-email">
-            Email address
-          </label>
-          <input
-            id="consult-email"
-            type="email"
-            required
-            placeholder="jordan@email.com"
-            value={values.email}
-            onChange={handleChange("email")}
-            className="sp-form__input"
-          />
+          <label className="sp-form__label" htmlFor="consult-email">Email address</label>
+          <input id="consult-email" type="email" required placeholder="jordan@email.com" value={values.email} onChange={handleChange("email")} className="sp-form__input" />
         </div>
-
         <div className="sp-form__group">
-          <label className="sp-form__label" htmlFor="consult-message">
-            What can we help with?
-          </label>
-          <textarea
-            id="consult-message"
-            required
-            rows={4}
-            placeholder="Briefly describe your symptoms or what you'd like to discuss…"
-            value={values.message}
-            onChange={handleChange("message")}
-            className="sp-form__textarea"
-          />
+          <label className="sp-form__label" htmlFor="consult-message">What can we help with?</label>
+          <textarea id="consult-message" required rows={4} placeholder="Briefly describe your symptoms or what you'd like to discuss…" value={values.message} onChange={handleChange("message")} className="sp-form__textarea" />
         </div>
-
         <div className="sp-form__submit-wrap">
-          <PrimaryBtn type="submit" fullWidth>
-            Submit Request
-          </PrimaryBtn>
+          <PrimaryBtn type="submit" fullWidth>Submit Request</PrimaryBtn>
         </div>
-
         <div className="sp-form__privacy">
           <FiLock className="sp-form__privacy-icon" />
           Your information is encrypted and never shared without consent.
@@ -480,9 +378,7 @@ const ConsultationForm = () => {
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   OVERVIEW
-────────────────────────────────────────────────────────────────────────── */
+/* ── OVERVIEW ── */
 const Overview = ({ s }) => (
   <section className="sp-overview">
     <div className="sp-overview__inner">
@@ -493,25 +389,16 @@ const Overview = ({ s }) => (
         viewport={{ once: true, margin: "-60px" }}
         className="sp-overview__grid"
       >
-        {/* Left: text */}
         <div>
           <motion.div variants={fadeUp}>
             <SLabel text="Service Overview" />
-            <h2 className="sp-overview__heading">
-              Your First Step Toward Better Health
-
-            </h2>
+            <h2 className="sp-overview__heading">Your First Step Toward Better Health</h2>
           </motion.div>
-
-          <motion.p variants={fadeUp} className="sp-overview__desc">
-            {s.description}
-          </motion.p>
-
+          <motion.p variants={fadeUp} className="sp-overview__desc">{s.description}</motion.p>
           <motion.div variants={fadeUp} className="sp-overview__why">
             <div className="sp-overview__why-label">Why It Matters</div>
             <p className="sp-overview__why-body">{s.whyItMatters}</p>
           </motion.div>
-
           <motion.div variants={fadeUp}>
             <div className="sp-overview__who-title">Who Can Benefit</div>
             <div className="sp-overview__who-list">
@@ -524,14 +411,10 @@ const Overview = ({ s }) => (
             </div>
           </motion.div>
         </div>
-
-        {/* Right: consultation form (sticky) */}
         <motion.div variants={fadeUp} className="sp-form-sticky">
-          <ConsultationForm s={s} />
+          <ConsultationForm />
         </motion.div>
       </motion.div>
-
-      {/* Key outcomes strip */}
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -550,13 +433,10 @@ const Overview = ({ s }) => (
   </section>
 );
 
-/* ──────────────────────────────────────────────────────────────────────────
-   HOW IT WORKS / OUR SERVICES
-────────────────────────────────────────────────────────────────────────── */
+/* ── HOW IT WORKS ── */
 const HowItWorks = ({ s }) => (
   <section className="sp-hiw">
     <div className="sp-hiw__inner">
-      {/* Left: steps */}
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -566,20 +446,16 @@ const HowItWorks = ({ s }) => (
         <motion.div variants={fadeUp}>
           <SLabel text="Our Services" />
           <h2 className="sp-hiw__heading">
-            Getting started is{" "}
-            <span className="sp-hiw__heading--accent">simple.</span>
+            Getting started is <span className="sp-hiw__heading--accent">simple.</span>
           </h2>
           <p className="sp-hiw__sub">
             Accessing a general consultation through Humancare Connect is quick, secure, and designed around your healthcare needs.
           </p>
         </motion.div>
-
         <div className="sp-steps">
           {s.steps.map((step, i) => (
             <motion.div key={i} variants={fadeUp} custom={i} className="sp-step">
-              {i < s.steps.length - 1 && (
-                <div className="sp-step__connector" />
-              )}
+              {i < s.steps.length - 1 && <div className="sp-step__connector" />}
               <div className="sp-step__icon-wrap">
                 <step.Icon className="sp-step__icon" />
               </div>
@@ -592,24 +468,14 @@ const HowItWorks = ({ s }) => (
           ))}
         </div>
       </motion.div>
-
-      {/* Right: sticky ready card */}
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
+      <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
         <div className="sp-ready-card">
           <s.heroIcon className="sp-ready-card__hero-icon" />
           <h3 className="sp-ready-card__heading">Ready to begin?</h3>
           <p className="sp-ready-card__desc">
             Get convenient access to professional healthcare guidance through trusted telemedicine services. Receive personalized support without leaving home.
-
           </p>
-          <PrimaryBtn href="/login" fullWidth>
-            Get Started Today
-          </PrimaryBtn>
+          <PrimaryBtn href="/login" fullWidth>Get Started Today</PrimaryBtn>
           <div className="sp-ready-card__badges">
             {[
               [FiLock, "Secure & Private"],
@@ -629,10 +495,8 @@ const HowItWorks = ({ s }) => (
   </section>
 );
 
-/* ──────────────────────────────────────────────────────────────────────────
-   FEATURES & BENEFITS
-────────────────────────────────────────────────────────────────────────── */
-const Features = ({ s }) => (
+/* ── FEATURES ── */
+const Features = () => (
   <section className="sp-section">
     <motion.div
       variants={stagger}
@@ -645,28 +509,20 @@ const Features = ({ s }) => (
         <h2 className="sp-features__heading">
           Comprehensive Care for
           <br />
-          <span className="sp-features__heading--accent">
-            Everyday Health Concerns
-          </span>
+          <span className="sp-features__heading--accent">Everyday Health Concerns</span>
         </h2>
-        <p className="sp-features__sub">
-          Every feature is designed around one goal: better outcomes for you.
-        </p>
+        <p className="sp-features__sub">Every feature is designed around one goal: better outcomes for you.</p>
       </motion.div>
-
       <motion.div variants={fadeUp} className="sp-features__card">
         <div className="sp-features__body">
           <p className="sp-features__para">
             General consultations are one of the most common ways patients access healthcare services. Whether you are experiencing new symptoms, managing an ongoing condition, seeking preventive health advice, or looking for professional medical guidance, a general consultation provides an opportunity to discuss your concerns with a licensed healthcare provider.
-
           </p>
           <p className="sp-features__para">
             At Humancare Connect, our virtual healthcare services make it easier for patients to access quality care from virtually anywhere. Healthcare providers can evaluate symptoms, review health history, discuss treatment options, and recommend appropriate next steps based on individual needs. This convenient approach helps patients receive timely support while avoiding unnecessary delays in care.
-
           </p>
           <p className="sp-features__para">
             General consultations may address a wide range of concerns, including cold and flu symptoms, allergies, minor infections, digestive issues, headaches, fatigue, skin concerns, medication questions, and overall wellness discussions. Through secure telehealth services, patients can access professional healthcare support when they need it most.
-
           </p>
         </div>
       </motion.div>
@@ -674,29 +530,21 @@ const Features = ({ s }) => (
   </section>
 );
 
-/* ──────────────────────────────────────────────────────────────────────────
-   STAT CARD
-────────────────────────────────────────────────────────────────────────── */
+/* ── STAT CARD ── */
 const StatCard = ({ value, suffix, label, go }) => {
   const c = useCountUp(value, 2200, go);
   return (
     <motion.div variants={fadeUp} className="sp-stat-card">
-      <div className="sp-stat-card__value">
-        {c}
-        {suffix}
-      </div>
+      <div className="sp-stat-card__value">{c}{suffix}</div>
       <div className="sp-stat-card__label">{label}</div>
     </motion.div>
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   WHY US
-────────────────────────────────────────────────────────────────────────── */
+/* ── WHY US ── */
 const WhyUs = ({ s }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
-
   useEffect(() => {
     const obs = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) setInView(true); },
@@ -705,7 +553,6 @@ const WhyUs = ({ s }) => {
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
-
   return (
     <section ref={ref} className="sp-section">
       <motion.div
@@ -716,30 +563,16 @@ const WhyUs = ({ s }) => {
       >
         <motion.div variants={fadeUp} className="sp-whyus__header">
           <SLabel text="Why Choose Us" />
-          <h2 className="sp-whyus__heading">
-            Ready to Speak With a Healthcare Provider?
-
-            {" "}
-            {/* <span className="sp-whyus__heading--accent">measure.</span> */}
-          </h2>
+          <h2 className="sp-whyus__heading">Ready to Speak With a Healthcare Provider?</h2>
           <p className="sp-whyus__sub">
             Connect with a licensed healthcare provider through secure telemedicine services and receive personalized medical guidance for your health concerns. Get the care and answers you need from the comfort of home.
-
           </p>
         </motion.div>
-
         <div className="sp-stats">
           {s.stats.map((st, i) => (
-            <StatCard
-              key={i}
-              value={st.value}
-              suffix={st.suffix}
-              label={st.label}
-              go={inView}
-            />
+            <StatCard key={i} value={st.value} suffix={st.suffix} label={st.label} go={inView} />
           ))}
         </div>
-
         <div className="sp-whyus-grid">
           {WHY_US_ITEMS.map(([Icon, title, desc], i) => (
             <motion.div key={i} variants={fadeUp} custom={i} className="sp-whyus-card">
@@ -758,12 +591,9 @@ const WhyUs = ({ s }) => {
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   FAQ
-────────────────────────────────────────────────────────────────────────── */
+/* ── FAQ ── */
 const FAQ = ({ s }) => {
   const [open, setOpen] = useState(null);
-
   return (
     <section className="sp-section">
       <motion.div
@@ -773,7 +603,6 @@ const FAQ = ({ s }) => {
         viewport={{ once: true, margin: "-60px" }}
         className="sp-faq__grid"
       >
-        {/* Left: intro */}
         <motion.div variants={fadeUp}>
           <SLabel text="FAQ" />
           <h2 className="sp-faq__heading">
@@ -782,41 +611,22 @@ const FAQ = ({ s }) => {
             <span className="sp-faq__heading--accent">{s.name}?</span>
           </h2>
           <p className="sp-faq__sub">
-            We've answered the most common questions below. Our care team is
-            one message away if yours isn't listed.
+            We've answered the most common questions below. Our care team is one message away if yours isn't listed.
           </p>
         </motion.div>
-
-        {/* Right: accordion */}
         <motion.div variants={fadeUp} className="sp-faq__panel">
           {s.faqs.map((faq, i) => (
-            <div
-              key={i}
-              className="sp-faq__item"
-            >
+            <div key={i} className="sp-faq__item">
               <button
                 className="sp-faq__trigger"
                 onClick={() => setOpen(open === i ? null : i)}
                 aria-expanded={open === i}
               >
                 <span className="sp-faq__question">{faq.q}</span>
-                <div
-                  className={
-                    open === i
-                      ? "sp-faq__toggle sp-faq__toggle--open"
-                      : "sp-faq__toggle sp-faq__toggle--closed"
-                  }
-                >
-                  <FiPlus
-                    className={
-                      open === i
-                        ? "sp-faq__toggle-icon--open"
-                        : "sp-faq__toggle-icon--closed"
-                    }
-                  />
+                <div className={open === i ? "sp-faq__toggle sp-faq__toggle--open" : "sp-faq__toggle sp-faq__toggle--closed"}>
+                  <FiPlus className={open === i ? "sp-faq__toggle-icon--open" : "sp-faq__toggle-icon--closed"} />
                 </div>
               </button>
-
               <AnimatePresence>
                 {open === i && (
                   <motion.div
@@ -838,10 +648,8 @@ const FAQ = ({ s }) => {
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   FINAL CTA
-────────────────────────────────────────────────────────────────────────── */
-const FinalCTA = () => (
+/* ── FINAL CTA — fixed: now accepts `s` prop, JSX is properly closed ── */
+const FinalCTA = ({ s }) => (
   <section className="sp-section">
     <motion.div
       initial={{ opacity: 0, y: 32 }}
@@ -852,25 +660,19 @@ const FinalCTA = () => (
     >
       <Pill>Start Today</Pill>
       <h2 className="sp-cta__heading">
-        Ready to Travel With Confidence?
-
+        Ready to Speak With a Healthcare Provider?
         <br />
-        <span className="sp-cta__heading--accent">Travel smarter with convenient virtual healthcare services designed around your schedule.
+        <span className="sp-cta__heading--accent">
+          Get the care and answers you need from the comfort of home.
         </span>
       </h2>
       <p className="sp-cta__body">
-        Whether you're preparing for an upcoming flight, recovering from a recent medical condition, or need documentation for airline requirements, Humancare Connect makes it simple to access professional travel health support.
-        Connect with a licensed healthcare provider through secure telemedicine services, complete your Fit to Fly assessment online, and receive medical clearance documentation when clinically appropriate.
+        Connect with a licensed healthcare provider through secure telemedicine services and receive personalized medical guidance for your health concerns.
       </p>
-
       <div className="sp-cta__actions">
         <PrimaryBtn href="/login">Get Started</PrimaryBtn>
         <GhostBtn href="/appointment-booking">Book Appointment</GhostBtn>
-        {/* <a href="/contact" className="sp-btn sp-btn--muted">
-          Contact Us
-        </a> */}
       </div>
-
       <div className="sp-cta__trust">
         {[
           [FiLock, "HIPAA Compliant"],
@@ -889,36 +691,25 @@ const FinalCTA = () => (
   </section>
 );
 
-/* ──────────────────────────────────────────────────────────────────────────
-   ROOT COMPONENT
-   Sets --accent CSS custom property on the root element so every
-   color-mix() reference in the shared CSS resolves to the correct hue.
-────────────────────────────────────────────────────────────────────────── */
+/* ── ROOT ── */
 export default function GenralConsultation() {
   const [slug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
 
-  /* Inject the per-page accent color as a CSS variable */
   useEffect(() => {
     document.documentElement.style.setProperty("--accent", s.accentColor);
-    return () => {
-      document.documentElement.style.removeProperty("--accent");
-    };
+    return () => { document.documentElement.style.removeProperty("--accent"); };
   }, [s.accentColor]);
 
   return (
     <>
       <Helmet>
-        <title>
-          General Consultation Online | Virtual Doctor Consultation | Humancare Connect
-
-        </title>
+        <title>General Consultation Online | Virtual Doctor Consultation | Humancare Connect</title>
         <meta
           name="description"
           content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
         />
       </Helmet>
-
       <div className="sp-page">
         <AnimatePresence mode="wait">
           <motion.div
@@ -931,7 +722,7 @@ export default function GenralConsultation() {
             <Hero s={s} />
             <Overview s={s} />
             <HowItWorks s={s} />
-            <Features s={s} />
+            <Features />
             <WhyUs s={s} />
             <FAQ s={s} />
             <FinalCTA s={s} />

@@ -7,6 +7,20 @@
 import { useEffect, useRef } from "react";
 import "./Services.css";
 
+import OnlinePrescriptionImg from "../assets/MedicalServices/online-prescription-digital-healthcare.webp";
+
+import SickNotesDoctorNotesImg from "../assets/MedicalServices/sick-notes-medical-certificates.webp";
+
+import FitToFlyCertificateImg from "../assets/MedicalServices/fit-to-fly-medical-certificate.webp";
+
+import LabServicesImg from "../assets/MedicalServices/laboratory-diagnostic-testing-services.webp";
+
+import HomeCareServicesImg from "../assets/MedicalServices/home-healthcare-nursing-services.webp";
+
+import HospitalizationSupportImg from "../assets/MedicalServices/hospitalization-support-care-coordination.webp";
+
+import OnlineDoctorConsultationImg from "../assets/MedicalServices/online-doctor-video-consultation.webp";
+
 /* ─────────────────────────────────────────
    SERVICES DATA
    Replace imageUrl with real assets or API
@@ -24,8 +38,9 @@ const SERVICES = [
   //     "Valid for all standard medications",
   //   ],
   //   imageUrl:
-  //     "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&q=80",
-  //   imageAlt: "Doctor writing a digital prescription on a tablet",
+  //     OnlinePrescriptionImg,
+
+  //   imageAlt: "Doctor issuing an online prescription through a secure digital healthcare platform",
   //   badgeNum: "2K+",
   //   badgeLabel: "Prescriptions Issued",
   // },
@@ -40,9 +55,9 @@ const SERVICES = [
       "Sent directly to your pharmacy or inbox",
       "Valid for all standard medications",
     ],
-    imageUrl:
-      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&q=80",
-    imageAlt: "Doctor writing a digital prescription on a tablet",
+    imageUrl: OnlinePrescriptionImg,
+    imageAlt:
+      "Doctor issuing an online prescription through a secure digital healthcare platform",
     badgeNum: "2K+",
     badgeLabel: "Prescriptions Issued",
   },
@@ -57,9 +72,9 @@ const SERVICES = [
       "Issued within hours, not days",
       "Available for single or extended periods",
     ],
-    imageUrl:
-      "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80",
-    imageAlt: "Doctor reviewing medical certificate documents",
+    imageUrl: SickNotesDoctorNotesImg,
+    imageAlt:
+      "Doctor reviewing and issuing medical certificates and sick notes for patients",
     badgeNum: "98%",
     badgeLabel: "Acceptance Rate",
   },
@@ -74,9 +89,9 @@ const SERVICES = [
       "Quick turnaround — same day available",
       "Includes complete health assessment",
     ],
-    imageUrl:
-      "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80",
-    imageAlt: "Airplane flying with medical certificate concept",
+    imageUrl: FitToFlyCertificateImg,
+    imageAlt:
+      "Medical assessment for fit to fly certificate before international travel",
     badgeNum: "500+",
     badgeLabel: "Airlines Covered",
   },
@@ -91,9 +106,9 @@ const SERVICES = [
       "Results reviewed by our medical panel",
       "Integrated with your health records",
     ],
-    imageUrl:
-      "https://images.unsplash.com/photo-1579154204601-01588f351e67?w=800&q=80",
-    imageAlt: "Laboratory technician analysing blood samples",
+    imageUrl: LabServicesImg,
+    imageAlt:
+      "Laboratory technician performing diagnostic testing and sample analysis",
     badgeNum: "300+",
     badgeLabel: "Tests Available",
   },
@@ -108,9 +123,9 @@ const SERVICES = [
       "Post-surgery and chronic care support",
       "Scheduled or on-demand visits",
     ],
-    imageUrl:
-      "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&q=80",
-    imageAlt: "Home care nurse helping an elderly patient",
+    imageUrl: HomeCareServicesImg,
+    imageAlt:
+      "Professional home healthcare nurse providing medical support to a patient",
     badgeNum: "24/7",
     badgeLabel: "Care Available",
   },
@@ -125,9 +140,9 @@ const SERVICES = [
       "Specialist referral and bed arrangement",
       "Insurance claim and billing assistance",
     ],
-    imageUrl:
-      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80",
-    imageAlt: "Hospital corridor with supportive medical staff",
+    imageUrl: HospitalizationSupportImg,
+    imageAlt:
+      "Hospital care coordination and patient hospitalization support services",
     badgeNum: "150+",
     badgeLabel: "Partner Hospitals",
   },
@@ -142,9 +157,9 @@ const SERVICES = [
       "Secure video, audio, or chat sessions",
       "Follow-up care and prescriptions included",
     ],
-    imageUrl:
-      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&q=80",
-    imageAlt: "Patient having a video consultation with a doctor",
+    imageUrl: OnlineDoctorConsultationImg,
+    imageAlt:
+      "Patient attending an online doctor consultation through a telemedicine platform",
     badgeNum: "4.9★",
     badgeLabel: "Patient Rating",
   },

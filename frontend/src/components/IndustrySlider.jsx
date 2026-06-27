@@ -3,15 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import "./industrySlider.css";
 import { BsBuildingsFill } from "react-icons/bs";
 import { MdHealthAndSafety } from "react-icons/md";
-import {
-  FaAnchor,
-  FaBalanceScale,
-  FaHotel,
-} from "react-icons/fa";
+import { FaAnchor, FaBalanceScale, FaHotel } from "react-icons/fa";
 
 // Swiper imports
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectCoverflow, Autoplay, Pagination } from "swiper/modules";
+
+import CorporateHealthcareImg from "../assets/Industries/corporate-employee-healthcare-solutions.webp";
+import InsuranceTelehealthImg from "../assets/Industries/insurance-telehealth-solutions.webp";
+import MaritimeTelemedicineImg from "../assets/Industries/maritime-telemedicine-services.webp";
+import MedicoLegalHealthcareImg from "../assets/Industries/medico-legal-healthcare-support.webp";
+import HotelGuestHealthcareImg from "../assets/Industries/hotel-guest-medical-assistance.webp";
 
 // Swiper Styles
 import "swiper/css";
@@ -25,10 +27,17 @@ const industries = [
     tab: "Corporates",
     tag: "EMPLOYEE HEALTH",
     title: "Corporates",
-    description: "Empower your workforce with on-demand healthcare access. From routine consultations to specialist referrals.",
-    features: ["24/7 teleconsultations", "Mental health support", "Annual screenings"],
+    description:
+      "Empower your workforce with on-demand healthcare access. From routine consultations to specialist referrals.",
+    features: [
+      "24/7 teleconsultations",
+      "Mental health support",
+      "Annual screenings",
+    ],
     accent: "#0c8b7a",
-    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=90"
+    image: CorporateHealthcareImg,
+    imageAlt:
+      "Corporate employees accessing virtual healthcare and online doctor consultations through an employee wellness program",
   },
   {
     id: 2,
@@ -36,10 +45,17 @@ const industries = [
     tab: "Insurance",
     tag: "EMBEDDED CARE",
     title: "Insurance Cos.",
-    description: "Enhance your policy offerings with integrated telehealth. Reduce claims costs while delivering superior experiences.",
-    features: ["Claims reduction tools", "Member wellness portals", "Real-time consults"],
+    description:
+      "Enhance your policy offerings with integrated telehealth. Reduce claims costs while delivering superior experiences.",
+    features: [
+      "Claims reduction tools",
+      "Member wellness portals",
+      "Real-time consults",
+    ],
     accent: "#1a56db",
-    image: "https://images.unsplash.com/photo-1509017174183-0b7e0278f1ec?auto=format&fit=crop&w=1200&q=90"
+    image: InsuranceTelehealthImg,
+    imageAlt:
+      "Health insurance members receiving telehealth services and virtual healthcare support",
   },
   {
     id: 3,
@@ -47,10 +63,17 @@ const industries = [
     tab: "Maritime",
     tag: "REMOTE MEDICAL",
     title: "Maritime",
-    description: "Keep crews safe in international waters with specialized support. Remote diagnoses and emergency evacuations.",
-    features: ["Satellite consultations", "Emergency evacuations", "Port medical liaison"],
+    description:
+      "Keep crews safe in international waters with specialized support. Remote diagnoses and emergency evacuations.",
+    features: [
+      "Satellite consultations",
+      "Emergency evacuations",
+      "Port medical liaison",
+    ],
     accent: "#0c8b7a",
-    image: "https://images.unsplash.com/photo-1534312527009-56c7016453e6?auto=format&fit=crop&w=1200&q=90"
+    image: MaritimeTelemedicineImg,
+    imageAlt:
+      "Maritime crew receiving remote telemedicine support and online medical consultation at sea",
   },
   {
     id: 4,
@@ -58,10 +81,17 @@ const industries = [
     tab: "Law Firms",
     tag: "MEDICO-LEGAL",
     title: "Law Firms",
-    description: "Strengthen your cases with expert medico-legal support. Access certified medical professionals for documentation.",
-    features: ["Expert witness reports", "Medical record review", "IME coordination"],
+    description:
+      "Strengthen your cases with expert medico-legal support. Access certified medical professionals for documentation.",
+    features: [
+      "Expert witness reports",
+      "Medical record review",
+      "IME coordination",
+    ],
     accent: "#7c3aed",
-    image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=90"
+    image: MedicoLegalHealthcareImg,
+    imageAlt:
+      "Medical expert providing medico-legal healthcare consultation and documentation for legal professionals",
   },
   {
     id: 5,
@@ -69,10 +99,17 @@ const industries = [
     tab: "Hotels",
     tag: "GUEST ASSIST",
     title: "Hotels",
-    description: "Elevate guest experience with on-demand support. From minor illnesses to emergency coordination.",
-    features: ["Guest teleconsultations", "Concierge medical visits", "Emergency referrals"],
+    description:
+      "Elevate guest experience with on-demand support. From minor illnesses to emergency coordination.",
+    features: [
+      "Guest teleconsultations",
+      "Concierge medical visits",
+      "Emergency referrals",
+    ],
     accent: "#c97b1a",
-    image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=90"
+    image: HotelGuestHealthcareImg,
+    imageAlt:
+      "Hotel guest receiving virtual medical assistance and online healthcare consultation during travel",
   },
 ];
 
@@ -96,9 +133,15 @@ export default function IndustrySlider() {
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="slider-h1-v2">Telemedicine expertise across every  <span>Industries</span></h2>
-          <p className="slider-subtitle">Flexible telehealth services, online doctor appointments, and virtual healthcare solutions designed for corporate teams, healthcare organizations, logistics, technology, hospitality, education, manufacturing, and more.
-</p>
+          <h2 className="slider-h1-v2">
+            Telemedicine expertise across every <span>Industries</span>
+          </h2>
+          <p className="slider-subtitle">
+            Flexible telehealth services, online doctor appointments, and
+            virtual healthcare solutions designed for corporate teams,
+            healthcare organizations, logistics, technology, hospitality,
+            education, manufacturing, and more.
+          </p>
         </motion.div>
 
         {/* Sync Tabs — scroll wrapper keeps nav on one line on mobile */}
@@ -152,26 +195,36 @@ export default function IndustrySlider() {
             className="industry-panoramic-swiper"
           >
             {industries.map((ind, index) => (
-              <SwiperSlide key={ind.id} style={{ width: 'min(90vw, 1000px)' }}>
+              <SwiperSlide key={ind.id} style={{ width: "min(90vw, 1000px)" }}>
                 <motion.div
                   className="industry-card-v3"
-                  style={{ '--accent': ind.accent }}
+                  style={{ "--accent": ind.accent }}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{
                     opacity: activeIndex === index ? 1 : 0.4,
                     scale: activeIndex === index ? 1 : 0.9,
-                    filter: activeIndex === index ? "blur(0px)" : "blur(2px)"
+                    filter: activeIndex === index ? "blur(0px)" : "blur(2px)",
                   }}
                   transition={{ duration: 0.6 }}
                 >
                   <div className="v3-image-area">
-                    <img src={ind.image} alt={ind.title} />
+                    <img
+                      src={ind.image}
+                      alt={ind.imageAlt}
+                      title={ind.title}
+                      loading="lazy"
+                      decoding="async"
+                    />
                     <div className="v3-overlay"></div>
                     <motion.div
                       className="v3-icon-badge"
                       initial={{ scale: 0 }}
                       animate={{ scale: activeIndex === index ? 1 : 0 }}
-                      transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                      transition={{
+                        delay: 0.3,
+                        type: "spring",
+                        stiffness: 200,
+                      }}
                     >
                       {ind.icon}
                     </motion.div>
@@ -181,7 +234,10 @@ export default function IndustrySlider() {
                     <motion.div
                       className="v3-tag"
                       initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: activeIndex === index ? 1 : 0.45, x: activeIndex === index ? 0 : -8 }}
+                      animate={{
+                        opacity: activeIndex === index ? 1 : 0.45,
+                        x: activeIndex === index ? 0 : -8,
+                      }}
                       transition={{ delay: 0.4 }}
                     >
                       {ind.tag}
@@ -189,7 +245,10 @@ export default function IndustrySlider() {
                     <motion.h3
                       className="v3-title"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: activeIndex === index ? 1 : 0.55, y: activeIndex === index ? 0 : 8 }}
+                      animate={{
+                        opacity: activeIndex === index ? 1 : 0.55,
+                        y: activeIndex === index ? 0 : 8,
+                      }}
                       transition={{ delay: 0.5 }}
                     >
                       {ind.title}
@@ -197,7 +256,10 @@ export default function IndustrySlider() {
                     <motion.p
                       className="v3-desc"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: activeIndex === index ? 1 : 0.42, y: activeIndex === index ? 0 : 8 }}
+                      animate={{
+                        opacity: activeIndex === index ? 1 : 0.42,
+                        y: activeIndex === index ? 0 : 8,
+                      }}
                       transition={{ delay: 0.6 }}
                     >
                       {ind.description}
@@ -209,10 +271,20 @@ export default function IndustrySlider() {
                           className="v3-feat"
                           key={idx}
                           initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: activeIndex === index ? 1 : 0.38, x: activeIndex === index ? 0 : 8 }}
+                          animate={{
+                            opacity: activeIndex === index ? 1 : 0.38,
+                            x: activeIndex === index ? 0 : 8,
+                          }}
                           transition={{ delay: 0.7 + idx * 0.1 }}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
                             <polyline points="20 6 9 17 4 12" />
                           </svg>
                           {f}
@@ -223,7 +295,10 @@ export default function IndustrySlider() {
                     <motion.div
                       className="v3-footer"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: activeIndex === index ? 1 : 0.45, y: activeIndex === index ? 0 : 8 }}
+                      animate={{
+                        opacity: activeIndex === index ? 1 : 0.45,
+                        y: activeIndex === index ? 0 : 8,
+                      }}
                       transition={{ delay: 1 }}
                     >
                       <button className="v3-cta">View Case Study</button>
