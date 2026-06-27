@@ -120,7 +120,7 @@ const STYLES = `
         color:#fff;border:1px solid rgba(255,255,255,.18);
     }
     .sp-btn--ghost:hover { background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.30); }
-    .sp-trust { display:flex;flex-wrap:wrap;gap:8px 20px; }
+    .sp-trust-container { display:flex;flex-wrap:wrap;gap:8px 20px; }
     .sp-trust-item { display:flex;align-items:center;gap:6px;color:#D0E4FF;font-size:12.5px;font-weight:500; }
     .sp-trust-check { color:#7CB7FF;flex-shrink:0; }
 
@@ -686,7 +686,7 @@ function HeroSection({ data }) {
           </div>
 
           <div
-            className="sp-trust"
+            className="sp-trust-container"
             style={{
               animation: "sp-fadeUp .85s .34s cubic-bezier(.22,.68,0,1.2) both",
             }}
