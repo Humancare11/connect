@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -30,38 +30,30 @@ import {
 import { Helmet } from "react-helmet-async";
 
 import "./newservices.css";
-
-import heroBanner from "../../assets/MedicalServices/chronic-care-management-telemedicine.webp";
-
-const HERO_IMAGE = {
-  src: heroBanner,
-  alt: "Licensed healthcare provider conducting a virtual chronic care management consultation with a patient through telemedicine.",
-  width: 1920,
-  height: 700,
-};
+import DoctorsNote from "../Conditions/DoctorsNote";
 
 /* ──────────────────────────────────────────────────────────────────────────
-   DATA
+   DATA — one entry per service slug
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
-    slug: "chronic-care-management",
-    name: "CHRONIC CARE MANAGEMENT",
-    tagline: "Ongoing support for long term health conditions.",
+    slug: "doctor-note-or-sick-notes",
+    name: "DOCTOR NOTES & SICK NOTES",
+    tagline: "Get the documentation you need without leaving home.",
     intro:
-      "Manage chronic health conditions with personalized telemedicine services designed to support your long term health and well being. Connect with licensed healthcare providers who can help monitor symptoms, review treatment plans, manage medications, and provide ongoing healthcare guidance from the comfort of home.",
+      "Request a Doctor Note or Sick Note through secure telemedicine services. Connect with a licensed healthcare provider, discuss your symptoms or health concerns, and receive supporting documentation when clinically appropriate for work, school, or personal needs.",
     accentColor: "#2563EB",
     heroIcon: FiMonitor,
     description:
-      "Chronic care management focuses on helping patients effectively manage ongoing medical conditions through regular monitoring, personalized treatment plans, and continuous healthcare support. Through Humancare Connect, patients can access convenient virtual healthcare services that promote better health outcomes and improved quality of life.",
+      "Doctor Notes and Sick Notes are medical documents that may be provided by a healthcare professional after evaluating a patient's health condition. These documents are commonly used to verify an illness, medical condition, or healthcare visit for employers, schools, universities, or other organizations. Through Humancare Connect, eligible patients can connect with a licensed healthcare provider online to discuss their symptoms and determine whether documentation may be appropriate.",
     whyItMatters:
-      "Chronic conditions often require ongoing medical attention and long term management. Regular follow up care, medication management, and professional guidance can help reduce complications, improve symptom control, and support overall wellness. Consistent care plays an important role in helping patients stay healthy and maintain their daily activities.",
+      "Many workplaces, schools, and institutions require medical documentation when illness affects attendance or daily responsibilities. Obtaining the appropriate documentation can help support leave requests, verify absences, and provide confirmation of a medical evaluation.",
     whoBenefits: [
-      "Individuals living with chronic health conditions",
-      "Patients managing diabetes or high blood pressure",
-      "Adults with asthma, COPD, or respiratory conditions",
-      "Individuals with heart disease or high cholesterol",
-      "Patients seeking ongoing healthcare support and monitoring",
+      " Employees requiring documentation for work absences",
+      "Students needing verification for missed classes",
+      "Individuals recovering from short term illnesses",
+      "Individuals with heart disease or high cholesterolPeople requiring documentation following a medical consultation",
+      "Adults seeking convenient healthcare support from home",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
@@ -72,23 +64,23 @@ const SERVICES = {
     steps: [
       {
         Icon: FiSearch,
-        title: "Share Your Health Information",
-        body: "Tell us about your condition, medical history, medications, symptoms, and healthcare goals through our secure intake process.",
+        title: "Tell Us About Your Symptoms",
+        body: "Share information about your illness, symptoms, health concerns, and the reason documentation may be required.",
       },
       {
         Icon: FiFileText,
         title: "Connect With a Healthcare Provider",
-        body: "Meet with a licensed healthcare provider who will review your health status and discuss your ongoing care needs.",
+        body: "A licensed healthcare provider will review your information and discuss your condition during a virtual consultation.",
       },
       {
         Icon: FiVideo,
-        title: "Develop a Personalized Care Plan",
-        body: "Receive recommendations for symptom management, medication adherence, lifestyle adjustments, and ongoing monitoring.",
+        title: "Complete Your Consultation",
+        body: "Join a secure online appointment from your phone, tablet, or computer and receive a professional medical evaluation.",
       },
       {
         Icon: FiPackage,
-        title: "Stay Connected With Ongoing Support",
-        body: "Schedule follow up appointments to review progress, address concerns, and make adjustments to your care plan when needed.",
+        title: "Receive Your Documentation",
+        body: "If clinically appropriate, your provider may issue a Doctor Note or Sick Note that can be used for work, school, or other approved purposes.",
       },
     ],
     stats: [
@@ -99,87 +91,91 @@ const SERVICES = {
     ],
     faqs: [
       {
-        q: "What is chronic care management?",
-        a: "Chronic care management is an ongoing healthcare service designed to help patients manage long term medical conditions through regular monitoring, treatment planning, and professional support.",
+        q: "What is a Doctor Note?",
+        a: "A Doctor Note is a medical document provided by a healthcare professional confirming that a patient has been evaluated during a medical consultation.",
       },
       {
-        q: "What conditions can be managed through chronic care services?",
-        a: "Common conditions include diabetes, high blood pressure, asthma, COPD, heart disease, arthritis, high cholesterol, and other long term health concerns.",
+        q: "What is a Sick Note?",
+        a: "A Sick Note is documentation that may verify an illness, medical condition, or healthcare visit when clinically appropriate.",
       },
       {
-        q: "Can chronic care management be provided through telehealth?",
-        a: "Yes. Telemedicine services allow patients to connect with healthcare providers remotely for ongoing support and monitoring.",
+        q: "Can I request a Doctor Note online?",
+        a: "Yes. Eligible patients can complete a virtual consultation with a licensed healthcare provider through secure telemedicine services.",
       },
       {
-        q: "Why is chronic care management important?",
-        a: "Regular care and monitoring can help improve symptom control, reduce complications, and support better long term health outcomes.",
+        q: "Can I get a Sick Note for work?",
+        a: "A healthcare provider may issue documentation for work-related absences when clinically appropriate following an evaluation.",
       },
       {
-        q: "How often should I schedule follow up visits?",
-        a: "The frequency of follow up appointments depends on your condition, treatment plan, and healthcare provider's recommendations.",
+        q: "Can students request Sick Notes for school?",
+        a: "Yes. Students may request medical documentation when illness affects school attendance or academic responsibilities.",
       },
       {
-        q: "Can chronic care management help prevent complications?",
-        a: "Yes. Ongoing monitoring and professional guidance can help identify potential issues early and support preventive care.",
+        q: "What conditions may qualify for a Doctor Note?",
+        a: "Common illnesses, infections, migraines, flu symptoms, gastrointestinal concerns, and other health conditions may be evaluated during a consultation.",
       },
       {
-        q: "What are the benefits of virtual chronic care management?",
-        a: "Virtual care offers convenient access to healthcare providers, flexible scheduling, and ongoing support from home.",
+        q: "How do healthcare providers determine eligibility for documentation?",
+        a: "Providers review symptoms, medical history, and clinical information before determining whether documentation is appropriate.",
       },
       {
-        q: "Can healthcare providers monitor my progress remotely?",
-        a: "Yes. Providers can review symptoms, treatment progress, medication adherence, and health goals during follow up visits.",
+        q: "Can I request documentation for a previous illness?",
+        a: "Documentation availability depends on the circumstances and provider assessment.",
       },
       {
-        q: "Is chronic care management suitable for diabetes?",
-        a: "Yes. Diabetes management is one of the most common conditions supported through chronic care services.",
+        q: "How long does a virtual consultation take?",
+        a: "Most appointments are completed within a short consultation, depending on the patient's needs.",
       },
       {
-        q: "Can telehealth help manage high blood pressure?",
-        a: "Yes. Healthcare providers can review blood pressure readings, discuss treatment plans, and provide ongoing support.",
+        q: "Can a provider refuse to issue a Doctor Note?",
+        a: "Yes. Documentation is provided based on clinical judgment and may not be appropriate in every situation.",
       },
       {
-        q: "What role does medication management play in chronic care?",
-        a: "Medication management helps ensure treatments remain effective, safe, and aligned with your healthcare needs.",
+        q: "Are online Doctor Notes legally valid?",
+        a: "Acceptance varies depending on employer, school, institution, and local requirements.",
       },
       {
-        q: "Can chronic care services improve quality of life?",
-        a: "Yes. Consistent healthcare support can help patients manage symptoms and maintain greater independence in daily life.",
+        q: "Can I use a Doctor Note for workplace leave requests?",
+        a: "Many employers accept medical documentation for illness-related absences, though individual policies may vary.",
       },
       {
-        q: "What happens during a chronic care consultation?",
-        a: "A healthcare provider reviews your symptoms, treatment plan, medications, health goals, and overall condition management.",
+        q: "Can I receive documentation for short term illnesses?",
+        a: "Yes. Many patients request documentation for temporary illnesses that affect daily activities.",
       },
       {
-        q: "Can lifestyle changes help manage chronic conditions?",
-        a: "Yes. Nutrition, physical activity, sleep habits, and stress management can play an important role in overall health.",
+        q: "Are virtual consultations secure?",
+        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient information.",
       },
       {
-        q: "Is chronic care management only for older adults?",
-        a: "No. Adults of all ages living with chronic health conditions may benefit from ongoing healthcare support.",
+        q: "What information should I prepare before my appointment?",
+        a: "Be prepared to discuss your symptoms, medical history, medications, and the reason documentation is being requested.",
       },
       {
-        q: "Can I discuss multiple chronic conditions during one appointment?",
-        a: "Yes. Healthcare providers can review and manage multiple health concerns during a consultation.",
+        q: "Can I discuss return-to-work recommendations with my provider?",
+        a: "Yes. Providers can discuss recovery timelines and recommendations based on your condition.",
       },
       {
-        q: "Are virtual chronic care appointments secure?",
-        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient information and privacy.",
+        q: "Why choose Humancare Connect for Doctor Notes and Sick Notes?",
+        a: "Humancare Connect offers secure telemedicine services, licensed healthcare providers, and convenient online consultations designed around your schedule.",
       },
       {
-        q: "How do I get started with chronic care management?",
-        a: "Schedule an appointment, discuss your condition with a healthcare provider, and receive a personalized care plan.",
+        q: "Can I access care from home?",
+        a: "Yes. Virtual healthcare services allow patients to connect with providers from home, work, or while traveling.",
       },
       {
-        q: "Why choose Humancare Connect for chronic care management?",
-        a: "Humancare Connect provides secure telemedicine services, licensed healthcare providers, personalized care plans, and convenient access to ongoing healthcare support.",
+        q: "How quickly can I schedule an appointment?",
+        a: "Appointment availability varies, but many patients can access care without lengthy wait times.",
+      },
+      {
+        q: "How do I get started?",
+        a: "Simply schedule an online appointment, discuss your symptoms with a healthcare provider, and receive documentation when clinically appropriate.",
       },
     ],
   },
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   WHY US ITEMS
+   WHY US ITEMS (static, shared across pages)
 ────────────────────────────────────────────────────────────────────────── */
 const WHY_US_ITEMS = [
   [
@@ -215,26 +211,6 @@ const WHY_US_ITEMS = [
 ];
 
 /* ──────────────────────────────────────────────────────────────────────────
-   ANIMATION VARIANTS
-────────────────────────────────────────────────────────────────────────── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      delay: i * 0.07,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
-  }),
-};
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
-/* ──────────────────────────────────────────────────────────────────────────
    HOOKS
 ────────────────────────────────────────────────────────────────────────── */
 const useCountUp = (target, duration = 2200, start = false) => {
@@ -256,8 +232,30 @@ const useCountUp = (target, duration = 2200, start = false) => {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
+   ANIMATION VARIANTS
+────────────────────────────────────────────────────────────────────────── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      delay: i * 0.07,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  }),
+};
+
+const stagger = {
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
    MICRO COMPONENTS
 ────────────────────────────────────────────────────────────────────────── */
+
+/** Eyebrow label with accent line */
 const SLabel = ({ text }) => (
   <div className="sp-label">
     <div className="sp-label__line" />
@@ -265,6 +263,7 @@ const SLabel = ({ text }) => (
   </div>
 );
 
+/** Accent pill badge */
 const Pill = ({ children }) => (
   <div className="sp-pill">
     <span className="sp-pill__dot" />
@@ -272,10 +271,15 @@ const Pill = ({ children }) => (
   </div>
 );
 
+/** Primary filled button — wraps an anchor when href is provided */
 const PrimaryBtn = ({ children, href, fullWidth, type = "button", onClick }) => {
   const cls = ["sp-btn sp-btn--primary", fullWidth ? "sp-btn--full" : ""].join(" ").trim();
   if (href) {
-    return <a href={href} className={cls}>{children}</a>;
+    return (
+      <a href={href} className={cls}>
+        {children}
+      </a>
+    );
   }
   return (
     <button type={type} className={cls} onClick={onClick}>
@@ -284,9 +288,14 @@ const PrimaryBtn = ({ children, href, fullWidth, type = "button", onClick }) => 
   );
 };
 
+/** Ghost / outlined button */
 const GhostBtn = ({ children, href, onClick }) => {
   if (href) {
-    return <a href={href} className="sp-btn sp-btn--ghost">{children}</a>;
+    return (
+      <a href={href} className="sp-btn sp-btn--ghost">
+        {children}
+      </a>
+    );
   }
   return (
     <button className="sp-btn sp-btn--ghost" onClick={onClick}>
@@ -311,17 +320,6 @@ const Hero = ({ s }) => {
 
   return (
     <section className="sp-hero" ref={ref}>
-      <img
-        src={HERO_IMAGE.src}
-        alt={HERO_IMAGE.alt}
-        width={HERO_IMAGE.width}
-        height={HERO_IMAGE.height}
-        loading="eager"
-        fetchPriority="high"
-        className="sp-hero__bg-img"
-      />
-      <div className="sp-hero__overlay" />
-
       <motion.div className="sp-hero__inner" style={{ opacity: op }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -508,7 +506,7 @@ const Overview = ({ s }) => (
           <motion.div variants={fadeUp}>
             <SLabel text="Service Overview" />
             <h2 className="sp-overview__heading">
-              Comprehensive Care for Long Term Health Conditions
+              What Are Doctor Notes & Sick Notes?
             </h2>
           </motion.div>
 
@@ -536,7 +534,7 @@ const Overview = ({ s }) => (
 
         {/* Right: consultation form (sticky) */}
         <motion.div variants={fadeUp} className="sp-form-sticky">
-          <ConsultationForm />
+          <ConsultationForm s={s} />
         </motion.div>
       </motion.div>
 
@@ -562,86 +560,81 @@ const Overview = ({ s }) => (
 /* ──────────────────────────────────────────────────────────────────────────
    HOW IT WORKS / OUR SERVICES
 ────────────────────────────────────────────────────────────────────────── */
-const HowItWorks = ({ s }) => {
-  const HeroIcon = s.heroIcon;
-  return (
-    <section className="sp-hiw">
-      <div className="sp-hiw__inner">
-        {/* Left: steps */}
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
-        >
-          <motion.div variants={fadeUp}>
-            <SLabel text="Our Services" />
-            <h2 className="sp-hiw__heading">
-              Getting started is{" "}
-              <span className="sp-hiw__heading--accent">simple.</span>
-            </h2>
-            <p className="sp-hiw__sub">
-              Accessing chronic care management through Humancare Connect is
-              convenient, secure, and designed around your healthcare needs.
-            </p>
-          </motion.div>
+const HowItWorks = ({ s }) => (
+  <section className="sp-hiw">
+    <div className="sp-hiw__inner">
+      {/* Left: steps */}
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-60px" }}
+      >
+        <motion.div variants={fadeUp}>
+          <SLabel text="Our Services" />
+          <h2 className="sp-hiw__heading">
+            Getting started is{" "}
+            <span className="sp-hiw__heading--accent">simple.</span>
+          </h2>
+          <p className="sp-hiw__sub">
+            Requesting a Doctor Note or Sick Note through Humancare Connect is quick, secure, and convenient.
+          </p>
+        </motion.div>
 
-          <div className="sp-steps">
-            {s.steps.map((step, i) => (
-              <motion.div key={i} variants={fadeUp} custom={i} className="sp-step">
-                {i < s.steps.length - 1 && (
-                  <div className="sp-step__connector" />
-                )}
-                <div className="sp-step__icon-wrap">
-                  <step.Icon className="sp-step__icon" />
-                </div>
-                <div className="sp-step__body">
-                  <div className="sp-step__num">Step {i + 1}</div>
-                  <div className="sp-step__title">{step.title}</div>
-                  <p className="sp-step__desc">{step.body}</p>
-                </div>
-              </motion.div>
+        <div className="sp-steps">
+          {s.steps.map((step, i) => (
+            <motion.div key={i} variants={fadeUp} custom={i} className="sp-step">
+              {i < s.steps.length - 1 && (
+                <div className="sp-step__connector" />
+              )}
+              <div className="sp-step__icon-wrap">
+                <step.Icon className="sp-step__icon" />
+              </div>
+              <div className="sp-step__body">
+                <div className="sp-step__num">Step {i + 1}</div>
+                <div className="sp-step__title">{step.title}</div>
+                <p className="sp-step__desc">{step.body}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Right: sticky ready card */}
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+      >
+        <div className="sp-ready-card">
+          <s.heroIcon className="sp-ready-card__hero-icon" />
+          <h3 className="sp-ready-card__heading">Ready to begin?</h3>
+          <p className="sp-ready-card__desc">
+            Access trusted telemedicine services from wherever you are. Complete your consultation online and receive medical documentation when appropriate.
+
+          </p>
+          <PrimaryBtn href="/login" fullWidth>
+            Get Started Today
+          </PrimaryBtn>
+          <div className="sp-ready-card__badges">
+            {[
+              [FiLock, "Secure & Private"],
+              [FiZap, "Fast Response"],
+              [FiUserCheck, "Verified Providers"],
+              [FiFileText, "Insurance Accepted"],
+            ].map(([Icon, lb], i) => (
+              <div key={i} className="sp-badge">
+                <Icon className="sp-badge__icon" />
+                {lb}
+              </div>
             ))}
           </div>
-        </motion.div>
-
-        {/* Right: sticky ready card */}
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          <div className="sp-ready-card">
-            <HeroIcon className="sp-ready-card__hero-icon" />
-            <h3 className="sp-ready-card__heading">Ready to begin?</h3>
-            <p className="sp-ready-card__desc">
-              Get convenient access to chronic care management through trusted
-              telemedicine services and receive ongoing support from licensed
-              healthcare providers.
-            </p>
-            <PrimaryBtn href="/login" fullWidth>
-              Get Started Today
-            </PrimaryBtn>
-            <div className="sp-ready-card__badges">
-              {[
-                [FiLock, "Secure & Private"],
-                [FiZap, "Fast Response"],
-                [FiUserCheck, "Verified Providers"],
-                [FiFileText, "Insurance Accepted"],
-              ].map(([Icon, lb], i) => (
-                <div key={i} className="sp-badge">
-                  <Icon className="sp-badge__icon" />
-                  {lb}
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-};
+        </div>
+      </motion.div>
+    </div>
+  </section>
+);
 
 /* ──────────────────────────────────────────────────────────────────────────
    FEATURES & BENEFITS
@@ -657,10 +650,10 @@ const Features = ({ s }) => (
       <motion.div variants={fadeUp} className="sp-features__header">
         <SLabel text="Features & Benefits" />
         <h2 className="sp-features__heading">
-          Managing Chronic Conditions
+          Understanding
           <br />
           <span className="sp-features__heading--accent">
-            Through Virtual Healthcare
+            Doctor Notes & Sick Notes
           </span>
         </h2>
         <p className="sp-features__sub">
@@ -671,31 +664,17 @@ const Features = ({ s }) => (
       <motion.div variants={fadeUp} className="sp-features__card">
         <div className="sp-features__body">
           <p className="sp-features__para">
-            Chronic conditions are long term health concerns that often require
-            continuous medical attention, lifestyle adjustments, and regular
-            monitoring. Conditions such as diabetes, high blood pressure, heart
-            disease, asthma, arthritis, and chronic respiratory disorders can
-            significantly impact daily life if not properly managed. Consistent
-            healthcare support helps patients maintain better control of their
-            symptoms and overall health.
+            Doctor Notes and Sick Notes are commonly requested when an illness, injury, or medical condition affects an individual's ability to attend work, school, or other responsibilities. These documents help confirm that a healthcare professional has evaluated the patient's condition and may provide recommendations regarding rest, recovery, or temporary activity limitations.
+
           </p>
           <p className="sp-features__para">
-            At Humancare Connect, our chronic care management services provide
-            patients with convenient access to licensed healthcare providers
-            through secure telehealth services. Providers work closely with
-            patients to review treatment plans, monitor symptoms, discuss
-            medication management, and identify opportunities to improve health
-            outcomes. Virtual healthcare services make it easier to stay
-            connected with professional care while reducing the need for
-            frequent in person visits.
+            Through Humancare Connect, patients can access telemedicine services and connect with licensed healthcare providers from the comfort of home. During the consultation, providers may review symptoms, discuss medical history, assess the patient's condition, and determine whether medical documentation is appropriate based on clinical findings.
+
           </p>
           <p className="sp-features__para">
-            Effective chronic care management goes beyond treating symptoms. It
-            focuses on helping patients understand their conditions, make
-            informed healthcare decisions, maintain healthy lifestyle habits,
-            and prevent complications. Through personalized care and ongoing
-            support, telemedicine services help patients take a proactive
-            approach to managing their long term health.
+            Doctor Notes and Sick Notes are frequently requested for common illnesses such as colds, flu symptoms, infections, migraines, gastrointestinal concerns, minor injuries, and other short term health conditions. By combining virtual healthcare services with professional medical evaluation, Humancare Connect helps patients access convenient healthcare support while reducing unnecessary clinic visits.
+
+
           </p>
         </div>
       </motion.div>
@@ -728,9 +707,7 @@ const WhyUs = ({ s }) => {
 
   useEffect(() => {
     const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) setInView(true);
-      },
+      ([e]) => { if (e.isIntersecting) setInView(true); },
       { threshold: 0.2 }
     );
     if (ref.current) obs.observe(ref.current);
@@ -818,7 +795,10 @@ const FAQ = ({ s }) => {
         {/* Right: accordion */}
         <motion.div variants={fadeUp} className="sp-faq__panel">
           {s.faqs.map((faq, i) => (
-            <div key={i} className="sp-faq__item">
+            <div
+              key={i}
+              className="sp-faq__item"
+            >
               <button
                 className="sp-faq__trigger"
                 onClick={() => setOpen(open === i ? null : i)}
@@ -877,19 +857,22 @@ const FinalCTA = () => (
     >
       <Pill>Start Today</Pill>
       <h2 className="sp-cta__heading">
-        Ready to Take Control of
+        Need Medical Documentation?
+
         <br />
-        <span className="sp-cta__heading--accent">Your Long Term Health?</span>
+        {/* <span className="sp-cta__heading--accent">Your Long Term Health?</span> */}
       </h2>
       <p className="sp-cta__body">
-        Connect with a licensed healthcare provider through secure telemedicine
-        services and receive personalized chronic care management designed to
-        support your health goals and improve your quality of life.
+        Connect with a licensed healthcare provider through secure telemedicine services and discuss your healthcare needs from the comfort of home. Receive Doctor Notes or Sick Notes when clinically appropriate and access convenient virtual healthcare services designed to fit your schedule.
+
       </p>
 
       <div className="sp-cta__actions">
         <PrimaryBtn href="/login">Get Started</PrimaryBtn>
         <GhostBtn href="/appointment-booking">Book Appointment</GhostBtn>
+        {/* <a href="/contact" className="sp-btn sp-btn--muted">
+          Contact Us
+        </a> */}
       </div>
 
       <div className="sp-cta__trust">
@@ -912,28 +895,29 @@ const FinalCTA = () => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    ROOT COMPONENT
+  
 ────────────────────────────────────────────────────────────────────────── */
-export default function ChronicCareManagement() {
+export default function DoctorNoteSockNote() {
   const [slug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
 
+  /* Inject the per-page accent color as a CSS variable */
   useEffect(() => {
     document.documentElement.style.setProperty("--accent", s.accentColor);
     return () => {
       document.documentElement.style.removeProperty("--accent");
     };
   }, [s.accentColor]);
-
   return (
     <>
       <Helmet>
         <title>
-          Chronic Care Management Online | Ongoing Healthcare Support |
-          Humancare Connect
+          Doctor Notes & Sick Notes Online | Medical Documentation | Humancare Connect
+
         </title>
         <meta
           name="description"
-          content="Manage chronic health conditions through secure telemedicine services. Connect with licensed healthcare providers for ongoing care, monitoring, and personalized support."
+          content="Need a Doctor Note or Sick Note? Connect with licensed healthcare providers online and receive medical documentation when clinically appropriate through secure telemedicine services."
         />
       </Helmet>
 
@@ -952,7 +936,7 @@ export default function ChronicCareManagement() {
             <Features s={s} />
             <WhyUs s={s} />
             <FAQ s={s} />
-            <FinalCTA />
+            <FinalCTA s={s} />
           </motion.div>
         </AnimatePresence>
       </div>

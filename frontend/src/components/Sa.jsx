@@ -180,7 +180,7 @@ export default function ServicesSection() {
           <RevealCard
             className="services-card-item services-bento-small-weightloss"
             delay={D[1]}
-            to="/doctor-note"
+            to="/doctor-note-or-sick-notes"
           >
             <div className="services-icon-box">
               <FaBalanceScale />
@@ -219,7 +219,7 @@ export default function ServicesSection() {
           <RevealCard
             className="services-card-item services-bento-smal-1"
             delay={D[2]}
-            to="/fit-to-fly"
+            to="/fit-to-fly-certificate"
           >
             <div className="services-icon-box">
               <FaBrain />

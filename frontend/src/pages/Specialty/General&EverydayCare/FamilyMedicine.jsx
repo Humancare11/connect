@@ -78,240 +78,240 @@ const SPECIALTY_DATA = {
   whenToConsult:
     "Schedule a visit with a family medicine specialist for annual wellness exams, routine healthcare needs, vaccinations, common illnesses, chronic disease management, preventive screenings, or ongoing primary care support.",
 
-keyServices: [
-  {
-    Icon: FiActivity,
-    title: "Routine Wellness Exams",
-    description:
-      "Comprehensive health evaluations, preventive screenings, and annual check-ups to monitor overall health and wellness.",
-  },
-  {
-    Icon: MdOutlineVaccines,
-    title: "Vaccination & Immunization Services",
-    description:
-      "Guidance and administration of age-appropriate vaccinations to help prevent serious illnesses.",
-  },
-  {
-    Icon: FiUsers,
-    title: "Family Healthcare Management",
-    description:
-      "Coordinated medical care for children, adults, and seniors within the same family.",
-  },
-  {
-    Icon: FiThermometer,
-    title: "Acute Illness Treatment",
-    description:
-      "Diagnosis and treatment of common illnesses, infections, and short-term health concerns.",
-  },
-  {
-    Icon: FiDroplet,
-    title: "Chronic Disease Management",
-    description:
-      "Ongoing care for conditions such as hypertension, diabetes, asthma, and other chronic health issues.",
-  },
-  {
-    Icon: MdOutlineSpa,
-    title: "Preventive Healthcare Services",
-    description:
-      "Health education, screenings, lifestyle counseling, and wellness planning to support long-term health.",
-  },
-],
+  keyServices: [
+    {
+      Icon: FiActivity,
+      title: "Routine Wellness Exams",
+      description:
+        "Comprehensive health evaluations, preventive screenings, and annual check-ups to monitor overall health and wellness.",
+    },
+    {
+      Icon: MdOutlineVaccines,
+      title: "Vaccination & Immunization Services",
+      description:
+        "Guidance and administration of age-appropriate vaccinations to help prevent serious illnesses.",
+    },
+    {
+      Icon: FiUsers,
+      title: "Family Healthcare Management",
+      description:
+        "Coordinated medical care for children, adults, and seniors within the same family.",
+    },
+    {
+      Icon: FiThermometer,
+      title: "Acute Illness Treatment",
+      description:
+        "Diagnosis and treatment of common illnesses, infections, and short-term health concerns.",
+    },
+    {
+      Icon: FiDroplet,
+      title: "Chronic Disease Management",
+      description:
+        "Ongoing care for conditions such as hypertension, diabetes, asthma, and other chronic health issues.",
+    },
+    {
+      Icon: MdOutlineSpa,
+      title: "Preventive Healthcare Services",
+      description:
+        "Health education, screenings, lifestyle counseling, and wellness planning to support long-term health.",
+    },
+  ],
 
- benefits: [
-  {
-    Icon: FiSearch,
-    title: "Continuity of Care",
-    description:
-      "Build long-term relationships with a trusted healthcare provider who understands your health history and needs.",
-  },
-  {
-    Icon: FiTrendingUp,
-    title: "Preventive Health Focus",
-    description:
-      "Identify potential health risks early through regular screenings, wellness visits, and preventive care.",
-  },
-  {
-    Icon: FiShield,
-    title: "Care for the Entire Family",
-    description:
-      "Receive coordinated healthcare services for children, adults, and seniors from a single healthcare team.",
-  },
-  {
-    Icon: FiHeart,
-    title: "Personalized Healthcare Plans",
-    description:
-      "Benefit from treatment and wellness strategies tailored to your unique health goals and lifestyle.",
-  },
-],
+  benefits: [
+    {
+      Icon: FiSearch,
+      title: "Continuity of Care",
+      description:
+        "Build long-term relationships with a trusted healthcare provider who understands your health history and needs.",
+    },
+    {
+      Icon: FiTrendingUp,
+      title: "Preventive Health Focus",
+      description:
+        "Identify potential health risks early through regular screenings, wellness visits, and preventive care.",
+    },
+    {
+      Icon: FiShield,
+      title: "Care for the Entire Family",
+      description:
+        "Receive coordinated healthcare services for children, adults, and seniors from a single healthcare team.",
+    },
+    {
+      Icon: FiHeart,
+      title: "Personalized Healthcare Plans",
+      description:
+        "Benefit from treatment and wellness strategies tailored to your unique health goals and lifestyle.",
+    },
+  ],
 
-conditions: [
-  {
-    Icon: FiCalendar,
-    name: "Routine Check-Ups",
-    description:
-      "Annual wellness visits, preventive screenings, health assessments, and ongoing wellness monitoring.",
-  },
-  {
-    Icon: MdOutlineVaccines,
-    name: "Vaccination Advice",
-    description:
-      "Guidance on recommended immunizations for children, adults, seniors, travel needs, and preventive healthcare.",
-  },
-  {
-    Icon: FiUsers,
-    name: "Whole-Family Illnesses",
-    description:
-      "Diagnosis and treatment of common illnesses that affect multiple family members, including viral and seasonal infections.",
-  },
-  {
-    Icon: FiThermometer,
-    name: "Common Cold & Flu",
-    description:
-      "Evaluation and treatment of cold symptoms, influenza, cough, congestion, fever, and seasonal illnesses.",
-  },
-  {
-    Icon: FiShield,
-    name: "Minor Infections",
-    description:
-      "Care for common infections affecting the respiratory system, skin, urinary tract, and other areas of the body.",
-  },
-  {
-    Icon: FiHeart,
-    name: "Hypertension Management",
-    description:
-      "Monitoring and treatment of high blood pressure to support cardiovascular health.",
-  },
-  {
-    Icon: MdOutlineBloodtype,
-    name: "Diabetes Follow-Up",
-    description:
-      "Ongoing management and monitoring of blood sugar levels and diabetes-related health concerns.",
-  },
-  {
-    Icon: GiLungs,
-    name: "Asthma & Respiratory Conditions",
-    description:
-      "Care for asthma symptoms, breathing concerns, allergies, and chronic respiratory conditions.",
-  },
-  {
-    Icon: FiSearch,
-    name: "Preventive Health Screenings",
-    description:
-      "Routine screenings designed to identify health risks and detect conditions early.",
-  },
-  {
-    Icon: FiTrendingUp,
-    name: "Lifestyle & Wellness Counseling",
-    description:
-      "Support for nutrition, exercise, weight management, stress reduction, and healthy living.",
-  },
-  {
-    Icon: FiActivity,
-    name: "Minor Injuries & Health Concerns",
-    description:
-      "Evaluation of minor injuries, strains, aches, and common non-emergency medical issues.",
-  },
-  {
-    Icon: FiTarget,
-    name: "General Primary Care Needs",
-    description:
-      "Comprehensive healthcare services addressing everyday health concerns and long-term wellness goals.",
-  },
-],
+  conditions: [
+    {
+      Icon: FiCalendar,
+      name: "Routine Check-Ups",
+      description:
+        "Annual wellness visits, preventive screenings, health assessments, and ongoing wellness monitoring.",
+    },
+    {
+      Icon: MdOutlineVaccines,
+      name: "Vaccination Advice",
+      description:
+        "Guidance on recommended immunizations for children, adults, seniors, travel needs, and preventive healthcare.",
+    },
+    {
+      Icon: FiUsers,
+      name: "Whole-Family Illnesses",
+      description:
+        "Diagnosis and treatment of common illnesses that affect multiple family members, including viral and seasonal infections.",
+    },
+    {
+      Icon: FiThermometer,
+      name: "Common Cold & Flu",
+      description:
+        "Evaluation and treatment of cold symptoms, influenza, cough, congestion, fever, and seasonal illnesses.",
+    },
+    {
+      Icon: FiShield,
+      name: "Minor Infections",
+      description:
+        "Care for common infections affecting the respiratory system, skin, urinary tract, and other areas of the body.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Hypertension Management",
+      description:
+        "Monitoring and treatment of high blood pressure to support cardiovascular health.",
+    },
+    {
+      Icon: MdOutlineBloodtype,
+      name: "Diabetes Follow-Up",
+      description:
+        "Ongoing management and monitoring of blood sugar levels and diabetes-related health concerns.",
+    },
+    {
+      Icon: GiLungs,
+      name: "Asthma & Respiratory Conditions",
+      description:
+        "Care for asthma symptoms, breathing concerns, allergies, and chronic respiratory conditions.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Preventive Health Screenings",
+      description:
+        "Routine screenings designed to identify health risks and detect conditions early.",
+    },
+    {
+      Icon: FiTrendingUp,
+      name: "Lifestyle & Wellness Counseling",
+      description:
+        "Support for nutrition, exercise, weight management, stress reduction, and healthy living.",
+    },
+    {
+      Icon: FiActivity,
+      name: "Minor Injuries & Health Concerns",
+      description:
+        "Evaluation of minor injuries, strains, aches, and common non-emergency medical issues.",
+    },
+    {
+      Icon: FiTarget,
+      name: "General Primary Care Needs",
+      description:
+        "Comprehensive healthcare services addressing everyday health concerns and long-term wellness goals.",
+    },
+  ],
 
   faqs: [
-  {
-    question: "What is family medicine?",
-    answer:
-      "Family medicine is a medical specialty that provides comprehensive healthcare for patients of all ages, focusing on prevention, diagnosis, treatment, and long-term wellness.",
-  },
-  {
-    question: "What conditions do family medicine specialists treat?",
-    answer:
-      "Family medicine specialists treat common illnesses, chronic diseases, preventive health needs, routine check-ups, and a wide variety of primary care concerns.",
-  },
-  {
-    question: "How is family medicine different from primary care?",
-    answer:
-      "Family medicine is a type of primary care that provides healthcare for people of all ages, including children, adults, and seniors.",
-  },
-  {
-    question: "Can family medicine doctors treat children?",
-    answer:
-      "Yes. Family medicine physicians are trained to care for children, adolescents, adults, and older adults.",
-  },
-  {
-    question: "How often should I schedule a routine check-up?",
-    answer:
-      "Most adults benefit from annual wellness visits, although frequency may vary based on age, health conditions, and risk factors.",
-  },
-  {
-    question: "What happens during a routine wellness exam?",
-    answer:
-      "A wellness visit may include a physical examination, health history review, screenings, vaccinations, and preventive care recommendations.",
-  },
-  {
-    question: "Can family medicine specialists manage chronic conditions?",
-    answer:
-      "Yes. They commonly manage conditions such as diabetes, hypertension, asthma, high cholesterol, and other chronic illnesses.",
-  },
-  {
-    question: "What vaccinations do adults need?",
-    answer:
-      "Recommended vaccines vary by age, health status, lifestyle, and travel plans. Your provider can recommend an appropriate schedule.",
-  },
-  {
-    question: "Can family medicine physicians prescribe medications?",
-    answer:
-      "Yes. Family medicine providers diagnose conditions and prescribe medications when appropriate.",
-  },
-  {
-    question: "Do family medicine doctors provide preventive care?",
-    answer:
-      "Yes. Preventive care is a major focus and includes screenings, wellness exams, vaccinations, and health education.",
-  },
-  {
-    question: "Can I use telehealth for family medicine appointments?",
-    answer:
-      "Yes. Many routine consultations, follow-ups, medication reviews, and non-emergency healthcare concerns can be managed through telehealth.",
-  },
-  {
-    question: "What types of screenings are offered?",
-    answer:
-      "Screenings may include blood pressure checks, cholesterol testing, diabetes screening, cancer screenings, and other preventive evaluations.",
-  },
-  {
-    question: "Can family medicine providers coordinate specialist care?",
-    answer:
-      "Yes. Family medicine physicians often coordinate referrals and communicate with specialists when advanced care is needed.",
-  },
-  {
-    question: "Is family medicine suitable for older adults?",
-    answer:
-      "Yes. Family medicine specialists provide healthcare for patients throughout every stage of life, including seniors.",
-  },
-  {
-    question: "Can family medicine help with lifestyle changes?",
-    answer:
-      "Yes. Providers offer guidance on nutrition, exercise, weight management, stress reduction, and healthy habits.",
-  },
-  {
-    question: "When should I choose family medicine instead of urgent care?",
-    answer:
-      "Family medicine is ideal for ongoing healthcare needs, preventive care, chronic condition management, and non-emergency medical concerns.",
-  },
-  {
-    question: "Why is preventive care important?",
-    answer:
-      "Preventive care helps identify health risks early, reduce complications, and support long-term health and wellness.",
-  },
-  {
-    question: "How can I schedule an appointment with a family medicine specialist?",
-    answer:
-      "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
-  },
-],
-  
+    {
+      question: "What is family medicine?",
+      answer:
+        "Family medicine is a medical specialty that provides comprehensive healthcare for patients of all ages, focusing on prevention, diagnosis, treatment, and long-term wellness.",
+    },
+    {
+      question: "What conditions do family medicine specialists treat?",
+      answer:
+        "Family medicine specialists treat common illnesses, chronic diseases, preventive health needs, routine check-ups, and a wide variety of primary care concerns.",
+    },
+    {
+      question: "How is family medicine different from primary care?",
+      answer:
+        "Family medicine is a type of primary care that provides healthcare for people of all ages, including children, adults, and seniors.",
+    },
+    {
+      question: "Can family medicine doctors treat children?",
+      answer:
+        "Yes. Family medicine physicians are trained to care for children, adolescents, adults, and older adults.",
+    },
+    {
+      question: "How often should I schedule a routine check-up?",
+      answer:
+        "Most adults benefit from annual wellness visits, although frequency may vary based on age, health conditions, and risk factors.",
+    },
+    {
+      question: "What happens during a routine wellness exam?",
+      answer:
+        "A wellness visit may include a physical examination, health history review, screenings, vaccinations, and preventive care recommendations.",
+    },
+    {
+      question: "Can family medicine specialists manage chronic conditions?",
+      answer:
+        "Yes. They commonly manage conditions such as diabetes, hypertension, asthma, high cholesterol, and other chronic illnesses.",
+    },
+    {
+      question: "What vaccinations do adults need?",
+      answer:
+        "Recommended vaccines vary by age, health status, lifestyle, and travel plans. Your provider can recommend an appropriate schedule.",
+    },
+    {
+      question: "Can family medicine physicians prescribe medications?",
+      answer:
+        "Yes. Family medicine providers diagnose conditions and prescribe medications when appropriate.",
+    },
+    {
+      question: "Do family medicine doctors provide preventive care?",
+      answer:
+        "Yes. Preventive care is a major focus and includes screenings, wellness exams, vaccinations, and health education.",
+    },
+    {
+      question: "Can I use telehealth for family medicine appointments?",
+      answer:
+        "Yes. Many routine consultations, follow-ups, medication reviews, and non-emergency healthcare concerns can be managed through telehealth.",
+    },
+    {
+      question: "What types of screenings are offered?",
+      answer:
+        "Screenings may include blood pressure checks, cholesterol testing, diabetes screening, cancer screenings, and other preventive evaluations.",
+    },
+    {
+      question: "Can family medicine providers coordinate specialist care?",
+      answer:
+        "Yes. Family medicine physicians often coordinate referrals and communicate with specialists when advanced care is needed.",
+    },
+    {
+      question: "Is family medicine suitable for older adults?",
+      answer:
+        "Yes. Family medicine specialists provide healthcare for patients throughout every stage of life, including seniors.",
+    },
+    {
+      question: "Can family medicine help with lifestyle changes?",
+      answer:
+        "Yes. Providers offer guidance on nutrition, exercise, weight management, stress reduction, and healthy habits.",
+    },
+    {
+      question: "When should I choose family medicine instead of urgent care?",
+      answer:
+        "Family medicine is ideal for ongoing healthcare needs, preventive care, chronic condition management, and non-emergency medical concerns.",
+    },
+    {
+      question: "Why is preventive care important?",
+      answer:
+        "Preventive care helps identify health risks early, reduce complications, and support long-term health and wellness.",
+    },
+    {
+      question: "How can I schedule an appointment with a family medicine specialist?",
+      answer:
+        "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
+    },
+  ],
+
 };
 
 const TRUST_STATS = [
@@ -579,22 +579,16 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
-                <a
-                  href={`/specialties/${data.slug}/doctors`}
-                  className="sp-btn sp-btn--primary"
-                >
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a
-                  href={`/specialties/${data.slug}/book`}
-                  className="sp-btn sp-btn--ghost"
-                >
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
-              </div>
+               <div className="sp-hero__actions">
+              <a href="/Specialties" className="sp-btn sp-btn--primary">
+                <FiSearch size={17} />
+                Find Specialists
+              </a>
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                <FiCalendar size={17} />
+                Book Appointment
+              </a>
+            </div>
             </div>
           </div>
         </section>
@@ -699,7 +693,7 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                 Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
+                  Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
 
                 </p>
               </div>
@@ -727,7 +721,7 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                 We combine experienced family medicine providers with advanced technology to make primary healthcare more accessible, convenient, and personalized.
+                  We combine experienced family medicine providers with advanced technology to make primary healthcare more accessible, convenient, and personalized.
 
                 </p>
               </div>
@@ -780,33 +774,27 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
           <div className="sp-cta__inner">
             <Reveal>
               <span className="sp-cta__eyebrow">GET STARTED TODAY
-</span>
+              </span>
               <h2 className="sp-cta__heading">
-               Ready to Connect with a 
- <span>{data.name}</span> Specialist?
+                Ready to Connect with a
+                <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-               Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
+                Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
               </p>
             </Reveal>
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-                <a
-                  href={`/specialties/${data.slug}/doctors`}
-                  className="sp-btn sp-btn--primary-lg"
-                >
-                  <FiSearch size={18} />
-                  Find a Doctor
-                </a>
-                <a
-                  href={`/specialties/${data.slug}/book`}
-                  className="sp-btn sp-btn--ghost-lg"
-                >
-                  <FiCalendar size={18} />
-                  Book Appointment
-                </a>
-              </div>
+              <a href="/login" className="sp-btn sp-btn--primary-lg">
+                <FiSearch size={18} />
+                Find a Doctor
+              </a>
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
+                <FiCalendar size={18} />
+                Book Appointment
+              </a>
+            </div>
             </Reveal>
 
             <Reveal delay={130}>
