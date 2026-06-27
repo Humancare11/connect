@@ -29,31 +29,31 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 
-/* Import the shared stylesheet — same file for every service page */
 import "./newservices.css";
+import DoctorsNote from "../Conditions/DoctorsNote";
 
 /* ──────────────────────────────────────────────────────────────────────────
    DATA — one entry per service slug
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
-    slug: "general-consultation",
-    name: "GENERAL CONSULTATION",
-    tagline: "Trusted healthcare guidance for everyday health concerns.",
+    slug: "doctor-note-or-sick-notes",
+    name: "DOCTOR NOTES & SICK NOTES",
+    tagline: "Get the documentation you need without leaving home.",
     intro:
-      "Connect with a licensed healthcare provider through secure telemedicine services for personalized medical advice, symptom evaluation, and treatment recommendations. General consultations offer a convenient way to discuss non emergency health concerns and receive professional care from the comfort of home.",
+      "Request a Doctor Note or Sick Note through secure telemedicine services. Connect with a licensed healthcare provider, discuss your symptoms or health concerns, and receive supporting documentation when clinically appropriate for work, school, or personal needs.",
     accentColor: "#2563EB",
     heroIcon: FiMonitor,
     description:
-      "General consultations provide patients with convenient access to healthcare providers for a wide range of everyday medical concerns. Through Humancare Connect, patients can discuss symptoms, receive medical guidance, review treatment options, and get recommendations for appropriate next steps through secure virtual healthcare services.",
+      "Doctor Notes and Sick Notes are medical documents that may be provided by a healthcare professional after evaluating a patient's health condition. These documents are commonly used to verify an illness, medical condition, or healthcare visit for employers, schools, universities, or other organizations. Through Humancare Connect, eligible patients can connect with a licensed healthcare provider online to discuss their symptoms and determine whether documentation may be appropriate.",
     whyItMatters:
-      "Many health concerns can be addressed early through timely medical advice and evaluation. General consultations help patients better understand their symptoms, make informed healthcare decisions, and access professional support without the need for unnecessary clinic visits.",
+      "Many workplaces, schools, and institutions require medical documentation when illness affects attendance or daily responsibilities. Obtaining the appropriate documentation can help support leave requests, verify absences, and provide confirmation of a medical evaluation.",
     whoBenefits: [
-      "Adults experiencing new or ongoing health concerns",
-      "Individuals seeking medical advice and symptom evaluation",
-      "Patients managing common illnesses or minor conditions",
-      "Busy professionals looking for convenient healthcare access",
-      "Anyone seeking trusted healthcare guidance from licensed providers",
+      " Employees requiring documentation for work absences",
+      "Students needing verification for missed classes",
+      "Individuals recovering from short term illnesses",
+      "Individuals with heart disease or high cholesterolPeople requiring documentation following a medical consultation",
+      "Adults seeking convenient healthcare support from home",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
@@ -64,23 +64,23 @@ const SERVICES = {
     steps: [
       {
         Icon: FiSearch,
-        title: "Share Your Health Concerns",
-        body: "Tell us about your symptoms, medical history, current medications, and healthcare questions through our secure intake process.",
+        title: "Tell Us About Your Symptoms",
+        body: "Share information about your illness, symptoms, health concerns, and the reason documentation may be required.",
       },
       {
         Icon: FiFileText,
         title: "Connect With a Healthcare Provider",
-        body: "Meet with a licensed healthcare provider who will review your concerns and discuss your symptoms.",
+        body: "A licensed healthcare provider will review your information and discuss your condition during a virtual consultation.",
       },
       {
         Icon: FiVideo,
-        title: "Receive Personalized Medical Guidance",
-        body: "Your provider will offer recommendations, discuss treatment options, and help determine the most appropriate next steps for your care.",
+        title: "Complete Your Consultation",
+        body: "Join a secure online appointment from your phone, tablet, or computer and receive a professional medical evaluation.",
       },
       {
         Icon: FiPackage,
-        title: "Follow Your Care Plan",
-        body: "Receive guidance for ongoing care, symptom management, follow up recommendations, or referrals when needed.",
+        title: "Receive Your Documentation",
+        body: "If clinically appropriate, your provider may issue a Doctor Note or Sick Note that can be used for work, school, or other approved purposes.",
       },
     ],
     stats: [
@@ -91,76 +91,84 @@ const SERVICES = {
     ],
     faqs: [
       {
-        q: "What is a general consultation?",
-        a: "A general consultation is a virtual appointment with a licensed healthcare provider to discuss symptoms, health concerns, treatment options, and medical questions.",
+        q: "What is a Doctor Note?",
+        a: "A Doctor Note is a medical document provided by a healthcare professional confirming that a patient has been evaluated during a medical consultation.",
       },
       {
-        q: "What health concerns can be discussed during a general consultation?",
-        a: "Patients can discuss common illnesses, minor injuries, allergies, digestive concerns, headaches, fatigue, skin conditions, medication questions, and other non emergency health issues.",
+        q: "What is a Sick Note?",
+        a: "A Sick Note is documentation that may verify an illness, medical condition, or healthcare visit when clinically appropriate.",
       },
       {
-        q: "Can I speak with a healthcare provider online?",
-        a: "Yes. Humancare Connect offers secure telemedicine services that allow patients to connect with licensed healthcare providers remotely.",
+        q: "Can I request a Doctor Note online?",
+        a: "Yes. Eligible patients can complete a virtual consultation with a licensed healthcare provider through secure telemedicine services.",
       },
       {
-        q: "Are virtual general consultations effective?",
-        a: "Yes. Many common health concerns can be evaluated and managed through telehealth services when clinically appropriate.",
+        q: "Can I get a Sick Note for work?",
+        a: "A healthcare provider may issue documentation for work-related absences when clinically appropriate following an evaluation.",
       },
       {
-        q: "Do I need an appointment for a general consultation?",
-        a: "Yes. Patients can schedule an online appointment at a convenient time.",
+        q: "Can students request Sick Notes for school?",
+        a: "Yes. Students may request medical documentation when illness affects school attendance or academic responsibilities.",
       },
       {
-        q: "Can a provider diagnose my condition during a virtual visit?",
-        a: "Healthcare providers can assess symptoms, discuss concerns, and provide recommendations based on the information available during the consultation.",
+        q: "What conditions may qualify for a Doctor Note?",
+        a: "Common illnesses, infections, migraines, flu symptoms, gastrointestinal concerns, and other health conditions may be evaluated during a consultation.",
       },
       {
-        q: "What happens during a general consultation?",
-        a: "Your provider will review your symptoms, medical history, medications, and healthcare concerns before discussing appropriate recommendations.",
+        q: "How do healthcare providers determine eligibility for documentation?",
+        a: "Providers review symptoms, medical history, and clinical information before determining whether documentation is appropriate.",
       },
       {
-        q: "Can I ask questions about my medications?",
-        a: "Yes. General consultations are a convenient opportunity to discuss medications, side effects, and treatment plans.",
+        q: "Can I request documentation for a previous illness?",
+        a: "Documentation availability depends on the circumstances and provider assessment.",
       },
       {
-        q: "Is a general consultation confidential?",
-        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and confidentiality.",
+        q: "How long does a virtual consultation take?",
+        a: "Most appointments are completed within a short consultation, depending on the patient's needs.",
       },
       {
-        q: "Can I receive treatment recommendations during a consultation?",
-        a: "Yes. Healthcare providers can discuss treatment options, symptom management strategies, and next steps for care.",
+        q: "Can a provider refuse to issue a Doctor Note?",
+        a: "Yes. Documentation is provided based on clinical judgment and may not be appropriate in every situation.",
       },
       {
-        q: "Are general consultations suitable for preventive care?",
-        a: "Yes. Patients can discuss wellness goals, preventive healthcare measures, and healthy lifestyle recommendations.",
+        q: "Are online Doctor Notes legally valid?",
+        a: "Acceptance varies depending on employer, school, institution, and local requirements.",
       },
       {
-        q: "Can I get a referral during a general consultation?",
-        a: "When appropriate, healthcare providers may recommend referrals for additional evaluation or specialty care.",
+        q: "Can I use a Doctor Note for workplace leave requests?",
+        a: "Many employers accept medical documentation for illness-related absences, though individual policies may vary.",
       },
       {
-        q: "What are the benefits of telemedicine consultations?",
-        a: "Telemedicine services provide convenient access to healthcare providers, flexible scheduling, and care from the comfort of home.",
+        q: "Can I receive documentation for short term illnesses?",
+        a: "Yes. Many patients request documentation for temporary illnesses that affect daily activities.",
       },
       {
-        q: "Can I discuss multiple health concerns in one appointment?",
-        a: "Yes. Patients may discuss multiple non emergency healthcare concerns during a consultation.",
+        q: "Are virtual consultations secure?",
+        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient information.",
       },
       {
-        q: "Who can benefit from a general consultation?",
-        a: "Anyone seeking medical advice, symptom evaluation, treatment guidance, or healthcare support may benefit from a general consultation.",
+        q: "What information should I prepare before my appointment?",
+        a: "Be prepared to discuss your symptoms, medical history, medications, and the reason documentation is being requested.",
       },
       {
-        q: "Can virtual consultations help save time?",
-        a: "Yes. Telehealth services eliminate travel time and provide convenient access to healthcare providers.",
+        q: "Can I discuss return-to-work recommendations with my provider?",
+        a: "Yes. Providers can discuss recovery timelines and recommendations based on your condition.",
       },
       {
-        q: "What should I prepare before my appointment?",
-        a: "Patients should be prepared to discuss symptoms, medications, medical history, and any questions they would like addressed.",
+        q: "Why choose Humancare Connect for Doctor Notes and Sick Notes?",
+        a: "Humancare Connect offers secure telemedicine services, licensed healthcare providers, and convenient online consultations designed around your schedule.",
       },
       {
-        q: "When should I seek emergency medical care instead?",
-        a: "Emergency symptoms such as chest pain, severe breathing difficulties, stroke symptoms, or serious injuries require immediate emergency medical attention.",
+        q: "Can I access care from home?",
+        a: "Yes. Virtual healthcare services allow patients to connect with providers from home, work, or while traveling.",
+      },
+      {
+        q: "How quickly can I schedule an appointment?",
+        a: "Appointment availability varies, but many patients can access care without lengthy wait times.",
+      },
+      {
+        q: "How do I get started?",
+        a: "Simply schedule an online appointment, discuss your symptoms with a healthcare provider, and receive documentation when clinically appropriate.",
       },
     ],
   },
@@ -498,8 +506,7 @@ const Overview = ({ s }) => (
           <motion.div variants={fadeUp}>
             <SLabel text="Service Overview" />
             <h2 className="sp-overview__heading">
-              Your First Step Toward Better Health
-
+              What Are Doctor Notes & Sick Notes?
             </h2>
           </motion.div>
 
@@ -570,7 +577,7 @@ const HowItWorks = ({ s }) => (
             <span className="sp-hiw__heading--accent">simple.</span>
           </h2>
           <p className="sp-hiw__sub">
-            Accessing a general consultation through Humancare Connect is quick, secure, and designed around your healthcare needs.
+            Requesting a Doctor Note or Sick Note through Humancare Connect is quick, secure, and convenient.
           </p>
         </motion.div>
 
@@ -604,7 +611,7 @@ const HowItWorks = ({ s }) => (
           <s.heroIcon className="sp-ready-card__hero-icon" />
           <h3 className="sp-ready-card__heading">Ready to begin?</h3>
           <p className="sp-ready-card__desc">
-            Get convenient access to professional healthcare guidance through trusted telemedicine services. Receive personalized support without leaving home.
+            Access trusted telemedicine services from wherever you are. Complete your consultation online and receive medical documentation when appropriate.
 
           </p>
           <PrimaryBtn href="/login" fullWidth>
@@ -643,10 +650,10 @@ const Features = ({ s }) => (
       <motion.div variants={fadeUp} className="sp-features__header">
         <SLabel text="Features & Benefits" />
         <h2 className="sp-features__heading">
-          Comprehensive Care for
+          Understanding
           <br />
           <span className="sp-features__heading--accent">
-            Everyday Health Concerns
+            Doctor Notes & Sick Notes
           </span>
         </h2>
         <p className="sp-features__sub">
@@ -657,15 +664,16 @@ const Features = ({ s }) => (
       <motion.div variants={fadeUp} className="sp-features__card">
         <div className="sp-features__body">
           <p className="sp-features__para">
-            General consultations are one of the most common ways patients access healthcare services. Whether you are experiencing new symptoms, managing an ongoing condition, seeking preventive health advice, or looking for professional medical guidance, a general consultation provides an opportunity to discuss your concerns with a licensed healthcare provider.
+            Doctor Notes and Sick Notes are commonly requested when an illness, injury, or medical condition affects an individual's ability to attend work, school, or other responsibilities. These documents help confirm that a healthcare professional has evaluated the patient's condition and may provide recommendations regarding rest, recovery, or temporary activity limitations.
 
           </p>
           <p className="sp-features__para">
-            At Humancare Connect, our virtual healthcare services make it easier for patients to access quality care from virtually anywhere. Healthcare providers can evaluate symptoms, review health history, discuss treatment options, and recommend appropriate next steps based on individual needs. This convenient approach helps patients receive timely support while avoiding unnecessary delays in care.
+            Through Humancare Connect, patients can access telemedicine services and connect with licensed healthcare providers from the comfort of home. During the consultation, providers may review symptoms, discuss medical history, assess the patient's condition, and determine whether medical documentation is appropriate based on clinical findings.
 
           </p>
           <p className="sp-features__para">
-            General consultations may address a wide range of concerns, including cold and flu symptoms, allergies, minor infections, digestive issues, headaches, fatigue, skin concerns, medication questions, and overall wellness discussions. Through secure telehealth services, patients can access professional healthcare support when they need it most.
+            Doctor Notes and Sick Notes are frequently requested for common illnesses such as colds, flu symptoms, infections, migraines, gastrointestinal concerns, minor injuries, and other short term health conditions. By combining virtual healthcare services with professional medical evaluation, Humancare Connect helps patients access convenient healthcare support while reducing unnecessary clinic visits.
+
 
           </p>
         </div>
@@ -717,14 +725,11 @@ const WhyUs = ({ s }) => {
         <motion.div variants={fadeUp} className="sp-whyus__header">
           <SLabel text="Why Choose Us" />
           <h2 className="sp-whyus__heading">
-            Ready to Speak With a Healthcare Provider?
-
-            {" "}
-            {/* <span className="sp-whyus__heading--accent">measure.</span> */}
+            Results you can{" "}
+            <span className="sp-whyus__heading--accent">measure.</span>
           </h2>
           <p className="sp-whyus__sub">
-            Connect with a licensed healthcare provider through secure telemedicine services and receive personalized medical guidance for your health concerns. Get the care and answers you need from the comfort of home.
-
+            Numbers that represent real patients, real outcomes.
           </p>
         </motion.div>
 
@@ -852,15 +857,14 @@ const FinalCTA = () => (
     >
       <Pill>Start Today</Pill>
       <h2 className="sp-cta__heading">
-        Ready to Travel With Confidence?
+        Need Medical Documentation?
 
         <br />
-        <span className="sp-cta__heading--accent">Travel smarter with convenient virtual healthcare services designed around your schedule.
-        </span>
+        {/* <span className="sp-cta__heading--accent">Your Long Term Health?</span> */}
       </h2>
       <p className="sp-cta__body">
-        Whether you're preparing for an upcoming flight, recovering from a recent medical condition, or need documentation for airline requirements, Humancare Connect makes it simple to access professional travel health support.
-        Connect with a licensed healthcare provider through secure telemedicine services, complete your Fit to Fly assessment online, and receive medical clearance documentation when clinically appropriate.
+        Connect with a licensed healthcare provider through secure telemedicine services and discuss your healthcare needs from the comfort of home. Receive Doctor Notes or Sick Notes when clinically appropriate and access convenient virtual healthcare services designed to fit your schedule.
+
       </p>
 
       <div className="sp-cta__actions">
@@ -891,10 +895,9 @@ const FinalCTA = () => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    ROOT COMPONENT
-   Sets --accent CSS custom property on the root element so every
-   color-mix() reference in the shared CSS resolves to the correct hue.
+  
 ────────────────────────────────────────────────────────────────────────── */
-export default function GenralConsultation() {
+export default function DoctorNoteSockNote() {
   const [slug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
 
@@ -905,17 +908,16 @@ export default function GenralConsultation() {
       document.documentElement.style.removeProperty("--accent");
     };
   }, [s.accentColor]);
-
   return (
     <>
       <Helmet>
         <title>
-          General Consultation Online | Virtual Doctor Consultation | Humancare Connect
+          Doctor Notes & Sick Notes Online | Medical Documentation | Humancare Connect
 
         </title>
         <meta
           name="description"
-          content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
+          content="Need a Doctor Note or Sick Note? Connect with licensed healthcare providers online and receive medical documentation when clinically appropriate through secure telemedicine services."
         />
       </Helmet>
 

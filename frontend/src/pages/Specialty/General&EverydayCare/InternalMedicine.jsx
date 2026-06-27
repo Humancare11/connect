@@ -84,241 +84,241 @@ const SPECIALTY_DATA = {
   whenToConsult:
     "Schedule a visit with an internal medicine specialist if you have multiple health conditions, unexplained symptoms, chronic diseases, medication concerns, preventive care needs, or require a comprehensive adult health evaluation.",
 
-    keyServices: [
-  {
-    Icon: FiClipboard,
-    title: "Comprehensive Adult Health Evaluations",
-    description:
-      "Detailed assessments of overall health, medical history, risk factors, and ongoing healthcare needs.",
-  },
-  {
-    Icon: FiHeart,
-    title: "Chronic Disease Management",
-    description:
-      "Long-term care for conditions such as hypertension, diabetes, high cholesterol, thyroid disorders, and other chronic illnesses.",
-  },
-  {
-    Icon: FiTool,
-    title: "Medication Review & Optimization",
-    description:
-      "Evaluation of medications to ensure safety, effectiveness, and appropriate management of treatment plans.",
-  },
-  {
-    Icon: FiShield,
-    title: "Preventive Health Screenings",
-    description:
-      "Routine health screenings, risk assessments, and wellness services designed to prevent disease and detect health issues early.",
-  },
-  {
-    Icon: FiSearch,
-    title: "Diagnostic Evaluation of Complex Symptoms",
-    description:
-      "Investigation of unexplained symptoms and conditions involving multiple body systems.",
-  },
-  {
-    Icon: FiUsers,
-    title: "Coordinated Specialty Care",
-    description:
-      "Collaboration with specialists and healthcare providers to ensure comprehensive patient care and treatment continuity.",
-  },
-],
+  keyServices: [
+    {
+      Icon: FiClipboard,
+      title: "Comprehensive Adult Health Evaluations",
+      description:
+        "Detailed assessments of overall health, medical history, risk factors, and ongoing healthcare needs.",
+    },
+    {
+      Icon: FiHeart,
+      title: "Chronic Disease Management",
+      description:
+        "Long-term care for conditions such as hypertension, diabetes, high cholesterol, thyroid disorders, and other chronic illnesses.",
+    },
+    {
+      Icon: FiTool,
+      title: "Medication Review & Optimization",
+      description:
+        "Evaluation of medications to ensure safety, effectiveness, and appropriate management of treatment plans.",
+    },
+    {
+      Icon: FiShield,
+      title: "Preventive Health Screenings",
+      description:
+        "Routine health screenings, risk assessments, and wellness services designed to prevent disease and detect health issues early.",
+    },
+    {
+      Icon: FiSearch,
+      title: "Diagnostic Evaluation of Complex Symptoms",
+      description:
+        "Investigation of unexplained symptoms and conditions involving multiple body systems.",
+    },
+    {
+      Icon: FiUsers,
+      title: "Coordinated Specialty Care",
+      description:
+        "Collaboration with specialists and healthcare providers to ensure comprehensive patient care and treatment continuity.",
+    },
+  ],
 
- benefits: [
-  {
-    Icon: FiUserCheck,
-    title: "Expert Adult Healthcare",
-    description:
-      "Provides specialized medical care focused exclusively on adult health concerns.",
-  },
-  {
-    Icon: FiHeart,
-    title: "Comprehensive Disease Management",
-    description:
-      "Helps patients effectively manage chronic conditions and complex medical issues.",
-  },
-  {
-    Icon: FiSearch,
-    title: "Early Detection & Prevention",
-    description:
-      "Identifies health risks early through screenings, evaluations, and preventive care strategies.",
-  },
-  {
-    Icon: FiUsers,
-    title: "Personalized Long-Term Care",
-    description:
-      "Builds ongoing relationships that support better health outcomes and continuity of care.",
-  },
-],
+  benefits: [
+    {
+      Icon: FiUserCheck,
+      title: "Expert Adult Healthcare",
+      description:
+        "Provides specialized medical care focused exclusively on adult health concerns.",
+    },
+    {
+      Icon: FiHeart,
+      title: "Comprehensive Disease Management",
+      description:
+        "Helps patients effectively manage chronic conditions and complex medical issues.",
+    },
+    {
+      Icon: FiSearch,
+      title: "Early Detection & Prevention",
+      description:
+        "Identifies health risks early through screenings, evaluations, and preventive care strategies.",
+    },
+    {
+      Icon: FiUsers,
+      title: "Personalized Long-Term Care",
+      description:
+        "Builds ongoing relationships that support better health outcomes and continuity of care.",
+    },
+  ],
 
-conditions: [
-  {
-    Icon: FiTool,
-    name: "Medication Review",
-    description:
-      "Comprehensive evaluation of medications to ensure safe use, identify interactions, and optimize treatment effectiveness.",
-  },
-  {
-    Icon: FiCrosshair,
-    name: "Multi-System Complaints",
-    description:
-      "Assessment of symptoms affecting multiple organs or body systems that require a coordinated medical evaluation.",
-  },
-  {
-    Icon: FiSearch,
-    name: "Preventive Screening",
-    description:
-      "Routine screenings and risk assessments to detect disease early and support long-term health.",
-  },
-  {
-    Icon: FiAlertCircle,
-    name: "Undiagnosed Symptoms",
-    description:
-      "Investigation of persistent symptoms that have not yet received a clear diagnosis.",
-  },
-  {
-    Icon: FiHeart,
-    name: "Hypertension",
-    description:
-      "Management of high blood pressure to reduce cardiovascular risks and support overall health.",
-  },
-  {
-    Icon: MdOutlineBloodtype,
-    name: "Type 2 Diabetes",
-    description:
-      "Long-term monitoring and treatment to maintain healthy blood sugar levels and prevent complications.",
-  },
-  {
-    Icon: FiTrendingUp,
-    name: "High Cholesterol",
-    description:
-      "Evaluation and treatment of cholesterol disorders to support heart and vascular health.",
-  },
-  {
-    Icon: MdOutlineBiotech,
-    name: "Thyroid Disorders",
-    description:
-      "Diagnosis and management of thyroid-related conditions affecting metabolism, energy levels, and overall wellness.",
-  },
-  {
-    Icon: FiBatteryCharging,
-    name: "Chronic Fatigue",
-    description:
-      "Assessment of persistent tiredness, low energy, and underlying medical causes.",
-  },
-  {
-    Icon: FiActivity,
-    name: "Unexplained Weight Changes",
-    description:
-      "Evaluation of unexpected weight gain or loss and associated medical concerns.",
-  },
-  {
-    Icon: FiUsers,
-    name: "Multiple Chronic Conditions",
-    description:
-      "Coordinated care for patients managing several health conditions simultaneously.",
-  },
-  {
-    Icon: FiHeart,
-    name: "General Adult Health Concerns",
-    description:
-      "Comprehensive care for non-emergency medical issues affecting adults across all stages of life.",
-  },
-],
+  conditions: [
+    {
+      Icon: FiTool,
+      name: "Medication Review",
+      description:
+        "Comprehensive evaluation of medications to ensure safe use, identify interactions, and optimize treatment effectiveness.",
+    },
+    {
+      Icon: FiCrosshair,
+      name: "Multi-System Complaints",
+      description:
+        "Assessment of symptoms affecting multiple organs or body systems that require a coordinated medical evaluation.",
+    },
+    {
+      Icon: FiSearch,
+      name: "Preventive Screening",
+      description:
+        "Routine screenings and risk assessments to detect disease early and support long-term health.",
+    },
+    {
+      Icon: FiAlertCircle,
+      name: "Undiagnosed Symptoms",
+      description:
+        "Investigation of persistent symptoms that have not yet received a clear diagnosis.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Hypertension",
+      description:
+        "Management of high blood pressure to reduce cardiovascular risks and support overall health.",
+    },
+    {
+      Icon: MdOutlineBloodtype,
+      name: "Type 2 Diabetes",
+      description:
+        "Long-term monitoring and treatment to maintain healthy blood sugar levels and prevent complications.",
+    },
+    {
+      Icon: FiTrendingUp,
+      name: "High Cholesterol",
+      description:
+        "Evaluation and treatment of cholesterol disorders to support heart and vascular health.",
+    },
+    {
+      Icon: MdOutlineBiotech,
+      name: "Thyroid Disorders",
+      description:
+        "Diagnosis and management of thyroid-related conditions affecting metabolism, energy levels, and overall wellness.",
+    },
+    {
+      Icon: FiBatteryCharging,
+      name: "Chronic Fatigue",
+      description:
+        "Assessment of persistent tiredness, low energy, and underlying medical causes.",
+    },
+    {
+      Icon: FiActivity,
+      name: "Unexplained Weight Changes",
+      description:
+        "Evaluation of unexpected weight gain or loss and associated medical concerns.",
+    },
+    {
+      Icon: FiUsers,
+      name: "Multiple Chronic Conditions",
+      description:
+        "Coordinated care for patients managing several health conditions simultaneously.",
+    },
+    {
+      Icon: FiHeart,
+      name: "General Adult Health Concerns",
+      description:
+        "Comprehensive care for non-emergency medical issues affecting adults across all stages of life.",
+    },
+  ],
 
 
-faqs: [
-  {
-    question: "What is internal medicine?",
-    answer:
-      "Internal medicine is a medical specialty focused on the prevention, diagnosis, and treatment of diseases affecting adults.",
-  },
-  {
-    question: "What does an internal medicine specialist treat?",
-    answer:
-      "Internal medicine specialists treat chronic diseases, complex medical conditions, preventive health concerns, unexplained symptoms, and adult healthcare needs.",
-  },
-  {
-    question: "How is internal medicine different from family medicine?",
-    answer:
-      "Internal medicine focuses exclusively on adult healthcare, while family medicine provides care for patients of all ages.",
-  },
-  {
-    question: "When should I see an internal medicine specialist?",
-    answer:
-      "You should consider seeing an internist for chronic disease management, complex symptoms, preventive care, or ongoing adult healthcare needs.",
-  },
-  {
-    question: "What is a medication review?",
-    answer:
-      "A medication review evaluates prescriptions, supplements, and treatment plans to ensure safety, effectiveness, and proper use.",
-  },
-  {
-    question: "Why are preventive screenings important?",
-    answer:
-      "Preventive screenings help identify health conditions early, often before symptoms develop, allowing for earlier treatment and better outcomes.",
-  },
-  {
-    question: "What are multi-system complaints?",
-    answer:
-      "Multi-system complaints involve symptoms affecting multiple organs or body systems and often require a comprehensive medical evaluation.",
-  },
-  {
-    question: "Can internal medicine specialists diagnose unexplained symptoms?",
-    answer:
-      "Yes. Internists are trained to investigate complex and undiagnosed symptoms through detailed evaluations and testing.",
-  },
-  {
-    question: "Can an internist manage diabetes?",
-    answer:
-      "Yes. Internal medicine specialists commonly manage diabetes and related health concerns.",
-  },
-  {
-    question: "Do internal medicine physicians treat hypertension?",
-    answer:
-      "Yes. They diagnose, monitor, and manage high blood pressure and cardiovascular risk factors.",
-  },
-  {
-    question: "Can internal medicine specialists coordinate specialist care?",
-    answer:
-      "Yes. Internists frequently work with specialists and coordinate treatment plans for patients with complex conditions.",
-  },
-  {
-    question: "What happens during an internal medicine appointment?",
-    answer:
-      "Your provider will review your medical history, symptoms, medications, health risks, and recommend appropriate testing or treatment.",
-  },
-  {
-    question: "Are telehealth appointments available?",
-    answer:
-      "Yes. Many consultations, follow-up visits, medication reviews, and chronic disease management appointments can be conducted virtually.",
-  },
-  {
-    question: "Can internal medicine specialists treat thyroid disorders?",
-    answer:
-      "Yes. Internists commonly diagnose and manage hypothyroidism, hyperthyroidism, and other thyroid-related conditions.",
-  },
-  {
-    question: "How often should adults have preventive screenings?",
-    answer:
-      "Screening recommendations vary based on age, health history, risk factors, and medical guidelines.",
-  },
-  {
-    question: "Can internal medicine specialists help with chronic fatigue?",
-    answer:
-      "Yes. They evaluate potential medical causes of fatigue and develop personalized treatment strategies.",
-  },
-  {
-    question: "Why is continuity of care important?",
-    answer:
-      "Long-term relationships with a healthcare provider help improve disease management, preventive care, and overall health outcomes.",
-  },
-  {
-    question: "How can I schedule an appointment with an internal medicine specialist?",
-    answer:
-      "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
-  },
-],
-  
+  faqs: [
+    {
+      question: "What is internal medicine?",
+      answer:
+        "Internal medicine is a medical specialty focused on the prevention, diagnosis, and treatment of diseases affecting adults.",
+    },
+    {
+      question: "What does an internal medicine specialist treat?",
+      answer:
+        "Internal medicine specialists treat chronic diseases, complex medical conditions, preventive health concerns, unexplained symptoms, and adult healthcare needs.",
+    },
+    {
+      question: "How is internal medicine different from family medicine?",
+      answer:
+        "Internal medicine focuses exclusively on adult healthcare, while family medicine provides care for patients of all ages.",
+    },
+    {
+      question: "When should I see an internal medicine specialist?",
+      answer:
+        "You should consider seeing an internist for chronic disease management, complex symptoms, preventive care, or ongoing adult healthcare needs.",
+    },
+    {
+      question: "What is a medication review?",
+      answer:
+        "A medication review evaluates prescriptions, supplements, and treatment plans to ensure safety, effectiveness, and proper use.",
+    },
+    {
+      question: "Why are preventive screenings important?",
+      answer:
+        "Preventive screenings help identify health conditions early, often before symptoms develop, allowing for earlier treatment and better outcomes.",
+    },
+    {
+      question: "What are multi-system complaints?",
+      answer:
+        "Multi-system complaints involve symptoms affecting multiple organs or body systems and often require a comprehensive medical evaluation.",
+    },
+    {
+      question: "Can internal medicine specialists diagnose unexplained symptoms?",
+      answer:
+        "Yes. Internists are trained to investigate complex and undiagnosed symptoms through detailed evaluations and testing.",
+    },
+    {
+      question: "Can an internist manage diabetes?",
+      answer:
+        "Yes. Internal medicine specialists commonly manage diabetes and related health concerns.",
+    },
+    {
+      question: "Do internal medicine physicians treat hypertension?",
+      answer:
+        "Yes. They diagnose, monitor, and manage high blood pressure and cardiovascular risk factors.",
+    },
+    {
+      question: "Can internal medicine specialists coordinate specialist care?",
+      answer:
+        "Yes. Internists frequently work with specialists and coordinate treatment plans for patients with complex conditions.",
+    },
+    {
+      question: "What happens during an internal medicine appointment?",
+      answer:
+        "Your provider will review your medical history, symptoms, medications, health risks, and recommend appropriate testing or treatment.",
+    },
+    {
+      question: "Are telehealth appointments available?",
+      answer:
+        "Yes. Many consultations, follow-up visits, medication reviews, and chronic disease management appointments can be conducted virtually.",
+    },
+    {
+      question: "Can internal medicine specialists treat thyroid disorders?",
+      answer:
+        "Yes. Internists commonly diagnose and manage hypothyroidism, hyperthyroidism, and other thyroid-related conditions.",
+    },
+    {
+      question: "How often should adults have preventive screenings?",
+      answer:
+        "Screening recommendations vary based on age, health history, risk factors, and medical guidelines.",
+    },
+    {
+      question: "Can internal medicine specialists help with chronic fatigue?",
+      answer:
+        "Yes. They evaluate potential medical causes of fatigue and develop personalized treatment strategies.",
+    },
+    {
+      question: "Why is continuity of care important?",
+      answer:
+        "Long-term relationships with a healthcare provider help improve disease management, preventive care, and overall health outcomes.",
+    },
+    {
+      question: "How can I schedule an appointment with an internal medicine specialist?",
+      answer:
+        "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
+    },
+  ],
+
 };
 
 const TRUST_STATS = [
@@ -329,7 +329,7 @@ const TRUST_STATS = [
 ];
 
 const TRUST_CARDS = [
-    {
+  {
     Icon: FiAward,
     title: "Board-Certified Specialists",
     description:
@@ -586,22 +586,16 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
-                <a
-                  href={`/specialties/${data.slug}/doctors`}
-                  className="sp-btn sp-btn--primary"
-                >
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a
-                  href={`/specialties/${data.slug}/book`}
-                  className="sp-btn sp-btn--ghost"
-                >
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
-              </div>
+               <div className="sp-hero__actions">
+              <a href="/Specialties" className="sp-btn sp-btn--primary">
+                <FiSearch size={17} />
+                Find Specialists
+              </a>
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                <FiCalendar size={17} />
+                Book Appointment
+              </a>
+            </div>
             </div>
           </div>
         </section>
@@ -706,7 +700,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                 Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
+                  Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
 
                 </p>
               </div>
@@ -787,33 +781,27 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
           <div className="sp-cta__inner">
             <Reveal>
               <span className="sp-cta__eyebrow">GET STARTED TODAY
-</span>
+              </span>
               <h2 className="sp-cta__heading">
-               Ready to Connect with a 
- <span>{data.name}</span> Specialist?
+                Ready to Connect with a
+                <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-               Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
+                Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
               </p>
             </Reveal>
 
             <Reveal delay={80}>
-              <div className="sp-cta__actions">
-                <a
-                  href={`/specialties/${data.slug}/doctors`}
-                  className="sp-btn sp-btn--primary-lg"
-                >
-                  <FiSearch size={18} />
-                  Find a Doctor
-                </a>
-                <a
-                  href={`/specialties/${data.slug}/book`}
-                  className="sp-btn sp-btn--ghost-lg"
-                >
-                  <FiCalendar size={18} />
-                  Book Appointment
-                </a>
-              </div>
+             <div className="sp-cta__actions">
+              <a href="/login" className="sp-btn sp-btn--primary-lg">
+                <FiSearch size={18} />
+                Find a Doctor
+              </a>
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
+                <FiCalendar size={18} />
+                Book Appointment
+              </a>
+            </div>
             </Reveal>
 
             <Reveal delay={130}>

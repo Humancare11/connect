@@ -84,239 +84,239 @@ const SPECIALTY_DATA = {
   whenToConsult:
     "Schedule a visit with a General Physician if you experience symptoms such as fever, persistent cough, fatigue, headaches, body aches, digestive issues, infections, or any non-emergency health concern requiring medical attention.",
 
-keyServices: [
-  {
-    Icon: FiThermometer,
-    title: "Acute Illness Diagnosis & Treatment",
-    description:
-      "Evaluation and treatment of common illnesses such as colds, flu, infections, coughs, and fever.",
-  },
-  {
-    Icon: FiShield,
-    title: "Preventive Healthcare Services",
-    description:
-      "Routine health screenings, wellness assessments, vaccinations, and preventive care recommendations.",
-  },
-  {
-    Icon: FiHeart,
-    title: "Chronic Disease Monitoring",
-    description:
-      "Ongoing care for common chronic conditions such as hypertension, diabetes, asthma, and high cholesterol.",
-  },
-  {
-    Icon: FiSearch,
-    title: "Symptom Evaluation & Management",
-    description:
-      "Assessment of unexplained symptoms and development of personalized treatment plans.",
-  },
-  {
-    Icon: FiTrendingUp,
-    title: "Health Education & Lifestyle Guidance",
-    description:
-      "Support for nutrition, exercise, stress management, and healthy lifestyle habits.",
-  },
-  {
-    Icon: FiUsers,
-    title: "Care Coordination & Referrals",
-    description:
-      "Referrals to specialists and coordination of care when advanced medical evaluation is needed.",
-  },
-],
+  keyServices: [
+    {
+      Icon: FiThermometer,
+      title: "Acute Illness Diagnosis & Treatment",
+      description:
+        "Evaluation and treatment of common illnesses such as colds, flu, infections, coughs, and fever.",
+    },
+    {
+      Icon: FiShield,
+      title: "Preventive Healthcare Services",
+      description:
+        "Routine health screenings, wellness assessments, vaccinations, and preventive care recommendations.",
+    },
+    {
+      Icon: FiHeart,
+      title: "Chronic Disease Monitoring",
+      description:
+        "Ongoing care for common chronic conditions such as hypertension, diabetes, asthma, and high cholesterol.",
+    },
+    {
+      Icon: FiSearch,
+      title: "Symptom Evaluation & Management",
+      description:
+        "Assessment of unexplained symptoms and development of personalized treatment plans.",
+    },
+    {
+      Icon: FiTrendingUp,
+      title: "Health Education & Lifestyle Guidance",
+      description:
+        "Support for nutrition, exercise, stress management, and healthy lifestyle habits.",
+    },
+    {
+      Icon: FiUsers,
+      title: "Care Coordination & Referrals",
+      description:
+        "Referrals to specialists and coordination of care when advanced medical evaluation is needed.",
+    },
+  ],
 
- benefits: [
-  {
-    Icon: FiSearch,
-    title: "Early Diagnosis & Treatment",
-    description:
-      "Identifies health concerns quickly and helps prevent minor conditions from becoming more serious.",
-  },
-  {
-    Icon: FiShield,
-    title: "Convenient Everyday Care",
-    description:
-      "Provides accessible healthcare for common illnesses, routine needs, and preventive services.",
-  },
-  {
-    Icon: FiUsers,
-    title: "Continuity of Care",
-    description:
-      "Builds long-term relationships that support better health outcomes and personalized treatment.",
-  },
-  {
-    Icon: FiHeart,
-    title: "Whole-Person Healthcare",
-    description:
-      "Addresses physical health, preventive care, lifestyle factors, and overall wellness in one place.",
-  },
-],
+  benefits: [
+    {
+      Icon: FiSearch,
+      title: "Early Diagnosis & Treatment",
+      description:
+        "Identifies health concerns quickly and helps prevent minor conditions from becoming more serious.",
+    },
+    {
+      Icon: FiShield,
+      title: "Convenient Everyday Care",
+      description:
+        "Provides accessible healthcare for common illnesses, routine needs, and preventive services.",
+    },
+    {
+      Icon: FiUsers,
+      title: "Continuity of Care",
+      description:
+        "Builds long-term relationships that support better health outcomes and personalized treatment.",
+    },
+    {
+      Icon: FiHeart,
+      title: "Whole-Person Healthcare",
+      description:
+        "Addresses physical health, preventive care, lifestyle factors, and overall wellness in one place.",
+    },
+  ],
 
-conditions: [
-  {
-    Icon: FiActivity,
-    name: "Body Aches",
-    description:
-      "Evaluation and treatment of muscle pain, body soreness, aches, and discomfort associated with illness or physical strain.",
-  },
-  {
-    Icon: FiThermometer,
-    name: "Cold & Flu",
-    description:
-      "Diagnosis and management of cold symptoms, influenza, congestion, sore throat, cough, and seasonal illnesses.",
-  },
-  {
-    Icon: FiWind,
-    name: "Cough",
-    description:
-      "Assessment and treatment of acute and persistent cough caused by infections, allergies, or respiratory conditions.",
-  },
-  {
-    Icon: FiBatteryCharging,
-    name: "Fatigue",
-    description:
-      "Evaluation of ongoing tiredness, low energy levels, weakness, and unexplained fatigue.",
-  },
-  {
-    Icon: FiAlertCircle,
-    name: "Fever",
-    description:
-      "Diagnosis and treatment of fever, chills, infection-related symptoms, and illness-related temperature changes.",
-  },
-  {
-    Icon: FiTarget,
-    name: "Headache",
-    description:
-      "Management of tension headaches, illness-related headaches, and common headache symptoms.",
-  },
-  {
-    Icon: FiShield,
-    name: "Minor Infections",
-    description:
-      "Treatment for common bacterial and viral infections affecting the respiratory system, skin, urinary tract, and more.",
-  },
-  {
-    Icon: FiDroplet,
-    name: "Nausea & Vomiting",
-    description:
-      "Care for digestive symptoms, stomach discomfort, nausea, vomiting, and related health concerns.",
-  },
-  {
-    Icon: FiEye,
-    name: "Pink Eye",
-    description:
-      "Diagnosis and treatment of conjunctivitis causing redness, irritation, discharge, and eye discomfort.",
-  },
-  {
-    Icon: FiCloud,
-    name: "Sinus Infection",
-    description:
-      "Evaluation and management of sinus pressure, facial pain, congestion, and sinus-related symptoms.",
-  },
-  {
-    Icon: FiCalendar,
-    name: "Seasonal Illnesses",
-    description:
-      "Treatment for common viral illnesses, seasonal infections, and flu-related conditions.",
-  },
-  {
-    Icon: FiHeart,
-    name: "General Health Concerns",
-    description:
-      "Comprehensive evaluation of everyday symptoms, wellness concerns, and non-emergency medical conditions.",
-  },
-],
-faqs: [
-  {
-    question: "What does a General Physician do?",
-    answer:
-      "A General Physician diagnoses, treats, and manages a wide range of common illnesses, chronic conditions, and preventive healthcare needs.",
-  },
-  {
-    question: "When should I see a General Physician?",
-    answer:
-      "You should see a General Physician for common illnesses, routine check-ups, fever, cough, headaches, fatigue, infections, and preventive healthcare.",
-  },
-  {
-    question: "Can a General Physician treat cold and flu symptoms?",
-    answer:
-      "Yes. General Physicians diagnose and treat colds, influenza, cough, congestion, sore throat, and related symptoms.",
-  },
-  {
-    question: "Can a General Physician prescribe medications?",
-    answer:
-      "Yes. They can prescribe medications when appropriate for diagnosed conditions and treatment plans.",
-  },
-  {
-    question: "What should I do if I have a persistent fever?",
-    answer:
-      "A persistent fever should be evaluated by a healthcare provider to determine the underlying cause and appropriate treatment.",
-  },
-  {
-    question: "Can a General Physician treat headaches?",
-    answer:
-      "Yes. General Physicians evaluate common headache causes and recommend treatment based on symptoms and medical history.",
-  },
-  {
-    question: "What causes fatigue?",
-    answer:
-      "Fatigue can result from illness, stress, poor sleep, nutritional deficiencies, chronic conditions, or lifestyle factors.",
-  },
-  {
-    question: "Can a General Physician treat minor infections?",
-    answer:
-      "Yes. They diagnose and manage many common bacterial and viral infections.",
-  },
-  {
-    question: "What is pink eye?",
-    answer:
-      "Pink eye, or conjunctivitis, is an inflammation of the eye causing redness, irritation, discharge, and discomfort.",
-  },
-  {
-    question: "Can a General Physician help with sinus infections?",
-    answer:
-      "Yes. They evaluate sinus symptoms and recommend appropriate treatment options.",
-  },
-  {
-    question: "What happens during a General Physician appointment?",
-    answer:
-      "Your provider will review symptoms, medical history, perform an evaluation, discuss treatment options, and recommend follow-up care if needed.",
-  },
-  {
-    question: "Can General Physicians manage chronic diseases?",
-    answer:
-      "Yes. They commonly manage conditions such as diabetes, hypertension, asthma, and high cholesterol.",
-  },
-  {
-    question: "Are telehealth appointments available?",
-    answer:
-      "Yes. Many consultations for common illnesses, follow-ups, and routine healthcare needs can be completed through telehealth.",
-  },
-  {
-    question: "Can I see a General Physician for preventive care?",
-    answer:
-      "Absolutely. Preventive services such as wellness exams, screenings, vaccinations, and health counseling are important parts of primary care.",
-  },
-  {
-    question: "What symptoms require immediate medical attention?",
-    answer:
-      "Severe chest pain, difficulty breathing, sudden weakness, loss of consciousness, or other emergency symptoms require urgent medical care.",
-  },
-  {
-    question: "How often should I have a routine health check-up?",
-    answer:
-      "Most adults benefit from annual wellness visits, though recommendations may vary based on age and health status.",
-  },
-  {
-    question: "Can a General Physician refer me to a specialist?",
-    answer:
-      "Yes. If specialized care is needed, your General Physician can coordinate referrals and ongoing care.",
-  },
-  {
-    question: "How can I schedule an appointment with a General Physician?",
-    answer:
-      "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
-  },
-],
-  
+  conditions: [
+    {
+      Icon: FiActivity,
+      name: "Body Aches",
+      description:
+        "Evaluation and treatment of muscle pain, body soreness, aches, and discomfort associated with illness or physical strain.",
+    },
+    {
+      Icon: FiThermometer,
+      name: "Cold & Flu",
+      description:
+        "Diagnosis and management of cold symptoms, influenza, congestion, sore throat, cough, and seasonal illnesses.",
+    },
+    {
+      Icon: FiWind,
+      name: "Cough",
+      description:
+        "Assessment and treatment of acute and persistent cough caused by infections, allergies, or respiratory conditions.",
+    },
+    {
+      Icon: FiBatteryCharging,
+      name: "Fatigue",
+      description:
+        "Evaluation of ongoing tiredness, low energy levels, weakness, and unexplained fatigue.",
+    },
+    {
+      Icon: FiAlertCircle,
+      name: "Fever",
+      description:
+        "Diagnosis and treatment of fever, chills, infection-related symptoms, and illness-related temperature changes.",
+    },
+    {
+      Icon: FiTarget,
+      name: "Headache",
+      description:
+        "Management of tension headaches, illness-related headaches, and common headache symptoms.",
+    },
+    {
+      Icon: FiShield,
+      name: "Minor Infections",
+      description:
+        "Treatment for common bacterial and viral infections affecting the respiratory system, skin, urinary tract, and more.",
+    },
+    {
+      Icon: FiDroplet,
+      name: "Nausea & Vomiting",
+      description:
+        "Care for digestive symptoms, stomach discomfort, nausea, vomiting, and related health concerns.",
+    },
+    {
+      Icon: FiEye,
+      name: "Pink Eye",
+      description:
+        "Diagnosis and treatment of conjunctivitis causing redness, irritation, discharge, and eye discomfort.",
+    },
+    {
+      Icon: FiCloud,
+      name: "Sinus Infection",
+      description:
+        "Evaluation and management of sinus pressure, facial pain, congestion, and sinus-related symptoms.",
+    },
+    {
+      Icon: FiCalendar,
+      name: "Seasonal Illnesses",
+      description:
+        "Treatment for common viral illnesses, seasonal infections, and flu-related conditions.",
+    },
+    {
+      Icon: FiHeart,
+      name: "General Health Concerns",
+      description:
+        "Comprehensive evaluation of everyday symptoms, wellness concerns, and non-emergency medical conditions.",
+    },
+  ],
+  faqs: [
+    {
+      question: "What does a General Physician do?",
+      answer:
+        "A General Physician diagnoses, treats, and manages a wide range of common illnesses, chronic conditions, and preventive healthcare needs.",
+    },
+    {
+      question: "When should I see a General Physician?",
+      answer:
+        "You should see a General Physician for common illnesses, routine check-ups, fever, cough, headaches, fatigue, infections, and preventive healthcare.",
+    },
+    {
+      question: "Can a General Physician treat cold and flu symptoms?",
+      answer:
+        "Yes. General Physicians diagnose and treat colds, influenza, cough, congestion, sore throat, and related symptoms.",
+    },
+    {
+      question: "Can a General Physician prescribe medications?",
+      answer:
+        "Yes. They can prescribe medications when appropriate for diagnosed conditions and treatment plans.",
+    },
+    {
+      question: "What should I do if I have a persistent fever?",
+      answer:
+        "A persistent fever should be evaluated by a healthcare provider to determine the underlying cause and appropriate treatment.",
+    },
+    {
+      question: "Can a General Physician treat headaches?",
+      answer:
+        "Yes. General Physicians evaluate common headache causes and recommend treatment based on symptoms and medical history.",
+    },
+    {
+      question: "What causes fatigue?",
+      answer:
+        "Fatigue can result from illness, stress, poor sleep, nutritional deficiencies, chronic conditions, or lifestyle factors.",
+    },
+    {
+      question: "Can a General Physician treat minor infections?",
+      answer:
+        "Yes. They diagnose and manage many common bacterial and viral infections.",
+    },
+    {
+      question: "What is pink eye?",
+      answer:
+        "Pink eye, or conjunctivitis, is an inflammation of the eye causing redness, irritation, discharge, and discomfort.",
+    },
+    {
+      question: "Can a General Physician help with sinus infections?",
+      answer:
+        "Yes. They evaluate sinus symptoms and recommend appropriate treatment options.",
+    },
+    {
+      question: "What happens during a General Physician appointment?",
+      answer:
+        "Your provider will review symptoms, medical history, perform an evaluation, discuss treatment options, and recommend follow-up care if needed.",
+    },
+    {
+      question: "Can General Physicians manage chronic diseases?",
+      answer:
+        "Yes. They commonly manage conditions such as diabetes, hypertension, asthma, and high cholesterol.",
+    },
+    {
+      question: "Are telehealth appointments available?",
+      answer:
+        "Yes. Many consultations for common illnesses, follow-ups, and routine healthcare needs can be completed through telehealth.",
+    },
+    {
+      question: "Can I see a General Physician for preventive care?",
+      answer:
+        "Absolutely. Preventive services such as wellness exams, screenings, vaccinations, and health counseling are important parts of primary care.",
+    },
+    {
+      question: "What symptoms require immediate medical attention?",
+      answer:
+        "Severe chest pain, difficulty breathing, sudden weakness, loss of consciousness, or other emergency symptoms require urgent medical care.",
+    },
+    {
+      question: "How often should I have a routine health check-up?",
+      answer:
+        "Most adults benefit from annual wellness visits, though recommendations may vary based on age and health status.",
+    },
+    {
+      question: "Can a General Physician refer me to a specialist?",
+      answer:
+        "Yes. If specialized care is needed, your General Physician can coordinate referrals and ongoing care.",
+    },
+    {
+      question: "How can I schedule an appointment with a General Physician?",
+      answer:
+        "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
+    },
+  ],
+
 };
 
 const TRUST_STATS = [
@@ -585,22 +585,16 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
-                <a
-                  href={`/specialties/${data.slug}/doctors`}
-                  className="sp-btn sp-btn--primary"
-                >
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a
-                  href={`/specialties/${data.slug}/book`}
-                  className="sp-btn sp-btn--ghost"
-                >
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
-              </div>
+               <div className="sp-hero__actions">
+              <a href="/Specialties" className="sp-btn sp-btn--primary">
+                <FiSearch size={17} />
+                Find Specialists
+              </a>
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                <FiCalendar size={17} />
+                Book Appointment
+              </a>
+            </div>
             </div>
           </div>
         </section>
@@ -705,7 +699,7 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                 Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
+                  Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
 
                 </p>
               </div>
@@ -786,33 +780,28 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
           <div className="sp-cta__inner">
             <Reveal>
               <span className="sp-cta__eyebrow">GET STARTED TODAY
-</span>
+              </span>
               <h2 className="sp-cta__heading">
-               Ready to Connect with a 
- <span>{data.name}</span> Specialist?
+                Ready to Connect with a
+                <span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-               Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
+                Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
               </p>
             </Reveal>
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-                <a
-                  href={`/specialties/${data.slug}/doctors`}
-                  className="sp-btn sp-btn--primary-lg"
-                >
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
                   <FiSearch size={18} />
                   Find a Doctor
                 </a>
-                <a
-                  href={`/specialties/${data.slug}/book`}
-                  className="sp-btn sp-btn--ghost-lg"
-                >
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
                   <FiCalendar size={18} />
                   Book Appointment
                 </a>
               </div>
+
             </Reveal>
 
             <Reveal delay={130}>

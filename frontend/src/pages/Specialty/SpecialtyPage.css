@@ -35,6 +35,7 @@
   border-radius: 100px;
   padding: 4px 14px;
   margin-bottom: 12px;
+  /* width: 300px; */
 }
 
 /* ── Container ─────────────────────────────────────────────────────────────── */
@@ -332,6 +333,7 @@
   font-weight: 800;
   color: #0f172a;
   margin: 0;
+
 }
 
 /* ── Key Services grid ─────────────────────────────────────────────────────── */
@@ -471,6 +473,7 @@
   font-weight: 800;
   color: #0f172a;
   margin: 0 0 12px;
+  /* text-align: left; */
 }
 .sp-conditions__head p {
   color: #64748b;
@@ -478,6 +481,7 @@
   margin: 0 auto;
   font-size: 15px;
   line-height: 1.65;
+
 }
 
 .sp-conditions__grid {
@@ -626,13 +630,15 @@
   font-weight: 800;
   color: #0f172a;
   margin: 0 0 12px;
+  text-align: left;
 }
 .sp-trust__head p {
   color: #64748b;
-  max-width: 520px;
-  margin: 0 auto;
+  max-width: 600px;
+  /* margin: 0 auto; */
   font-size: 15px;
   line-height: 1.65;
+  text-align: left;
 }
 
 .sp-trust-grid {

@@ -59,12 +59,13 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Services </h5>
           <a href="/online-prescription-refills">Online Prescription Refill</a>
-          <a href="/chronic-care-management">Chronic Care Management</a>
-          <a href="/general-consultation">General Consultation</a>
-          <a href="/mental-health-support">Mental Health Support</a>
-          <a href="/sexual-health">Sexual Health</a>
-          <a href="/weight-loss-programs">Weight Loss Programs</a>
-          <a href="/vertigo">Vertigo</a>
+          <a href="/appointment-booking">Online Doctor Consultation</a>
+          <a href="/doctor-note">Sick Notes</a>
+          <a href="/lab-requestions">Lab Requestion</a>
+          <a href="/fit-to-fly">Fit to Fly Certifications</a>
+          {/* <a href="/sexual-health">Sexual Health</a>
+          <a href="/weight-loss-programs">Weight Loss Programs</a> */}
+          
         </div>
 
         <div className="footer-col footer-col-dropdown">
@@ -105,6 +106,23 @@ export default function Footer() {
                 { label: "Cookie Policy", href: "/cookie-policy" },
                 { label: "Refund & Cancellation Policy", href: "/refund-and-cancellation-policy" },
                 { label: "Accessibility Statement", href: "/accessibility-statement" },
+              ],
+            },
+            {
+              key: "agrement",
+              label: "Terms & Agreements",
+              children: [
+                { label: "Provider Agreement", href: "/tele-health-provider-agreement" },
+                
+              ],
+            },
+            {
+              key: "clinical",
+              label: "Clinical & Provider Policies",
+              children: [
+                { label: "Prescription Handling", href: "/prescription-handling-policy" },
+                { label: "Teleconsultation Workflow", href: "/teleconsultation-workflow-policy" },
+                { label: "Physician Credentialing", href: "/physician-credentialing-policy" },
               ],
             },
           ].map(({ key, label, children }) => (

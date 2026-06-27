@@ -85,226 +85,226 @@ const SPECIALTY_DATA = {
     whenToConsult:
         "Consider seeking support if emotional symptoms interfere with daily life, relationships, parenting, work performance, sleep quality, or overall well-being.",
 
-keyServices: [
-  {
-    Icon: FiSearch,
-    title: "Mental Health Evaluations",
-    description:
-      "Comprehensive assessments focused on emotional wellness and psychological health.",
-  },
-  {
-    Icon: FiHeart,
-    title: "Pregnancy & Postpartum Support",
-    description:
-      "Specialized care for mental health concerns before and after childbirth.",
-  },
-  {
-    Icon: FiActivity,
-    title: "Hormonal Mood Health Assessments",
-    description:
-      "Evaluation of emotional symptoms related to menstrual cycles and hormonal changes.",
-  },
-  {
-    Icon: FiAlertCircle,
-    title: "Anxiety Management Support",
-    description:
-      "Personalized strategies to manage worry, stress, and emotional overwhelm.",
-  },
-  {
-    Icon: FiUsers,
-    title: "Emotional Wellness Counseling",
-    description:
-      "Support for building resilience, coping skills, and long-term mental wellness.",
-  },
-  {
-    Icon: FiRefreshCw,
-    title: "Ongoing Mental Health Care",
-    description:
-      "Continued guidance and treatment planning tailored to your needs.",
-  },
-],
-   benefits: [
-  {
-    Icon: FiHeart,
-    title: "Improved Emotional Well-Being",
-    description:
-      "Receive support that helps improve mood, confidence, and daily functioning.",
-  },
-  {
-    Icon: FiActivity,
-    title: "Better Symptom Management",
-    description:
-      "Learn strategies to manage anxiety, mood changes, and emotional challenges.",
-  },
-  {
-    Icon: FiUsers,
-    title: "Stronger Support Systems",
-    description:
-      "Access professional guidance during important life transitions.",
-  },
-  {
-    Icon: FiTrendingUp,
-    title: "Healthier Quality of Life",
-    description:
-      "Improve relationships, self-care, and overall wellness through mental health support.",
-  },
-],
-   conditions: [
-  {
-    Icon: FiAlertCircle,
-    name: "Perinatal Anxiety",
-    description:
-      "Support for anxiety experienced during pregnancy and the postpartum period.",
-  },
-  {
-    Icon: FiActivity,
-    name: "PMDD",
-    description:
-      "Evaluation and management of Premenstrual Dysphoric Disorder and severe menstrual-related mood symptoms.",
-  },
-  {
-    Icon: FiHeart,
-    name: "Postnatal Depression",
-    description:
-      "Support for emotional challenges and depression experienced after childbirth.",
-  },
-  {
-    Icon: FiTrendingUp,
-    name: "Pregnancy-Related Stress",
-    description:
-      "Guidance for emotional concerns associated with pregnancy and major life changes.",
-  },
-  {
-    Icon: FiUserCheck,
-    name: "Hormonal Mood Changes",
-    description:
-      "Assessment of emotional symptoms influenced by hormonal fluctuations.",
-  },
-  {
-    Icon: FiWind,
-    name: "Emotional Overwhelm",
-    description:
-      "Support for managing feelings of stress, exhaustion, and emotional fatigue.",
-  },
-  {
-    Icon: FiHeart,
-    name: "Maternal Mental Health",
-    description:
-      "Comprehensive care focused on emotional well-being during motherhood.",
-  },
-  {
-    Icon: FiMoon,
-    name: "Sleep & Mood Concerns",
-    description:
-      "Evaluation of emotional symptoms connected to sleep disruption and fatigue.",
-  },
-  {
-    Icon: FiUsers,
-    name: "Parenting Stress",
-    description:
-      "Support for the emotional demands and challenges of parenting.",
-  },
-  {
-    Icon: FiAlertCircle,
-    name: "Anxiety Disorders",
-    description:
-      "Personalized care for excessive worry, nervousness, and anxiety-related symptoms.",
-  },
-  {
-    Icon: FiActivity,
-    name: "Mood Disorders",
-    description:
-      "Assessment and support for ongoing mood-related concerns.",
-  },
-  {
-    Icon: FiHeart,
-    name: "Women's Emotional Wellness",
-    description:
-      "Comprehensive mental health support designed around women's unique life experiences.",
-  },
-],
-faqs: [
-  {
-    question: "What is women's mental health?",
-    answer:
-      "Women's mental health focuses on emotional and psychological well-being throughout different stages of a woman's life.",
-  },
-  {
-    question: "What is perinatal anxiety?",
-    answer:
-      "Perinatal anxiety refers to excessive worry, fear, or anxiety experienced during pregnancy or after childbirth.",
-  },
-  {
-    question: "What is postpartum depression?",
-    answer:
-      "Postpartum depression is a mental health condition that may develop after childbirth and affect mood, energy, and emotional well-being.",
-  },
-  {
-    question: "What is PMDD?",
-    answer:
-      "Premenstrual Dysphoric Disorder (PMDD) is a severe form of premenstrual mood symptoms that can significantly affect daily life.",
-  },
-  {
-    question: "Can hormonal changes affect mental health?",
-    answer:
-      "Yes. Hormonal fluctuations may influence mood, emotions, sleep, and overall mental well-being.",
-  },
-  {
-    question: "When should I seek support for emotional symptoms?",
-    answer:
-      "Support may be helpful whenever emotional symptoms interfere with daily functioning, relationships, work, or overall quality of life.",
-  },
-  {
-    question: "Can anxiety occur during pregnancy?",
-    answer:
-      "Yes. Many women experience anxiety symptoms during pregnancy and the postpartum period.",
-  },
-  {
-    question: "What are common signs of postpartum depression?",
-    answer:
-      "Symptoms may include persistent sadness, low mood, emotional distress, fatigue, and difficulty coping with daily activities.",
-  },
-  {
-    question: "Is PMDD different from PMS?",
-    answer:
-      "Yes. PMDD generally involves more severe emotional and psychological symptoms than typical PMS.",
-  },
-  {
-    question: "Can telehealth be used for women's mental health care?",
-    answer:
-      "Yes. Many mental health consultations and follow-up appointments can be conducted through secure virtual healthcare services.",
-  },
-  {
-    question: "How can therapy help with women's mental health concerns?",
-    answer:
-      "Therapy can provide coping strategies, emotional support, and practical tools for managing symptoms.",
-  },
-  {
-    question: "Can sleep problems affect mental health?",
-    answer:
-      "Yes. Poor sleep may contribute to emotional challenges, mood symptoms, and stress.",
-  },
-  {
-    question: "Is postpartum depression common?",
-    answer:
-      "Postpartum emotional challenges affect many individuals and should be addressed with professional support when needed.",
-  },
-  {
-    question: "Can parenting stress affect emotional well-being?",
-    answer:
-      "Yes. Parenting responsibilities and life changes can contribute to emotional stress and mental health concerns.",
-  },
-  {
-    question: "What happens during a women's mental health consultation?",
-    answer:
-      "A provider reviews your symptoms, history, concerns, and goals to develop a personalized care plan.",
-  },
-  {
-    question: "How long does treatment typically last?",
-    answer:
-      "Treatment duration varies based on symptoms, goals, and individual needs.",
-  },
-],
+    keyServices: [
+        {
+            Icon: FiSearch,
+            title: "Mental Health Evaluations",
+            description:
+                "Comprehensive assessments focused on emotional wellness and psychological health.",
+        },
+        {
+            Icon: FiHeart,
+            title: "Pregnancy & Postpartum Support",
+            description:
+                "Specialized care for mental health concerns before and after childbirth.",
+        },
+        {
+            Icon: FiActivity,
+            title: "Hormonal Mood Health Assessments",
+            description:
+                "Evaluation of emotional symptoms related to menstrual cycles and hormonal changes.",
+        },
+        {
+            Icon: FiAlertCircle,
+            title: "Anxiety Management Support",
+            description:
+                "Personalized strategies to manage worry, stress, and emotional overwhelm.",
+        },
+        {
+            Icon: FiUsers,
+            title: "Emotional Wellness Counseling",
+            description:
+                "Support for building resilience, coping skills, and long-term mental wellness.",
+        },
+        {
+            Icon: FiRefreshCw,
+            title: "Ongoing Mental Health Care",
+            description:
+                "Continued guidance and treatment planning tailored to your needs.",
+        },
+    ],
+    benefits: [
+        {
+            Icon: FiHeart,
+            title: "Improved Emotional Well-Being",
+            description:
+                "Receive support that helps improve mood, confidence, and daily functioning.",
+        },
+        {
+            Icon: FiActivity,
+            title: "Better Symptom Management",
+            description:
+                "Learn strategies to manage anxiety, mood changes, and emotional challenges.",
+        },
+        {
+            Icon: FiUsers,
+            title: "Stronger Support Systems",
+            description:
+                "Access professional guidance during important life transitions.",
+        },
+        {
+            Icon: FiTrendingUp,
+            title: "Healthier Quality of Life",
+            description:
+                "Improve relationships, self-care, and overall wellness through mental health support.",
+        },
+    ],
+    conditions: [
+        {
+            Icon: FiAlertCircle,
+            name: "Perinatal Anxiety",
+            description:
+                "Support for anxiety experienced during pregnancy and the postpartum period.",
+        },
+        {
+            Icon: FiActivity,
+            name: "PMDD",
+            description:
+                "Evaluation and management of Premenstrual Dysphoric Disorder and severe menstrual-related mood symptoms.",
+        },
+        {
+            Icon: FiHeart,
+            name: "Postnatal Depression",
+            description:
+                "Support for emotional challenges and depression experienced after childbirth.",
+        },
+        {
+            Icon: FiTrendingUp,
+            name: "Pregnancy-Related Stress",
+            description:
+                "Guidance for emotional concerns associated with pregnancy and major life changes.",
+        },
+        {
+            Icon: FiUserCheck,
+            name: "Hormonal Mood Changes",
+            description:
+                "Assessment of emotional symptoms influenced by hormonal fluctuations.",
+        },
+        {
+            Icon: FiWind,
+            name: "Emotional Overwhelm",
+            description:
+                "Support for managing feelings of stress, exhaustion, and emotional fatigue.",
+        },
+        {
+            Icon: FiHeart,
+            name: "Maternal Mental Health",
+            description:
+                "Comprehensive care focused on emotional well-being during motherhood.",
+        },
+        {
+            Icon: FiMoon,
+            name: "Sleep & Mood Concerns",
+            description:
+                "Evaluation of emotional symptoms connected to sleep disruption and fatigue.",
+        },
+        {
+            Icon: FiUsers,
+            name: "Parenting Stress",
+            description:
+                "Support for the emotional demands and challenges of parenting.",
+        },
+        {
+            Icon: FiAlertCircle,
+            name: "Anxiety Disorders",
+            description:
+                "Personalized care for excessive worry, nervousness, and anxiety-related symptoms.",
+        },
+        {
+            Icon: FiActivity,
+            name: "Mood Disorders",
+            description:
+                "Assessment and support for ongoing mood-related concerns.",
+        },
+        {
+            Icon: FiHeart,
+            name: "Women's Emotional Wellness",
+            description:
+                "Comprehensive mental health support designed around women's unique life experiences.",
+        },
+    ],
+    faqs: [
+        {
+            question: "What is women's mental health?",
+            answer:
+                "Women's mental health focuses on emotional and psychological well-being throughout different stages of a woman's life.",
+        },
+        {
+            question: "What is perinatal anxiety?",
+            answer:
+                "Perinatal anxiety refers to excessive worry, fear, or anxiety experienced during pregnancy or after childbirth.",
+        },
+        {
+            question: "What is postpartum depression?",
+            answer:
+                "Postpartum depression is a mental health condition that may develop after childbirth and affect mood, energy, and emotional well-being.",
+        },
+        {
+            question: "What is PMDD?",
+            answer:
+                "Premenstrual Dysphoric Disorder (PMDD) is a severe form of premenstrual mood symptoms that can significantly affect daily life.",
+        },
+        {
+            question: "Can hormonal changes affect mental health?",
+            answer:
+                "Yes. Hormonal fluctuations may influence mood, emotions, sleep, and overall mental well-being.",
+        },
+        {
+            question: "When should I seek support for emotional symptoms?",
+            answer:
+                "Support may be helpful whenever emotional symptoms interfere with daily functioning, relationships, work, or overall quality of life.",
+        },
+        {
+            question: "Can anxiety occur during pregnancy?",
+            answer:
+                "Yes. Many women experience anxiety symptoms during pregnancy and the postpartum period.",
+        },
+        {
+            question: "What are common signs of postpartum depression?",
+            answer:
+                "Symptoms may include persistent sadness, low mood, emotional distress, fatigue, and difficulty coping with daily activities.",
+        },
+        {
+            question: "Is PMDD different from PMS?",
+            answer:
+                "Yes. PMDD generally involves more severe emotional and psychological symptoms than typical PMS.",
+        },
+        {
+            question: "Can telehealth be used for women's mental health care?",
+            answer:
+                "Yes. Many mental health consultations and follow-up appointments can be conducted through secure virtual healthcare services.",
+        },
+        {
+            question: "How can therapy help with women's mental health concerns?",
+            answer:
+                "Therapy can provide coping strategies, emotional support, and practical tools for managing symptoms.",
+        },
+        {
+            question: "Can sleep problems affect mental health?",
+            answer:
+                "Yes. Poor sleep may contribute to emotional challenges, mood symptoms, and stress.",
+        },
+        {
+            question: "Is postpartum depression common?",
+            answer:
+                "Postpartum emotional challenges affect many individuals and should be addressed with professional support when needed.",
+        },
+        {
+            question: "Can parenting stress affect emotional well-being?",
+            answer:
+                "Yes. Parenting responsibilities and life changes can contribute to emotional stress and mental health concerns.",
+        },
+        {
+            question: "What happens during a women's mental health consultation?",
+            answer:
+                "A provider reviews your symptoms, history, concerns, and goals to develop a personalized care plan.",
+        },
+        {
+            question: "How long does treatment typically last?",
+            answer:
+                "Treatment duration varies based on symptoms, goals, and individual needs.",
+        },
+    ],
 }
 
 const TRUST_STATS = [
@@ -315,42 +315,42 @@ const TRUST_STATS = [
 ];
 
 const TRUST_CARDS = [
-  {
-    Icon: FiAward,
-    title: "Experienced Mental Health Specialists",
-    description:
-      "Connect with professionals experienced in women's emotional and psychological wellness.",
-  },
-  {
-    Icon: FiClock,
-    title: "Fast Appointments",
-    description:
-      "Access support quickly when you need it most.",
-  },
-  {
-    Icon: FiMonitor,
-    title: "Telehealth Access",
-    description:
-      "Receive care securely from the comfort and privacy of home.",
-  },
-  {
-    Icon: FiUserCheck,
-    title: "Personalized Treatment Plans",
-    description:
-      "Every care plan is designed around your symptoms, goals, and personal experiences.",
-  },
-  {
-    Icon: FiRefreshCw,
-    title: "Ongoing Support",
-    description:
-      "Receive continued guidance throughout your mental health journey.",
-  },
-  {
-    Icon: FiHeart,
-    title: "Whole-Person Care",
-    description:
-      "We focus on emotional, psychological, physical, and lifestyle factors that affect well-being.",
-  },
+    {
+        Icon: FiAward,
+        title: "Experienced Mental Health Specialists",
+        description:
+            "Connect with professionals experienced in women's emotional and psychological wellness.",
+    },
+    {
+        Icon: FiClock,
+        title: "Fast Appointments",
+        description:
+            "Access support quickly when you need it most.",
+    },
+    {
+        Icon: FiMonitor,
+        title: "Telehealth Access",
+        description:
+            "Receive care securely from the comfort and privacy of home.",
+    },
+    {
+        Icon: FiUserCheck,
+        title: "Personalized Treatment Plans",
+        description:
+            "Every care plan is designed around your symptoms, goals, and personal experiences.",
+    },
+    {
+        Icon: FiRefreshCw,
+        title: "Ongoing Support",
+        description:
+            "Receive continued guidance throughout your mental health journey.",
+    },
+    {
+        Icon: FiHeart,
+        title: "Whole-Person Care",
+        description:
+            "We focus on emotional, psychological, physical, and lifestyle factors that affect well-being.",
+    },
 ];
 // ── Scroll reveal hook ────────────────────────────────────────────────────────
 function useScrollReveal(threshold = 0.1) {
@@ -532,7 +532,7 @@ function SectionLabel({ children }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────────────────────
-export default function  WomenMentalHealth({ data = SPECIALTY_DATA }) {
+export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
     const [heroLoaded, setHeroLoaded] = useState(false);
 
     useEffect(() => {
@@ -574,17 +574,11 @@ export default function  WomenMentalHealth({ data = SPECIALTY_DATA }) {
                             <p className="sp-hero__description">{data.heroDescription}</p>
 
                             <div className="sp-hero__actions">
-                                <a
-                                    href={`/specialties/${data.slug}/doctors`}
-                                    className="sp-btn sp-btn--primary"
-                                >
+                                <a href="/Specialties" className="sp-btn sp-btn--primary">
                                     <FiSearch size={17} />
                                     Find Specialists
                                 </a>
-                                <a
-                                    href={`/specialties/${data.slug}/book`}
-                                    className="sp-btn sp-btn--ghost"
-                                >
+                                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
                                     <FiCalendar size={17} />
                                     Book Appointment
                                 </a>
@@ -693,7 +687,7 @@ export default function  WomenMentalHealth({ data = SPECIALTY_DATA }) {
                                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                                 <h2>What We Treat</h2>
                                 <p>
-                                   Our women's mental health specialists provide compassionate care for a variety of emotional and psychological concerns.
+                                    Our women's mental health specialists provide compassionate care for a variety of emotional and psychological concerns.
 
                                 </p>
                             </div>
@@ -721,7 +715,7 @@ export default function  WomenMentalHealth({ data = SPECIALTY_DATA }) {
                                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                                 <h2>Care You Can Trust</h2>
                                 <p>
-                                  We combine experienced mental health professionals with secure telemedicine technology to make compassionate care accessible, private, and convenient.
+                                    We combine experienced mental health professionals with secure telemedicine technology to make compassionate care accessible, private, and convenient.
 
                                 </p>
                             </div>
@@ -776,27 +770,21 @@ export default function  WomenMentalHealth({ data = SPECIALTY_DATA }) {
                             <span className="sp-cta__eyebrow">GET STARTED TODAY
                             </span>
                             <h2 className="sp-cta__heading">
-                              Ready to Prioritize Your
+                                Ready to Prioritize Your
                                 <span>{data.name}</span>Being?
                             </h2>
                             <p className="sp-cta__sub">
-                               Connect with a women's mental health specialist for compassionate support, personalized treatment recommendations, and expert guidance designed to help you feel supported, understood, and empowered.
+                                Connect with a women's mental health specialist for compassionate support, personalized treatment recommendations, and expert guidance designed to help you feel supported, understood, and empowered.
                             </p>
                         </Reveal>
 
                         <Reveal delay={80}>
                             <div className="sp-cta__actions">
-                                <a
-                                    href={`/specialties/${data.slug}/doctors`}
-                                    className="sp-btn sp-btn--primary-lg"
-                                >
+                                <a href="/login" className="sp-btn sp-btn--primary-lg">
                                     <FiSearch size={18} />
                                     Find a Doctor
                                 </a>
-                                <a
-                                    href={`/specialties/${data.slug}/book`}
-                                    className="sp-btn sp-btn--ghost-lg"
-                                >
+                                <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
                                     <FiCalendar size={18} />
                                     Book Appointment
                                 </a>

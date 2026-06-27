@@ -336,7 +336,7 @@ import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
 
 import FittoFly from "./pages/NewServices/FittoFly";
 import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
-import DoctorNote from "./pages/NewServices/DoctorNote";
+import DoctorNote from "./pages/NewServices/DoctorNoteSickNote";
 // Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
 
@@ -1557,9 +1557,9 @@ function AppLayout() {
             path="/weight-loss-programs"
             element={<WeightLossPrograms />}
           />
-          <Route path="/fit-to-fly" element={<FittoFly />} />
+          <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
-          <Route path="/doctor-note" element={<DoctorNote />} />
+          <Route path="/doctor-note-or-sick-notes" element={<DoctorNote />} />
 
 
 
