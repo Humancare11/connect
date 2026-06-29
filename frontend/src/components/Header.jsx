@@ -39,7 +39,7 @@ const helpRoutes = {
   "Child & Family Care":           "/child-and-family-care",
   "Chronic Care & Expert Opinion": "/chronic-care-and-expert-opinion",
   "Eye, Ear & Bone":               "/eye-ear-bone",
-  "General & Everyday Care":       "/general-everyday-care",
+  "General & Everyday Care":       "/general-and-everyday-care",
   "Men's Health":                  "/men-health",
   "Mental Health":                 "/mental-health",
   "Sexual Health":                 "/categories-sexual-health",

@@ -197,17 +197,17 @@ export default function SpecialtiesSection() {
     },
     {
       img: sp6,
-      name: "Brain & Nerves",
-      alt: "Neurology services for brain nerve and neurological disorders",
-      conditions: "32 Conditions",
-      path: "/care/brain-and-nerves",
-    },
-    {
-      img: sp7,
       name: "Family Medicine",
       alt: "Family Medicine specialists provide continuous, personalized healthcare for individuals and families of all ages",
       conditions: "3 Conditions",
       path: "/family-medicine",
+    },
+    {
+      img: sp7,
+      name: "Behaviorial Health",
+      alt: "Behavioral health services for mental emotional and psychological wellness",
+      conditions: "4 Conditions",
+      path: "/behavioral-health",
     },
     {
       img: sp8,
