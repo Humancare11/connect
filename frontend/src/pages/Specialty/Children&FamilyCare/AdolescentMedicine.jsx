@@ -360,12 +360,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
             <p className="sp-hero__tagline">{data.tagline}</p>
             <p className="sp-hero__description">{data.heroDescription}</p>
 
-            <div className="sp-hero__actions">
-              <a href={`/specialties/${data.slug}/doctors`} className="sp-btn sp-btn--primary">
+             <div className="sp-hero__actions">
+              <a href="/Specialties" className="sp-btn sp-btn--primary">
                 <FiSearch size={17} />
                 Find Specialists
               </a>
-              <a href={`/specialties/${data.slug}/book`} className="sp-btn sp-btn--ghost">
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
                 <FiCalendar size={17} />
                 Book Appointment
               </a>
@@ -558,11 +558,11 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
           <Reveal delay={80}>
             <div className="sp-cta__actions">
-              <a href={`/specialties/${data.slug}/doctors`} className="sp-btn sp-btn--primary-lg">
+              <a href="/login" className="sp-btn sp-btn--primary-lg">
                 <FiSearch size={18} />
                 Find a Doctor
               </a>
-              <a href={`/specialties/${data.slug}/book`} className="sp-btn sp-btn--ghost-lg">
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
                 <FiCalendar size={18} />
                 Book Appointment
               </a>
@@ -606,105 +606,3 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
     </main>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ADDITIONAL SPECIALTY DATA EXAMPLES
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const CARDIOLOGY_DATA = {
-  slug: "cardiology",
-  name: "Cardiology",
-  tagline: "Expert heart care, from prevention to advanced intervention.",
-  heroDescription:
-    "Our board-certified cardiologists provide comprehensive cardiac care — from lipid management and ECG interpretation to interventional procedures and heart failure management. Your heart health is our priority.",
-  heroImage: "https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&w=1600&q=80",
-  overviewImage: "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80",
-  overviewDescription:
-    "Cardiology is the branch of medicine concerned with the diagnosis and treatment of diseases of the heart and blood vessels. Cardiologists specialise in managing conditions ranging from coronary artery disease and heart failure to arrhythmias and congenital heart defects.",
-  overviewImportance:
-    "Cardiovascular disease remains the leading cause of mortality globally. Early detection, lifestyle modification, and timely intervention can significantly reduce the risk of heart attacks, strokes, and other cardiac events.",
-  conditionsTreated:
-    "Cardiologists treat coronary artery disease, heart failure, arrhythmias, valvular heart disease, hypertension, high cholesterol, pericarditis, and congenital heart defects.",
-  whenToConsult:
-    "Seek a cardiologist if you experience chest pain, shortness of breath, palpitations, fainting, leg swelling, or if you have risk factors like diabetes, hypertension, or a family history of heart disease.",
-  keyServices: [
-    { Icon: FiActivity, title: "ECG & Holter Monitoring", description: "Detect arrhythmias and electrical abnormalities with advanced cardiac monitoring." },
-    { Icon: MdOutlineMonitorHeart, title: "Echocardiography", description: "Ultrasound imaging of heart structure and function." },
-    { Icon: FiTrendingUp, title: "Stress Testing", description: "Exercise treadmill and pharmacological stress tests to assess cardiac fitness." },
-    { Icon: GiMedicines, title: "Lipid Management", description: "Cholesterol control through diet, lifestyle, and medication." },
-    { Icon: FiRefreshCw, title: "Cardiac Rehabilitation", description: "Structured programmes to strengthen the heart after a cardiac event." },
-    { Icon: FiZap, title: "Pacemaker Management", description: "Implantation, programming, and monitoring of pacemakers and ICDs." },
-  ],
-  benefits: [
-    { Icon: FiSearch, title: "Early Risk Detection", description: "Identify silent cardiac risks before a major event." },
-    { Icon: GiMedicines, title: "Medication Management", description: "Precision prescribing to optimise your cardiac medications." },
-    { Icon: FiBriefcase, title: "Procedural Expertise", description: "Advanced interventions by experienced interventional cardiologists." },
-    { Icon: FiBarChart2, title: "Ongoing Monitoring", description: "Long-term cardiac surveillance with remote monitoring options." },
-  ],
-  conditions: [
-    { Icon: GiHeartOrgan, name: "Coronary Artery Disease", description: "Diagnosis and management of plaque-narrowed coronary arteries to prevent heart attacks." },
-    { Icon: FiHeart, name: "Heart Failure", description: "Comprehensive management of reduced and preserved ejection fraction heart failure." },
-    { Icon: FiZap, name: "Arrhythmias", description: "AF, SVT, VT, and bradyarrhythmias diagnosed and treated with medication or ablation." },
-    { Icon: MdOutlineBloodtype, name: "Hypertension", description: "Resistant and secondary hypertension evaluation and treatment." },
-    { Icon: FiTrendingUp, name: "High Cholesterol", description: "Dyslipidaemia management including statin therapy and lifestyle modification." },
-    { Icon: FiTarget, name: "Valvular Disease", description: "Aortic stenosis, mitral regurgitation, and other valve conditions monitored and managed." },
-    { Icon: GiLungs, name: "Pulmonary Hypertension", description: "Specialist evaluation and targeted therapy for elevated pulmonary arterial pressure." },
-    { Icon: FiShield, name: "Pericarditis", description: "Inflammation of the pericardium: acute, recurrent, and constrictive forms treated." },
-  ],
-  faqs: [
-    { question: "When should I see a cardiologist?", answer: "See a cardiologist if you have chest pain, palpitations, shortness of breath, dizziness, or known cardiac risk factors such as hypertension, diabetes, or a family history of early heart disease." },
-    { question: "What does a cardiologist do on a first visit?", answer: "Your first cardiology visit typically includes a detailed history, physical examination, ECG, and sometimes an echocardiogram or blood tests. The cardiologist will discuss your risk factors and create an initial management plan." },
-    { question: "Is cardiology only for older adults?", answer: "No. Heart conditions can affect people of all ages, including children (congenital defects) and young adults (arrhythmias, cardiomyopathy). If you have symptoms, age is not a barrier to seeing a cardiologist." },
-    { question: "Can I see a cardiologist via telehealth?", answer: "Yes. Follow-up consultations, medication reviews, and risk factor management can be handled via telehealth. Initial diagnostic visits may require in-person tests, which your cardiologist will organise." },
-    { question: "What lifestyle changes reduce heart disease risk?", answer: "A heart-healthy diet low in saturated fats and sodium, regular aerobic exercise (150 minutes/week), not smoking, moderate alcohol intake, maintaining a healthy weight, and managing stress are all evidence-based strategies." },
-  ],
-};
-
-export const DERMATOLOGY_DATA = {
-  slug: "dermatology",
-  name: "Dermatology",
-  tagline: "Healthy, radiant skin backed by expert medical care.",
-  heroDescription:
-    "Our board-certified dermatologists address everything from acne and eczema to skin cancer detection and cosmetic concerns. Evidence-based treatments tailored to your skin type, tone, and health goals.",
-  heroImage: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=1600&q=80",
-  overviewImage: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&w=800&q=80",
-  overviewDescription:
-    "Dermatology is the medical specialty focused on the diagnosis and treatment of conditions affecting the skin, hair, and nails. The skin is the body's largest organ and a window into overall health — changes can signal systemic diseases, infections, or malignancies.",
-  overviewImportance:
-    "Skin conditions affect over 1.9 billion people globally. Early detection of skin cancer dramatically improves survival rates. Effective management of chronic conditions like psoriasis and eczema significantly improves quality of life.",
-  conditionsTreated:
-    "Dermatologists treat acne, eczema, psoriasis, rosacea, fungal infections, warts, hair loss, skin cancer, vitiligo, and cosmetic skin concerns.",
-  whenToConsult:
-    "Visit a dermatologist for persistent skin rashes, unusual moles, hair loss, nail changes, chronic itching, suspected skin infections, or when over-the-counter treatments are not working.",
-  keyServices: [
-    { Icon: FiEye, title: "Skin Cancer Screening", description: "Full-body mole mapping and dermoscopy to detect melanoma and other skin cancers early." },
-    { Icon: MdOutlineSpa, title: "Acne Treatment", description: "Medical-grade treatments including topical retinoids, antibiotics, and isotretinoin." },
-    { Icon: FiFeather, title: "Eczema & Psoriasis", description: "Personalised care plans including biologics, phototherapy, and topical therapies." },
-    { Icon: FiTool, title: "Minor Surgical Procedures", description: "Cyst removal, biopsy, and lesion excision performed in-office." },
-    { Icon: GiBodySwapping, title: "Hair & Scalp Treatment", description: "Diagnosis and management of alopecia, dandruff, and scalp conditions." },
-    { Icon: FiStar, title: "Cosmetic Dermatology", description: "Chemical peels, PRP, and evidence-based cosmetic treatments." },
-  ],
-  benefits: [
-    { Icon: FiShield, title: "Cancer Prevention", description: "Early detection saves lives. Annual screenings recommended for high-risk individuals." },
-    { Icon: FiHeart, title: "Improved Confidence", description: "Effective treatment of visible skin conditions improves mental wellbeing." },
-    { Icon: FiSearch, title: "Accurate Diagnosis", description: "Dermoscopy and biopsy ensure correct diagnosis and targeted treatment." },
-    { Icon: FiClipboard, title: "Long-Term Management", description: "Chronic condition care plans that evolve with your skin over time." },
-  ],
-  conditions: [
-    { Icon: FiAlertCircle, name: "Acne", description: "From mild comedonal acne to severe nodular cystic acne — treated effectively at every grade." },
-    { Icon: FiDroplet, name: "Eczema (Atopic Dermatitis)", description: "Chronic dry, itchy, inflamed skin managed with moisturisers, steroids, and biologics." },
-    { Icon: FiActivity, name: "Psoriasis", description: "Autoimmune plaques on skin and scalp managed with topical, systemic, and biologic therapies." },
-    { Icon: FiStar, name: "Rosacea", description: "Facial redness, flushing, and papules treated with topical agents and laser therapy." },
-    { Icon: FiCrosshair, name: "Fungal Infections", description: "Tinea, athlete's foot, ringworm, and onychomycosis diagnosed and treated." },
-    { Icon: FiEye, name: "Skin Cancer", description: "Basal cell, squamous cell, and melanoma detected early and managed by our oncology team." },
-    { Icon: FiLayout, name: "Vitiligo", description: "Loss of skin pigmentation treated with phototherapy, topical calcineurin inhibitors, and JAK inhibitors." },
-    { Icon: GiBodySwapping, name: "Hair Loss (Alopecia)", description: "Androgenetic alopecia, alopecia areata, and telogen effluvium diagnosed and treated." },
-  ],
-  faqs: [
-    { question: "How often should I have a full skin check?", answer: "Adults should have an annual full-body skin exam, especially if you have fair skin, a history of sunburns, a family history of skin cancer, or many moles. Those with prior skin cancer need more frequent checks." },
-    { question: "Can dermatology visits be done via telehealth?", answer: "Many dermatology concerns can be assessed via video or photo submission, including acne, rashes, and follow-up care. Biopsies and surgical procedures require an in-person visit." },
-    { question: "What is the difference between a dermatologist and an aesthetician?", answer: "A dermatologist is a medical doctor with 6+ years of specialised training who can diagnose and treat skin diseases, prescribe medications, and perform surgery. An aesthetician provides non-medical cosmetic treatments." },
-    { question: "How do I know if a mole is dangerous?", answer: "Use the ABCDE rule: Asymmetry, Border irregularity, Colour variation, Diameter >6mm, and Evolving. If a mole shows any of these signs, see a dermatologist promptly." },
-    { question: "What treatments are available for acne scarring?", answer: "Options include chemical peels, microneedling, fractional laser resurfacing, dermal fillers for ice-pick scars, and PRP therapy. Your dermatologist will recommend the best combination based on your scar type and skin tone." },
-  ],
-};

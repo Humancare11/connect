@@ -566,18 +566,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
             <p className="sp-hero__tagline">{data.tagline}</p>
             <p className="sp-hero__description">{data.heroDescription}</p>
 
-            <div className="sp-hero__actions">
-              <a
-                href={`/specialties/${data.slug}/doctors`}
-                className="sp-btn sp-btn--primary"
-              >
+             <div className="sp-hero__actions">
+              <a href="/Specialties" className="sp-btn sp-btn--primary">
                 <FiSearch size={17} />
                 Find Specialists
               </a>
-              <a
-                href={`/specialties/${data.slug}/book`}
-                className="sp-btn sp-btn--ghost"
-              >
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
                 <FiCalendar size={17} />
                 Book Appointment
               </a>
@@ -776,17 +770,11 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
           <Reveal delay={80}>
             <div className="sp-cta__actions">
-              <a
-                href={`/specialties/${data.slug}/doctors`}
-                className="sp-btn sp-btn--primary-lg"
-              >
+              <a href="/login" className="sp-btn sp-btn--primary-lg">
                 <FiSearch size={18} />
                 Find a Doctor
               </a>
-              <a
-                href={`/specialties/${data.slug}/book`}
-                className="sp-btn sp-btn--ghost-lg"
-              >
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
                 <FiCalendar size={18} />
                 Book Appointment
               </a>

@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import "./AboutPage.css";
-import AboutImg from "../assets/About-us (1).webp";
-import PatientImg from "../assets/patient.webp";
-import DoctorImg from "../assets/doctor.webp";
+import AboutHeroImg from "../assets/AboutUsPage/about-humancare-connect-telehealth.webp";
+
+import WhyHumancareImg from "../assets/AboutUsPage/why-humancare-connect-healthcare.webp";
+
+import PatientTrustImg from "../assets/AboutUsPage/global-healthcare-professionals-network.webp";
+
+import NetworkDoctorsImg from "../assets/AboutUsPage//patient-virtual-healthcare-experience.webp";
+
+import DoctorTrustImg from "../assets/AboutUsPage/doctor-telemedicine-consultation.webp";
 // ADD your why-section and network images to assets and import them:
 // import WhyImg from "../assets/why-us.webp";
 // import NetworkImg from "../assets/network.webp";
@@ -19,8 +25,13 @@ function useRevealObserver() {
     const el = ref.current;
     if (!el) return;
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) { setVisible(true); return; }
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reduce) {
+      setVisible(true);
+      return;
+    }
 
     const raf = requestAnimationFrame(() => {
       if (!el) return;
@@ -32,9 +43,12 @@ function useRevealObserver() {
 
       const io = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) { setVisible(true); io.unobserve(el); }
+          if (entry.isIntersecting) {
+            setVisible(true);
+            io.unobserve(el);
+          }
         },
-        { threshold: 0.15 }
+        { threshold: 0.15 },
       );
       io.observe(el);
     });
@@ -53,8 +67,13 @@ function useCounterObserver(targets) {
     const el = ref.current;
     if (!el) return;
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) { setCounts(targets); return; }
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reduce) {
+      setCounts(targets);
+      return;
+    }
 
     const runCount = () => {
       const dur = 1500;
@@ -83,7 +102,7 @@ function useCounterObserver(targets) {
           io.disconnect();
           runCount();
         },
-        { threshold: 0.4 }
+        { threshold: 0.4 },
       );
       io.observe(el);
     });
@@ -178,23 +197,26 @@ function HeroSection() {
       <div className="about-hero__glow about-hero__glow--gold" />
       <div className="container">
         <div className="about-hero__grid">
-
           {/* ── Left: text ── */}
           <div className="about-hero__text is-visible">
             <Eyebrow>About Humancare Connect</Eyebrow>
             <h1 className="about-hero__title">
               One Global Connection{" "}
-              <span className="about-hero__title-accent">to Better Healthcare</span>
+              <span className="about-hero__title-accent">
+                to Better Healthcare
+              </span>
             </h1>
             <p className="about-hero__lead">
-              At Humancare Connect, we make quality healthcare accessible beyond borders.
-              Through secure online doctor consultations and virtual healthcare services,
-              we connect individuals, travelers, and organizations with trusted medical
-              care anytime, anywhere.
+              At Humancare Connect, we make quality healthcare accessible beyond
+              borders. Through secure online doctor consultations and virtual
+              healthcare services, we connect individuals, travelers, and
+              organizations with trusted medical care anytime, anywhere.
             </p>
             <div className="about-hero__actions">
               <Btn href="#how">See how it works</Btn>
-              <Btn href="#why" ghost>Why we started</Btn>
+              <Btn href="#why" ghost>
+                Why we started
+              </Btn>
             </div>
 
             <div className="trust-strip">
@@ -210,10 +232,13 @@ function HeroSection() {
           {/* ── Right: photo — REMOVED floating badge ── */}
           <div className="about-hero__photo is-visible">
             <div className="about-hero__photo-frame">
-              <img src={AboutImg} alt="About us" loading="eager" />
+              <img
+                src={AboutHeroImg}
+                alt="About Humancare Connect providing secure virtual healthcare and online doctor consultations"
+                loading="eager"
+              />
             </div>
           </div>
-
         </div>
       </div>
     </section>
@@ -229,7 +254,10 @@ function WhySection() {
           <Rv>
             <div className="why__left">
               <Eyebrow>Our story</Eyebrow>
-              <h2 className="heading heading--lg why__heading" style={{ marginTop: 16 }}>
+              <h2
+                className="heading heading--lg why__heading"
+                style={{ marginTop: 16 }}
+              >
                 Why we
                 <br />
                 started
@@ -238,8 +266,8 @@ function WhySection() {
               <div className="why__img-wrap">
                 {/* Replace src with your actual why-section image */}
                 <img
-                  src={AboutImg}
-                  alt="Why Humancare Connect was founded"
+                  src={WhyHumancareImg}
+                  alt="Healthcare professionals collaborating to improve access to virtual healthcare services"
                   className="why__img"
                   loading="lazy"
                 />
@@ -249,24 +277,27 @@ function WhySection() {
           <Rv delay={100}>
             <div>
               <p className="why__intro">
-                Humancare Connect was founded with a simple vision: to transform the way
-                people experience healthcare by making it more accessible, convenient,
-                and connected.
+                Humancare Connect was founded with a simple vision: to transform
+                the way people experience healthcare by making it more
+                accessible, convenient, and connected.
               </p>
               <p className="why__body">
-                With years of experience in healthcare and telemedicine, we recognized
-                the need for a smarter approach — one that removes unnecessary barriers
-                and gives patients seamless access to trusted healthcare professionals.
+                With years of experience in healthcare and telemedicine, we
+                recognized the need for a smarter approach — one that removes
+                unnecessary barriers and gives patients seamless access to
+                trusted healthcare professionals.
               </p>
               <blockquote className="quote">
-                That's why we created Humancare Connect: A secure virtual healthcare
-                platform designed to deliver online doctor consultations and personalized
-                medical support whenever you need it.
+                That's why we created Humancare Connect: A secure virtual
+                healthcare platform designed to deliver online doctor
+                consultations and personalized medical support whenever you need
+                it.
               </blockquote>
               <p className="why__closing">
-                We believe great healthcare is not just about treating symptoms — it's
-                about providing peace of mind, building lasting trust, and ensuring every
-                patient receives the quality care they deserve.
+                We believe great healthcare is not just about treating symptoms
+                — it's about providing peace of mind, building lasting trust,
+                and ensuring every patient receives the quality care they
+                deserve.
               </p>
             </div>
           </Rv>
@@ -310,10 +341,10 @@ function ProblemSection() {
             <span className="text-blue">We're Solving</span>
           </h2>
           <p className="heading heading--lg problem__desc">
-            Healthcare should be simple, transparent, and built around the patient.
-            Yet too many people still face challenges like long wait times, limited
-            access to trusted medical professionals, unclear costs, and disconnected
-            care experiences.
+            Healthcare should be simple, transparent, and built around the
+            patient. Yet too many people still face challenges like long wait
+            times, limited access to trusted medical professionals, unclear
+            costs, and disconnected care experiences.
           </p>
         </Rv>
         <div className="grid grid--3">
@@ -337,10 +368,30 @@ function ProblemSection() {
 /* 4. How It Works */
 function HowSection() {
   const steps = [
-    { n: 1, title: "Share Your Health Concern", body: "Tell us about your symptoms or healthcare needs, and we'll help connect you with the right medical professional for the appropriate care.", color: "navy" },
-    { n: 2, title: "Know Your Consultation Cost", body: "No hidden fees or surprises. View transparent consultation pricing upfront so you can make informed healthcare decisions with confidence.", color: "blue" },
-    { n: 3, title: "Connect With a Trusted Doctor", body: "Meet with licensed healthcare professionals through secure online doctor consultations and receive expert medical guidance, diagnosis, and treatment recommendations where applicable.", color: "gold" },
-    { n: 4, title: "Experience Continuous Care", body: "Your healthcare journey doesn't end after one appointment. Stay connected with ongoing support, medical records, and a more personalised virtual healthcare experience.", color: "navy" },
+    {
+      n: 1,
+      title: "Share Your Health Concern",
+      body: "Tell us about your symptoms or healthcare needs, and we'll help connect you with the right medical professional for the appropriate care.",
+      color: "navy",
+    },
+    {
+      n: 2,
+      title: "Know Your Consultation Cost",
+      body: "No hidden fees or surprises. View transparent consultation pricing upfront so you can make informed healthcare decisions with confidence.",
+      color: "blue",
+    },
+    {
+      n: 3,
+      title: "Connect With a Trusted Doctor",
+      body: "Meet with licensed healthcare professionals through secure online doctor consultations and receive expert medical guidance, diagnosis, and treatment recommendations where applicable.",
+      color: "gold",
+    },
+    {
+      n: 4,
+      title: "Experience Continuous Care",
+      body: "Your healthcare journey doesn't end after one appointment. Stay connected with ongoing support, medical records, and a more personalised virtual healthcare experience.",
+      color: "navy",
+    },
   ];
 
   return (
@@ -353,9 +404,9 @@ function HowSection() {
               Healthcare Made Simple, From Start to Finish
             </h2>
             <p className="section-head__lead">
-              Getting the care you need shouldn't be complicated. Humancare Connect
-              makes online healthcare easy with a seamless virtual care experience
-              designed around your needs.
+              Getting the care you need shouldn't be complicated. Humancare
+              Connect makes online healthcare easy with a seamless virtual care
+              experience designed around your needs.
             </p>
           </div>
         </Rv>
@@ -363,7 +414,9 @@ function HowSection() {
           {steps.map((s, i) => (
             <Rv key={s.n} delay={i * 90}>
               <div className="step-card">
-                <div className={`step-card__num step-card__num--${s.color}`}>{s.n}</div>
+                <div className={`step-card__num step-card__num--${s.color}`}>
+                  {s.n}
+                </div>
                 {i < steps.length - 1 && <ArrowIcon />}
                 <h4 className="step-card__title">{s.title}</h4>
                 <p className="step-card__body">{s.body}</p>
@@ -396,7 +449,6 @@ function NetworkSection() {
   return (
     <section className="section section--white">
       <div className="container">
-
         {/* Top row: heading/text left, image right */}
         <div className="network__top">
           <div className="network__copy">
@@ -407,9 +459,10 @@ function NetworkSection() {
             <p className="section-head__lead">
               Quality healthcare starts with the right connection. At Humancare
               Connect, we have built a trusted network of licensed healthcare
-              professionals across multiple specialties, ensuring patients receive
-              the right care from the right medical expert.
-              <br /><br />
+              professionals across multiple specialties, ensuring patients
+              receive the right care from the right medical expert.
+              <br />
+              <br />
               Our virtual healthcare platform is designed around quality,
               accessibility, and trust — making it simple to connect with
               experienced doctors, receive personalised medical guidance, and
@@ -419,8 +472,8 @@ function NetworkSection() {
           <div className="network__img-wrap">
             {/* Replace src with your actual network image */}
             <img
-              src={DoctorImg}
-              alt="Our network of healthcare professionals"
+              src={NetworkDoctorsImg}
+              alt="Licensed healthcare professionals providing trusted online medical consultations"
               className="network__img"
               loading="lazy"
             />
@@ -449,7 +502,6 @@ function NetworkSection() {
             </span>
           ))}
         </div>
-
       </div>
     </section>
   );
@@ -463,8 +515,18 @@ function SolveSection() {
       title: "Verified Healthcare Professionals",
       body: "Your health deserves trusted expertise. Every healthcare professional on our platform is carefully verified, ensuring you receive care from qualified and experienced medical providers.",
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 12l2 2 4-4" /><path d="M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z" />
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#2563EB"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 12l2 2 4-4" />
+          <path d="M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z" />
         </svg>
       ),
     },
@@ -473,8 +535,18 @@ function SolveSection() {
       title: "Transparent Consultation Pricing",
       body: "No hidden costs or unexpected fees. We believe healthcare should be straightforward, with clear consultation pricing that helps you make informed decisions with confidence.",
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C97B1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#C97B1A"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
         </svg>
       ),
     },
@@ -483,8 +555,18 @@ function SolveSection() {
       title: "Secure & Connected Healthcare Experience",
       body: "Your healthcare journey should be simple and seamless. With secure technology and protected health information, we make it easier to stay connected with your care and medical history.",
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1E3A5F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="9" /><path d="M3 12h18" />
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#1E3A5F"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18" />
           <path d="M12 3c2.5 2.6 4 5.7 4 9s-1.5 6.4-4 9c-2.5-2.6-4-5.7-4-9s1.5-6.4 4-9z" />
         </svg>
       ),
@@ -494,8 +576,18 @@ function SolveSection() {
       title: "Fast Access to the Right Care",
       body: "Getting medical support should not mean waiting for days. Our streamlined virtual healthcare platform helps you connect with the right healthcare professional quickly and conveniently.",
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2v4M12 18v4M2 12h4M18 12h4" /><circle cx="12" cy="12" r="4" />
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#2563EB"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+          <circle cx="12" cy="12" r="4" />
         </svg>
       ),
     },
@@ -511,9 +603,9 @@ function SolveSection() {
               Care You Can Trust, Every Step of the Way
             </h2>
             <p className="section-head__lead">
-              At Humancare Connect, every part of our virtual healthcare experience
-              is designed to provide confidence, clarity, and continuous support —
-              so you always feel informed and cared for.
+              At Humancare Connect, every part of our virtual healthcare
+              experience is designed to provide confidence, clarity, and
+              continuous support — so you always feel informed and cared for.
             </p>
           </div>
         </Rv>
@@ -574,15 +666,17 @@ function ServicesSection() {
               Services, organised by who you need
             </h2>
             <p className="section-head__lead">
-              Care is grouped by specialty tier, with one clear price per consultation
-              — and a dedicated track for people on the move.
+              Care is grouped by specialty tier, with one clear price per
+              consultation — and a dedicated track for people on the move.
             </p>
           </div>
         </Rv>
         <div className="grid grid--3 grid--services">
           {services.map((s, i) => (
             <Rv key={s.title} delay={i * 50}>
-              <div className={`service-card${s.featured ? " service-card--featured" : ""}`}>
+              <div
+                className={`service-card${s.featured ? " service-card--featured" : ""}`}
+              >
                 {s.featured && <div className="service-card__glow" />}
                 <span className="service-card__tier">{s.tier}</span>
                 <h4 className="service-card__title">{s.title}</h4>
@@ -609,8 +703,9 @@ function TrustSection() {
             </h2>
             <p className="section-head__lead">
               At Humancare Connect, trust is at the heart of every consultation.
-              We create a healthcare experience where patients feel confident, and
-              healthcare professionals are empowered to deliver their best care.
+              We create a healthcare experience where patients feel confident,
+              and healthcare professionals are empowered to deliver their best
+              care.
             </p>
           </div>
         </Rv>
@@ -621,17 +716,17 @@ function TrustSection() {
             <div className="trust-panel">
               <PhotoSlot
                 label="Reassured Patient"
-                image={PatientImg}
+                image={PatientTrustImg}
                 variant="blue"
                 className="photo-slot--panel photo-slot--no-sheen"
               />
               <div className="trust-panel__text">
                 <h3 className="trust-panel__title">Patients Feel Confident</h3>
                 <p className="trust-panel__body">
-                  From verified healthcare professionals to transparent consultation
-                  pricing and secure virtual visits, we ensure every patient knows
-                  who they are connecting with and what to expect before their care
-                  begins.
+                  From verified healthcare professionals to transparent
+                  consultation pricing and secure virtual visits, we ensure
+                  every patient knows who they are connecting with and what to
+                  expect before their care begins.
                 </p>
               </div>
             </div>
@@ -641,18 +736,20 @@ function TrustSection() {
           <Rv delay={80}>
             <div className="trust-panel">
               <div className="trust-panel__text trust-panel__text--first">
-                <h3 className="trust-panel__title">Healthcare Professionals Deliver Their Best</h3>
+                <h3 className="trust-panel__title">
+                  Healthcare Professionals Deliver Their Best
+                </h3>
                 <p className="trust-panel__body">
                   Our platform allows doctors to focus on what matters most —
                   providing quality patient care. With a streamlined virtual
-                  healthcare experience and a trusted care environment, healthcare
-                  professionals can deliver personalised medical support with
-                  confidence.
+                  healthcare experience and a trusted care environment,
+                  healthcare professionals can deliver personalised medical
+                  support with confidence.
                 </p>
               </div>
               <PhotoSlot
                 label="Doctor at Work"
-                image={DoctorImg}
+                image={DoctorTrustImg}
                 variant="gold"
                 className="photo-slot--panel photo-slot--no-sheen"
               />
@@ -664,7 +761,16 @@ function TrustSection() {
             <div className="trust-privacy">
               <div className="trust-privacy__glow" />
               <div className="trust-privacy__icon">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="30"
+                  height="30"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="4" y="11" width="16" height="10" rx="2" />
                   <path d="M8 11V8a4 4 0 0 1 8 0v3" />
                 </svg>
@@ -672,21 +778,24 @@ function TrustSection() {
               <div className="trust-privacy__text">
                 <h3>Your Privacy. Our Priority.</h3>
                 <p>
-                  At Humancare Connect, we understand that your health information
-                  is personal and deserves the highest level of protection. That's
-                  why our virtual healthcare platform is built with secure technology,
-                  strict privacy practices, and a commitment to protecting patient
-                  confidentiality.
+                  At Humancare Connect, we understand that your health
+                  information is personal and deserves the highest level of
+                  protection. That's why our virtual healthcare platform is
+                  built with secure technology, strict privacy practices, and a
+                  commitment to protecting patient confidentiality.
                 </p>
                 <p style={{ marginTop: 10 }}>
                   From secure online doctor consultations to protected medical
-                  records, we are dedicated to providing a safe and trusted digital
-                  healthcare experience where your privacy always comes first.
+                  records, we are dedicated to providing a safe and trusted
+                  digital healthcare experience where your privacy always comes
+                  first.
                 </p>
               </div>
               <div className="trust-privacy__badges">
                 {["GDPR", "HIPAA-aligned", "Encrypted"].map((b) => (
-                  <span key={b} className="badge">{b}</span>
+                  <span key={b} className="badge">
+                    {b}
+                  </span>
                 ))}
               </div>
             </div>
@@ -719,9 +828,11 @@ function ContactSection() {
               Whether you're looking for trusted online healthcare, a healthcare
               professional interested in joining our network, or an organisation
               exploring virtual healthcare solutions, our team is here to help.
-              <br /><br />
+              <br />
+              <br />
               Get in touch with Humancare Connect and discover how we're making
-              quality healthcare more accessible, connected, and patient-centred.
+              quality healthcare more accessible, connected, and
+              patient-centred.
             </p>
           </Rv>
           <Rv delay={80}>
@@ -737,7 +848,10 @@ function ContactSection() {
                         <br />
                       </span>
                     ))}
-                    <a href={`mailto:${addr.email}`} className="address-card__email">
+                    <a
+                      href={`mailto:${addr.email}`}
+                      className="address-card__email"
+                    >
                       {addr.email}
                     </a>
                   </p>
