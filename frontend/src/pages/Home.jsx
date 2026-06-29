@@ -554,7 +554,7 @@ export default function HomePage() {
             healthcare providers without leaving home. Schedule an online doctor
             appointment, discuss symptoms, receive treatment guidance, and get
             prescriptions through our secure virtual healthcare platform
-            available across all 50 states.
+            available across globally.
           </p>
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">
@@ -594,7 +594,7 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Board-certified
+              Board-Certified Doctor's
             </span>
 
             <span className="trust-chip">
@@ -608,7 +608,7 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Rx/Doctor's Note
+              Rx / Sick Note's Available 
             </span>
           </div>
           {/* SEARCH BAR */}
