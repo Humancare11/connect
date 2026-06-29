@@ -55,6 +55,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/pediatrics-specialist-child-healthcare-banner.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/pediatric-specialist-child-health-checkup-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,10 +67,12 @@ const SPECIALTY_DATA = {
   tagline: "Caring for Your Child's Health from Infancy Through Adolescence.",
   heroDescription:
     "Pediatric specialists provide comprehensive healthcare for infants, children, and teenagers, focusing on growth, development, illness prevention, and treatment of common childhood conditions. From routine wellness visits and vaccinations to managing infections, feeding concerns, and skin conditions, pediatric care supports your child's healthy journey at every stage of life.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified pediatric specialist providing healthcare for infants, children, and adolescents with preventive, diagnostic, and wellness care.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Pediatric specialist consulting with a child and parent during a routine health checkup for growth, development, and preventive care.",
   overviewDescription:
     "Pediatrics is a medical specialty dedicated to the physical, emotional, and developmental health of infants, children, and adolescents. Pediatricians diagnose, treat, and prevent a wide range of childhood illnesses while monitoring growth milestones, nutrition, behavior, and overall well-being.",
   overviewImportance:

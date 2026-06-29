@@ -51,12 +51,12 @@ function RevealCard({ children, className, delay = 0, to }) {
   );
 }
 
-const D = [0, 0.08, 0.16, 0.24, 0.32, 0.40];
+const D = [0, 0.08, 0.16, 0.24, 0.32, 0.4];
 
 /* ─────────────────────────────────────────
    Component
 ───────────────────────────────────────── */
-export default function ServicesSection() {
+export default function Sa() {
   /* ── Header reveal ── */
   const headerRef = useRef(null);
   const headerInView = useInView(headerRef, { once: true, margin: "-60px" });
@@ -85,7 +85,6 @@ export default function ServicesSection() {
       style={{ scale, opacity, y }}
     >
       <div className="services-inner-container">
-
         {/* ── Header ── */}
         <div className="services-header-block" ref={headerRef}>
           <Motion.span
@@ -113,7 +112,6 @@ export default function ServicesSection() {
 
         {/* ── Bento Grid ── */}
         <div className="services-bento-grid">
-
           {/* ── Prescription Refills (4-col wide) ── */}
           <RevealCard
             className="services-card-item services-bento-large"
@@ -130,7 +128,10 @@ export default function ServicesSection() {
               <div className="services-content-left">
                 <h3 className="services-card-title">Prescription Refills</h3>
                 <p className="services-card-description">
-                  Need a medication refill without the wait? Connect with a licensed provider through a fast online doctor appointment and receive prescription refill support the same day through our secure virtual healthcare services.
+                  Need a medication refill without the wait? Connect with a
+                  licensed provider through a fast online doctor appointment and
+                  receive prescription refill support the same day through our
+                  secure virtual healthcare services.
                 </p>
                 <span className="services-card-cta-link">
                   Refill Prescription <span className="cta-arrow">→</span>
@@ -187,14 +188,17 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title">Doctor Note or Sick Note</h3>
             <p className="services-card-description">
-              Doctor Notes and Sick Notes are medical documents that may be provided by a healthcare professional after evaluating a patient's health condition. These documents are commonly used to verify an illness, medical condition, or healthcare visit for employers, schools, universities, or other organizations.
+              Doctor Notes and Sick Notes are medical documents that may be
+              provided by a healthcare professional after evaluating a patient's
+              health condition. These documents are commonly used to verify an
+              illness, medical condition, or healthcare visit for employers,
+              schools, universities, or other organizations.
             </p>
             <div className="services-weight-stat-block">
               <span className="services-card-cta-link services-weight-cta">
-                Get Started  <span className="cta-arrow">→</span>
+                Get Started <span className="cta-arrow">→</span>
               </span>
             </div>
-
           </RevealCard>
 
           {/* ── Mental Health (2-col tall) ── */}
@@ -226,8 +230,12 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title"> Fit to Fly Certificate</h3>
             <p className="services-card-description">
-              A Fit to Fly Certificate is a medical document that may be required by airlines for passengers with certain health conditions, recent surgeries, pregnancy-related travel considerations, or ongoing medical concerns. The certificate confirms that a healthcare provider has reviewed your condition and assessed your ability to travel safely by air.
-
+              A Fit to Fly Certificate is a medical document that may be
+              required by airlines for passengers with certain health
+              conditions, recent surgeries, pregnancy-related travel
+              considerations, or ongoing medical concerns. The certificate
+              confirms that a healthcare provider has reviewed your condition
+              and assessed your ability to travel safely by air.
             </p>
             <span className="services-card-cta-link">
               Get support <span className="cta-arrow">→</span>
@@ -244,7 +252,9 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title">General Consultation</h3>
             <p className="services-card-description">
-              Speak with a licensed doctor for common symptoms, referrals, health advice, and follow-ups — all through a secure virtual visit without leaving home.
+              Speak with a licensed doctor for common symptoms, referrals,
+              health advice, and follow-ups — all through a secure virtual visit
+              without leaving home.
             </p>
             <span className="services-card-cta-link">
               See a Doctor <span className="cta-arrow">→</span>
@@ -268,7 +278,7 @@ export default function ServicesSection() {
               Learn more <span className="cta-arrow">→</span>
             </span>
           </RevealCard> */}
-            <RevealCard
+          <RevealCard
             className="services-card-item services-bento-small-0"
             delay={D[4]}
             to="/lab-requisitions"
@@ -278,7 +288,11 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title"> Lab Requisition</h3>
             <p className="services-card-description">
-             A Lab Requisition is a medical order provided by a healthcare professional that authorizes laboratory testing. These tests can help evaluate symptoms, monitor chronic conditions, assess overall health, and provide important information for diagnosis and treatment planning. 
+              A Lab Requisition is a medical order provided by a healthcare
+              professional that authorizes laboratory testing. These tests can
+              help evaluate symptoms, monitor chronic conditions, assess overall
+              health, and provide important information for diagnosis and
+              treatment planning.
             </p>
             <span className="services-card-cta-link">
               Learn more <span className="cta-arrow">→</span>
@@ -296,13 +310,14 @@ export default function ServicesSection() {
             </div>
             <h3 className="services-card-title">Chronic Care</h3>
             <p className="services-card-description">
-              Ongoing chronic care management for diabetes, asthma, thyroid disorders, hypertension, cholesterol, and long-term health conditions through personalized telemedicine healthcare support.
+              Ongoing chronic care management for diabetes, asthma, thyroid
+              disorders, hypertension, cholesterol, and long-term health
+              conditions through personalized telemedicine healthcare support.
             </p>
             <span className="services-card-cta-link">
               Manage condition <span className="cta-arrow">→</span>
             </span>
           </RevealCard>
-
         </div>
       </div>
     </Motion.section>

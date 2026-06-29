@@ -336,7 +336,7 @@ import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
 import DoctorNoteSickNote from "./pages/NewServices/DoctorNoteSickNote";
-import FittoFly from "./pages/NewServices/FittoFly";
+import FitToFly from "./pages/NewServices/FitToFly";
 import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
@@ -394,8 +394,12 @@ const SuperAdminDashboard = lazy(
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 
 const EmployeeAdminLogin = lazy(() => import("./pages/employee/EmployeeLogin"));
-const EmployeeAdminLayout = lazy(() => import("./pages/employee/EmployeeLayout"));
-const EmployeeAdminDashboard = lazy(() => import("./pages/employee/EmployeeDashboard"));
+const EmployeeAdminLayout = lazy(
+  () => import("./pages/employee/EmployeeLayout"),
+);
+const EmployeeAdminDashboard = lazy(
+  () => import("./pages/employee/EmployeeDashboard"),
+);
 const EmployeeTasks = lazy(() => import("./pages/employee/EmployeeTasks"));
 const AssignTask = lazy(() => import("./pages/employee/Assigntask"));
 
@@ -1668,7 +1672,7 @@ function AppLayout() {
             path="/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
-          <Route path="/fit-to-fly" element={<FittoFly />} />
+          <Route path="/fit-to-fly-certificate" element={<FitToFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
           <Route
             path="/doctor-note-or-sick-notes"

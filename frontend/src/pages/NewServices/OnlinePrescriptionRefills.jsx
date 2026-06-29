@@ -53,6 +53,15 @@ import {
 
 import { Helmet } from "react-helmet-async";
 
+import heroBanner from "../../assets/MedicalServices/online-prescription-digital-healthcare.webp";
+
+const HERO_IMAGE = {
+  src: heroBanner,
+  alt: "Healthcare professionals providing telemedicine and virtual healthcare solutions for businesses across corporate, insurance, maritime, legal, and hospitality industries",
+  width: 1920,
+  height: 700,
+};
+
 /* ─────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS
 ───────────────────────────────────────────────────────────────────────── */
@@ -75,7 +84,11 @@ const BORDER_HOVER = "#CBD5E1";
 const useBreakpoint = () => {
   const getBreakpoint = () => {
     const w = typeof window !== "undefined" ? window.innerWidth : 1200;
-    return { isMobile: w < 640, isTablet: w >= 640 && w < 1024, isDesktop: w >= 1024 };
+    return {
+      isMobile: w < 640,
+      isTablet: w >= 640 && w < 1024,
+      isDesktop: w >= 1024,
+    };
   };
   const [bp, setBp] = useState(getBreakpoint);
   useEffect(() => {
@@ -297,7 +310,9 @@ const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
    MICRO COMPONENTS
 ───────────────────────────────────────────────────────────────────────── */
 const SLabel = ({ text, ac }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+  <div
+    style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}
+  >
     <div style={{ width: 24, height: 1, background: ac }} />
     <span
       style={{
@@ -334,7 +349,7 @@ const Pill = ({ children, ac }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: `${ac}12`,
+        background: "#FFFFFF",
         color: textColor,
         border: `1px solid ${ac}30`,
         fontSize: 11,
@@ -344,7 +359,9 @@ const Pill = ({ children, ac }) => {
         marginBottom: 22,
       }}
     >
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: ac }} />
+      <span
+        style={{ width: 6, height: 6, borderRadius: "50%", background: ac }}
+      />
       {children}
     </div>
   );
@@ -420,30 +437,67 @@ const Hero = ({ s, bp }) => {
     offset: ["start start", "end start"],
   });
   const op = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const words = s.name.split(" ");
+  const midIdx = Math.floor(words.length / 2);
+  const accentLight = s.accentColor === "#2563EB" ? "#60A5FA" : s.accentColor;
 
   return (
     <section
       ref={ref}
       style={{
         position: "relative",
-        minHeight: bp.isMobile ? "auto" : "62vh",
+        minHeight: "62vh",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         overflow: "hidden",
-        background: BG_SURFACE,
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
+      {/* Background Image */}
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Overlay */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `
+            linear-gradient(
+              to bottom,
+              rgba(15, 23, 42, 0.35) 0%,
+              rgba(15, 23, 42, 0.65) 50%,
+              rgba(15, 23, 42, 0.95) 100%
+            )
+          `,
+          zIndex: 1,
+        }}
+      />
+
+      {/* Hero Content */}
       <motion.div
         style={{
           position: "relative",
           zIndex: 10,
           maxWidth: 1200,
-          margin: "80px auto",
-          padding: bp.isMobile ? "48px 20px" : "64px 24px",
+          margin: "0 auto",
+          padding: "100px 24px",
           width: "100%",
-          opacity: bp.isMobile ? 1 : op,
+          opacity: op,
         }}
       >
         <motion.div
@@ -459,9 +513,9 @@ const Hero = ({ s, bp }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.18 }}
           style={{
-            fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(36px, 5.5vw, 60px)",
+            fontSize: "clamp(36px, 5.5vw, 60px)",
             fontWeight: 900,
-            color: TEXT_PRIMARY,
+            color: "#FFFFFF",
             lineHeight: 1.08,
             letterSpacing: "-0.03em",
             marginBottom: 18,
@@ -484,8 +538,8 @@ const Hero = ({ s, bp }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.26 }}
           style={{
-            fontSize: bp.isMobile ? 16 : 18,
-            color: TEXT_DIM,
+            fontSize: 18,
+            color: "#E5E7EB",
             fontStyle: "italic",
             marginBottom: 10,
           }}
@@ -499,7 +553,7 @@ const Hero = ({ s, bp }) => {
           transition={{ duration: 0.45, delay: 0.32 }}
           style={{
             fontSize: 16,
-            color: TEXT_BODY,
+            color: "#F3F4F6",
             lineHeight: 1.7,
             maxWidth: 560,
             marginBottom: 28,
@@ -516,13 +570,16 @@ const Hero = ({ s, bp }) => {
             display: "flex",
             gap: 12,
             flexWrap: "wrap",
-            flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
-         <PrimaryBtn ac={s.accentColor}><a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
-          {/* <GhostBtn>
-            Contact Care Team <FiArrowRight />
-          </GhostBtn> */}
+          <PrimaryBtn ac={s.accentColor}>
+            <a
+              href="/appointment-booking"
+              style={{ color: "#fff", textDecoration: "none" }}
+            >
+              Book Appointment
+            </a>
+          </PrimaryBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -602,11 +659,26 @@ const ConsultationForm = ({ s }) => {
           >
             <FiCheckCircle style={{ fontSize: 24, color: s.accentColor }} />
           </div>
-          <h3 style={{ color: TEXT_PRIMARY, fontSize: 18, fontWeight: 800, marginBottom: 8 }}>
+          <h3
+            style={{
+              color: TEXT_PRIMARY,
+              fontSize: 18,
+              fontWeight: 800,
+              marginBottom: 8,
+            }}
+          >
             Request received
           </h3>
-          <p style={{ color: TEXT_BODY, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
-            A member of our care team will reach out to {values.email || "you"} shortly.
+          <p
+            style={{
+              color: TEXT_BODY,
+              fontSize: 14,
+              lineHeight: 1.6,
+              marginBottom: 20,
+            }}
+          >
+            A member of our care team will reach out to {values.email || "you"}{" "}
+            shortly.
           </p>
           <button
             onClick={() => {
@@ -641,12 +713,26 @@ const ConsultationForm = ({ s }) => {
           >
             <FiMessageSquare style={{ fontSize: 20, color: s.accentColor }} />
           </div>
-          <h3 style={{ color: TEXT_PRIMARY, fontSize: 19, fontWeight: 800, marginBottom: 6 }}>
+          <h3
+            style={{
+              color: TEXT_PRIMARY,
+              fontSize: 19,
+              fontWeight: 800,
+              marginBottom: 6,
+            }}
+          >
             Request a Consultation
           </h3>
-          <p style={{ color: TEXT_DIM, fontSize: 13.5, lineHeight: 1.6, marginBottom: 22 }}>
-            Tell us a little about what you need, and a care coordinator will follow up within one
-            business day.
+          <p
+            style={{
+              color: TEXT_DIM,
+              fontSize: 13.5,
+              lineHeight: 1.6,
+              marginBottom: 22,
+            }}
+          >
+            Tell us a little about what you need, and a care coordinator will
+            follow up within one business day.
           </p>
 
           <form onSubmit={handleSubmit}>
@@ -691,7 +777,11 @@ const ConsultationForm = ({ s }) => {
                 placeholder="Briefly describe your symptoms or what you'd like to discuss…"
                 value={values.message}
                 onChange={handleChange("message")}
-                style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
+                style={{
+                  ...inputStyle,
+                  resize: "vertical",
+                  fontFamily: "inherit",
+                }}
                 {...focusHandlers}
               />
             </div>
@@ -728,12 +818,14 @@ const Overview = ({ s, bp }) => {
   const outcomesColumns = bp.isMobile
     ? "1fr"
     : bp.isTablet
-    ? "repeat(2, 1fr)"
-    : "repeat(4, 1fr)";
+      ? "repeat(2, 1fr)"
+      : "repeat(4, 1fr)";
 
   return (
     <section style={{ background: BG_BASE, width: "100%" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: sectionPadding }}>
+      <div
+        style={{ maxWidth: 1200, margin: "0 auto", padding: sectionPadding }}
+      >
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -741,7 +833,8 @@ const Overview = ({ s, bp }) => {
           viewport={{ once: true, margin: "-60px" }}
           style={{
             display: "grid",
-            gridTemplateColumns: bp.isMobile || bp.isTablet ? "1fr" : "1.1fr 0.9fr",
+            gridTemplateColumns:
+              bp.isMobile || bp.isTablet ? "1fr" : "1.1fr 0.9fr",
             gap: bp.isMobile ? 32 : 64,
             alignItems: "start",
           }}
@@ -764,7 +857,12 @@ const Overview = ({ s, bp }) => {
             </motion.div>
             <motion.p
               variants={fadeUp}
-              style={{ color: TEXT_BODY, lineHeight: 1.75, marginBottom: 20, fontSize: 15.5 }}
+              style={{
+                color: TEXT_BODY,
+                lineHeight: 1.75,
+                marginBottom: 20,
+                fontSize: 15.5,
+              }}
             >
               {s.description}
             </motion.p>
@@ -790,12 +888,26 @@ const Overview = ({ s, bp }) => {
               >
                 Why It Matters
               </div>
-              <p style={{ color: TEXT_BODY, fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+              <p
+                style={{
+                  color: TEXT_BODY,
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  margin: 0,
+                }}
+              >
                 {s.whyItMatters}
               </p>
             </motion.div>
             <motion.div variants={fadeUp}>
-              <div style={{ color: TEXT_PRIMARY, fontWeight: 700, fontSize: 14, marginBottom: 12 }}>
+              <div
+                style={{
+                  color: TEXT_PRIMARY,
+                  fontWeight: 700,
+                  fontSize: 14,
+                  marginBottom: 12,
+                }}
+              >
                 Who Can Benefit
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -811,7 +923,12 @@ const Overview = ({ s, bp }) => {
                     }}
                   >
                     <FiCheckCircle
-                      style={{ color: s.accentColor, fontSize: 16, marginTop: 1, flexShrink: 0 }}
+                      style={{
+                        color: s.accentColor,
+                        fontSize: 16,
+                        marginTop: 1,
+                        flexShrink: 0,
+                      }}
                     />
                     {item}
                   </div>
@@ -867,7 +984,16 @@ const Overview = ({ s, bp }) => {
                   flexShrink: 0,
                 }}
               />
-              <p style={{ color: TEXT_BODY, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{o}</p>
+              <p
+                style={{
+                  color: TEXT_BODY,
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  margin: 0,
+                }}
+              >
+                {o}
+              </p>
             </motion.div>
           ))}
         </motion.div>
@@ -891,7 +1017,13 @@ const HowItWorks = ({ s, bp }) => {
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "0 20px" : "0 24px" }}>
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: bp.isMobile ? "0 20px" : "0 24px",
+        }}
+      >
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -919,9 +1051,16 @@ const HowItWorks = ({ s, bp }) => {
                 Getting started is{" "}
                 <span style={{ color: s.accentColor }}>simple.</span>
               </h2>
-              <p style={{ color: TEXT_DIM, fontSize: 15, lineHeight: 1.7, marginBottom: 36 }}>
-                Requesting an online prescription refill through Humancare Connect is quick, secure,
-                and convenient.
+              <p
+                style={{
+                  color: TEXT_DIM,
+                  fontSize: 15,
+                  lineHeight: 1.7,
+                  marginBottom: 36,
+                }}
+              >
+                Requesting an online prescription refill through Humancare
+                Connect is quick, secure, and convenient.
               </p>
             </motion.div>
 
@@ -991,7 +1130,14 @@ const HowItWorks = ({ s, bp }) => {
                     >
                       {step.title}
                     </div>
-                    <p style={{ color: TEXT_DIM, fontSize: 14, lineHeight: 1.65, margin: 0 }}>
+                    <p
+                      style={{
+                        color: TEXT_DIM,
+                        fontSize: 14,
+                        lineHeight: 1.65,
+                        margin: 0,
+                      }}
+                    >
                       {step.body}
                     </p>
                   </div>
@@ -1017,14 +1163,27 @@ const HowItWorks = ({ s, bp }) => {
                 style: { fontSize: 44, color: s.accentColor, marginBottom: 16 },
               })}
               <h3
-                style={{ color: TEXT_PRIMARY, fontSize: 20, fontWeight: 800, marginBottom: 8 }}
+                style={{
+                  color: TEXT_PRIMARY,
+                  fontSize: 20,
+                  fontWeight: 800,
+                  marginBottom: 8,
+                }}
               >
                 Ready to begin?
               </h3>
-              <p style={{ color: TEXT_DIM, fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                Get convenient access to online prescription refills through trusted telemedicine
-                services. Most appointments take just a few minutes, helping you stay on track with
-                your medications and ongoing care.
+              <p
+                style={{
+                  color: TEXT_DIM,
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  marginBottom: 24,
+                }}
+              >
+                Get convenient access to online prescription refills through
+                trusted telemedicine services. Most appointments take just a few
+                minutes, helping you stay on track with your medications and
+                ongoing care.
               </p>
               <PrimaryBtn ac={s.accentColor} fullWidth>
                 <a href="/login"> Get Started Today</a>
@@ -1116,30 +1275,55 @@ const Features = ({ s, bp }) => (
         }}
       >
         <div style={{ padding: bp.isMobile ? 20 : 28 }}>
-          <p style={{ color: TEXT_BODY, fontSize: 15, lineHeight: 1.75, margin: "0 0 18px 0" }}>
-            Online prescription refills allow eligible patients to renew ongoing medications through
-            a secure telemedicine consultation with a licensed healthcare provider. This service is
-            designed for individuals who are managing chronic health conditions, maintaining long
-            term treatment plans, or requiring continued access to prescribed medications. Instead of
-            scheduling an in person appointment for routine medication renewals, patients can connect
-            with a healthcare provider remotely and receive professional guidance from the comfort of
-            home.
+          <p
+            style={{
+              color: TEXT_BODY,
+              fontSize: 15,
+              lineHeight: 1.75,
+              margin: "0 0 18px 0",
+            }}
+          >
+            Online prescription refills allow eligible patients to renew ongoing
+            medications through a secure telemedicine consultation with a
+            licensed healthcare provider. This service is designed for
+            individuals who are managing chronic health conditions, maintaining
+            long term treatment plans, or requiring continued access to
+            prescribed medications. Instead of scheduling an in person
+            appointment for routine medication renewals, patients can connect
+            with a healthcare provider remotely and receive professional
+            guidance from the comfort of home.
           </p>
-          <p style={{ color: TEXT_BODY, fontSize: 15, lineHeight: 1.75, margin: "0 0 18px 0" }}>
-            At Humancare Connect, our online prescription refill service helps simplify medication
-            management while supporting continuity of care. Healthcare providers can review your
-            medical history, current medications, treatment progress, and ongoing healthcare needs to
-            determine whether a prescription renewal is appropriate. This approach helps patients
-            stay consistent with their treatment plans while reducing delays that could impact their
-            health outcomes.
+          <p
+            style={{
+              color: TEXT_BODY,
+              fontSize: 15,
+              lineHeight: 1.75,
+              margin: "0 0 18px 0",
+            }}
+          >
+            At Humancare Connect, our online prescription refill service helps
+            simplify medication management while supporting continuity of care.
+            Healthcare providers can review your medical history, current
+            medications, treatment progress, and ongoing healthcare needs to
+            determine whether a prescription renewal is appropriate. This
+            approach helps patients stay consistent with their treatment plans
+            while reducing delays that could impact their health outcomes.
           </p>
-          <p style={{ color: TEXT_BODY, fontSize: 15, lineHeight: 1.75, margin: 0 }}>
-            Online prescription refills are commonly requested for conditions such as high blood
-            pressure, diabetes, asthma, allergies, thyroid disorders, high cholesterol, migraine
-            management, and other ongoing health concerns. By combining convenient access to
-            telemedicine services with professional clinical oversight, Humancare Connect helps
-            patients maintain their healthcare journey through secure, accessible, and patient
-            centered virtual healthcare services.
+          <p
+            style={{
+              color: TEXT_BODY,
+              fontSize: 15,
+              lineHeight: 1.75,
+              margin: 0,
+            }}
+          >
+            Online prescription refills are commonly requested for conditions
+            such as high blood pressure, diabetes, asthma, allergies, thyroid
+            disorders, high cholesterol, migraine management, and other ongoing
+            health concerns. By combining convenient access to telemedicine
+            services with professional clinical oversight, Humancare Connect
+            helps patients maintain their healthcare journey through secure,
+            accessible, and patient centered virtual healthcare services.
           </p>
         </div>
       </motion.div>
@@ -1210,7 +1394,11 @@ const whyUsItems = [
     "Nationwide Access",
     "Care without geographic limits — from metro centres to remote districts.",
   ],
-  [FiZap, "Fast Scheduling", "From first contact to first appointment in hours, not weeks."],
+  [
+    FiZap,
+    "Fast Scheduling",
+    "From first contact to first appointment in hours, not weeks.",
+  ],
   [
     FiLock,
     "Secure Platform",
@@ -1231,7 +1419,7 @@ const WhyUs = ({ s, bp }) => {
       ([e]) => {
         if (e.isIntersecting) setInView(true);
       },
-      { threshold: 0.2 }
+      { threshold: 0.2 },
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
@@ -1240,7 +1428,11 @@ const WhyUs = ({ s, bp }) => {
   // Stats: 4-col desktop → 2-col tablet+mobile
   const statsColumns = bp.isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)";
   // Why-us items: 3-col desktop → 2-col tablet → 1-col mobile
-  const whyColumns = bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)";
+  const whyColumns = bp.isMobile
+    ? "1fr"
+    : bp.isTablet
+      ? "repeat(2, 1fr)"
+      : "repeat(3, 1fr)";
 
   return (
     <section
@@ -1271,7 +1463,8 @@ const WhyUs = ({ s, bp }) => {
               marginBottom: 10,
             }}
           >
-            Results you can <span style={{ color: s.accentColor }}>measure.</span>
+            Results you can{" "}
+            <span style={{ color: s.accentColor }}>measure.</span>
           </h2>
           <p style={{ color: TEXT_DIM, fontSize: 15 }}>
             Numbers that represent real patients, real outcomes.
@@ -1336,11 +1529,18 @@ const WhyUs = ({ s, bp }) => {
               </div>
               <div>
                 <div
-                  style={{ color: TEXT_PRIMARY, fontWeight: 700, fontSize: 14, marginBottom: 4 }}
+                  style={{
+                    color: TEXT_PRIMARY,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    marginBottom: 4,
+                  }}
                 >
                   {title}
                 </div>
-                <div style={{ color: TEXT_DIM, fontSize: 13, lineHeight: 1.6 }}>{desc}</div>
+                <div style={{ color: TEXT_DIM, fontSize: 13, lineHeight: 1.6 }}>
+                  {desc}
+                </div>
               </div>
             </motion.div>
           ))}
@@ -1389,9 +1589,16 @@ const FAQ = ({ s, bp }) => {
             <br />
             <span style={{ color: s.accentColor }}>{s.name}?</span>
           </h2>
-          <p style={{ color: TEXT_DIM, fontSize: 15, lineHeight: 1.7, marginBottom: 24 }}>
-            We've answered the most common questions below. Our care team is one message away if
-            yours isn't listed.
+          <p
+            style={{
+              color: TEXT_DIM,
+              fontSize: 15,
+              lineHeight: 1.7,
+              marginBottom: 24,
+            }}
+          >
+            We've answered the most common questions below. Our care team is one
+            message away if yours isn't listed.
           </p>
           {/* <button
             style={{
@@ -1432,7 +1639,8 @@ const FAQ = ({ s, bp }) => {
             <div
               key={i}
               style={{
-                borderBottom: i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
+                borderBottom:
+                  i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
               }}
             >
               <button
@@ -1473,7 +1681,12 @@ const FAQ = ({ s, bp }) => {
                     transform: open === i ? "rotate(45deg)" : "none",
                   }}
                 >
-                  <FiPlus style={{ fontSize: 14, color: open === i ? "#fff" : TEXT_DIM }} />
+                  <FiPlus
+                    style={{
+                      fontSize: 14,
+                      color: open === i ? "#fff" : TEXT_DIM,
+                    }}
+                  />
                 </div>
               </button>
               <AnimatePresence>
@@ -1536,7 +1749,9 @@ const FinalCTA = ({ s, bp }) => (
         <Pill ac={s.accentColor}>Start Today</Pill>
         <h2
           style={{
-            fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(32px, 5vw, 52px)",
+            fontSize: bp.isMobile
+              ? "clamp(28px, 8vw, 36px)"
+              : "clamp(32px, 5vw, 52px)",
             fontWeight: 900,
             color: TEXT_PRIMARY,
             lineHeight: 1.1,
@@ -1556,9 +1771,10 @@ const FinalCTA = ({ s, bp }) => (
             fontSize: bp.isMobile ? 15 : 16,
           }}
         >
-          Stay on track with your treatment plan through secure online prescription refill services.
-          Connect with a licensed healthcare provider, request medication renewals when clinically
-          appropriate, and access convenient telehealth services from wherever you are.
+          Stay on track with your treatment plan through secure online
+          prescription refill services. Connect with a licensed healthcare
+          provider, request medication renewals when clinically appropriate, and
+          access convenient telehealth services from wherever you are.
         </p>
         <div
           style={{
@@ -1572,9 +1788,12 @@ const FinalCTA = ({ s, bp }) => (
           }}
         >
           <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
-         <a href="/login"> Get Started Today</a>
+            <a href="/login"> Get Started Today</a>
           </PrimaryBtn>
-          <GhostBtn> <a href="/login"> Book Appointment </a></GhostBtn>
+          <GhostBtn>
+            {" "}
+            <a href="/login"> Book Appointment </a>
+          </GhostBtn>
           {/* <button
             style={{
               padding: "13px 24px",
@@ -1640,7 +1859,8 @@ export default function OnlinePrescriptionRefills() {
     <>
       <Helmet>
         <title>
-          Online Prescription Refills | Renew Medications Online | Humancare Connect
+          Online Prescription Refills | Renew Medications Online | Humancare
+          Connect
         </title>
         <meta
           name="description"
