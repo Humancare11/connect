@@ -29,6 +29,7 @@ const VideoCall = lazy(() => import("./pages/VideoCall"));
 import socket from "./socket";
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
+import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
 import useLenis from "./hooks/useLenis";
 import api from "./api";
 import {
@@ -332,10 +333,10 @@ import GeneralConsultation from "./pages/NewServices/GeneralConsultation";
 import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
-
-import FittoFly from "./pages/NewServices/FittoFly";
+import DoctorNoteSickNote from "./pages/NewServices/DoctorNoteSickNote";
+import FitToFly from "./pages/NewServices/FitToFly";
 import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
-import DoctorNote from "./pages/NewServices/DoctorNote";
+// import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
 
@@ -390,6 +391,16 @@ const SuperAdminDashboard = lazy(
 );
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 
+const EmployeeAdminLogin = lazy(() => import("./pages/employee/EmployeeLogin"));
+const EmployeeAdminLayout = lazy(
+  () => import("./pages/employee/EmployeeLayout"),
+);
+const EmployeeAdminDashboard = lazy(
+  () => import("./pages/employee/EmployeeDashboard"),
+);
+const EmployeeTasks = lazy(() => import("./pages/employee/EmployeeTasks"));
+const AssignTask = lazy(() => import("./pages/employee/Assigntask"));
+
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
 const Appointments = lazy(() => import("./pages/user/Appointments"));
@@ -430,6 +441,13 @@ function PrivateRoute({ children, allowedRoles, loginPath = "/adminauth" }) {
   if (!allowedRoles.includes(admin.role))
     return <Navigate to={loginPath} replace />;
 
+  return children;
+}
+
+function EmployeeAdminPrivateRoute({ children }) {
+  const { employeeAdmin, loading } = useEmployeeAdmin();
+  if (loading) return null;
+  if (!employeeAdmin) return <Navigate to="/employee-login" replace />;
   return children;
 }
 
@@ -611,6 +629,7 @@ function AppLayout() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/payment-admin") ||
     location.pathname.startsWith("/superadmin") ||
+    location.pathname.startsWith("/employee") ||
     location.pathname.startsWith("/user") ||
     location.pathname.startsWith("/pay/") ||
     location.pathname.startsWith("/video-call");
@@ -819,6 +838,51 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
+          <Route path="/employee-login" element={<EmployeeAdminLogin />} />
+          <Route
+            path="/employee-dashboard"
+            element={
+              <EmployeeAdminPrivateRoute>
+                <EmployeeAdminLayout>
+                  <EmployeeAdminDashboard />
+                </EmployeeAdminLayout>
+              </EmployeeAdminPrivateRoute>
+            }
+          />
+          <Route
+            path="/employee-dashboard/tasks"
+            element={<Navigate to="/employee-dashboard/my-tasks" replace />}
+          />
+          <Route
+            path="/employee-dashboard/my-tasks"
+            element={
+              <EmployeeAdminPrivateRoute>
+                <EmployeeAdminLayout>
+                  <EmployeeTasks mode="my" />
+                </EmployeeAdminLayout>
+              </EmployeeAdminPrivateRoute>
+            }
+          />
+          <Route
+            path="/employee-dashboard/my-tasks/:taskId"
+            element={
+              <EmployeeAdminPrivateRoute>
+                <EmployeeAdminLayout>
+                  <EmployeeTasks mode="detail" />
+                </EmployeeAdminLayout>
+              </EmployeeAdminPrivateRoute>
+            }
+          />
+          <Route
+            path="/employee-dashboard/assign-task"
+            element={
+              <EmployeeAdminPrivateRoute>
+                <EmployeeAdminLayout>
+                  <AssignTask />
+                </EmployeeAdminLayout>
+              </EmployeeAdminPrivateRoute>
+            }
+          />
           <Route
             path="/payment-admin"
             element={<Navigate to="/payment-admin/payment-links" replace />}
@@ -1606,9 +1670,12 @@ function AppLayout() {
             path="/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
-          <Route path="/fit-to-fly" element={<FittoFly />} />
+          <Route path="/fit-to-fly-certificate" element={<FitToFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
-          <Route path="/doctor-note" element={<DoctorNote />} />
+          <Route
+            path="/doctor-note-or-sick-notes"
+            element={<DoctorNoteSickNote />}
+          />
           <Route path="/vertigo" element={<Vertigo />} />
         </Routes>
 

@@ -7,30 +7,51 @@ import {
 } from "framer-motion";
 import {
   FiMonitor,
+  FiHome,
   FiSearch,
   FiActivity,
   FiShield,
+  FiSun,
   FiLock,
   FiZap,
   FiCalendar,
   FiFileText,
   FiGlobe,
   FiCheckCircle,
+  FiArrowRight,
+  FiChevronDown,
   FiPlus,
   FiStar,
   FiHeart,
+  FiUsers,
+  FiPhone,
+  FiMail,
   FiClock,
+  FiTrendingUp,
   FiAward,
+  FiRefreshCw,
   FiBarChart2,
+  FiMapPin,
+  FiCamera,
+  FiDroplet,
   FiPackage,
+  FiSmile,
+  FiBriefcase,
   FiUserCheck,
   FiMessageSquare,
+  FiCpu,
+  FiAlertCircle,
+  FiThumbsUp,
   FiVideo,
+  FiPieChart,
+  FiBookOpen,
+  FiNavigation,
+  FiWifi,
+  FiHeadphones,
+  FiUser,
 } from "react-icons/fi";
-import { Helmet } from "react-helmet-async";
 
-/* Import the shared stylesheet — same file for every service page */
-import "./newservices.css";
+import { Helmet } from "react-helmet-async";
 
 import heroBanner from "../../assets/MedicalServices/fit-to-fly-medical-certificate.webp";
 
@@ -42,17 +63,31 @@ const HERO_IMAGE = {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   DATA — one entry per service slug
+   DESIGN TOKENS 
+────────────────────────────────────────────────────────────────────────── */
+const BG_BASE = "#FFFFFF"; // Page background
+const BG_SURFACE = "#F8FAFC"; // Alternating section background
+const BG_ELEVATED = "#FFFFFF"; // Card background (flat, bordered — no glass)
+const TEXT_PRIMARY = "#0F172A"; // Headings, high-emphasis body
+const TEXT_BODY = "#475569"; // Standard paragraph text
+const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
+const BORDER = "#E2E8F0";
+const BORDER_HOVER = "#CBD5E1";
+
+/* ──────────────────────────────────────────────────────────────────────────
+   DATA
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
-    slug: "chronic-care-management",
+    slug: "fit-to-fly",
     name: "FIT TO FLY CERTIFICATE",
     tagline: "Medical travel clearance for a smoother journey.",
     intro:
       "Request a Fit to Fly Certificate through secure telemedicine services. Connect with a licensed healthcare provider, discuss your travel plans and health status, and receive medical documentation when clinically appropriate to support airline travel requirements.",
     accentColor: "#2563EB",
+    accentGlow: "#2563EB20",
     heroIcon: FiMonitor,
+    heroEmoji: "🖥️",
     description:
       "A Fit to Fly Certificate is a medical document that may be required by airlines for passengers with certain health conditions, recent surgeries, pregnancy-related travel considerations, or ongoing medical concerns. The certificate confirms that a healthcare provider has reviewed your condition and assessed your ability to travel safely by air.Through Humancare Connect, eligible travelers can complete a virtual consultation with a licensed healthcare provider, discuss airline requirements, and obtain travel-related medical documentation when appropriate. Our telemedicine platform offers a convenient way to address travel health requirements without the need for an in-person clinic visit.",
     whyItMatters:
@@ -94,26 +129,37 @@ const SERVICES = {
     ],
     features: [
       {
-        Icon: FiSearch,
-        title: "Share Your Travel & Health Information",
-        body: "Tell us about your upcoming trip, airline requirements, medical history, recent treatments, and any health concerns that may impact your travel plans.",
+        Icon: FiLock,
+        title: "HIPAA-Secure Platform",
+        desc: "End-to-end encrypted sessions protect every conversation and record.",
+      },
+      {
+        Icon: FiZap,
+        title: "Under 15-Min Wait",
+        desc: "Our average queue time is less than 15 minutes, even at peak hours.",
+      },
+      {
+        Icon: FiUserCheck,
+        title: "Board-Certified Doctors",
+        desc: "Every provider is credentialed, state-licensed, and continuously reviewed.",
+      },
+      {
+        Icon: FiCalendar,
+        title: "Flexible Scheduling",
+        desc: "Book ahead or consult on demand — evenings, weekends, holidays included.",
       },
       {
         Icon: FiFileText,
-        title: "Connect With a Healthcare Provider",
-        body: "A licensed healthcare provider will review your information, discuss your condition, and assess any factors that could affect your ability to travel safely.",
+        title: "Insurance Integration",
+        desc: "We verify your coverage in real time and handle claims on your behalf.",
       },
       {
-        Icon: FiVideo,
-        title: "Complete Your Virtual Assessment",
-        body: "Join a secure online consultation from your phone, tablet, or computer and discuss your travel needs with your provider.",
-      },
-      {
-        Icon: FiPackage,
-        title: "Receive Your Travel Documentation",
-        body: "If clinically appropriate, your provider may issue a Fit to Fly Certificate that can be shared with your airline or travel provider.",
+        Icon: FiGlobe,
+        title: "Multilingual Support",
+        desc: "Consultations available in 14+ languages with live interpreter access.",
       },
     ],
+
     stats: [
       { value: 120000, suffix: "+", label: "Patients Served" },
       { value: 2800, suffix: "+", label: "Verified Providers" },
@@ -274,8 +320,8 @@ const darken = (hex, amount) => {
   return `#${[dr, dg, db].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 };
 
-const Pill = ({ children, ac, onDark = false }) => {
-  const textColor = onDark ? "#ffffff" : darken(ac, 0.18);
+const Pill = ({ children, ac }) => {
+  const textColor = darken(ac, 0.18); // verified >7:1 contrast at this font size, vs ~4.5:1 for the raw accent
   return (
     <div
       style={{
@@ -284,11 +330,9 @@ const Pill = ({ children, ac, onDark = false }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: onDark ? "rgba(255,255,255,0.15)" : `${ac}12`,
+        background: "#fff",
         color: textColor,
-        border: onDark
-          ? "1px solid rgba(255,255,255,0.35)"
-          : `1px solid ${ac}30`,
+        border: `1px solid ${ac}30`,
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: "0.1em",
@@ -297,12 +341,7 @@ const Pill = ({ children, ac, onDark = false }) => {
       }}
     >
       <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: onDark ? "#ffffff" : ac,
-        }}
+        style={{ width: 6, height: 6, borderRadius: "50%", background: ac }}
       />
       {children}
     </div>
@@ -391,49 +430,51 @@ const Hero = ({ s }) => {
         flexDirection: "column",
         justifyContent: "center",
         overflow: "hidden",
-        background: BG_SURFACE,
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
+      {/* Background Image */}
       <img
         src={HERO_IMAGE.src}
         alt={HERO_IMAGE.alt}
         width={HERO_IMAGE.width}
         height={HERO_IMAGE.height}
         loading="eager"
-        fetchPriority="high"
         style={{
           position: "absolute",
           inset: 0,
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          objectPosition: "center",
           zIndex: 0,
         }}
       />
 
-      {/* ── Layer 1: Dark overlay for text legibility ───────────────────────
-              Adjust rgba alpha:
-                0.40 → lighter overlay, more image visible
-                0.58 → balanced (default)
-                0.70 → darker, maximum text contrast
-          ───────────────────────────────────────────────────────────────────── */}
+      {/* Overlay */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: "rgba(15, 23, 42, 0.58)",
+          background: `
+            linear-gradient(
+              to bottom,
+              rgba(15, 23, 42, 0.35) 0%,
+              rgba(15, 23, 42, 0.65) 50%,
+              rgba(15, 23, 42, 0.95) 100%
+            )
+          `,
           zIndex: 1,
         }}
       />
+
+      {/* Hero Content */}
       <motion.div
         style={{
           position: "relative",
           zIndex: 10,
           maxWidth: 1200,
           margin: "0 auto",
-          padding: "64px 24px",
+          padding: "100px 24px",
           width: "100%",
           opacity: op,
         }}
@@ -443,10 +484,7 @@ const Hero = ({ s }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
         >
-          {/* onDark=true → white pill border + text instead of accent tint */}
-          <Pill ac={s.accentColor} onDark>
-            HumanCare Connect
-          </Pill>
+          <Pill ac={s.accentColor}>HumanCare Connect</Pill>
         </motion.div>
 
         <motion.h1
@@ -456,7 +494,7 @@ const Hero = ({ s }) => {
           style={{
             fontSize: "clamp(36px, 5.5vw, 60px)",
             fontWeight: 900,
-            color: "#FFFFFF" /* white on dark overlay */,
+            color: "#FFFFFF",
             lineHeight: 1.08,
             letterSpacing: "-0.03em",
             marginBottom: 18,
@@ -466,15 +504,7 @@ const Hero = ({ s }) => {
           {s.name.split(" ").map((w, i, arr) => (
             <span key={i}>
               {i === Math.floor(arr.length / 2) ? (
-                /* Keep accent color on one word — stays readable on dark bg */
-                <span
-                  style={{
-                    color:
-                      s.accentColor === "#2563EB" ? "#60A5FA" : s.accentColor,
-                  }}
-                >
-                  {w}{" "}
-                </span>
+                <span style={{ color: s.accentColor }}>{w} </span>
               ) : (
                 <span>{w} </span>
               )}
@@ -488,7 +518,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.5, delay: 0.26 }}
           style={{
             fontSize: 18,
-            color: "rgba(255,255,255,0.80)" /* was TEXT_DIM */,
+            color: "#E5E7EB",
             fontStyle: "italic",
             marginBottom: 10,
           }}
@@ -502,7 +532,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.45, delay: 0.32 }}
           style={{
             fontSize: 16,
-            color: "rgba(255,255,255,0.88)" /* was TEXT_BODY */,
+            color: "#F3F4F6",
             lineHeight: 1.7,
             maxWidth: 560,
             marginBottom: 28,
@@ -515,13 +545,20 @@ const Hero = ({ s }) => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.38 }}
-          style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
+          style={{
+            display: "flex",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
         >
-          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
-          {/* onDark=true → white ghost button style */}
-          <GhostBtn onDark>
-            Contact Care Team <FiArrowRight />
-          </GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>
+            <a
+              href="/appointment-booking"
+              style={{ color: "#fff", textDecoration: "none" }}
+            >
+              Book Appointment
+            </a>
+          </PrimaryBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -529,9 +566,8 @@ const Hero = ({ s }) => {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   WHY US ITEMS (static, shared across pages)
+   CONSULTATION FORM — 
 ────────────────────────────────────────────────────────────────────────── */
-
 const ConsultationForm = ({ s }) => {
   const [values, setValues] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
@@ -1332,82 +1368,123 @@ const whyUsItems = [
   ],
 ];
 
-
-/* ──────────────────────────────────────────────────────────────────────────
-   ANIMATION VARIANTS
-────────────────────────────────────────────────────────────────────────── */
-// const fadeUp = {
-//   hidden: { opacity: 0, y: 24 },
-//   visible: (i = 0) => ({
-//     opacity: 1,
-//     y: 0,
-//     transition: {
-//       duration: 0.5,
-//       delay: i * 0.07,
-//       ease: [0.25, 0.46, 0.45, 0.94],
-//     },
-//   }),
-// };
-
-
-
-/* ──────────────────────────────────────────────────────────────────────────
-   WHY US
-────────────────────────────────────────────────────────────────────────── */
 const WhyUs = ({ s }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
-
   useEffect(() => {
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setInView(true); },
-      { threshold: 0.2 }
+      ([e]) => {
+        if (e.isIntersecting) setInView(true);
+      },
+      { threshold: 0.2 },
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
 
   return (
-    <section ref={ref} className="sp-section">
+    <section
+      ref={ref}
+      style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}
+    >
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
       >
-        <motion.div variants={fadeUp} className="sp-whyus__header">
-          <SLabel text="Why Choose Us" />
-          <h2 className="sp-whyus__heading">
-            Ready to Travel With Confidence?
-            {" "}
-            {/* <span className="sp-whyus__heading--accent">measure.</span> */}
+        <motion.div
+          variants={fadeUp}
+          style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
+        >
+          <SLabel text="Why Choose Us" ac={s.accentColor} />
+          <h2
+            style={{
+              fontSize: "clamp(26px, 3.5vw, 36px)",
+              fontWeight: 900,
+              color: TEXT_PRIMARY,
+              lineHeight: 1.15,
+              marginBottom: 10,
+            }}
+          >
+            Results you can{" "}
+            <span style={{ color: s.accentColor }}>measure.</span>
           </h2>
-          <p className="sp-whyus__sub">
+          <p style={{ color: TEXT_DIM, fontSize: 15 }}>
             Numbers that represent real patients, real outcomes.
           </p>
         </motion.div>
 
-        <div className="sp-stats">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 12,
+            marginBottom: 44,
+          }}
+        >
           {s.stats.map((st, i) => (
             <StatCard
               key={i}
               value={st.value}
               suffix={st.suffix}
               label={st.label}
+              ac={s.accentColor}
               go={inView}
             />
           ))}
         </div>
 
-        <div className="sp-whyus-grid">
-          {WHY_US_ITEMS.map(([Icon, title, desc], i) => (
-            <motion.div key={i} variants={fadeUp} custom={i} className="sp-whyus-card">
-              <div className="sp-whyus-card__icon-wrap">
-                <Icon className="sp-whyus-card__icon" />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 12,
+          }}
+        >
+          {whyUsItems.map(([Icon, title, desc], i) => (
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              custom={i}
+              style={{
+                display: "flex",
+                gap: 14,
+                alignItems: "flex-start",
+                padding: 20,
+                borderRadius: 16,
+                background: "#fff",
+                border: `1px solid ${BORDER}`,
+              }}
+            >
+              <div
+                style={{
+                  flexShrink: 0,
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: `${s.accentColor}12`,
+                }}
+              >
+                <Icon style={{ fontSize: 18, color: s.accentColor }} />
               </div>
               <div>
-                <div className="sp-whyus-card__title">{title}</div>
-                <div className="sp-whyus-card__desc">{desc}</div>
+                <div
+                  style={{
+                    color: TEXT_PRIMARY,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    marginBottom: 4,
+                  }}
+                >
+                  {title}
+                </div>
+                <div style={{ color: TEXT_DIM, fontSize: 13, lineHeight: 1.6 }}>
+                  {desc}
+                </div>
               </div>
             </motion.div>
           ))}
@@ -1419,73 +1496,154 @@ const WhyUs = ({ s }) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    FAQ
+   Fix 5: container is a flat bordered surface, no backdrop blur.
 ────────────────────────────────────────────────────────────────────────── */
 const FAQ = ({ s }) => {
   const [open, setOpen] = useState(null);
-
   return (
-    <section className="sp-section">
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        className="sp-faq__grid"
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}
       >
-        {/* Left: intro */}
         <motion.div variants={fadeUp}>
-          <SLabel text="FAQ" />
-          <h2 className="sp-faq__heading">
+          <SLabel text="FAQ" ac={s.accentColor} />
+          <h2
+            style={{
+              fontSize: "clamp(26px, 3.5vw, 36px)",
+              fontWeight: 900,
+              color: TEXT_PRIMARY,
+              lineHeight: 1.15,
+              marginBottom: 14,
+            }}
+          >
             Questions about
             <br />
-            <span className="sp-faq__heading--accent">{s.name}?</span>
+            <span style={{ color: s.accentColor }}>{s.name}?</span>
           </h2>
-          <p className="sp-faq__sub">
-            We've answered the most common questions below. Our care team is
-            one message away if yours isn't listed.
+          <p
+            style={{
+              color: TEXT_DIM,
+              fontSize: 15,
+              lineHeight: 1.7,
+              marginBottom: 24,
+            }}
+          >
+            We've answered the most common questions below. Our care team is one
+            message away if yours isn't listed.
           </p>
+          {/* <button
+            style={{
+              padding: "11px 20px",
+              borderRadius: 12,
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: "pointer",
+              background: `${s.accentColor}10`,
+              color: s.accentColor,
+              border: `1px solid ${s.accentColor}30`,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = `${s.accentColor}1A`)
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = `${s.accentColor}10`)
+            }
+          >
+            <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
+          </button> */}
         </motion.div>
 
-        {/* Right: accordion */}
-        <motion.div variants={fadeUp} className="sp-faq__panel">
+        <motion.div
+          variants={fadeUp}
+          style={{
+            padding: 20,
+            borderRadius: 22,
+            background: "#fff",
+            border: `1px solid ${BORDER}`,
+          }}
+        >
           {s.faqs.map((faq, i) => (
             <div
               key={i}
-              className="sp-faq__item"
+              style={{
+                borderBottom:
+                  i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
+              }}
             >
               <button
-                className="sp-faq__trigger"
                 onClick={() => setOpen(open === i ? null : i)}
-                aria-expanded={open === i}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "16px 0",
+                  textAlign: "left",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
               >
-                <span className="sp-faq__question">{faq.q}</span>
+                <span
+                  style={{
+                    color: TEXT_PRIMARY,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    paddingRight: 16,
+                  }}
+                >
+                  {faq.q}
+                </span>
                 <div
-                  className={
-                    open === i
-                      ? "sp-faq__toggle sp-faq__toggle--open"
-                      : "sp-faq__toggle sp-faq__toggle--closed"
-                  }
+                  style={{
+                    flexShrink: 0,
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: open === i ? s.accentColor : BG_SURFACE,
+                    transition: "background 0.2s, transform 0.2s",
+                    transform: open === i ? "rotate(45deg)" : "none",
+                  }}
                 >
                   <FiPlus
-                    className={
-                      open === i
-                        ? "sp-faq__toggle-icon--open"
-                        : "sp-faq__toggle-icon--closed"
-                    }
+                    style={{
+                      fontSize: 14,
+                      color: open === i ? "#fff" : TEXT_DIM,
+                    }}
                   />
                 </div>
               </button>
-
               <AnimatePresence>
                 {open === i && (
                   <motion.div
-                    className="sp-faq__answer"
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.26 }}
+                    style={{ overflow: "hidden" }}
                   >
-                    <div className="sp-faq__answer-body">{faq.a}</div>
+                    <div
+                      style={{
+                        paddingBottom: 16,
+                        paddingRight: 40,
+                        color: TEXT_BODY,
+                        fontSize: 14,
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      {faq.a}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1499,50 +1657,25 @@ const FAQ = ({ s }) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    FINAL CTA
+   Fix 5: glow blobs and translucent layered gradient removed — flat tinted
+   surface instead.
 ────────────────────────────────────────────────────────────────────────── */
-const FinalCTA = () => (
-  <section className="sp-section">
+const FinalCTA = ({ s }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.6 }}
-      className="sp-cta"
+      style={{
+        position: "relative",
+        borderRadius: 28,
+        padding: "72px 48px",
+        textAlign: "center",
+        background: `${s.accentColor}08`,
+        border: `1px solid ${s.accentColor}25`,
+      }}
     >
-      <Pill>Start Today</Pill>
-      <h2 className="sp-cta__heading">
-        Ready to Travel With Confidence?
-
-        <br />
-        <span className="sp-cta__heading--accent">Travel smarter with convenient virtual healthcare services designed around your schedule.
-        </span>
-      </h2>
-      <p className="sp-cta__body">
-        Whether you're preparing for an upcoming flight, recovering from a recent medical condition, or need documentation for airline requirements, Humancare Connect makes it simple to access professional travel health support.
-        Connect with a licensed healthcare provider through secure telemedicine services, complete your Fit to Fly assessment online, and receive medical clearance documentation when clinically appropriate.
-      </p>
-
-      <div className="sp-cta__actions">
-        <PrimaryBtn href="/login">Get Started</PrimaryBtn>
-        <GhostBtn href="/appointment-booking">Book Appointment</GhostBtn>
-        {/* <a href="/contact" className="sp-btn sp-btn--muted">
-          Contact Us
-        </a> */}
-      </div>
-
-      <div className="sp-cta__trust">
-        {[
-          [FiLock, "HIPAA Compliant"],
-          [FiStar, "4.9/5 Rated"],
-          [FiShield, "Verified Providers"],
-          [FiFileText, "All Insurances"],
-          [FiClock, "24/7 Access"],
-        ].map(([Icon, lb], i) => (
-          <div key={i} className="sp-trust-item">
-            <Icon className="sp-trust-item__icon" />
-            {lb}
-          </div>
-        ))}
       <div>
         <Pill ac={s.accentColor}>Start Today</Pill>
         <h2
@@ -1645,28 +1778,20 @@ const FinalCTA = () => (
             </div>
           ))}
         </div>
-        </div>
       </div>
     </motion.div>
   </section>
 );
 
 /* ──────────────────────────────────────────────────────────────────────────
-   ROOT COMPONENT
-   Sets --accent CSS custom property on the root element so every
-   color-mix() reference in the shared CSS resolves to the correct hue.
+   ROOT APP
+   Fix 6: wrapper background now matches the token system used throughout
+   every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
-export default function FittoFly() {
-  const [slug] = useState("telehealth-services");
+export default function FitToFly() {
+  const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
-
-  /* Inject the per-page accent color as a CSS variable */
-  useEffect(() => {
-    document.documentElement.style.setProperty("--accent", s.accentColor);
-    return () => {
-      document.documentElement.style.removeProperty("--accent");
-    };
-  }, [s.accentColor]);
+  const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
 
   return (
     <>
@@ -1680,8 +1805,13 @@ export default function FittoFly() {
           content="Need a Fit to Fly Certificate? Connect with a licensed healthcare provider online for travel health assessments and medical clearance documentation when clinically appropriate."
         />
       </Helmet>
-
-      <div className="sp-page">
+      <div
+      // style={{
+      //   backgroundColor: BG_BASE,
+      //   minHeight: "700px",
+      //   width: "100%",
+      // }}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={slug}
