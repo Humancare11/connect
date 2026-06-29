@@ -74,24 +74,25 @@ const BORDER_HOVER = "#CBD5E1";
 const SERVICES = {
   "telehealth-services": {
     slug: "telehealth-services",
-    name: "GENERAL CONSULTATION",
-    tagline: "Trusted healthcare guidance for everyday health concerns.",
+    name: "WEIGHT LOSS PROGRAMS",
+    tagline:
+      "Personalized support for healthy and sustainable weight management.",
     intro:
-      "Connect with a licensed healthcare provider through secure telemedicine services for personalized medical advice, symptom evaluation, and treatment recommendations. General consultations offer a convenient way to discuss non emergency health concerns and receive professional care from the comfort of home.",
+      "Achieve your health goals with personalized weight loss programs through secure telemedicine services. Connect with licensed healthcare providers who can help you create a realistic weight management plan based on your health history, lifestyle, and individual needs. Get expert guidance from the comfort of your home.",
     accentColor: "#2563EB",
     accentGlow: "#2563EB20",
     heroIcon: FiMonitor,
     heroEmoji: "🖥️",
     description:
-      "General consultations provide patients with convenient access to healthcare providers for a wide range of everyday medical concerns. Through Humancare Connect, patients can discuss symptoms, receive medical guidance, review treatment options, and get recommendations for appropriate next steps through secure virtual healthcare services.",
+      "Weight loss programs are personalized healthcare services designed to help individuals achieve and maintain a healthy weight through evidence based strategies. Through Humancare Connect, patients can connect with licensed healthcare providers who assess their health status, discuss weight management goals, and recommend appropriate lifestyle changes, nutrition guidance, and treatment options when clinically appropriate.",
     whyItMatters:
-      "Many health concerns can be addressed early through timely medical advice and evaluation. General consultations help patients better understand their symptoms, make informed healthcare decisions, and access professional support without the need for unnecessary clinic visits.",
+      "Maintaining a healthy weight can support overall wellness and may help reduce the risk of health conditions such as high blood pressure, type 2 diabetes, heart disease, sleep apnea, and joint problems. Professional weight management support can help patients build sustainable habits and achieve long term success.",
     whoBenefits: [
-      "Adults experiencing new or ongoing health concerns",
-      "Patients managing common illnesses or minor conditions",
-      "Busy professionals looking for convenient healthcare access",
-      "Individuals with heart disease or high cholesterol",
-      " Anyone seeking trusted healthcare guidance from licensed providers",
+      "Adults seeking healthy weight management support",
+      "Individuals struggling with overweight or obesity",
+      "Patients looking to improve overall health and wellness",
+      "People managing weight related health conditions",
+      "Individuals seeking personalized nutrition and lifestyle guidance",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
@@ -102,23 +103,23 @@ const SERVICES = {
     steps: [
       {
         Icon: FiSearch,
-        title: "Share Your Health Concerns",
-        body: "Tell us about your symptoms, medical history, current medications, and healthcare questions through our secure intake process.",
+        title: "Share Your Health Goals",
+        body: "Tell us about your weight management goals, health history, lifestyle habits, and any existing medical conditions.",
       },
       {
         Icon: FiFileText,
-        title: "Connect With a Healthcare Provider",
-        body: "Meet with a licensed healthcare provider who will review your concerns and discuss your symptoms.",
+        title: "Meet With a Healthcare Provider",
+        body: "Connect with a licensed healthcare provider who will evaluate your needs and discuss personalized weight loss strategies.",
       },
       {
         Icon: FiVideo,
-        title: "Receive Personalized Medical Guidance",
-        body: "Your provider will offer recommendations, discuss treatment options, and help determine the most appropriate next steps for your care.",
+        title: "Receive a Personalized Plan",
+        body: "Your provider may recommend nutrition guidance, lifestyle modifications, activity goals, and other weight management approaches.",
       },
       {
         Icon: FiPackage,
-        title: "Follow Your Care Plan",
-        body: "Receive guidance for ongoing care, symptom management, follow up recommendations, or referrals when needed.",
+        title: "Stay on Track",
+        body: "Continue your journey with ongoing support, follow up appointments, and adjustments to your plan as needed.",
       },
     ],
     features: [
@@ -162,76 +163,68 @@ const SERVICES = {
     ],
     faqs: [
       {
-        q: "What is a general consultation?",
-        a: "A general consultation is a virtual appointment with a licensed healthcare provider to discuss symptoms, health concerns, treatment options, and medical questions.",
+        q: "What is a weight loss program?",
+        a: "A weight loss program is a personalized plan designed to help individuals achieve and maintain a healthy weight through nutrition guidance, lifestyle changes, physical activity, and professional healthcare support.",
       },
       {
-        q: "What health concerns can be discussed during a general consultation?",
-        a: "Patients can discuss common illnesses, minor injuries, allergies, digestive concerns, headaches, fatigue, skin conditions, medication questions, and other non emergency health issues.",
+        q: "Can telehealth help with weight loss?",
+        a: "Yes. Telemedicine services provide convenient access to healthcare providers who can offer weight management guidance, monitor progress, and recommend personalized strategies.",
       },
       {
-        q: "Can I speak with a healthcare provider online?",
-        a: "Yes. Humancare Connect offers secure telemedicine services that allow patients to connect with licensed healthcare providers remotely.",
+        q: "Who can benefit from a weight loss program?",
+        a: "Adults seeking healthier lifestyle habits, weight management support, or help managing weight related health conditions may benefit from a structured program.",
       },
       {
-        q: "Are virtual general consultations effective?",
-        a: "Yes. Many common health concerns can be evaluated and managed through telehealth services when clinically appropriate.",
+        q: "Are weight loss programs personalized?",
+        a: "Yes. Healthcare providers consider your health history, goals, lifestyle habits, and current health status when creating recommendations.",
       },
       {
-        q: "Do I need an appointment for a general consultation?",
-        a: "Yes. Patients can schedule an online appointment at a convenient time.",
+        q: "Can weight loss improve overall health?",
+        a: "Maintaining a healthy weight may help support heart health, blood pressure management, blood sugar control, mobility, and overall wellness.",
       },
       {
-        q: "Can a provider diagnose my condition during a virtual visit?",
-        a: "Healthcare providers can assess symptoms, discuss concerns, and provide recommendations based on the information available during the consultation.",
+        q: "How do I get started with a weight loss program?",
+        a: "You can schedule an online appointment, discuss your goals with a healthcare provider, and receive a personalized weight management plan.",
       },
       {
-        q: "What happens during a general consultation?",
-        a: "Your provider will review your symptoms, medical history, medications, and healthcare concerns before discussing appropriate recommendations.",
+        q: "Are virtual weight loss consultations effective?",
+        a: "Virtual consultations provide convenient access to professional guidance and ongoing support while helping patients stay engaged in their health goals.",
       },
       {
-        q: "Can I ask questions about my medications?",
-        a: "Yes. General consultations are a convenient opportunity to discuss medications, side effects, and treatment plans.",
+        q: "Can weight loss programs help with obesity?",
+        a: "Yes. Weight management programs can provide support for individuals living with overweight or obesity through personalized care and lifestyle recommendations.",
       },
       {
-        q: "Is a general consultation confidential?",
-        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and confidentiality.",
+        q: "What role does nutrition play in weight loss?",
+        a: "Balanced nutrition is a key component of healthy weight management and can help support sustainable long term results.",
       },
       {
-        q: "Can I receive treatment recommendations during a consultation?",
-        a: "Yes. Healthcare providers can discuss treatment options, symptom management strategies, and next steps for care.",
+        q: "How often should I follow up with a provider?",
+        a: "Follow up schedules vary based on individual goals, progress, and healthcare needs.",
       },
       {
-        q: "Are general consultations suitable for preventive care?",
-        a: "Yes. Patients can discuss wellness goals, preventive healthcare measures, and healthy lifestyle recommendations.",
+        q: "Can weight loss programs support long term success?",
+        a: "Yes. Sustainable habits and ongoing support are important factors in maintaining long term weight management results.",
       },
       {
-        q: "Can I get a referral during a general consultation?",
-        a: "When appropriate, healthcare providers may recommend referrals for additional evaluation or specialty care.",
+        q: "Do I need to exercise to lose weight?",
+        a: "Physical activity is often recommended as part of a comprehensive weight management plan, but recommendations vary by individual.",
       },
       {
-        q: "What are the benefits of telemedicine consultations?",
-        a: "Telemedicine services provide convenient access to healthcare providers, flexible scheduling, and care from the comfort of home.",
+        q: "Can weight loss help reduce health risks?",
+        a: "Achieving a healthier weight may help reduce risks associated with conditions such as type 2 diabetes, heart disease, and high blood pressure.",
       },
       {
-        q: "Can I discuss multiple health concerns in one appointment?",
-        a: "Yes. Patients may discuss multiple non emergency healthcare concerns during a consultation.",
+        q: "Are online weight loss programs secure?",
+        a: "Yes. Humancare Connect uses secure telemedicine technology to protect patient privacy and healthcare information.",
       },
       {
-        q: "Who can benefit from a general consultation?",
-        a: "Anyone seeking medical advice, symptom evaluation, treatment guidance, or healthcare support may benefit from a general consultation.",
+        q: "Can healthcare providers monitor my progress remotely?",
+        a: "Yes. Providers can review your progress during follow up appointments and recommend adjustments to your plan when appropriate.",
       },
       {
-        q: "Can virtual consultations help save time?",
-        a: "Yes. Telehealth services eliminate travel time and provide convenient access to healthcare providers.",
-      },
-      {
-        q: "What should I prepare before my appointment?",
-        a: "Patients should be prepared to discuss symptoms, medications, medical history, and any questions they would like addressed.",
-      },
-      {
-        q: "When should I seek emergency medical care instead?",
-        a: "Emergency symptoms such as chest pain, severe breathing difficulties, stroke symptoms, or serious injuries require immediate emergency medical attention.",
+        q: "What makes a healthy weight loss plan?",
+        a: "Healthy weight loss plans focus on balanced nutrition, sustainable lifestyle changes, realistic goals, and ongoing support.",
       },
     ],
   },
@@ -499,10 +492,10 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
-          {/* <GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
+          <GhostBtn>
             Contact Care Team <FiArrowRight />
-          </GhostBtn> */}
+          </GhostBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -775,7 +768,7 @@ const Overview = ({ s }) => (
                 marginBottom: 20,
               }}
             >
-              Your First Step Toward Better Health
+              What Are Weight Loss Programs?
             </h2>
           </motion.div>
           <motion.p
@@ -973,8 +966,8 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 36,
               }}
             >
-              Accessing a general consultation through Humancare Connect is
-              quick, secure, and designed around your healthcare needs.
+              Beginning your weight loss journey through Humancare Connect is
+              convenient, secure, and designed around your individual needs.
             </p>
           </motion.div>
 
@@ -1091,12 +1084,13 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 24,
               }}
             >
-              Get convenient access to professional healthcare guidance through
-              trusted telemedicine services. Receive personalized support
-              without leaving home.
+              Take the first step toward healthier weight management through
+              trusted telemedicine services. Personalized support is available
+              to help you build sustainable habits and achieve your long term
+              wellness goals.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
-              <a href="/login">Get Started Today</a>
+              Get Started Today
             </PrimaryBtn>
             <div
               style={{
@@ -1163,9 +1157,9 @@ const Features = ({ s }) => (
             marginBottom: 10,
           }}
         >
-          Comprehensive Care for
+          Understanding Weight Loss
           <br />
-          <span style={{ color: s.accentColor }}>Everyday Health Concerns</span>
+          <span style={{ color: s.accentColor }}>Programs</span>
         </h2>
         <p style={{ color: TEXT_DIM, fontSize: 15 }}>
           Every feature is designed around one goal: better outcomes for you.
@@ -1190,12 +1184,12 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            General consultations are one of the most common ways patients
-            access healthcare services. Whether you are experiencing new
-            symptoms, managing an ongoing condition, seeking preventive health
-            advice, or looking for professional medical guidance, a general
-            consultation provides an opportunity to discuss your concerns with a
-            licensed healthcare provider.
+            Weight loss is not simply about reducing numbers on a scale.
+            Effective weight management focuses on improving overall health
+            through sustainable lifestyle changes, balanced nutrition, regular
+            physical activity, and professional healthcare guidance. Every
+            individual has unique health needs, which is why personalized care
+            plays an important role in long term success.
           </p>
           <p
             style={{
@@ -1205,12 +1199,13 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            At Humancare Connect, our virtual healthcare services make it easier
-            for patients to access quality care from virtually anywhere.
-            Healthcare providers can evaluate symptoms, review health history,
-            discuss treatment options, and recommend appropriate next steps
-            based on individual needs. This convenient approach helps patients
-            receive timely support while avoiding unnecessary delays in care.
+            At Humancare Connect, our weight loss programs are designed to
+            provide patient centered support through virtual healthcare
+            services. Licensed healthcare providers evaluate factors such as
+            current weight, medical history, lifestyle habits, nutrition
+            patterns, and health goals to develop individualized
+            recommendations. This personalized approach helps patients make
+            meaningful progress while prioritizing their overall well being.
           </p>
           <p
             style={{
@@ -1220,12 +1215,12 @@ const Features = ({ s }) => (
               margin: 0,
             }}
           >
-            General consultations may address a wide range of concerns,
-            including cold and flu symptoms, allergies, minor infections,
-            digestive issues, headaches, fatigue, skin concerns, medication
-            questions, and overall wellness discussions. Through secure
-            telehealth services, patients can access professional healthcare
-            support when they need it most.
+            Weight loss programs may benefit individuals who are managing
+            obesity, weight related health concerns, or difficulties maintaining
+            healthy lifestyle habits. Through secure telemedicine services,
+            patients can access professional support, receive ongoing guidance,
+            and stay accountable throughout their weight management journey
+            without the need for frequent in person visits.
           </p>
         </div>
       </motion.div>
@@ -1481,7 +1476,7 @@ const FAQ = ({ s }) => {
             We've answered the most common questions below. Our care team is one
             message away if yours isn't listed.
           </p>
-          {/* <button
+          <button
             style={{
               padding: "11px 20px",
               borderRadius: 12,
@@ -1504,7 +1499,7 @@ const FAQ = ({ s }) => {
             }
           >
             <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button> */}
+          </button>
         </motion.div>
 
         <motion.div
@@ -1633,9 +1628,9 @@ const FinalCTA = ({ s }) => (
             marginBottom: 14,
           }}
         >
-          Ready to Speak With a
+          Ready to Reach Your Weight
           <br />
-          <span style={{ color: s.accentColor }}>Healthcare Provider?</span>
+          <span style={{ color: s.accentColor }}>Management Goals?</span>
         </h2>
         <p
           style={{
@@ -1646,10 +1641,10 @@ const FinalCTA = ({ s }) => (
             fontSize: 16,
           }}
         >
-          Connect with a licensed healthcare provider through secure
-          telemedicine services and receive personalized medical guidance for
-          your health concerns. Get the care and answers you need from the
-          comfort of home.
+          Take control of your health with personalized weight loss programs
+          through Humancare Connect. Connect with a licensed healthcare
+          provider, receive expert guidance, and start building healthier habits
+          that support long term wellness.
         </p>
         <div
           style={{
@@ -1661,8 +1656,8 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/login">Get Started</a></PrimaryBtn>
-          <GhostBtn><a href="/appointment-booking">Book Appointment</a></GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Get Started</PrimaryBtn>
+          <GhostBtn>Book Appointment</GhostBtn>
           <button
             style={{
               padding: "13px 24px",
@@ -1719,7 +1714,7 @@ const FinalCTA = ({ s }) => (
    Fix 6: wrapper background now matches the token system used throughout
    every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
-export default function GeneralConsultation() {
+export default function WeightLossPrograms() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
@@ -1728,12 +1723,12 @@ export default function GeneralConsultation() {
     <>
       <Helmet>
         <title>
-          General Consultation Online | Virtual Doctor Consultation | Humancare
-          Connect
+          Weight Loss Programs Online | Personalized Weight Management |
+          Humancare Connect
         </title>
         <meta
           name="description"
-          content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
+          content="Explore personalized weight loss programs through secure telemedicine services. Connect with licensed healthcare providers and achieve your health goals."
         />
       </Helmet>
       <div
