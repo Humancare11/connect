@@ -1,10 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { AuthProvider }       from "./context/AuthContext";
-import { DoctorAuthProvider } from "./context/DoctorAuthContext";
-import { AdminProvider }      from "./context/AdminContext";
-import { PricingProvider }    from "./context/PricingContext";
+import { AuthProvider }             from "./context/AuthContext";
+import { DoctorAuthProvider }       from "./context/DoctorAuthContext";
+import { AdminProvider }            from "./context/AdminContext";
+import { PricingProvider }          from "./context/PricingContext";
+import { EmployeeAdminProvider }    from "./context/EmployeeAdminContext";
 import "./index.css";
 import App from "./App.jsx";
 
@@ -16,9 +17,11 @@ createRoot(document.getElementById("root")).render(
           <AuthProvider>
             <DoctorAuthProvider>
               <AdminProvider>
-                <PricingProvider>
-                  <App />
-                </PricingProvider>
+                <EmployeeAdminProvider>
+                  <PricingProvider>
+                    <App />
+                  </PricingProvider>
+                </EmployeeAdminProvider>
               </AdminProvider>
             </DoctorAuthProvider>
           </AuthProvider>

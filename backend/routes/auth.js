@@ -7,10 +7,11 @@ const {
   updateProfile, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
+  employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
 } = require("../controllers/authController");
 
-const authMiddleware                        = require("../middleware/authMiddleware");
-const { verifyUserToken, verifyAdminToken } = require("../middleware/verifyToken");
+const authMiddleware                                                    = require("../middleware/authMiddleware");
+const { verifyUserToken, verifyAdminToken, verifyEmployeeAdminToken } = require("../middleware/verifyToken");
 const {
   registrationLimiter,
 } = require("../middleware/rateLimiters");
@@ -37,6 +38,11 @@ router.post("/admin-login",  adminLogin);
 router.post("/payment-admin-login", paymentAdminLogin);
 router.post("/admin-logout", adminLogout);
 router.get ("/admin-me",     verifyAdminToken, adminMe);
+
+// ── Employee Admin auth ───────────────────────────────────────────────────────
+router.post("/employee-admin-login",  employeeAdminLogin);
+router.post("/employee-admin-logout", verifyEmployeeAdminToken, employeeAdminLogout);
+router.get ("/employee-admin-me",     verifyEmployeeAdminToken, employeeAdminMe);
 
 // ── Doctor auth (legacy via authController) ───────────────────────────────────
 router.post("/doctor-register", registrationLimiter, doctorRegister);
