@@ -334,10 +334,10 @@ import GeneralConsultation from "./pages/NewServices/GeneralConsultation";
 import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
-
+import DoctorNoteSickNote from "./pages/NewServices/DoctorNoteSickNote";
 import FittoFly from "./pages/NewServices/FittoFly";
 import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
-import DoctorNote from "./pages/NewServices/DoctorNote";
+// import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
 
@@ -1610,7 +1610,10 @@ function AppLayout() {
           />
           <Route path="/fit-to-fly" element={<FittoFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
-          <Route path="/doctor-note" element={<DoctorNote />} />
+          <Route
+            path="/doctor-note-or-sick-notes"
+            element={<DoctorNoteSickNote />}
+          />
           <Route path="/vertigo" element={<Vertigo />} />
         </Routes>
 

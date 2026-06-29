@@ -255,21 +255,50 @@ const Pill = ({ children }) => (
   </div>
 );
 
-const PrimaryBtn = ({ children, href, fullWidth, type = "button", onClick }) => {
-  const cls = ["sp-btn sp-btn--primary", fullWidth ? "sp-btn--full" : ""].join(" ").trim();
-  if (href) return <a href={href} className={cls}>{children}</a>;
-  return <button type={type} className={cls} onClick={onClick}>{children}</button>;
+const PrimaryBtn = ({
+  children,
+  href,
+  fullWidth,
+  type = "button",
+  onClick,
+}) => {
+  const cls = ["sp-btn sp-btn--primary", fullWidth ? "sp-btn--full" : ""]
+    .join(" ")
+    .trim();
+  if (href)
+    return (
+      <a href={href} className={cls}>
+        {children}
+      </a>
+    );
+  return (
+    <button type={type} className={cls} onClick={onClick}>
+      {children}
+    </button>
+  );
 };
 
 const GhostBtn = ({ children, href, onClick }) => {
-  if (href) return <a href={href} className="sp-btn sp-btn--ghost">{children}</a>;
-  return <button className="sp-btn sp-btn--ghost" onClick={onClick}>{children}</button>;
+  if (href)
+    return (
+      <a href={href} className="sp-btn sp-btn--ghost">
+        {children}
+      </a>
+    );
+  return (
+    <button className="sp-btn sp-btn--ghost" onClick={onClick}>
+      {children}
+    </button>
+  );
 };
 
 /* ── HERO ── */
 const Hero = ({ s }) => {
   const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
   const op = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
   const words = s.name.split(" ");
   const midIdx = Math.floor(words.length / 2);
@@ -286,7 +315,11 @@ const Hero = ({ s }) => {
       />
       <div className="sp-hero__overlay" />
       <motion.div className="sp-hero__inner" style={{ opacity: op }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.1 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.1 }}
+        >
           <Pill>HumanCare Connect</Pill>
         </motion.div>
         <motion.h1
@@ -296,18 +329,37 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.6, delay: 0.18 }}
         >
           {words.map((w, i) =>
-            i === midIdx
-              ? <span key={i} className="sp-hero__heading--accent">{w} </span>
-              : <span key={i}>{w} </span>
+            i === midIdx ? (
+              <span key={i} className="sp-hero__heading--accent">
+                {w}{" "}
+              </span>
+            ) : (
+              <span key={i}>{w} </span>
+            ),
           )}
         </motion.h1>
-        <motion.p className="sp-hero__tagline" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.26 }}>
+        <motion.p
+          className="sp-hero__tagline"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.26 }}
+        >
           {s.tagline}
         </motion.p>
-        <motion.p className="sp-hero__intro" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.32 }}>
+        <motion.p
+          className="sp-hero__intro"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.32 }}
+        >
           {s.intro}
         </motion.p>
-        <motion.div className="sp-hero__actions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.38 }}>
+        <motion.div
+          className="sp-hero__actions"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.38 }}
+        >
           <PrimaryBtn href="/appointment-booking">Book Appointment</PrimaryBtn>
         </motion.div>
       </motion.div>
@@ -319,8 +371,12 @@ const Hero = ({ s }) => {
 const ConsultationForm = () => {
   const [values, setValues] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
-  const handleChange = (field) => (e) => setValues((v) => ({ ...v, [field]: e.target.value }));
-  const handleSubmit = (e) => { e.preventDefault(); setSubmitted(true); };
+  const handleChange = (field) => (e) =>
+    setValues((v) => ({ ...v, [field]: e.target.value }));
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
 
   if (submitted) {
     return (
@@ -331,11 +387,15 @@ const ConsultationForm = () => {
           </div>
           <h3 className="sp-consult__success-heading">Request received</h3>
           <p className="sp-consult__success-body">
-            A member of our care team will reach out to {values.email || "you"} shortly.
+            A member of our care team will reach out to {values.email || "you"}{" "}
+            shortly.
           </p>
           <button
             className="sp-consult__reset-btn"
-            onClick={() => { setSubmitted(false); setValues({ name: "", email: "", message: "" }); }}
+            onClick={() => {
+              setSubmitted(false);
+              setValues({ name: "", email: "", message: "" });
+            }}
           >
             Send another request
           </button>
@@ -351,23 +411,56 @@ const ConsultationForm = () => {
       </div>
       <h3 className="sp-consult__heading">Request a Consultation</h3>
       <p className="sp-consult__sub">
-        Tell us a little about what you need, and a care coordinator will follow up within one business day.
+        Tell us a little about what you need, and a care coordinator will follow
+        up within one business day.
       </p>
       <form onSubmit={handleSubmit}>
         <div className="sp-form__group">
-          <label className="sp-form__label" htmlFor="consult-name">Full name</label>
-          <input id="consult-name" type="text" required placeholder="Jordan Lee" value={values.name} onChange={handleChange("name")} className="sp-form__input" />
+          <label className="sp-form__label" htmlFor="consult-name">
+            Full name
+          </label>
+          <input
+            id="consult-name"
+            type="text"
+            required
+            placeholder="Jordan Lee"
+            value={values.name}
+            onChange={handleChange("name")}
+            className="sp-form__input"
+          />
         </div>
         <div className="sp-form__group">
-          <label className="sp-form__label" htmlFor="consult-email">Email address</label>
-          <input id="consult-email" type="email" required placeholder="jordan@email.com" value={values.email} onChange={handleChange("email")} className="sp-form__input" />
+          <label className="sp-form__label" htmlFor="consult-email">
+            Email address
+          </label>
+          <input
+            id="consult-email"
+            type="email"
+            required
+            placeholder="jordan@email.com"
+            value={values.email}
+            onChange={handleChange("email")}
+            className="sp-form__input"
+          />
         </div>
         <div className="sp-form__group">
-          <label className="sp-form__label" htmlFor="consult-message">What can we help with?</label>
-          <textarea id="consult-message" required rows={4} placeholder="Briefly describe your symptoms or what you'd like to discuss…" value={values.message} onChange={handleChange("message")} className="sp-form__textarea" />
+          <label className="sp-form__label" htmlFor="consult-message">
+            What can we help with?
+          </label>
+          <textarea
+            id="consult-message"
+            required
+            rows={4}
+            placeholder="Briefly describe your symptoms or what you'd like to discuss…"
+            value={values.message}
+            onChange={handleChange("message")}
+            className="sp-form__textarea"
+          />
         </div>
         <div className="sp-form__submit-wrap">
-          <PrimaryBtn type="submit" fullWidth>Submit Request</PrimaryBtn>
+          <PrimaryBtn type="submit" fullWidth>
+            Submit Request
+          </PrimaryBtn>
         </div>
         <div className="sp-form__privacy">
           <FiLock className="sp-form__privacy-icon" />
@@ -392,9 +485,13 @@ const Overview = ({ s }) => (
         <div>
           <motion.div variants={fadeUp}>
             <SLabel text="Service Overview" />
-            <h2 className="sp-overview__heading">Your First Step Toward Better Health</h2>
+            <h2 className="sp-overview__heading">
+              Your First Step Toward Better Health
+            </h2>
           </motion.div>
-          <motion.p variants={fadeUp} className="sp-overview__desc">{s.description}</motion.p>
+          <motion.p variants={fadeUp} className="sp-overview__desc">
+            {s.description}
+          </motion.p>
           <motion.div variants={fadeUp} className="sp-overview__why">
             <div className="sp-overview__why-label">Why It Matters</div>
             <p className="sp-overview__why-body">{s.whyItMatters}</p>
@@ -423,7 +520,12 @@ const Overview = ({ s }) => (
         className="sp-outcomes"
       >
         {s.keyOutcomes.map((o, i) => (
-          <motion.div key={i} variants={fadeUp} custom={i} className="sp-outcome-card">
+          <motion.div
+            key={i}
+            variants={fadeUp}
+            custom={i}
+            className="sp-outcome-card"
+          >
             <div className="sp-outcome-card__dot" />
             <p className="sp-outcome-card__text">{o}</p>
           </motion.div>
@@ -446,15 +548,22 @@ const HowItWorks = ({ s }) => (
         <motion.div variants={fadeUp}>
           <SLabel text="Our Services" />
           <h2 className="sp-hiw__heading">
-            Getting started is <span className="sp-hiw__heading--accent">simple.</span>
+            Getting started is{" "}
+            <span className="sp-hiw__heading--accent">simple.</span>
           </h2>
           <p className="sp-hiw__sub">
-            Accessing a general consultation through Humancare Connect is quick, secure, and designed around your healthcare needs.
+            Accessing a general consultation through Humancare Connect is quick,
+            secure, and designed around your healthcare needs.
           </p>
         </motion.div>
         <div className="sp-steps">
           {s.steps.map((step, i) => (
-            <motion.div key={i} variants={fadeUp} custom={i} className="sp-step">
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              custom={i}
+              className="sp-step"
+            >
               {i < s.steps.length - 1 && <div className="sp-step__connector" />}
               <div className="sp-step__icon-wrap">
                 <step.Icon className="sp-step__icon" />
@@ -468,14 +577,23 @@ const HowItWorks = ({ s }) => (
           ))}
         </div>
       </motion.div>
-      <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+      >
         <div className="sp-ready-card">
           <s.heroIcon className="sp-ready-card__hero-icon" />
           <h3 className="sp-ready-card__heading">Ready to begin?</h3>
           <p className="sp-ready-card__desc">
-            Get convenient access to professional healthcare guidance through trusted telemedicine services. Receive personalized support without leaving home.
+            Get convenient access to professional healthcare guidance through
+            trusted telemedicine services. Receive personalized support without
+            leaving home.
           </p>
-          <PrimaryBtn href="/login" fullWidth>Get Started Today</PrimaryBtn>
+          <PrimaryBtn href="/login" fullWidth>
+            Get Started Today
+          </PrimaryBtn>
           <div className="sp-ready-card__badges">
             {[
               [FiLock, "Secure & Private"],
@@ -509,20 +627,39 @@ const Features = () => (
         <h2 className="sp-features__heading">
           Comprehensive Care for
           <br />
-          <span className="sp-features__heading--accent">Everyday Health Concerns</span>
+          <span className="sp-features__heading--accent">
+            Everyday Health Concerns
+          </span>
         </h2>
-        <p className="sp-features__sub">Every feature is designed around one goal: better outcomes for you.</p>
+        <p className="sp-features__sub">
+          Every feature is designed around one goal: better outcomes for you.
+        </p>
       </motion.div>
       <motion.div variants={fadeUp} className="sp-features__card">
         <div className="sp-features__body">
           <p className="sp-features__para">
-            General consultations are one of the most common ways patients access healthcare services. Whether you are experiencing new symptoms, managing an ongoing condition, seeking preventive health advice, or looking for professional medical guidance, a general consultation provides an opportunity to discuss your concerns with a licensed healthcare provider.
+            General consultations are one of the most common ways patients
+            access healthcare services. Whether you are experiencing new
+            symptoms, managing an ongoing condition, seeking preventive health
+            advice, or looking for professional medical guidance, a general
+            consultation provides an opportunity to discuss your concerns with a
+            licensed healthcare provider.
           </p>
           <p className="sp-features__para">
-            At Humancare Connect, our virtual healthcare services make it easier for patients to access quality care from virtually anywhere. Healthcare providers can evaluate symptoms, review health history, discuss treatment options, and recommend appropriate next steps based on individual needs. This convenient approach helps patients receive timely support while avoiding unnecessary delays in care.
+            At Humancare Connect, our virtual healthcare services make it easier
+            for patients to access quality care from virtually anywhere.
+            Healthcare providers can evaluate symptoms, review health history,
+            discuss treatment options, and recommend appropriate next steps
+            based on individual needs. This convenient approach helps patients
+            receive timely support while avoiding unnecessary delays in care.
           </p>
           <p className="sp-features__para">
-            General consultations may address a wide range of concerns, including cold and flu symptoms, allergies, minor infections, digestive issues, headaches, fatigue, skin concerns, medication questions, and overall wellness discussions. Through secure telehealth services, patients can access professional healthcare support when they need it most.
+            General consultations may address a wide range of concerns,
+            including cold and flu symptoms, allergies, minor infections,
+            digestive issues, headaches, fatigue, skin concerns, medication
+            questions, and overall wellness discussions. Through secure
+            telehealth services, patients can access professional healthcare
+            support when they need it most.
           </p>
         </div>
       </motion.div>
@@ -535,7 +672,10 @@ const StatCard = ({ value, suffix, label, go }) => {
   const c = useCountUp(value, 2200, go);
   return (
     <motion.div variants={fadeUp} className="sp-stat-card">
-      <div className="sp-stat-card__value">{c}{suffix}</div>
+      <div className="sp-stat-card__value">
+        {c}
+        {suffix}
+      </div>
       <div className="sp-stat-card__label">{label}</div>
     </motion.div>
   );
@@ -547,8 +687,10 @@ const WhyUs = ({ s }) => {
   const [inView, setInView] = useState(false);
   useEffect(() => {
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setInView(true); },
-      { threshold: 0.2 }
+      ([e]) => {
+        if (e.isIntersecting) setInView(true);
+      },
+      { threshold: 0.2 },
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
@@ -563,19 +705,35 @@ const WhyUs = ({ s }) => {
       >
         <motion.div variants={fadeUp} className="sp-whyus__header">
           <SLabel text="Why Choose Us" />
-          <h2 className="sp-whyus__heading">Ready to Speak With a Healthcare Provider?</h2>
+          <h2 className="sp-whyus__heading">
+            Ready to Speak With a Healthcare Provider?
+          </h2>
           <p className="sp-whyus__sub">
-            Connect with a licensed healthcare provider through secure telemedicine services and receive personalized medical guidance for your health concerns. Get the care and answers you need from the comfort of home.
+            Connect with a licensed healthcare provider through secure
+            telemedicine services and receive personalized medical guidance for
+            your health concerns. Get the care and answers you need from the
+            comfort of home.
           </p>
         </motion.div>
         <div className="sp-stats">
           {s.stats.map((st, i) => (
-            <StatCard key={i} value={st.value} suffix={st.suffix} label={st.label} go={inView} />
+            <StatCard
+              key={i}
+              value={st.value}
+              suffix={st.suffix}
+              label={st.label}
+              go={inView}
+            />
           ))}
         </div>
         <div className="sp-whyus-grid">
           {WHY_US_ITEMS.map(([Icon, title, desc], i) => (
-            <motion.div key={i} variants={fadeUp} custom={i} className="sp-whyus-card">
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              custom={i}
+              className="sp-whyus-card"
+            >
               <div className="sp-whyus-card__icon-wrap">
                 <Icon className="sp-whyus-card__icon" />
               </div>
@@ -611,7 +769,8 @@ const FAQ = ({ s }) => {
             <span className="sp-faq__heading--accent">{s.name}?</span>
           </h2>
           <p className="sp-faq__sub">
-            We've answered the most common questions below. Our care team is one message away if yours isn't listed.
+            We've answered the most common questions below. Our care team is one
+            message away if yours isn't listed.
           </p>
         </motion.div>
         <motion.div variants={fadeUp} className="sp-faq__panel">
@@ -623,8 +782,20 @@ const FAQ = ({ s }) => {
                 aria-expanded={open === i}
               >
                 <span className="sp-faq__question">{faq.q}</span>
-                <div className={open === i ? "sp-faq__toggle sp-faq__toggle--open" : "sp-faq__toggle sp-faq__toggle--closed"}>
-                  <FiPlus className={open === i ? "sp-faq__toggle-icon--open" : "sp-faq__toggle-icon--closed"} />
+                <div
+                  className={
+                    open === i
+                      ? "sp-faq__toggle sp-faq__toggle--open"
+                      : "sp-faq__toggle sp-faq__toggle--closed"
+                  }
+                >
+                  <FiPlus
+                    className={
+                      open === i
+                        ? "sp-faq__toggle-icon--open"
+                        : "sp-faq__toggle-icon--closed"
+                    }
+                  />
                 </div>
               </button>
               <AnimatePresence>
@@ -667,7 +838,9 @@ const FinalCTA = ({ s }) => (
         </span>
       </h2>
       <p className="sp-cta__body">
-        Connect with a licensed healthcare provider through secure telemedicine services and receive personalized medical guidance for your health concerns.
+        Connect with a licensed healthcare provider through secure telemedicine
+        services and receive personalized medical guidance for your health
+        concerns.
       </p>
       <div className="sp-cta__actions">
         <PrimaryBtn href="/login">Get Started</PrimaryBtn>
@@ -698,13 +871,18 @@ export default function GenralConsultation() {
 
   useEffect(() => {
     document.documentElement.style.setProperty("--accent", s.accentColor);
-    return () => { document.documentElement.style.removeProperty("--accent"); };
+    return () => {
+      document.documentElement.style.removeProperty("--accent");
+    };
   }, [s.accentColor]);
 
   return (
     <>
       <Helmet>
-        <title>General Consultation Online | Virtual Doctor Consultation | Humancare Connect</title>
+        <title>
+          General Consultation Online | Virtual Doctor Consultation | Humancare
+          Connect
+        </title>
         <meta
           name="description"
           content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."

@@ -32,6 +32,15 @@ import { Helmet } from "react-helmet-async";
 import "./newservices.css";
 import DoctorsNote from "../Conditions/DoctorsNote";
 
+import heroBanner from "../../assets/MedicalServices/general-consultation-online.webp";
+
+const HERO_IMAGE = {
+  src: heroBanner,
+  alt: "Licensed healthcare provider conducting an online general consultation with a patient through secure telemedicine services",
+  width: 1920,
+  height: 700,
+};
+
 /* ──────────────────────────────────────────────────────────────────────────
    DATA — one entry per service slug
 ────────────────────────────────────────────────────────────────────────── */
@@ -272,8 +281,16 @@ const Pill = ({ children }) => (
 );
 
 /** Primary filled button — wraps an anchor when href is provided */
-const PrimaryBtn = ({ children, href, fullWidth, type = "button", onClick }) => {
-  const cls = ["sp-btn sp-btn--primary", fullWidth ? "sp-btn--full" : ""].join(" ").trim();
+const PrimaryBtn = ({
+  children,
+  href,
+  fullWidth,
+  type = "button",
+  onClick,
+}) => {
+  const cls = ["sp-btn sp-btn--primary", fullWidth ? "sp-btn--full" : ""]
+    .join(" ")
+    .trim();
   if (href) {
     return (
       <a href={href} className={cls}>
@@ -314,12 +331,20 @@ const Hero = ({ s }) => {
     offset: ["start start", "end start"],
   });
   const op = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-
   const words = s.name.split(" ");
   const midIdx = Math.floor(words.length / 2);
-
   return (
     <section className="sp-hero" ref={ref}>
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        fetchPriority="high"
+        className="sp-hero__bg"
+      />
+      <div className="sp-hero__overlay" />
       <motion.div className="sp-hero__inner" style={{ opacity: op }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -328,7 +353,6 @@ const Hero = ({ s }) => {
         >
           <Pill>HumanCare Connect</Pill>
         </motion.div>
-
         <motion.h1
           className="sp-hero__heading"
           initial={{ opacity: 0, y: 32 }}
@@ -337,13 +361,14 @@ const Hero = ({ s }) => {
         >
           {words.map((w, i) =>
             i === midIdx ? (
-              <span key={i} className="sp-hero__heading--accent">{w} </span>
+              <span key={i} className="sp-hero__heading--accent">
+                {w}{" "}
+              </span>
             ) : (
               <span key={i}>{w} </span>
-            )
+            ),
           )}
         </motion.h1>
-
         <motion.p
           className="sp-hero__tagline"
           initial={{ opacity: 0, y: 16 }}
@@ -352,7 +377,6 @@ const Hero = ({ s }) => {
         >
           {s.tagline}
         </motion.p>
-
         <motion.p
           className="sp-hero__intro"
           initial={{ opacity: 0, y: 12 }}
@@ -361,7 +385,6 @@ const Hero = ({ s }) => {
         >
           {s.intro}
         </motion.p>
-
         <motion.div
           className="sp-hero__actions"
           initial={{ opacity: 0, y: 10 }}
@@ -399,8 +422,8 @@ const ConsultationForm = () => {
           </div>
           <h3 className="sp-consult__success-heading">Request received</h3>
           <p className="sp-consult__success-body">
-            A member of our care team will reach out to{" "}
-            {values.email || "you"} shortly.
+            A member of our care team will reach out to {values.email || "you"}{" "}
+            shortly.
           </p>
           <button
             className="sp-consult__reset-btn"
@@ -423,8 +446,8 @@ const ConsultationForm = () => {
       </div>
       <h3 className="sp-consult__heading">Request a Consultation</h3>
       <p className="sp-consult__sub">
-        Tell us a little about what you need, and a care coordinator will
-        follow up within one business day.
+        Tell us a little about what you need, and a care coordinator will follow
+        up within one business day.
       </p>
 
       <form onSubmit={handleSubmit}>
@@ -547,7 +570,12 @@ const Overview = ({ s }) => (
         className="sp-outcomes"
       >
         {s.keyOutcomes.map((o, i) => (
-          <motion.div key={i} variants={fadeUp} custom={i} className="sp-outcome-card">
+          <motion.div
+            key={i}
+            variants={fadeUp}
+            custom={i}
+            className="sp-outcome-card"
+          >
             <div className="sp-outcome-card__dot" />
             <p className="sp-outcome-card__text">{o}</p>
           </motion.div>
@@ -577,16 +605,20 @@ const HowItWorks = ({ s }) => (
             <span className="sp-hiw__heading--accent">simple.</span>
           </h2>
           <p className="sp-hiw__sub">
-            Requesting a Doctor Note or Sick Note through Humancare Connect is quick, secure, and convenient.
+            Requesting a Doctor Note or Sick Note through Humancare Connect is
+            quick, secure, and convenient.
           </p>
         </motion.div>
 
         <div className="sp-steps">
           {s.steps.map((step, i) => (
-            <motion.div key={i} variants={fadeUp} custom={i} className="sp-step">
-              {i < s.steps.length - 1 && (
-                <div className="sp-step__connector" />
-              )}
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              custom={i}
+              className="sp-step"
+            >
+              {i < s.steps.length - 1 && <div className="sp-step__connector" />}
               <div className="sp-step__icon-wrap">
                 <step.Icon className="sp-step__icon" />
               </div>
@@ -611,8 +643,9 @@ const HowItWorks = ({ s }) => (
           <s.heroIcon className="sp-ready-card__hero-icon" />
           <h3 className="sp-ready-card__heading">Ready to begin?</h3>
           <p className="sp-ready-card__desc">
-            Access trusted telemedicine services from wherever you are. Complete your consultation online and receive medical documentation when appropriate.
-
+            Access trusted telemedicine services from wherever you are. Complete
+            your consultation online and receive medical documentation when
+            appropriate.
           </p>
           <PrimaryBtn href="/login" fullWidth>
             Get Started Today
@@ -664,17 +697,29 @@ const Features = ({ s }) => (
       <motion.div variants={fadeUp} className="sp-features__card">
         <div className="sp-features__body">
           <p className="sp-features__para">
-            Doctor Notes and Sick Notes are commonly requested when an illness, injury, or medical condition affects an individual's ability to attend work, school, or other responsibilities. These documents help confirm that a healthcare professional has evaluated the patient's condition and may provide recommendations regarding rest, recovery, or temporary activity limitations.
-
+            Doctor Notes and Sick Notes are commonly requested when an illness,
+            injury, or medical condition affects an individual's ability to
+            attend work, school, or other responsibilities. These documents help
+            confirm that a healthcare professional has evaluated the patient's
+            condition and may provide recommendations regarding rest, recovery,
+            or temporary activity limitations.
           </p>
           <p className="sp-features__para">
-            Through Humancare Connect, patients can access telemedicine services and connect with licensed healthcare providers from the comfort of home. During the consultation, providers may review symptoms, discuss medical history, assess the patient's condition, and determine whether medical documentation is appropriate based on clinical findings.
-
+            Through Humancare Connect, patients can access telemedicine services
+            and connect with licensed healthcare providers from the comfort of
+            home. During the consultation, providers may review symptoms,
+            discuss medical history, assess the patient's condition, and
+            determine whether medical documentation is appropriate based on
+            clinical findings.
           </p>
           <p className="sp-features__para">
-            Doctor Notes and Sick Notes are frequently requested for common illnesses such as colds, flu symptoms, infections, migraines, gastrointestinal concerns, minor injuries, and other short term health conditions. By combining virtual healthcare services with professional medical evaluation, Humancare Connect helps patients access convenient healthcare support while reducing unnecessary clinic visits.
-
-
+            Doctor Notes and Sick Notes are frequently requested for common
+            illnesses such as colds, flu symptoms, infections, migraines,
+            gastrointestinal concerns, minor injuries, and other short term
+            health conditions. By combining virtual healthcare services with
+            professional medical evaluation, Humancare Connect helps patients
+            access convenient healthcare support while reducing unnecessary
+            clinic visits.
           </p>
         </div>
       </motion.div>
@@ -707,8 +752,10 @@ const WhyUs = ({ s }) => {
 
   useEffect(() => {
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setInView(true); },
-      { threshold: 0.2 }
+      ([e]) => {
+        if (e.isIntersecting) setInView(true);
+      },
+      { threshold: 0.2 },
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
@@ -747,7 +794,12 @@ const WhyUs = ({ s }) => {
 
         <div className="sp-whyus-grid">
           {WHY_US_ITEMS.map(([Icon, title, desc], i) => (
-            <motion.div key={i} variants={fadeUp} custom={i} className="sp-whyus-card">
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              custom={i}
+              className="sp-whyus-card"
+            >
               <div className="sp-whyus-card__icon-wrap">
                 <Icon className="sp-whyus-card__icon" />
               </div>
@@ -787,18 +839,15 @@ const FAQ = ({ s }) => {
             <span className="sp-faq__heading--accent">{s.name}?</span>
           </h2>
           <p className="sp-faq__sub">
-            We've answered the most common questions below. Our care team is
-            one message away if yours isn't listed.
+            We've answered the most common questions below. Our care team is one
+            message away if yours isn't listed.
           </p>
         </motion.div>
 
         {/* Right: accordion */}
         <motion.div variants={fadeUp} className="sp-faq__panel">
           {s.faqs.map((faq, i) => (
-            <div
-              key={i}
-              className="sp-faq__item"
-            >
+            <div key={i} className="sp-faq__item">
               <button
                 className="sp-faq__trigger"
                 onClick={() => setOpen(open === i ? null : i)}
@@ -858,13 +907,15 @@ const FinalCTA = () => (
       <Pill>Start Today</Pill>
       <h2 className="sp-cta__heading">
         Need Medical Documentation?
-
         <br />
         {/* <span className="sp-cta__heading--accent">Your Long Term Health?</span> */}
       </h2>
       <p className="sp-cta__body">
-        Connect with a licensed healthcare provider through secure telemedicine services and discuss your healthcare needs from the comfort of home. Receive Doctor Notes or Sick Notes when clinically appropriate and access convenient virtual healthcare services designed to fit your schedule.
-
+        Connect with a licensed healthcare provider through secure telemedicine
+        services and discuss your healthcare needs from the comfort of home.
+        Receive Doctor Notes or Sick Notes when clinically appropriate and
+        access convenient virtual healthcare services designed to fit your
+        schedule.
       </p>
 
       <div className="sp-cta__actions">
@@ -912,8 +963,8 @@ export default function DoctorNoteSockNote() {
     <>
       <Helmet>
         <title>
-          Doctor Notes & Sick Notes Online | Medical Documentation | Humancare Connect
-
+          Doctor Notes & Sick Notes Online | Medical Documentation | Humancare
+          Connect
         </title>
         <meta
           name="description"
