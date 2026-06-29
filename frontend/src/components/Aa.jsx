@@ -186,7 +186,7 @@ export default function SpecialtiesSection() {
       name: "Opthalmology",
       alt: "Ophthalmology services for eye care vision health and eye diseases",
       conditions: "6 Conditions",
-      path: "/opthalmology",
+      path: "/ophthalmology",
     },
     {
       img: sp5,
@@ -204,10 +204,10 @@ export default function SpecialtiesSection() {
     },
     {
       img: sp7,
-      name: "Behaviorial Health",
-      alt: "Behavioral health services for mental emotional and psychological wellness",
-      conditions: "4 Conditions",
-      path: "/cardiology",
+      name: "Family Medicine",
+      alt: "Family Medicine specialists provide continuous, personalized healthcare for individuals and families of all ages",
+      conditions: "3 Conditions",
+      path: "/family-medicine",
     },
     {
       img: sp8,

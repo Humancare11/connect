@@ -41,8 +41,6 @@ import {
 
 import AboutUs from "./pages/AboutPage"; // about us page
 
-// Specialty pages
-// import SPdemo from "./pages/Specialty/SPeDemo";
 import AboutPage from "./pages/AboutPage";
 import PCP from "./pages/PCP";
 
@@ -1070,7 +1068,7 @@ function AppLayout() {
           <Route path="/gastroenterology" element={<Gastroenterology />} />
           <Route path="/neurology" element={<Neurology />} />
           <Route path="/pulmonology" element={<Pulmonology />} />
-          <Route path="/ent" element={<Ent />} />
+          <Route path="/ear-nose-throat" element={<Ent />} />
           <Route path="/ophthalmology" element={<Ophthalmology />} />
           <Route path="/orthopedics" element={<Orthopedics />} />
           <Route path="/mens-health" element={<MensHealth />} />

@@ -99,7 +99,6 @@ export default function Header() {
     ...(location.pathname !== "/" ? [{ label: "Home", link: "/" }] : []),
     { label: "About Us",         link: "/about-us"           },
     { label: "Book Appointment", link: "/appointment-booking" },
-    // { label: "Medical Services", link: "/medical-services"    },
     { label: "Corporates",       link: "/corporates"          },
     { label: "Blogs",            link: "/blogs"               },
   ];
@@ -216,99 +215,105 @@ export default function Header() {
             <img src={miniLogo} alt="Humancare Mini Logo" className="logo-mini" decoding="async" />
           </Link>
 
-          {/* HELP SLIDER WRAP */}
-          <div className="help-slider-wrap" ref={helpWrapRef}>
+          {/* CENTER GROUP — help slider + desktop nav, perfectly centered */}
+          <div className="nav-center">
 
-            {/* HELP SLIDER PILL */}
-            <div
-              className={`help-slider magnetic ${helpOpen ? "help-slider--open" : ""}`}
-              onClick={() => setHelpOpen((o) => !o)}
-              role="button"
-              aria-haspopup="true"
-              aria-expanded={helpOpen}
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setHelpOpen((o) => !o);
-                }
-              }}
-            >
-              <span className="help-label">
-                GET HELP FOR
-              </span>
-              <div className="help-slide-wrapper">
-                <div className={`help-slide-track ${helpOpen ? "paused" : ""}`}>
-                  {helpItems.map((item, i) => (
-                    <span key={i} className="help-slide-item">{item}</span>
-                  ))}
-                  {/* Duplicate for seamless loop */}
-                  {helpItems.map((item, i) => (
-                    <span key={`d-${i}`} className="help-slide-item">{item}</span>
-                  ))}
+            {/* HELP SLIDER WRAP */}
+            <div className="help-slider-wrap" ref={helpWrapRef}>
+
+              {/* HELP SLIDER PILL */}
+              <div
+                className={`help-slider magnetic ${helpOpen ? "help-slider--open" : ""}`}
+                onClick={() => setHelpOpen((o) => !o)}
+                role="button"
+                aria-haspopup="true"
+                aria-expanded={helpOpen}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setHelpOpen((o) => !o);
+                  }
+                }}
+              >
+                <span className="help-label">
+                  GET HELP FOR
+                </span>
+                <div className="help-slide-wrapper">
+                  <div className={`help-slide-track ${helpOpen ? "paused" : ""}`}>
+                    {helpItems.map((item, i) => (
+                      <span key={i} className="help-slide-item">{item}</span>
+                    ))}
+                    {/* Duplicate for seamless loop */}
+                    {helpItems.map((item, i) => (
+                      <span key={`d-${i}`} className="help-slide-item">{item}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {/* HELP DROPDOWN */}
+              {helpOpen && (
+                <div
+                  className="help-dropdown"
+                  role="menu"
+                  aria-label="Care categories"
+                >
+                  <p className="help-dropdown-heading">Browse by Care Category</p>
+                  <ul className="help-dropdown-list">
+                    {helpItems.map((item) => (
+                      <li key={item} role="none">
+                        <Link
+                          to={helpRoutes[item]}
+                          className="help-dropdown-item"
+                          role="menuitem"
+                          onClick={() => setHelpOpen(false)}
+                        >
+                          <span className="help-dropdown-icon">
+                            {HelpIcons[item]}
+                          </span>
+                          <span className="help-dropdown-text">
+                            <span className="help-dropdown-label">{item}</span>
+                            <span className="help-dropdown-desc">{helpDesc[item]}</span>
+                          </span>
+                          <span className="help-dropdown-arrow">
+                            <svg
+                              width="14" height="14"
+                              viewBox="0 0 14 14"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3 7h8M7 3l4 4-4 4" />
+                            </svg>
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
+            {/* /help-slider-wrap */}
 
-            {/* HELP DROPDOWN */}
-            {helpOpen && (
-              <div
-                className="help-dropdown"
-                role="menu"
-                aria-label="Care categories"
-              >
-                <p className="help-dropdown-heading">Browse by Care Category</p>
-                <ul className="help-dropdown-list">
-                  {helpItems.map((item) => (
-                    <li key={item} role="none">
-                      <Link
-                        to={helpRoutes[item]}
-                        className="help-dropdown-item"
-                        role="menuitem"
-                        onClick={() => setHelpOpen(false)}
-                      >
-                        <span className="help-dropdown-icon">
-                          {HelpIcons[item]}
-                        </span>
-                        <span className="help-dropdown-text">
-                          <span className="help-dropdown-label">{item}</span>
-                          <span className="help-dropdown-desc">{helpDesc[item]}</span>
-                        </span>
-                        <span className="help-dropdown-arrow">
-                          <svg
-                            width="14" height="14"
-                            viewBox="0 0 14 14"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M3 7h8M7 3l4 4-4 4" />
-                          </svg>
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {/* DESKTOP NAV */}
+            <nav className="nav-menu" ref={navMenuRef}>
+              <span className="nav-pill" ref={pillRef} aria-hidden="true" />
+              {navItems.map((item, i) => (
+                <Link
+                  key={i}
+                  to={item.link}
+                  className={`nav-item ${location.pathname === item.link ? "active" : ""}`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
           </div>
-          {/* /help-slider-wrap */}
-
-          {/* DESKTOP NAV */}
-          <nav className="nav-menu" ref={navMenuRef}>
-            <span className="nav-pill" ref={pillRef} aria-hidden="true" />
-            {navItems.map((item, i) => (
-              <Link
-                key={i}
-                to={item.link}
-                className={`nav-item ${location.pathname === item.link ? "active" : ""}`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          {/* /nav-center */}
 
           {/* AUTH */}
           <div className="auth-buttons">

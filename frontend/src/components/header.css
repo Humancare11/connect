@@ -77,7 +77,6 @@
   height: 44px;
   width: auto;
   object-fit: contain;
-  /* FIX: slowed down from .9s so the shrink crossfade feels less abrupt */
   transition: opacity 1.6s var(--ease-out-expo), transform 1.6s var(--ease-out-expo);
 }
 
@@ -89,7 +88,6 @@
   width: auto;
   opacity: 0;
   transform: translateY(-50%) scale(0.75);
-  /* FIX: slowed down from .9s so the shrink crossfade feels less abrupt */
   transition: opacity 1.6s var(--ease-out-expo), transform 1.6s var(--ease-out-expo);
 }
 
@@ -103,15 +101,24 @@
 }
 
 /* ============================================================
+   CENTER GROUP — 
+============================================================ */
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* ============================================================
    HELP SLIDER WRAP
 ============================================================ */
 .help-slider-wrap {
   position: relative;
   flex-shrink: 0;
-  /* Pushes this element (and everything after it: help slider,
-     nav menu, auth, hamburger) to the right of the logo,
-     creating an auto-filling gap between logo and the rest. */
-  margin-left: auto;
+ 
 }
 
 /* ============================================================
@@ -187,7 +194,7 @@
   flex: 1;
   overflow: hidden;
   height: var(--item-h);
-  min-width: 80px; 
+  min-width: 80px;
 }
 
 .help-slide-track {
@@ -219,20 +226,18 @@
 }
 
 /* ============================================================
-   HELP DROPDOWN
- 
+   HELP DROPDOWN — centered under the help slider pill
 ============================================================ */
 .help-dropdown {
   position: absolute;
   top: calc(100% + 15px);
-
-  left: -50px;
-  transform: none;
+    margin: 0 900px 0;
+  /* left: 50%; */
+  transform: translateX(-50%);
 
   width: 1100px;
 
   z-index: 90;
-
   background: rgba(255,255,255,.96);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
@@ -252,12 +257,12 @@
 @keyframes dropdownIn {
   from {
     opacity: 0;
-    translate: 0 -6px;
+    translate: -50% -6px;
     scale: .98;
   }
   to {
     opacity: 1;
-    translate: 0 0;
+    translate: -50% 0;
     scale: 1;
   }
 }
@@ -279,7 +284,6 @@
   padding: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  /* gap: 8px; */
 }
 
 .help-dropdown-item {
@@ -353,10 +357,6 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  /* CHANGED: no longer flex:1 — the nav menu now sizes to its
-     content instead of stretching to fill the row. The gap
-     between the logo and everything else is created by
-     .help-slider-wrap's margin-left: auto instead. */
   flex: 0 0 auto;
   min-width: 0;
   height: 42px;
@@ -390,13 +390,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* height intentionally unchanged so the pill/hover hitbox stays identical */
   height: 38px;
   padding: 0 14px;
   border-radius: 999px;
   color: var(--ink-2);
   font-family: var(--display);
-  /* FIX: bumped up from 13px for better legibility, height untouched */
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -.01em;
@@ -588,8 +586,9 @@
 
 /* ── 1180px: tighten nav item spacing ── */
 @media (max-width: 1180px) {
-  .nav-item { font-size: 14px; padding: 0 9px; }
-  .nav-menu { gap: 0; }
+  .nav-item    { font-size: 14px; padding: 0 9px; }
+  .nav-menu    { gap: 0; }
+  .nav-center  { gap: 8px; }
   .help-slider { width: 200px; min-width: 200px; }
 }
 
@@ -597,10 +596,13 @@
 @media (max-width: 1024px) {
   .nav-item      { font-size: 14px; padding: 0 8px; }
   .auth-combined { padding: 9px 14px; font-size: 13px; }
+  .nav-center    { gap: 6px; }
 
-  /* keep the now-wider help dropdown from overflowing the viewport
-     on tablet widths, where it has less room to its left */
-  .help-dropdown { width: clamp(560px, 70vw, 700px); }
+  .help-dropdown {
+    width: clamp(560px, 70vw, 700px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 /* ── 980px: hide help slider at mid-tablet ── */
@@ -615,7 +617,7 @@
     top: 10px;
   }
 
-  .nav-menu     { display: none; }
+  .nav-center   { display: none; }
   .auth-buttons { display: none; }
 
   .hamburger {
@@ -640,6 +642,7 @@
     gap: 0;
   }
 
+  /* On mobile shrink, show help slider outside nav-center */
   .help-slider-wrap {
     display: none;
     flex-shrink: 0;
@@ -655,7 +658,7 @@
   .glass-header.shrink .help-slider {
     width: auto;
     min-width: 200px;
-    max-width: calc(100vw - 160px); /* leaves room for logo + hamburger */
+    max-width: calc(100vw - 160px);
     height: 36px;
     padding: 0 14px;
   }
@@ -672,9 +675,7 @@
     font-size: 12px;
   }
 
-  /* ── MOBILE DROPDOWN ──────────────────────────────────────
-    
-  ──────────────────────────────────────────────────────────── */
+  /* ── MOBILE DROPDOWN ── */
   .help-dropdown {
     position: fixed;
     top: 72px;
@@ -754,7 +755,7 @@
     font-size: 11px;
   }
 
-    .help-dropdown {
+  .help-dropdown {
     top: 66px;
     left: 8px;
     right: 8px;
@@ -763,5 +764,4 @@
 
   .help-dropdown-label { font-size: 10.5px; }
   .help-dropdown-desc  { font-size: 9px; }
-
 }
