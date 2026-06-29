@@ -7,91 +7,62 @@ import {
 } from "framer-motion";
 import {
   FiMonitor,
-  FiHome,
   FiSearch,
   FiActivity,
   FiShield,
-  FiSun,
   FiLock,
   FiZap,
   FiCalendar,
   FiFileText,
   FiGlobe,
   FiCheckCircle,
-  FiArrowRight,
-  FiChevronDown,
   FiPlus,
   FiStar,
   FiHeart,
-  FiUsers,
-  FiPhone,
-  FiMail,
   FiClock,
-  FiTrendingUp,
   FiAward,
-  FiRefreshCw,
   FiBarChart2,
-  FiMapPin,
-  FiCamera,
-  FiDroplet,
   FiPackage,
-  FiSmile,
-  FiBriefcase,
   FiUserCheck,
   FiMessageSquare,
-  FiCpu,
-  FiAlertCircle,
-  FiThumbsUp,
   FiVideo,
-  FiPieChart,
-  FiBookOpen,
-  FiNavigation,
-  FiWifi,
-  FiHeadphones,
-  FiUser,
 } from "react-icons/fi";
-
 import { Helmet } from "react-helmet-async";
 
-/* ──────────────────────────────────────────────────────────────────────────
-   DESIGN TOKENS — light theme
-   Body copy uses solid slate, never low-opacity white-on-white, so contrast
-   stays readable (point 6). Accent color is the only saturated color on the
-   page; everything else is neutral.
-────────────────────────────────────────────────────────────────────────── */
-const BG_BASE = "#FFFFFF"; // Page background
-const BG_SURFACE = "#F8FAFC"; // Alternating section background
-const BG_ELEVATED = "#FFFFFF"; // Card background (flat, bordered — no glass)
-const TEXT_PRIMARY = "#0F172A"; // Headings, high-emphasis body
-const TEXT_BODY = "#475569"; // Standard paragraph text
-const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
-const BORDER = "#E2E8F0";
-const BORDER_HOVER = "#CBD5E1";
+/* Import the shared stylesheet — same file for every service page */
+import "./newservices.css";
+
+import heroBanner from "../../assets/MedicalServices/fit-to-fly-medical-certificate.webp";
+
+const HERO_IMAGE = {
+  src: heroBanner, // ← imported path, bundler handles it
+  alt: "Licensed healthcare provider conducting a virtual fit to fly certificate consultation for airline medical clearance",
+  width: 1920,
+  height: 700,
+};
 
 /* ──────────────────────────────────────────────────────────────────────────
-   DATA
+   DATA — one entry per service slug
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
-    slug: "telehealth-services",
-    name: "GENERAL CONSULTATION",
-    tagline: "Trusted healthcare guidance for everyday health concerns.",
+    slug: "chronic-care-management",
+    name: "FIT TO FLY CERTIFICATE",
+    tagline: "Medical travel clearance for a smoother journey.",
     intro:
-      "Connect with a licensed healthcare provider through secure telemedicine services for personalized medical advice, symptom evaluation, and treatment recommendations. General consultations offer a convenient way to discuss non emergency health concerns and receive professional care from the comfort of home.",
+      "Request a Fit to Fly Certificate through secure telemedicine services. Connect with a licensed healthcare provider, discuss your travel plans and health status, and receive medical documentation when clinically appropriate to support airline travel requirements.",
     accentColor: "#2563EB",
-    accentGlow: "#2563EB20",
     heroIcon: FiMonitor,
-    heroEmoji: "🖥️",
     description:
-      "General consultations provide patients with convenient access to healthcare providers for a wide range of everyday medical concerns. Through Humancare Connect, patients can discuss symptoms, receive medical guidance, review treatment options, and get recommendations for appropriate next steps through secure virtual healthcare services.",
+      "A Fit to Fly Certificate is a medical document that may be required by airlines for passengers with certain health conditions, recent surgeries, pregnancy-related travel considerations, or ongoing medical concerns. The certificate confirms that a healthcare provider has reviewed your condition and assessed your ability to travel safely by air.Through Humancare Connect, eligible travelers can complete a virtual consultation with a licensed healthcare provider, discuss airline requirements, and obtain travel-related medical documentation when appropriate. Our telemedicine platform offers a convenient way to address travel health requirements without the need for an in-person clinic visit.",
     whyItMatters:
-      "Many health concerns can be addressed early through timely medical advice and evaluation. General consultations help patients better understand their symptoms, make informed healthcare decisions, and access professional support without the need for unnecessary clinic visits.",
+      "Unexpected airline documentation requirements can delay or disrupt travel plans. A Fit to Fly assessment helps travelers understand whether medical clearance may be needed before departure and provides an opportunity to address health concerns before boarding.",
     whoBenefits: [
-      "Adults experiencing new or ongoing health concerns",
-      "Patients managing common illnesses or minor conditions",
-      "Busy professionals looking for convenient healthcare access",
-      "Individuals with heart disease or high cholesterol",
-      " Anyone seeking trusted healthcare guidance from licensed providers",
+      "Travelers recovering from surgery or hospitalization",
+      "Passengers with chronic medical conditions",
+      "Pregnant individuals requiring airline documentation",
+      "Travelers with recent illnesses or injuries",
+      "International travelers needing medical travel clearance",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
@@ -102,58 +73,47 @@ const SERVICES = {
     steps: [
       {
         Icon: FiSearch,
-        title: "Share Your Health Concerns",
-        body: "Tell us about your symptoms, medical history, current medications, and healthcare questions through our secure intake process.",
+        title: "Share Your Travel & Health Information",
+        body: "Tell us about your upcoming trip, airline requirements, medical history, recent treatments, and any health concerns that may impact your travel plans.",
       },
       {
         Icon: FiFileText,
         title: "Connect With a Healthcare Provider",
-        body: "Meet with a licensed healthcare provider who will review your concerns and discuss your symptoms.",
+        body: "A licensed healthcare provider will review your information, discuss your condition, and assess any factors that could affect your ability to travel safely.",
       },
       {
         Icon: FiVideo,
-        title: "Receive Personalized Medical Guidance",
-        body: "Your provider will offer recommendations, discuss treatment options, and help determine the most appropriate next steps for your care.",
+        title: "Complete Your Virtual Assessment",
+        body: "Join a secure online consultation from your phone, tablet, or computer and discuss your travel needs with your provider.",
       },
       {
         Icon: FiPackage,
-        title: "Follow Your Care Plan",
-        body: "Receive guidance for ongoing care, symptom management, follow up recommendations, or referrals when needed.",
+        title: "Receive Your Travel Documentation",
+        body: "If medically appropriate, your provider will issue the required travel clearance documentation or fit-to-fly certificate to help support your travel plans.",
       },
     ],
     features: [
       {
-        Icon: FiLock,
-        title: "HIPAA-Secure Platform",
-        desc: "End-to-end encrypted sessions protect every conversation and record.",
-      },
-      {
-        Icon: FiZap,
-        title: "Under 15-Min Wait",
-        desc: "Our average queue time is less than 15 minutes, even at peak hours.",
-      },
-      {
-        Icon: FiUserCheck,
-        title: "Board-Certified Doctors",
-        desc: "Every provider is credentialed, state-licensed, and continuously reviewed.",
-      },
-      {
-        Icon: FiCalendar,
-        title: "Flexible Scheduling",
-        desc: "Book ahead or consult on demand — evenings, weekends, holidays included.",
+        Icon: FiSearch,
+        title: "Share Your Travel & Health Information",
+        body: "Tell us about your upcoming trip, airline requirements, medical history, recent treatments, and any health concerns that may impact your travel plans.",
       },
       {
         Icon: FiFileText,
-        title: "Insurance Integration",
-        desc: "We verify your coverage in real time and handle claims on your behalf.",
+        title: "Connect With a Healthcare Provider",
+        body: "A licensed healthcare provider will review your information, discuss your condition, and assess any factors that could affect your ability to travel safely.",
       },
       {
-        Icon: FiGlobe,
-        title: "Multilingual Support",
-        desc: "Consultations available in 14+ languages with live interpreter access.",
+        Icon: FiVideo,
+        title: "Complete Your Virtual Assessment",
+        body: "Join a secure online consultation from your phone, tablet, or computer and discuss your travel needs with your provider.",
+      },
+      {
+        Icon: FiPackage,
+        title: "Receive Your Travel Documentation",
+        body: "If clinically appropriate, your provider may issue a Fit to Fly Certificate that can be shared with your airline or travel provider.",
       },
     ],
-
     stats: [
       { value: 120000, suffix: "+", label: "Patients Served" },
       { value: 2800, suffix: "+", label: "Verified Providers" },
@@ -162,76 +122,84 @@ const SERVICES = {
     ],
     faqs: [
       {
-        q: "What is a general consultation?",
-        a: "A general consultation is a virtual appointment with a licensed healthcare provider to discuss symptoms, health concerns, treatment options, and medical questions.",
+        q: "What is a Fit to Fly Certificate?",
+        a: "A Fit to Fly Certificate is a medical document issued by a healthcare provider after assessing a traveler's health status. It may be used to confirm that a person is medically suitable for air travel based on their current condition.",
       },
       {
-        q: "What health concerns can be discussed during a general consultation?",
-        a: "Patients can discuss common illnesses, minor injuries, allergies, digestive concerns, headaches, fatigue, skin conditions, medication questions, and other non emergency health issues.",
+        q: "Why might an airline require a Fit to Fly Certificate?",
+        a: "Airlines may request medical clearance for passengers recovering from illness, surgery, injury, pregnancy-related conditions, or certain ongoing health concerns that could affect travel.",
       },
       {
-        q: "Can I speak with a healthcare provider online?",
-        a: "Yes. Humancare Connect offers secure telemedicine services that allow patients to connect with licensed healthcare providers remotely.",
+        q: "Who may benefit from a Fit to Fly assessment?",
+        a: "Travelers with recent medical procedures, chronic health conditions, respiratory concerns, pregnancy-related travel needs, or other health issues that could require airline approval may benefit from an assessment.",
       },
       {
-        q: "Are virtual general consultations effective?",
-        a: "Yes. Many common health concerns can be evaluated and managed through telehealth services when clinically appropriate.",
+        q: "Can I request a Fit to Fly Certificate online?",
+        a: "Yes. Eligible travelers can complete a virtual consultation with a licensed healthcare provider through secure telemedicine services and discuss their travel requirements.",
       },
       {
-        q: "Do I need an appointment for a general consultation?",
-        a: "Yes. Patients can schedule an online appointment at a convenient time.",
+        q: "What health conditions commonly require travel clearance?",
+        a: "Conditions involving recent surgery, cardiovascular concerns, respiratory illnesses, pregnancy, mobility limitations, or ongoing medical treatment may require additional review before travel.",
       },
       {
-        q: "Can a provider diagnose my condition during a virtual visit?",
-        a: "Healthcare providers can assess symptoms, discuss concerns, and provide recommendations based on the information available during the consultation.",
+        q: "How soon should I arrange my Fit to Fly assessment?",
+        a: "It is best to schedule your assessment several days before departure to allow sufficient time for evaluation and any necessary documentation.",
       },
       {
-        q: "What happens during a general consultation?",
-        a: "Your provider will review your symptoms, medical history, medications, and healthcare concerns before discussing appropriate recommendations.",
+        q: "Can I obtain a Fit to Fly Certificate after surgery?",
+        a: "Many travelers seek medical clearance after surgery. Eligibility depends on the type of procedure, recovery progress, current symptoms, and provider assessment.",
       },
       {
-        q: "Can I ask questions about my medications?",
-        a: "Yes. General consultations are a convenient opportunity to discuss medications, side effects, and treatment plans.",
+        q: "Is a Fit to Fly assessment available for pregnant travelers?",
+        a: "Yes. Pregnant travelers may request an assessment, especially when airline policies require medical documentation during certain stages of pregnancy.",
       },
       {
-        q: "Is a general consultation confidential?",
-        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and confidentiality.",
+        q: "Can travelers with chronic medical conditions request a certificate?",
+        a: "Yes. Individuals managing stable chronic conditions may be eligible for assessment based on their medical history, current health status, and travel plans.",
       },
       {
-        q: "Can I receive treatment recommendations during a consultation?",
-        a: "Yes. Healthcare providers can discuss treatment options, symptom management strategies, and next steps for care.",
+        q: "What information should I prepare before my consultation?",
+        a: "You may be asked to provide details about your medical history, medications, recent treatments, travel itinerary, airline requirements, and current symptoms.",
       },
       {
-        q: "Are general consultations suitable for preventive care?",
-        a: "Yes. Patients can discuss wellness goals, preventive healthcare measures, and healthy lifestyle recommendations.",
+        q: "How is eligibility for a Fit to Fly Certificate determined?",
+        a: "A healthcare provider reviews your medical information, travel plans, and overall condition before determining whether medical clearance is appropriate.",
       },
       {
-        q: "Can I get a referral during a general consultation?",
-        a: "When appropriate, healthcare providers may recommend referrals for additional evaluation or specialty care.",
+        q: "What happens during a Fit to Fly consultation?",
+        a: "During the consultation, a provider may discuss your health history, recent medical events, current symptoms, medications, and travel-related concerns.",
       },
       {
-        q: "What are the benefits of telemedicine consultations?",
-        a: "Telemedicine services provide convenient access to healthcare providers, flexible scheduling, and care from the comfort of home.",
+        q: "Can a healthcare provider recommend postponing travel?",
+        a: "Yes. If a provider believes air travel could pose a health risk, they may recommend delaying travel or seeking additional medical evaluation.",
       },
       {
-        q: "Can I discuss multiple health concerns in one appointment?",
-        a: "Yes. Patients may discuss multiple non emergency healthcare concerns during a consultation.",
+        q: "Are Fit to Fly Certificates accepted for international travel?",
+        a: "Many travelers use Fit to Fly Certificates for international travel when requested by airlines or destination-specific travel requirements.",
       },
       {
-        q: "Who can benefit from a general consultation?",
-        a: "Anyone seeking medical advice, symptom evaluation, treatment guidance, or healthcare support may benefit from a general consultation.",
+        q: "Does a Fit to Fly Certificate guarantee boarding approval?",
+        a: "No. Final travel decisions remain subject to airline policies, operational procedures, and any additional documentation requirements.",
       },
       {
-        q: "Can virtual consultations help save time?",
-        a: "Yes. Telehealth services eliminate travel time and provide convenient access to healthcare providers.",
+        q: "What should I do if my health condition changes before departure?",
+        a: "If you experience new symptoms or changes in your condition after receiving medical clearance, you should seek further medical advice before traveling.",
       },
       {
-        q: "What should I prepare before my appointment?",
-        a: "Patients should be prepared to discuss symptoms, medications, medical history, and any questions they would like addressed.",
+        q: "Can I discuss travel-related health concerns during my appointment?",
+        a: "Yes. Providers can discuss travel health considerations, medication management, mobility concerns, and precautions that may help support safer travel.",
       },
       {
-        q: "When should I seek emergency medical care instead?",
-        a: "Emergency symptoms such as chest pain, severe breathing difficulties, stroke symptoms, or serious injuries require immediate emergency medical attention.",
+        q: "Are online Fit to Fly consultations secure?",
+        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and healthcare information.",
+      },
+      {
+        q: "Why choose Humancare Connect for a Fit to Fly assessment?",
+        a: "Humancare Connect provides convenient access to licensed healthcare providers, secure virtual consultations, and professional travel health support from wherever you are.",
+      },
+      {
+        q: "How do I get started?",
+        a: "Simply schedule an appointment, share your travel details, complete your virtual consultation, and discuss your eligibility for a Fit to Fly Certificate with a healthcare provider.",
       },
     ],
   },
@@ -306,8 +274,8 @@ const darken = (hex, amount) => {
   return `#${[dr, dg, db].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 };
 
-const Pill = ({ children, ac }) => {
-  const textColor = darken(ac, 0.18); // verified >7:1 contrast at this font size, vs ~4.5:1 for the raw accent
+const Pill = ({ children, ac, onDark = false }) => {
+  const textColor = onDark ? "#ffffff" : darken(ac, 0.18);
   return (
     <div
       style={{
@@ -316,9 +284,11 @@ const Pill = ({ children, ac }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: `${ac}12`,
+        background: onDark ? "rgba(255,255,255,0.15)" : `${ac}12`,
         color: textColor,
-        border: `1px solid ${ac}30`,
+        border: onDark
+          ? "1px solid rgba(255,255,255,0.35)"
+          : `1px solid ${ac}30`,
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: "0.1em",
@@ -327,7 +297,12 @@ const Pill = ({ children, ac }) => {
       }}
     >
       <span
-        style={{ width: 6, height: 6, borderRadius: "50%", background: ac }}
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: onDark ? "#ffffff" : ac,
+        }}
       />
       {children}
     </div>
@@ -420,6 +395,38 @@ const Hero = ({ s }) => {
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        fetchPriority="high"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          zIndex: 0,
+        }}
+      />
+
+      {/* ── Layer 1: Dark overlay for text legibility ───────────────────────
+              Adjust rgba alpha:
+                0.40 → lighter overlay, more image visible
+                0.58 → balanced (default)
+                0.70 → darker, maximum text contrast
+          ───────────────────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(15, 23, 42, 0.58)",
+          zIndex: 1,
+        }}
+      />
       <motion.div
         style={{
           position: "relative",
@@ -436,7 +443,10 @@ const Hero = ({ s }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
         >
-          <Pill ac={s.accentColor}>HumanCare Connect</Pill>
+          {/* onDark=true → white pill border + text instead of accent tint */}
+          <Pill ac={s.accentColor} onDark>
+            HumanCare Connect
+          </Pill>
         </motion.div>
 
         <motion.h1
@@ -446,7 +456,7 @@ const Hero = ({ s }) => {
           style={{
             fontSize: "clamp(36px, 5.5vw, 60px)",
             fontWeight: 900,
-            color: TEXT_PRIMARY,
+            color: "#FFFFFF" /* white on dark overlay */,
             lineHeight: 1.08,
             letterSpacing: "-0.03em",
             marginBottom: 18,
@@ -456,7 +466,15 @@ const Hero = ({ s }) => {
           {s.name.split(" ").map((w, i, arr) => (
             <span key={i}>
               {i === Math.floor(arr.length / 2) ? (
-                <span style={{ color: s.accentColor }}>{w} </span>
+                /* Keep accent color on one word — stays readable on dark bg */
+                <span
+                  style={{
+                    color:
+                      s.accentColor === "#2563EB" ? "#60A5FA" : s.accentColor,
+                  }}
+                >
+                  {w}{" "}
+                </span>
               ) : (
                 <span>{w} </span>
               )}
@@ -470,7 +488,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.5, delay: 0.26 }}
           style={{
             fontSize: 18,
-            color: TEXT_DIM,
+            color: "rgba(255,255,255,0.80)" /* was TEXT_DIM */,
             fontStyle: "italic",
             marginBottom: 10,
           }}
@@ -484,7 +502,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.45, delay: 0.32 }}
           style={{
             fontSize: 16,
-            color: TEXT_BODY,
+            color: "rgba(255,255,255,0.88)" /* was TEXT_BODY */,
             lineHeight: 1.7,
             maxWidth: 560,
             marginBottom: 28,
@@ -499,10 +517,11 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
-          {/* <GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
+          {/* onDark=true → white ghost button style */}
+          <GhostBtn onDark>
             Contact Care Team <FiArrowRight />
-          </GhostBtn> */}
+          </GhostBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -510,8 +529,9 @@ const Hero = ({ s }) => {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   CONSULTATION FORM — 
+   WHY US ITEMS (static, shared across pages)
 ────────────────────────────────────────────────────────────────────────── */
+
 const ConsultationForm = ({ s }) => {
   const [values, setValues] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
@@ -775,7 +795,7 @@ const Overview = ({ s }) => (
                 marginBottom: 20,
               }}
             >
-              Your First Step Toward Better Health
+              What Is a Fit to Fly Certificate?
             </h2>
           </motion.div>
           <motion.p
@@ -809,7 +829,7 @@ const Overview = ({ s }) => (
                 marginBottom: 6,
               }}
             >
-              Why It Matters
+              WHY IT MATTERS
             </div>
             <p
               style={{
@@ -922,11 +942,8 @@ const Overview = ({ s }) => (
 );
 
 /* ──────────────────────────────────────────────────────────────────────────
-   OUR SERVICES (was "How It Works")
-   Fix 3: heading text changed only — content (the 4-step process) is
-   unchanged since it's still accurate underneath the new label.
-   Fix 5: sticky card glass effect removed — flat surface, no backdrop-filter,
-   no glow blob.
+   OUR SERVICES 
+  
 ────────────────────────────────────────────────────────────────────────── */
 const HowItWorks = ({ s }) => (
   <section
@@ -962,7 +979,7 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 8,
               }}
             >
-              Getting started is{" "}
+              Getting started is simple.{" "}
               <span style={{ color: s.accentColor }}>simple.</span>
             </h2>
             <p
@@ -973,8 +990,8 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 36,
               }}
             >
-              Accessing a general consultation through Humancare Connect is
-              quick, secure, and designed around your healthcare needs.
+              Obtaining a Fit to Fly Certificate through Humancare Connect is
+              quick, secure, and designed to fit your travel schedule.
             </p>
           </motion.div>
 
@@ -1091,9 +1108,9 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 24,
               }}
             >
-              Get convenient access to professional healthcare guidance through
-              trusted telemedicine services. Receive personalized support
-              without leaving home.
+              Get professional travel health support from licensed healthcare
+              providers through secure telemedicine services. Complete your
+              assessment online and prepare for your journey with confidence.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
               <a href="/login">Get Started Today</a>
@@ -1136,10 +1153,7 @@ const HowItWorks = ({ s }) => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    FEATURES & BENEFITS
-   Fix 4: the 6 separate small cards are consolidated into a single large
-   card. Each feature is now a row inside one bordered container rather than
-   its own tile, so it reads as one consolidated "service details" panel.
-   Fix 5: no glass effect, no hover glow-shadow — flat row dividers instead.
+ 
 ────────────────────────────────────────────────────────────────────────── */
 const Features = ({ s }) => (
   <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
@@ -1163,13 +1177,15 @@ const Features = ({ s }) => (
             marginBottom: 10,
           }}
         >
-          Comprehensive Care for
+          Understanding Fit to Fly Certificates
           <br />
-          <span style={{ color: s.accentColor }}>Everyday Health Concerns</span>
+          {/* <span style={{ color: s.accentColor }}>
+            Through Virtual Healthcare
+          </span> */}
         </h2>
-        <p style={{ color: TEXT_DIM, fontSize: 15 }}>
+        {/* <p style={{ color: TEXT_DIM, fontSize: 15 }}>
           Every feature is designed around one goal: better outcomes for you.
-        </p>
+        </p> */}
       </motion.div>
 
       <motion.div
@@ -1190,12 +1206,12 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            General consultations are one of the most common ways patients
-            access healthcare services. Whether you are experiencing new
-            symptoms, managing an ongoing condition, seeking preventive health
-            advice, or looking for professional medical guidance, a general
-            consultation provides an opportunity to discuss your concerns with a
-            licensed healthcare provider.
+            A Fit to Fly Certificate is often requested when an airline requires
+            confirmation that a passenger can safely travel despite a recent
+            illness, injury, surgery, pregnancy-related concern, or ongoing
+            medical condition. The purpose of the certificate is to provide
+            medical clearance based on an assessment of the traveler's current
+            health status and travel plans.
           </p>
           <p
             style={{
@@ -1205,12 +1221,13 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            At Humancare Connect, our virtual healthcare services make it easier
-            for patients to access quality care from virtually anywhere.
-            Healthcare providers can evaluate symptoms, review health history,
-            discuss treatment options, and recommend appropriate next steps
-            based on individual needs. This convenient approach helps patients
-            receive timely support while avoiding unnecessary delays in care.
+            Through Humancare Connect, travelers can access telemedicine
+            services to discuss their health concerns and airline requirements
+            with a licensed healthcare provider. During the consultation,
+            providers may review medical history, recent treatments,
+            medications, symptoms, recovery progress, and travel details to
+            determine whether additional precautions or documentation may be
+            necessary before travel.
           </p>
           <p
             style={{
@@ -1220,12 +1237,13 @@ const Features = ({ s }) => (
               margin: 0,
             }}
           >
-            General consultations may address a wide range of concerns,
-            including cold and flu symptoms, allergies, minor infections,
-            digestive issues, headaches, fatigue, skin concerns, medication
-            questions, and overall wellness discussions. Through secure
-            telehealth services, patients can access professional healthcare
-            support when they need it most.
+            Fit to Fly assessments are commonly requested by travelers
+            recovering from surgery, managing chronic health conditions,
+            traveling during pregnancy, or returning to travel after a recent
+            medical event. By combining convenient online doctor appointments
+            with professional medical review, Humancare Connect helps travelers
+            access virtual healthcare services that support informed travel
+            decisions and help reduce unexpected disruptions before departure.
           </p>
         </div>
       </motion.div>
@@ -1314,123 +1332,82 @@ const whyUsItems = [
   ],
 ];
 
+
+/* ──────────────────────────────────────────────────────────────────────────
+   ANIMATION VARIANTS
+────────────────────────────────────────────────────────────────────────── */
+// const fadeUp = {
+//   hidden: { opacity: 0, y: 24 },
+//   visible: (i = 0) => ({
+//     opacity: 1,
+//     y: 0,
+//     transition: {
+//       duration: 0.5,
+//       delay: i * 0.07,
+//       ease: [0.25, 0.46, 0.45, 0.94],
+//     },
+//   }),
+// };
+
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   WHY US
+────────────────────────────────────────────────────────────────────────── */
 const WhyUs = ({ s }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
+
   useEffect(() => {
     const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) setInView(true);
-      },
-      { threshold: 0.2 },
+      ([e]) => { if (e.isIntersecting) setInView(true); },
+      { threshold: 0.2 }
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
 
   return (
-    <section
-      ref={ref}
-      style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}
-    >
+    <section ref={ref} className="sp-section">
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
       >
-        <motion.div
-          variants={fadeUp}
-          style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
-        >
-          <SLabel text="Why Choose Us" ac={s.accentColor} />
-          <h2
-            style={{
-              fontSize: "clamp(26px, 3.5vw, 36px)",
-              fontWeight: 900,
-              color: TEXT_PRIMARY,
-              lineHeight: 1.15,
-              marginBottom: 10,
-            }}
-          >
-            Results you can{" "}
-            <span style={{ color: s.accentColor }}>measure.</span>
+        <motion.div variants={fadeUp} className="sp-whyus__header">
+          <SLabel text="Why Choose Us" />
+          <h2 className="sp-whyus__heading">
+            Ready to Travel With Confidence?
+            {" "}
+            {/* <span className="sp-whyus__heading--accent">measure.</span> */}
           </h2>
-          <p style={{ color: TEXT_DIM, fontSize: 15 }}>
+          <p className="sp-whyus__sub">
             Numbers that represent real patients, real outcomes.
           </p>
         </motion.div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 12,
-            marginBottom: 44,
-          }}
-        >
+        <div className="sp-stats">
           {s.stats.map((st, i) => (
             <StatCard
               key={i}
               value={st.value}
               suffix={st.suffix}
               label={st.label}
-              ac={s.accentColor}
               go={inView}
             />
           ))}
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 12,
-          }}
-        >
-          {whyUsItems.map(([Icon, title, desc], i) => (
-            <motion.div
-              key={i}
-              variants={fadeUp}
-              custom={i}
-              style={{
-                display: "flex",
-                gap: 14,
-                alignItems: "flex-start",
-                padding: 20,
-                borderRadius: 16,
-                background: "#fff",
-                border: `1px solid ${BORDER}`,
-              }}
-            >
-              <div
-                style={{
-                  flexShrink: 0,
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: `${s.accentColor}12`,
-                }}
-              >
-                <Icon style={{ fontSize: 18, color: s.accentColor }} />
+        <div className="sp-whyus-grid">
+          {WHY_US_ITEMS.map(([Icon, title, desc], i) => (
+            <motion.div key={i} variants={fadeUp} custom={i} className="sp-whyus-card">
+              <div className="sp-whyus-card__icon-wrap">
+                <Icon className="sp-whyus-card__icon" />
               </div>
               <div>
-                <div
-                  style={{
-                    color: TEXT_PRIMARY,
-                    fontWeight: 700,
-                    fontSize: 14,
-                    marginBottom: 4,
-                  }}
-                >
-                  {title}
-                </div>
-                <div style={{ color: TEXT_DIM, fontSize: 13, lineHeight: 1.6 }}>
-                  {desc}
-                </div>
+                <div className="sp-whyus-card__title">{title}</div>
+                <div className="sp-whyus-card__desc">{desc}</div>
               </div>
             </motion.div>
           ))}
@@ -1442,154 +1419,73 @@ const WhyUs = ({ s }) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    FAQ
-   Fix 5: container is a flat bordered surface, no backdrop blur.
 ────────────────────────────────────────────────────────────────────────── */
 const FAQ = ({ s }) => {
   const [open, setOpen] = useState(null);
+
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+    <section className="sp-section">
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}
+        className="sp-faq__grid"
       >
+        {/* Left: intro */}
         <motion.div variants={fadeUp}>
-          <SLabel text="FAQ" ac={s.accentColor} />
-          <h2
-            style={{
-              fontSize: "clamp(26px, 3.5vw, 36px)",
-              fontWeight: 900,
-              color: TEXT_PRIMARY,
-              lineHeight: 1.15,
-              marginBottom: 14,
-            }}
-          >
+          <SLabel text="FAQ" />
+          <h2 className="sp-faq__heading">
             Questions about
             <br />
-            <span style={{ color: s.accentColor }}>{s.name}?</span>
+            <span className="sp-faq__heading--accent">{s.name}?</span>
           </h2>
-          <p
-            style={{
-              color: TEXT_DIM,
-              fontSize: 15,
-              lineHeight: 1.7,
-              marginBottom: 24,
-            }}
-          >
-            We've answered the most common questions below. Our care team is one
-            message away if yours isn't listed.
+          <p className="sp-faq__sub">
+            We've answered the most common questions below. Our care team is
+            one message away if yours isn't listed.
           </p>
-          {/* <button
-            style={{
-              padding: "11px 20px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              background: `${s.accentColor}10`,
-              color: s.accentColor,
-              border: `1px solid ${s.accentColor}30`,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}1A`)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}10`)
-            }
-          >
-            <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button> */}
         </motion.div>
 
-        <motion.div
-          variants={fadeUp}
-          style={{
-            padding: 20,
-            borderRadius: 22,
-            background: "#fff",
-            border: `1px solid ${BORDER}`,
-          }}
-        >
+        {/* Right: accordion */}
+        <motion.div variants={fadeUp} className="sp-faq__panel">
           {s.faqs.map((faq, i) => (
             <div
               key={i}
-              style={{
-                borderBottom:
-                  i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
-              }}
+              className="sp-faq__item"
             >
               <button
+                className="sp-faq__trigger"
                 onClick={() => setOpen(open === i ? null : i)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "16px 0",
-                  textAlign: "left",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
+                aria-expanded={open === i}
               >
-                <span
-                  style={{
-                    color: TEXT_PRIMARY,
-                    fontWeight: 700,
-                    fontSize: 14,
-                    paddingRight: 16,
-                  }}
-                >
-                  {faq.q}
-                </span>
+                <span className="sp-faq__question">{faq.q}</span>
                 <div
-                  style={{
-                    flexShrink: 0,
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: open === i ? s.accentColor : BG_SURFACE,
-                    transition: "background 0.2s, transform 0.2s",
-                    transform: open === i ? "rotate(45deg)" : "none",
-                  }}
+                  className={
+                    open === i
+                      ? "sp-faq__toggle sp-faq__toggle--open"
+                      : "sp-faq__toggle sp-faq__toggle--closed"
+                  }
                 >
                   <FiPlus
-                    style={{
-                      fontSize: 14,
-                      color: open === i ? "#fff" : TEXT_DIM,
-                    }}
+                    className={
+                      open === i
+                        ? "sp-faq__toggle-icon--open"
+                        : "sp-faq__toggle-icon--closed"
+                    }
                   />
                 </div>
               </button>
+
               <AnimatePresence>
                 {open === i && (
                   <motion.div
+                    className="sp-faq__answer"
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.26 }}
-                    style={{ overflow: "hidden" }}
                   >
-                    <div
-                      style={{
-                        paddingBottom: 16,
-                        paddingRight: 40,
-                        color: TEXT_BODY,
-                        fontSize: 14,
-                        lineHeight: 1.7,
-                      }}
-                    >
-                      {faq.a}
-                    </div>
+                    <div className="sp-faq__answer-body">{faq.a}</div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1603,25 +1499,50 @@ const FAQ = ({ s }) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    FINAL CTA
-   Fix 5: glow blobs and translucent layered gradient removed — flat tinted
-   surface instead.
 ────────────────────────────────────────────────────────────────────────── */
-const FinalCTA = ({ s }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+const FinalCTA = () => (
+  <section className="sp-section">
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.6 }}
-      style={{
-        position: "relative",
-        borderRadius: 28,
-        padding: "72px 48px",
-        textAlign: "center",
-        background: `${s.accentColor}08`,
-        border: `1px solid ${s.accentColor}25`,
-      }}
+      className="sp-cta"
     >
+      <Pill>Start Today</Pill>
+      <h2 className="sp-cta__heading">
+        Ready to Travel With Confidence?
+
+        <br />
+        <span className="sp-cta__heading--accent">Travel smarter with convenient virtual healthcare services designed around your schedule.
+        </span>
+      </h2>
+      <p className="sp-cta__body">
+        Whether you're preparing for an upcoming flight, recovering from a recent medical condition, or need documentation for airline requirements, Humancare Connect makes it simple to access professional travel health support.
+        Connect with a licensed healthcare provider through secure telemedicine services, complete your Fit to Fly assessment online, and receive medical clearance documentation when clinically appropriate.
+      </p>
+
+      <div className="sp-cta__actions">
+        <PrimaryBtn href="/login">Get Started</PrimaryBtn>
+        <GhostBtn href="/appointment-booking">Book Appointment</GhostBtn>
+        {/* <a href="/contact" className="sp-btn sp-btn--muted">
+          Contact Us
+        </a> */}
+      </div>
+
+      <div className="sp-cta__trust">
+        {[
+          [FiLock, "HIPAA Compliant"],
+          [FiStar, "4.9/5 Rated"],
+          [FiShield, "Verified Providers"],
+          [FiFileText, "All Insurances"],
+          [FiClock, "24/7 Access"],
+        ].map(([Icon, lb], i) => (
+          <div key={i} className="sp-trust-item">
+            <Icon className="sp-trust-item__icon" />
+            {lb}
+          </div>
+        ))}
       <div>
         <Pill ac={s.accentColor}>Start Today</Pill>
         <h2
@@ -1633,9 +1554,9 @@ const FinalCTA = ({ s }) => (
             marginBottom: 14,
           }}
         >
-          Ready to Speak With a
+          Ready to Travel
           <br />
-          <span style={{ color: s.accentColor }}>Healthcare Provider?</span>
+          <span style={{ color: s.accentColor }}>With Confidence?</span>
         </h2>
         <p
           style={{
@@ -1646,10 +1567,19 @@ const FinalCTA = ({ s }) => (
             fontSize: 16,
           }}
         >
+          Whether you're preparing for an upcoming flight, recovering from a
+          recent medical condition, or need documentation for airline
+          requirements, Humancare Connect makes it simple to access professional
+          travel health support.
+          <br />
+          <br />
           Connect with a licensed healthcare provider through secure
-          telemedicine services and receive personalized medical guidance for
-          your health concerns. Get the care and answers you need from the
-          comfort of home.
+          telemedicine services, complete your Fit to Fly assessment online, and
+          receive medical clearance documentation when clinically appropriate.
+          <br />
+          <br />
+          Travel smarter with convenient virtual healthcare services designed
+          around your schedule.
         </p>
         <div
           style={{
@@ -1661,8 +1591,14 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/login">Get Started</a></PrimaryBtn>
-          <GhostBtn><a href="/appointment-booking">Book Appointment</a></GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>
+            <a href="/login">Get Started</a>
+          </PrimaryBtn>
+          <GhostBtn>
+            <a href="/appointment-booking">
+              Book Your Fit to Fly Assessment Today
+            </a>
+          </GhostBtn>
           <button
             style={{
               padding: "13px 24px",
@@ -1709,40 +1645,43 @@ const FinalCTA = ({ s }) => (
             </div>
           ))}
         </div>
+        </div>
       </div>
     </motion.div>
   </section>
 );
 
 /* ──────────────────────────────────────────────────────────────────────────
-   ROOT APP
-   Fix 6: wrapper background now matches the token system used throughout
-   every child component, instead of a hardcoded color disconnected from it.
+   ROOT COMPONENT
+   Sets --accent CSS custom property on the root element so every
+   color-mix() reference in the shared CSS resolves to the correct hue.
 ────────────────────────────────────────────────────────────────────────── */
-export default function GeneralConsultation() {
-  const [slug, setSlug] = useState("telehealth-services");
+export default function FittoFly() {
+  const [slug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
-  const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
+
+  /* Inject the per-page accent color as a CSS variable */
+  useEffect(() => {
+    document.documentElement.style.setProperty("--accent", s.accentColor);
+    return () => {
+      document.documentElement.style.removeProperty("--accent");
+    };
+  }, [s.accentColor]);
 
   return (
     <>
       <Helmet>
         <title>
-          General Consultation Online | Virtual Doctor Consultation | Humancare
-          Connect
+          Fit to Fly Certificate Online | Medical Clearance for Air Travel |
+          Humancare Connect
         </title>
         <meta
           name="description"
-          content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
+          content="Need a Fit to Fly Certificate? Connect with a licensed healthcare provider online for travel health assessments and medical clearance documentation when clinically appropriate."
         />
       </Helmet>
-      <div
-      // style={{
-      //   backgroundColor: BG_BASE,
-      //   minHeight: "700px",
-      //   width: "100%",
-      // }}
-      >
+
+      <div className="sp-page">
         <AnimatePresence mode="wait">
           <motion.div
             key={slug}

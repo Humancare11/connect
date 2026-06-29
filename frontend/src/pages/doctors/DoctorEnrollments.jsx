@@ -1575,13 +1575,13 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
             <strong>Click to upload</strong> or drag and drop
           </div>
           <div className="upload-text" style={{ fontSize: 11, marginTop: 4 }}>
-            PDF, JPG, PNG up to 10MB
+            PDF only, up to 10MB
           </div>
           <input
             ref={ref}
             type="file"
             hidden
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            accept=".pdf"
             onChange={(e) => handlePick(e.target.files[0])}
           />
         </div>
@@ -1636,7 +1636,7 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
             ref={ref}
             type="file"
             hidden
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            accept=".pdf"
             onChange={(e) => handlePick(e.target.files[0])}
           />
         </div>

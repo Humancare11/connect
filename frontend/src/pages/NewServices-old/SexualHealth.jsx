@@ -74,24 +74,24 @@ const BORDER_HOVER = "#CBD5E1";
 const SERVICES = {
   "telehealth-services": {
     slug: "telehealth-services",
-    name: "GENERAL CONSULTATION",
-    tagline: "Trusted healthcare guidance for everyday health concerns.",
+    name: "SEXUAL HEALTH",
+    tagline: "Confidential care for your sexual health and wellness.",
     intro:
-      "Connect with a licensed healthcare provider through secure telemedicine services for personalized medical advice, symptom evaluation, and treatment recommendations. General consultations offer a convenient way to discuss non emergency health concerns and receive professional care from the comfort of home.",
+      "Access professional sexual health support through secure telemedicine services. Connect with licensed healthcare providers to discuss sexual wellness concerns, symptoms, preventive care, testing guidance, treatment options, and reproductive health questions in a private and judgment free environment.",
     accentColor: "#2563EB",
     accentGlow: "#2563EB20",
     heroIcon: FiMonitor,
     heroEmoji: "🖥️",
     description:
-      "General consultations provide patients with convenient access to healthcare providers for a wide range of everyday medical concerns. Through Humancare Connect, patients can discuss symptoms, receive medical guidance, review treatment options, and get recommendations for appropriate next steps through secure virtual healthcare services.",
+      "Sexual health is an important part of overall well being. Through Humancare Connect, patients can access convenient and confidential sexual health services without the discomfort or barriers that may prevent them from seeking care. Our healthcare providers offer guidance, evaluations, and treatment recommendations for a wide range of sexual health concerns through secure virtual healthcare services.",
     whyItMatters:
-      "Many health concerns can be addressed early through timely medical advice and evaluation. General consultations help patients better understand their symptoms, make informed healthcare decisions, and access professional support without the need for unnecessary clinic visits.",
+      "Sexual health affects physical health, emotional well being, relationships, and quality of life. Early evaluation and professional guidance can help address concerns, reduce health risks, support preventive care, and improve confidence in managing sexual wellness.",
     whoBenefits: [
-      "Adults experiencing new or ongoing health concerns",
-      "Patients managing common illnesses or minor conditions",
-      "Busy professionals looking for convenient healthcare access",
-      "Individuals with heart disease or high cholesterol",
-      " Anyone seeking trusted healthcare guidance from licensed providers",
+      "Adults seeking confidential sexual health guidance",
+      "Individuals with sexual wellness concerns or symptoms",
+      "Patients seeking STI and STD testing guidance",
+      "Patients seeking STI and STD testing guidance",
+      "Adults looking for preventive sexual health care and education",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
@@ -102,23 +102,23 @@ const SERVICES = {
     steps: [
       {
         Icon: FiSearch,
-        title: "Share Your Health Concerns",
-        body: "Tell us about your symptoms, medical history, current medications, and healthcare questions through our secure intake process.",
+        title: "Share Your Concerns",
+        body: "Tell us about your symptoms, sexual health concerns, medical history, and wellness goals through our secure intake process.",
       },
       {
         Icon: FiFileText,
         title: "Connect With a Healthcare Provider",
-        body: "Meet with a licensed healthcare provider who will review your concerns and discuss your symptoms.",
+        body: "Meet with a licensed healthcare provider who will discuss your concerns and evaluate your healthcare needs.",
       },
       {
         Icon: FiVideo,
-        title: "Receive Personalized Medical Guidance",
-        body: "Your provider will offer recommendations, discuss treatment options, and help determine the most appropriate next steps for your care.",
+        title: "Receive Personalized Guidance",
+        body: "Your provider may discuss testing recommendations, treatment options, preventive care strategies, or additional follow up care when appropriate.",
       },
       {
         Icon: FiPackage,
-        title: "Follow Your Care Plan",
-        body: "Receive guidance for ongoing care, symptom management, follow up recommendations, or referrals when needed.",
+        title: "Take Control of Your Sexual Health",
+        body: "Follow your personalized care plan and access ongoing support as needed through secure telehealth services.",
       },
     ],
     features: [
@@ -162,76 +162,72 @@ const SERVICES = {
     ],
     faqs: [
       {
-        q: "What is a general consultation?",
-        a: "A general consultation is a virtual appointment with a licensed healthcare provider to discuss symptoms, health concerns, treatment options, and medical questions.",
+        q: "What are sexual health services?",
+        a: "Sexual health services provide education, evaluation, guidance, prevention strategies, and treatment recommendations related to sexual wellness and reproductive health.",
       },
       {
-        q: "What health concerns can be discussed during a general consultation?",
-        a: "Patients can discuss common illnesses, minor injuries, allergies, digestive concerns, headaches, fatigue, skin conditions, medication questions, and other non emergency health issues.",
+        q: "Can I discuss sexual health concerns online?",
+        a: "Yes. Telemedicine services allow patients to discuss sexual health concerns privately with licensed healthcare providers.",
       },
       {
-        q: "Can I speak with a healthcare provider online?",
-        a: "Yes. Humancare Connect offers secure telemedicine services that allow patients to connect with licensed healthcare providers remotely.",
-      },
-      {
-        q: "Are virtual general consultations effective?",
-        a: "Yes. Many common health concerns can be evaluated and managed through telehealth services when clinically appropriate.",
-      },
-      {
-        q: "Do I need an appointment for a general consultation?",
-        a: "Yes. Patients can schedule an online appointment at a convenient time.",
-      },
-      {
-        q: "Can a provider diagnose my condition during a virtual visit?",
-        a: "Healthcare providers can assess symptoms, discuss concerns, and provide recommendations based on the information available during the consultation.",
-      },
-      {
-        q: "What happens during a general consultation?",
-        a: "Your provider will review your symptoms, medical history, medications, and healthcare concerns before discussing appropriate recommendations.",
-      },
-      {
-        q: "Can I ask questions about my medications?",
-        a: "Yes. General consultations are a convenient opportunity to discuss medications, side effects, and treatment plans.",
-      },
-      {
-        q: "Is a general consultation confidential?",
+        q: "Is online sexual health care confidential?",
         a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and confidentiality.",
       },
       {
-        q: "Can I receive treatment recommendations during a consultation?",
-        a: "Yes. Healthcare providers can discuss treatment options, symptom management strategies, and next steps for care.",
+        q: "What sexual health concerns can be discussed during a virtual appointment?",
+        a: "Patients may discuss sexual wellness concerns, symptoms, STI and STD questions, reproductive health, sexual function concerns, and preventive care.",
       },
       {
-        q: "Are general consultations suitable for preventive care?",
-        a: "Yes. Patients can discuss wellness goals, preventive healthcare measures, and healthy lifestyle recommendations.",
+        q: "Can telehealth help with STI and STD concerns?",
+        a: "Yes. Healthcare providers can discuss symptoms, testing recommendations, prevention strategies, and treatment options when appropriate.",
       },
       {
-        q: "Can I get a referral during a general consultation?",
-        a: "When appropriate, healthcare providers may recommend referrals for additional evaluation or specialty care.",
+        q: "Can I receive guidance about safe sexual practices?",
+        a: "Yes. Providers can offer education and recommendations related to safer sexual health practices and prevention.",
       },
       {
-        q: "What are the benefits of telemedicine consultations?",
-        a: "Telemedicine services provide convenient access to healthcare providers, flexible scheduling, and care from the comfort of home.",
+        q: "What are the benefits of virtual sexual health services?",
+        a: "Virtual care offers privacy, convenience, flexibility, and easier access to professional healthcare support.",
       },
       {
-        q: "Can I discuss multiple health concerns in one appointment?",
-        a: "Yes. Patients may discuss multiple non emergency healthcare concerns during a consultation.",
+        q: "Can I discuss reproductive health concerns during a consultation?",
+        a: "Yes. Providers can discuss reproductive health questions and recommend appropriate next steps when needed.",
       },
       {
-        q: "Who can benefit from a general consultation?",
-        a: "Anyone seeking medical advice, symptom evaluation, treatment guidance, or healthcare support may benefit from a general consultation.",
+        q: "Are sexual health consultations judgment free?",
+        a: "Yes. Healthcare providers offer professional, respectful, and confidential care focused on patient well being.",
       },
       {
-        q: "Can virtual consultations help save time?",
-        a: "Yes. Telehealth services eliminate travel time and provide convenient access to healthcare providers.",
+        q: "Can telehealth help with sexual wellness concerns?",
+        a: "Yes. Patients can discuss a variety of concerns related to sexual health, wellness, and intimate relationships.",
       },
       {
-        q: "What should I prepare before my appointment?",
-        a: "Patients should be prepared to discuss symptoms, medications, medical history, and any questions they would like addressed.",
+        q: "What happens during a sexual health consultation?",
+        a: "A healthcare provider will discuss your symptoms, concerns, health history, and wellness goals to better understand your needs.",
       },
       {
-        q: "When should I seek emergency medical care instead?",
-        a: "Emergency symptoms such as chest pain, severe breathing difficulties, stroke symptoms, or serious injuries require immediate emergency medical attention.",
+        q: "Can I ask questions about STI and STD prevention?",
+        a: "Yes. Providers can discuss prevention strategies, risk reduction, and recommendations for maintaining sexual health.",
+      },
+      {
+        q: "When should I seek sexual health support?",
+        a: "You should seek support whenever you experience symptoms, concerns, changes in sexual health, or questions about prevention and wellness.",
+      },
+      {
+        q: "Can virtual appointments help reduce barriers to care?",
+        a: "Yes. Telehealth services make it easier to access care from a private and convenient location.",
+      },
+      {
+        q: "Are sexual health services only for people with symptoms?",
+        a: "No. Preventive care, education, and wellness discussions are important aspects of maintaining sexual health.",
+      },
+      {
+        q: "Can I schedule follow up appointments if needed?",
+        a: "Yes. Follow up consultations may be recommended based on your individual healthcare needs.",
+      },
+      {
+        q: "Why is preventive sexual health care important?",
+        a: "Preventive care can help reduce health risks, support early detection of concerns, and promote overall wellness.",
       },
     ],
   },
@@ -499,10 +495,10 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
-          {/* <GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
+          <GhostBtn>
             Contact Care Team <FiArrowRight />
-          </GhostBtn> */}
+          </GhostBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -775,7 +771,7 @@ const Overview = ({ s }) => (
                 marginBottom: 20,
               }}
             >
-              Your First Step Toward Better Health
+              Confidential Sexual Health Care From Anywhere
             </h2>
           </motion.div>
           <motion.p
@@ -973,8 +969,8 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 36,
               }}
             >
-              Accessing a general consultation through Humancare Connect is
-              quick, secure, and designed around your healthcare needs.
+              Accessing sexual health support through Humancare Connect is
+              secure, private, and designed to protect your confidentiality.
             </p>
           </motion.div>
 
@@ -1091,12 +1087,12 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 24,
               }}
             >
-              Get convenient access to professional healthcare guidance through
-              trusted telemedicine services. Receive personalized support
-              without leaving home.
+              Get confidential sexual health support through trusted
+              telemedicine services and receive professional guidance from
+              licensed healthcare providers.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
-              <a href="/login">Get Started Today</a>
+              Get Started Today
             </PrimaryBtn>
             <div
               style={{
@@ -1163,9 +1159,11 @@ const Features = ({ s }) => (
             marginBottom: 10,
           }}
         >
-          Comprehensive Care for
+          Supporting Sexual Wellness
           <br />
-          <span style={{ color: s.accentColor }}>Everyday Health Concerns</span>
+          <span style={{ color: s.accentColor }}>
+            Through Virtual Healthcare
+          </span>
         </h2>
         <p style={{ color: TEXT_DIM, fontSize: 15 }}>
           Every feature is designed around one goal: better outcomes for you.
@@ -1190,12 +1188,13 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            General consultations are one of the most common ways patients
-            access healthcare services. Whether you are experiencing new
-            symptoms, managing an ongoing condition, seeking preventive health
-            advice, or looking for professional medical guidance, a general
-            consultation provides an opportunity to discuss your concerns with a
-            licensed healthcare provider.
+            Sexual health includes physical, emotional, mental, and social
+            aspects of well being related to sexuality and intimate
+            relationships. Maintaining good sexual health involves understanding
+            your body, practicing preventive care, recognizing symptoms when
+            they occur, and seeking professional guidance when concerns arise.
+            Access to timely healthcare can help individuals make informed
+            decisions about their sexual wellness.
           </p>
           <p
             style={{
@@ -1205,12 +1204,13 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            At Humancare Connect, our virtual healthcare services make it easier
-            for patients to access quality care from virtually anywhere.
-            Healthcare providers can evaluate symptoms, review health history,
-            discuss treatment options, and recommend appropriate next steps
-            based on individual needs. This convenient approach helps patients
-            receive timely support while avoiding unnecessary delays in care.
+            At Humancare Connect, our sexual health services provide convenient
+            access to licensed healthcare providers through secure telemedicine
+            services. Patients can discuss concerns related to sexual function,
+            sexually transmitted infections, reproductive health, prevention
+            strategies, relationship concerns, and overall sexual wellness.
+            Virtual healthcare services help remove barriers that often prevent
+            people from seeking care.
           </p>
           <p
             style={{
@@ -1220,12 +1220,12 @@ const Features = ({ s }) => (
               margin: 0,
             }}
           >
-            General consultations may address a wide range of concerns,
-            including cold and flu symptoms, allergies, minor infections,
-            digestive issues, headaches, fatigue, skin concerns, medication
-            questions, and overall wellness discussions. Through secure
-            telehealth services, patients can access professional healthcare
-            support when they need it most.
+            Many sexual health concerns are common and treatable when addressed
+            early. Whether you have questions about symptoms, testing,
+            prevention, treatment options, or general sexual wellness,
+            telehealth services provide a confidential and supportive
+            environment where patients can receive professional guidance and
+            personalized recommendations.
           </p>
         </div>
       </motion.div>
@@ -1481,7 +1481,7 @@ const FAQ = ({ s }) => {
             We've answered the most common questions below. Our care team is one
             message away if yours isn't listed.
           </p>
-          {/* <button
+          <button
             style={{
               padding: "11px 20px",
               borderRadius: 12,
@@ -1504,7 +1504,7 @@ const FAQ = ({ s }) => {
             }
           >
             <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button> */}
+          </button>
         </motion.div>
 
         <motion.div
@@ -1633,9 +1633,9 @@ const FinalCTA = ({ s }) => (
             marginBottom: 14,
           }}
         >
-          Ready to Speak With a
+          Ready to Take Charge of
           <br />
-          <span style={{ color: s.accentColor }}>Healthcare Provider?</span>
+          <span style={{ color: s.accentColor }}>Your Sexual Health?</span>
         </h2>
         <p
           style={{
@@ -1647,9 +1647,9 @@ const FinalCTA = ({ s }) => (
           }}
         >
           Connect with a licensed healthcare provider through secure
-          telemedicine services and receive personalized medical guidance for
-          your health concerns. Get the care and answers you need from the
-          comfort of home.
+          telemedicine services and receive confidential support for your sexual
+          wellness concerns. Get trusted guidance, personalized care, and peace
+          of mind from wherever you are.
         </p>
         <div
           style={{
@@ -1661,8 +1661,8 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/login">Get Started</a></PrimaryBtn>
-          <GhostBtn><a href="/appointment-booking">Book Appointment</a></GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Get Started</PrimaryBtn>
+          <GhostBtn>Book Appointment</GhostBtn>
           <button
             style={{
               padding: "13px 24px",
@@ -1719,7 +1719,7 @@ const FinalCTA = ({ s }) => (
    Fix 6: wrapper background now matches the token system used throughout
    every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
-export default function GeneralConsultation() {
+export default function SexualHealth() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
@@ -1728,12 +1728,12 @@ export default function GeneralConsultation() {
     <>
       <Helmet>
         <title>
-          General Consultation Online | Virtual Doctor Consultation | Humancare
+          Sexual Health Services Online | Confidential Virtual Care | Humancare
           Connect
         </title>
         <meta
           name="description"
-          content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
+          content="Access confidential sexual health services online. Connect with licensed healthcare providers for sexual wellness support, preventive care, and personalized guidance through telemedicine."
         />
       </Helmet>
       <div

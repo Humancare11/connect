@@ -74,24 +74,24 @@ const BORDER_HOVER = "#CBD5E1";
 const SERVICES = {
   "telehealth-services": {
     slug: "telehealth-services",
-    name: "GENERAL CONSULTATION",
-    tagline: "Trusted healthcare guidance for everyday health concerns.",
+    name: "MENTAL HEALTH SUPPORT",
+    tagline: "Compassionate care for your emotional well being.",
     intro:
-      "Connect with a licensed healthcare provider through secure telemedicine services for personalized medical advice, symptom evaluation, and treatment recommendations. General consultations offer a convenient way to discuss non emergency health concerns and receive professional care from the comfort of home.",
+      "Take care of your mental health with confidential telemedicine services designed to support emotional wellness. Connect with licensed healthcare providers who can help address anxiety, stress, depression, mood concerns, and other mental health challenges through secure virtual healthcare services from the comfort of home.",
     accentColor: "#2563EB",
     accentGlow: "#2563EB20",
     heroIcon: FiMonitor,
     heroEmoji: "🖥️",
     description:
-      "General consultations provide patients with convenient access to healthcare providers for a wide range of everyday medical concerns. Through Humancare Connect, patients can discuss symptoms, receive medical guidance, review treatment options, and get recommendations for appropriate next steps through secure virtual healthcare services.",
+      "Mental health care should be accessible, convenient, and free from unnecessary barriers. Through Humancare Connect, patients can connect with licensed healthcare providers for professional support, mental health evaluations, and personalized care recommendations through secure telehealth services. Whether you are experiencing stress, anxiety, emotional challenges, or ongoing mental health concerns, virtual care makes it easier to access the support you need.",
     whyItMatters:
-      "Many health concerns can be addressed early through timely medical advice and evaluation. General consultations help patients better understand their symptoms, make informed healthcare decisions, and access professional support without the need for unnecessary clinic visits.",
+      "Mental health plays a vital role in overall well being. Emotional and psychological challenges can affect relationships, work performance, sleep quality, physical health, and daily functioning. Early support and professional guidance can help individuals develop healthier coping strategies, improve resilience, and enhance their quality of life.",
     whoBenefits: [
-      "Adults experiencing new or ongoing health concerns",
-      "Patients managing common illnesses or minor conditions",
-      "Busy professionals looking for convenient healthcare access",
-      "Individuals with heart disease or high cholesterol",
-      " Anyone seeking trusted healthcare guidance from licensed providers",
+      "Adults experiencing anxiety or excessive stress",
+      "Individuals struggling with depression or low mood",
+      "People experiencing burnout or emotional exhaustion",
+      "Individuals facing major life transitions or personal challenges",
+      "Adults seeking confidential and convenient mental health support",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
@@ -102,23 +102,23 @@ const SERVICES = {
     steps: [
       {
         Icon: FiSearch,
-        title: "Share Your Health Concerns",
-        body: "Tell us about your symptoms, medical history, current medications, and healthcare questions through our secure intake process.",
+        title: "Share Your Concerns",
+        body: "Tell us about your symptoms, emotional challenges, mental health history, and wellness goals through our secure intake process.",
       },
       {
         Icon: FiFileText,
         title: "Connect With a Healthcare Provider",
-        body: "Meet with a licensed healthcare provider who will review your concerns and discuss your symptoms.",
+        body: "Meet with a licensed healthcare provider who will discuss your concerns and evaluate your mental health needs.",
       },
       {
         Icon: FiVideo,
-        title: "Receive Personalized Medical Guidance",
-        body: "Your provider will offer recommendations, discuss treatment options, and help determine the most appropriate next steps for your care.",
+        title: "Receive Personalized Guidance",
+        body: "Your provider may recommend coping strategies, treatment options, lifestyle adjustments, or additional mental health resources based on your situation.",
       },
       {
         Icon: FiPackage,
-        title: "Follow Your Care Plan",
-        body: "Receive guidance for ongoing care, symptom management, follow up recommendations, or referrals when needed.",
+        title: "Continue Your Care Journey",
+        body: "Schedule follow up appointments as needed to monitor progress, discuss concerns, and receive ongoing support.",
       },
     ],
     features: [
@@ -162,76 +162,80 @@ const SERVICES = {
     ],
     faqs: [
       {
-        q: "What is a general consultation?",
-        a: "A general consultation is a virtual appointment with a licensed healthcare provider to discuss symptoms, health concerns, treatment options, and medical questions.",
+        q: "What is mental health support?",
+        a: "Mental health support provides professional guidance and care for emotional, behavioral, and psychological concerns that may affect daily life and overall well being.",
       },
       {
-        q: "What health concerns can be discussed during a general consultation?",
-        a: "Patients can discuss common illnesses, minor injuries, allergies, digestive concerns, headaches, fatigue, skin conditions, medication questions, and other non emergency health issues.",
+        q: "Can I access mental health support online?",
+        a: "Yes. Telemedicine services allow patients to connect with licensed healthcare providers through secure virtual appointments.",
       },
       {
-        q: "Can I speak with a healthcare provider online?",
-        a: "Yes. Humancare Connect offers secure telemedicine services that allow patients to connect with licensed healthcare providers remotely.",
+        q: "What mental health concerns can be discussed during a telehealth visit?",
+        a: "Patients commonly seek support for anxiety, depression, stress, burnout, mood changes, emotional difficulties, and other mental health concerns.",
       },
       {
-        q: "Are virtual general consultations effective?",
-        a: "Yes. Many common health concerns can be evaluated and managed through telehealth services when clinically appropriate.",
-      },
-      {
-        q: "Do I need an appointment for a general consultation?",
-        a: "Yes. Patients can schedule an online appointment at a convenient time.",
-      },
-      {
-        q: "Can a provider diagnose my condition during a virtual visit?",
-        a: "Healthcare providers can assess symptoms, discuss concerns, and provide recommendations based on the information available during the consultation.",
-      },
-      {
-        q: "What happens during a general consultation?",
-        a: "Your provider will review your symptoms, medical history, medications, and healthcare concerns before discussing appropriate recommendations.",
-      },
-      {
-        q: "Can I ask questions about my medications?",
-        a: "Yes. General consultations are a convenient opportunity to discuss medications, side effects, and treatment plans.",
-      },
-      {
-        q: "Is a general consultation confidential?",
+        q: "Is online mental health support confidential?",
         a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and confidentiality.",
       },
       {
-        q: "Can I receive treatment recommendations during a consultation?",
-        a: "Yes. Healthcare providers can discuss treatment options, symptom management strategies, and next steps for care.",
+        q: "Can telehealth help with anxiety?",
+        a: "Yes. Healthcare providers can evaluate symptoms of anxiety, discuss treatment options, and recommend appropriate support strategies.",
       },
       {
-        q: "Are general consultations suitable for preventive care?",
-        a: "Yes. Patients can discuss wellness goals, preventive healthcare measures, and healthy lifestyle recommendations.",
+        q: "What are the benefits of virtual mental health services?",
+        a: "Virtual mental health services provide convenient access to care, flexible scheduling, privacy, and support from the comfort of home.",
       },
       {
-        q: "Can I get a referral during a general consultation?",
-        a: "When appropriate, healthcare providers may recommend referrals for additional evaluation or specialty care.",
+        q: "Can I discuss depression during an online appointment?",
+        a: "Yes. Licensed healthcare providers can assess symptoms, discuss concerns, and recommend appropriate next steps for care.",
       },
       {
-        q: "What are the benefits of telemedicine consultations?",
-        a: "Telemedicine services provide convenient access to healthcare providers, flexible scheduling, and care from the comfort of home.",
+        q: "How do I know if I should seek mental health support?",
+        a: "If emotional challenges are affecting your daily life, relationships, work, or overall well being, professional support may be beneficial.",
       },
       {
-        q: "Can I discuss multiple health concerns in one appointment?",
-        a: "Yes. Patients may discuss multiple non emergency healthcare concerns during a consultation.",
+        q: "Can stress affect my physical health?",
+        a: "Yes. Chronic stress may contribute to fatigue, headaches, sleep difficulties, digestive concerns, and other health issues.",
       },
       {
-        q: "Who can benefit from a general consultation?",
-        a: "Anyone seeking medical advice, symptom evaluation, treatment guidance, or healthcare support may benefit from a general consultation.",
+        q: "Who can benefit from mental health support?",
+        a: "Anyone experiencing emotional, behavioral, or psychological challenges may benefit from professional guidance and support.",
       },
       {
-        q: "Can virtual consultations help save time?",
-        a: "Yes. Telehealth services eliminate travel time and provide convenient access to healthcare providers.",
+        q: "What happens during a mental health consultation?",
+        a: "A healthcare provider will discuss your symptoms, concerns, health history, and goals to better understand your needs.",
       },
       {
-        q: "What should I prepare before my appointment?",
-        a: "Patients should be prepared to discuss symptoms, medications, medical history, and any questions they would like addressed.",
+        q: "Can mental health support help with burnout?",
+        a: "Yes. Healthcare providers can help identify contributing factors and recommend strategies to improve emotional wellness and reduce stress.",
       },
       {
-        q: "When should I seek emergency medical care instead?",
-        a: "Emergency symptoms such as chest pain, severe breathing difficulties, stroke symptoms, or serious injuries require immediate emergency medical attention.",
+        q: "Are telehealth mental health appointments effective?",
+        a: "Many patients find virtual appointments to be a convenient and effective way to access professional mental health support.",
+      },
+      {
+        q: "Can I schedule follow up appointments?",
+        a: "Yes. Follow up visits may be recommended to monitor progress and provide ongoing support.",
+      },
+      {
+        q: "Is mental health care only for serious conditions?",
+        a: "No. Many people seek support for everyday stress, emotional challenges, life transitions, and personal wellness concerns.",
+      },
+      {
+        q: "Can online mental health support improve emotional wellness?",
+        a: "Professional guidance can help individuals develop healthier coping strategies and improve overall emotional well being.",
+      },
+      {
+        q: "Are mental health services available from home?",
+        a: "Yes. Telehealth services allow patients to access support from home, work, or another private location.",
+      },
+      {
+        q: "Why is early mental health support important?",
+        a: "Early intervention may help individuals address concerns before they significantly affect daily life, relationships, and overall health.",
+      },
+      {
+        q: "Why choose Humancare Connect for mental health support?",
+        a: "Humancare Connect provides secure telemedicine services, compassionate care, convenient access to healthcare providers, and personalized support focused on emotional wellness.",
       },
     ],
   },
@@ -499,10 +503,10 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/appointment-booking">Book Appointment</a></PrimaryBtn>
-          {/* <GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
+          <GhostBtn>
             Contact Care Team <FiArrowRight />
-          </GhostBtn> */}
+          </GhostBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -775,7 +779,7 @@ const Overview = ({ s }) => (
                 marginBottom: 20,
               }}
             >
-              Your First Step Toward Better Health
+              Accessible Mental Health Care When You Need It Most
             </h2>
           </motion.div>
           <motion.p
@@ -973,8 +977,8 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 36,
               }}
             >
-              Accessing a general consultation through Humancare Connect is
-              quick, secure, and designed around your healthcare needs.
+              Accessing mental health support through Humancare Connect is
+              secure, private, and designed around your needs.
             </p>
           </motion.div>
 
@@ -1091,12 +1095,12 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 24,
               }}
             >
-              Get convenient access to professional healthcare guidance through
-              trusted telemedicine services. Receive personalized support
-              without leaving home.
+              Take the first step toward better emotional wellness through
+              trusted telemedicine services. Professional support is available
+              when and where you need it most.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
-              <a href="/login">Get Started Today</a>
+              Get Started Today
             </PrimaryBtn>
             <div
               style={{
@@ -1163,9 +1167,9 @@ const Features = ({ s }) => (
             marginBottom: 10,
           }}
         >
-          Comprehensive Care for
+          Supporting Emotional Wellness
           <br />
-          <span style={{ color: s.accentColor }}>Everyday Health Concerns</span>
+          <span style={{ color: s.accentColor }}>Through Telehealth</span>
         </h2>
         <p style={{ color: TEXT_DIM, fontSize: 15 }}>
           Every feature is designed around one goal: better outcomes for you.
@@ -1190,12 +1194,12 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            General consultations are one of the most common ways patients
-            access healthcare services. Whether you are experiencing new
-            symptoms, managing an ongoing condition, seeking preventive health
-            advice, or looking for professional medical guidance, a general
-            consultation provides an opportunity to discuss your concerns with a
-            licensed healthcare provider.
+            Mental health affects how people think, feel, behave, and respond to
+            everyday challenges. Emotional wellness influences relationships,
+            work performance, productivity, physical health, and overall quality
+            of life. Seeking professional support is an important step toward
+            understanding mental health concerns and developing effective
+            strategies to manage them.
           </p>
           <p
             style={{
@@ -1205,12 +1209,13 @@ const Features = ({ s }) => (
               margin: "0 0 18px 0",
             }}
           >
-            At Humancare Connect, our virtual healthcare services make it easier
-            for patients to access quality care from virtually anywhere.
-            Healthcare providers can evaluate symptoms, review health history,
-            discuss treatment options, and recommend appropriate next steps
-            based on individual needs. This convenient approach helps patients
-            receive timely support while avoiding unnecessary delays in care.
+            At Humancare Connect, our mental health support services provide
+            convenient access to licensed healthcare providers through secure
+            virtual healthcare services. Patients can discuss concerns such as
+            anxiety, depression, chronic stress, burnout, mood changes,
+            emotional difficulties, and sleep related concerns in a confidential
+            and supportive environment. Telemedicine services remove many of the
+            barriers that often prevent individuals from seeking care.
           </p>
           <p
             style={{
@@ -1220,12 +1225,13 @@ const Features = ({ s }) => (
               margin: 0,
             }}
           >
-            General consultations may address a wide range of concerns,
-            including cold and flu symptoms, allergies, minor infections,
-            digestive issues, headaches, fatigue, skin concerns, medication
-            questions, and overall wellness discussions. Through secure
-            telehealth services, patients can access professional healthcare
-            support when they need it most.
+            Mental health support is not limited to severe conditions. Many
+            individuals benefit from professional guidance during periods of
+            increased stress, major life changes, relationship challenges,
+            workplace pressures, grief, or emotional difficulties. Through
+            telehealth services, patients can receive personalized
+            recommendations, access ongoing support, and take meaningful steps
+            toward improving their emotional well being and overall health.
           </p>
         </div>
       </motion.div>
@@ -1481,7 +1487,7 @@ const FAQ = ({ s }) => {
             We've answered the most common questions below. Our care team is one
             message away if yours isn't listed.
           </p>
-          {/* <button
+          <button
             style={{
               padding: "11px 20px",
               borderRadius: 12,
@@ -1504,7 +1510,7 @@ const FAQ = ({ s }) => {
             }
           >
             <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button> */}
+          </button>
         </motion.div>
 
         <motion.div
@@ -1633,9 +1639,9 @@ const FinalCTA = ({ s }) => (
             marginBottom: 14,
           }}
         >
-          Ready to Speak With a
+          Ready to Prioritize Your
           <br />
-          <span style={{ color: s.accentColor }}>Healthcare Provider?</span>
+          <span style={{ color: s.accentColor }}>Mental Health?</span>
         </h2>
         <p
           style={{
@@ -1647,9 +1653,9 @@ const FinalCTA = ({ s }) => (
           }}
         >
           Connect with a licensed healthcare provider through secure
-          telemedicine services and receive personalized medical guidance for
-          your health concerns. Get the care and answers you need from the
-          comfort of home.
+          telemedicine services and receive compassionate support for your
+          emotional well being. Take the first step toward better mental health
+          and a healthier future today.
         </p>
         <div
           style={{
@@ -1661,8 +1667,8 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}><a href="/login">Get Started</a></PrimaryBtn>
-          <GhostBtn><a href="/appointment-booking">Book Appointment</a></GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>Get Started</PrimaryBtn>
+          <GhostBtn>Book Appointment</GhostBtn>
           <button
             style={{
               padding: "13px 24px",
@@ -1719,7 +1725,7 @@ const FinalCTA = ({ s }) => (
    Fix 6: wrapper background now matches the token system used throughout
    every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
-export default function GeneralConsultation() {
+export default function MentalHealthSupport() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
@@ -1728,12 +1734,12 @@ export default function GeneralConsultation() {
     <>
       <Helmet>
         <title>
-          General Consultation Online | Virtual Doctor Consultation | Humancare
+          Mental Health Support Online | Virtual Mental Health Care | Humancare
           Connect
         </title>
         <meta
           name="description"
-          content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
+          content="Access confidential mental health support through secure telemedicine services. Connect with licensed healthcare providers for anxiety, stress, depression, and emotional wellness care."
         />
       </Helmet>
       <div
