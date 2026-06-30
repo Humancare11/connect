@@ -51,7 +51,7 @@ export default function  AccessibilityStatement() {
                     <SectionCard icon={Monitor} title="Our Commitment">
     <p style={{ color: "#64748b", lineHeight: 1.8 }}>
         Humancare Connect, Inc. is committed to ensuring that our website and
-        telehealth platform at humancareworldwide.com and related subdomains
+        telehealth platform at c and related subdomains
         (the "Platform") are accessible to everyone, including people with
         disabilities.
     </p>
@@ -72,7 +72,7 @@ export default function  AccessibilityStatement() {
                     <SectionCard icon={ClipboardList} title="Scope">
     <p style={{ color: "#64748b", lineHeight: 1.8 }}>
         This Accessibility Statement applies to all pages and features of
-        humancareworldwide.com and our patient and provider portals.
+        humancareconeect.co and our patient and provider portals.
     </p>
 
     <p style={{ color: "#64748b", lineHeight: 1.8 }}>
@@ -153,7 +153,6 @@ export default function  AccessibilityStatement() {
         }}
     >
         <p><strong>Accessibility Email:</strong> support@humancareconnect.co</p>
-        <p><strong>General Support:</strong> support@humancareworldwide.com</p>
 
         <p style={{ marginTop: "16px" }}>
             <strong>Humancare Connect, Inc.</strong><br />

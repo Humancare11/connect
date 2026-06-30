@@ -148,7 +148,7 @@ export default function CookiePolicy() {
           <SectionCard icon={Info} title="Introduction">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               Humancare Connect, Inc. uses cookies and similar tracking technologies on
-              humancareworldwide.com and related subdomains.
+              humancareconeect.co and related subdomains.
             </p>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>

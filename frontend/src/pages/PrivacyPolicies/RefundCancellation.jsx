@@ -58,7 +58,7 @@ export default function RefundCancellation() {
             </p>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
-              By booking a consultation through our Platform, you agree to this policy. This policy applies to all services purchased through humancareworldwide.com.
+              By booking a consultation through our Platform, you agree to this policy. This policy applies to all services purchased through humancareconeect.co
             </p>
           </SectionCard>
 

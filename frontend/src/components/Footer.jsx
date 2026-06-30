@@ -39,11 +39,11 @@ export default function Footer() {
           </p>
 
           {/* COMPLIANCE BADGES */}
-          <div className="footer-badges">
+          {/* <div className="footer-badges">
             <span className="footer-badge">GDPR</span>
             <span className="footer-badge">SOC 2 Type II</span>
             <span className="footer-badge">HITRUST R2</span>
-          </div>
+          </div> */}
         </div>
 
         {/* PLATFORM */}
