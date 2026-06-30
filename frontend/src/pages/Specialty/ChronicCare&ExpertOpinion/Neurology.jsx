@@ -56,6 +56,8 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/neurology-specialist-brain-nerve-care.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/neurology-consultation-brain-health-specialist.webp";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,10 +67,12 @@ const SPECIALTY_DATA = {
   tagline: "Expert Care for Brain, Nerve, and Neurological Health.",
   heroDescription:
     "Neurology specialists diagnose and treat conditions affecting the brain, spinal cord, nerves, and nervous system. From migraines and dizziness to memory concerns, seizures, and nerve disorders, neurologists provide comprehensive care to help patients improve neurological function, manage symptoms, and maintain a better quality of life.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified neurology specialist providing expert diagnosis and treatment for brain, spinal cord, nerve, migraine, seizure, and neurological disorders.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Neurology specialist consulting with a patient about brain health, migraines, memory concerns, nerve disorders, and neurological treatment.",
   overviewDescription:
     "Neurology is a medical specialty focused on diagnosing, treating, and managing disorders that affect the nervous system. Neurologists evaluate symptoms related to the brain, spinal cord, peripheral nerves, and muscles, helping patients understand the underlying causes of neurological conditions and receive appropriate treatment.",
   overviewImportance:
@@ -563,7 +567,7 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -579,16 +583,16 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -602,7 +606,7 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -793,7 +797,10 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
                   <FiSearch size={18} />
                   Find a Doctor
                 </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
                   <FiCalendar size={18} />
                   Book Appointment
                 </a>

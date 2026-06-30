@@ -6,7 +6,12 @@
 .sp-page {
   min-height: 100vh;
   background: #fff;
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -15,7 +20,9 @@
 .sp-reveal {
   opacity: 0;
   transform: translateY(24px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
 }
 .sp-reveal.sp-reveal--visible {
   opacity: 1;
@@ -98,7 +105,9 @@
 .sp-hero__content-inner {
   opacity: 0;
   transform: translateY(20px);
-  transition: opacity 0.65s ease 0.25s, transform 0.65s ease 0.25s;
+  transition:
+    opacity 0.65s ease 0.25s,
+    transform 0.65s ease 0.25s;
 }
 .sp-hero__content-inner--loaded {
   opacity: 1;
@@ -156,7 +165,9 @@
   padding: 13px 24px;
   border-radius: 100px;
   text-decoration: none;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
   cursor: pointer;
   border: none;
 }
@@ -333,7 +344,6 @@
   font-weight: 800;
   color: #0f172a;
   margin: 0;
-
 }
 
 /* ── Key Services grid ─────────────────────────────────────────────────────── */
@@ -481,7 +491,6 @@
   margin: 0 auto;
   font-size: 15px;
   line-height: 1.65;
-
 }
 
 .sp-conditions__grid {
@@ -589,7 +598,9 @@
   gap: 8px;
   opacity: 0;
   transform: translateY(16px) scale(0.96);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
 }
 .sp-stat-card--visible {
   opacity: 1;
@@ -625,20 +636,20 @@
   text-align: center;
   margin-bottom: clamp(36px, 5vw, 56px);
 }
+
 .sp-trust__head h2 {
   font-size: clamp(24px, 3.5vw, 40px);
   font-weight: 800;
   color: #0f172a;
   margin: 0 0 12px;
-  text-align: left;
 }
+
 .sp-trust__head p {
   color: #64748b;
   max-width: 600px;
-  /* margin: 0 auto; */
+  margin: 0 auto;
   font-size: 15px;
   line-height: 1.65;
-  text-align: left;
 }
 
 .sp-trust-grid {
@@ -733,7 +744,9 @@
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   overflow: hidden;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
   background: #fff;
 }
 .sp-faq-item--open {
@@ -770,7 +783,10 @@
   align-items: center;
   justify-content: center;
   color: #083ebd;
-  transition: background 0.25s ease, color 0.25s ease, transform 0.3s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.3s ease;
 }
 .sp-faq-item__icon--open {
   background: #083ebd;
@@ -831,7 +847,11 @@
   width: 480px;
   height: 480px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(8, 62, 189, 0.18) 0%, transparent 65%);
+  background: radial-gradient(
+    circle,
+    rgba(8, 62, 189, 0.18) 0%,
+    transparent 65%
+  );
   transform: translate(30%, -30%);
   pointer-events: none;
 }
@@ -842,7 +862,11 @@
   width: 360px;
   height: 360px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(11, 87, 232, 0.12) 0%, transparent 65%);
+  background: radial-gradient(
+    circle,
+    rgba(11, 87, 232, 0.12) 0%,
+    transparent 65%
+  );
   transform: translate(-30%, 30%);
   pointer-events: none;
 }

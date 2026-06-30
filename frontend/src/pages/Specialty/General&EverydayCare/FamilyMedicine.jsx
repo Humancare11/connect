@@ -56,6 +56,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/family-medicine-primary-care-doctor-consultation-banner.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/family-medicine-doctor-patient-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,10 +68,12 @@ const SPECIALTY_DATA = {
   tagline: "Comprehensive Healthcare for Every Stage of Life.",
   heroDescription:
     "Family Medicine specialists provide continuous, personalized healthcare for individuals and families of all ages. From preventive care and routine wellness visits to managing common illnesses and chronic conditions, family medicine focuses on building long-term relationships that support lifelong health and well-being.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified family medicine physician providing comprehensive primary care, preventive healthcare, and wellness consultations for patients of all ages.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Family medicine physician conducting a comprehensive health examination and preventive care consultation with a patient.",
   overviewDescription:
     "Family Medicine is a medical specialty dedicated to providing comprehensive healthcare for patients of all ages, from children and adolescents to adults and seniors. Family medicine physicians serve as primary healthcare providers who diagnose, treat, prevent, and manage a wide range of health concerns while focusing on long-term wellness.",
   overviewImportance:
@@ -306,12 +311,12 @@ const SPECIALTY_DATA = {
         "Preventive care helps identify health risks early, reduce complications, and support long-term health and wellness.",
     },
     {
-      question: "How can I schedule an appointment with a family medicine specialist?",
+      question:
+        "How can I schedule an appointment with a family medicine specialist?",
       answer:
         "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
     },
   ],
-
 };
 
 const TRUST_STATS = [
@@ -551,7 +556,9 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
   return (
     <>
       <HelmetProvider>
-        <title>Family Medicine Specialists | Comprehensive Care for All Ages</title>
+        <title>
+          Family Medicine Specialists | Comprehensive Care for All Ages
+        </title>
         <meta
           name="description"
           content="Get personalized family medicine care for routine check-ups, vaccinations, preventive care, and common illnesses for individuals and families."
@@ -563,7 +570,7 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -579,16 +586,16 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -602,7 +609,7 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -693,8 +700,9 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
-                  Our family medicine specialists provide comprehensive care for a wide range of health concerns affecting individuals and families across every stage of life.
-
+                  Our family medicine specialists provide comprehensive care for
+                  a wide range of health concerns affecting individuals and
+                  families across every stage of life.
                 </p>
               </div>
             </Reveal>
@@ -721,8 +729,9 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
                 <SectionLabel>Why HumanCare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
-                  We combine experienced family medicine providers with advanced technology to make primary healthcare more accessible, convenient, and personalized.
-
+                  We combine experienced family medicine providers with advanced
+                  technology to make primary healthcare more accessible,
+                  convenient, and personalized.
                 </p>
               </div>
             </Reveal>
@@ -773,28 +782,32 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
 
           <div className="sp-cta__inner">
             <Reveal>
-              <span className="sp-cta__eyebrow">GET STARTED TODAY
-              </span>
+              <span className="sp-cta__eyebrow">GET STARTED TODAY</span>
               <h2 className="sp-cta__heading">
-                Ready to Connect with a
-                <span>{data.name}</span> Specialist?
+                Ready to Connect with a<span>{data.name}</span> Specialist?
               </h2>
               <p className="sp-cta__sub">
-                Take charge of your family's health with expert primary care, preventive services, and personalized healthcare support. Schedule an in-person or virtual visit with a family medicine specialist today.
+                Take charge of your family's health with expert primary care,
+                preventive services, and personalized healthcare support.
+                Schedule an in-person or virtual visit with a family medicine
+                specialist today.
               </p>
             </Reveal>
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

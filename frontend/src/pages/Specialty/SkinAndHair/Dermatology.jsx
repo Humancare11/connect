@@ -72,6 +72,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/dermatology-specialist-skin-care-consultation-banner.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/dermatologist-patient-skin-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,10 +84,12 @@ const SPECIALTY_DATA = {
   tagline: "Expert Care for Healthy Skin, Hair, and Nails.",
   heroDescription:
     "Dermatology specialists diagnose, treat, and manage conditions affecting the skin, hair, and nails. Whether you're dealing with acne, eczema, psoriasis, hair loss, skin infections, or chronic skin concerns, dermatology care helps restore skin health, improve confidence, and support overall wellness. Using evidence-based treatments and personalized care plans, dermatologists help patients manage symptoms, prevent complications, and achieve healthier skin, hair, and nails at every stage of life.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified dermatologist providing skin, hair, and nail consultation for acne, eczema, psoriasis, and other dermatology conditions.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Dermatologist examining a patient's skin during a comprehensive dermatology consultation for skin, hair, and nail health.",
   overviewDescription:
     "Dermatology is the medical specialty focused on diagnosing and treating conditions affecting the skin, hair, nails, and related structures. Skin is the body's largest organ and plays an important role in protecting overall health, making early diagnosis and treatment essential.",
   overviewImportance:
@@ -579,7 +584,7 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -595,16 +600,16 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -618,7 +623,7 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -804,15 +809,18 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

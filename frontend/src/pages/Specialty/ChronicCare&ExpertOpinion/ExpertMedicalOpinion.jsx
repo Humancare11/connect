@@ -56,6 +56,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/expert-medical-opinion-second-opinion-healthcare-specialist.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/expert-medical-opinion-consultation-review-medical-records.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,10 +68,12 @@ const SPECIALTY_DATA = {
   tagline: "Confidence in Every Healthcare Decision.",
   heroDescription:
     "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. Whether you're facing a new diagnosis, considering surgery, evaluating cancer treatment options, or seeking reassurance about your care plan, expert medical opinions can help you make informed healthcare decisions with greater confidence.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Expert medical opinion specialist reviewing patient diagnosis and treatment plans",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Expert medical opinion consultation with specialist reviewing medical records and treatment options",
   overviewDescription:
     "Expert Medical Opinion is a specialized healthcare service that provides independent reviews of medical diagnoses, treatment recommendations, surgical plans, and complex health conditions. Patients often seek a second opinion to confirm a diagnosis, explore alternative treatment options, or better understand their healthcare choices before making important medical decisions.",
   overviewImportance:
@@ -567,7 +572,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -584,15 +589,15 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__description">{data.heroDescription}</p>
 
               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -606,7 +611,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -793,15 +798,18 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

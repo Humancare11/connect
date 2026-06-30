@@ -55,255 +55,265 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/endocrinology-specialist-hormone-metabolic-care.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/board-certified-endocrinologist-hormone-health-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "pediatrics",
-  name: "Pediatrics",
-  tagline: "Caring for Your Child's Health from Infancy Through Adolescence.",
+  slug: "endocrinology",
+  name: "Endocrinology",
+  tagline: "Expert Care for Hormonal Health and Metabolic Wellness.",
   heroDescription:
-    "Pediatric specialists provide comprehensive healthcare for infants, children, and teenagers, focusing on growth, development, illness prevention, and treatment of common childhood conditions. From routine wellness visits and vaccinations to managing infections, feeding concerns, and skin conditions, pediatric care supports your child's healthy journey at every stage of life.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+    "Endocrinology specialists diagnose and treat conditions related to hormones, glands, metabolism, and the endocrine system. From managing diabetes and thyroid disorders to treating hormone imbalances and bone health concerns, endocrinologists help patients achieve better health through personalized, evidence-based care.",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified endocrinologist consulting with a patient about hormone disorders, diabetes, thyroid health, and metabolic care",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Board-certified endocrinologist reviewing hormone test results and providing personalized endocrine care consultation",
   overviewDescription:
-    "Pediatrics is a medical specialty dedicated to the physical, emotional, and developmental health of infants, children, and adolescents. Pediatricians diagnose, treat, and prevent a wide range of childhood illnesses while monitoring growth milestones, nutrition, behavior, and overall well-being.",
+    "Endocrinology is a medical specialty focused on the endocrine system, which includes glands that produce hormones regulating metabolism, growth, reproduction, energy levels, and many other essential bodily functions. When hormone levels become imbalanced, they can affect multiple aspects of health and overall well-being.",
   overviewImportance:
-    "Pediatric specialists provide age-appropriate medical care tailored to each child's unique needs. Through preventive screenings, early diagnosis, immunizations, and personalized treatment plans, pediatric care helps children grow into healthy adults while giving families the guidance and support they need.",
+    "Endocrinologists specialize in diagnosing, treating, and managing hormonal and metabolic disorders through advanced testing, lifestyle guidance, medication management, and ongoing monitoring. Their goal is to restore hormonal balance, improve symptoms, prevent complications, and support long-term health outcomes.",
   conditionsTreated:
-    "Pediatric specialists diagnose and manage common childhood illnesses and developmental concerns, including colds and flu, fever, ear infections, feeding difficulties, skin rashes, allergies, and other health conditions affecting children.",
+    "Endocrinology specialists diagnose and manage hormone imbalances, thyroid disorders, diabetes, osteoporosis, metabolic conditions, and other disorders affecting the endocrine system.",
   whenToConsult:
-    "Schedule a visit with a pediatric specialist if your child experiences persistent fever, frequent infections, feeding or growth concerns, ear pain, skin changes, breathing difficulties, unusual symptoms, or requires routine checkups and preventive healthcare.",
+    "Schedule a visit with an endocrinology specialist if you experience unexplained weight changes, fatigue, hormone-related symptoms, blood sugar concerns, thyroid issues, bone health problems, or have been diagnosed with an endocrine disorder requiring specialized care.",
 
   keyServices: [
     {
       Icon: FiActivity,
-      title: "Well-Child Exams & Growth Monitoring",
+      title: "Hormone Evaluation & Management",
       description:
-        "Comprehensive pediatric checkups to track physical growth, developmental milestones, and overall health from infancy through adolescence.",
-    },
-    {
-      Icon: FiThermometer,
-      title: "Childhood Illness Diagnosis & Treatment",
-      description:
-        "Evaluation and treatment for common pediatric conditions, including colds, flu, infections, fever, and other acute illnesses.",
-    },
-    {
-      Icon: MdOutlineVaccines,
-      title: "Vaccinations & Preventive Care",
-      description:
-        "Routine immunizations, health screenings, and preventive services designed to protect children from serious illnesses.",
+        "Comprehensive assessment and treatment of hormone imbalances affecting energy, metabolism, mood, growth, and reproductive health.",
     },
     {
       Icon: FiDroplet,
-      title: "Feeding & Nutrition Support",
+      title: "Diabetes Care & Monitoring",
       description:
-        "Guidance for feeding challenges, nutrition concerns, healthy eating habits, and proper growth and development.",
+        "Personalized treatment plans for Type 1 and Type 2 diabetes, including blood sugar management and long-term health monitoring.",
+    },
+    {
+      Icon: FiThermometer,
+      title: "Thyroid Disorder Treatment",
+      description:
+        "Diagnosis and management of hypothyroidism, hyperthyroidism, thyroid nodules, and other thyroid-related conditions.",
     },
     {
       Icon: MdOutlineSpa,
-      title: "Skin & Allergy Care",
+      title: "Osteoporosis & Bone Health Care",
       description:
-        "Diagnosis and management of childhood skin conditions, rashes, allergic reactions, and environmental sensitivities.",
+        "Evaluation and treatment strategies to strengthen bones, improve bone density, and reduce fracture risk.",
+    },
+    {
+      Icon: FiActivity,
+      title: "Metabolic Health Management",
+      description:
+        "Support for metabolism-related disorders, weight concerns, insulin resistance, and endocrine-related health conditions.",
     },
     {
       Icon: FiUsers,
-      title: "Parent Education & Pediatric Guidance",
+      title: "Preventive Endocrine Care",
       description:
-        "Expert advice for parents regarding child development, safety, sleep habits, behavior, and everyday health concerns.",
+        "Routine monitoring, risk assessments, and long-term management plans to help prevent complications from endocrine disorders.",
     },
   ],
 
   benefits: [
     {
-      Icon: FiSearch,
-      title: "Early Detection & Intervention",
+      Icon: FiActivity,
+      title: "Restored Hormonal Balance",
       description:
-        "Identifies health concerns, developmental delays, and childhood illnesses early for timely treatment and better outcomes.",
-    },
-    {
-      Icon: FiTrendingUp,
-      title: "Healthy Growth & Development",
-      description:
-        "Supports children through every stage of physical, emotional, and developmental milestones.",
-    },
-    {
-      Icon: FiShield,
-      title: "Preventive Health Protection",
-      description:
-        "Provides vaccinations, screenings, and wellness guidance to reduce the risk of preventable illnesses.",
+        "Helps regulate hormone levels to improve overall health, energy, mood, and quality of life.",
     },
     {
       Icon: FiHeart,
-      title: "Family-Centered Care",
+      title: "Better Disease Management",
       description:
-        "Partners with parents and caregivers to create personalized healthcare plans that support every child's unique needs.",
+        "Provides specialized care for chronic endocrine conditions such as diabetes and thyroid disorders.",
+    },
+    {
+      Icon: FiShield,
+      title: "Prevention of Long-Term Complications",
+      description:
+        "Early diagnosis and ongoing monitoring help reduce the risk of serious health complications.",
+    },
+    {
+      Icon: FiTrendingUp,
+      title: "Improved Metabolic Health",
+      description:
+        "Supports healthy metabolism, blood sugar control, bone strength, and long-term wellness.",
     },
   ],
 
   conditions: [
     {
-      Icon: FiAlertCircle,
-      name: "Ear Pain & Ear Infections",
-      description:
-        "Diagnosis and treatment for earaches, middle ear infections, ear pressure, and discomfort that commonly affect children.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Feeding Concerns",
-      description:
-        "Support for breastfeeding challenges, picky eating, poor appetite, nutritional concerns, and healthy feeding habits.",
-    },
-    {
-      Icon: FiWind,
-      name: "Pediatric Cold & Flu",
-      description:
-        "Treatment for cough, congestion, sore throat, viral infections, and flu symptoms to help children recover safely.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Pediatric Fever",
-      description:
-        "Evaluation and care for fever, infection-related symptoms, and signs requiring medical attention.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Skin Rashes in Children",
-      description:
-        "Diagnosis and treatment for childhood rashes, eczema, allergic reactions, irritation, and common skin conditions.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Allergies in Children",
-      description:
-        "Management of seasonal allergies, food allergies, environmental triggers, and allergy-related symptoms.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Asthma & Breathing Concerns",
-      description:
-        "Care for wheezing, shortness of breath, chronic cough, and respiratory conditions affecting children.",
-    },
-    {
       Icon: FiActivity,
-      name: "Childhood Infections",
+      name: "Hormone Imbalance",
       description:
-        "Diagnosis and treatment of bacterial and viral infections, including throat, sinus, and other common infections.",
+        "Evaluation and treatment of hormonal disruptions affecting metabolism, mood, energy levels, reproductive health, and overall wellness.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Growth & Development Concerns",
+      name: "Osteoporosis",
       description:
-        "Evaluation of delayed milestones, growth patterns, and developmental challenges.",
+        "Comprehensive care for low bone density and bone loss to help strengthen bones and reduce fracture risk.",
     },
     {
-      Icon: FiClock,
-      name: "Sleep Problems in Children",
+      Icon: FiThermometer,
+      name: "Thyroid Disorders",
       description:
-        "Support for sleep difficulties, bedtime challenges, poor sleep habits, and concerns affecting a child's health.",
+        "Diagnosis and management of hypothyroidism, hyperthyroidism, thyroid nodules, and thyroid hormone imbalances.",
+    },
+    {
+      Icon: FiDroplet,
+      name: "Type 2 Diabetes",
+      description:
+        "Personalized diabetes management focused on blood sugar control, lifestyle modifications, and complication prevention.",
+    },
+    {
+      Icon: FiActivity,
+      name: "Insulin Resistance",
+      description:
+        "Evaluation and treatment of insulin resistance to support healthy blood sugar levels and metabolic function.",
+    },
+    {
+      Icon: FiAlertCircle,
+      name: "Prediabetes",
+      description:
+        "Early intervention strategies to help prevent the progression from prediabetes to Type 2 diabetes.",
     },
     {
       Icon: FiBarChart2,
-      name: "Digestive & Stomach Issues",
+      name: "Metabolic Disorders",
       description:
-        "Care for abdominal pain, constipation, diarrhea, reflux, and other gastrointestinal concerns in children.",
+        "Care for conditions affecting metabolism, weight regulation, and energy balance.",
+    },
+    {
+      Icon: FiHeart,
+      name: "Adrenal Gland Disorders",
+      description:
+        "Diagnosis and management of conditions affecting adrenal hormone production and overall endocrine health.",
+    },
+    {
+      Icon: FiUsers,
+      name: "Polycystic Ovary Syndrome (PCOS)",
+      description:
+        "Treatment for hormone-related symptoms including irregular periods, fertility concerns, and metabolic complications.",
+    },
+    {
+      Icon: FiTrendingUp,
+      name: "Weight Management Concerns",
+      description:
+        "Medical support for endocrine-related weight gain, obesity, and metabolic challenges.",
+    },
+    {
+      Icon: FiShield,
+      name: "Vitamin D Deficiency",
+      description:
+        "Evaluation and treatment of vitamin deficiencies that may impact bone strength and overall health.",
     },
     {
       Icon: MdOutlineHealthAndSafety,
-      name: "Preventive Pediatric Care",
+      name: "Calcium & Bone Metabolism Disorders",
       description:
-        "Routine wellness visits, immunizations, health screenings, and guidance to maintain long-term childhood health.",
+        "Management of conditions affecting calcium balance, bone health, and endocrine function.",
     },
   ],
 
   faqs: [
     {
-      question: "What is pediatrics?",
+      question: "What is endocrinology?",
       answer:
-        "Pediatrics is the medical specialty focused on the healthcare of infants, children, and adolescents, including prevention, diagnosis, and treatment of childhood conditions.",
+        "Endocrinology is the medical specialty focused on diagnosing and treating hormone-related and metabolic disorders affecting the endocrine system.",
     },
     {
-      question: "What does a pediatric specialist treat?",
+      question: "What does an endocrinologist treat?",
       answer:
-        "Pediatric specialists treat common childhood illnesses, infections, fevers, feeding concerns, skin conditions, allergies, growth concerns, and developmental issues.",
+        "Endocrinologists treat diabetes, thyroid disorders, hormone imbalances, osteoporosis, adrenal disorders, PCOS, and other endocrine conditions.",
     },
     {
-      question: "When should I take my child to a pediatrician?",
+      question: "When should I see an endocrinologist?",
       answer:
-        "You should seek pediatric care for fever, persistent symptoms, breathing difficulties, feeding problems, injuries, unusual behavior changes, or routine wellness visits.",
+        "You should consider seeing an endocrinologist for hormone imbalances, diabetes, thyroid issues, unexplained weight changes, or metabolic disorders.",
     },
     {
-      question: "How often does my child need a pediatric wellness visit?",
+      question: "What are common symptoms of hormone imbalance?",
       answer:
-        "Well-child visit schedules depend on age, but regular checkups throughout childhood are essential for monitoring growth, development, and preventive care.",
+        "Symptoms may include fatigue, weight changes, mood fluctuations, irregular periods, low energy, and changes in metabolism.",
     },
     {
-      question: "Can pediatricians treat colds and flu?",
+      question: "What causes hormone imbalances?",
       answer:
-        "Yes. Pediatricians diagnose and manage cold and flu symptoms, provide treatment recommendations, and monitor for complications.",
+        "Hormone imbalances can result from endocrine disorders, aging, stress, medical conditions, medications, or gland dysfunction.",
     },
     {
-      question: "What should I do if my child has a fever?",
+      question: "Can endocrinologists help manage diabetes?",
       answer:
-        "Monitor symptoms and seek medical care if the fever is persistent, very high, accompanied by concerning symptoms, or your child appears seriously ill.",
+        "Yes. Endocrinologists specialize in diabetes management, including blood sugar monitoring, medication adjustments, and complication prevention.",
     },
     {
-      question: "Can pediatricians help with feeding difficulties?",
+      question: "What are thyroid disorders?",
       answer:
-        "Yes. Pediatric specialists evaluate feeding concerns, nutritional challenges, poor appetite, and growth-related issues.",
+        "Thyroid disorders are conditions that affect thyroid hormone production, including hypothyroidism, hyperthyroidism, and thyroid nodules.",
     },
     {
-      question: "What causes ear infections in children?",
+      question: "What is osteoporosis?",
       answer:
-        "Ear infections can develop from bacteria or viruses, often following colds or respiratory infections that cause fluid buildup in the middle ear.",
+        "Osteoporosis is a condition that weakens bones, making them more likely to fracture or break.",
     },
     {
-      question: "When should I worry about a skin rash on my child?",
+      question: "Can endocrinologists help with weight management?",
       answer:
-        "Seek medical advice if a rash is severe, spreads quickly, causes discomfort, comes with fever, or does not improve.",
+        "Yes. Endocrinologists evaluate hormonal and metabolic factors that may contribute to weight gain or difficulty losing weight.",
     },
     {
-      question: "Can pediatricians diagnose allergies?",
+      question: "What is insulin resistance?",
       answer:
-        "Yes. Pediatric providers can evaluate allergy symptoms, recommend treatment options, and provide guidance on avoiding triggers.",
+        "Insulin resistance occurs when the body's cells do not respond effectively to insulin, increasing the risk of Type 2 diabetes.",
     },
     {
-      question: "Do pediatricians provide vaccinations?",
+      question: "What tests do endocrinologists perform?",
       answer:
-        "Yes. Pediatric care includes recommended childhood vaccines to help protect against preventable diseases.",
+        "Common tests include hormone panels, blood glucose testing, thyroid function tests, bone density scans, and metabolic evaluations.",
     },
     {
-      question: "What developmental milestones do pediatricians monitor?",
+      question: "Is PCOS treated by an endocrinologist?",
       answer:
-        "Pediatricians track physical growth, speech, movement, social skills, behavior, and age-appropriate developmental milestones.",
+        "Yes. Endocrinologists often diagnose and manage PCOS, including hormone regulation and metabolic health concerns.",
     },
     {
-      question: "Are telehealth pediatric visits available?",
+      question: "Can hormone imbalances affect mental health?",
       answer:
-        "Yes. Many pediatric concerns, including minor illnesses, follow-up care, and parent consultations, can be addressed through secure telehealth visits.",
+        "Yes. Hormonal changes can influence mood, anxiety levels, energy, sleep, and emotional well-being.",
     },
     {
-      question: "Do I need a referral to see a pediatric specialist?",
+      question: "Are telehealth endocrinology appointments available?",
       answer:
-        "Referral requirements depend on your insurance plan and the type of pediatric specialty care needed.",
+        "Yes. Many consultations, follow-ups, medication reviews, and treatment discussions can be conducted through secure telehealth visits.",
     },
     {
-      question: "How can I support my child's immune health?",
+      question: "How often should endocrine conditions be monitored?",
       answer:
-        "Healthy nutrition, adequate sleep, physical activity, vaccinations, and routine medical care all contribute to a strong immune system.",
+        "Monitoring frequency depends on the condition, treatment plan, and individual health needs.",
     },
     {
-      question: "What happens during a pediatric appointment?",
+      question: "Can endocrine disorders be cured?",
       answer:
-        "A pediatric visit may include reviewing medical history, checking growth and development, performing an examination, discussing concerns, and creating a treatment plan.",
+        "Some endocrine conditions can be resolved, while others require ongoing management and long-term monitoring.",
+    },
+    {
+      question: "What lifestyle changes support endocrine health?",
+      answer:
+        "A healthy diet, regular exercise, adequate sleep, stress management, and following treatment recommendations help support endocrine function.",
     },
     {
       question:
-        "How can I schedule an appointment with a pediatric specialist?",
+        "How can I schedule an appointment with an endocrinology specialist?",
       answer:
-        "You can schedule an appointment by selecting a pediatric provider online or contacting the healthcare team for assistance.",
+        "You can schedule an appointment online, through telehealth services, or by contacting the healthcare team for assistance.",
     },
   ],
 };
@@ -318,39 +328,39 @@ const TRUST_STATS = [
 const TRUST_CARDS = [
   {
     Icon: FiAward,
-    title: " Board-Certified Specialists",
+    title: "Board-Certified Specialists",
     description:
-      "Receive care from experienced, credentialed providers who meet high standards of medical expertise and patient care.",
+      "Receive care from experienced endocrinology providers who deliver evidence-based treatment and long-term disease management.",
   },
   {
     Icon: FiZap,
     title: "Fast Appointments",
     description:
-      "Schedule appointments quickly with convenient availability, including timely care for urgent health concerns.",
+      "Schedule consultations quickly with convenient availability for both routine and urgent endocrine concerns.",
   },
   {
     Icon: FiMonitor,
     title: "Telehealth Access",
     description:
-      "Connect with healthcare providers from the comfort of your home through secure, convenient virtual visits.",
+      "Connect securely with endocrinology specialists through virtual visits for consultations, follow-ups, and treatment monitoring.",
   },
   {
     Icon: FiShield,
     title: "Insurance Support",
     description:
-      "Get assistance understanding insurance coverage, benefits, authorizations, and billing questions.",
+      "Receive guidance regarding insurance coverage, authorizations, and billing-related questions.",
   },
   {
     Icon: FiHeart,
-    title: "Personalised Care",
+    title: "Personalized Care",
     description:
-      "Receive customized treatment recommendations designed around your medical history, lifestyle, health needs, and goals.",
+      "Benefit from individualized treatment plans tailored to your symptoms, diagnosis, health goals, and lifestyle.",
   },
   {
     Icon: FiGlobe,
     title: "Global Provider Network",
     description:
-      "Access a broad network of healthcare specialists and coordinated care services wherever you need support.",
+      "Access a broad network of specialists and coordinated endocrine care services wherever you need support.",
   },
 ];
 
@@ -543,279 +553,300 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
   }, []);
 
   return (
-    <main className="sp-page">
-      {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
-      <section className="sp-hero">
-        <div className="sp-hero__bg">
-          <img
-            src={data.heroImage}
-            alt={`${data.name} — HumanCare Connect`}
-            className="sp-hero__img"
-            loading="eager"
-          />
-          <div className="sp-hero__overlay" />
-        </div>
+    <>
+      <HelmetProvider>
+        <title>
+          Endocrinology Specialists | Hormone & Metabolic Health Care
+        </title>
+        <meta
+          name="description"
+          content="Get expert endocrinology care for hormone imbalances, thyroid disorders, diabetes, osteoporosis, and metabolic conditions with personalized treatment plans."
+        />
+      </HelmetProvider>
+      <main className="sp-page">
+        {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
+        <section className="sp-hero">
+          <div className="sp-hero__bg">
+            <img
+              src={data.heroImage}
+              alt={data.heroAlt}
+              className="sp-hero__img"
+              loading="eager"
+            />
+            <div className="sp-hero__overlay" />
+          </div>
 
-        <div className="sp-hero__content">
-          <div
-            className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-          >
-            <span className="sp-hero__badge">HumanCare Connect</span>
-            <h1 className="sp-hero__title">{data.name}</h1>
-            <p className="sp-hero__tagline">{data.tagline}</p>
-            <p className="sp-hero__description">{data.heroDescription}</p>
+          <div className="sp-hero__content">
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">HumanCare Connect</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-            <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
-      <section className="sp-overview">
-        <div className="sp-container">
-          <div className="sp-overview__grid">
-            {/* Image column */}
-            <Reveal>
-              <div className="sp-overview__img-wrap">
-                <img
-                  src={data.overviewImage}
-                  alt={`${data.name} specialists`}
-                  className="sp-overview__img"
-                  loading="lazy"
-                />
-                <div className="sp-overview__badge">
-                  <div className="sp-overview__badge-icon">
-                    <FiCheckCircle size={20} />
-                  </div>
-                  <div>
-                    <p className="sp-overview__badge-title">Board-Certified</p>
-                    <p className="sp-overview__badge-sub">
-                      {data.name} Specialists
-                    </p>
+        {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
+        <section className="sp-overview">
+          <div className="sp-container">
+            <div className="sp-overview__grid">
+              {/* Image column */}
+              <Reveal>
+                <div className="sp-overview__img-wrap">
+                  <img
+                    src={data.overviewImage}
+                    alt={data.overviewAlt}
+                    className="sp-overview__img"
+                    loading="lazy"
+                  />
+                  <div className="sp-overview__badge">
+                    <div className="sp-overview__badge-icon">
+                      <FiCheckCircle size={20} />
+                    </div>
+                    <div>
+                      <p className="sp-overview__badge-title">
+                        Board-Certified
+                      </p>
+                      <p className="sp-overview__badge-sub">
+                        {data.name} Specialists
+                      </p>
+                    </div>
                   </div>
                 </div>
+              </Reveal>
+
+              {/* Text column */}
+              <div className="sp-overview__text">
+                <Reveal>
+                  <SectionLabel>About the Specialty</SectionLabel>
+                  <h2 className="sp-overview__heading">What Is {data.name}?</h2>
+                  <p className="sp-overview__para">
+                    {data.overviewDescription}
+                  </p>
+                  <p className="sp-overview__para">{data.overviewImportance}</p>
+                </Reveal>
+
+                <Reveal delay={80}>
+                  <div className="sp-info-box sp-info-box--blue">
+                    <h3 className="sp-info-box__heading">
+                      <FiActivity size={15} color="#083EBD" />
+                      Conditions Treated
+                    </h3>
+                    <p className="sp-info-box__text">
+                      {data.conditionsTreated}
+                    </p>
+                  </div>
+                </Reveal>
+
+                <Reveal delay={140}>
+                  <div className="sp-info-box sp-info-box--gray">
+                    <h3 className="sp-info-box__heading">
+                      <FiAlertCircle size={15} color="#64748b" />
+                      When to Consult
+                    </h3>
+                    <p className="sp-info-box__text">{data.whenToConsult}</p>
+                  </div>
+                </Reveal>
+              </div>
+            </div>
+
+            {/* Key Services */}
+            <Reveal>
+              <div className="sp-section-head">
+                <SectionLabel>What We Offer</SectionLabel>
+                <h3>Key Services</h3>
+              </div>
+            </Reveal>
+            <div className="sp-services-grid">
+              {data.keyServices.map((s, i) => (
+                <ServiceCard key={i} {...s} delay={i * 55} />
+              ))}
+            </div>
+
+            {/* Benefits */}
+            <Reveal>
+              <div className="sp-section-head">
+                <SectionLabel>Why It Matters</SectionLabel>
+                <h3>Benefits of {data.name}</h3>
+              </div>
+            </Reveal>
+            <div className="sp-benefits-grid">
+              {data.benefits.map((b, i) => (
+                <BenefitCard key={i} {...b} delay={i * 65} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 3. CONDITIONS ──────────────────────────────────────────────────── */}
+        <section className="sp-conditions">
+          <div className="sp-container">
+            <Reveal>
+              <div className="sp-conditions__head">
+                <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
+                <h2>What We Treat</h2>
+                <p>
+                  Our {data.name.toLowerCase()} specialists diagnose and manage
+                  a wide range of hormonal, metabolic, and endocrine disorders
+                  through personalized treatment and ongoing care.
+                </p>
               </div>
             </Reveal>
 
-            {/* Text column */}
-            <div className="sp-overview__text">
-              <Reveal>
-                <SectionLabel>About the Specialty</SectionLabel>
-                <h2 className="sp-overview__heading">What Is {data.name}?</h2>
-                <p className="sp-overview__para">{data.overviewDescription}</p>
-                <p className="sp-overview__para">{data.overviewImportance}</p>
-              </Reveal>
-
-              <Reveal delay={80}>
-                <div className="sp-info-box sp-info-box--blue">
-                  <h3 className="sp-info-box__heading">
-                    <FiActivity size={15} color="#083EBD" />
-                    Conditions Treated
-                  </h3>
-                  <p className="sp-info-box__text">{data.conditionsTreated}</p>
-                </div>
-              </Reveal>
-
-              <Reveal delay={140}>
-                <div className="sp-info-box sp-info-box--gray">
-                  <h3 className="sp-info-box__heading">
-                    <FiAlertCircle size={15} color="#64748b" />
-                    When to Consult
-                  </h3>
-                  <p className="sp-info-box__text">{data.whenToConsult}</p>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-
-          {/* Key Services */}
-          <Reveal>
-            <div className="sp-section-head">
-              <SectionLabel>What We Offer</SectionLabel>
-              <h3>Key Services</h3>
-            </div>
-          </Reveal>
-          <div className="sp-services-grid">
-            {data.keyServices.map((s, i) => (
-              <ServiceCard key={i} {...s} delay={i * 55} />
-            ))}
-          </div>
-
-          {/* Benefits */}
-          <Reveal>
-            <div className="sp-section-head">
-              <SectionLabel>Why It Matters</SectionLabel>
-              <h3>Benefits of {data.name}</h3>
-            </div>
-          </Reveal>
-          <div className="sp-benefits-grid">
-            {data.benefits.map((b, i) => (
-              <BenefitCard key={i} {...b} delay={i * 65} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 3. CONDITIONS ──────────────────────────────────────────────────── */}
-      <section className="sp-conditions">
-        <div className="sp-container">
-          <Reveal>
-            <div className="sp-conditions__head">
-              <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
-              <h2>What We Treat</h2>
-              <p>
-                Our {data.name.toLowerCase()} specialists are experienced in
-                diagnosing and treating a wide range of conditions across all
-                age groups.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-conditions__grid">
-            {data.conditions.map((c, i) => (
-              <ConditionCard key={i} {...c} delay={Math.min(i, 7) * 45} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. WHY HUMANCARE ───────────────────────────────────────────────── */}
-      <section className="sp-trust">
-        <div className="sp-container">
-          <div className="sp-stats-grid">
-            {TRUST_STATS.map((s, i) => (
-              <AnimatedStat key={i} {...s} />
-            ))}
-          </div>
-
-          <Reveal>
-            <div className="sp-trust__head">
-              <SectionLabel>Why HumanCare Connect</SectionLabel>
-              <h2>Care You Can Trust</h2>
-              <p>
-                We combine experienced medical professionals with advanced
-                technology to make accessing quality healthcare simpler, faster,
-                and more personalized.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-trust-grid">
-            {TRUST_CARDS.map((c, i) => (
-              <TrustCard key={i} {...c} delay={i * 55} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="sp-faq">
-        <div className="sp-container--narrow">
-          <Reveal>
-            <div className="sp-faq__head">
-              <SectionLabel>FAQ</SectionLabel>
-              <h2>Frequently Asked Questions</h2>
-              <p>
-                Everything you need to know about {data.name.toLowerCase()} at
-                HumanCare Connect.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-faq__list">
-            {data.faqs.map((faq, i) => (
-              <Reveal key={i} delay={i * 45}>
-                <FAQItem question={faq.question} answer={faq.answer} />
-              </Reveal>
-            ))}
-          </div>
-
-          <Reveal delay={80}>
-            <p className="sp-faq__footer">
-              Still have questions?{" "}
-              <a href="/contact">Chat with our care team →</a>
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── 6. CTA ─────────────────────────────────────────────────────────── */}
-      <section className="sp-cta">
-        <div className="sp-cta__glow-top" aria-hidden="true" />
-        <div className="sp-cta__glow-bottom" aria-hidden="true" />
-
-        <div className="sp-cta__inner">
-          <Reveal>
-            <span className="sp-cta__eyebrow">Get Started Today</span>
-            <h2 className="sp-cta__heading">
-              Ready to Connect with a <span>{data.name}</span> Specialist?
-            </h2>
-            <p className="sp-cta__sub">
-              Give your child access to compassionate, expert pediatric care
-              with convenient appointments and personalized treatment plans for
-              every stage of growth and development.
-            </p>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a
-                href="/appointment-booking"
-                className="sp-btn sp-btn--ghost-lg"
-              >
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
-          </Reveal>
-
-          <Reveal delay={130}>
-            <div className="sp-cta__badges">
-              {[
-                { Icon: FiLock, label: "HIPAA Compliant" },
-                { Icon: FiStar, label: "Highly Rated Providers" },
-                { Icon: FiCheckCircle, label: "Verified Specialists" },
-                { Icon: FiShield, label: "Secure Telehealth Platform" },
-              ].map((badge, i) => (
-                <div key={i} className="sp-cta__badge">
-                  <badge.Icon size={15} className="sp-cta__badge-icon" />
-                  <span>{badge.label}</span>
-                </div>
+            <div className="sp-conditions__grid">
+              {data.conditions.map((c, i) => (
+                <ConditionCard key={i} {...c} delay={Math.min(i, 7) * 45} />
               ))}
             </div>
-          </Reveal>
+          </div>
+        </section>
 
-          {/* <Reveal delay={170}>
-            <div className="sp-cta__contact">
-              <a href="tel:+918008001234" className="sp-cta__contact-link">
-                <FiPhone size={14} />
-                +91 800 800 1234
-              </a>
-              <a href="mailto:care@humancareconnect.co" className="sp-cta__contact-link">
-                <FiMail size={14} />
-                care@humancareconnect.co
-              </a>
-              <span className="sp-cta__contact-item">
-                <FiClock size={14} />
-                Mon – Sun, 8 AM – 10 PM IST
-              </span>
+        {/* ── 4. WHY HUMANCARE ───────────────────────────────────────────────── */}
+        <section className="sp-trust">
+          <div className="sp-container">
+            <div className="sp-stats-grid">
+              {TRUST_STATS.map((s, i) => (
+                <AnimatedStat key={i} {...s} />
+              ))}
             </div>
-          </Reveal> */}
-        </div>
-      </section>
-    </main>
+
+            <Reveal>
+              <div className="sp-trust__head">
+                <SectionLabel>Why HumanCare Connect</SectionLabel>
+                <h2>Care You Can Trust</h2>
+                <p>
+                  We combine experienced endocrinology specialists with advanced
+                  technology to make quality hormone and metabolic healthcare
+                  accessible, convenient, and personalized.
+                </p>
+              </div>
+            </Reveal>
+
+            <div className="sp-trust-grid">
+              {TRUST_CARDS.map((c, i) => (
+                <TrustCard key={i} {...c} delay={i * 55} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
+        <section className="sp-faq">
+          <div className="sp-container--narrow">
+            <Reveal>
+              <div className="sp-faq__head">
+                <SectionLabel>FAQ</SectionLabel>
+                <h2>Frequently Asked Questions</h2>
+                <p>
+                  Everything you need to know about {data.name.toLowerCase()} at
+                  HumanCare Connect.
+                </p>
+              </div>
+            </Reveal>
+
+            <div className="sp-faq__list">
+              {data.faqs.map((faq, i) => (
+                <Reveal key={i} delay={i * 45}>
+                  <FAQItem question={faq.question} answer={faq.answer} />
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal delay={80}>
+              <p className="sp-faq__footer">
+                Still have questions?{" "}
+                <a href="/contact">Chat with our care team →</a>
+              </p>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── 6. CTA ─────────────────────────────────────────────────────────── */}
+        <section className="sp-cta">
+          <div className="sp-cta__glow-top" aria-hidden="true" />
+          <div className="sp-cta__glow-bottom" aria-hidden="true" />
+
+          <div className="sp-cta__inner">
+            <Reveal>
+              <span className="sp-cta__eyebrow">Get Started Today</span>
+              <h2 className="sp-cta__heading">
+                Ready to Connect with a <span>{data.name}</span> Specialist?
+              </h2>
+              <p className="sp-cta__sub">
+                Take control of your hormonal and metabolic health with expert
+                endocrinology care, personalized treatment plans, and convenient
+                appointment options. Schedule an in-person or virtual visit with
+                an endocrinology specialist today.
+              </p>
+            </Reveal>
+
+            <Reveal delay={80}>
+              <div className="sp-cta__actions">
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
+            </Reveal>
+
+            <Reveal delay={130}>
+              <div className="sp-cta__badges">
+                {[
+                  { Icon: FiLock, label: "HIPAA Compliant" },
+                  { Icon: FiStar, label: "4.9/5 Patient Rating" },
+                  { Icon: FiCheckCircle, label: "Verified Providers" },
+                  { Icon: FiShield, label: "100% Secure Platform" },
+                ].map((badge, i) => (
+                  <div key={i} className="sp-cta__badge">
+                    <badge.Icon size={15} className="sp-cta__badge-icon" />
+                    <span>{badge.label}</span>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
+            <Reveal delay={170}>
+              <div className="sp-cta__contact">
+                <a href="tel:+918008001234" className="sp-cta__contact-link">
+                  <FiPhone size={14} />
+                  +91 800 800 1234
+                </a>
+                <a
+                  href="mailto:care@humancareconnect.co"
+                  className="sp-cta__contact-link"
+                >
+                  <FiMail size={14} />
+                  care@humancareconnect.co
+                </a>
+                <span className="sp-cta__contact-item">
+                  <FiClock size={14} />
+                  Mon – Sun, 8 AM – 10 PM IST
+                </span>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      </main>
+    </>
   );
 }

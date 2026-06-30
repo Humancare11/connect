@@ -72,6 +72,10 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/sexual-health-specialist-consultation.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/sexual-health-doctor-patient-consultation.webp";
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,10 +85,12 @@ const SPECIALTY_DATA = {
   tagline: "Confidential Care for Your Sexual Health and Wellness.",
   heroDescription:
     "Sexual health is an important part of overall well-being. Sexual health specialists provide confidential, judgment-free care for sexually transmitted infections (STIs), HIV prevention, sexual wellness concerns, partner exposure risks, and preventive sexual healthcare. Through personalized treatment plans and evidence-based medical care, patients receive the support they need to protect their health and make informed decisions. Whether you need testing guidance, treatment support, prevention counseling, or answers to sexual health questions, our specialists are here to help.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Expert medical opinion specialist reviewing patient diagnosis and treatment plans",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Sexual health doctor consulting a patient about STI testing, HIV prevention, and sexual wellness",
   overviewDescription:
     "Sexual Health is a healthcare specialty focused on preventing, diagnosing, treating, and managing conditions related to sexual wellness and reproductive health. This includes STI evaluations, HIV prevention strategies, sexual health education, risk reduction counseling, and treatment for common sexually transmitted infections.",
   overviewImportance:
@@ -584,7 +590,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -601,15 +607,15 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__description">{data.heroDescription}</p>
 
               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -623,7 +629,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -810,15 +816,18 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

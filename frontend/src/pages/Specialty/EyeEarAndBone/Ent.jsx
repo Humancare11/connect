@@ -63,6 +63,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/ent-ear-nose-throat-specialist-consultation-banner.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/ent-specialist-ear-nose-throat-examination-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,10 +75,12 @@ const SPECIALTY_DATA = {
   tagline: "Specialized Care for Better Ear, Nose, and Throat Health.",
   heroDescription:
     "ENT specialists diagnose and treat conditions affecting the ears, nose, throat, sinuses, voice, and balance system. From ear infections and sore throats to nasal congestion, hoarseness, and vertigo, ENT specialists provide comprehensive care to improve comfort, communication, breathing, and overall quality of life.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified ENT specialist consulting with a patient for ear, nose, and throat care, including sinus, hearing, and throat disorders.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "ENT specialist performing an ear, nose, and throat examination during a patient consultation for hearing, sinus, and throat health.",
   overviewDescription:
     "Otolaryngology, commonly known as ENT (Ear, Nose & Throat), is a medical specialty focused on diagnosing and treating conditions affecting the ears, nose, throat, sinuses, voice box, and related structures of the head and neck. ENT specialists help patients manage infections, hearing concerns, breathing difficulties, balance disorders, and throat-related conditions.",
   overviewImportance:
@@ -569,7 +574,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -586,15 +591,15 @@ export default function Ent({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__description">{data.heroDescription}</p>
 
               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -608,7 +613,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -795,15 +800,18 @@ export default function Ent({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

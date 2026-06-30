@@ -312,6 +312,7 @@ import TravelMedicine from "./pages/Specialty/TravelAndGlobalCare/TravelMedicine
 import WeightManagement from "./pages/Specialty/WeightAndNutrition/WeightManagement";
 import LifestyleMedicine from "./pages/Specialty/WeightAndNutrition/LifestyleMedicine";
 import NutritionAndDietetics from "./pages/Specialty/WeightAndNutrition/NutritionAndDietetics";
+import EndocrinologySpeciality from "./pages/Specialty/ChronicCare&ExpertOpinion/Endocrinology";
 
 // General & Everyday Care
 import FamilyMedicine from "./pages/Specialty/General&EverydayCare/FamilyMedicine";
@@ -1135,6 +1136,7 @@ function AppLayout() {
           <Route path="/ear-nose-throat" element={<Ent />} />
           <Route path="/ophthalmology" element={<Ophthalmology />} />
           <Route path="/orthopedics" element={<Orthopedics />} />
+          <Route path="/endocrinology" element={<EndocrinologySpeciality />} />
           <Route path="/mens-health" element={<MensHealth />} />
           <Route path="/urology" element={<Urology />} />
           <Route path="/behavioral-health" element={<BehavioralHealth />} />
