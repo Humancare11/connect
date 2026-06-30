@@ -1672,7 +1672,7 @@ function AppLayout() {
             path="/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
-          <Route path="/fit-to-fly-certificate" element={<FitToFly />} />
+          <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
           <Route
             path="/doctor-note-or-sick-notes"
