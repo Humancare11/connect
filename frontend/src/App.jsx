@@ -1144,7 +1144,7 @@ function AppLayout() {
             element={<PsychologyCounseling />}
           />
           <Route
-            path="/sexual-health-speciality"
+            path="/speciality-sexual-health"
             element={<SexualHealthSpeciality />}
           />
           <Route path="/dermatology" element={<Dermatology />} />

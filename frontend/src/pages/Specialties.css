@@ -492,7 +492,7 @@
 .specialties__card {
   display: flex;
   flex-direction: column;
-  height: 220px;
+  height: 300px;
   box-sizing: border-box;
   text-decoration: none;
   color: inherit;
@@ -561,7 +561,7 @@
 
 /* Row 2: Description — 2-line clamp keeps all cards flush */
 .specialties__card-desc {
-  font-size: 0.8rem;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--slate6);
   flex-grow: 1;
