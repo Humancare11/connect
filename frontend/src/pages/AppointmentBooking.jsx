@@ -9,17 +9,21 @@ const HCC_TREE = [
     id: "general",
     label: "General & Everyday Care",
     e: "🩺",
+    desc: "Quick consultations for common illnesses, routine check-ups, and everyday health concerns — no clinic visit needed.",
     specs: [
       {
         name: "General Physician", ico: "🩺", live: true, count: "98 doctors", cost: 100,
+        desc: "Your first stop for fevers, infections, and everyday ailments. Get a diagnosis and prescription fast.",
         conds: [["Fever", "🌡️"], ["Cold & flu", "🤧"], ["Cough & sore throat", "😷"], ["Headache", "🤕"], ["Sinus infection", "👃"], ["Body aches", "💪"], ["Fatigue", "😮‍💨"], ["Minor infections", "🩹"]],
       },
       {
         name: "Internal Medicine", ico: "🏥", cost: 100,
+        desc: "Expert evaluation of complex or multi-system symptoms when you need more than a quick consult.",
         conds: [["Undiagnosed symptoms", "❓"], ["Multi-system complaints", "🩺"], ["Preventive screening", "🛡️"], ["Medication review", "💊"]],
       },
       {
         name: "Family Medicine", ico: "👨‍👩‍👧", cost: 100,
+        desc: "Ongoing care for every member of the family — from toddlers to seniors — under one trusted doctor.",
         conds: [["Routine check-ups", "✅"], ["Whole-family illness", "👪"], ["Chronic-disease review", "📋"], ["Vaccination advice", "💉"]],
       },
     ],
@@ -28,17 +32,21 @@ const HCC_TREE = [
     id: "mental",
     label: "Mental Health",
     e: "🧠",
+    desc: "Confidential support for anxiety, depression, and emotional wellbeing from licensed psychiatrists and therapists.",
     specs: [
       {
         name: "Psychiatry", ico: "🧠", live: true, count: "76 doctors", cost: 1499,
+        desc: "Diagnosis and medication management for anxiety, depression, ADHD, and other psychiatric conditions.",
         conds: [["Anxiety", "😟"], ["Depression", "💭"], ["Bipolar follow-up", "🔄"], ["OCD", "🔁"], ["PTSD", "🌀"], ["Panic attacks", "⚡"], ["Insomnia", "😴"], ["ADHD follow-up", "🎯"]],
       },
       {
         name: "Psychology / Counselling", ico: "💬", cost: 1299,
+        desc: "Talk therapy for stress, grief, relationship issues, and personal growth with qualified psychologists.",
         conds: [["Stress", "😣"], ["Grief & loss", "🕊️"], ["Relationship issues", "💔"], ["Low self-esteem", "🪞"], ["Trauma support", "🤝"]],
       },
       {
         name: "Behavioral Health", ico: "🧩", cost: 999,
+        desc: "Practical strategies to change habits, manage anger, and address substance-use or sleep concerns.",
         conds: [["Anger management", "🔥"], ["Adjustment difficulties", "🔀"], ["Substance-use concerns", "🚭"], ["Sleep-related anxiety", "🌙"]],
       },
     ],
@@ -47,9 +55,11 @@ const HCC_TREE = [
     id: "skin",
     label: "Skin & Hair",
     e: "🧴",
+    desc: "Dermatologist-reviewed care for acne, eczema, hair loss, rashes, and all things skin — from the comfort of home.",
     specs: [
       {
         name: "Dermatology", ico: "🧴", live: true, count: "35 doctors", cost: 100,
+        desc: "Board-certified dermatologists for acne, eczema, psoriasis, hair loss, and skin checks.",
         conds: [["Acne", "🔴"], ["Eczema", "🌾"], ["Psoriasis", "🩹"], ["Skin rashes", "🌡️"], ["Hives", "🐝"], ["Rosacea", "🌹"], ["Fungal infections", "🍄"], ["Hair loss", "💈"], ["Nail problems", "💅"], ["Mole & skin checks", "🔎"]],
       },
     ],
@@ -58,85 +68,179 @@ const HCC_TREE = [
     id: "women",
     label: "Women's Health",
     e: "🌸",
+    desc: "Holistic care for every stage of a woman's life — periods, pregnancy, menopause, and mental wellbeing.",
     specs: [
       {
         name: "OB-GYN", ico: "🌸", count: "44 doctors", cost: 1199,
+        desc: "Specialist care for periods, PCOS, contraception, vaginal health, and prenatal consultations.",
         conds: [["Irregular periods", "📅"], ["Painful periods", "😣"], ["PCOS", "🌺"], ["Contraception advice", "💊"], ["Vaginal infections", "🩺"], ["Pelvic pain", "⚡"], ["Prenatal teleconsult", "🤰"]],
       },
-      { name: "Menopause Care", ico: "🌙", cost: 999, conds: [["Hot flashes", "🔥"], ["Mood changes", "🎭"], ["Sleep disturbance", "😴"], ["HRT guidance", "💊"]] },
-      { name: "Women's Mental Health", ico: "💗", cost: 1099, conds: [["Postnatal depression", "🍼"], ["Perinatal anxiety", "🤱"], ["PMDD", "📆"]] },
-      { name: "Lactation Consulting", ico: "🤱", cost: 699, conds: [["Low milk supply", "🍼"], ["Latch problems", "👶"], ["Nipple pain", "🩹"], ["Weaning guidance", "🥄"]] },
+      {
+        name: "Menopause Care", ico: "🌙", cost: 999,
+        desc: "Evidence-based guidance on hot flashes, mood changes, sleep, and hormone replacement therapy.",
+        conds: [["Hot flashes", "🔥"], ["Mood changes", "🎭"], ["Sleep disturbance", "😴"], ["HRT guidance", "💊"]],
+      },
+      {
+        name: "Women's Mental Health", ico: "💗", cost: 1099,
+        desc: "Sensitive support for postnatal depression, perinatal anxiety, and PMDD from specialist clinicians.",
+        conds: [["Postnatal depression", "🍼"], ["Perinatal anxiety", "🤱"], ["PMDD", "📆"]],
+      },
+      {
+        name: "Lactation Consulting", ico: "🤱", cost: 699,
+        desc: "Expert guidance on breastfeeding, latch issues, milk supply, and comfortable weaning.",
+        conds: [["Low milk supply", "🍼"], ["Latch problems", "👶"], ["Nipple pain", "🩹"], ["Weaning guidance", "🥄"]],
+      },
     ],
   },
   {
     id: "men",
     label: "Men's Health",
     e: "♂️",
+    desc: "Private, judgment-free consultations for men's unique health concerns — from hormones to urological issues.",
     specs: [
-      { name: "Men's Health", ico: "♂️", count: "19 doctors", cost: 100, conds: [["Erectile dysfunction", "💙"], ["Low testosterone", "📉"], ["Hair loss", "💈"], ["Prostate concerns", "🔬"], ["Low libido", "💤"]] },
-      { name: "Urology", ico: "🚹", cost: 100, conds: [["UTIs", "🚻"], ["Kidney stones follow-up", "🪨"], ["Blood in urine", "🩸"], ["Incontinence", "💧"], ["Bladder problems", "🚽"]] },
+      {
+        name: "Men's Health", ico: "♂️", count: "19 doctors", cost: 100,
+        desc: "Discreet care for erectile dysfunction, low testosterone, hair loss, and prostate health.",
+        conds: [["Erectile dysfunction", "💙"], ["Low testosterone", "📉"], ["Hair loss", "💈"], ["Prostate concerns", "🔬"], ["Low libido", "💤"]],
+      },
+      {
+        name: "Urology", ico: "🚹", cost: 100,
+        desc: "Specialist advice for UTIs, kidney stones, bladder issues, and urinary incontinence.",
+        conds: [["UTIs", "🚻"], ["Kidney stones follow-up", "🪨"], ["Blood in urine", "🩸"], ["Incontinence", "💧"], ["Bladder problems", "🚽"]],
+      },
     ],
   },
   {
     id: "family",
-    label: "Children & Family",
+    label: "Children & Family Care",
     e: "🧒",
+    desc: "Trusted paediatric and adolescent care — from baby fevers and rashes to teen health and development.",
     specs: [
       {
         name: "Pediatrics", ico: "🧒", live: true, count: "41 doctors", cost: 699,
+        desc: "Child-specialist doctors for fevers, infections, rashes, feeding concerns, and growth milestones.",
         conds: [["Fever in children", "🌡️"], ["Cough & cold", "🤧"], ["Childhood rashes", "🌸"], ["Ear infections", "👂"], ["Feeding concerns", "🍼"], ["Growth & development", "📏"], ["Vaccination advice", "💉"]],
       },
-      { name: "Adolescent Care", ico: "🧑", cost: 699, conds: [["Teen acne", "🔴"], ["Puberty concerns", "🌱"], ["Teen mood & anxiety", "😟"], ["Menstrual problems", "📅"], ["Sports injuries", "🏃"]] },
+      {
+        name: "Adolescent Care", ico: "🧑", cost: 699,
+        desc: "Compassionate support for teens navigating acne, puberty, anxiety, and sports injuries.",
+        conds: [["Teen acne", "🔴"], ["Puberty concerns", "🌱"], ["Teen mood & anxiety", "😟"], ["Menstrual problems", "📅"], ["Sports injuries", "🏃"]],
+      },
     ],
   },
   {
     id: "weight",
     label: "Weight & Nutrition",
     e: "🥗",
+    desc: "Personalised plans for healthy weight management, balanced nutrition, and sustainable lifestyle change.",
     specs: [
-      { name: "Weight Management", ico: "⚖️", cost: 999, conds: [["Obesity", "📊"], ["GLP-1 eligibility", "💉"], ["Metabolic syndrome", "🔬"], ["Weight-loss planning", "🎯"], ["Binge eating", "🍽️"]] },
-      { name: "Nutrition & Dietetics", ico: "🥗", cost: 699, conds: [["Diabetic diet", "🩸"], ["Cholesterol diet", "🫀"], ["Food-intolerance plan", "🚫"], ["Pregnancy nutrition", "🤰"], ["Sports nutrition", "🏋️"]] },
-      { name: "Lifestyle Medicine", ico: "🌱", cost: 599, conds: [["Healthy-habit coaching", "✅"], ["Diet & exercise plan", "🏃"], ["Sleep hygiene", "😴"], ["Stress reduction", "🧘"]] },
+      {
+        name: "Weight Management", ico: "⚖️", cost: 999,
+        desc: "Medical weight-loss guidance including GLP-1 eligibility assessment and metabolic health reviews.",
+        conds: [["Obesity", "📊"], ["GLP-1 eligibility", "💉"], ["Metabolic syndrome", "🔬"], ["Weight-loss planning", "🎯"], ["Binge eating", "🍽️"]],
+      },
+      {
+        name: "Nutrition & Dietetics", ico: "🥗", cost: 699,
+        desc: "Registered dietitians creating meal plans for diabetes, cholesterol, food intolerances, and more.",
+        conds: [["Diabetic diet", "🩸"], ["Cholesterol diet", "🫀"], ["Food-intolerance plan", "🚫"], ["Pregnancy nutrition", "🤰"], ["Sports nutrition", "🏋️"]],
+      },
+      {
+        name: "Lifestyle Medicine", ico: "🌱", cost: 599,
+        desc: "Holistic coaching on diet, exercise, sleep hygiene, and stress reduction for long-term wellness.",
+        conds: [["Healthy-habit coaching", "✅"], ["Diet & exercise plan", "🏃"], ["Sleep hygiene", "😴"], ["Stress reduction", "🧘"]],
+      },
     ],
   },
   {
     id: "chronic",
     label: "Chronic Care & Expert Opinion",
     e: "📋",
+    desc: "Specialist management of long-term conditions and authoritative second opinions on complex diagnoses.",
     specs: [
-      { name: "Cardiology", ico: "🫀", live: true, count: "48 doctors", cost: 1799, conds: [["High blood pressure", "💉"], ["Chest pain (non-emerg.)", "❤️"], ["Palpitations", "💓"], ["High cholesterol", "🩸"], ["Heart failure follow-up", "🫀"]] },
-      { name: "Neurology", ico: "🧬", live: true, count: "32 doctors", cost: 1699, conds: [["Migraine & headaches", "🤕"], ["Seizures follow-up", "⚡"], ["Numbness & tingling", "🖐️"], ["Tremor", "🤲"], ["Dizziness", "💫"], ["Memory concerns", "🧠"]] },
-      { name: "Endocrinology", ico: "⚕️", cost: 1499, conds: [["Thyroid disorders", "🦋"], ["Diabetes (Type 1 & 2)", "🩸"], ["PCOS", "🌺"], ["Hormone imbalance", "⚗️"], ["Osteoporosis", "🦴"]] },
-      { name: "Gastroenterology", ico: "🍽️", cost: 1399, conds: [["Acid reflux / GERD", "🔥"], ["IBS", "🌀"], ["Constipation", "🚽"], ["Stomach pain", "😣"], ["Bloating", "🎈"]] },
-      { name: "Pulmonology", ico: "🫁", cost: 1299, conds: [["Asthma", "💨"], ["COPD", "🫁"], ["Chronic cough", "😷"], ["Shortness of breath", "😮‍💨"], ["Sleep apnea screening", "😴"]] },
-      { name: "Expert Medical Opinion", ico: "📑", cost: 2499, conds: [["Cancer second opinion", "🎗️"], ["Surgery second opinion", "🏥"], ["Complex-diagnosis review", "🔍"], ["Treatment-plan review", "📋"]] },
+      {
+        name: "Cardiology", ico: "🫀", live: true, count: "48 doctors", cost: 1799,
+        desc: "Heart specialists for blood pressure, chest pain, palpitations, high cholesterol, and follow-up care.",
+        conds: [["High blood pressure", "💉"], ["Chest pain (non-emerg.)", "❤️"], ["Palpitations", "💓"], ["High cholesterol", "🩸"], ["Heart failure follow-up", "🫀"]],
+      },
+      {
+        name: "Neurology", ico: "🧬", live: true, count: "32 doctors", cost: 1699,
+        desc: "Neurologists for migraines, seizure follow-up, numbness, tremor, dizziness, and memory concerns.",
+        conds: [["Migraine & headaches", "🤕"], ["Seizures follow-up", "⚡"], ["Numbness & tingling", "🖐️"], ["Tremor", "🤲"], ["Dizziness", "💫"], ["Memory concerns", "🧠"]],
+      },
+      {
+        name: "Endocrinology", ico: "⚕️", cost: 1499,
+        desc: "Expert management of thyroid disorders, diabetes, PCOS, hormone imbalance, and osteoporosis.",
+        conds: [["Thyroid disorders", "🦋"], ["Diabetes (Type 1 & 2)", "🩸"], ["PCOS", "🌺"], ["Hormone imbalance", "⚗️"], ["Osteoporosis", "🦴"]],
+      },
+      {
+        name: "Gastroenterology", ico: "🍽️", cost: 1399,
+        desc: "Gut specialists for acid reflux, IBS, constipation, stomach pain, and persistent bloating.",
+        conds: [["Acid reflux / GERD", "🔥"], ["IBS", "🌀"], ["Constipation", "🚽"], ["Stomach pain", "😣"], ["Bloating", "🎈"]],
+      },
+      {
+        name: "Pulmonology", ico: "🫁", cost: 1299,
+        desc: "Lung specialists for asthma, COPD, chronic cough, breathlessness, and sleep apnea screening.",
+        conds: [["Asthma", "💨"], ["COPD", "🫁"], ["Chronic cough", "😷"], ["Shortness of breath", "😮‍💨"], ["Sleep apnea screening", "😴"]],
+      },
+      {
+        name: "Expert Medical Opinion", ico: "📑", cost: 2499,
+        desc: "Authoritative second opinions on cancer, surgery, complex diagnoses, and treatment plans.",
+        conds: [["Cancer second opinion", "🎗️"], ["Surgery second opinion", "🏥"], ["Complex-diagnosis review", "🔍"], ["Treatment-plan review", "📋"]],
+      },
     ],
   },
   {
     id: "eeb",
     label: "Eye, Ear & Bone",
     e: "🦴",
+    desc: "Specialist care for vision problems, ear and sinus conditions, and musculoskeletal pain and injuries.",
     specs: [
-      { name: "Ophthalmology", ico: "👁️", live: true, count: "22 doctors", cost: 999, conds: [["Red / irritated eyes", "👁️"], ["Dry eyes", "🌵"], ["Vision changes", "🔭"], ["Eye infections", "🦠"], ["Stye", "💢"]] },
-      { name: "ENT", ico: "👂", cost: 899, conds: [["Sinusitis", "👃"], ["Sore throat / tonsillitis", "😮"], ["Ear infections", "👂"], ["Vertigo", "💫"], ["Nasal congestion", "🤧"]] },
-      { name: "Orthopedics", ico: "🦴", live: true, count: "29 doctors", cost: 1299, conds: [["Back pain", "🔙"], ["Neck pain", "🧍"], ["Knee & joint pain", "🦵"], ["Sprains & strains", "🤕"], ["Sports injuries", "🏃"]] },
+      {
+        name: "Ophthalmology", ico: "👁️", live: true, count: "22 doctors", cost: 999,
+        desc: "Eye specialists for red or irritated eyes, dry eyes, vision changes, infections, and styes.",
+        conds: [["Red / irritated eyes", "👁️"], ["Dry eyes", "🌵"], ["Vision changes", "🔭"], ["Eye infections", "🦠"], ["Stye", "💢"]],
+      },
+      {
+        name: "ENT", ico: "👂", cost: 899,
+        desc: "Ear, nose, and throat specialists for sinusitis, sore throats, ear infections, and vertigo.",
+        conds: [["Sinusitis", "👃"], ["Sore throat / tonsillitis", "😮"], ["Ear infections", "👂"], ["Vertigo", "💫"], ["Nasal congestion", "🤧"]],
+      },
+      {
+        name: "Orthopedics", ico: "🦴", live: true, count: "29 doctors", cost: 1299,
+        desc: "Bone and joint specialists for back pain, neck pain, knee pain, sprains, and sports injuries.",
+        conds: [["Back pain", "🔙"], ["Neck pain", "🧍"], ["Knee & joint pain", "🦵"], ["Sprains & strains", "🤕"], ["Sports injuries", "🏃"]],
+      },
     ],
   },
   {
     id: "sexual",
     label: "Sexual Health",
     e: "💗",
+    desc: "Private, non-judgmental consultations for STIs, contraception, and sexual wellbeing concerns.",
     specs: [
-      { name: "Sexual Health", ico: "💗", cost: 799, conds: [["STI advice & testing", "🔬"], ["Contraception advice", "💊"], ["Erectile dysfunction", "💙"], ["Confidential care", "🤐"], ["Safe-sex counselling", "🤝"]] },
+      {
+        name: "Sexual Health", ico: "💗", cost: 799,
+        desc: "Confidential advice on STI testing, contraception, erectile dysfunction, and safe-sex practices.",
+        conds: [["STI advice & testing", "🔬"], ["Contraception advice", "💊"], ["Erectile dysfunction", "💙"], ["Confidential care", "🤐"], ["Safe-sex counselling", "🤝"]],
+      },
     ],
   },
   {
     id: "travel",
     label: "Travel & Global Care",
     e: "✈️",
+    desc: "Pre-travel health planning, malaria prevention, and cross-border care continuity for international travellers.",
     specs: [
-      { name: "Travel Medicine", ico: "✈️", cost: 899, conds: [["Pre-travel vaccination", "💉"], ["Malaria prevention", "🦟"], ["Altitude sickness", "⛰️"], ["Travel-illness advice", "🤒"], ["Post-travel symptoms", "🌡️"]] },
-      { name: "Global / Cross-Border Care", ico: "🌍", cost: 1999, conds: [["Cross-border consult", "🌐"], ["Care continuity abroad", "🔄"], ["Referral coordination", "🗺️"], ["Travel medical assistance", "🆘"], ["Prescription continuity", "💊"]] },
+      {
+        name: "Travel Medicine", ico: "✈️", cost: 899,
+        desc: "Pre-travel vaccination advice, malaria prevention, altitude sickness, and post-travel illness guidance.",
+        conds: [["Pre-travel vaccination", "💉"], ["Malaria prevention", "🦟"], ["Altitude sickness", "⛰️"], ["Travel-illness advice", "🤒"], ["Post-travel symptoms", "🌡️"]],
+      },
+      {
+        name: "Global / Cross-Border Care", ico: "🌍", cost: 1999,
+        desc: "Seamless care continuity, referral coordination, and prescription support for patients living abroad.",
+        conds: [["Cross-border consult", "🌐"], ["Care continuity abroad", "🔄"], ["Referral coordination", "🗺️"], ["Travel medical assistance", "🆘"], ["Prescription continuity", "💊"]],
+      },
     ],
   },
 ];
@@ -226,12 +330,9 @@ export default function AppointmentBooking() {
     [enrichedTree],
   );
 
-  // Keep switchRef / gliderRef in the tree so the glider animation code still runs
-  // even though we've hidden the glider element (it does no harm).
   const switchRef = useRef(null);
   const gliderRef = useRef(null);
 
-  // Map internal tab ids → display numbers + labels (matches screenshot numbering)
   const tabs = [
     { id: "cat", num: "01", label: "Categories" },
     { id: "spec", num: "02", label: "Specialties" },
@@ -240,7 +341,6 @@ export default function AppointmentBooking() {
 
   const activeTabId = browseTab ?? drillLevel;
 
-  // Keep original glider logic (hidden element, no visual effect but logic preserved)
   const moveGlider = () => {
     if (!switchRef.current || !gliderRef.current) return;
     const active = switchRef.current.querySelector("button.active");
@@ -333,10 +433,6 @@ export default function AppointmentBooking() {
     if (idx === 1) { setDrillLevel("spec"); setActiveSpec(null); }
   };
 
-  // [FIX] Prevents card onClick from firing when the user is click-dragging
-  // to select/copy text inside a card (name, count, etc). Without this guard,
-  // releasing the mouse after a text selection re-triggers navigation/drill-down
-  // instead of letting the selection stand so the user can copy it.
   const handleCardClick = (e, action) => {
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
@@ -349,11 +445,6 @@ export default function AppointmentBooking() {
   if (activeCat) breadcrumbItems.push(activeCat.label);
   if (activeSpec) breadcrumbItems.push(activeSpec.name);
 
-  // const viewAllLabel =
-  //   activeTabId === "cat" ? "View all categories →" :
-  //     activeTabId === "spec" ? "View all specialties →" :
-  //       "View all conditions →";
-
   const searchPlaceholder =
     activeTabId === "cat" ? "Search categories…" :
       activeTabId === "spec" ? "Search specialties…" :
@@ -361,7 +452,6 @@ export default function AppointmentBooking() {
 
   const drillConds = activeSpec ? activeSpec.conds : [];
 
-  // Derive the numbered label shown in level-label (e.g. "01 — General & Everyday Care")
   const activeCatIndex = activeCat
     ? enrichedTree.findIndex((c) => c.id === activeCat.id)
     : -1;
@@ -370,24 +460,20 @@ export default function AppointmentBooking() {
     : null;
 
   return (
-
     <section className="hcc-sx">
       <div className="wrap">
 
         {/* ── CENTERED HERO ── */}
         <div className="head">
-          {/* Small pill badge — "● THE PLATFORM" style from screenshot */}
           <span className="eyebrow">
             <span className="eyebrow-dot" />
             Discover Care
           </span>
 
-          <h2>Find the right online doctor for your needs.
-</h2>
+          <h2>Find the right online doctor for your needs.</h2>
 
           <p className="lead">
-          Book an online doctor appointment in minutes and access secure virtual healthcare services without long wait times or unnecessary clinic visits. 
-
+            Book an online doctor appointment in minutes and access secure virtual healthcare services without long wait times or unnecessary clinic visits.
           </p>
         </div>
 
@@ -395,7 +481,6 @@ export default function AppointmentBooking() {
           {/* ── NUMBERED TAB BAR ── */}
           <div className="tab-bar-wrap">
             <div className="switch" ref={switchRef}>
-              {/* Hidden glider — keeps original logic alive, CSS hides it */}
               <span className="glider" ref={gliderRef} />
               {tabs.map((t) => (
                 <button
@@ -427,7 +512,8 @@ export default function AppointmentBooking() {
             </div>
           </div>
         </div>
-        {/* ── CONTENT CARD (white rounded container) ── */}
+
+        {/* ── CONTENT CARD ── */}
         <div className="content-card">
 
           {/* ── DRILL MODE ── */}
@@ -439,7 +525,7 @@ export default function AppointmentBooking() {
                 </div>
               )}
 
-              {/* Category grid */}
+              {/* ── Category grid ── */}
               {drillLevel === "cat" && (
                 <div className="panel">
                   <div className="catgrid">
@@ -447,18 +533,22 @@ export default function AppointmentBooking() {
                       visibleCats.map((c) => {
                         const sc = c.specs.length;
                         const cc = c.specs.reduce((n, s) => n + s.conds.length, 0);
-                        const samp = c.specs.slice(0, 3).map((s) => s.name).join(", ") + (c.specs.length > 3 ? "…" : "");
                         return (
                           <div
                             key={c.id}
                             className="catcard"
                             onClick={(e) => handleCardClick(e, () => handleOpenCat(c))}
                           >
-                            <div className="ic">{c.e}</div>
-                            <h3>{c.label}</h3>
-                            <div className="meta">{sc} specialties · {cc} conditions</div>
-                            <div className="samp">{samp}</div>
-                            <div className="go">Explore →</div>
+                            <div className="catcard-row1">
+                              <div className="ic">{c.e}</div>
+                              <h3>{c.label}</h3>
+                            </div>
+                            {/* ── CHANGED: render custom desc instead of auto-generated samp ── */}
+                            <div className="samp">{c.desc}</div>
+                            <div className="catcard-row3">
+                              <div className="meta">{sc} specialties · {cc} conditions</div>
+                              <div className="go">Explore →</div>
+                            </div>
                           </div>
                         );
                       })
@@ -469,7 +559,7 @@ export default function AppointmentBooking() {
                 </div>
               )}
 
-              {/* Specialty list */}
+              {/* ── Specialty list ── */}
               {drillLevel === "spec" && activeCat && (
                 <div className="panel">
                   <div className="hcc-level-label">
@@ -482,6 +572,7 @@ export default function AppointmentBooking() {
                       .filter((s) => !q || s.name.toLowerCase().includes(q))
                       .map((s) => {
                         const specWithCat = { ...s, catId: activeCat.id, catLabel: activeCat.label, cost: s.cost };
+                        const condCount = s.conds.length;
                         return (
                           <div
                             key={s.name}
@@ -489,10 +580,16 @@ export default function AppointmentBooking() {
                             onClick={(e) => handleCardClick(e, () => handleOpenSpec(specWithCat))}
                           >
                             {s.live && <span className="live">LIVE</span>}
-                            <div className="ic">{s.ico}</div>
-                            <h3>{s.name}</h3>
-                            <div className="count">{s.count || "Book now"}</div>
-                            <div className="catref">{activeCat.label}</div>
+                            <div className="spec-row1">
+                              <div className="ic">{s.ico}</div>
+                              <h3>{s.name}</h3>
+                            </div>
+                            {/* ── CHANGED: render custom spec desc ── */}
+                            <div className="spec-desc">{s.desc}</div>
+                            <div className="spec-row3">
+                              <span className="count">{s.count || "Book now"}</span>
+                              <span className="condcount">{condCount} condition{condCount === 1 ? "" : "s"}</span>
+                            </div>
                           </div>
                         );
                       })}
@@ -500,7 +597,7 @@ export default function AppointmentBooking() {
                 </div>
               )}
 
-              {/* Condition list */}
+              {/* ── Condition list ── (unchanged) ── */}
               {drillLevel === "cond" && activeSpec && (
                 <div className="panel">
                   <div className="hcc-level-label">
@@ -517,8 +614,10 @@ export default function AppointmentBooking() {
                           onClick={(e) => handleCardClick(e, () => handleSelectCond(name, ico, activeSpec))}
                         >
                           <div className="condcard-ico">{ico}</div>
-                          <div className="condcard-name">{name}</div>
-                          <div className="condcard-go">Book →</div>
+                          <div className="condcard-body">
+                            <div className="condcard-name">{name}</div>
+                            <div className="condcard-desc">{activeSpec.name}</div>
+                          </div>
                         </div>
                       ))}
                     <div
@@ -526,8 +625,10 @@ export default function AppointmentBooking() {
                       onClick={(e) => handleCardClick(e, () => handleSelectCond("General Consultation", "🩺", activeSpec))}
                     >
                       <div className="condcard-ico">💬</div>
-                      <div className="condcard-name">Other / not listed</div>
-                      <div className="condcard-go">Book →</div>
+                      <div className="condcard-body">
+                        <div className="condcard-name">Other / not listed</div>
+                        <div className="condcard-desc">{activeSpec.name}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -540,19 +641,28 @@ export default function AppointmentBooking() {
             <div className="panel">
               <div className="grid">
                 {visibleFlatSpecs.length ? (
-                  visibleFlatSpecs.map((s) => (
-                    <div
-                      key={s.name + s.catId}
-                      className="spec"
-                      onClick={(e) => handleCardClick(e, () => handleFlatSpecClick(s))}
-                    >
-                      {s.live && <span className="live">LIVE</span>}
-                      <div className="ic">{s.ico}</div>
-                      <h3>{s.name}</h3>
-                      <div className="count">{s.count || "Book now"}</div>
-                      <div className="catref">{s.catLabel}</div>
-                    </div>
-                  ))
+                  visibleFlatSpecs.map((s) => {
+                    const condCount = s.conds.length;
+                    return (
+                      <div
+                        key={s.name + s.catId}
+                        className="spec"
+                        onClick={(e) => handleCardClick(e, () => handleFlatSpecClick(s))}
+                      >
+                        {s.live && <span className="live">LIVE</span>}
+                        <div className="spec-row1">
+                          <div className="ic">{s.ico}</div>
+                          <h3>{s.name}</h3>
+                        </div>
+                        {/* ── CHANGED: render custom spec desc in flat browse too ── */}
+                        <div className="spec-desc">{s.desc}</div>
+                        <div className="spec-row3">
+                          <span className="count">{s.count || "Book now"}</span>
+                          <span className="condcount">{condCount} condition{condCount === 1 ? "" : "s"}</span>
+                        </div>
+                      </div>
+                    );
+                  })
                 ) : (
                   <div className="empty"><div className="big">🔍</div>No specialties found.</div>
                 )}
@@ -560,7 +670,7 @@ export default function AppointmentBooking() {
             </div>
           )}
 
-          {/* ── FLAT BROWSE: Conditions ── */}
+          {/* ── FLAT BROWSE: Conditions ── (unchanged) ── */}
           {browseTab === "cond" && (
             <div className="panel">
               <div className="condgrid">
@@ -572,9 +682,10 @@ export default function AppointmentBooking() {
                       onClick={(e) => handleCardClick(e, () => handleFlatCondClick(c))}
                     >
                       <div className="condcard-ico">{c.ico}</div>
-                      <div className="condcard-name">{c.name}</div>
-                      <div className="condcard-spec">{c.to}</div>
-                      <div className="condcard-go">Book →</div>
+                      <div className="condcard-body">
+                        <div className="condcard-name">{c.name}</div>
+                        <div className="condcard-desc">{c.to}</div>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -583,11 +694,6 @@ export default function AppointmentBooking() {
               </div>
             </div>
           )}
-
-          {/* ── Footer inside card ── */}
-          {/* <div className="foot">
-            <button className="viewall">{viewAllLabel}</button>
-          </div> */}
 
         </div>{/* /content-card */}
 

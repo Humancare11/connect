@@ -1792,7 +1792,7 @@ const FinalCTA = ({ s, bp }) => (
           </PrimaryBtn>
           <GhostBtn>
             {" "}
-            <a href="/login"> Book Appointment </a>
+            <a href="/book-appointment"> Book Appointment </a>
           </GhostBtn>
           {/* <button
             style={{

@@ -84,7 +84,6 @@ const carouselSlides = [
 ];
 
 // ── Full specialties list (30) ───────────────────────────────────────────────
-// `path` matches the exact route defined in App.jsx
 export const specialties = [
   {
     name: "General Physician (GP)",
@@ -221,7 +220,7 @@ export const specialties = [
   },
   {
     name: "Endocrinology",
-    path: "/endocrinology", // ⚠️ No route found in App.jsx — add one when ready
+    path: "/endocrinology",
     icon: Activity,
     description: "Hormone-related conditions including thyroid and metabolic disorders.",
     tags: ["Diabetes", "Thyroid", "Hormones"],
@@ -797,28 +796,21 @@ export default function Specialties() {
                   className="specialties__card"
                   style={{ "--delay": `${(i % 10) * 30}ms` }}
                 >
+                  {/* Row 1: Icon + Title */}
                   <div className="specialties__card-head">
                     <div className="specialties__card-icon">
                       <Icon size={18} />
                     </div>
-                    <span className="specialties__card-num">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
+                    <h3 className="specialties__card-name">{s.name}</h3>
                   </div>
-                  <h3 className="specialties__card-name">{s.name}</h3>
+
+                  {/* Row 2: Description */}
                   <p className="specialties__card-desc">{s.description}</p>
-                  <div className="specialties__card-tags">
-                    {s.tags.map((t) => (
-                      <span key={t} className="specialties__card-tag">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  {/* Arrow hint */}
-                  <div className="specialties__card-footer">
-                    <span className="specialties__card-cta">
-                      Book consultation <ArrowRight size={13} />
-                    </span>
+
+                  {/* Row 3: Conditions count */}
+                  <div className="specialties__card-conditions">
+                    <span className="specialties__card-conditions-dot" />
+                    {s.tags.length} condition{s.tags.length !== 1 ? "s" : ""}
                   </div>
                 </Link>
               );

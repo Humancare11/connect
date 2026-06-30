@@ -124,7 +124,7 @@ const SLIDES = [
 ];
 
 /* ─────────────────────────────────────────────────────────────
-   HERO CAROUSEL  — tabs now clickable, preview strip added
+   HERO CAROUSEL
 ───────────────────────────────────────────────────────────── */
 function HeroCarousel() {
   const [idx, setIdx] = useState(0);
@@ -139,7 +139,7 @@ function HeroCarousel() {
     setAnimCls(dir === "next" ? "cat-carousel--exit-next" : "cat-carousel--exit-prev");
     setTimeout(() => {
       setIdx(next);
-      setActiveTab(0);          /* reset tab on slide change */
+      setActiveTab(0);
       setAnimCls(dir === "next" ? "cat-carousel--enter-next" : "cat-carousel--enter-prev");
       animating.current = false;
     }, 300);
@@ -168,7 +168,6 @@ function HeroCarousel() {
 
   return (
     <div className="cat-hero__panel">
-
       <div className={`cat-carousel__card ${animCls}`}>
         <div className="cat-carousel__card-header">
           <div>
@@ -189,7 +188,6 @@ function HeroCarousel() {
         </div>
       </div>
 
-
       <div className="cat-carousel__tabs cat-carousel__tab-fade" key={idx}>
         {slide.tabs.map((tab, i) => (
           <button
@@ -207,7 +205,6 @@ function HeroCarousel() {
         ))}
       </div>
 
-      {/* ── Preview strip (highlighted in image 1) ── */}
       <div className="cat-carousel__preview" key={`${idx}-${activeTab}`}>
         <span className="cat-carousel__preview-icon">
           <Icon name={currentTab.icon} size={16} />
@@ -220,7 +217,6 @@ function HeroCarousel() {
         </div>
       </div>
 
-      {/* Prev / dots / next */}
       <div className="cat-carousel__controls">
         <button className="cat-carousel__btn" onClick={handlePrev} aria-label="Previous">
           <Icon name="chevronLeft" size={14} />
@@ -239,7 +235,6 @@ function HeroCarousel() {
           <Icon name="chevronRight" size={14} />
         </button>
       </div>
-
     </div>
   );
 }
@@ -272,7 +267,6 @@ const SPECIALTIES = [
   { slug: "ophthalmology", path: "/ophthalmology", icon: "eye", name: "Ophthalmology", featured: false },
 ];
 
-/* Conditions data — real routes */
 const CONDITIONS = [
   { slug: "arthritis", path: "/arthritis", icon: "bone", name: "Arthritis" },
   { slug: "cancer-second-opinion", path: "/cancer-second-opinion", icon: "check", name: "Cancer Second Opinion" },
@@ -288,7 +282,6 @@ const HERO_STATS = [
   { n: "11", l: "Categories" },
   { n: "30", l: "Specialties" },
   { n: "140+", l: "Conditions" },
-
 ];
 
 const CARE_CAT = [
@@ -401,58 +394,37 @@ const FAQ_GROUPS = [
       },
     ],
   },
-
 ];
-// CARE 
+
+/* ─────────────────────────────────────────────────────────────
+   CARE SECTION
+───────────────────────────────────────────────────────────── */
 function CareSection() {
   return (
     <section className="cat-b2b">
       <div className="cat-section__wrap">
         <div className="cat-b2b__grid">
-
           <div className="cat-b2b__left">
-            <span className="cat-b2b__eyebrow">
-              CARE MADE SIMPLE
-
-            </span>
-
-            <h2 className="cat-b2b__title">
-              Care Designed Around Your Health Needs
-
-            </h2>
-
+            <span className="cat-b2b__eyebrow">CARE MADE SIMPLE</span>
+            <h2 className="cat-b2b__title">Care Designed Around Your Health Needs</h2>
             <p className="cat-b2b__copy">
               Humancare Connect provides a comprehensive virtual healthcare experience that makes it easier to access trusted medical guidance, connect with experienced healthcare professionals, and receive personalized care tailored to your unique health journey.
-
             </p>
-
-            {/* <Link to="/faq" className="cat-b2b__btn">
-              View FAQs
-              <Icon name="arrowRight" size={14} />
-            </Link> */}
           </div>
-
           <div className="cat-b2b__cards">
             {CARE_CAT.map((item, i) => (
               <div className="cat-b2b__card" key={i}>
-                {/* <Icon
-                  name="building"
-                  size={22}
-                  style={{ color: "var(--primary)" }}
-                /> */}
-
                 <h3>{item.title}</h3>
-
                 <p>{item.desc}</p>
               </div>
             ))}
           </div>
-
         </div>
       </div>
     </section>
   );
 }
+
 /* ─────────────────────────────────────────────────────────────
    FAQ SECTION
 ───────────────────────────────────────────────────────────── */
@@ -463,14 +435,11 @@ function FaqSection() {
     <section className="cat-faq">
       <div className="cat-section__wrap">
         <div className="cat-faq__grid">
-
-          {/* Left intro column */}
           <div className="cat-faq__left">
             <span className="cat-faq__eyebrow">FAQ</span>
             <h2 className="cat-faq__title">Frequently Asked Questions</h2>
             <p className="cat-faq__copy">
-              Everything you need to know about primary care at Humancare
-              Connect. Can&apos;t find an answer?
+              Everything you need to know about primary care at Humancare Connect. Can&apos;t find an answer?
             </p>
             <button type="button" className="cat-faq__chat-btn">
               <Icon name="chat" size={16} />
@@ -492,7 +461,6 @@ function FaqSection() {
             </div>
           </div>
 
-          {/* Right accordion column */}
           <div className="cat-faq__right">
             {FAQ_GROUPS.map((group, gi) => (
               <div className="cat-faq__group" key={group.label}>
@@ -529,18 +497,6 @@ function FaqSection() {
             ))}
           </div>
         </div>
-
-        {/* Bottom dark CTA bar */}
-        {/* <div className="cat-faq__cta">
-          <div className="cat-faq__cta-text">
-            <p className="cat-faq__cta-title">Still have questions?</p>
-            <p className="cat-faq__cta-sub">Our care team is available 24/7</p>
-          </div>
-          <Link to="/appointment-booking" className="cat-faq__cta-btn">
-            Book a Call
-            <Icon name="arrowRight" size={14} />
-          </Link>
-        </div> */}
       </div>
     </section>
   );
@@ -570,10 +526,9 @@ export default function Categories() {
         />
       </Helmet>
 
-      {/* ── Hero ────────────────────────────────────────────── */}
+      {/* ── Hero ── */}
       <section className="cat-hero">
         <div className="cat-hero__inner">
-
           <div className="cat-hero__left">
             <div className="cat-hero__eyebrow">
               <Icon name="globe" size={14} />
@@ -583,8 +538,7 @@ export default function Categories() {
               Explore Online Doctor Consultation Services Designed Around Your Needs
             </h1>
             <p className="cat-hero__copy">
-              Find the right care with Humancare Connect’s comprehensive range of virtual healthcare services. From everyday health concerns and mental wellness to chronic care, women’s health, skin and hair care, and specialized medical support, our online doctor consultation services are designed to connect you with appropriate healthcare professionals and personalized care solutions.
-
+              Find the right care with Humancare Connect's comprehensive range of virtual healthcare services. From everyday health concerns and mental wellness to chronic care, women's health, skin and hair care, and specialized medical support, our online doctor consultation services are designed to connect you with appropriate healthcare professionals and personalized care solutions.
             </p>
             <div className="cat-hero-stats">
               {HERO_STATS.map(({ n, l }) => (
@@ -595,15 +549,13 @@ export default function Categories() {
               ))}
             </div>
           </div>
-
           <div className="cat-hero__right">
             <HeroCarousel />
           </div>
-
         </div>
       </section>
 
-      {/* ── Category Cards (4×3 grid) ───────────────────────── */}
+      {/* ── Category Cards ── */}
       <section className="cat-section cat-section--bg">
         <div className="cat-section__wrap">
           <div className="cat-section__header">
@@ -647,23 +599,35 @@ export default function Categories() {
           ) : (
             <div className="cat-grid">
               {filtered.map((cat, i) => (
-                <Link key={cat.slug} to={cat.path} className="cat-card" style={{ animationDelay: `${i * 50}ms` }}>
-                  <div className="cat-card__icon" style={{ background: cat.bgTint, color: cat.color }}>
-                    <Icon name={cat.icon} size={22} />
+                <Link
+                  key={cat.slug}
+                  to={cat.path}
+                  className="cat-card"
+                  style={{ animationDelay: `${i * 50}ms` }}
+                >
+                  {/* ── ROW 1: Icon + Title ── */}
+                  <div className="cat-card__header">
+                    <div
+                      className="cat-card__icon"
+                      style={{ background: cat.bgTint, color: cat.color }}
+                    >
+                      <Icon name={cat.icon} size={20} />
+                    </div>
+                    <h3 className="cat-card__name">{cat.name}</h3>
                   </div>
-                  <h3 className="cat-card__name">{cat.name}</h3>
+
+                  {/* ── ROW 2: Description ── */}
                   <p className="cat-card__tagline">{cat.tagline}</p>
-                  <div className="cat-card__chips">
-                    {cat.conditions.slice(0, 3).map(cond => (
-                      <span key={cond} className="cat-card__chip" style={{ background: cat.bgTint, color: cat.color }}>{cond}</span>
-                    ))}
-                    {cat.conditions.length > 3 && (
-                      <span className="cat-card__chip" style={{ background: "#F7FAFF", color: "#5C7099" }}>+{cat.conditions.length - 3} more</span>
-                    )}
-                  </div>
+
+                  {/* ── ROW 3: Count + Arrow ── */}
                   <div className="cat-card__footer">
-                    <span className="cat-card__count">{cat.specialtyCount} Specialties · {cat.conditions.length} Conditions</span>
-                    <span className="cat-card__arrow" style={{ background: cat.bgTint, color: cat.color }}>
+                    <span className="cat-card__count">
+                      {cat.specialtyCount} Specialties · {cat.conditions.length} Conditions
+                    </span>
+                    <span
+                      className="cat-card__arrow"
+                      style={{ background: cat.bgTint, color: cat.color }}
+                    >
                       <Icon name="chevronRight" size={14} />
                     </span>
                   </div>
@@ -674,17 +638,14 @@ export default function Categories() {
         </div>
       </section>
 
-      {/* ── Specialties Strip ───────────────────────────────── */}
+      {/* ── Specialties Strip ── */}
       <section className="cat-section cat-section--white">
         <div className="cat-section__wrap">
           <div className="cat-section__header--center">
-            <span className="cat-eyebrow">EXPERT SPECIALTY CARE
-            </span>
-            <h2 className="cat-heading">Connect With the Right Healthcare Specialist
-            </h2>
+            <span className="cat-eyebrow">EXPERT SPECIALTY CARE</span>
+            <h2 className="cat-heading">Connect With the Right Healthcare Specialist</h2>
             <p className="cat-subtext--center">
               Find trusted healthcare professionals across a wide range of medical specialties. Humancare Connect makes it simple to access expert medical guidance, personalized treatment support, and specialized care through online doctor consultation services designed around your unique health needs.
-
             </p>
           </div>
           <div className="cat-spec-grid">
@@ -713,7 +674,7 @@ export default function Categories() {
         </div>
       </section>
 
-      {/* ── CONDITIONS Strip ─────────────────────────────── */}
+      {/* ── CONDITIONS Strip ── */}
       <section className="cat-section cat-section--bg">
         <div className="cat-section__wrap">
           <div className="cat-section__header--center">
@@ -746,10 +707,11 @@ export default function Categories() {
       </section>
 
       <CareSection />
-      {/* ── FAQ ─────────────────────────────────────────────── */}
+
+      {/* ── FAQ ── */}
       <FaqSection />
 
-      {/* ── CTA ─────────────────────────────────────────────── */}
+      {/* ── CTA ── */}
       <section className="cat-cta">
         <div className="cat-cta__card">
           <div className="cat-cta__tag">

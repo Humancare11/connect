@@ -488,31 +488,22 @@
 @media (min-width: 1024px) { .specialties__grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1280px) { .specialties__grid { grid-template-columns: repeat(4, 1fr); } }
 
-/* ── Specialty card — works for both <article> and <Link> (renders as <a>) ── */
+/* ── Specialty card — fixed-size, new 3-row layout ── */
 .specialties__card {
-  /* Layout */
   display: flex;
   flex-direction: column;
-
-  /* Reset anchor defaults so Link looks identical to a plain div */
+  height: 220px;
+  box-sizing: border-box;
   text-decoration: none;
   color: inherit;
-
-  /* Appearance */
   border-radius: 1.5rem;
   border: 1px solid #eef1f7;
   background: var(--white);
-  padding: 22px;
+  padding: 20px 22px 18px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-
-  /* Animation */
   animation: fadeUp 0.45s ease both;
   animation-delay: var(--delay, 0ms);
-
-  /* Hover transition */
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color .2s;
-
-  /* Keyboard focus ring */
   outline-offset: 3px;
 }
 
@@ -526,18 +517,19 @@
   outline: 2px solid var(--blue);
 }
 
+/* Row 1: Icon + Title inline */
 .specialties__card-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .specialties__card-icon {
   display: grid;
   place-items: center;
-  width: 42px; height: 42px;
-  border-radius: 0.85rem;
+  width: 38px; height: 38px;
+  border-radius: 0.75rem;
   background: var(--bg);
   color: var(--teal);
   flex-shrink: 0;
@@ -549,21 +541,16 @@
   color: var(--blue);
 }
 
-.specialties__card-num {
-  border-radius: 9999px;
-  background: #f1f5f9;
-  padding: 3px 11px;
-  font-size: 0.7rem;
-  font-weight: 900;
-  color: var(--slate5);
-  height: fit-content;
-}
+/* Hide old num badge */
+.specialties__card-num { display: none; }
 
+/* Title inline with icon */
 .specialties__card-name {
-  margin: 18px 0 0;
-  font-size: 1.05rem;
+  margin: 0;
+  flex: 1;
+  font-size: 0.92rem;
   font-weight: 800;
-  line-height: 1.3;
+  line-height: 1.25;
   color: var(--navy);
   transition: color .2s;
 }
@@ -572,56 +559,51 @@
   color: var(--blue);
 }
 
+/* Row 2: Description — 2-line clamp keeps all cards flush */
 .specialties__card-desc {
-  margin: 10px 0 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   line-height: 1.6;
   color: var(--slate6);
   flex-grow: 1;
+  margin: 0 0 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.specialties__card-tags {
-  margin-top: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.specialties__card-tag {
-  padding: 6px 13px;
-  border-radius: 9999px;
-  background: var(--bg);
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--slate6);
-}
-
-/* ── Card footer CTA row ── */
-.specialties__card-footer {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid #f0f4fb;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.specialties__card-cta {
+/* Row 3: Conditions count pill */
+.specialties__card-conditions {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: var(--blue);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity .22s ease, transform .22s ease;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: var(--bg);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--slate6);
+  width: fit-content;
+  transition: background .2s, color .2s;
 }
 
-.specialties__card:hover .specialties__card-cta {
-  opacity: 1;
-  transform: translateX(0);
+.specialties__card:hover .specialties__card-conditions {
+  background: rgba(11,87,232,.08);
+  color: var(--blue);
 }
+
+.specialties__card-conditions-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Hide old tag list + footer CTA */
+.specialties__card-tags,
+.specialties__card-tag,
+.specialties__card-footer,
+.specialties__card-cta { display: none; }
 
 .specialties__empty {
   grid-column: 1 / -1;
