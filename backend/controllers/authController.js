@@ -1018,9 +1018,96 @@ const adminLogout = async (req, res) => {
   res.json({ msg: "Logged out." });
 };
 
+const employeeAdminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ msg: "Email and password are required." });
+
+    const clean = email.toLowerCase().trim();
+    const user = await User.findOne({ email: clean });
+
+    if (!user || user.role !== "employeeadmin") {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "EmployeeAdmin",
+        userEmail: clean,
+        success: false,
+        details: { reason: "Invalid employee admin credentials" },
+      });
+      await recordFailedLogin(req, { email: clean, portal: "employeeadmin" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    if (user.accountDisabled) {
+      await recordSecurityIncident(req, {
+        type: "unauthorized_access",
+        severity: "high",
+        title: "Disabled employee admin login attempt",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { portal: "employeeadmin", disabledAt: user.disabledAt },
+      });
+      return res.status(403).json({ msg: "This account is disabled. Please contact your Super Admin." });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      await logAudit(req, {
+        action: "LOGIN_FAILED",
+        resource: "EmployeeAdmin",
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: user.role,
+        success: false,
+        details: { reason: "Incorrect password" },
+      });
+      await recordFailedLogin(req, { email: clean, userId: user._id, userRole: user.role, portal: "employeeadmin" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
+
+    await logAudit(req, {
+      action: "LOGIN_SUCCESS",
+      resource: "EmployeeAdmin",
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+    });
+
+    return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
+  } catch (err) {
+    console.error("employeeAdminLogin error:", err);
+    return res.status(500).json({ msg: "Server error. Please try again." });
+  }
+};
+
+const employeeAdminMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user || user.role !== "employeeadmin")
+      return res.status(404).json({ msg: "Employee Admin not found." });
+    return res.json({ user: safeUser(user) });
+  } catch (err) {
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+const employeeAdminLogout = async (req, res) => {
+  await logAudit(req, { action: "LOGOUT", resource: "EmployeeAdmin" });
+  if (req.user?.sid) await revokeSession(req.user.sid, "logout");
+  clearAuthCookies(res, "employeeadmin");
+  res.json({ msg: "Logged out." });
+};
+
 module.exports = {
   register, login, doctorRegister, doctorLogin, adminLogin, paymentAdminLogin,
   updateProfile, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
+  employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
 };

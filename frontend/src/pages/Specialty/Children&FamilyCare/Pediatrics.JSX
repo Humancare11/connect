@@ -1,23 +1,62 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  FiActivity, FiHeart, FiShield, FiUsers, FiClock, FiGlobe,
-  FiSearch, FiCalendar, FiPhone, FiMail, FiAward, FiZap,
-  FiMonitor, FiDollarSign, FiCheckCircle, FiStar, FiLock,
-  FiArrowRight, FiPlus, FiDroplet, FiWind, FiThermometer,
-  FiAlertCircle, FiRefreshCw, FiTarget, FiTrendingUp, FiBarChart2,
-  FiFeather, FiCrosshair, FiLayout, FiEye, FiTool,
-  FiCpu, FiBriefcase, FiClipboard,
+  FiActivity,
+  FiHeart,
+  FiShield,
+  FiUsers,
+  FiClock,
+  FiGlobe,
+  FiSearch,
+  FiCalendar,
+  FiPhone,
+  FiMail,
+  FiAward,
+  FiZap,
+  FiMonitor,
+  FiDollarSign,
+  FiCheckCircle,
+  FiStar,
+  FiLock,
+  FiArrowRight,
+  FiPlus,
+  FiDroplet,
+  FiWind,
+  FiThermometer,
+  FiAlertCircle,
+  FiRefreshCw,
+  FiTarget,
+  FiTrendingUp,
+  FiBarChart2,
+  FiFeather,
+  FiCrosshair,
+  FiLayout,
+  FiEye,
+  FiTool,
+  FiCpu,
+  FiBriefcase,
+  FiClipboard,
 } from "react-icons/fi";
 import {
-  MdOutlineVaccines, MdOutlineBloodtype, MdOutlinePsychology,
-  MdOutlineHealthAndSafety, MdOutlineSpa, MdOutlineMonitorHeart,
+  MdOutlineVaccines,
+  MdOutlineBloodtype,
+  MdOutlinePsychology,
+  MdOutlineHealthAndSafety,
+  MdOutlineSpa,
+  MdOutlineMonitorHeart,
   MdOutlineBiotech,
 } from "react-icons/md";
 import {
-  GiHeartOrgan, GiLungs, GiBrain, GiBoneKnife,
-  GiMedicines, GiBodySwapping,
+  GiHeartOrgan,
+  GiLungs,
+  GiBrain,
+  GiBoneKnife,
+  GiMedicines,
+  GiBodySwapping,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+
+import heroImage from "../../../assets/SpecialitiesImage/pediatrics-specialist-child-healthcare-banner.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/pediatric-specialist-child-health-checkup-consultation.webp";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -28,10 +67,12 @@ const SPECIALTY_DATA = {
   tagline: "Caring for Your Child's Health from Infancy Through Adolescence.",
   heroDescription:
     "Pediatric specialists provide comprehensive healthcare for infants, children, and teenagers, focusing on growth, development, illness prevention, and treatment of common childhood conditions. From routine wellness visits and vaccinations to managing infections, feeding concerns, and skin conditions, pediatric care supports your child's healthy journey at every stage of life.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified pediatric specialist providing healthcare for infants, children, and adolescents with preventive, diagnostic, and wellness care.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Pediatric specialist consulting with a child and parent during a routine health checkup for growth, development, and preventive care.",
   overviewDescription:
     "Pediatrics is a medical specialty dedicated to the physical, emotional, and developmental health of infants, children, and adolescents. Pediatricians diagnose, treat, and prevent a wide range of childhood illnesses while monitoring growth milestones, nutrition, behavior, and overall well-being.",
   overviewImportance:
@@ -42,104 +83,232 @@ const SPECIALTY_DATA = {
     "Schedule a visit with a pediatric specialist if your child experiences persistent fever, frequent infections, feeding or growth concerns, ear pain, skin changes, breathing difficulties, unusual symptoms, or requires routine checkups and preventive healthcare.",
 
   keyServices: [
-    { Icon: FiActivity, title: "Well-Child Exams & Growth Monitoring", description: "Comprehensive pediatric checkups to track physical growth, developmental milestones, and overall health from infancy through adolescence." },
-    { Icon: FiThermometer, title: "Childhood Illness Diagnosis & Treatment", description: "Evaluation and treatment for common pediatric conditions, including colds, flu, infections, fever, and other acute illnesses." },
-    { Icon: MdOutlineVaccines, title: "Vaccinations & Preventive Care", description: "Routine immunizations, health screenings, and preventive services designed to protect children from serious illnesses." },
-    { Icon: FiDroplet, title: "Feeding & Nutrition Support", description: "Guidance for feeding challenges, nutrition concerns, healthy eating habits, and proper growth and development." },
-    { Icon: MdOutlineSpa, title: "Skin & Allergy Care", description: "Diagnosis and management of childhood skin conditions, rashes, allergic reactions, and environmental sensitivities." },
-    { Icon: FiUsers, title: "Parent Education & Pediatric Guidance", description: "Expert advice for parents regarding child development, safety, sleep habits, behavior, and everyday health concerns." },
+    {
+      Icon: FiActivity,
+      title: "Well-Child Exams & Growth Monitoring",
+      description:
+        "Comprehensive pediatric checkups to track physical growth, developmental milestones, and overall health from infancy through adolescence.",
+    },
+    {
+      Icon: FiThermometer,
+      title: "Childhood Illness Diagnosis & Treatment",
+      description:
+        "Evaluation and treatment for common pediatric conditions, including colds, flu, infections, fever, and other acute illnesses.",
+    },
+    {
+      Icon: MdOutlineVaccines,
+      title: "Vaccinations & Preventive Care",
+      description:
+        "Routine immunizations, health screenings, and preventive services designed to protect children from serious illnesses.",
+    },
+    {
+      Icon: FiDroplet,
+      title: "Feeding & Nutrition Support",
+      description:
+        "Guidance for feeding challenges, nutrition concerns, healthy eating habits, and proper growth and development.",
+    },
+    {
+      Icon: MdOutlineSpa,
+      title: "Skin & Allergy Care",
+      description:
+        "Diagnosis and management of childhood skin conditions, rashes, allergic reactions, and environmental sensitivities.",
+    },
+    {
+      Icon: FiUsers,
+      title: "Parent Education & Pediatric Guidance",
+      description:
+        "Expert advice for parents regarding child development, safety, sleep habits, behavior, and everyday health concerns.",
+    },
   ],
 
   benefits: [
-    { Icon: FiSearch, title: "Early Detection & Intervention", description: "Identifies health concerns, developmental delays, and childhood illnesses early for timely treatment and better outcomes." },
-    { Icon: FiTrendingUp, title: "Healthy Growth & Development", description: "Supports children through every stage of physical, emotional, and developmental milestones." },
-    { Icon: FiShield, title: "Preventive Health Protection", description: "Provides vaccinations, screenings, and wellness guidance to reduce the risk of preventable illnesses." },
-    { Icon: FiHeart, title: "Family-Centered Care", description: "Partners with parents and caregivers to create personalized healthcare plans that support every child's unique needs." },
+    {
+      Icon: FiSearch,
+      title: "Early Detection & Intervention",
+      description:
+        "Identifies health concerns, developmental delays, and childhood illnesses early for timely treatment and better outcomes.",
+    },
+    {
+      Icon: FiTrendingUp,
+      title: "Healthy Growth & Development",
+      description:
+        "Supports children through every stage of physical, emotional, and developmental milestones.",
+    },
+    {
+      Icon: FiShield,
+      title: "Preventive Health Protection",
+      description:
+        "Provides vaccinations, screenings, and wellness guidance to reduce the risk of preventable illnesses.",
+    },
+    {
+      Icon: FiHeart,
+      title: "Family-Centered Care",
+      description:
+        "Partners with parents and caregivers to create personalized healthcare plans that support every child's unique needs.",
+    },
   ],
 
   conditions: [
-    { Icon: FiAlertCircle, name: "Ear Pain & Ear Infections", description: "Diagnosis and treatment for earaches, middle ear infections, ear pressure, and discomfort that commonly affect children." },
-    { Icon: FiDroplet, name: "Feeding Concerns", description: "Support for breastfeeding challenges, picky eating, poor appetite, nutritional concerns, and healthy feeding habits." },
-    { Icon: FiWind, name: "Pediatric Cold & Flu", description: "Treatment for cough, congestion, sore throat, viral infections, and flu symptoms to help children recover safely." },
-    { Icon: FiThermometer, name: "Pediatric Fever", description: "Evaluation and care for fever, infection-related symptoms, and signs requiring medical attention." },
-    { Icon: MdOutlineSpa, name: "Skin Rashes in Children", description: "Diagnosis and treatment for childhood rashes, eczema, allergic reactions, irritation, and common skin conditions." },
-    { Icon: FiFeather, name: "Allergies in Children", description: "Management of seasonal allergies, food allergies, environmental triggers, and allergy-related symptoms." },
-    { Icon: GiLungs, name: "Asthma & Breathing Concerns", description: "Care for wheezing, shortness of breath, chronic cough, and respiratory conditions affecting children." },
-    { Icon: FiActivity, name: "Childhood Infections", description: "Diagnosis and treatment of bacterial and viral infections, including throat, sinus, and other common infections." },
-    { Icon: FiTrendingUp, name: "Growth & Development Concerns", description: "Evaluation of delayed milestones, growth patterns, and developmental challenges." },
-    { Icon: FiClock, name: "Sleep Problems in Children", description: "Support for sleep difficulties, bedtime challenges, poor sleep habits, and concerns affecting a child's health." },
-    { Icon: FiBarChart2, name: "Digestive & Stomach Issues", description: "Care for abdominal pain, constipation, diarrhea, reflux, and other gastrointestinal concerns in children." },
-    { Icon: MdOutlineHealthAndSafety, name: "Preventive Pediatric Care", description: "Routine wellness visits, immunizations, health screenings, and guidance to maintain long-term childhood health." },
+    {
+      Icon: FiAlertCircle,
+      name: "Ear Pain & Ear Infections",
+      description:
+        "Diagnosis and treatment for earaches, middle ear infections, ear pressure, and discomfort that commonly affect children.",
+    },
+    {
+      Icon: FiDroplet,
+      name: "Feeding Concerns",
+      description:
+        "Support for breastfeeding challenges, picky eating, poor appetite, nutritional concerns, and healthy feeding habits.",
+    },
+    {
+      Icon: FiWind,
+      name: "Pediatric Cold & Flu",
+      description:
+        "Treatment for cough, congestion, sore throat, viral infections, and flu symptoms to help children recover safely.",
+    },
+    {
+      Icon: FiThermometer,
+      name: "Pediatric Fever",
+      description:
+        "Evaluation and care for fever, infection-related symptoms, and signs requiring medical attention.",
+    },
+    {
+      Icon: MdOutlineSpa,
+      name: "Skin Rashes in Children",
+      description:
+        "Diagnosis and treatment for childhood rashes, eczema, allergic reactions, irritation, and common skin conditions.",
+    },
+    {
+      Icon: FiFeather,
+      name: "Allergies in Children",
+      description:
+        "Management of seasonal allergies, food allergies, environmental triggers, and allergy-related symptoms.",
+    },
+    {
+      Icon: GiLungs,
+      name: "Asthma & Breathing Concerns",
+      description:
+        "Care for wheezing, shortness of breath, chronic cough, and respiratory conditions affecting children.",
+    },
+    {
+      Icon: FiActivity,
+      name: "Childhood Infections",
+      description:
+        "Diagnosis and treatment of bacterial and viral infections, including throat, sinus, and other common infections.",
+    },
+    {
+      Icon: FiTrendingUp,
+      name: "Growth & Development Concerns",
+      description:
+        "Evaluation of delayed milestones, growth patterns, and developmental challenges.",
+    },
+    {
+      Icon: FiClock,
+      name: "Sleep Problems in Children",
+      description:
+        "Support for sleep difficulties, bedtime challenges, poor sleep habits, and concerns affecting a child's health.",
+    },
+    {
+      Icon: FiBarChart2,
+      name: "Digestive & Stomach Issues",
+      description:
+        "Care for abdominal pain, constipation, diarrhea, reflux, and other gastrointestinal concerns in children.",
+    },
+    {
+      Icon: MdOutlineHealthAndSafety,
+      name: "Preventive Pediatric Care",
+      description:
+        "Routine wellness visits, immunizations, health screenings, and guidance to maintain long-term childhood health.",
+    },
   ],
 
   faqs: [
     {
       question: "What is pediatrics?",
-      answer: "Pediatrics is the medical specialty focused on the healthcare of infants, children, and adolescents, including prevention, diagnosis, and treatment of childhood conditions.",
+      answer:
+        "Pediatrics is the medical specialty focused on the healthcare of infants, children, and adolescents, including prevention, diagnosis, and treatment of childhood conditions.",
     },
     {
       question: "What does a pediatric specialist treat?",
-      answer: "Pediatric specialists treat common childhood illnesses, infections, fevers, feeding concerns, skin conditions, allergies, growth concerns, and developmental issues.",
+      answer:
+        "Pediatric specialists treat common childhood illnesses, infections, fevers, feeding concerns, skin conditions, allergies, growth concerns, and developmental issues.",
     },
     {
       question: "When should I take my child to a pediatrician?",
-      answer: "You should seek pediatric care for fever, persistent symptoms, breathing difficulties, feeding problems, injuries, unusual behavior changes, or routine wellness visits.",
+      answer:
+        "You should seek pediatric care for fever, persistent symptoms, breathing difficulties, feeding problems, injuries, unusual behavior changes, or routine wellness visits.",
     },
     {
       question: "How often does my child need a pediatric wellness visit?",
-      answer: "Well-child visit schedules depend on age, but regular checkups throughout childhood are essential for monitoring growth, development, and preventive care.",
+      answer:
+        "Well-child visit schedules depend on age, but regular checkups throughout childhood are essential for monitoring growth, development, and preventive care.",
     },
     {
       question: "Can pediatricians treat colds and flu?",
-      answer: "Yes. Pediatricians diagnose and manage cold and flu symptoms, provide treatment recommendations, and monitor for complications.",
+      answer:
+        "Yes. Pediatricians diagnose and manage cold and flu symptoms, provide treatment recommendations, and monitor for complications.",
     },
     {
       question: "What should I do if my child has a fever?",
-      answer: "Monitor symptoms and seek medical care if the fever is persistent, very high, accompanied by concerning symptoms, or your child appears seriously ill.",
+      answer:
+        "Monitor symptoms and seek medical care if the fever is persistent, very high, accompanied by concerning symptoms, or your child appears seriously ill.",
     },
     {
       question: "Can pediatricians help with feeding difficulties?",
-      answer: "Yes. Pediatric specialists evaluate feeding concerns, nutritional challenges, poor appetite, and growth-related issues.",
+      answer:
+        "Yes. Pediatric specialists evaluate feeding concerns, nutritional challenges, poor appetite, and growth-related issues.",
     },
     {
       question: "What causes ear infections in children?",
-      answer: "Ear infections can develop from bacteria or viruses, often following colds or respiratory infections that cause fluid buildup in the middle ear.",
+      answer:
+        "Ear infections can develop from bacteria or viruses, often following colds or respiratory infections that cause fluid buildup in the middle ear.",
     },
     {
       question: "When should I worry about a skin rash on my child?",
-      answer: "Seek medical advice if a rash is severe, spreads quickly, causes discomfort, comes with fever, or does not improve.",
+      answer:
+        "Seek medical advice if a rash is severe, spreads quickly, causes discomfort, comes with fever, or does not improve.",
     },
     {
       question: "Can pediatricians diagnose allergies?",
-      answer: "Yes. Pediatric providers can evaluate allergy symptoms, recommend treatment options, and provide guidance on avoiding triggers.",
+      answer:
+        "Yes. Pediatric providers can evaluate allergy symptoms, recommend treatment options, and provide guidance on avoiding triggers.",
     },
     {
       question: "Do pediatricians provide vaccinations?",
-      answer: "Yes. Pediatric care includes recommended childhood vaccines to help protect against preventable diseases.",
+      answer:
+        "Yes. Pediatric care includes recommended childhood vaccines to help protect against preventable diseases.",
     },
     {
       question: "What developmental milestones do pediatricians monitor?",
-      answer: "Pediatricians track physical growth, speech, movement, social skills, behavior, and age-appropriate developmental milestones.",
+      answer:
+        "Pediatricians track physical growth, speech, movement, social skills, behavior, and age-appropriate developmental milestones.",
     },
     {
       question: "Are telehealth pediatric visits available?",
-      answer: "Yes. Many pediatric concerns, including minor illnesses, follow-up care, and parent consultations, can be addressed through secure telehealth visits.",
+      answer:
+        "Yes. Many pediatric concerns, including minor illnesses, follow-up care, and parent consultations, can be addressed through secure telehealth visits.",
     },
     {
       question: "Do I need a referral to see a pediatric specialist?",
-      answer: "Referral requirements depend on your insurance plan and the type of pediatric specialty care needed.",
+      answer:
+        "Referral requirements depend on your insurance plan and the type of pediatric specialty care needed.",
     },
     {
       question: "How can I support my child's immune health?",
-      answer: "Healthy nutrition, adequate sleep, physical activity, vaccinations, and routine medical care all contribute to a strong immune system.",
+      answer:
+        "Healthy nutrition, adequate sleep, physical activity, vaccinations, and routine medical care all contribute to a strong immune system.",
     },
     {
       question: "What happens during a pediatric appointment?",
-      answer: "A pediatric visit may include reviewing medical history, checking growth and development, performing an examination, discussing concerns, and creating a treatment plan.",
+      answer:
+        "A pediatric visit may include reviewing medical history, checking growth and development, performing an examination, discussing concerns, and creating a treatment plan.",
     },
     {
-      question: "How can I schedule an appointment with a pediatric specialist?",
-      answer: "You can schedule an appointment by selecting a pediatric provider online or contacting the healthcare team for assistance.",
+      question:
+        "How can I schedule an appointment with a pediatric specialist?",
+      answer:
+        "You can schedule an appointment by selecting a pediatric provider online or contacting the healthcare team for assistance.",
     },
   ],
 };
@@ -152,12 +321,42 @@ const TRUST_STATS = [
 ];
 
 const TRUST_CARDS = [
-  { Icon: FiAward, title: " Board-Certified Specialists", description: "Receive care from experienced, credentialed providers who meet high standards of medical expertise and patient care." },
-  { Icon: FiZap, title: "Fast Appointments", description: "Schedule appointments quickly with convenient availability, including timely care for urgent health concerns." },
-  { Icon: FiMonitor, title: "Telehealth Access", description: "Connect with healthcare providers from the comfort of your home through secure, convenient virtual visits." },
-  { Icon: FiShield, title: "Insurance Support", description: "Get assistance understanding insurance coverage, benefits, authorizations, and billing questions." },
-  { Icon: FiHeart, title: "Personalised Care", description: "Receive customized treatment recommendations designed around your medical history, lifestyle, health needs, and goals." },
-  { Icon: FiGlobe, title: "Global Provider Network", description: "Access a broad network of healthcare specialists and coordinated care services wherever you need support." },
+  {
+    Icon: FiAward,
+    title: " Board-Certified Specialists",
+    description:
+      "Receive care from experienced, credentialed providers who meet high standards of medical expertise and patient care.",
+  },
+  {
+    Icon: FiZap,
+    title: "Fast Appointments",
+    description:
+      "Schedule appointments quickly with convenient availability, including timely care for urgent health concerns.",
+  },
+  {
+    Icon: FiMonitor,
+    title: "Telehealth Access",
+    description:
+      "Connect with healthcare providers from the comfort of your home through secure, convenient virtual visits.",
+  },
+  {
+    Icon: FiShield,
+    title: "Insurance Support",
+    description:
+      "Get assistance understanding insurance coverage, benefits, authorizations, and billing questions.",
+  },
+  {
+    Icon: FiHeart,
+    title: "Personalised Care",
+    description:
+      "Receive customized treatment recommendations designed around your medical history, lifestyle, health needs, and goals.",
+  },
+  {
+    Icon: FiGlobe,
+    title: "Global Provider Network",
+    description:
+      "Access a broad network of healthcare specialists and coordinated care services wherever you need support.",
+  },
 ];
 
 // ── Scroll reveal hook ────────────────────────────────────────────────────────
@@ -172,7 +371,7 @@ function useScrollReveal(threshold = 0.1) {
           observer.disconnect();
         }
       },
-      { threshold }
+      { threshold },
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -202,7 +401,10 @@ function AnimatedStat({ value, label, Icon }) {
     if (!visible) return;
     const numeric = parseFloat(value.replace(/[^0-9.]/g, ""));
     const suffix = value.replace(/[0-9.]/g, "");
-    if (isNaN(numeric)) { setDisplayed(value); return; }
+    if (isNaN(numeric)) {
+      setDisplayed(value);
+      return;
+    }
     let start = 0;
     const duration = 1200;
     const step = 16;
@@ -213,7 +415,8 @@ function AnimatedStat({ value, label, Icon }) {
         setDisplayed(value);
         clearInterval(timer);
       } else {
-        const rounded = numeric < 10 ? start.toFixed(1) : Math.floor(start).toString();
+        const rounded =
+          numeric < 10 ? start.toFixed(1) : Math.floor(start).toString();
         setDisplayed(rounded + suffix);
       }
     }, step);
@@ -221,7 +424,10 @@ function AnimatedStat({ value, label, Icon }) {
   }, [visible, value]);
 
   return (
-    <div ref={ref} className={`sp-stat-card${visible ? " sp-stat-card--visible" : ""}`}>
+    <div
+      ref={ref}
+      className={`sp-stat-card${visible ? " sp-stat-card--visible" : ""}`}
+    >
       <div className="sp-stat-card__icon-wrap">
         <Icon size={22} />
       </div>
@@ -242,11 +448,15 @@ function FAQItem({ question, answer }) {
         aria-expanded={open}
       >
         <span className="sp-faq-item__question">{question}</span>
-        <span className={`sp-faq-item__icon${open ? " sp-faq-item__icon--open" : ""}`}>
+        <span
+          className={`sp-faq-item__icon${open ? " sp-faq-item__icon--open" : ""}`}
+        >
           <FiPlus size={15} />
         </span>
       </button>
-      <div className={`sp-faq-item__body${open ? " sp-faq-item__body--open" : ""}`}>
+      <div
+        className={`sp-faq-item__body${open ? " sp-faq-item__body--open" : ""}`}
+      >
         <div className="sp-faq-item__answer">
           <p>{answer}</p>
         </div>
@@ -265,7 +475,10 @@ function ConditionCard({ Icon, name, description, delay }) {
         </div>
         <h3 className="sp-condition-card__title">{name}</h3>
         <p className="sp-condition-card__desc">{description}</p>
-        <button className="sp-condition-card__link" aria-label={`Learn more about ${name}`}>
+        <button
+          className="sp-condition-card__link"
+          aria-label={`Learn more about ${name}`}
+        >
           Learn more <FiArrowRight size={13} />
         </button>
       </div>
@@ -336,13 +549,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <main className="sp-page">
-
       {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
       <section className="sp-hero">
         <div className="sp-hero__bg">
           <img
             src={data.heroImage}
-            alt={`${data.name} — HumanCare Connect`}
+            alt={data.heroAlt}
             className="sp-hero__img"
             loading="eager"
           />
@@ -350,7 +562,9 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         </div>
 
         <div className="sp-hero__content">
-          <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+          <div
+            className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+          >
             <span className="sp-hero__badge">HumanCare Connect</span>
             <h1 className="sp-hero__title">{data.name}</h1>
             <p className="sp-hero__tagline">{data.tagline}</p>
@@ -373,14 +587,13 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
       {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
       <section className="sp-overview">
         <div className="sp-container">
-
           <div className="sp-overview__grid">
             {/* Image column */}
             <Reveal>
               <div className="sp-overview__img-wrap">
                 <img
                   src={data.overviewImage}
-                  alt={`${data.name} specialists`}
+                  alt={data.overviewAlt}
                   className="sp-overview__img"
                   loading="lazy"
                 />
@@ -390,7 +603,9 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                   </div>
                   <div>
                     <p className="sp-overview__badge-title">Board-Certified</p>
-                    <p className="sp-overview__badge-sub">{data.name} Specialists</p>
+                    <p className="sp-overview__badge-sub">
+                      {data.name} Specialists
+                    </p>
                   </div>
                 </div>
               </div>
@@ -463,8 +678,9 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
               <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
               <h2>What We Treat</h2>
               <p>
-                Our {data.name.toLowerCase()} specialists are experienced in diagnosing and treating a wide
-                range of conditions across all age groups.
+                Our {data.name.toLowerCase()} specialists are experienced in
+                diagnosing and treating a wide range of conditions across all
+                age groups.
               </p>
             </div>
           </Reveal>
@@ -480,19 +696,20 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
       {/* ── 4. WHY HUMANCARE ───────────────────────────────────────────────── */}
       <section className="sp-trust">
         <div className="sp-container">
-
           <div className="sp-stats-grid">
             {TRUST_STATS.map((s, i) => (
               <AnimatedStat key={i} {...s} />
             ))}
           </div>
 
-           <Reveal>
+          <Reveal>
             <div className="sp-trust__head">
               <SectionLabel>Why HumanCare Connect</SectionLabel>
               <h2>Care You Can Trust</h2>
               <p>
-            We combine experienced medical professionals with advanced technology to make accessing quality healthcare simpler, faster, and more personalized.
+                We combine experienced medical professionals with advanced
+                technology to make accessing quality healthcare simpler, faster,
+                and more personalized.
               </p>
             </div>
           </Reveal>
@@ -512,7 +729,10 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
             <div className="sp-faq__head">
               <SectionLabel>FAQ</SectionLabel>
               <h2>Frequently Asked Questions</h2>
-              <p>Everything you need to know about {data.name.toLowerCase()} at HumanCare Connect.</p>
+              <p>
+                Everything you need to know about {data.name.toLowerCase()} at
+                HumanCare Connect.
+              </p>
             </div>
           </Reveal>
 
@@ -542,13 +762,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
           <Reveal>
             <span className="sp-cta__eyebrow">Get Started Today</span>
             <h2 className="sp-cta__heading">
-              Ready to Connect with a{" "}
-              <span>{data.name}</span>{" "}
-              Specialist?
+              Ready to Connect with a <span>{data.name}</span> Specialist?
             </h2>
             <p className="sp-cta__sub">
-              Give your child access to compassionate, expert pediatric care with convenient
-              appointments and personalized treatment plans for every stage of growth and development.
+              Give your child access to compassionate, expert pediatric care
+              with convenient appointments and personalized treatment plans for
+              every stage of growth and development.
             </p>
           </Reveal>
 
@@ -558,7 +777,10 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                 <FiSearch size={18} />
                 Find a Doctor
               </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
+              <a
+                href="/appointment-booking"
+                className="sp-btn sp-btn--ghost-lg"
+              >
                 <FiCalendar size={18} />
                 Book Appointment
               </a>

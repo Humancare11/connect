@@ -597,6 +597,7 @@ export default function HomePage() {
               Board-Certified Doctor's
             </span>
 
+
             <span className="trust-chip">
               <svg
                 width="12"

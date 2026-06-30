@@ -73,6 +73,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/lifestyle-medicine-specialist-consultation.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/lifestyle-medicine-wellness-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,10 +85,12 @@ const SPECIALTY_DATA = {
   tagline: "Build Healthier Habits for a Better Life.",
   heroDescription:
     "Lifestyle Medicine focuses on preventing, managing, and improving health through sustainable lifestyle changes. By addressing nutrition, physical activity, sleep quality, stress management, and healthy daily habits, lifestyle medicine helps individuals achieve long-term wellness and reduce the risk of chronic disease. Whether your goal is weight management, increased energy, better sleep, improved fitness, or overall health optimization, lifestyle medicine provides personalized guidance designed around your unique needs and goals.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Lifestyle medicine specialist providing personalized nutrition, exercise, sleep, and preventive wellness care",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Lifestyle medicine specialist discussing healthy habits, nutrition, exercise, and wellness planning with a patient",
   overviewDescription:
     "Lifestyle Medicine is a medical specialty that uses evidence-based lifestyle interventions to prevent, manage, and sometimes reverse chronic health conditions. Rather than focusing only on symptoms, lifestyle medicine addresses the root causes of many health concerns through healthier daily choices and sustainable behavior changes.",
   overviewImportance:
@@ -583,7 +588,7 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -622,7 +627,7 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -813,7 +818,10 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
                   <FiSearch size={18} />
                   Find a Doctor
                 </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
                   <FiCalendar size={18} />
                   Book Appointment
                 </a>

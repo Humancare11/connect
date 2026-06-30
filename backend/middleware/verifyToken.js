@@ -25,6 +25,7 @@ const ACCESS_COOKIE_BY_ROLE = {
   admin: "adminToken",
   superadmin: "adminToken",
   paymentadmin: "adminToken",
+  employeeadmin: "employeeAdminToken",
 };
 
 const REFRESH_COOKIE_BY_ROLE = {
@@ -33,6 +34,7 @@ const REFRESH_COOKIE_BY_ROLE = {
   admin: "adminRefreshToken",
   superadmin: "adminRefreshToken",
   paymentadmin: "adminRefreshToken",
+  employeeadmin: "employeeAdminRefreshToken",
 };
 
 function extractBearerToken(req) {
@@ -93,7 +95,7 @@ async function validateDecodedSession(decoded) {
   const revoked = await RevokedToken.exists({ sessionId: String(decoded.sid), userId: String(decoded.id) });
   if (revoked) return false;
 
-  if (["user", "admin", "superadmin", "paymentadmin"].includes(decoded.role)) {
+  if (["user", "admin", "superadmin", "paymentadmin", "employeeadmin"].includes(decoded.role)) {
     const user = await User.findById(decoded.id).select("accountDisabled disabledAt role").lean();
     if (!user || user.accountDisabled) return false;
   }
@@ -118,6 +120,7 @@ const roleMap = {
   userToken: "user",
   doctorToken: "doctor",
   adminToken: null,
+  employeeAdminToken: "employeeadmin",
 };
 
 function makeVerify(cookieName) {
@@ -200,6 +203,7 @@ const verifyToken = async (req, res, next) => {
 const verifyUserToken = makeVerify("userToken");
 const verifyDoctorToken = makeVerify("doctorToken");
 const verifyAdminToken = makeVerify("adminToken");
+const verifyEmployeeAdminToken = makeVerify("employeeAdminToken");
 
 const doctorOnly = (req, res, next) => {
   if (req.user?.role !== "doctor") {
@@ -243,6 +247,20 @@ const paymentAdminOnly = (req, res, next) => {
   next();
 };
 
+const employeeAdminOnly = (req, res, next) => {
+  if (req.user?.role !== "employeeadmin") {
+    recordSecurityIncident(req, {
+      type: "unauthorized_access",
+      severity: "high",
+      title: "Non-employee-admin attempted employee-admin access",
+      resource: req.originalUrl,
+      metadata: { requiredRole: "employeeadmin", actualRole: req.user?.role || "anonymous" },
+    });
+    return res.status(403).json({ msg: "Access denied. Employee Admins only." });
+  }
+  next();
+};
+
 const superAdminOnly = (req, res, next) => {
   if (req.user?.role !== "superadmin") {
     recordSecurityIncident(req, {
@@ -273,8 +291,10 @@ module.exports = {
   verifyUserToken,
   verifyDoctorToken,
   verifyAdminToken,
+  verifyEmployeeAdminToken,
   doctorOnly,
   adminOnly,
   paymentAdminOnly,
+  employeeAdminOnly,
   superAdminOnly,
 };

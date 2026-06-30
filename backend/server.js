@@ -411,6 +411,7 @@ app.get(/^\/api\/uploads\/.+$/, verifyToken, serveProtectedUpload);
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/superadmin", require("./routes/superadmin"));
+app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/qna", require("./routes/qna"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
 app.use("/api/appointments", require("./routes/appointments"));

@@ -66,7 +66,7 @@ function Icon({ name, size = 18, style, className }) {
   return <Component size={size} style={style} className={className} aria-hidden="true" />;
 }
 
-/* ─────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────
    CAROUSEL DATA
 ───────────────────────────────────────────────────────────── */
 const SLIDES = [
@@ -124,7 +124,7 @@ const SLIDES = [
 ];
 
 /* ─────────────────────────────────────────────────────────────
-   HERO CAROUSEL  — tabs now clickable, preview strip added
+   HERO CAROUSEL
 ───────────────────────────────────────────────────────────── */
 function HeroCarousel() {
   const [idx, setIdx] = useState(0);
@@ -139,7 +139,7 @@ function HeroCarousel() {
     setAnimCls(dir === "next" ? "cat-carousel--exit-next" : "cat-carousel--exit-prev");
     setTimeout(() => {
       setIdx(next);
-      setActiveTab(0);          /* reset tab on slide change */
+      setActiveTab(0);
       setAnimCls(dir === "next" ? "cat-carousel--enter-next" : "cat-carousel--enter-prev");
       animating.current = false;
     }, 300);
@@ -168,7 +168,6 @@ function HeroCarousel() {
 
   return (
     <div className="cat-hero__panel">
-
       <div className={`cat-carousel__card ${animCls}`}>
         <div className="cat-carousel__card-header">
           <div>
@@ -189,7 +188,6 @@ function HeroCarousel() {
         </div>
       </div>
 
-
       <div className="cat-carousel__tabs cat-carousel__tab-fade" key={idx}>
         {slide.tabs.map((tab, i) => (
           <button
@@ -207,7 +205,6 @@ function HeroCarousel() {
         ))}
       </div>
 
-      {/* ── Preview strip (highlighted in image 1) ── */}
       <div className="cat-carousel__preview" key={`${idx}-${activeTab}`}>
         <span className="cat-carousel__preview-icon">
           <Icon name={currentTab.icon} size={16} />
@@ -220,7 +217,6 @@ function HeroCarousel() {
         </div>
       </div>
 
-      {/* Prev / dots / next */}
       <div className="cat-carousel__controls">
         <button className="cat-carousel__btn" onClick={handlePrev} aria-label="Previous">
           <Icon name="chevronLeft" size={14} />
@@ -239,7 +235,6 @@ function HeroCarousel() {
           <Icon name="chevronRight" size={14} />
         </button>
       </div>
-
     </div>
   );
 }
@@ -248,17 +243,27 @@ function HeroCarousel() {
    STATIC DATA
 ───────────────────────────────────────────────────────────── */
 const CATEGORIES = [
-  { slug: "child-and-family-care", path: "/child-and-family-care", icon: "child", name: "Child & Family Care", tagline: "Pediatrics, parenting support & whole-family health", specialtyCount: 3, conditions: ["Vaccinations", "Growth checks", "Fever", "Allergies"], color: "#059669", bgTint: "rgba(5,150,105,0.07)" },
-  { slug: "chronic-care-and-expert-opinion", path: "/chronic-care-and-expert-opinion", icon: "activity", name: "Chronic Care & Expert Opinion", tagline: "Ongoing condition management & specialist second opinions", specialtyCount: 4, conditions: ["Diabetes", "Hypertension", "Heart disease", "Second opinion"], color: "#0B57E8", bgTint: "rgba(11,87,232,0.07)" },
-  { slug: "eye-ear-bone", path: "/eye-ear-bone", icon: "eye", name: "Eye, Ear & Bone", tagline: "Ophthalmology, ENT & musculoskeletal care", specialtyCount: 3, conditions: ["Vision screening", "Hearing loss", "Joint pain", "Fractures"], color: "#0EA5E9", bgTint: "rgba(14,165,233,0.07)" },
-  { slug: "general-everyday-care", path: "/general-and-everyday-care", icon: "stethoscope", name: "General & Everyday Care", tagline: "Primary care for common, everyday health concerns", specialtyCount: 3, conditions: ["Cold & flu", "Fever", "Infections", "Check-ups"], color: "#4C5F87", bgTint: "rgba(76,95,135,0.07)" },
-  { slug: "men-health", path: "/men-health", icon: "activity", name: "Men's Health", tagline: "Men's wellness, screening & specialized care", specialtyCount: 3, conditions: ["Prostate health", "Hormone health", "Fitness", "Screenings"], color: "#D97706", bgTint: "rgba(217,119,6,0.07)" },
-  { slug: "mental-health", path: "/mental-health", icon: "mental", name: "Mental Health", tagline: "Psychiatry, therapy & emotional wellbeing", specialtyCount: 5, conditions: ["Anxiety", "Depression", "PTSD", "Sleep disorders"], color: "#7C3AED", bgTint: "rgba(124,58,237,0.07)" },
-  { slug: "sexual-health", path: "/sexual-health", icon: "heart", name: "Sexual Health", tagline: "Confidential sexual & reproductive health care", specialtyCount: 2, conditions: ["STI testing", "Contraception", "Fertility", "Counseling"], color: "#DB2777", bgTint: "rgba(219,39,119,0.07)" },
-  { slug: "skin-and-hair-care", path: "/skin-and-hair-care", icon: "skin", name: "Skin & Hair Care", tagline: "Dermatology, hair loss & skin condition care", specialtyCount: 3, conditions: ["Acne", "Eczema", "Hair loss", "Psoriasis"], color: "#C026D3", bgTint: "rgba(192,38,211,0.07)" },
-  { slug: "travel-global-care", path: "/travel-global-care", icon: "globe", name: "Travel & Global Care", tagline: "Telehealth support for travelers, anywhere", specialtyCount: 2, conditions: ["Food poisoning", "Travel vaccines", "Jet lag", "Altitude sickness"], color: "#0891B2", bgTint: "rgba(8,145,178,0.07)" },
-  { slug: "weight-and-nurtrition", path: "/weight-and-nurtrition", icon: "pill", name: "Weight & Nutrition", tagline: "Nutrition guidance & weight management support", specialtyCount: 2, conditions: ["Weight management", "Diet planning", "Metabolic health", "Obesity"], color: "#65A30D", bgTint: "rgba(101,163,13,0.07)" },
-  { slug: "women-health", path: "/women-health", icon: "women", name: "Women's Health", tagline: "Gynaecology, obstetrics & reproductive care", specialtyCount: 4, conditions: ["Prenatal care", "PCOS", "Menopause", "Fertility"], color: "#E8470B", bgTint: "rgba(232,71,11,0.07)" },
+  { path: "/child-and-family-care", icon: "child", name: "Children & Family Care ", tagline: "Expert medical guidance, pediatric support, preventive care and treatment for everyday health concerns, when you need it. Compassionate online healthcare for children & families.", specialtyCount: 2, conditionsCount: 8, color: "#059669", bgTint: "rgba(5,150,105,0.07)" },
+
+  { path: "/chronic-care-and-expert-opinion", icon: "activity", name: "Chronic Care & Expert Opinion", tagline: "Ongoing support for chronic health conditions with personalized treatment guidance, regular follow-ups, and expert medical opinions to help you make informed healthcare decisions.", specialtyCount: 6, conditionsCount: 34, color: "#0B57E8", bgTint: "rgba(11,87,232,0.07)" },
+
+  { path: "/eye-ear-bone", icon: "eye", name: "Eye, Ear & Bone", tagline: "Comprehensive care for vision concerns, hearing issues, ear conditions, joint pain, bone health, and musculoskeletal problems with expert medical guidance and support.", specialtyCount: 3, conditionsCount: 19, color: "#0EA5E9", bgTint: "rgba(14,165,233,0.07)" },
+
+  { path: "/general-and-everyday-care", icon: "stethoscope", name: "General & Everyday Care", tagline: "Convenient access to healthcare professionals for common illnesses, preventive care, routine health concerns, follow-up support, and personalized medical guidance whenever you need it.", specialtyCount: 3,conditionsCount: 17, color: "#4C5F87", bgTint: "rgba(76,95,135,0.07)" },
+
+  { path: "/men-health", icon: "activity", name: "Men's Health", tagline: "Confidential healthcare for men, including sexual wellness, hormonal health, hair loss, urinary concerns, preventive care, and personalized support for long-term well-being.", specialtyCount: 2, conditionsCount: 10, color: "#D97706", bgTint: "rgba(217,119,6,0.07)" },
+
+  { path: "/mental-health", icon: "mental", name: "Mental Health", tagline: "Compassionate support for anxiety, depression, stress, burnout, emotional challenges, sleep concerns, and overall mental well-being through confidential consultations.", specialtyCount: 3, conditionsCount: 17, color: "#7C3AED", bgTint: "rgba(124,58,237,0.07)" },
+
+  { path: "/categories-sexual-health", icon: "heart", name: "Sexual Health", tagline: "Confidential sexual healthcare for STI concerns, sexual wellness, contraception guidance, intimate health issues, and personalized support in a secure, judgment-free environment.", specialtyCount: 1, conditionsCount: 7, color: "#DB2777", bgTint: "rgba(219,39,119,0.07)" },
+
+  { path: "/skin-and-hair-care", icon: "skin", name: "Skin & Hair Care", tagline: "Expert support for acne, eczema, rashes, hair loss, scalp conditions, skin allergies, and healthy skin and hair care through personalized treatment guidance.", specialtyCount: 1, conditionsCount: 12, color: "#C026D3", bgTint: "rgba(192,38,211,0.07)" },
+
+  { path: "/travel-global-care", icon: "globe", name: "Travel & Global Care", tagline: "Expert healthcare support for international travelers, expatriates, medical tourists, cross-border healthcare needs, travel-related concerns, medication guidance, and ongoing care anywhere in the world.", specialtyCount: 2, conditionsCount: 11, color: "#0891B2", bgTint: "rgba(8,145,178,0.07)" },
+
+  {  path: "/weight-and-nurtrition", icon: "pill", name: "Weight & Nutrition", tagline: "Personalized nutrition support for weight management, healthy eating habits, nutritional deficiencies, digestive wellness, chronic disease management, meal planning, and long-term health goals.", specialtyCount: 3, conditionsCount: 12, color: "#65A30D", bgTint: "rgba(101,163,13,0.07)" },
+
+  { path: "/women-health", icon: "women", name: "Women's Health", tagline: "Personalized care for menstrual health, hormonal concerns, fertility support, pregnancy guidance, menopause management, reproductive wellness, birth control consultations, and preventive women's healthcare.", specialtyCount:  4, conditionsCount: 19, color: "#E8470B", bgTint: "rgba(232,71,11,0.07)" },
 ];
 
 const SPECIALTIES = [
@@ -272,7 +277,6 @@ const SPECIALTIES = [
   { slug: "ophthalmology", path: "/ophthalmology", icon: "eye", name: "Ophthalmology", featured: false },
 ];
 
-/* Conditions data — real routes */
 const CONDITIONS = [
   { slug: "arthritis", path: "/arthritis", icon: "bone", name: "Arthritis" },
   { slug: "cancer-second-opinion", path: "/cancer-second-opinion", icon: "check", name: "Cancer Second Opinion" },
@@ -288,7 +292,6 @@ const HERO_STATS = [
   { n: "11", l: "Categories" },
   { n: "30", l: "Specialties" },
   { n: "140+", l: "Conditions" },
-
 ];
 
 const CARE_CAT = [
@@ -401,58 +404,37 @@ const FAQ_GROUPS = [
       },
     ],
   },
-
 ];
-// CARE 
+
+/* ─────────────────────────────────────────────────────────────
+   CARE SECTION
+───────────────────────────────────────────────────────────── */
 function CareSection() {
   return (
     <section className="cat-b2b">
       <div className="cat-section__wrap">
         <div className="cat-b2b__grid">
-
           <div className="cat-b2b__left">
-            <span className="cat-b2b__eyebrow">
-              CARE MADE SIMPLE
-
-            </span>
-
-            <h2 className="cat-b2b__title">
-              Care Designed Around Your Health Needs
-
-            </h2>
-
+            <span className="cat-b2b__eyebrow">CARE MADE SIMPLE</span>
+            <h2 className="cat-b2b__title">Care Designed Around Your Health Needs</h2>
             <p className="cat-b2b__copy">
               Humancare Connect provides a comprehensive virtual healthcare experience that makes it easier to access trusted medical guidance, connect with experienced healthcare professionals, and receive personalized care tailored to your unique health journey.
-
             </p>
-
-            {/* <Link to="/faq" className="cat-b2b__btn">
-              View FAQs
-              <Icon name="arrowRight" size={14} />
-            </Link> */}
           </div>
-
           <div className="cat-b2b__cards">
             {CARE_CAT.map((item, i) => (
               <div className="cat-b2b__card" key={i}>
-                {/* <Icon
-                  name="building"
-                  size={22}
-                  style={{ color: "var(--primary)" }}
-                /> */}
-
                 <h3>{item.title}</h3>
-
                 <p>{item.desc}</p>
               </div>
             ))}
           </div>
-
         </div>
       </div>
     </section>
   );
 }
+
 /* ─────────────────────────────────────────────────────────────
    FAQ SECTION
 ───────────────────────────────────────────────────────────── */
@@ -463,14 +445,11 @@ function FaqSection() {
     <section className="cat-faq">
       <div className="cat-section__wrap">
         <div className="cat-faq__grid">
-
-          {/* Left intro column */}
           <div className="cat-faq__left">
             <span className="cat-faq__eyebrow">FAQ</span>
             <h2 className="cat-faq__title">Frequently Asked Questions</h2>
             <p className="cat-faq__copy">
-              Everything you need to know about primary care at Humancare
-              Connect. Can&apos;t find an answer?
+              Everything you need to know about primary care at Humancare Connect. Can&apos;t find an answer?
             </p>
             <button type="button" className="cat-faq__chat-btn">
               <Icon name="chat" size={16} />
@@ -492,7 +471,6 @@ function FaqSection() {
             </div>
           </div>
 
-          {/* Right accordion column */}
           <div className="cat-faq__right">
             {FAQ_GROUPS.map((group, gi) => (
               <div className="cat-faq__group" key={group.label}>
@@ -529,18 +507,6 @@ function FaqSection() {
             ))}
           </div>
         </div>
-
-        {/* Bottom dark CTA bar */}
-        {/* <div className="cat-faq__cta">
-          <div className="cat-faq__cta-text">
-            <p className="cat-faq__cta-title">Still have questions?</p>
-            <p className="cat-faq__cta-sub">Our care team is available 24/7</p>
-          </div>
-          <Link to="/appointment-booking" className="cat-faq__cta-btn">
-            Book a Call
-            <Icon name="arrowRight" size={14} />
-          </Link>
-        </div> */}
       </div>
     </section>
   );
@@ -570,10 +536,9 @@ export default function Categories() {
         />
       </Helmet>
 
-      {/* ── Hero ────────────────────────────────────────────── */}
+      {/* ── Hero ── */}
       <section className="cat-hero">
         <div className="cat-hero__inner">
-
           <div className="cat-hero__left">
             <div className="cat-hero__eyebrow">
               <Icon name="globe" size={14} />
@@ -583,8 +548,7 @@ export default function Categories() {
               Explore Online Doctor Consultation Services Designed Around Your Needs
             </h1>
             <p className="cat-hero__copy">
-              Find the right care with Humancare Connect’s comprehensive range of virtual healthcare services. From everyday health concerns and mental wellness to chronic care, women’s health, skin and hair care, and specialized medical support, our online doctor consultation services are designed to connect you with appropriate healthcare professionals and personalized care solutions.
-
+              Find the right care with Humancare Connect's comprehensive range of virtual healthcare services. From everyday health concerns and mental wellness to chronic care, women's health, skin and hair care, and specialized medical support, our online doctor consultation services are designed to connect you with appropriate healthcare professionals and personalized care solutions.
             </p>
             <div className="cat-hero-stats">
               {HERO_STATS.map(({ n, l }) => (
@@ -595,15 +559,13 @@ export default function Categories() {
               ))}
             </div>
           </div>
-
           <div className="cat-hero__right">
             <HeroCarousel />
           </div>
-
         </div>
       </section>
 
-      {/* ── Category Cards (4×3 grid) ───────────────────────── */}
+      {/* ── Category Cards ── */}
       <section className="cat-section cat-section--bg">
         <div className="cat-section__wrap">
           <div className="cat-section__header">
@@ -647,23 +609,35 @@ export default function Categories() {
           ) : (
             <div className="cat-grid">
               {filtered.map((cat, i) => (
-                <Link key={cat.slug} to={cat.path} className="cat-card" style={{ animationDelay: `${i * 50}ms` }}>
-                  <div className="cat-card__icon" style={{ background: cat.bgTint, color: cat.color }}>
-                    <Icon name={cat.icon} size={22} />
+                <Link
+                  key={cat.slug}
+                  to={cat.path}
+                  className="cat-card"
+                  style={{ animationDelay: `${i * 50}ms` }}
+                >
+                  {/* ── ROW 1: Icon + Title ── */}
+                  <div className="cat-card__header">
+                    <div
+                      className="cat-card__icon"
+                      style={{ background: cat.bgTint, color: cat.color }}
+                    >
+                      <Icon name={cat.icon} size={20} />
+                    </div>
+                    <h3 className="cat-card__name">{cat.name}</h3>
                   </div>
-                  <h3 className="cat-card__name">{cat.name}</h3>
+
+                  {/* ── ROW 2: Description ── */}
                   <p className="cat-card__tagline">{cat.tagline}</p>
-                  <div className="cat-card__chips">
-                    {cat.conditions.slice(0, 3).map(cond => (
-                      <span key={cond} className="cat-card__chip" style={{ background: cat.bgTint, color: cat.color }}>{cond}</span>
-                    ))}
-                    {cat.conditions.length > 3 && (
-                      <span className="cat-card__chip" style={{ background: "#F7FAFF", color: "#5C7099" }}>+{cat.conditions.length - 3} more</span>
-                    )}
-                  </div>
+
+                  {/* ── ROW 3: Count + Arrow ── */}
                   <div className="cat-card__footer">
-                    <span className="cat-card__count">{cat.specialtyCount} Specialties · {cat.conditions.length} Conditions</span>
-                    <span className="cat-card__arrow" style={{ background: cat.bgTint, color: cat.color }}>
+                    <span className="cat-card__count">
+                      {cat.specialtyCount} Specialties · {cat.conditionsCount} Conditions
+                    </span>
+                    <span
+                      className="cat-card__arrow"
+                      style={{ background: cat.bgTint, color: cat.color }}
+                    >
                       <Icon name="chevronRight" size={14} />
                     </span>
                   </div>
@@ -674,17 +648,14 @@ export default function Categories() {
         </div>
       </section>
 
-      {/* ── Specialties Strip ───────────────────────────────── */}
+      {/* ── Specialties Strip ── */}
       <section className="cat-section cat-section--white">
         <div className="cat-section__wrap">
           <div className="cat-section__header--center">
-            <span className="cat-eyebrow">EXPERT SPECIALTY CARE
-            </span>
-            <h2 className="cat-heading">Connect With the Right Healthcare Specialist
-            </h2>
+            <span className="cat-eyebrow">EXPERT SPECIALTY CARE</span>
+            <h2 className="cat-heading">Connect With the Right Healthcare Specialist</h2>
             <p className="cat-subtext--center">
               Find trusted healthcare professionals across a wide range of medical specialties. Humancare Connect makes it simple to access expert medical guidance, personalized treatment support, and specialized care through online doctor consultation services designed around your unique health needs.
-
             </p>
           </div>
           <div className="cat-spec-grid">
@@ -713,7 +684,7 @@ export default function Categories() {
         </div>
       </section>
 
-      {/* ── CONDITIONS Strip ─────────────────────────────── */}
+      {/* ── CONDITIONS Strip ── */}
       <section className="cat-section cat-section--bg">
         <div className="cat-section__wrap">
           <div className="cat-section__header--center">
@@ -746,10 +717,11 @@ export default function Categories() {
       </section>
 
       <CareSection />
-      {/* ── FAQ ─────────────────────────────────────────────── */}
+
+      {/* ── FAQ ── */}
       <FaqSection />
 
-      {/* ── CTA ─────────────────────────────────────────────── */}
+      {/* ── CTA ── */}
       <section className="cat-cta">
         <div className="cat-cta__card">
           <div className="cat-cta__tag">

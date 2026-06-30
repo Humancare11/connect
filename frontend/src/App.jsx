@@ -29,6 +29,7 @@ const VideoCall = lazy(() => import("./pages/VideoCall"));
 import socket from "./socket";
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
+import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
 import useLenis from "./hooks/useLenis";
 import api from "./api";
 import {
@@ -41,8 +42,6 @@ import {
 
 import AboutUs from "./pages/AboutPage"; // about us page
 
-// Specialty pages
-// import SPdemo from "./pages/Specialty/SPeDemo";
 import AboutPage from "./pages/AboutPage";
 import PCP from "./pages/PCP";
 
@@ -313,6 +312,7 @@ import TravelMedicine from "./pages/Specialty/TravelAndGlobalCare/TravelMedicine
 import WeightManagement from "./pages/Specialty/WeightAndNutrition/WeightManagement";
 import LifestyleMedicine from "./pages/Specialty/WeightAndNutrition/LifestyleMedicine";
 import NutritionAndDietetics from "./pages/Specialty/WeightAndNutrition/NutritionAndDietetics";
+import EndocrinologySpeciality from "./pages/Specialty/ChronicCare&ExpertOpinion/Endocrinology";
 
 // General & Everyday Care
 import FamilyMedicine from "./pages/Specialty/General&EverydayCare/FamilyMedicine";
@@ -335,7 +335,7 @@ import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
 import DoctorNoteSickNote from "./pages/NewServices/DoctorNoteSickNote";
-import FittoFly from "./pages/NewServices/FittoFly";
+import FitToFly from "./pages/NewServices/FitToFly";
 import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
@@ -392,6 +392,16 @@ const SuperAdminDashboard = lazy(
 );
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 
+const EmployeeAdminLogin = lazy(() => import("./pages/employee/EmployeeLogin"));
+const EmployeeAdminLayout = lazy(
+  () => import("./pages/employee/EmployeeLayout"),
+);
+const EmployeeAdminDashboard = lazy(
+  () => import("./pages/employee/EmployeeDashboard"),
+);
+const EmployeeTasks = lazy(() => import("./pages/employee/EmployeeTasks"));
+const AssignTask = lazy(() => import("./pages/employee/Assigntask"));
+
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
 const Appointments = lazy(() => import("./pages/user/Appointments"));
@@ -432,6 +442,13 @@ function PrivateRoute({ children, allowedRoles, loginPath = "/adminauth" }) {
   if (!allowedRoles.includes(admin.role))
     return <Navigate to={loginPath} replace />;
 
+  return children;
+}
+
+function EmployeeAdminPrivateRoute({ children }) {
+  const { employeeAdmin, loading } = useEmployeeAdmin();
+  if (loading) return null;
+  if (!employeeAdmin) return <Navigate to="/employee-login" replace />;
   return children;
 }
 
@@ -613,6 +630,7 @@ function AppLayout() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/payment-admin") ||
     location.pathname.startsWith("/superadmin") ||
+    location.pathname.startsWith("/employee") ||
     location.pathname.startsWith("/user") ||
     location.pathname.startsWith("/pay/") ||
     location.pathname.startsWith("/video-call");
@@ -821,6 +839,51 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
+          <Route path="/employee-login" element={<EmployeeAdminLogin />} />
+          <Route
+            path="/employee-dashboard"
+            element={
+              <EmployeeAdminPrivateRoute>
+                <EmployeeAdminLayout>
+                  <EmployeeAdminDashboard />
+                </EmployeeAdminLayout>
+              </EmployeeAdminPrivateRoute>
+            }
+          />
+          <Route
+            path="/employee-dashboard/tasks"
+            element={<Navigate to="/employee-dashboard/my-tasks" replace />}
+          />
+          <Route
+            path="/employee-dashboard/my-tasks"
+            element={
+              <EmployeeAdminPrivateRoute>
+                <EmployeeAdminLayout>
+                  <EmployeeTasks mode="my" />
+                </EmployeeAdminLayout>
+              </EmployeeAdminPrivateRoute>
+            }
+          />
+          <Route
+            path="/employee-dashboard/my-tasks/:taskId"
+            element={
+              <EmployeeAdminPrivateRoute>
+                <EmployeeAdminLayout>
+                  <EmployeeTasks mode="detail" />
+                </EmployeeAdminLayout>
+              </EmployeeAdminPrivateRoute>
+            }
+          />
+          <Route
+            path="/employee-dashboard/assign-task"
+            element={
+              <EmployeeAdminPrivateRoute>
+                <EmployeeAdminLayout>
+                  <AssignTask />
+                </EmployeeAdminLayout>
+              </EmployeeAdminPrivateRoute>
+            }
+          />
           <Route
             path="/payment-admin"
             element={<Navigate to="/payment-admin/payment-links" replace />}
@@ -1070,9 +1133,10 @@ function AppLayout() {
           <Route path="/gastroenterology" element={<Gastroenterology />} />
           <Route path="/neurology" element={<Neurology />} />
           <Route path="/pulmonology" element={<Pulmonology />} />
-          <Route path="/ent" element={<Ent />} />
+          <Route path="/ear-nose-throat" element={<Ent />} />
           <Route path="/ophthalmology" element={<Ophthalmology />} />
           <Route path="/orthopedics" element={<Orthopedics />} />
+          <Route path="/endocrinology" element={<EndocrinologySpeciality />} />
           <Route path="/mens-health" element={<MensHealth />} />
           <Route path="/urology" element={<Urology />} />
           <Route path="/behavioral-health" element={<BehavioralHealth />} />
@@ -1082,7 +1146,7 @@ function AppLayout() {
             element={<PsychologyCounseling />}
           />
           <Route
-            path="/sexual-health-speciality"
+            path="/speciality-sexual-health"
             element={<SexualHealthSpeciality />}
           />
           <Route path="/dermatology" element={<Dermatology />} />
@@ -1608,7 +1672,7 @@ function AppLayout() {
             path="/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
-          <Route path="/fit-to-fly" element={<FittoFly />} />
+          <Route path="/fit-to-fly-certificate" element={<FitToFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
           <Route
             path="/doctor-note-or-sick-notes"

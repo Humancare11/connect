@@ -66,6 +66,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/ophthalmology-eye-specialist-vision-care-banner.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/ophthalmologist-comprehensive-eye-examination-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,10 +78,12 @@ const SPECIALTY_DATA = {
   tagline: "Protecting Your Vision with Expert Eye Care.",
   heroDescription:
     "Ophthalmology specialists diagnose, treat, and manage conditions affecting the eyes, vision, and overall eye health. From dry eyes and eye irritation to vision changes and eye infections, ophthalmologists provide comprehensive care designed to protect sight, relieve discomfort, and support long-term visual wellness.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified ophthalmologist providing comprehensive eye examination and vision care for patients with eye health and vision concerns.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Ophthalmologist performing a comprehensive eye examination during a patient consultation for vision assessment and long-term eye health.",
   overviewDescription:
     "Ophthalmology is a medical specialty focused on the diagnosis, treatment, prevention, and management of eye diseases and vision-related conditions. Ophthalmologists are trained to evaluate a wide range of eye concerns, from common irritations and infections to more complex vision disorders affecting daily life.",
   overviewImportance:
@@ -575,7 +580,7 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -592,15 +597,15 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__description">{data.heroDescription}</p>
 
               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -614,7 +619,7 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -800,15 +805,18 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>
