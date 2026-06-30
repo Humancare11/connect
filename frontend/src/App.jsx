@@ -335,7 +335,7 @@ import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
 import DoctorNoteSickNote from "./pages/NewServices/DoctorNoteSickNote";
-import FitToFly from "./pages/NewServices/FitToFly";
+import FittoFly from "./pages/NewServices/FittoFly";
 import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
