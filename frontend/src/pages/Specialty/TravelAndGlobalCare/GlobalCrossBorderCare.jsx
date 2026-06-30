@@ -73,6 +73,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/aglobal-cross-border-care-telemedicine-consultation.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/global-cross-border-healthcare-support-specialists.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,10 +85,12 @@ const SPECIALTY_DATA = {
   tagline: "Healthcare Support Wherever Life Takes You.",
   heroDescription:
     "Global Cross-Border Care helps patients access trusted medical guidance, specialist consultations, medication support, and healthcare coordination across countries and regions. Whether you're traveling, living abroad, relocating internationally, or seeking medical guidance from another country, our healthcare professionals provide convenient access to quality care through secure telemedicine services. With personalized support and international care coordination, patients can stay connected to healthcare providers no matter where they are in the world.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Global Cross-Border Care telemedicine consultation with international healthcare specialists",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Healthcare specialists providing global cross-border medical support and virtual care",
   overviewDescription:
     "Global Cross-Border Care is designed to support individuals who need healthcare access while traveling internationally, living overseas, relocating to a new country, or managing healthcare needs across multiple locations. Through virtual healthcare services and telemedicine consultations, patients can receive medical guidance, treatment recommendations, medication assistance, and referral support from experienced providers.",
   overviewImportance:
@@ -582,7 +587,7 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -598,16 +603,16 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -621,7 +626,7 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -811,7 +816,10 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
                   <FiSearch size={18} />
                   Find a Doctor
                 </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
                   <FiCalendar size={18} />
                   Book Appointment
                 </a>

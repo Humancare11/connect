@@ -71,6 +71,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/psychiatry-mental-health-specialist-consultation-banner.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/psychiatrist-patient-mental-health-evaluation-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,10 +83,12 @@ const SPECIALTY_DATA = {
   tagline: "Compassionate Mental Health Care Designed Around You.",
   heroDescription:
     "Psychiatry specialists diagnose, treat, and manage mental health conditions that affect emotions, thoughts, behaviors, relationships, and overall well-being. Whether you're experiencing anxiety, depression, sleep difficulties, attention challenges, or mood disorders, psychiatric care provides personalized support to help you feel better and improve your quality of life.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified psychiatrist providing a mental health consultation for anxiety, depression, ADHD, PTSD, and emotional wellness.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Psychiatrist discussing mental health symptoms and personalized treatment options with a patient during a behavioral health consultation.",
   overviewDescription:
     "Psychiatry is a medical specialty focused on the diagnosis, treatment, prevention, and management of mental health conditions. Psychiatrists are medical doctors trained to evaluate emotional, psychological, and behavioral concerns while providing comprehensive treatment plans tailored to individual needs.",
   overviewImportance:
@@ -581,7 +586,7 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -597,16 +602,16 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -620,7 +625,7 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -811,7 +816,10 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
                   <FiSearch size={18} />
                   Find a Doctor
                 </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
                   <FiCalendar size={18} />
                   Book Appointment
                 </a>

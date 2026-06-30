@@ -56,6 +56,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/gastroenterology-specialist-digestive-health-consultation.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/gastroenterologist-digestive-system-examination.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,10 +68,12 @@ const SPECIALTY_DATA = {
   tagline: "Expert Care for a Healthier Digestive System.",
   heroDescription:
     "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. From abdominal pain and acid reflux to chronic digestive disorders and liver conditions, gastroenterologists provide personalized care to help patients achieve better digestive health and overall well-being.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Board-certified gastroenterologist providing digestive health evaluation and treatment for acid reflux, IBS, abdominal pain, and gastrointestinal disorders",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Gastroenterologist examining a patient for digestive disorders, liver disease, GERD, abdominal pain, and gastrointestinal health",
   overviewDescription:
     "Gastroenterology is a medical specialty focused on the prevention, diagnosis, and treatment of disorders affecting the digestive tract and related organs. Gastroenterologists evaluate symptoms such as abdominal pain, heartburn, bloating, constipation, diarrhea, and digestive discomfort to identify underlying causes and develop effective treatment plans.",
   overviewImportance:
@@ -563,7 +568,7 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -579,16 +584,16 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -602,7 +607,7 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -788,16 +793,19 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
             </Reveal>
 
             <Reveal delay={80}>
-             <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-cta__actions">
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

@@ -72,6 +72,8 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/psychology-counseling-mental-health-support-therapy.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/psychology-counseling-session-emotional-wellness.webp";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,10 +83,12 @@ const SPECIALTY_DATA = {
   tagline: "Compassionate Support for Life's Emotional Challenges.",
   heroDescription:
     "Psychology counseling provides a safe, supportive space to explore thoughts, emotions, behaviors, and life experiences. Whether you're facing stress, grief, relationship difficulties, trauma, or self-esteem concerns, counseling can help you develop healthier coping strategies, improve emotional well-being, and build resilience for everyday life. Through personalized counseling and evidence-based therapeutic approaches, psychology specialists help individuals navigate challenges, strengthen emotional health, and achieve personal growth.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Licensed psychology counselor providing mental health support, therapy, stress management, and emotional wellness counseling",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Psychology counseling session helping patients with emotional wellness, stress management, trauma support, and personal growth",
   overviewDescription:
     "Psychology counseling focuses on helping individuals understand and manage emotional, behavioral, and interpersonal challenges. Licensed counselors and psychologists provide professional support for life transitions, stress, grief, relationships, trauma, self-esteem concerns, and emotional well-being.",
   overviewImportance:
@@ -582,7 +586,7 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -598,16 +602,16 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -621,7 +625,7 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -806,16 +810,19 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
             </Reveal>
 
             <Reveal delay={80}>
-             <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-cta__actions">
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

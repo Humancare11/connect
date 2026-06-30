@@ -68,6 +68,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/mens-health-specialist-consultation.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/mens-health-wellness-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,10 +80,12 @@ const SPECIALTY_DATA = {
   tagline: "Personalized Healthcare Designed for Men's Unique Health Needs.",
   heroDescription:
     "Men's health specialists focus on the physical, hormonal, sexual, and preventive healthcare needs of men throughout every stage of life. From managing hormone imbalances and sexual wellness concerns to supporting prostate health and healthy aging, men's health care provides personalized treatment plans that help men feel their best and maintain long-term wellness.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Men's health specialist consulting with a male patient about preventive care, hormone health, and overall wellness",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Men's health specialist providing a personalized wellness and preventive healthcare consultation",
   overviewDescription:
     "Men's Health is a specialized area of healthcare dedicated to preventing, diagnosing, and treating conditions that commonly affect men. These services focus on sexual health, hormone balance, reproductive wellness, prostate care, preventive screenings, and age-related health concerns.",
   overviewImportance:
@@ -578,7 +583,7 @@ export default function MensHealth({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -594,16 +599,16 @@ export default function MensHealth({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -617,7 +622,7 @@ export default function MensHealth({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -804,15 +809,18 @@ export default function MensHealth({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

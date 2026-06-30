@@ -73,6 +73,8 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/travel-medicine-specialist-consultation.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/travel-medicine-health-consultation.webp";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,10 +84,12 @@ const SPECIALTY_DATA = {
   tagline: "Stay Healthy Before, During, and After Your Journey.",
   heroDescription:
     "Travel Medicine focuses on preventing, identifying, and managing health concerns related to domestic and international travel. Whether you're planning a vacation, business trip, adventure travel, or long-term relocation, travel medicine specialists help you prepare for potential health risks and stay healthy throughout your journey.From travel vaccinations and preventive health planning to post-travel illness evaluations, our specialists provide personalized guidance based on your destination, activities, and health history.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Travel medicine specialist providing pre-travel consultation, vaccination guidance, and international travel health planning",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Travel medicine specialist discussing travel vaccinations, disease prevention, and destination-specific health advice",
   overviewDescription:
     "Travel Medicine is a healthcare specialty dedicated to helping travelers prevent and manage health risks associated with domestic and international travel. This includes vaccination recommendations, infectious disease prevention, travel-related illness management, food and water safety guidance, and post-travel health evaluations.",
   overviewImportance:
@@ -584,7 +588,7 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -600,16 +604,16 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -623,7 +627,7 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -811,15 +815,18 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

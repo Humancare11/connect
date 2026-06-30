@@ -73,6 +73,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/nutrition-and-dietetics-specialist-consultation-healthy-eating-guidance.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/registered-dietitian-personalized-meal-planning-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,10 +85,12 @@ const SPECIALTY_DATA = {
   tagline: "Personalized Nutrition for Better Health and Wellness.",
   heroDescription:
     "Nutrition & Dietetics focuses on helping individuals improve their health through evidence-based nutrition guidance and personalized dietary planning. Whether you're managing a chronic condition, pursuing weight goals, improving athletic performance, supporting a healthy pregnancy, or simply wanting to eat better, nutrition specialists provide expert guidance tailored to your unique needs. Good nutrition plays a critical role in overall wellness, disease prevention, energy levels, and long-term health. Through customized meal planning and lifestyle-focused support, patients can build healthier eating habits that last.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Nutrition and dietetics specialist providing personalized nutrition counseling and healthy eating guidance to improve overall wellness.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Registered dietitian discussing personalized meal planning, balanced nutrition, and healthy lifestyle recommendations with a patient.",
   overviewDescription:
     "Nutrition & Dietetics is a healthcare specialty dedicated to understanding how food and nutrition affect health, wellness, disease prevention, and recovery. Registered dietitians and nutrition specialists help individuals make informed dietary choices that support specific health goals and medical needs.",
   overviewImportance:
@@ -582,7 +587,7 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -598,16 +603,16 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -621,7 +626,7 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -808,15 +813,18 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

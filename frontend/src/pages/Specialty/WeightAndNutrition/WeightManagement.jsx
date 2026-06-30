@@ -73,6 +73,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/weight-management-specialist-consultation-healthy-weight-loss.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/weight-management-nutrition-counseling-lifestyle-support.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,10 +85,12 @@ const SPECIALTY_DATA = {
   tagline: "Sustainable Weight Loss and Healthier Living Starts Here.",
   heroDescription:
     "Weight Management focuses on helping individuals achieve and maintain a healthy weight through personalized care, evidence-based treatment plans, nutrition guidance, lifestyle modifications, and ongoing support. Whether you're struggling with obesity, emotional eating, weight-related health concerns, or simply want a structured weight loss plan, our specialists can help you build a healthier future. Successful weight management goes beyond dieting. It involves understanding your health, habits, lifestyle, and personal goals to create a realistic and sustainable path toward long-term wellness. ",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Weight management specialist providing personalized weight loss and obesity care consultation",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Weight management specialist discussing nutrition, healthy eating, and sustainable lifestyle changes with a patient",
   overviewDescription:
     "Weight Management is a healthcare specialty focused on helping patients reach and maintain a healthy body weight while improving overall health and reducing obesity-related risks. Specialists evaluate factors such as nutrition, physical activity, medical conditions, medications, metabolism, and behavioral patterns to create personalized treatment plans.",
   overviewImportance:
@@ -592,7 +597,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -609,15 +614,15 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__description">{data.heroDescription}</p>
 
               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -631,7 +636,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -816,16 +821,19 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
             </Reveal>
 
             <Reveal delay={80}>
-             <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-cta__actions">
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>

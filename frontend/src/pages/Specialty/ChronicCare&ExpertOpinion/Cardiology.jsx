@@ -55,6 +55,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/cardiology-specialist-heart-care-consultation.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/board-certified-cardiologist-heart-examination.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,10 +67,12 @@ const SPECIALTY_DATA = {
   tagline: "Protecting Your Heart with Expert Cardiovascular Care.",
   heroDescription:
     "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. From routine heart screenings and blood pressure management to treating heart disease, chest pain, and irregular heart rhythms, cardiologists are dedicated to supporting lifelong heart health.",
-  heroImage:
-    "https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Cardiology specialist providing comprehensive heart care, cardiovascular evaluation, and preventive cardiac treatment",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Board-certified cardiologist performing a heart examination and cardiovascular assessment for a patient",
   overviewDescription:
     "Cardiology is a medical specialty focused on the diagnosis, treatment, and prevention of conditions affecting the heart and circulatory system. Cardiologists use advanced evaluations, diagnostic testing, and personalized treatment plans to manage heart-related conditions and reduce the risk of serious cardiovascular complications.",
   overviewImportance:
@@ -550,7 +555,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         <div className="sp-hero__bg">
           <img
             src={data.heroImage}
-            alt={`${data.name} — HumanCare Connect`}
+            alt={data.heroAlt}
             className="sp-hero__img"
             loading="eager"
           />
@@ -566,7 +571,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
             <p className="sp-hero__tagline">{data.tagline}</p>
             <p className="sp-hero__description">{data.heroDescription}</p>
 
-             <div className="sp-hero__actions">
+            <div className="sp-hero__actions">
               <a href="/Specialties" className="sp-btn sp-btn--primary">
                 <FiSearch size={17} />
                 Find Specialists
@@ -589,7 +594,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
               <div className="sp-overview__img-wrap">
                 <img
                   src={data.overviewImage}
-                  alt={`${data.name} specialists`}
+                  alt={data.overviewAlt}
                   className="sp-overview__img"
                   loading="lazy"
                 />
@@ -774,7 +779,10 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                 <FiSearch size={18} />
                 Find a Doctor
               </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
+              <a
+                href="/appointment-booking"
+                className="sp-btn sp-btn--ghost-lg"
+              >
                 <FiCalendar size={18} />
                 Book Appointment
               </a>

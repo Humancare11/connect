@@ -554,7 +554,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         <div className="sp-hero__bg">
           <img
             src={data.heroImage}
-            alt={`${data.name} — HumanCare Connect`}
+            alt={data.heroAlt}
             className="sp-hero__img"
             loading="eager"
           />
@@ -593,7 +593,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
               <div className="sp-overview__img-wrap">
                 <img
                   src={data.overviewImage}
-                  alt={`${data.name} specialists`}
+                  alt={data.overviewAlt}
                   className="sp-overview__img"
                   loading="lazy"
                 />

@@ -71,6 +71,9 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 
+import heroImage from "../../../assets/SpecialitiesImage/behavioral-health-mental-health-counseling-session-banner.webp";
+import overviewImage from "../../../assets/SpecialitiesImage/behavioral-health-therapy-patient-consultation.webp";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,10 +83,12 @@ const SPECIALTY_DATA = {
   tagline: "Supporting Mental, Emotional, and Behavioral Well-Being.",
   heroDescription:
     "Behavioral Health specialists help individuals navigate emotional challenges, behavioral concerns, life transitions, stress, and mental health conditions. Through personalized care, evidence-based treatment plans, and compassionate support, behavioral health services empower individuals to improve emotional resilience, develop healthier coping strategies, and achieve overall well-being.",
-  heroImage:
-    "https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1600&q=80",
-  overviewImage:
-    "https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=800&q=80",
+  heroImage: heroImage,
+  heroAlt:
+    "Behavioral health specialist providing mental health counseling and emotional wellness support during a therapy session.",
+  overviewImage: overviewImage,
+  overviewAlt:
+    "Behavioral health therapist discussing emotional well-being and personalized treatment with a patient.",
   overviewDescription:
     "Behavioral Health focuses on the connection between thoughts, emotions, behaviors, and overall wellness. This specialty addresses emotional and behavioral challenges that can impact relationships, work performance, sleep, daily functioning, and quality of life.",
   overviewImportance:
@@ -582,7 +587,7 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
-              alt={`${data.name} — HumanCare Connect`}
+              alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
             />
@@ -598,16 +603,16 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-               <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div>
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -621,7 +626,7 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
-                    alt={`${data.name} specialists`}
+                    alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
                   />
@@ -808,15 +813,18 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
 
             <Reveal delay={80}>
               <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost-lg">
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
             </Reveal>
 
             <Reveal delay={130}>
