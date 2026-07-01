@@ -66,7 +66,7 @@ function Icon({ name, size = 18, style, className }) {
   return <Component size={size} style={style} className={className} aria-hidden="true" />;
 }
 
-/* ─────────────────────────────────────────────────────────────
+/* ────────────────────────────────────────────────────────────
    CAROUSEL DATA
 ───────────────────────────────────────────────────────────── */
 const SLIDES = [
@@ -243,17 +243,27 @@ function HeroCarousel() {
    STATIC DATA
 ───────────────────────────────────────────────────────────── */
 const CATEGORIES = [
-  { slug: "child-and-family-care", path: "/child-and-family-care", icon: "child", name: "Child & Family Care", tagline: "Pediatrics, parenting support & whole-family health", specialtyCount: 3, conditions: ["Vaccinations", "Growth checks", "Fever", "Allergies"], color: "#059669", bgTint: "rgba(5,150,105,0.07)" },
-  { slug: "chronic-care-and-expert-opinion", path: "/chronic-care-and-expert-opinion", icon: "activity", name: "Chronic Care & Expert Opinion", tagline: "Ongoing condition management & specialist second opinions", specialtyCount: 4, conditions: ["Diabetes", "Hypertension", "Heart disease", "Second opinion"], color: "#0B57E8", bgTint: "rgba(11,87,232,0.07)" },
-  { slug: "eye-ear-bone", path: "/eye-ear-bone", icon: "eye", name: "Eye, Ear & Bone", tagline: "Ophthalmology, ENT & musculoskeletal care", specialtyCount: 3, conditions: ["Vision screening", "Hearing loss", "Joint pain", "Fractures"], color: "#0EA5E9", bgTint: "rgba(14,165,233,0.07)" },
-  { slug: "general-everyday-care", path: "/general-and-everyday-care", icon: "stethoscope", name: "General & Everyday Care", tagline: "Primary care for common, everyday health concerns", specialtyCount: 3, conditions: ["Cold & flu", "Fever", "Infections", "Check-ups"], color: "#4C5F87", bgTint: "rgba(76,95,135,0.07)" },
-  { slug: "men-health", path: "/men-health", icon: "activity", name: "Men's Health", tagline: "Men's wellness, screening & specialized care", specialtyCount: 3, conditions: ["Prostate health", "Hormone health", "Fitness", "Screenings"], color: "#D97706", bgTint: "rgba(217,119,6,0.07)" },
-  { slug: "mental-health", path: "/mental-health", icon: "mental", name: "Mental Health", tagline: "Psychiatry, therapy & emotional wellbeing", specialtyCount: 5, conditions: ["Anxiety", "Depression", "PTSD", "Sleep disorders"], color: "#7C3AED", bgTint: "rgba(124,58,237,0.07)" },
-  { slug: "sexual-health", path: "/sexual-health", icon: "heart", name: "Sexual Health", tagline: "Confidential sexual & reproductive health care", specialtyCount: 2, conditions: ["STI testing", "Contraception", "Fertility", "Counseling"], color: "#DB2777", bgTint: "rgba(219,39,119,0.07)" },
-  { slug: "skin-and-hair-care", path: "/skin-and-hair-care", icon: "skin", name: "Skin & Hair Care", tagline: "Dermatology, hair loss & skin condition care", specialtyCount: 3, conditions: ["Acne", "Eczema", "Hair loss", "Psoriasis"], color: "#C026D3", bgTint: "rgba(192,38,211,0.07)" },
-  { slug: "travel-global-care", path: "/travel-global-care", icon: "globe", name: "Travel & Global Care", tagline: "Telehealth support for travelers, anywhere", specialtyCount: 2, conditions: ["Food poisoning", "Travel vaccines", "Jet lag", "Altitude sickness"], color: "#0891B2", bgTint: "rgba(8,145,178,0.07)" },
-  { slug: "weight-and-nurtrition", path: "/weight-and-nurtrition", icon: "pill", name: "Weight & Nutrition", tagline: "Nutrition guidance & weight management support", specialtyCount: 2, conditions: ["Weight management", "Diet planning", "Metabolic health", "Obesity"], color: "#65A30D", bgTint: "rgba(101,163,13,0.07)" },
-  { slug: "women-health", path: "/women-health", icon: "women", name: "Women's Health", tagline: "Gynaecology, obstetrics & reproductive care", specialtyCount: 4, conditions: ["Prenatal care", "PCOS", "Menopause", "Fertility"], color: "#E8470B", bgTint: "rgba(232,71,11,0.07)" },
+  { path: "/child-and-family-care", icon: "child", name: "Children & Family Care ", tagline: "Expert medical guidance, pediatric support, preventive care and treatment for everyday health concerns, when you need it. Compassionate online healthcare for children & families.", specialtyCount: 2, conditionsCount: 8, color: "#059669", bgTint: "rgba(5,150,105,0.07)" },
+
+  { path: "/chronic-care-and-expert-opinion", icon: "activity", name: "Chronic Care & Expert Opinion", tagline: "Ongoing support for chronic health conditions with personalized treatment guidance, regular follow-ups, and expert medical opinions to help you make informed healthcare decisions.", specialtyCount: 6, conditionsCount: 34, color: "#0B57E8", bgTint: "rgba(11,87,232,0.07)" },
+
+  { path: "/eye-ear-bone", icon: "eye", name: "Eye, Ear & Bone", tagline: "Comprehensive care for vision concerns, hearing issues, ear conditions, joint pain, bone health, and musculoskeletal problems with expert medical guidance and support.", specialtyCount: 3, conditionsCount: 19, color: "#0EA5E9", bgTint: "rgba(14,165,233,0.07)" },
+
+  { path: "/general-and-everyday-care", icon: "stethoscope", name: "General & Everyday Care", tagline: "Convenient access to healthcare professionals for common illnesses, preventive care, routine health concerns, follow-up support, and personalized medical guidance whenever you need it.", specialtyCount: 3,conditionsCount: 17, color: "#4C5F87", bgTint: "rgba(76,95,135,0.07)" },
+
+  { path: "/men-health", icon: "activity", name: "Men's Health", tagline: "Confidential healthcare for men, including sexual wellness, hormonal health, hair loss, urinary concerns, preventive care, and personalized support for long-term well-being.", specialtyCount: 2, conditionsCount: 10, color: "#D97706", bgTint: "rgba(217,119,6,0.07)" },
+
+  { path: "/mental-health", icon: "mental", name: "Mental Health", tagline: "Compassionate support for anxiety, depression, stress, burnout, emotional challenges, sleep concerns, and overall mental well-being through confidential consultations.", specialtyCount: 3, conditionsCount: 17, color: "#7C3AED", bgTint: "rgba(124,58,237,0.07)" },
+
+  { path: "/categories-sexual-health", icon: "heart", name: "Sexual Health", tagline: "Confidential sexual healthcare for STI concerns, sexual wellness, contraception guidance, intimate health issues, and personalized support in a secure, judgment-free environment.", specialtyCount: 1, conditionsCount: 7, color: "#DB2777", bgTint: "rgba(219,39,119,0.07)" },
+
+  { path: "/skin-and-hair-care", icon: "skin", name: "Skin & Hair Care", tagline: "Expert support for acne, eczema, rashes, hair loss, scalp conditions, skin allergies, and healthy skin and hair care through personalized treatment guidance.", specialtyCount: 1, conditionsCount: 12, color: "#C026D3", bgTint: "rgba(192,38,211,0.07)" },
+
+  { path: "/travel-global-care", icon: "globe", name: "Travel & Global Care", tagline: "Expert healthcare support for international travelers, expatriates, medical tourists, cross-border healthcare needs, travel-related concerns, medication guidance, and ongoing care anywhere in the world.", specialtyCount: 2, conditionsCount: 11, color: "#0891B2", bgTint: "rgba(8,145,178,0.07)" },
+
+  {  path: "/weight-and-nurtrition", icon: "pill", name: "Weight & Nutrition", tagline: "Personalized nutrition support for weight management, healthy eating habits, nutritional deficiencies, digestive wellness, chronic disease management, meal planning, and long-term health goals.", specialtyCount: 3, conditionsCount: 12, color: "#65A30D", bgTint: "rgba(101,163,13,0.07)" },
+
+  { path: "/women-health", icon: "women", name: "Women's Health", tagline: "Personalized care for menstrual health, hormonal concerns, fertility support, pregnancy guidance, menopause management, reproductive wellness, birth control consultations, and preventive women's healthcare.", specialtyCount:  4, conditionsCount: 19, color: "#E8470B", bgTint: "rgba(232,71,11,0.07)" },
 ];
 
 const SPECIALTIES = [
@@ -622,7 +632,7 @@ export default function Categories() {
                   {/* ── ROW 3: Count + Arrow ── */}
                   <div className="cat-card__footer">
                     <span className="cat-card__count">
-                      {cat.specialtyCount} Specialties · {cat.conditions.length} Conditions
+                      {cat.specialtyCount} Specialties · {cat.conditionsCount} Conditions
                     </span>
                     <span
                       className="cat-card__arrow"
