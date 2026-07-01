@@ -65,7 +65,6 @@ export default function Footer() {
           <a href="/fit-to-fly-certificate">Fit to Fly Certifications</a>
           {/* <a href="/sexual-health">Sexual Health</a>
           <a href="/weight-loss-programs">Weight Loss Programs</a> */}
-          
         </div>
 
         <div className="footer-col footer-col-dropdown">
@@ -77,8 +76,14 @@ export default function Footer() {
               label: "Privacy Policy",
               children: [
                 { label: "Privacy Policy", href: "/privacy-policy" },
-                { label: "Patient Privacy Notice", href: "/patient-privacy-notice" },
-                { label: "Notice of Privacy Practices", href: "/notice-of-privacy-practices" },
+                {
+                  label: "Patient Privacy Notice",
+                  href: "/patient-privacy-notice",
+                },
+                {
+                  label: "Notice of Privacy Practices",
+                  href: "/notice-of-privacy-practices",
+                },
                 { label: "CCPA Compliance", href: "/CCPA" },
                 { label: "Privacy Concerns", href: "/privacy-concerns" },
               ],
@@ -88,15 +93,24 @@ export default function Footer() {
               label: "Terms & Conditions",
               children: [
                 { label: "Terms of Service", href: "/terms-of-service" },
-                { label: "Provider Terms of Service", href: "/provider-terms-of-service" },
+                {
+                  label: "Provider Terms of Service",
+                  href: "/provider-terms-of-service",
+                },
               ],
             },
             {
               key: "consent",
               label: "Consent Forms",
               children: [
-                { label: "TeleHealth Consent", href: "/tele-health-informed-consent" },
-                { label: "Patient Informed Consent Form", href: "/patient-informed-consent-form" },
+                {
+                  label: "TeleHealth Consent",
+                  href: "/tele-health-informed-consent",
+                },
+                {
+                  label: "Patient Informed Consent Form",
+                  href: "/patient-informed-consent-form",
+                },
               ],
             },
             {
@@ -104,25 +118,42 @@ export default function Footer() {
               label: "Policies",
               children: [
                 { label: "Cookie Policy", href: "/cookie-policy" },
-                { label: "Refund & Cancellation Policy", href: "/refund-and-cancellation-policy" },
-                { label: "Accessibility Statement", href: "/accessibility-statement" },
+                {
+                  label: "Refund & Cancellation Policy",
+                  href: "/refund-and-cancellation-policy",
+                },
+                {
+                  label: "Accessibility Statement",
+                  href: "/accessibility-statement",
+                },
               ],
             },
             {
               key: "agrement",
               label: "Terms & Agreements",
               children: [
-                { label: "Provider Agreement", href: "/tele-health-provider-agreement" },
-                
+                {
+                  label: "Provider Agreement",
+                  href: "/tele-health-provider-agreement",
+                },
               ],
             },
             {
               key: "clinical",
               label: "Clinical & Provider Policies",
               children: [
-                { label: "Prescription Handling", href: "/prescription-handling-policy" },
-                { label: "Teleconsultation Workflow", href: "/teleconsultation-workflow-policy" },
-                { label: "Physician Credentialing", href: "/physician-credentialing-policy" },
+                {
+                  label: "Prescription Handling",
+                  href: "/prescription-handling-policy",
+                },
+                {
+                  label: "Teleconsultation Workflow",
+                  href: "/teleconsultation-workflow-policy",
+                },
+                {
+                  label: "Physician Credentialing",
+                  href: "/physician-credentialing-policy",
+                },
               ],
             },
           ].map(({ key, label, children }) => (

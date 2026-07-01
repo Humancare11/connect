@@ -3,6 +3,8 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api, { normalizeFileUrl } from "../../api";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 
+import { Country, State } from "country-state-city";
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 const DAYS = [
   "Monday",
@@ -337,9 +339,14 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
   const AVAIL_FIELDS = new Set(["availability", "timezone"]);
   const docChanges = changes.filter((c) => DOCUMENT_FIELDS.has(c.field));
   const availChanges = changes.filter((c) => AVAIL_FIELDS.has(c.field));
-  const textChanges = changes.filter((c) => !DOCUMENT_FIELDS.has(c.field) && !AVAIL_FIELDS.has(c.field));
+  const textChanges = changes.filter(
+    (c) => !DOCUMENT_FIELDS.has(c.field) && !AVAIL_FIELDS.has(c.field),
+  );
   // Display count: text fields individually + 1 per group (availability, documents) if any changed
-  const displayCount = textChanges.length + (availChanges.length > 0 ? 1 : 0) + (docChanges.length > 0 ? 1 : 0);
+  const displayCount =
+    textChanges.length +
+    (availChanges.length > 0 ? 1 : 0) +
+    (docChanges.length > 0 ? 1 : 0);
   return (
     <Section icon="📝" title="Profile Changes Submitted by Doctor">
       <div
@@ -467,8 +474,16 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
             >
               Availability Schedule Updated
             </div>
-            <div style={{ padding: "12px 14px", fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
-              {availChanges.map((c) => c.label || c.field).join(", ")} — new schedule submitted.
+            <div
+              style={{
+                padding: "12px 14px",
+                fontSize: 13,
+                color: "#475569",
+                lineHeight: 1.6,
+              }}
+            >
+              {availChanges.map((c) => c.label || c.field).join(", ")} — new
+              schedule submitted.
             </div>
           </div>
         )}
@@ -493,8 +508,16 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
             >
               Uploaded Files Edited
             </div>
-            <div style={{ padding: "12px 14px", fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
-              {docChanges.map((c) => c.label || c.field).join(", ")} — new file(s) submitted.
+            <div
+              style={{
+                padding: "12px 14px",
+                fontSize: 13,
+                color: "#475569",
+                lineHeight: 1.6,
+              }}
+            >
+              {docChanges.map((c) => c.label || c.field).join(", ")} — new
+              file(s) submitted.
             </div>
           </div>
         )}
@@ -1003,17 +1026,44 @@ function AdminDocUpload({
 
     // Client-side validation — PDF only
     const ext = raw.name.split(".").pop().toLowerCase();
-    const BLOCKED = ["php", "html", "htm", "js", "exe", "bat", "cmd", "sh", "py", "rb", "dll", "vbs", "msi", "ps1", "jar", "svg", "xml", "ts", "jsx", "tsx"];
+    const BLOCKED = [
+      "php",
+      "html",
+      "htm",
+      "js",
+      "exe",
+      "bat",
+      "cmd",
+      "sh",
+      "py",
+      "rb",
+      "dll",
+      "vbs",
+      "msi",
+      "ps1",
+      "jar",
+      "svg",
+      "xml",
+      "ts",
+      "jsx",
+      "tsx",
+    ];
     if (BLOCKED.includes(ext)) {
-      setErr(`".${ext}" files are not allowed. Only PDF files may be uploaded.`);
+      setErr(
+        `".${ext}" files are not allowed. Only PDF files may be uploaded.`,
+      );
       return;
     }
     if (ext !== "pdf") {
-      setErr(`".${ext}" files are not accepted. Only PDF files may be uploaded.`);
+      setErr(
+        `".${ext}" files are not accepted. Only PDF files may be uploaded.`,
+      );
       return;
     }
     if (raw.type && raw.type !== "application/pdf") {
-      setErr("Only PDF files are accepted. Please select a valid PDF document.");
+      setErr(
+        "Only PDF files are accepted. Please select a valid PDF document.",
+      );
       return;
     }
 
@@ -1231,7 +1281,14 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     city: e.city || "",
     zip: e.zip || "",
     address: e.address || "",
-    specialization: e.specialization || "",
+    specialization: (() => {
+      const saved = e.specialization || "";
+      return saved && !SPECIALTIES.includes(saved) ? "Other" : saved;
+    })(),
+    customSpecialty: (() => {
+      const saved = e.specialization || "";
+      return saved && !SPECIALTIES.includes(saved) ? saved : "";
+    })(),
     subSpecialization: e.subSpecialization || "",
     qualification: e.qualification || "",
     experience: e.experience ? String(e.experience) : "",
@@ -1346,6 +1403,10 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         .filter(Boolean);
       const payload = {
         ...d,
+        specialization:
+          d.specialization === "Other"
+            ? d.customSpecialty || "Other"
+            : d.specialization,
         experience: d.experience ? Number(d.experience) : undefined,
         consultantFees: d.consultantFees ? Number(d.consultantFees) : undefined,
         languagesKnown,
@@ -1365,6 +1426,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         timezone,
         availability: avail,
       };
+      delete payload.customSpecialty;
       const res = await api.put(`/api/admin/doctors/${e._id}`, payload);
       onSaved(res.data.enrollment);
       showToast("Doctor profile updated successfully.");
@@ -1568,7 +1630,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
       </Section>
 
       {/* ── 3. Location ── */}
-      <Section icon="📍" title="Location" accent>
+      {/* <Section icon="📍" title="Location" accent>
         <div style={G2}>
           <FG label="Country">
             <select style={SEL} value={d.country} onChange={f("country")}>
@@ -1613,6 +1675,81 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
             />
           </FG>
         </div>
+      </Section> */}
+      {/* ── 3. Location ── */}
+      <Section icon="📍" title="Location" accent>
+        <div style={G2}>
+          <FG label="Country">
+            <select
+              style={SEL}
+              value={d.country}
+              onChange={(ev) => {
+                f("country")(ev);
+                setD((p) => ({ ...p, state: "" })); // reset state when country changes
+              }}
+            >
+              <option value="">Select country…</option>
+              {Country.getAllCountries().map((c) => (
+                <option key={c.isoCode} value={c.isoCode}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </FG>
+          <FG label="State / Province">
+            {(() => {
+              const states = d.country
+                ? State.getStatesOfCountry(d.country)
+                : [];
+              return states.length > 0 ? (
+                <select style={SEL} value={d.state} onChange={f("state")}>
+                  <option value="">
+                    {d.country ? "Select state…" : "Select country first"}
+                  </option>
+                  {states.map((s) => (
+                    <option key={s.isoCode} value={s.isoCode}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  style={INP}
+                  value={d.state}
+                  onChange={f("state")}
+                  placeholder={
+                    d.country ? "State or province" : "Select country first"
+                  }
+                  disabled={!d.country}
+                />
+              );
+            })()}
+          </FG>
+          <FG label="City">
+            <input
+              style={INP}
+              value={d.city}
+              onChange={f("city")}
+              placeholder="City"
+            />
+          </FG>
+          <FG label="ZIP / Postal Code">
+            <input
+              style={INP}
+              value={d.zip}
+              onChange={f("zip")}
+              placeholder="ZIP or postal code"
+            />
+          </FG>
+          <FG label="Street Address" full>
+            <input
+              style={INP}
+              value={d.address}
+              onChange={f("address")}
+              placeholder="Full street address"
+            />
+          </FG>
+        </div>
       </Section>
 
       {/* ── 4. Professional Details ── */}
@@ -1621,8 +1758,28 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
           <FG label="Specialization">
             <select
               style={SEL}
-              value={d.specialization}
-              onChange={f("specialization")}
+              value={
+                SPECIALTIES.includes(d.specialization)
+                  ? d.specialization
+                  : d.specialization
+                    ? "Other"
+                    : ""
+              }
+              onChange={(ev) => {
+                if (ev.target.value === "Other") {
+                  f("specialization")("Other");
+                  if (
+                    !d.customSpecialty &&
+                    d.specialization &&
+                    !SPECIALTIES.includes(d.specialization)
+                  ) {
+                    f("customSpecialty")(d.specialization);
+                  }
+                } else {
+                  f("specialization")(ev.target.value);
+                  f("customSpecialty")("");
+                }
+              }}
             >
               <option value="">Select…</option>
               {SPECIALTIES.map((s) => (
@@ -1630,13 +1787,24 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                   {s}
                 </option>
               ))}
-              {d.specialization && !SPECIALTIES.includes(d.specialization) && (
-                <option value={d.specialization}>
-                  {d.specialization} (custom)
-                </option>
-              )}
             </select>
           </FG>
+          {(d.specialization === "Other" ||
+            (d.specialization && !SPECIALTIES.includes(d.specialization))) && (
+            <FG label="Custom Specialty">
+              <input
+                style={INP}
+                value={
+                  d.customSpecialty ||
+                  (d.specialization && !SPECIALTIES.includes(d.specialization)
+                    ? d.specialization
+                    : "")
+                }
+                onChange={f("customSpecialty")}
+                placeholder="e.g. Sports Medicine"
+              />
+            </FG>
+          )}
           <FG label="Sub-Specialization">
             <input
               style={INP}
@@ -1711,7 +1879,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               placeholder="License number"
             />
           </FG>
-          <FG label="ID Proof Type">
+          {/* <FG label="ID Proof Type">
             <select
               style={SEL}
               value={d.idProofType}
@@ -1724,7 +1892,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                 </option>
               ))}
             </select>
-          </FG>
+          </FG> */}
           <FG label="State/Territory Licensing (comma-separated)" full>
             <input
               style={INP}
@@ -1747,7 +1915,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
       {/* ── 5. Consultation & Practice ── */}
       <Section icon="🏥" title="Consultation & Practice" accent>
         <div style={G2}>
-          <FG label="Consultation Mode">
+          {/* <FG label="Consultation Mode">
             <select
               style={SEL}
               value={d.consultationMode}
@@ -1760,7 +1928,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                 </option>
               ))}
             </select>
-          </FG>
+          </FG> */}
           <FG label="Consultation Fee">
             <div
               style={{
@@ -2131,14 +2299,14 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
       {/* ── 9. Payout ── */}
       <Section icon="💳" title="Payout Information" accent>
         <div style={G2}>
-          <FG label="Bank Name">
+          {/* <FG label="Bank Name">
             <input
               style={INP}
               value={d.bankName}
               onChange={f("bankName")}
               placeholder="Bank name"
             />
-          </FG>
+          </FG> */}
           <FG label="Account Holder Name">
             <input
               style={INP}
@@ -2147,14 +2315,14 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               placeholder="Full name on account"
             />
           </FG>
-          <FG label="Account Number">
+          {/* <FG label="Account Number">
             <input
               style={INP}
               value={d.accountNumber}
               onChange={f("accountNumber")}
               placeholder="Account number"
             />
-          </FG>
+          </FG> */}
           <FG label="SWIFT / IFSC / BIC Code">
             <input
               style={INP}
@@ -2180,14 +2348,14 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               placeholder="Payout email address"
             />
           </FG>
-          <FG label="Stripe Account ID">
+          {/* <FG label="Stripe Account ID">
             <input
               style={INP}
               value={d.stripeAccountId}
               onChange={f("stripeAccountId")}
               placeholder="acct_xxxxxxxx"
             />
-          </FG>
+          </FG> */}
         </div>
       </Section>
 
@@ -2951,8 +3119,8 @@ export default function AdminDoctorProfile() {
               <Field label="Medical Council" value={e.medicalCouncilName} />
               <Field label="NPI" value={e.medicalRegistrationNumber} />
               <Field label="Medical License No." value={e.medicalLicense} />
-              <Field label="ID Proof Type" value={e.idProofType} />
-              <Field label="Consultation Mode" value={e.consultationMode} />
+              {/* <Field label="ID Proof Type" value={e.idProofType} /> */}
+              {/* <Field label="Consultation Mode" value={e.consultationMode} /> */}
               <Field
                 label="Consultation Fee"
                 value={
@@ -2994,7 +3162,12 @@ export default function AdminDoctorProfile() {
                 </div>
               </div>
             )}
-            {(Array.isArray(e.licensedStates) ? e.licensedStates : e.state ? [e.state] : []).length > 0 && (
+            {(Array.isArray(e.licensedStates)
+              ? e.licensedStates
+              : e.state
+                ? [e.state]
+                : []
+            ).length > 0 && (
               <div
                 style={{
                   marginTop: 16,
@@ -3019,7 +3192,8 @@ export default function AdminDoctorProfile() {
                     ? e.licensedStates
                     : e.state
                       ? [e.state]
-                      : []).map((stateName) => (
+                      : []
+                  ).map((stateName) => (
                     <span
                       key={stateName}
                       style={{
@@ -3267,20 +3441,20 @@ export default function AdminDoctorProfile() {
                 gap: "16px 24px",
               }}
             >
-              <Field label="Bank Name" value={e.bankName} />
+              {/* <Field label="Bank Name" value={e.bankName} /> */}
               <Field label="Account Holder" value={e.accountHolderName} />
-              <Field
+              {/* <Field
                 label="Account Number"
                 value={
                   e.accountNumber
                     ? `****${String(e.accountNumber).slice(-4)}`
                     : ""
                 }
-              />
+              /> */}
               <Field label="SWIFT / BIC" value={e.ifscCode} />
               <Field label="PayPal ID" value={e.paypalId} />
               <Field label="Payout Email" value={e.payoutEmail} />
-              <Field label="Stripe Account" value={e.stripeAccountId} />
+              {/* <Field label="Stripe Account" value={e.stripeAccountId} /> */}
             </div>
           </Section>
 
