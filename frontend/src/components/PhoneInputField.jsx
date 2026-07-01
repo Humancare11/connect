@@ -365,6 +365,7 @@ export default function PhoneInputField({
   const inputRef = useRef(null);
   const userSelectedRef = useRef(Boolean(value));
   const autoAppliedRef = useRef(false);
+  const selectedCountryRef = useRef(null);
 
   const emit = useCallback(
     (c, l) => {
@@ -422,7 +423,16 @@ export default function PhoneInputField({
   };
 
   useEffect(() => {
-    if (open) setTimeout(() => searchRef.current?.focus(), 40);
+    if (!open) return;
+
+    setTimeout(() => {
+      searchRef.current?.focus();
+
+      selectedCountryRef.current?.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }, 40);
   }, [open]);
 
   useEffect(() => {
@@ -497,12 +507,26 @@ export default function PhoneInputField({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return COUNTRIES;
-    return COUNTRIES.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) || c.dial.includes(q.replace("+", "")),
-    );
-  }, [search]);
+    const query = q.replace("+", "");
+
+    let list = COUNTRIES;
+
+    if (q) {
+      list = COUNTRIES.filter((c) => {
+        return (
+          c.name.toLowerCase().includes(q) ||
+          c.code.toLowerCase().includes(q) ||
+          c.dial.includes(query)
+        );
+      });
+    }
+
+    return [...list].sort((a, b) => {
+      if (a.code === country.code) return -1;
+      if (b.code === country.code) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [search, country.code]);
 
   const active = open || focused;
 
@@ -761,6 +785,7 @@ export default function PhoneInputField({
               ) : (
                 filtered.map((c) => (
                   <button
+                    ref={country.code === c.code ? selectedCountryRef : null}
                     key={c.code}
                     type="button"
                     role="option"
