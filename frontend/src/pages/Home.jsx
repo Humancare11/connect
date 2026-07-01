@@ -11,6 +11,7 @@ const Sa = lazy(() => import("../components/Sa"));
 const Aa = lazy(() => import("../components/Aa"));
 // import sceneVideo from "../assets/gifts/scene-card-bg-video.mp4";
 import sceneVideo from "../assets/gifts/HeroVideo.mp4";
+import heroPoster from "../assets/gifts/HeroPoster.webp";
 import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
 const LogoMarquee = lazy(() => import("../components/LogoMarquee"));
@@ -26,6 +27,8 @@ import {
 import searchIndex from "../data/searchIndex.js";
 
 import { useNavigate } from "react-router-dom";
+
+import LazySection from "../components/LazySection";
 
 const PCP = lazy(() => import("../components/PCPSection"));
 const Why = lazy(() => import("../components/WhySection"));
@@ -197,9 +200,25 @@ export default function HomePage() {
   const searchRef = useRef(null);
   const [noResults, setNoResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  // ── Filter search suggestions ─────────────────────────────────────────────
-  // Remove the local SEARCH_DATA array entirely, and replace the useEffect that filters it:
-  // In your useEffect that calls the API, track a "no results" state
+
+  // Video lazy loading with Intersection Observer
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setShouldLoadVideo(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }, // Load before visible
+    );
+
+    const videoSection = rightRef.current;
+    if (videoSection) observer.observe(videoSection);
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -441,7 +460,44 @@ export default function HomePage() {
     updateVisuals();
     lastTickRef.current = 0; // reset so first tick sets baseline
     rafRef.current = requestAnimationFrame(() => tickRef.current?.());
+
+    // Pause animation when page not visible
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        pausedRef.current = true;
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      } else {
+        pausedRef.current = false;
+        lastTickRef.current = 0;
+        rafRef.current = requestAnimationFrame(() => tickRef.current?.());
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Also pause when scrolled out of view
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isVisible = entries[0].isIntersecting;
+        if (!isVisible && !pausedRef.current) {
+          // Going out of view - pause
+          pausedRef.current = true;
+          if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        } else if (isVisible && pausedRef.current && !document.hidden) {
+          // Coming into view and not paused by visibility - resume
+          pausedRef.current = false;
+          lastTickRef.current = 0;
+          rafRef.current = requestAnimationFrame(() => tickRef.current?.());
+        }
+      },
+      { threshold: 0 },
+    );
+
+    if (rightRef.current) observer.observe(rightRef.current);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      observer.disconnect();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [updateVisuals]);
@@ -457,48 +513,54 @@ export default function HomePage() {
     let ctx;
     let cancelled = false;
 
-    import("gsap").then(({ default: gsap }) => {
-      if (cancelled) return;
+    // Use requestIdleCallback to defer non-critical animations until after paint
+    const idleCallback =
+      window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
 
-      ctx = gsap.context(() => {
-        const tl = gsap.timeline();
+    idleCallback(() => {
+      import("gsap").then(({ default: gsap }) => {
+        if (cancelled) return;
 
-        tl.fromTo(
-          headerRef.current,
-          { opacity: 0, y: 60 },
-          { opacity: 1, y: 0, duration: 1.2 },
-        );
-        tl.fromTo(
-          featuresRef.current[0],
-          { opacity: 0, x: -70 },
-          { opacity: 1, x: 0, duration: 0.8 },
-          "+=0.2",
-        );
-        tl.fromTo(
-          featuresRef.current[1],
-          { opacity: 0, x: -70 },
-          { opacity: 1, x: 0, duration: 0.8 },
-          "+=0.1",
-        );
-        tl.fromTo(
-          featuresRef.current[2],
-          { opacity: 0, x: -70 },
-          { opacity: 1, x: 0, duration: 0.8 },
-          "+=0.1",
-        );
-        tl.fromTo(
-          btnRef.current,
-          { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 0.7 },
-          "+=0.1",
-        );
-        tl.fromTo(
-          rightRef.current,
-          { opacity: 0, y: 80, scale: 0.95 },
-          { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
-          "+=0.3",
-        );
-      }, wrapperRef);
+        ctx = gsap.context(() => {
+          const tl = gsap.timeline();
+
+          tl.fromTo(
+            headerRef.current,
+            { opacity: 0, y: 60 },
+            { opacity: 1, y: 0, duration: 1.2 },
+          );
+          tl.fromTo(
+            featuresRef.current[0],
+            { opacity: 0, x: -70 },
+            { opacity: 1, x: 0, duration: 0.8 },
+            "+=0.2",
+          );
+          tl.fromTo(
+            featuresRef.current[1],
+            { opacity: 0, x: -70 },
+            { opacity: 1, x: 0, duration: 0.8 },
+            "+=0.1",
+          );
+          tl.fromTo(
+            featuresRef.current[2],
+            { opacity: 0, x: -70 },
+            { opacity: 1, x: 0, duration: 0.8 },
+            "+=0.1",
+          );
+          tl.fromTo(
+            btnRef.current,
+            { opacity: 0, y: 30 },
+            { opacity: 1, y: 0, duration: 0.7 },
+            "+=0.1",
+          );
+          tl.fromTo(
+            rightRef.current,
+            { opacity: 0, y: 80, scale: 0.95 },
+            { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
+            "+=0.3",
+          );
+        }, wrapperRef);
+      });
     });
 
     return () => {
@@ -511,18 +573,32 @@ export default function HomePage() {
   const testimonialsRef = useRef(null);
 
   useEffect(() => {
+    let ticking = false;
+
     const handleScroll = () => {
-      const section = testimonialsRef.current;
-      if (!section) return;
-      const rect = section.getBoundingClientRect();
-      const viewH = window.innerHeight;
-      const progress = (viewH - rect.top) / (viewH + rect.height);
-      const p = Math.max(0, Math.min(1, progress));
-      const offset = (p - 0.5) * 120;
-      // Apply subtle parallax to the header inside the section
-      const header = section.querySelector(".testi-header");
-      if (header) header.style.transform = `translateY(${offset * 0.3}px)`;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const section = testimonialsRef.current;
+          if (!section) return;
+
+          const rect = section.getBoundingClientRect();
+          const viewH = window.innerHeight;
+          const progress = (viewH - rect.top) / (viewH + rect.height);
+          const p = Math.max(0, Math.min(1, progress));
+          const offset = (p - 0.5) * 120;
+
+          // Apply subtle parallax to the header inside the section
+          const header = section.querySelector(".testi-header");
+          if (header) {
+            header.style.transform = `translateY(${offset * 0.3}px)`;
+          }
+
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
@@ -597,7 +673,6 @@ export default function HomePage() {
               Board-Certified Doctor's
             </span>
 
-
             <span className="trust-chip">
               <svg
                 width="12"
@@ -609,7 +684,7 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Rx / Sick Note's Available 
+              Rx / Sick Note's Available
             </span>
           </div>
           {/* SEARCH BAR */}
@@ -720,17 +795,19 @@ export default function HomePage() {
 
         {/* ── RIGHT ── */}
         <div className="hero-right" ref={rightRef}>
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            aria-hidden="true"
-            className="hero-right-video-bg"
-          >
-            <source src={sceneVideo} type="video/mp4" />
-          </video>
+          {shouldLoadVideo && (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              poster={heroPoster}
+              className="hero-right-video-bg"
+            >
+              <source src={sceneVideo} type="video/mp4" />
+            </video>
+          )}
 
           <div className="hero-right-overlay" />
 
@@ -826,29 +903,40 @@ export default function HomePage() {
       </section>
 
       {/* ════════ LOGO MARQUEE ═══════════════════════════════════════════════ */}
-      <Suspense fallback={null}>
-        <LogoMarquee />
-      </Suspense>
+      <LazySection>
+        <Suspense fallback={null}>
+          <LogoMarquee />
+        </Suspense>
+      </LazySection>
 
       {/* ════════ SERVICES ═══════════════════════════════════════════════════ */}
-      <Suspense fallback={null}>
-        <Sa />
-      </Suspense>
+      <LazySection>
+        <Suspense fallback={null}>
+          <Sa />
+        </Suspense>
+      </LazySection>
 
       {/* ════════ SPECIALTIES ════════════════════════════════════════════════ */}
-      <Suspense fallback={null}>
-        <Aa />
-      </Suspense>
+      <LazySection>
+        <Suspense fallback={null}>
+          <Aa />
+        </Suspense>
+      </LazySection>
 
       {/* ════════ HOW IT WORKS / PCP ════════════════════════════════════════ */}
-      <Suspense fallback={null}>
-        <PCP />
-      </Suspense>
+      <LazySection>
+        <Suspense fallback={null}>
+          <PCP />
+        </Suspense>
+      </LazySection>
 
       {/* ════════ WHY HUMANCARE ═════════════════════════════════════════════ */}
-      <Suspense fallback={null}>
-        <Why />
-      </Suspense>
+
+      <LazySection>
+        <Suspense fallback={null}>
+          <Why />
+        </Suspense>
+      </LazySection>
 
       {/* ════════ TESTIMONIALS ══════════════════════════════════════════════ */}
       <section
