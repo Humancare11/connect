@@ -515,7 +515,7 @@ export default function AppointmentBookingForm() {
   // ── Consent modal state ──────────────────────────────────────────────────────
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consents, setConsents] = useState({
-    telehealth: true,
+    telehealth: false,
     terms: true,
     hipaa: true,
     age: true,
@@ -668,8 +668,13 @@ export default function AppointmentBookingForm() {
     }));
 
   // ── Opens consent modal (validates date/time first) ──────────────────────────
+  // const handleProceedClick = () => {
+  //   if (!validate()) return;
+  //   setShowConsentModal(true);
+  // };
   const handleProceedClick = () => {
     if (!validate()) return;
+    setConsents({ telehealth: false, terms: false, hipaa: false, age: false }); // reset
     setShowConsentModal(true);
   };
 
@@ -1204,7 +1209,7 @@ export default function AppointmentBookingForm() {
                     understand that (1) telehealth is not a substitute for
                     in-person care in all situations; (2) physicians on this
                     platform are independent contractors; (3) in a medical
-                    emergency, call 112 immediately. You have read and agree to
+                    emergency, call 911 immediately. You have read and agree to
                     our Telehealth Informed Consent policy.
                   </p>
                 </div>

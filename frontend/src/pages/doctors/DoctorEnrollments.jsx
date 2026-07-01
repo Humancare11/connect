@@ -13,7 +13,6 @@ import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State, City } from "country-state-city";
 // ─── Constants ───
 
-
 const SPECIALTIES = [
   "General Practice",
   "Internal Medicine",
@@ -1830,16 +1829,22 @@ export default function DoctorOnboardingWizard({
         ? rawLangs
         : typeof rawLangs === "string" && rawLangs.trim()
           ? rawLangs
-            .split(",")
-            .map((l) => l.trim())
-            .filter(Boolean)
+              .split(",")
+              .map((l) => l.trim())
+              .filter(Boolean)
           : [],
     );
+
+    // Handle specialty - if not in predefined list, it's a custom specialty
+    const savedSpecialty = data.specialization || "";
+    const isCustomSpecialty =
+      savedSpecialty && !SPECIALTIES.includes(savedSpecialty);
+
     setS2({
       npi: data.medicalRegistrationNumber || "",
       licenseNum: data.medicalLicense || data.medicalRegistrationNumber || "",
-      specialty: data.specialization || "",
-      customSpecialty: "",
+      specialty: isCustomSpecialty ? "Other" : savedSpecialty,
+      customSpecialty: isCustomSpecialty ? savedSpecialty : "",
       subSpecialization: data.subSpecialization || "",
       qualification: data.qualification || "",
       school: data.medicalSchool || "",
@@ -1909,7 +1914,7 @@ export default function DoctorOnboardingWizard({
       if (Array.isArray(d.otherLicenseCountries))
         setOtherLicenseCountries(d.otherLicenseCountries);
       if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
-    } catch { }
+    } catch {}
   }, [doctorId, initialData]);
 
   // Auto-detect timezone on mount.
@@ -1940,7 +1945,7 @@ export default function DoctorOnboardingWizard({
     try {
       const iana = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (iana) setTimezone((prev) => prev || matchTz(iana));
-    } catch { }
+    } catch {}
 
     // ── Step 2: async IP-based refinement (best-effort, 3 fallback APIs) ───
     const fetchTz = async (url, extract) => {
@@ -2021,7 +2026,7 @@ export default function DoctorOnboardingWizard({
             completedSteps,
             currentStep,
           })
-          .catch(() => { });
+          .catch(() => {});
       }, 250);
     },
     [doctorId],
@@ -2117,7 +2122,7 @@ export default function DoctorOnboardingWizard({
         `hc_enroll_draft_${doctorId}`,
         JSON.stringify(draftData),
       );
-    } catch { }
+    } catch {}
     setDraftSaved(true);
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => setDraftSaved(false), 2500);
@@ -2209,14 +2214,14 @@ export default function DoctorOnboardingWizard({
       // setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
       try {
         localStorage.removeItem(`hc_enroll_draft_${doctorId}`);
-      } catch { }
+      } catch {}
       setStep(5);
       if (enrollment && typeof onComplete === "function")
         onComplete(enrollment);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-        "Failed to submit enrollment. Please try again.",
+          "Failed to submit enrollment. Please try again.",
       );
     } finally {
       setSubmitBusy(false);
@@ -2380,7 +2385,7 @@ export default function DoctorOnboardingWizard({
                 {countryApi ? "Select country..." : "Loading countries..."}
               </option>
 
-              {countries.map(country => (
+              {countries.map((country) => (
                 <option key={country.isoCode} value={country.isoCode}>
                   {country.name}
                 </option>
@@ -2389,18 +2394,17 @@ export default function DoctorOnboardingWizard({
             {s1Errors.country && (
               <div className="field-error">{s1Errors.country}</div>
             )}
-              {!hasStates && !hasCities && s1.country && (
-  <div
-    style={{
-      fontSize: 13,
-      color: "var(--red-500)",
-      marginTop: 6,
-      
-    }}
-  >
-    This country does not have state or city data available.
-  </div>
-)}
+            {!hasStates && !hasCities && s1.country && (
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--red-500)",
+                  marginTop: 6,
+                }}
+              >
+                This country does not have state or city data available.
+              </div>
+            )}
           </div>
           <div className="location-row">
             {hasStates && (
@@ -3074,15 +3078,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3231,15 +3235,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3368,15 +3372,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}

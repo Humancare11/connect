@@ -62,4 +62,20 @@ router.get("/cities/:country/:state", (req, res) => {
   }
 });
 
+
+// GET /api/locations/countries
+router.get("/countries", (req, res) => {
+  try {
+    const result = allCountries.map((c) => ({
+      isoCode: c.isoCode,
+      name: c.name,
+      phonecode: c.phonecode,
+    }));
+    res.json({ countries: result });
+  } catch (err) {
+    console.error("Error fetching countries:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
 module.exports = router;
