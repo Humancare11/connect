@@ -467,8 +467,15 @@ function FaqSection({ faqGroups, catLabel }) {
           <p className="hcc-faq-sidebar-desc">
             Everything you need to know about {catLabel} care at HumanCare Connect. Can't find an answer?
           </p>
-          <button className="hcc-faq-chat-btn">
-            <span className="chat-icon"><FiMessageSquare size={10} /></span>
+          <button
+            className="hcc-faq-chat-btn"
+            onClick={() =>
+              (window.location.href = "mailto:support@humancareconnect.co")
+            }
+          >
+            <span className="chat-icon">
+              <FiMessageSquare size={10} />
+            </span>
             Chat with our team
           </button>
           <div className="hcc-faq-trust-badges">
@@ -526,7 +533,7 @@ function FaqSection({ faqGroups, catLabel }) {
             ))}
           </div>
 
-          <div className="hcc-faq-still">
+          {/* <div className="hcc-faq-still">
             <div className="hcc-faq-still-text">
               <strong>Still have questions?</strong>
               Our care team is available every day, 8 AM – 10 PM.
@@ -534,7 +541,7 @@ function FaqSection({ faqGroups, catLabel }) {
             <button className="hcc-faq-call-btn">
               <FiPhone size={13} /> Book a Call
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>
@@ -546,6 +553,7 @@ function FaqSection({ faqGroups, catLabel }) {
 export default function MentalHealth() {
   const navigate = useNavigate();
   const goToBooking = () => navigate("/appointment-booking");
+  const goToContact = () => navigate("/contact");
 
   return (
     <div style={{ fontFamily: "'Satoshi', sans-serif", background: "var(--bg)", color: "var(--navy)", minHeight: "100vh" }}>
@@ -663,7 +671,7 @@ export default function MentalHealth() {
             <button className="hcc-btn-primary" style={{ background: "#fff", color: "var(--blue)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} onClick={goToBooking}>
               Find Doctors <FiArrowRight />
             </button>
-            <button className="hcc-btn-secondary" style={{ borderColor: "rgba(255,255,255,0.35)" }} onClick={goToBooking}>
+            <button className="hcc-btn-secondary" style={{ borderColor: "rgba(255,255,255,0.35)" }} onClick={goToContact}>
               <FiPhone size={14} /> Call Us Now
             </button>
           </div>

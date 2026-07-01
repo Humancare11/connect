@@ -50,7 +50,7 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Navigation </h5>
           <a href="/about-us">About Us</a>
-          <a href="/book-appointment">Book Appointment</a>
+          <a href="/appointment-booking">Book Appointment</a>
           <a href="/corporates">Corporate</a>
           <a href="/blogs">Blog</a>
         </div>
@@ -60,9 +60,9 @@ export default function Footer() {
           <h5>Services </h5>
           <a href="/online-prescription-refills">Online Prescription Refill</a>
           <a href="/appointment-booking">Online Doctor Consultation</a>
-          <a href="/doctor-note">Sick Notes</a>
-          <a href="/lab-requestions">Lab Requestion</a>
-          <a href="/fit-to-fly">Fit to Fly Certifications</a>
+          <a href="/doctor-note-or-sick-notes">Sick Notes</a>
+          <a href="/lab-requisitions">Lab Requestion</a>
+          <a href="/fit-to-fly-certificate">Fit to Fly Certifications</a>
           {/* <a href="/sexual-health">Sexual Health</a>
           <a href="/weight-loss-programs">Weight Loss Programs</a> */}
           
@@ -182,10 +182,10 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Support</h5>
           <a href="/doctor-login">Doctor Login</a>
-          <a href="#">Help Center</a>
-          <a href="#">FAQs</a>
-          <a href="#">Careers</a>
-          <a href="/contact">Contact Us</a>
+          {/* <a href="#">Help Center</a> */}
+          {/* <a href="#">FAQs</a> */}
+          <a href="/career">Careers</a>
+          <a href="/contact-us">Contact Us</a>
         </div>
       </div>
 
@@ -218,7 +218,7 @@ export default function Footer() {
             <FaLinkedinIn />
           </a>
           <a
-            href="https://www.youtube.com/@HumancareConncect"
+            href="https://www.youtube.com/@HumancareConnect"
             className="soc-btn"
             aria-label="YouTube"
             target="_blank"
