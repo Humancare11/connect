@@ -1727,7 +1727,7 @@ const FinalCTA = ({ s }) => (
           <GhostBtn>
             <a href="/appointment-booking">Book Appointment</a>
           </GhostBtn>
-          <button
+          {/* <button
             style={{
               padding: "13px 24px",
               borderRadius: 12,
@@ -1740,7 +1740,7 @@ const FinalCTA = ({ s }) => (
             }}
           >
             Contact Us
-          </button>
+          </button> */}
         </div>
         <div
           style={{

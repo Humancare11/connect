@@ -40,11 +40,12 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-import AboutUs from "./pages/AboutPage"; // about us page
+// import AboutUs from "./pages/AboutPage"; 
+import AboutPage from "./pages/AboutPage"; // about us page
 
-import AboutPage from "./pages/AboutPage";
 import PCP from "./pages/PCP";
-
+import DoctorCareers from "./pages/DoctorCareers";       // Career Page for Doctors
+import FAQ from "./pages/FAQPage"; // FAQ page
 // privacy concerns
 import PrivacyConcerns from "./pages/PrivacyPolicies/PrivacyConcerns";
 import PatientPrivacyNotice from "./pages/PrivacyPolicies/PatientPrivacyNotice";
@@ -668,7 +669,7 @@ function AppLayout() {
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/corporates" element={<Corporates />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/contact-us" element={<Contact />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
           {/* <Route path="/register" element={<Register />} /> */}
@@ -1615,6 +1616,9 @@ function AppLayout() {
             element={<TelehealthProviderAgreement />}
           />
           <Route path="/about-us" element={<AboutPage />} />
+          <Route path="/career" element={<DoctorCareers />} />
+          <Route path="/faq" element={<FAQ />} />
+
           {/* ---------------------Service Pages---------------------------- */}
           <Route path="/ServiceDemo" element={<ServiceDemo />} />
           <Route
