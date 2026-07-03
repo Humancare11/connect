@@ -100,7 +100,7 @@ body {
   font-size: clamp(28px, 5vw, 46px);
   max-width: 700px;
   font-weight: 700;
-  color: var(--ink);
+  color: #ffffff;
   letter-spacing: -0.02em;
   line-height: 1.12;
   margin-bottom: 12px;
