@@ -40,11 +40,11 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-// import AboutUs from "./pages/AboutPage"; 
+// import AboutUs from "./pages/AboutPage";
 import AboutPage from "./pages/AboutPage"; // about us page
 
 import PCP from "./pages/PCP";
-import DoctorCareers from "./pages/DoctorCareers";       // Career Page for Doctors
+import DoctorCareers from "./pages/DoctorCareers"; // Career Page for Doctors
 import FAQ from "./pages/FAQPage"; // FAQ page
 // privacy concerns
 import PrivacyConcerns from "./pages/PrivacyPolicies/PrivacyConcerns";
@@ -336,7 +336,7 @@ import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
 import DoctorNoteSickNote from "./pages/NewServices/DoctorNoteSickNote";
-import FitToFly from "./pages/NewServices/FitToFly";
+import FittoFly from "./pages/NewServices/FittoFly";
 import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
@@ -774,6 +774,14 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <DoctorProfile />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/doctor-profile-for-patients"
+            element={
+              <DoctorLayout>
+                <DoctorProfileForUser showOwnProfile />
               </DoctorLayout>
             }
           />
@@ -1618,7 +1626,6 @@ function AppLayout() {
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/career" element={<DoctorCareers />} />
           <Route path="/faq" element={<FAQ />} />
-
           {/* ---------------------Service Pages---------------------------- */}
           <Route path="/ServiceDemo" element={<ServiceDemo />} />
           <Route
@@ -1676,7 +1683,7 @@ function AppLayout() {
             path="/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
-          <Route path="/fit-to-fly-certificate" element={<FitToFly />} />
+          <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
           <Route
             path="/doctor-note-or-sick-notes"

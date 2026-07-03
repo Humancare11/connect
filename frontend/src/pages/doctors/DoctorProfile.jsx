@@ -6,6 +6,42 @@ import { useDoctorAuth } from "../../context/DoctorAuthContext";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State } from "country-state-city";
 import "./DoctorProfile.css";
+import PhoneInputField, {
+  COUNTRIES as PHONE_COUNTRIES,
+} from "../../components/PhoneInputField";
+
+// Helper functions to convert ISO codes to display names
+const getCountryName = (isoCode) => {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+};
+
+const getStateName = (stateIsoCode, countryIsoCode) => {
+  if (!stateIsoCode || !countryIsoCode) return "";
+  const state = State.getStateByCodeAndCountry(stateIsoCode, countryIsoCode);
+  return state?.name || stateIsoCode;
+};
+
+const splitPhoneValue = (fullValue, countryMeta) => {
+  const digits = String(fullValue || "").replace(/\D/g, "");
+  const dial = String(countryMeta?.dial || countryMeta?.dialCode || "").replace(
+    /\D/g,
+    "",
+  );
+  if (!dial) return { countryCode: "", phone: digits };
+  return {
+    countryCode: `+${dial}`,
+    phone: digits.startsWith(dial) ? digits.slice(dial.length) : digits,
+  };
+};
+
+const getCountryCodeFromDialCode = (dialCode) => {
+  if (!dialCode) return "auto";
+  const cleanDial = String(dialCode).replace(/\D/g, "");
+  const country = PHONE_COUNTRIES.find((c) => c.dial === cleanDial);
+  return country?.code || "auto";
+};
 
 const DAYS = [
   "Monday",
@@ -411,6 +447,12 @@ const CSS = `
 .ms-overflow {
   font-size: 11px; font-weight: 600; color: #2563eb;
   background: rgba(37,99,235,0.08); padding: 3px 8px; border-radius: 50px;
+}
+
+/* Pulse animation for online status indicator */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 `;
 
@@ -1341,6 +1383,7 @@ export default function DoctorProfile() {
   // ── NEW: tracks the localStorage key of the last status banner the
   //         user has already seen (for approved / rejected only).
   const [seenStatusKey, setSeenStatusKey] = useState(null);
+  const [phoneCountryCode, setPhoneCountryCode] = useState("auto");
 
   const doctorId = doctor?._id || doctor?.id;
 
@@ -1350,7 +1393,9 @@ export default function DoctorProfile() {
     setLoading(true);
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
-      .then((res) => setEnrollment(res.data || null))
+      .then((res) => {
+        setEnrollment(res.data || null);
+      })
       .catch(() => setEnrollment(null))
       .finally(() => setLoading(false));
   }, [doctorId]);
@@ -1433,6 +1478,9 @@ export default function DoctorProfile() {
       ...initialForm,
       availability: buildDefaultAvailability(initialForm.availability),
     });
+    if (initialForm.countryCode) {
+      setPhoneCountryCode(getCountryCodeFromDialCode(initialForm.countryCode));
+    }
     setToast(null);
     setEditMode(true);
   };
@@ -1498,9 +1546,10 @@ export default function DoctorProfile() {
       const payload = {
         doctorId,
         ...form,
-        specialization: form.specialization === "Other" 
-          ? (form.customSpecialty || "Other") 
-          : form.specialization,
+        specialization:
+          form.specialization === "Other"
+            ? form.customSpecialty || "Other"
+            : form.specialization,
         languagesKnown: form.languagesKnown
           ? form.languagesKnown
               .split(",")
@@ -1560,7 +1609,7 @@ export default function DoctorProfile() {
       return inp("state", "Select country first");
     }
     const countryData = Country.getAllCountries().find(
-      (c) => c.name === form.country
+      (c) => c.isoCode === form.country,
     );
     if (!countryData) {
       return inp("state", "State / Province");
@@ -1620,7 +1669,12 @@ export default function DoctorProfile() {
   const initials =
     `${(source.firstName || "D")[0]}${(source.surname || "R")[0]}`.toUpperCase();
   const statusMeta = STATUS_META[e.approvalStatus] || STATUS_META.pending;
-  const location = [source.city, source.state, source.country]
+
+  // Convert ISO codes to display names for location
+  const displayCountry = getCountryName(source.country);
+  const displayState = getStateName(source.state, source.country);
+
+  const location = [source.city, displayState, displayCountry]
     .filter(Boolean)
     .join(", ");
   const publicSlug = doctor?.doctorId
@@ -1632,9 +1686,10 @@ export default function DoctorProfile() {
   const editStateIso = editMode
     ? COUNTRY_NAME_TO_ISO[form.country] || null
     : null;
-  const editStateConfig = editStateIso
-    ? STATE_LICENSING_COUNTRIES[editStateIso]
-    : null;
+  const editStateConfig =
+    editMode && (form.country === "US" || form.country === "CA")
+      ? STATE_LICENSING_COUNTRIES[form.country]
+      : null;
 
   // ── NEW: Status banner visibility logic ─────────────────────────────────
   //
@@ -1863,15 +1918,27 @@ export default function DoctorProfile() {
                   {inp("email", "Email", "email")}
                 </InputField>
                 <InputField label="Phone">
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "74px 1fr",
-                      gap: 8,
-                    }}
-                  >
-                    {inp("countryCode", "+1")}
-                    {inp("phoneNumber", "Phone number")}
+                  <div className="de-phone-input">
+                    <PhoneInputField
+                      value={
+                        (form.countryCode || "") + (form.phoneNumber || "")
+                      }
+                      onChange={(value, countryMeta) => {
+                        const next = splitPhoneValue(value, countryMeta);
+                        update("countryCode", next.countryCode);
+                        update("phoneNumber", next.phone);
+                      }}
+                      onCountryChange={(countryMeta) => {
+                        setPhoneCountryCode(countryMeta.code || "auto");
+                        update(
+                          "countryCode",
+                          countryMeta.dialCode || form.countryCode,
+                        );
+                      }}
+                      defaultCountry={phoneCountryCode}
+                      placeholder="Mobile number"
+                      showCountryNameInDropdown={true}
+                    />
                   </div>
                 </InputField>
                 <InputField label="Gender">{sel("gender", GENDERS)}</InputField>
@@ -1887,17 +1954,19 @@ export default function DoctorProfile() {
             <EditSection icon="📍" title="Location">
               <div className="drprofile__grid-wide">
                 <InputField label="Country">
+                  a
                   <select
                     value={form.country || ""}
                     onChange={(e) => {
                       update("country", e.target.value);
                       update("state", "");
+                      update("licensedStates", []);
                     }}
                   >
-                    <option value="">Select...</option>
-                    {COUNTRIES.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
+                    <option value="">Select country...</option>
+                    {Country.getAllCountries().map((country) => (
+                      <option key={country.isoCode} value={country.isoCode}>
+                        {country.name}
                       </option>
                     ))}
                   </select>
@@ -1917,11 +1986,23 @@ export default function DoctorProfile() {
               <div className="drprofile__grid-wide">
                 <InputField label="Specialization">
                   <select
-                    value={SPECIALTIES.includes(form.specialization) ? form.specialization : form.specialization ? "Other" : ""}
+                    value={
+                      SPECIALTIES.includes(form.specialization)
+                        ? form.specialization
+                        : form.specialization
+                          ? "Other"
+                          : ""
+                    }
                     onChange={(e) => {
                       if (e.target.value === "Other") {
                         update("specialization", "Other");
-                        update("customSpecialty", form.specialization && !SPECIALTIES.includes(form.specialization) ? form.specialization : "");
+                        update(
+                          "customSpecialty",
+                          form.specialization &&
+                            !SPECIALTIES.includes(form.specialization)
+                            ? form.specialization
+                            : "",
+                        );
                       } else {
                         update("specialization", e.target.value);
                         update("customSpecialty", "");
@@ -1936,7 +2017,9 @@ export default function DoctorProfile() {
                     ))}
                   </select>
                 </InputField>
-                {(form.specialization === "Other" || (form.specialization && !SPECIALTIES.includes(form.specialization))) && (
+                {(form.specialization === "Other" ||
+                  (form.specialization &&
+                    !SPECIALTIES.includes(form.specialization))) && (
                   <InputField label="Custom Specialty">
                     {inp("customSpecialty", "e.g. Sports Medicine")}
                   </InputField>
@@ -1989,7 +2072,7 @@ export default function DoctorProfile() {
                     onChange={(e) => update("aboutDoctor", e.target.value)}
                   />
                 </InputField>
-                {editStateConfig ? (
+                {editStateConfig && (
                   <InputField
                     label={`${editStateConfig.plural} Licensing`}
                     full
@@ -2004,20 +2087,6 @@ export default function DoctorProfile() {
                       onChange={(v) => update("licensedStates", v)}
                       placeholder={`Select ${editStateConfig.plural.toLowerCase()}...`}
                       searchPlaceholder={`Search ${editStateConfig.plural.toLowerCase()}...`}
-                    />
-                  </InputField>
-                ) : (
-                  <InputField label="State/Territory Licensing" full>
-                    <MultiSelect
-                      items={[]}
-                      selected={
-                        Array.isArray(form.licensedStates)
-                          ? form.licensedStates
-                          : []
-                      }
-                      onChange={(v) => update("licensedStates", v)}
-                      placeholder="Select a country above to see states/territories..."
-                      searchPlaceholder="Search..."
                     />
                   </InputField>
                 )}
@@ -2297,8 +2366,11 @@ export default function DoctorProfile() {
                 className="drprofile__grid-read"
                 style={{ marginBottom: 20 }}
               >
-                <ReadField label="Country" value={e.country} />
-                <ReadField label="State" value={e.state} />
+                <ReadField label="Country" value={getCountryName(e.country)} />
+                <ReadField
+                  label="State"
+                  value={getStateName(e.state, e.country)}
+                />
                 <ReadField label="City" value={e.city} />
                 <ReadField label="ZIP / Postal" value={e.zip} />
               </div>
