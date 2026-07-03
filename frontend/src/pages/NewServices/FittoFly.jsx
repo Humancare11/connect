@@ -1732,7 +1732,7 @@ const FinalCTA = ({ s }) => (
               Book Your Fit to Fly Assessment Today
             </a>
           </GhostBtn>
-          <button
+          {/* <button
             style={{
               padding: "13px 24px",
               borderRadius: 12,
@@ -1745,7 +1745,7 @@ const FinalCTA = ({ s }) => (
             }}
           >
             Contact Us
-          </button>
+          </button> */}
         </div>
         <div
           style={{

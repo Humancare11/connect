@@ -307,7 +307,6 @@
    ═══════════════════════════════════════════════════════════════ */
 .hcc-sx .content-card {
   background: rgba(255, 255, 255, 0.38);
-  /* [CHANGED] frosted glass */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--r-card);
@@ -323,7 +322,7 @@
 /* Panel fade-in */
 .hcc-sx .panel {
   width: 100%;
-  padding: 40px 36px 48px;
+  padding: 38px 13px 47px;
   animation: hcc-fadein 0.25s var(--ease);
 }
 
@@ -666,16 +665,24 @@
    ═══════════════════════════════════════════════════════════════ */
 .hcc-sx .condgrid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+  /* [FIX] ensure every card in a row shares the same height so
+     2-line-wrapped titles don't leave neighboring cards short */
+  align-items: stretch;
 }
 
 .hcc-sx .condcard {
-  background: #ffffff;
-  border: 1px solid rgba(17, 28, 46, 0.06);
+  /* [FIX] swapped flat opaque white for the same frosted-glass
+     treatment used by .catcard / .spec so it matches the rest of
+     the design system instead of reading as a different component */
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: var(--r-lg);
-  
-  padding: 14px 18px;
+
+  padding: 14px 10px;
   cursor: pointer;
   transition: transform var(--t), box-shadow var(--t), border-color var(--t), background var(--t);
   display: flex;
@@ -689,7 +696,9 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(11, 87, 232, 0.12);
   border-color: rgba(11, 87, 232, 0.22);
-  background: #ffffff;
+  /* [FIX] was hard-coded #ffffff, identical to the resting state,
+     so hovering produced no visible background change */
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .hcc-sx .condcard-ico {
@@ -724,9 +733,15 @@
   color: var(--navy-deep);
   line-height: 1.3;
   letter-spacing: -0.1px;
-  white-space: nowrap;
+  /* [FIX] long names (e.g. "HIV Prevention / PrEP Guidance") were
+     being clipped to an unreadable single-line ellipsis — now wraps
+     up to 2 lines before truncating */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  white-space: normal;
 }
 
 /* [NEW] Description line under the title, e.g. parent specialty or category context */
@@ -735,9 +750,15 @@
   color: var(--muted);
   font-weight: 500;
   line-height: 1.3;
-  white-space: nowrap;
+  /* [FIX] same clipping problem as condcard-name, e.g. long specialty
+     names like "Obstetrics & Gynaecology (OB-GYN)" — allow 1 line
+     to keep clamping but wrap cleanly instead of hard nowrap-clip */
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: normal;
 }
 
 .hcc-sx .condcard.condcard-other {

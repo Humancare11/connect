@@ -72,7 +72,7 @@ export default function TermsService() {
                     {/* acceptance  */}
                     <SectionCard icon={FileText} title="Acceptance of Terms">
                         <p style={{ color: "#64748b", lineHeight: 1.8 }}>
-                            By accessing or using the Humancare Connect platform at humancareworldwide.com (the "Platform"), you agree to be bound by these Terms of Service ("Terms").
+                            By accessing or using the Humancare Connect platform at humancareconeect.co (the "Platform"), you agree to be bound by these Terms of Service ("Terms").
                         </p>
 
                         <p style={{ color: "#64748b", lineHeight: 1.8 }}>

@@ -55,7 +55,6 @@ const cat = {
       desc: " Personalized care for menstrual health, hormonal concerns, fertility support, pregnancy guidance, menopause management, reproductive wellness, birth control consultations, and preventive women's healthcare.",
       path: "/weight-management",
     },
-    
   ],
 
   conditions: [
@@ -139,112 +138,116 @@ const cat = {
     },
   ],
 
-faqGroups: [
-  {
-    label: "Women's Mental Health",
-    items: [
-      {
-        q: "What is women's mental health?",
-        a: "Women's mental health focuses on emotional and psychological well-being throughout different stages of a woman's life, including reproductive, hormonal, and life transitions.",
-      },
-      {
-        q: "Can hormonal changes affect mental health?",
-        a: "Yes. Hormonal fluctuations may influence mood, emotions, sleep patterns, stress levels, and overall mental well-being.",
-      },
-      {
-        q: "When should I seek support for emotional symptoms?",
-        a: "Professional support may be beneficial whenever emotional symptoms interfere with daily activities, relationships, work, or overall quality of life.",
-      },
-      {
-        q: "Can telehealth be used for women's mental health care?",
-        a: "Yes. Many mental health consultations, therapy sessions, and follow-up appointments can be conducted through secure virtual healthcare services.",
-      },
-    ],
-  },
+  faqGroups: [
+    {
+      label: "Women's Mental Health",
+      items: [
+        {
+          q: "What is women's mental health?",
+          a: "Women's mental health focuses on emotional and psychological well-being throughout different stages of a woman's life, including reproductive, hormonal, and life transitions.",
+        },
+        {
+          q: "Can hormonal changes affect mental health?",
+          a: "Yes. Hormonal fluctuations may influence mood, emotions, sleep patterns, stress levels, and overall mental well-being.",
+        },
+        {
+          q: "When should I seek support for emotional symptoms?",
+          a: "Professional support may be beneficial whenever emotional symptoms interfere with daily activities, relationships, work, or overall quality of life.",
+        },
+        {
+          q: "Can telehealth be used for women's mental health care?",
+          a: "Yes. Many mental health consultations, therapy sessions, and follow-up appointments can be conducted through secure virtual healthcare services.",
+        },
+      ],
+    },
 
-  {
-    label: "Pregnancy & Postpartum Mental Health",
-    items: [
-      {
-        q: "What is perinatal anxiety?",
-        a: "Perinatal anxiety refers to excessive worry, fear, or anxiety experienced during pregnancy or after childbirth.",
-      },
-      {
-        q: "Can anxiety occur during pregnancy?",
-        a: "Yes. Many women experience anxiety symptoms during pregnancy and the postpartum period due to physical, emotional, and lifestyle changes.",
-      },
-      {
-        q: "What is postpartum depression?",
-        a: "Postpartum depression is a mental health condition that may develop after childbirth and affect mood, energy levels, emotional well-being, and daily functioning.",
-      },
-      {
-        q: "What are common signs of postpartum depression?",
-        a: "Symptoms may include persistent sadness, low mood, emotional distress, fatigue, loss of interest in activities, and difficulty coping with daily responsibilities.",
-      },
-      {
-        q: "Is postpartum depression common?",
-        a: "Postpartum emotional challenges affect many individuals and should be addressed with professional support whenever symptoms become difficult to manage.",
-      },
-    ],
-  },
+    {
+      label: "Pregnancy & Postpartum Mental Health",
+      items: [
+        {
+          q: "What is perinatal anxiety?",
+          a: "Perinatal anxiety refers to excessive worry, fear, or anxiety experienced during pregnancy or after childbirth.",
+        },
+        {
+          q: "Can anxiety occur during pregnancy?",
+          a: "Yes. Many women experience anxiety symptoms during pregnancy and the postpartum period due to physical, emotional, and lifestyle changes.",
+        },
+        {
+          q: "What is postpartum depression?",
+          a: "Postpartum depression is a mental health condition that may develop after childbirth and affect mood, energy levels, emotional well-being, and daily functioning.",
+        },
+        {
+          q: "What are common signs of postpartum depression?",
+          a: "Symptoms may include persistent sadness, low mood, emotional distress, fatigue, loss of interest in activities, and difficulty coping with daily responsibilities.",
+        },
+        {
+          q: "Is postpartum depression common?",
+          a: "Postpartum emotional challenges affect many individuals and should be addressed with professional support whenever symptoms become difficult to manage.",
+        },
+      ],
+    },
 
-  {
-    label: "Hormonal & Mood Concerns",
-    items: [
-      {
-        q: "What is PMDD?",
-        a: "Premenstrual Dysphoric Disorder (PMDD) is a severe form of premenstrual mood symptoms that can significantly affect emotional well-being and daily life.",
-      },
-      {
-        q: "Is PMDD different from PMS?",
-        a: "Yes. PMDD typically involves more severe emotional, psychological, and behavioral symptoms than typical Premenstrual Syndrome (PMS).",
-      },
-      {
-        q: "Can sleep problems affect mental health?",
-        a: "Yes. Poor sleep may contribute to emotional challenges, mood symptoms, anxiety, stress, and reduced overall well-being.",
-      },
-      {
-        q: "Can parenting stress affect emotional well-being?",
-        a: "Yes. Parenting responsibilities, life transitions, and daily demands can contribute to emotional stress and mental health concerns.",
-      },
-    ],
-  },
+    {
+      label: "Hormonal & Mood Concerns",
+      items: [
+        {
+          q: "What is PMDD?",
+          a: "Premenstrual Dysphoric Disorder (PMDD) is a severe form of premenstrual mood symptoms that can significantly affect emotional well-being and daily life.",
+        },
+        {
+          q: "Is PMDD different from PMS?",
+          a: "Yes. PMDD typically involves more severe emotional, psychological, and behavioral symptoms than typical Premenstrual Syndrome (PMS).",
+        },
+        {
+          q: "Can sleep problems affect mental health?",
+          a: "Yes. Poor sleep may contribute to emotional challenges, mood symptoms, anxiety, stress, and reduced overall well-being.",
+        },
+        {
+          q: "Can parenting stress affect emotional well-being?",
+          a: "Yes. Parenting responsibilities, life transitions, and daily demands can contribute to emotional stress and mental health concerns.",
+        },
+      ],
+    },
 
-  {
-    label: "Treatment & Support",
-    items: [
-      {
-        q: "How can therapy help with women's mental health concerns?",
-        a: "Therapy can provide coping strategies, emotional support, stress management techniques, and practical tools for managing mental health symptoms.",
-      },
-      {
-        q: "What happens during a women's mental health consultation?",
-        a: "A healthcare professional reviews your symptoms, medical history, concerns, and goals to create a personalized care and support plan.",
-      },
-      {
-        q: "How long does treatment typically last?",
-        a: "Treatment duration varies based on individual symptoms, treatment goals, response to care, and personal healthcare needs.",
-      },
-      {
-        q: "Can I receive ongoing support through virtual consultations?",
-        a: "Yes. Many women benefit from ongoing virtual mental health consultations that provide consistent support, monitoring, and follow-up care.",
-      },
-    ],
-  },
-],
+    {
+      label: "Treatment & Support",
+      items: [
+        {
+          q: "How can therapy help with women's mental health concerns?",
+          a: "Therapy can provide coping strategies, emotional support, stress management techniques, and practical tools for managing mental health symptoms.",
+        },
+        {
+          q: "What happens during a women's mental health consultation?",
+          a: "A healthcare professional reviews your symptoms, medical history, concerns, and goals to create a personalized care and support plan.",
+        },
+        {
+          q: "How long does treatment typically last?",
+          a: "Treatment duration varies based on individual symptoms, treatment goals, response to care, and personal healthcare needs.",
+        },
+        {
+          q: "Can I receive ongoing support through virtual consultations?",
+          a: "Yes. Many women benefit from ongoing virtual mental health consultations that provide consistent support, monitoring, and follow-up care.",
+        },
+      ],
+    },
+  ],
 
-ctaHeadline: "Compassionate Support for Every Stage of a Woman's Life",
+  ctaHeadline: "Compassionate Support for Every Stage of a Woman's Life",
 
-ctaBody:
-  "Connect with trusted mental health professionals for support with anxiety, postpartum depression, PMDD, emotional wellness, hormonal changes, and life's transitions through secure and confidential online consultations.",
-
-  };
+  ctaBody:
+    "Connect with trusted mental health professionals for support with anxiety, postpartum depression, PMDD, emotional wellness, hormonal changes, and life's transitions through secure and confidential online consultations.",
+};
 
 // ─── Booking Form ─────────────────────────────────────────────────────────────
 
 function BookingForm({ specialtyPlaceholder }) {
   const [form, setForm] = useState({
-    name: "", phone: "", date: "", time: "", type: "", specialty: "",
+    name: "",
+    phone: "",
+    date: "",
+    time: "",
+    type: "",
+    specialty: "",
   });
   const [submitted, setSubmitted] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -260,7 +263,14 @@ function BookingForm({ specialtyPlaceholder }) {
       <div className="hcc-book-card" style={{ textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
         <div className="hcc-book-title">Appointment Requested!</div>
-        <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8, lineHeight: 1.6 }}>
+        <p
+          style={{
+            fontSize: 13,
+            color: "var(--muted)",
+            marginTop: 8,
+            lineHeight: 1.6,
+          }}
+        >
           We'll confirm your slot via call or SMS within 15 minutes.
         </p>
       </div>
@@ -273,21 +283,40 @@ function BookingForm({ specialtyPlaceholder }) {
       <p className="hcc-book-sub">Same-day slots often available</p>
       <div className="hcc-form-group">
         <label className="hcc-form-label">Full Name</label>
-        <input className="hcc-form-input" placeholder="Your full name" value={form.name} onChange={(e) => set("name", e.target.value)} />
+        <input
+          className="hcc-form-input"
+          placeholder="Your full name"
+          value={form.name}
+          onChange={(e) => set("name", e.target.value)}
+        />
       </div>
       <div className="hcc-form-group">
         <label className="hcc-form-label">Phone Number</label>
-        <input className="hcc-form-input" placeholder="+91 98765 43210" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+        <input
+          className="hcc-form-input"
+          placeholder="+91 98765 43210"
+          value={form.phone}
+          onChange={(e) => set("phone", e.target.value)}
+        />
       </div>
       <div className="hcc-form-row">
         <div className="hcc-form-group">
           <label className="hcc-form-label">Date</label>
-          <input className="hcc-form-input" type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
+          <input
+            className="hcc-form-input"
+            type="date"
+            value={form.date}
+            onChange={(e) => set("date", e.target.value)}
+          />
         </div>
         <div className="hcc-form-group">
           <label className="hcc-form-label">Time</label>
           <div className="hcc-select-wrap">
-            <select className="hcc-form-select" value={form.time} onChange={(e) => set("time", e.target.value)}>
+            <select
+              className="hcc-form-select"
+              value={form.time}
+              onChange={(e) => set("time", e.target.value)}
+            >
               <option value="">Select</option>
               <option>Morning (9–12)</option>
               <option>Afternoon (12–4)</option>
@@ -299,7 +328,11 @@ function BookingForm({ specialtyPlaceholder }) {
       <div className="hcc-form-group">
         <label className="hcc-form-label">Consultation Type</label>
         <div className="hcc-select-wrap">
-          <select className="hcc-form-select" value={form.type} onChange={(e) => set("type", e.target.value)}>
+          <select
+            className="hcc-form-select"
+            value={form.type}
+            onChange={(e) => set("type", e.target.value)}
+          >
             <option value="">Select type</option>
             <option>Video Consultation</option>
             <option>In-Person Visit</option>
@@ -308,7 +341,12 @@ function BookingForm({ specialtyPlaceholder }) {
       </div>
       <div className="hcc-form-group">
         <label className="hcc-form-label">Specialty (optional)</label>
-        <input className="hcc-form-input" placeholder={specialtyPlaceholder || "e.g. Specialist"} value={form.specialty} onChange={(e) => set("specialty", e.target.value)} />
+        <input
+          className="hcc-form-input"
+          placeholder={specialtyPlaceholder || "e.g. Specialist"}
+          value={form.specialty}
+          onChange={(e) => set("specialty", e.target.value)}
+        />
       </div>
       <button className="hcc-book-submit" onClick={handleSubmit}>
         <FiCalendar /> Confirm Appointment
@@ -401,24 +439,41 @@ function FaqSection({ faqGroups, catLabel }) {
           <span className="hcc-faq-sidebar-eyebrow">FAQ</span>
           <h2 className="hcc-faq-sidebar-title">Frequently Asked Questions</h2>
           <p className="hcc-faq-sidebar-desc">
-            Everything you need to know about {catLabel} care at HumanCare Connect. Can't find an answer?
+            Everything you need to know about {catLabel} care at HumanCare
+            Connect. Can't find an answer?
           </p>
-          <button className="hcc-faq-chat-btn">
-            <span className="chat-icon"><FiMessageSquare size={10} /></span>
+          <button
+            className="hcc-faq-chat-btn"
+            onClick={() =>
+              (window.location.href = "mailto:support@humancareconnect.co")
+            }
+          >
+            <span className="chat-icon">
+              <FiMessageSquare size={10} />
+            </span>
             Chat with our team
           </button>
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div><strong>Avg. response in 2 min</strong><div>Live chat available</div></div>
+              <div>
+                <strong>Avg. response in 2 min</strong>
+                <div>Live chat available</div>
+              </div>
             </div>
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">🏥</span>
-              <div><strong>HIPAA secure &amp; private</strong><div>Your data is protected</div></div>
+              <div>
+                <strong>HIPAA secure &amp; private</strong>
+                <div>Your data is protected</div>
+              </div>
             </div>
             <div className="hcc-faq-trust-badge">
               <span className="badge-dot" />
-              <div><strong>Available on all devices</strong><div>Web, iOS &amp; Android</div></div>
+              <div>
+                <strong>Available on all devices</strong>
+                <div>Web, iOS &amp; Android</div>
+              </div>
             </div>
           </div>
         </div>
@@ -435,11 +490,21 @@ function FaqSection({ faqGroups, catLabel }) {
                   const key = `${gi}-${fi}`;
                   const isOpen = openItem === key;
                   return (
-                    <div key={fi} className={`hcc-faq-item${isOpen ? " open" : ""}`}>
-                      <button className="hcc-faq-btn" onClick={() => toggle(key)}>
+                    <div
+                      key={fi}
+                      className={`hcc-faq-item${isOpen ? " open" : ""}`}
+                    >
+                      <button
+                        className="hcc-faq-btn"
+                        onClick={() => toggle(key)}
+                      >
                         <span className="hcc-faq-question">{faq.q}</span>
                         <span className="hcc-faq-toggle">
-                          {isOpen ? <FiMinus size={12} /> : <FiPlus size={12} />}
+                          {isOpen ? (
+                            <FiMinus size={12} />
+                          ) : (
+                            <FiPlus size={12} />
+                          )}
                         </span>
                       </button>
                       <AnimatePresence>
@@ -462,7 +527,7 @@ function FaqSection({ faqGroups, catLabel }) {
             ))}
           </div>
 
-          <div className="hcc-faq-still">
+          {/* <div className="hcc-faq-still">
             <div className="hcc-faq-still-text">
               <strong>Still have questions?</strong>
               Our care team is available every day, 8 AM – 10 PM.
@@ -470,7 +535,7 @@ function FaqSection({ faqGroups, catLabel }) {
             <button className="hcc-faq-call-btn">
               <FiPhone size={13} /> Book a Call
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>
@@ -479,18 +544,30 @@ function FaqSection({ faqGroups, catLabel }) {
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
-export default function  WomenHealth() {
+export default function WomenHealth() {
   const navigate = useNavigate();
   const goToBooking = () => navigate("/appointment-booking");
+  const goToContact = () => navigate("/contact");
 
   return (
-    <div style={{ fontFamily: "'Satoshi', sans-serif", background: "var(--bg)", color: "var(--navy)", minHeight: "100vh" }}>
-
+    <div
+      style={{
+        fontFamily: "'Satoshi', sans-serif",
+        background: "var(--bg)",
+        color: "var(--navy)",
+        minHeight: "100vh",
+      }}
+    >
       <Helmet>
-        <title>Women's Mental Health Specialists | Anxiety, PMDD & Postpartum Mental Health Support
-</title>
-        <meta name="description" content="Connect with women's mental health specialists for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, emotional wellness support, and personalized mental healthcare.
-" />
+        <title>
+          Women's Mental Health Specialists | Anxiety, PMDD & Postpartum Mental
+          Health Support
+        </title>
+        <meta
+          name="description"
+          content="Connect with women's mental health specialists for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, emotional wellness support, and personalized mental healthcare.
+"
+        />
       </Helmet>
 
       {/* ── Hero ── */}
@@ -498,13 +575,29 @@ export default function  WomenHealth() {
         <div className="hcc-hero-overlay" />
         <div className="hcc-hero-deco-1" />
         <div className="hcc-hero-deco-2" />
-        <FiHeart       className="hcc-hero-icon" style={{ top: 48,    right: 420, fontSize: 48 }} />
-        <FiShield      className="hcc-hero-icon" style={{ bottom: 60, right: 500, fontSize: 36 }} />
-        <FiActivity    className="hcc-hero-icon" style={{ top: 140,   right: 340, fontSize: 30 }} />
-        <FiCheckCircle className="hcc-hero-icon" style={{ bottom: 120, right: 420, fontSize: 28 }} />
+        <FiHeart
+          className="hcc-hero-icon"
+          style={{ top: 48, right: 420, fontSize: 48 }}
+        />
+        <FiShield
+          className="hcc-hero-icon"
+          style={{ bottom: 60, right: 500, fontSize: 36 }}
+        />
+        <FiActivity
+          className="hcc-hero-icon"
+          style={{ top: 140, right: 340, fontSize: 30 }}
+        />
+        <FiCheckCircle
+          className="hcc-hero-icon"
+          style={{ bottom: 120, right: 420, fontSize: 28 }}
+        />
 
         <div className="hcc-inner">
-          <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+          >
             <div className="hcc-badge">
               <span className="hcc-badge-dot" />
               Trusted {cat.label}
@@ -512,37 +605,58 @@ export default function  WomenHealth() {
             <h1 className="hcc-headline">
               {cat.headline}
               <br />
-              <span style={{ color: "var(--blue-lt)" }}>{cat.headlineAccent}</span>
+              <span style={{ color: "var(--blue-lt)" }}>
+                {cat.headlineAccent}
+              </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
             <div className="hcc-cta-row">
-              <button className="hcc-btn-primary" onClick={goToBooking}><FiCalendar /> Book Appointment</button>
-              <button className="hcc-btn-secondary" onClick={goToBooking}><FiUser size={15} /> Know More</button>
+              <button className="hcc-btn-primary" onClick={goToBooking}>
+                <FiCalendar /> Book Appointment
+              </button>
+              <button className="hcc-btn-secondary" onClick={goToContact}>
+                <FiUser size={15} /> Know More
+              </button>
             </div>
             <div className="hcc-trust-row">
-              <div className="hcc-trust-item"><FiCheckCircle size={14} /> Same Day Visits</div>
-              <div className="hcc-trust-item"><FiShield size={14} /> Insurance Accepted</div>
-              <div className="hcc-trust-item"><FiVideo size={14} /> Virtual Care</div>
+              <div className="hcc-trust-item">
+                <FiCheckCircle size={14} /> Same Day Visits
+              </div>
+              <div className="hcc-trust-item">
+                <FiShield size={14} /> Insurance Accepted
+              </div>
+              <div className="hcc-trust-item">
+                <FiVideo size={14} /> Virtual Care
+              </div>
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.15 }}>
-            <BookingForm specialtyPlaceholder={cat.bookingSpecialtyPlaceholder} />
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.15 }}
+          >
+            <BookingForm
+              specialtyPlaceholder={cat.bookingSpecialtyPlaceholder}
+            />
           </motion.div>
         </div>
       </section>
 
       {/* ── Body ── */}
       <div className="hcc-body">
-
         {/* Specialties */}
         {cat.specialties?.length > 0 && (
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Expertise</span>
             <h2 className="hcc-section-title">Specialties Covered</h2>
-            <p className="hcc-section-sub">All {cat.label} specialties available on Humancare Connect.</p>
+            <p className="hcc-section-sub">
+              All {cat.label} specialties available on Humancare Connect.
+            </p>
             <div className="hcc-specialty-grid">
-              {cat.specialties.map((sp, i) => <SpecialtyCard key={i} sp={sp} index={i} />)}
+              {cat.specialties.map((sp, i) => (
+                <SpecialtyCard key={i} sp={sp} index={i} />
+              ))}
             </div>
           </section>
         )}
@@ -552,9 +666,13 @@ export default function  WomenHealth() {
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Conditions</span>
             <h2 className="hcc-section-title">Conditions We Treat</h2>
-            <p className="hcc-section-sub">Click on any condition to learn more.</p>
+            <p className="hcc-section-sub">
+              Click on any condition to learn more.
+            </p>
             <div className="hcc-condition-grid">
-              {cat.conditions.map((cond, i) => <ConditionCard key={cond.name} cond={cond} index={i} />)}
+              {cat.conditions.map((cond, i) => (
+                <ConditionCard key={cond.name} cond={cond} index={i} />
+              ))}
             </div>
           </section>
         )}
@@ -564,7 +682,10 @@ export default function  WomenHealth() {
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Care Options</span>
             <h2 className="hcc-section-title">Treatment & Care Pathways</h2>
-            <p className="hcc-section-sub">Multiple ways to access quality care for your child, on your terms.</p>
+            <p className="hcc-section-sub">
+              Multiple ways to access quality care for your child, on your
+              terms.
+            </p>
             <div className="hcc-treatment-grid">
               {cat.treatments.map((t, i) => (
                 <motion.div
@@ -600,7 +721,11 @@ export default function  WomenHealth() {
             <button className="hcc-btn-primary" style={{ background: "#fff", color: "var(--blue)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} onClick={goToBooking}>
               Find Doctors <FiArrowRight />
             </button>
-            <button className="hcc-btn-secondary" style={{ borderColor: "rgba(255,255,255,0.35)" }} onClick={goToBooking}>
+            <button
+              className="hcc-btn-secondary"
+              style={{ borderColor: "rgba(255,255,255,0.35)" }}
+              onClick={goToContact}
+            >
               <FiPhone size={14} /> Call Us Now
             </button>
           </div>
@@ -609,11 +734,14 @@ export default function  WomenHealth() {
 
       {/* Mobile sticky CTA */}
       <div className="hcc-mobile-cta">
-        <button className="hcc-btn-primary" style={{ flex: 1, justifyContent: "center", borderRadius: 12 }} onClick={goToBooking}>
+        <button
+          className="hcc-btn-primary"
+          style={{ flex: 1, justifyContent: "center", borderRadius: 12 }}
+          onClick={goToBooking}
+        >
           Book Appointment
         </button>
       </div>
-
     </div>
   );
-} 
+}

@@ -40,11 +40,12 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-import AboutUs from "./pages/AboutPage"; // about us page
+// import AboutUs from "./pages/AboutPage";
+import AboutPage from "./pages/AboutPage"; // about us page
 
-import AboutPage from "./pages/AboutPage";
 import PCP from "./pages/PCP";
-
+import DoctorCareers from "./pages/DoctorCareers"; // Career Page for Doctors
+import FAQ from "./pages/FAQPage"; // FAQ page
 // privacy concerns
 import PrivacyConcerns from "./pages/PrivacyPolicies/PrivacyConcerns";
 import PatientPrivacyNotice from "./pages/PrivacyPolicies/PatientPrivacyNotice";
@@ -335,7 +336,7 @@ import MentalHealthSupport from "./pages/NewServices/MentalHealthSupport";
 import SexualHealth from "./pages/NewServices/SexualHealth";
 import WeightLossPrograms from "./pages/NewServices/WeightLossPrograms";
 import DoctorNoteSickNote from "./pages/NewServices/DoctorNoteSickNote";
-import FitToFly from "./pages/NewServices/FitToFly";
+import FittoFly from "./pages/NewServices/FittoFly";
 import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
@@ -668,7 +669,7 @@ function AppLayout() {
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/corporates" element={<Corporates />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/contact-us" element={<Contact />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
           {/* <Route path="/register" element={<Register />} /> */}
@@ -677,10 +678,6 @@ function AppLayout() {
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-          <Route
-            path="/doctors/test-doctor"
-            element={<DoctorProfileForUser />}
-          />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
@@ -1627,6 +1624,8 @@ function AppLayout() {
             element={<TelehealthProviderAgreement />}
           />
           <Route path="/about-us" element={<AboutPage />} />
+          <Route path="/career" element={<DoctorCareers />} />
+          <Route path="/faq" element={<FAQ />} />
           {/* ---------------------Service Pages---------------------------- */}
           <Route path="/ServiceDemo" element={<ServiceDemo />} />
           <Route
@@ -1684,7 +1683,7 @@ function AppLayout() {
             path="/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
-          <Route path="/fit-to-fly-certificate" element={<FitToFly />} />
+          <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
           <Route
             path="/doctor-note-or-sick-notes"

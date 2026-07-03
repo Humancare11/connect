@@ -431,8 +431,8 @@ const completeAppointment = async (req, res) => {
       return res.status(403).json({ msg: "You can only complete your own appointments." });
     }
 
-    if (appointment.status !== "confirmed") {
-      return res.status(400).json({ msg: "Only confirmed appointments can be marked complete." });
+    if (!["assigned", "confirmed"].includes(appointment.status)) {
+      return res.status(400).json({ msg: "Only assigned or confirmed appointments can be marked complete." });
     }
 
     appointment.status = "complete";
@@ -509,6 +509,25 @@ const reassignAppointmentDoctor = async (req, res) => {
     }
 
     if (appointment.doctorId?.toString() === newDoctor._id.toString()) {
+      const statusChanged = appointment.status !== "confirmed";
+      if (appointment.status !== "confirmed") {
+        appointment.status = "confirmed";
+        appointment.sessionStarted = true;
+        await appointment.save();
+      }
+      if (statusChanged) {
+        const io = req.app.get("io");
+        if (io) {
+          const payload = {
+            appointmentId: appointment._id,
+            status: appointment.status,
+            doctorId: appointment.doctorId,
+          };
+          io.to(`patient_${appointment.patientId}`).emit("appointment-updated", payload);
+          io.to(`appointment_${appointment._id}`).emit("appointment-updated", payload);
+          io.to("admin_room").emit("appointment-updated", payload);
+        }
+      }
       return res.status(200).json({ msg: "Appointment already assigned to this doctor.", appointment });
     }
 
@@ -532,7 +551,8 @@ const reassignAppointmentDoctor = async (req, res) => {
       .lean();
 
     appointment.doctorId = newDoctor._id;
-    appointment.status = "assigned";
+    appointment.status = "confirmed";
+    appointment.sessionStarted = true;
     appointment.doctorTimezone = assignedDoctorEnrollment?.timezone || appointment.doctorTimezone || "";
     appointment.assignedBy = {
       id: req.user?.id || null,
@@ -622,7 +642,7 @@ const reassignAppointmentDoctor = async (req, res) => {
     }
 
     res.status(200).json({
-      msg: wasRequested ? "Appointment accepted and doctor assigned successfully." : "Doctor reassigned successfully.",
+      msg: wasRequested ? "Appointment confirmed and doctor assigned successfully." : "Doctor reassigned successfully.",
       appointment: populatedAppointment,
     });
   } catch (error) {
