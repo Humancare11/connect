@@ -1,18 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import AppointmentChat from "../../components/AppointmentChat";
+import { Link, useLocation } from "react-router-dom";
 import "./appointment.css";
 import api from "../../api";
-import { useAuth } from "../../context/AuthContext";
 import socket from "../../socket";
 
 export default function Appointments() {
-  const { user } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [activeTab, setActiveTab] = useState("confirmed");
   const [focusedAppointmentId, setFocusedAppointmentId] = useState("");
   const refreshTimerRef = useRef(null);
@@ -36,6 +31,13 @@ export default function Appointments() {
       loadAppointments(false);
     }, 200);
   }, [loadAppointments]);
+
+  const appointmentStatus = useCallback((appointment) => {
+    if (appointment?.status === "assigned" && appointment?.doctorId) {
+      return "confirmed";
+    }
+    return appointment?.status || "";
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -83,12 +85,11 @@ export default function Appointments() {
     }
 
     setFocusedAppointmentId(activityId);
-    if (["requested", "upcoming", "assigned"].includes(target.status)) {
+    const status = appointmentStatus(target);
+    if (["requested", "upcoming", "pending"].includes(status)) {
       setActiveTab("pending");
-    } else if (
-      ["pending", "confirmed", "completed", "complete"].includes(target.status)
-    ) {
-      setActiveTab(target.status === "complete" ? "completed" : target.status);
+    } else if (["confirmed", "completed", "complete"].includes(status)) {
+      setActiveTab(status === "complete" ? "completed" : status);
     }
 
     setTimeout(() => {
@@ -96,16 +97,16 @@ export default function Appointments() {
         .getElementById(`appt-${activityId}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 40);
-  }, [appointments, location.search]);
+  }, [appointments, appointmentStatus, location.search]);
 
   const pendingAppointments = appointments.filter((a) =>
-    ["requested", "upcoming", "assigned", "pending"].includes(a.status),
+    ["requested", "upcoming", "pending"].includes(appointmentStatus(a)),
   );
   const confirmedAppointments = appointments.filter(
-    (a) => a.status === "confirmed",
+    (a) => appointmentStatus(a) === "confirmed",
   );
   const completedAppointments = appointments.filter((a) =>
-    ["complete", "completed"].includes(a.status),
+    ["complete", "completed"].includes(appointmentStatus(a)),
   );
 
   const tabData = {
@@ -304,27 +305,17 @@ export default function Appointments() {
                       <span className="appt-waiting-text">
                         {["requested", "upcoming"].includes(appt.status)
                           ? "Awaiting admin review and doctor assignment"
-                          : appt.status === "assigned"
-                            ? "Doctor assigned. Awaiting confirmation"
-                            : "Awaiting doctor confirmation"}
+                          : "Awaiting doctor confirmation"}
                       </span>
                     )}
 
                     {activeTab === "confirmed" && (
-                      <>
-                        <button
-                          className="appt-btn appt-btn--primary"
-                          onClick={() => setSelectedAppointment(appt)}
-                        >
-                          💬 Start Consultation
-                        </button>
-                        <Link
-                          to={`/video-call/${appt._id}`}
-                          className="appt-btn appt-btn--outline"
-                        >
-                          📹 Join Video Call
-                        </Link>
-                      </>
+                      <Link
+                        to={`/video-call/${appt._id}`}
+                        className="appt-btn appt-btn--primary"
+                      >
+                        Join Consultation
+                      </Link>
                     )}
 
                     {activeTab === "completed" && (
@@ -347,53 +338,6 @@ export default function Appointments() {
           </div>
         )}
       </div>
-
-      {/* Consultation Modal */}
-      {selectedAppointment && selectedAppointment.status === "confirmed" && (
-        <div
-          className="appt-modal-overlay"
-          onClick={() => setSelectedAppointment(null)}
-        >
-          <div className="appt-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="appt-modal-header">
-              <div className="appt-modal-title-group">
-                <div className="appt-modal-avatar">
-                  {selectedAppointment.doctorId?.name
-                    ?.charAt(0)
-                    ?.toUpperCase() || "D"}
-                </div>
-                <div>
-                  <h3>Live Consultation</h3>
-                  <p>
-                    Dr. {selectedAppointment.doctorId?.name || "Unknown Doctor"}
-                  </p>
-                </div>
-              </div>
-              <button
-                className="appt-modal-close"
-                onClick={() => setSelectedAppointment(null)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="appt-modal-body">
-              <AppointmentChat
-                appointmentId={selectedAppointment._id}
-                userName={user?.name}
-                userId={user?._id}
-              />
-            </div>
-            <div className="appt-modal-footer">
-              <Link
-                to={`/video-call/${selectedAppointment._id}`}
-                className="appt-btn appt-btn--primary full-width"
-              >
-                📹 Join Video Call
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

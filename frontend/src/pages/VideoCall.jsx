@@ -436,9 +436,13 @@ export default function VideoCall() {
     }
   }, [appointmentId, isDoctor]);
 
+  const canJoinConsultation = useMemo(() => {
+    return appt?.status === "confirmed" || (appt?.status === "assigned" && appt?.doctorId);
+  }, [appt]);
+
   // ── Block / intercept browser back button during confirmed call ───
   useEffect(() => {
-    if (!appt || appt.status !== "confirmed") return;
+    if (!canJoinConsultation) return;
 
     window.history.pushState(null, "", window.location.href);
 
@@ -451,11 +455,11 @@ export default function VideoCall() {
 
     window.addEventListener("popstate", handlePopstate);
     return () => window.removeEventListener("popstate", handlePopstate);
-  }, [appt, navigate, isDoctor, performCleanup]);
+  }, [canJoinConsultation, navigate, isDoctor, performCleanup]);
 
   // ── Tab close / reload → end call automatically ───────────────────
   useEffect(() => {
-    if (!appt || appt.status !== "confirmed") return;
+    if (!canJoinConsultation) return;
 
     const handleBeforeUnload = () => {
       performCleanup(true);
@@ -463,7 +467,7 @@ export default function VideoCall() {
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [appt, performCleanup]);
+  }, [canJoinConsultation, performCleanup]);
 
   // ── Assign stream to a video element ──────────────────────────────
   const assignStreams = useCallback((swapped) => {
@@ -481,7 +485,7 @@ export default function VideoCall() {
 
   // ── Main WebRTC + Socket setup ────────────────────────────────────
   useEffect(() => {
-    if (!appt || appt.status !== "confirmed") return;
+    if (!canJoinConsultation) return;
 
     let mounted = true;
     completedRef.current = false;
@@ -729,7 +733,7 @@ export default function VideoCall() {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       clearInterval(callTimerRef.current);
     };
-  }, [appt, appointmentId, assignStreams, isDoctor, doctorId, userId]);
+  }, [appt, canJoinConsultation, appointmentId, assignStreams, isDoctor, doctorId, userId]);
 
   // ── Auto-start: patient sends offer when both sides ready ─────────
   useEffect(() => {
@@ -863,7 +867,7 @@ export default function VideoCall() {
     setEndCallConfirm(false);
     setCompleting(true);
     try {
-      if (isDoctor && appt?.status === "confirmed") {
+      if (isDoctor && canJoinConsultation) {
         await api.put(`/api/appointments/${appointmentId}/complete`, {});
       }
       performCleanup(false);
@@ -873,7 +877,7 @@ export default function VideoCall() {
       setInlineError(err.response?.data?.msg || "Failed to end call. Please try again.");
       setTimeout(() => setInlineError(""), 5000);
     }
-  }, [completing, isDoctor, appt?.status, appointmentId, performCleanup, navigate]);
+  }, [completing, isDoctor, canJoinConsultation, appointmentId, performCleanup, navigate]);
 
   const handleRxSaved = useCallback(() => {
     setShowRxModal(false);
@@ -1005,7 +1009,7 @@ export default function VideoCall() {
     );
   }
 
-  if (appt?.status === "pending") {
+  if (!canJoinConsultation && ["pending", "requested", "upcoming", "assigned"].includes(appt?.status)) {
     return (
       <div className="hc-vc__gate">
         <div className="hc-vc__gate-icon"><FiClock /></div>
