@@ -3,7 +3,22 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useCurrency } from "../../hooks/useCurrency";
 import { useAuth } from "../../context/AuthContext";
+import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import { Country, State } from "country-state-city";
 import "./DoctorProfile.css";
+
+// Helper functions to convert ISO codes to display names
+const getCountryName = (isoCode) => {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+};
+
+const getStateName = (stateIsoCode, countryIsoCode) => {
+  if (!stateIsoCode || !countryIsoCode) return "";
+  const state = State.getStateByCodeAndCountry(stateIsoCode, countryIsoCode);
+  return state?.name || stateIsoCode;
+};
 
 const StarIcon = ({ filled }) => (
   <svg
@@ -218,17 +233,24 @@ function getInitials(name) {
 
 function extractDoctorId(raw) {
   if (!raw) return null;
-  const match = raw.match(/^(\d{5})/);
-  return match ? match[1] : null;
+  // Try 5-digit numeric id (legacy) first
+  let match = raw.match(/^(\d{5})/);
+  if (match) return match[1];
+  // Try Mongo-style 24-hex id
+  match = raw.match(/^([a-f0-9]{24})/i);
+  if (match) return match[1];
+  return null;
 }
 
 export default function DoctorProfileForUser({
   legacyId = false,
   adminView = false,
+  showOwnProfile = false,
 }) {
   const { id, slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { doctor: currentDoctor } = useDoctorAuth();
 
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -238,6 +260,14 @@ export default function DoctorProfileForUser({
 
   useEffect(() => {
     setLoading(true);
+    // If requested to show the logged-in doctor's public profile,
+    // use the doctor data from DoctorAuthContext and skip remote fetch.
+    if ((showOwnProfile || adminView) && currentDoctor) {
+      setDoctor(currentDoctor);
+      setLoading(false);
+      return;
+    }
+
     if (legacyId && id) {
       api
         .get(`/api/doctor/${id}`)
@@ -247,14 +277,28 @@ export default function DoctorProfileForUser({
         )
         .finally(() => setLoading(false));
     } else {
-      const numericId = extractDoctorId(slug);
-      if (!numericId) {
+      const extracted = extractDoctorId(slug);
+      if (!extracted) {
         setError("Invalid profile URL.");
         setLoading(false);
         return;
       }
+
+      // If extracted ID looks like a Mongo id (24 hex chars), use /api/doctor/:id
+      if (extracted.length === 24) {
+        api
+          .get(`/api/doctor/${extracted}`)
+          .then((res) => setDoctor(res.data))
+          .catch(() =>
+            setError("Could not load doctor profile. Please try again."),
+          )
+          .finally(() => setLoading(false));
+        return;
+      }
+
+      // Otherwise assume numeric 5-digit doctorId
       api
-        .get(`/api/doctor/profile/${numericId}`)
+        .get(`/api/doctor/profile/${extracted}`)
         .then((res) => setDoctor(res.data))
         .catch(() =>
           setError("Could not load doctor profile. Please try again."),
@@ -306,7 +350,11 @@ export default function DoctorProfileForUser({
   const rating = doctor.rating ?? 4.8;
   const filledStars = Math.round(rating);
   const tags = [doctor.specialty, doctor.subSpecialty].filter(Boolean);
-  const locationParts = [doctor.city, doctor.state, doctor.country]
+  const locationParts = [
+    doctor.city,
+    getStateName(doctor.state, doctor.country),
+    getCountryName(doctor.country),
+  ]
     .filter(Boolean)
     .join(", ");
 

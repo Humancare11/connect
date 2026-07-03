@@ -677,6 +677,10 @@ function AppLayout() {
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
+          <Route
+            path="/doctors/test-doctor"
+            element={<DoctorProfileForUser />}
+          />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
@@ -773,6 +777,14 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <DoctorProfile />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/doctor-profile-for-patients"
+            element={
+              <DoctorLayout>
+                <DoctorProfileForUser showOwnProfile />
               </DoctorLayout>
             }
           />

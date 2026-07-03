@@ -4,6 +4,42 @@ import api, { normalizeFileUrl } from "../../api";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 
 import { Country, State } from "country-state-city";
+import PhoneInputField, {
+  COUNTRIES as PHONE_COUNTRIES,
+} from "../../components/PhoneInputField";
+
+// Helper functions to convert ISO codes to display names
+const getCountryName = (isoCode) => {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+};
+
+const getStateName = (stateIsoCode, countryIsoCode) => {
+  if (!stateIsoCode || !countryIsoCode) return "";
+  const state = State.getStateByCodeAndCountry(stateIsoCode, countryIsoCode);
+  return state?.name || stateIsoCode;
+};
+
+const splitPhoneValue = (fullValue, countryMeta) => {
+  const digits = String(fullValue || "").replace(/\D/g, "");
+  const dial = String(countryMeta?.dial || countryMeta?.dialCode || "").replace(
+    /\D/g,
+    "",
+  );
+  if (!dial) return { countryCode: "", phone: digits };
+  return {
+    countryCode: `+${dial}`,
+    phone: digits.startsWith(dial) ? digits.slice(dial.length) : digits,
+  };
+};
+
+const getCountryCodeFromDialCode = (dialCode) => {
+  if (!dialCode) return "auto";
+  const cleanDial = String(dialCode).replace(/\D/g, "");
+  const country = PHONE_COUNTRIES.find((c) => c.dial === cleanDial);
+  return country?.code || "auto";
+};
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const DAYS = [
@@ -88,6 +124,84 @@ const ID_PROOF_TYPES = [
   "Voter ID",
   "Other",
 ];
+const STATE_LICENSING_COUNTRIES = {
+  US: {
+    label: "State",
+    plural: "States",
+    items: [
+      "Alabama",
+      "Alaska",
+      "Arizona",
+      "Arkansas",
+      "California",
+      "Colorado",
+      "Connecticut",
+      "Delaware",
+      "District of Columbia",
+      "Florida",
+      "Georgia",
+      "Hawaii",
+      "Idaho",
+      "Illinois",
+      "Indiana",
+      "Iowa",
+      "Kansas",
+      "Kentucky",
+      "Louisiana",
+      "Maine",
+      "Maryland",
+      "Massachusetts",
+      "Michigan",
+      "Minnesota",
+      "Mississippi",
+      "Missouri",
+      "Montana",
+      "Nebraska",
+      "Nevada",
+      "New Hampshire",
+      "New Jersey",
+      "New Mexico",
+      "New York",
+      "North Carolina",
+      "North Dakota",
+      "Ohio",
+      "Oklahoma",
+      "Oregon",
+      "Pennsylvania",
+      "Rhode Island",
+      "South Carolina",
+      "South Dakota",
+      "Tennessee",
+      "Texas",
+      "Utah",
+      "Vermont",
+      "Virginia",
+      "Washington",
+      "West Virginia",
+      "Wisconsin",
+      "Wyoming",
+    ],
+  },
+  CA: {
+    label: "Province/Territory",
+    plural: "Provinces/Territories",
+    items: [
+      "Alberta",
+      "British Columbia",
+      "Manitoba",
+      "New Brunswick",
+      "Newfoundland and Labrador",
+      "Northwest Territories",
+      "Nova Scotia",
+      "Nunavut",
+      "Ontario",
+      "Prince Edward Island",
+      "Quebec",
+      "Saskatchewan",
+      "Yukon",
+    ],
+  },
+};
 const TIMEZONES = [
   "America/New_York (EST/EDT)",
   "America/Chicago (CST/CDT)",
@@ -239,7 +353,7 @@ function Section({ icon, title, children, accent }) {
         background: "#fff",
         border: `1px solid ${accent ? "#bfdbfe" : "#e2e8f0"}`,
         borderRadius: 14,
-        overflow: "hidden",
+        overflow: "visible",
         marginBottom: 20,
       }}
     >
@@ -1263,6 +1377,182 @@ function AdminDocUpload({
   );
 }
 
+// const FG = ({ label, children, full }) => (
+//   <div
+//     style={{
+//       display: "flex",
+//       flexDirection: "column",
+//       gap: 4,
+//       gridColumn: full ? "1/-1" : undefined,
+//     }}
+//   >
+//     <label style={LBL}>{label}</label>
+//     {children}
+//   </div>
+// );
+
+function FG({ label, children, full }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        gridColumn: full ? "1/-1" : undefined,
+      }}
+    >
+      <label
+        style={{
+          display: "block",
+          fontSize: 12,
+          fontWeight: 700,
+          color: "#475569",
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          marginBottom: 5,
+        }}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function AdminMultiSelect({ items, selected, onChange, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef();
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const toggle = (item) => {
+    onChange(
+      selected.includes(item)
+        ? selected.filter((s) => s !== item)
+        : [...selected, item],
+    );
+  };
+
+  return (
+    <div ref={wrapperRef} style={{ position: "relative" }}>
+      <div
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 6,
+          padding: "8px 12px",
+          border: "1.5px solid #e2e8f0",
+          borderRadius: 8,
+          minHeight: 44,
+          alignItems: "center",
+          cursor: "pointer",
+          background: "#fff",
+        }}
+      >
+        {selected.length === 0 ? (
+          <span style={{ fontSize: 14, color: "#94a3b8" }}>{placeholder}</span>
+        ) : (
+          selected.map((s) => (
+            <span
+              key={s}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "3px 10px",
+                background: "rgba(37,99,235,0.1)",
+                color: "#2563eb",
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {s}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggle(s);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#2563eb",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >
+                ×
+              </button>
+            </span>
+          ))
+        )}
+      </div>
+      {open && (
+        <div
+          onMouseDown={(e) => e.preventDefault()}
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            background: "#fff",
+            border: "1.5px solid #e2e8f0",
+            borderRadius: 8,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            maxHeight: 220,
+            overflowY: "auto",
+            overflowX: "hidden",
+            zIndex: 9999,
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {items.map((item) => {
+            const isSelected = selected.includes(item);
+            return (
+              <div
+                key={item}
+                onClick={() => toggle(item)}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: 13,
+                  cursor: "pointer",
+                  background: isSelected ? "#f0fdf4" : "transparent",
+                  userSelect: "none",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = isSelected
+                    ? "#dcfce7"
+                    : "#f8fafc";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = isSelected
+                    ? "#f0fdf4"
+                    : "transparent";
+                }}
+              >
+                {isSelected ? "✓ " : ""}
+                {item}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── AdminEditForm — full inline edit, no modal ───────────────────────────────
 function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
   const e = enrollment;
@@ -1305,11 +1595,17 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     clinicAddress: e.clinicAddress || "",
     aboutDoctor: e.aboutDoctor || "",
     licensedStates: Array.isArray(e.licensedStates)
-      ? e.licensedStates.join(", ")
-      : e.licensedStates || e.state || "",
+      ? e.licensedStates
+      : e.licensedStates
+        ? [e.licensedStates]
+        : e.state
+          ? [e.state]
+          : [],
     internationalLicenses: Array.isArray(e.internationalLicenses)
-      ? e.internationalLicenses.join(", ")
-      : e.internationalLicenses || "",
+      ? e.internationalLicenses
+      : e.internationalLicenses
+        ? [e.internationalLicenses]
+        : [],
     bankName: e.bankName || "",
     accountHolderName: e.accountHolderName || "",
     accountNumber: e.accountNumber || "",
@@ -1320,6 +1616,10 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
   });
   const f = (k) => (v) =>
     setD((p) => ({ ...p, [k]: typeof v === "string" ? v : v.target.value }));
+  const [phoneCountryCode, setPhoneCountryCode] = useState(
+    getCountryCodeFromDialCode(e.countryCode),
+  );
+  const stateConfig = STATE_LICENSING_COUNTRIES[d.country] || null;
 
   // ── File URLs ──
   const [urls, setUrls] = useState({
@@ -1410,17 +1710,9 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         experience: d.experience ? Number(d.experience) : undefined,
         consultantFees: d.consultantFees ? Number(d.consultantFees) : undefined,
         languagesKnown,
-        licensedStates: d.licensedStates
-          ? d.licensedStates
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : [],
-        internationalLicenses: d.internationalLicenses
+        licensedStates: Array.isArray(d.licensedStates) ? d.licensedStates : [],
+        internationalLicenses: Array.isArray(d.internationalLicenses)
           ? d.internationalLicenses
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
           : [],
         ...urls,
         timezone,
@@ -1476,19 +1768,6 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
     gap: "16px 20px",
   };
-  const FG = ({ label, children, full }) => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        gridColumn: full ? "1/-1" : undefined,
-      }}
-    >
-      <label style={LBL}>{label}</label>
-      {children}
-    </div>
-  );
 
   /* ── Save/Cancel toolbar ── */
   const Toolbar = () => (
@@ -1611,20 +1890,27 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
             />
           </FG>
           <FG label="Phone Number">
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                style={{ ...INP, width: 84, flexShrink: 0 }}
-                value={d.countryCode}
-                onChange={f("countryCode")}
-                placeholder="+1"
-              />
-              <input
-                style={{ ...INP, flex: 1 }}
-                value={d.phoneNumber}
-                onChange={f("phoneNumber")}
-                placeholder="Phone number"
-              />
-            </div>
+            <PhoneInputField
+              value={(d.countryCode || "") + (d.phoneNumber || "")}
+              onChange={(value, countryMeta) => {
+                const next = splitPhoneValue(value, countryMeta);
+                setD((p) => ({
+                  ...p,
+                  countryCode: next.countryCode,
+                  phoneNumber: next.phone,
+                }));
+              }}
+              onCountryChange={(countryMeta) => {
+                setPhoneCountryCode(countryMeta.code || "auto");
+                setD((p) => ({
+                  ...p,
+                  countryCode: countryMeta.dialCode || p.countryCode,
+                }));
+              }}
+              defaultCountry={phoneCountryCode}
+              placeholder="Mobile number"
+              showCountryNameInDropdown={true}
+            />
           </FG>
         </div>
       </Section>
@@ -1893,20 +2179,32 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               ))}
             </select>
           </FG> */}
-          <FG label="State/Territory Licensing (comma-separated)" full>
-            <input
-              style={INP}
-              value={d.licensedStates}
-              onChange={f("licensedStates")}
-              placeholder="New South Wales, Victoria"
-            />
-          </FG>
-          <FG label="International Medical Licenses (comma-separated)" full>
-            <input
-              style={INP}
-              value={d.internationalLicenses}
-              onChange={f("internationalLicenses")}
-              placeholder="India, United Kingdom"
+          {stateConfig && (
+            <FG label={`${stateConfig.label} Licensing`} full>
+              <AdminMultiSelect
+                items={stateConfig.items}
+                selected={
+                  Array.isArray(d.licensedStates) ? d.licensedStates : []
+                }
+                onChange={(v) => setD((p) => ({ ...p, licensedStates: v }))}
+                placeholder={`Select ${stateConfig.plural.toLowerCase()}...`}
+              />
+            </FG>
+          )}
+          <FG label="International Medical Licenses" full>
+            <AdminMultiSelect
+              items={Country.getAllCountries()
+                .filter((c) => c.isoCode !== d.country)
+                .map((c) => c.name)}
+              selected={
+                Array.isArray(d.internationalLicenses)
+                  ? d.internationalLicenses
+                  : []
+              }
+              onChange={(v) =>
+                setD((p) => ({ ...p, internationalLicenses: v }))
+              }
+              placeholder="Select countries where you hold a medical license..."
             />
           </FG>
         </div>
@@ -2589,7 +2887,13 @@ export default function AdminDoctorProfile() {
   const initials =
     `${(e.firstName || e.doctorId?.name || "D")[0]}${(e.surname || " ")[0]}`.toUpperCase();
   const phone = [e.countryCode, e.phoneNumber].filter(Boolean).join(" ");
-  const location_ = [e.city, e.state, e.country].filter(Boolean).join(", ");
+  const location_ = [
+    e.city,
+    getStateName(e.state, e.country),
+    getCountryName(e.country),
+  ]
+    .filter(Boolean)
+    .join(", ");
   const langs = Array.isArray(e.languagesKnown)
     ? e.languagesKnown.join(", ")
     : e.languagesKnown || "";
@@ -2603,6 +2907,14 @@ export default function AdminDoctorProfile() {
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", paddingBottom: 40 }}>
+      <style>
+        {`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+        `}
+      </style>
       {/* Toast */}
       {toast && (
         <div
@@ -2788,6 +3100,31 @@ export default function AdminDoctorProfile() {
               ID: {e.doctorId.doctorId}
             </span>
           )}
+          <span
+            style={{
+              background: e.isOnline ? "#10b981" : "#6b7280",
+              color: "#fff",
+              padding: "5px 14px",
+              borderRadius: 50,
+              fontSize: 12,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#fff",
+                animation: e.isOnline ? "pulse 2s infinite" : "none",
+              }}
+            />
+            {e.isOnline ? "Online" : "Offline"}
+          </span>
         </div>
       </div>
 
@@ -3090,8 +3427,8 @@ export default function AdminDoctorProfile() {
                 gap: "16px 24px",
               }}
             >
-              <Field label="Country" value={e.country} />
-              <Field label="State" value={e.state} />
+              <Field label="Country" value={getCountryName(e.country)} />
+              <Field label="State" value={getStateName(e.state, e.country)} />
               <Field label="City" value={e.city} />
               <Field label="ZIP / Postal" value={e.zip} />
               <Field label="Street Address" value={e.address} full />
