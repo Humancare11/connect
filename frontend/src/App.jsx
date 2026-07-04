@@ -289,6 +289,7 @@ import PrematureEjaculation1 from "./pages/Conditions/Conditions/PrematureEjacul
 import ProstateHealth1 from "./pages/Conditions/Conditions/ProstateHealth";
 import UrinarySymptomsMen1 from "./pages/Conditions/Conditions/UrinarySymptomsMen";
 import Vertigo from "./pages/Conditions/Conditions/Vertigo";
+import Stress from "./pages/Conditions/Conditions/Stress";
 
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
@@ -1506,6 +1507,10 @@ function AppLayout() {
             element={<VaginalYeastInfection />}
           />
           <Route path="/weaning-guidance" element={<WeaningGuidance />} />
+          <Route
+            path="/stress"
+            element={<Stress />}
+          />
           {/* <Route path="/bladder-problems" element={<BladderProblems />} /> */}
           {/* <Route
             path="/erectile-dysfunction"
