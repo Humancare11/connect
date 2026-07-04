@@ -1081,7 +1081,7 @@ h4 {
     padding: 5px 11px;
     margin-bottom: 16px;
     margin-left: 0;
-    margin-top: 0;
+    margin-top: 20px;
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
@@ -1244,7 +1244,7 @@ h4 {
     max-width: 38px;
   }
   .scene-viewport {
-    height: 200px;
+    height: auto;
   }
   .scene-title {
     font-size: 13px;

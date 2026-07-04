@@ -114,7 +114,7 @@
 
 .slider-h1-v2 {
     font-family: var(--display);
-    font-size: clamp(32px, 5vw, 56px);
+    font-size: 50px;
     font-weight: 800;
     color: var(--navy);
     margin: 0;
@@ -228,8 +228,6 @@
 
 /* ================================================================
    PANORAMIC STAGE
-   FIX: overflow hidden only on the stage (cards), NOT on
-   the section or page-wrap which would trap the nav pill.
 ================================================================ */
 
 .slider-stage-v2 {
@@ -239,8 +237,12 @@
 
 .industry-panoramic-swiper {
     width: 100%;
-    padding: 40px 0 120px;
+    padding: 40px 0 150px;
     overflow: visible !important;
+}
+
+.industry-panoramic-swiper .swiper-pagination {
+    bottom: 18px;
 }
 
 /* ================================================================
@@ -248,12 +250,12 @@
 ================================================================ */
 
 .industry-card-v3 {
-    background: rgba(255, 255, 255, 0.92);
+ background: rgba(255, 255, 255, 0.92);
     border-radius: 48px;
     overflow: hidden;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    height: 600px;
+    height: 750px;             
     border: 1px solid rgba(255, 255, 255, 0.8);
     transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -345,11 +347,15 @@
 }
 
 .v3-desc {
-    font-size: 18px;
+   font-size: 18px;
     color: var(--muted);
     line-height: 1.7;
     margin-bottom: 40px;
     font-weight: 400;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .v3-features {
@@ -431,12 +437,14 @@
 .industry-panoramic-swiper .swiper-pagination-bullet {
     width: 10px;
     height: 10px;
+    margin: 0 10px !important;
     background: #cbd5e1;
     opacity: 1;
+    transition: width 0.3s ease, background 0.3s ease;
 }
 
 .industry-panoramic-swiper .swiper-pagination-bullet-active {
-    background: var(--navy);
+ background: var(--navy);
     width: 30px;
     border-radius: 5px;
 }
@@ -455,10 +463,12 @@
 ================================================================ */
 
 @media (max-width: 1200px) {
-    .industry-card-v3 {
-        height: 550px;
+.industry-card-v3 {
+        height: 560px;
     }
-
+    .v3-title {
+        font-size: 40px;
+    }
     .v3-title {
         font-size: 40px;
     }
@@ -469,15 +479,15 @@
 ================================================================ */
 
 @media (max-width: 1024px) {
-    .industry-card-v3 {
+     .industry-card-v3 {
         grid-template-columns: 1fr;
-        height: auto;
+        height: 780px;          /* fixed, not auto — stacked layout needs more vertical room */
         border-radius: 32px;
     }
-
     .v3-image-area {
         height: 300px;
     }
+    
 
     .v3-overlay {
         background: linear-gradient(0deg, #ffffff 0%, rgba(255, 255, 255, 0.1) 100%);
@@ -500,15 +510,14 @@
         padding: 10px 18px;
         font-size: 13px;
     }
+    .v3-desc {
+        -webkit-line-clamp: 5;
+    }
 }
 
 /* ================================================================
    RESPONSIVE — 768px
-   FIX STRATEGY: On mobile the pill is wider than the viewport.
-   The solution is NOT to scroll — it is to SCALE the tabs down
-   using font-size + padding reductions so ALL tabs fit in one
-   visible row without any scrolling or wrapping.
-   The wrapper uses overflow: visible (inherited) so nothing clips.
+ 
 ================================================================ */
 
 @media (max-width: 768px) {
@@ -561,13 +570,14 @@
     }
 
     /* CARDS */
-    .industry-card-v3 {
+        .industry-card-v3 {
+        height: 720px;
         width: 90vw !important;
         border-radius: 24px;
     }
+    .v3-image-area {
+        height: 220px;
 
-    .v3-content {
-        padding: 28px;
     }
 
     .v3-title {
@@ -613,13 +623,6 @@
         border-radius: 16px;
     }
 }
-
-/* ================================================================
-   RESPONSIVE — 480px
-   FIX: At very small screens we use CSS scale() to fit the pill
-   into the viewport without scrolling or wrapping. The pill keeps
-   its natural width (max-content) but is visually shrunk to fit.
-================================================================ */
 
 @media (max-width: 480px) {
     .industry-slider-section {
@@ -715,5 +718,8 @@
 
     .v3-image-area {
         height: 180px;
+    }
+    .v3-desc {
+        -webkit-line-clamp: 4;
     }
 }

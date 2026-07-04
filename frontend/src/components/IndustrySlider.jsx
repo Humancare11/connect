@@ -24,93 +24,93 @@ const industries = [
   {
     id: 1,
     icon: <BsBuildingsFill />,
-    tab: "Corporates",
+    tab: "Employee Health",
     tag: "EMPLOYEE HEALTH",
-    title: "Corporates",
+    title: "Corporate Healthcare Solutions",
     description:
-      "Empower your workforce with on-demand healthcare access. From routine consultations to specialist referrals.",
+      "Empower your workforce with convenient access to corporate telemedicine services, virtual healthcare solutions, and licensed healthcare providers. From routine medical consultations to preventive care and mental health support, Humancare Connect helps organizations build healthier, more productive teams through one secure telemedicine platform.",
     features: [
-      "24/7 teleconsultations",
-      "Mental health support",
-      "Annual screenings",
+      "24/7 Telehealth Consultations",
+      "Mental Health & Wellness Support",
+      "Preventive Health Screenings",
     ],
-    accent: "#0c8b7a",
+    accent: "#508ec1",
     image: CorporateHealthcareImg,
     imageAlt:
       "Corporate employees accessing virtual healthcare and online doctor consultations through an employee wellness program",
   },
-  {
-    id: 2,
-    icon: <MdHealthAndSafety />,
-    tab: "Insurance",
-    tag: "EMBEDDED CARE",
-    title: "Insurance Cos.",
-    description:
-      "Enhance your policy offerings with integrated telehealth. Reduce claims costs while delivering superior experiences.",
-    features: [
-      "Claims reduction tools",
-      "Member wellness portals",
-      "Real-time consults",
-    ],
-    accent: "#1a56db",
-    image: InsuranceTelehealthImg,
-    imageAlt:
-      "Health insurance members receiving telehealth services and virtual healthcare support",
-  },
-  {
-    id: 3,
-    icon: <FaAnchor />,
-    tab: "Maritime",
-    tag: "REMOTE MEDICAL",
-    title: "Maritime",
-    description:
-      "Keep crews safe in international waters with specialized support. Remote diagnoses and emergency evacuations.",
-    features: [
-      "Satellite consultations",
-      "Emergency evacuations",
-      "Port medical liaison",
-    ],
-    accent: "#0c8b7a",
-    image: MaritimeTelemedicineImg,
-    imageAlt:
-      "Maritime crew receiving remote telemedicine support and online medical consultation at sea",
-  },
-  {
-    id: 4,
-    icon: <FaBalanceScale />,
-    tab: "Law Firms",
-    tag: "MEDICO-LEGAL",
-    title: "Law Firms",
-    description:
-      "Strengthen your cases with expert medico-legal support. Access certified medical professionals for documentation.",
-    features: [
-      "Expert witness reports",
-      "Medical record review",
-      "IME coordination",
-    ],
-    accent: "#7c3aed",
-    image: MedicoLegalHealthcareImg,
-    imageAlt:
-      "Medical expert providing medico-legal healthcare consultation and documentation for legal professionals",
-  },
-  {
-    id: 5,
-    icon: <FaHotel />,
-    tab: "Hotels",
-    tag: "GUEST ASSIST",
-    title: "Hotels",
-    description:
-      "Elevate guest experience with on-demand support. From minor illnesses to emergency coordination.",
-    features: [
-      "Guest teleconsultations",
-      "Concierge medical visits",
-      "Emergency referrals",
-    ],
-    accent: "#c97b1a",
-    image: HotelGuestHealthcareImg,
-    imageAlt:
-      "Hotel guest receiving virtual medical assistance and online healthcare consultation during travel",
-  },
+{
+  id: 2,
+  icon: <MdHealthAndSafety />,
+  tab: "Insurance",
+  tag: "EMBEDDED CARE",
+  title: "Insurance & Healthcare Partners",
+  description:
+    "Enhance member experiences with integrated telehealth solutions. Support preventive care, improve healthcare accessibility, and help reduce unnecessary healthcare utilization through secure virtual healthcare services designed for insurers, health plans, and healthcare partners.",
+  features: [
+    "Claims Cost Reduction Strategies",
+    "Member Wellness & Engagement Programs",
+    "Real Time Virtual Consultations",
+  ],
+  accent: "#1a56db",
+  image: InsuranceTelehealthImg,
+  imageAlt:
+    "Health insurance members receiving secure virtual healthcare services through an integrated telehealth platform",
+},
+{
+  id: 3,
+  icon: <FaAnchor />,
+  tab: "Maritime",
+  tag: "REMOTE MEDICAL",
+  title: "Maritime Healthcare Solutions",
+  description:
+    "Keep crews connected to expert medical support wherever operations take them. Humancare Connect provides remote healthcare services for maritime organizations, helping vessels access medical guidance, telemedicine consultations, and coordinated care support while at sea or in international waters.",
+  features: [
+    "Remote Telemedicine Consultations",
+    "Emergency Medical Coordination",
+    "Port & Crew Healthcare Support",
+  ],
+  accent: "#0c8b7a",
+  image: MaritimeTelemedicineImg,
+  imageAlt:
+    "Maritime crew receiving remote telemedicine consultations and coordinated healthcare support while at sea",
+},
+{
+  id: 4,
+  icon: <FaBalanceScale />,
+  tab: "Law Firms",
+  tag: "MEDICO LEGAL",
+  title: "Healthcare Support for Legal Professionals",
+  description:
+    "Strengthen legal cases with access to qualified medical experts, healthcare documentation, and medico legal support services. Humancare Connect helps law firms obtain professional medical insights, coordinate independent medical evaluations, and access healthcare expertise that supports case preparation and informed legal decision making.",
+  features: [
+    "Expert Medical Opinions & Reports",
+    "Medical Record Review Services",
+    "Independent Medical Evaluation Coordination",
+  ],
+  accent: "#7c3aed",
+  image: MedicoLegalHealthcareImg,
+  imageAlt:
+    "Medical expert providing healthcare documentation, medical record review, and medico legal support for legal professionals",
+},
+{
+  id: 5,
+  icon: <FaHotel />,
+  tab: "Hotels",
+  tag: "GUEST HEALTHCARE",
+  title: "Healthcare Support for Hospitality & Travel",
+  description:
+    "Enhance the guest experience with convenient access to healthcare services and medical support whenever needed. Humancare Connect helps hotels, resorts, and hospitality providers offer trusted telemedicine services, giving guests access to licensed healthcare providers for routine medical concerns, travel related health issues, and urgent care coordination.",
+  features: [
+    "Virtual Medical Consultations for Guests",
+    "Concierge Healthcare Coordination",
+    "Emergency Referral & Care Support",
+  ],
+  accent: "#c97b1a",
+  image: HotelGuestHealthcareImg,
+  imageAlt:
+    "Hotel guest receiving virtual medical consultations and healthcare support through telemedicine services while traveling",
+},
 ];
 
 export default function IndustrySlider() {
@@ -134,13 +134,10 @@ export default function IndustrySlider() {
           transition={{ duration: 0.8 }}
         >
           <h2 className="slider-h1-v2">
-            Telemedicine expertise across every <span>Industries</span>
+            Telemedicine expertise across every<span>Industries</span>
           </h2>
           <p className="slider-subtitle">
-            Flexible telehealth services, online doctor appointments, and
-            virtual healthcare solutions designed for corporate teams,
-            healthcare organizations, logistics, technology, hospitality,
-            education, manufacturing, and more.
+           Flexible telehealth services, online doctor appointments, and virtual healthcare solutions designed for corporate teams, healthcare organizations, logistics, technology, hospitality, education, manufacturing, and more.
           </p>
         </motion.div>
 
@@ -185,10 +182,7 @@ export default function IndustrySlider() {
               delay: 5000,
               disableOnInteraction: false,
             }}
-            pagination={{
-              clickable: true,
-              dynamicBullets: true,
-            }}
+            pagination={{ clickable: true }}
             onSwiper={(swiper) => (swiperRef.current = swiper)}
             onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
             modules={[EffectCoverflow, Autoplay, Pagination]}
@@ -301,7 +295,7 @@ export default function IndustrySlider() {
                       }}
                       transition={{ delay: 1 }}
                     >
-                      <button className="v3-cta">View Case Study</button>
+                      {/* <button className="v3-cta">View Case Study</button> */}
                     </motion.div>
                   </div>
                 </motion.div>
