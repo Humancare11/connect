@@ -40,11 +40,11 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-// import AboutUs from "./pages/AboutPage"; 
+// import AboutUs from "./pages/AboutPage";
 import AboutPage from "./pages/AboutPage"; // about us page
 
 import PCP from "./pages/PCP";
-import DoctorCareers from "./pages/DoctorCareers";       // Career Page for Doctors
+import DoctorCareers from "./pages/DoctorCareers"; // Career Page for Doctors
 import FAQ from "./pages/FAQPage"; // FAQ page
 // privacy concerns
 import PrivacyConcerns from "./pages/PrivacyPolicies/PrivacyConcerns";
@@ -289,6 +289,7 @@ import PrematureEjaculation1 from "./pages/Conditions/Conditions/PrematureEjacul
 import ProstateHealth1 from "./pages/Conditions/Conditions/ProstateHealth";
 import UrinarySymptomsMen1 from "./pages/Conditions/Conditions/UrinarySymptomsMen";
 import Vertigo from "./pages/Conditions/Conditions/Vertigo";
+import Stress from "./pages/Conditions/Conditions/Stress";
 
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
@@ -678,7 +679,6 @@ function AppLayout() {
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
@@ -775,6 +775,14 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <DoctorProfile />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/doctor-profile-for-patients"
+            element={
+              <DoctorLayout>
+                <DoctorProfileForUser showOwnProfile />
               </DoctorLayout>
             }
           />
@@ -1491,6 +1499,10 @@ function AppLayout() {
             element={<VaginalYeastInfection />}
           />
           <Route path="/weaning-guidance" element={<WeaningGuidance />} />
+          <Route
+            path="/stress"
+            element={<Stress />}
+          />
           {/* <Route path="/bladder-problems" element={<BladderProblems />} /> */}
           {/* <Route
             path="/erectile-dysfunction"
@@ -1611,7 +1623,6 @@ function AppLayout() {
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/career" element={<DoctorCareers />} />
           <Route path="/faq" element={<FAQ />} />
-
           {/* ---------------------Service Pages---------------------------- */}
           <Route path="/ServiceDemo" element={<ServiceDemo />} />
           <Route

@@ -1,14 +1,31 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./AppointmentBooking.css";
 import { usePrices } from "../context/PricingContext";
+
+// ─── Search helpers ─────────────────────────────────────────────────────────
+// Plain `.includes()` matches a query ANYWHERE inside a string, including
+// mid-word — e.g. searching "men" would match "Manage**men**t" or "Women's".
+// matchQuery() instead matches only at word boundaries (start of a word),
+// so "men" matches "Men's Health", "Mental Health", "Menstrual Cramps"
+// but NOT "Weight Management" or "Women's Health".
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function matchQuery(text, q) {
+  if (!q) return true;
+  if (!text) return false;
+  const re = new RegExp(`\\b${escapeRegExp(q)}`, "i");
+  return re.test(text);
+}
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const HCC_TREE = [
   // Child and Family care
   {
     id: "family",
-    label: "Children & Family Care ",
+    label: "Children & Family Care",
     e: "🧒",
     desc: "Expert medical guidance, pediatric support, preventive care and treatment for everyday health concerns, when you need it. Compassionate online healthcare for children & families.",
     specs: [
@@ -516,6 +533,7 @@ const HCC_TREE = [
           ["Perinatal Anxiety", "🤱"],
           ["PMDD", "📆"],
         ],
+        
       },
       {
         name: "Lactation Consulting",
@@ -628,6 +646,7 @@ function Breadcrumb({ items, onNavigate }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AppointmentBooking() {
   const navigate = useNavigate();
+  const location = useLocation();
   const categoryPrices = usePrices();
   const [drillLevel, setDrillLevel] = useState("cat");
   const [activeCat, setActiveCat] = useState(null);
@@ -679,19 +698,33 @@ export default function AppointmentBooking() {
     return () => window.removeEventListener("resize", moveGlider);
   }, []);
 
+  // Handle incoming category from navigation state
+  useEffect(() => {
+    if (location.state?.categoryId && enrichedTree.length > 0) {
+      const cat = enrichedTree.find((c) => c.id === location.state.categoryId);
+      if (cat) {
+        setActiveCat(cat);
+        setDrillLevel("spec");
+        setBrowseTab(null);
+        // Clear the state after using it
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, enrichedTree, navigate, location.pathname]);
+
   const q = query.trim().toLowerCase();
 
+  // ── Search filters now use matchQuery() (word-boundary match) instead of
+  // raw .includes(), so short queries like "men" don't false-match inside
+  // unrelated words such as "Management" or "Women's".
   const visibleFlatSpecs = useMemo(
-    () => HCC_SPECS.filter((s) => !q || s.name.toLowerCase().includes(q)),
+    () => HCC_SPECS.filter((s) => matchQuery(s.name, q)),
     [q, HCC_SPECS],
   );
   const visibleFlatConds = useMemo(
     () =>
       HCC_CONDS.filter(
-        (c) =>
-          !q ||
-          c.name.toLowerCase().includes(q) ||
-          c.to.toLowerCase().includes(q),
+        (c) => matchQuery(c.name, q) || matchQuery(c.to, q),
       ),
     [q, HCC_CONDS],
   );
@@ -699,9 +732,8 @@ export default function AppointmentBooking() {
     () =>
       enrichedTree.filter(
         (c) =>
-          !q ||
-          c.label.toLowerCase().includes(q) ||
-          c.specs.some((s) => s.name.toLowerCase().includes(q)),
+          matchQuery(c.label, q) ||
+          c.specs.some((s) => matchQuery(s.name, q)),
       ),
     [q, enrichedTree],
   );
@@ -934,7 +966,7 @@ export default function AppointmentBooking() {
                   </div>
                   <div className="grid">
                     {activeCat.specs
-                      .filter((s) => !q || s.name.toLowerCase().includes(q))
+                      .filter((s) => matchQuery(s.name, q))
                       .map((s) => {
                         const specWithCat = {
                           ...s,
@@ -985,7 +1017,7 @@ export default function AppointmentBooking() {
                   </div>
                   <div className="condgrid">
                     {drillConds
-                      .filter(([name]) => !q || name.toLowerCase().includes(q))
+                      .filter(([name]) => matchQuery(name, q))
                       .map(([name, ico]) => (
                         <div
                           key={name}

@@ -130,6 +130,23 @@ const STUN_SERVERS = {
     { urls: "stun:stun2.l.google.com:19302" },
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
+    // TURN servers for media relay when P2P fails (e.g., restrictive NATs/firewalls)
+    // ⚠️ CRITICAL: Replace with your own production TURN server for reliability
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ],
 };
 
@@ -143,8 +160,8 @@ const MEDIA_CONSTRAINTS = {
     sampleSize: { ideal: 16 },
   },
   video: {
-    width: { ideal: 1920, max: 1920 },
-    height: { ideal: 1080, max: 1080 },
+    width: { ideal: 1280, max: 1920 },
+    height: { ideal: 720, max: 1080 },
     frameRate: { ideal: 30, max: 30 },
     facingMode: "user",
   },
@@ -577,7 +594,20 @@ export default function VideoCall() {
     };
 
     pc.onicecandidate = (e) => {
-      if (e.candidate) socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
+      if (e.candidate) {
+        // Log candidate type for debugging (helps identify if TURN is working)
+        if (e.candidate.candidate) {
+          const candidateStr = e.candidate.candidate;
+          let candidateType = "unknown";
+          if (candidateStr.includes("typ host")) candidateType = "host (local)";
+          else if (candidateStr.includes("typ srflx")) candidateType = "srflx (STUN)";
+          else if (candidateStr.includes("typ relay")) candidateType = "relay (TURN)";
+          console.log(`ICE candidate gathered: ${candidateType}`);
+        }
+        socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
+      } else {
+        console.log("ICE gathering complete");
+      }
     };
 
     pc.onconnectionstatechange = () => {
@@ -598,6 +628,7 @@ export default function VideoCall() {
     // Fallback for browsers where onconnectionstatechange fires late or not at all
     pc.oniceconnectionstatechange = () => {
       const s = pc.iceConnectionState;
+      console.log("ICE connection state:", s);
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
         setConnectionState("connected");
@@ -606,7 +637,26 @@ export default function VideoCall() {
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
       } else if (s === "failed") {
+        console.warn("ICE connection failed - connection may not work properly");
         setConnectionState("disconnected");
+        setIsRemoteConnected(false);
+        // Auto-retry ICE gathering after failure (helps with network issues)
+        if (isDoctor && mounted) {
+          console.log("Attempting ICE restart in 3 seconds...");
+          setTimeout(async () => {
+            if (!mounted || !pc) return;
+            try {
+              console.log("Restarting ICE...");
+              const offer = await pc.createOffer({ iceRestart: true });
+              await pc.setLocalDescription(offer);
+              socket.emit("video-offer", { appointmentId, offer });
+            } catch (err) {
+              console.error("ICE restart failed:", err);
+            }
+          }, 3000);
+        }
+      } else if (s === "disconnected") {
+        console.warn("ICE connection disconnected");
         setIsRemoteConnected(false);
       }
     };

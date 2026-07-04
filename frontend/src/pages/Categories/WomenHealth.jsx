@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowRight,
@@ -252,6 +253,28 @@ function BookingForm({ specialtyPlaceholder }) {
   const [submitted, setSubmitted] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const response = await api.get("/api/pricing");
+        const familyPricing = response.data?.family;
+        if (familyPricing) {
+          setPrice(familyPricing.price);
+        }
+      } catch (error) {
+        console.error("Failed to fetch pricing:", error);
+        // Fallback to default price if API fails
+        setPrice(49);
+      } finally {
+        setPriceLoading(false);
+      }
+    };
+    fetchPrice();
+  }, []);
+
   const handleSubmit = () => {
     if (!form.name || !form.phone || !form.date) return;
     setSubmitted(true);
@@ -278,81 +301,64 @@ function BookingForm({ specialtyPlaceholder }) {
   }
 
   return (
-    <div className="hcc-book-card">
-      <div className="hcc-book-title">Book an Appointment</div>
-      <p className="hcc-book-sub">Same-day slots often available</p>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Full Name</label>
-        <input
-          className="hcc-form-input"
-          placeholder="Your full name"
-          value={form.name}
-          onChange={(e) => set("name", e.target.value)}
-        />
+    <div className="hcc-booking-card">
+      <div className="hcc-booking-badge">
+        <span className="hcc-booking-badge-dot" />
+        Doctors Available Now
       </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Phone Number</label>
-        <input
-          className="hcc-form-input"
-          placeholder="+91 98765 43210"
-          value={form.phone}
-          onChange={(e) => set("phone", e.target.value)}
-        />
-      </div>
-      <div className="hcc-form-row">
-        <div className="hcc-form-group">
-          <label className="hcc-form-label">Date</label>
-          <input
-            className="hcc-form-input"
-            type="date"
-            value={form.date}
-            onChange={(e) => set("date", e.target.value)}
-          />
+
+      <div className="hcc-booking-price-block">
+        <div className="hcc-booking-price">
+          {priceLoading ? (
+            <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
+          ) : (
+            `$${price || 49}`
+          )}
         </div>
-        <div className="hcc-form-group">
-          <label className="hcc-form-label">Time</label>
-          <div className="hcc-select-wrap">
-            <select
-              className="hcc-form-select"
-              value={form.time}
-              onChange={(e) => set("time", e.target.value)}
-            >
-              <option value="">Select</option>
-              <option>Morning (9–12)</option>
-              <option>Afternoon (12–4)</option>
-              <option>Evening (4–8)</option>
-            </select>
-          </div>
-        </div>
+        <p className="hcc-booking-price-sub">
+          One-time consultation fee · No subscription required
+        </p>
       </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Consultation Type</label>
-        <div className="hcc-select-wrap">
-          <select
-            className="hcc-form-select"
-            value={form.type}
-            onChange={(e) => set("type", e.target.value)}
+
+      <div className="hcc-booking-info">
+        <FiShield size={15} className="hcc-booking-info-icon" />
+        <p className="hcc-booking-info-text">
+          No extra fee for doctor notes, prescriptions, or specialist referrals.{" "}
+          <strong className="hcc-booking-info-strong">
+            Everything is included.
+          </strong>
+        </p>
+      </div>
+
+      <div className="hcc-booking-features">
+        {[
+          "Board-certified physician",
+          "Rx to your pharmacy",
+          "Doctor's note included",
+          "24hr follow-up support",
+          "HIPAA secure session",
+        ].map((item, i) => (
+          <div
+            key={item}
+            className="hcc-booking-feature-row"
+            style={{ animationDelay: `${0.35 + i * 0.07}s` }}
           >
-            <option value="">Select type</option>
-            <option>Video Consultation</option>
-            <option>In-Person Visit</option>
-          </select>
-        </div>
+            <FiCheckCircle size={15} className="hcc-booking-check" />
+            <span className="hcc-booking-feature-text">{item}</span>
+          </div>
+        ))}
       </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Specialty (optional)</label>
-        <input
-          className="hcc-form-input"
-          placeholder={specialtyPlaceholder || "e.g. Specialist"}
-          value={form.specialty}
-          onChange={(e) => set("specialty", e.target.value)}
-        />
-      </div>
-      <button className="hcc-book-submit" onClick={handleSubmit}>
-        <FiCalendar /> Confirm Appointment
-      </button>
-      <p className="hcc-book-note">
-        <FiShield size={11} /> Free cancellation up to 2 hours before
+
+      <button className="hcc-booking-cta">Start Consultation →</button>
+      <p className="hcc-booking-terms">
+        By continuing, you agree to our{" "}
+        <a href="#" className="hcc-booking-link">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="#" className="hcc-booking-link">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );
@@ -546,7 +552,8 @@ function FaqSection({ faqGroups, catLabel }) {
 
 export default function WomenHealth() {
   const navigate = useNavigate();
-  const goToBooking = () => navigate("/appointment-booking");
+  const goToBooking = () =>
+    navigate("/appointment-booking", { state: { categoryId: "women" } });
   const goToContact = () => navigate("/contact");
 
   return (
@@ -614,9 +621,9 @@ export default function WomenHealth() {
               <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
               </button>
-              <button className="hcc-btn-secondary" onClick={goToContact}>
+              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
-              </button>
+              </button> */}
             </div>
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
@@ -718,7 +725,15 @@ export default function WomenHealth() {
             <p>{cat.ctaBody}</p>
           </div>
           <div className="hcc-cta-actions">
-            <button className="hcc-btn-primary" style={{ background: "#fff", color: "var(--blue)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} onClick={goToBooking}>
+            <button
+              className="hcc-btn-primary"
+              style={{
+                background: "#fff",
+                color: "var(--blue)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              }}
+              onClick={goToBooking}
+            >
               Find Doctors <FiArrowRight />
             </button>
             <button
