@@ -1,0 +1,288 @@
+body {
+  margin: 0;
+  padding: 24px;
+  background: #eef0ec;
+  font-family: "Inter", sans-serif;
+}
+.rx-slip {
+  width: 800px;
+  background: #fdfcfa;
+  color: #14213d;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(20, 33, 61, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+.rx-header {
+  position: relative;
+  padding: 36px 44px 24px;
+  overflow: hidden;
+}
+.rx-watermark {
+  position: absolute;
+  right: -10px;
+  top: -40px;
+  font-family: "Lora", serif;
+  font-size: 220px;
+  font-weight: 600;
+  color: #14213d;
+  opacity: 0.035;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+.rx-brand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+}
+.rx-clinic-name {
+  font-family: "Lora", serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: #14213d;
+  margin: 0;
+}
+.rx-clinic-tag {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2c5282;
+  margin-top: 4px;
+  font-weight: 500;
+}
+.rx-contact {
+  text-align: right;
+  font-size: 11.5px;
+  color: #5a6472;
+  line-height: 1.6;
+}
+
+.rx-divider {
+  height: 1px;
+  background: #d9d9d3;
+  margin: 0 44px;
+  position: relative;
+}
+.rx-divider::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  height: 1px;
+  width: 64px;
+  background: #b98b33;
+}
+
+.rx-ref-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 44px 0;
+}
+.rx-title {
+  font-family: "Lora", serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #14213d;
+}
+.rx-diagnosis {
+  font-size: 12.5px;
+  color: #5a6472;
+  margin-top: 2px;
+}
+.rx-ref-box {
+  border: 1px solid #d9d9d3;
+  border-radius: 2px;
+  padding: 8px 14px;
+  text-align: right;
+}
+.rx-ref-code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #14213d;
+}
+.rx-ref-date {
+  font-size: 11px;
+  color: #8a8f98;
+  margin-top: 2px;
+}
+
+.rx-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin: 24px 44px 0;
+  border-top: 1px solid #d9d9d3;
+  border-bottom: 1px solid #d9d9d3;
+}
+.rx-info-block {
+  padding: 16px 20px;
+}
+.rx-info-block + .rx-info-block {
+  border-left: 1px solid #d9d9d3;
+}
+.rx-info-kicker {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #b98b33;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.rx-info-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 5px 0;
+}
+.rx-info-line-label {
+  color: #5a6472;
+}
+.rx-info-line-value {
+  color: #14213d;
+  font-weight: 500;
+  text-align: right;
+}
+.rx-doctor-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #14213d;
+  margin-bottom: 2px;
+}
+.rx-doctor-spec {
+  font-size: 12px;
+  color: #2c5282;
+  margin-bottom: 10px;
+}
+
+.rx-med-section {
+  padding: 24px 44px 0;
+}
+.rx-symbol {
+  font-family: "Lora", serif;
+  font-size: 30px;
+  color: #b98b33;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+table.rx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+table.rx-table thead th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8f98;
+  font-weight: 600;
+  border-bottom: 1.5px solid #14213d;
+}
+table.rx-table tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eaeae5;
+  color: #2e3440;
+  vertical-align: top;
+}
+.rx-med-name {
+  font-weight: 600;
+  color: #14213d;
+}
+.rx-med-sub {
+  font-size: 11.5px;
+  color: #8a8f98;
+  margin-top: 2px;
+}
+
+.rx-notes {
+  margin: 22px 44px 0;
+  padding: 16px 20px;
+  border-left: 2px solid #b98b33;
+  background: #fbf8f1;
+  font-size: 12.5px;
+  color: #4a4f58;
+}
+.rx-notes b {
+  color: #14213d;
+  font-weight: 600;
+}
+.rx-notes div + div {
+  margin-top: 6px;
+}
+
+.rx-sign-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin: 34px 44px 0;
+}
+.rx-sign-block {
+  text-align: center;
+}
+.rx-sign-line {
+  width: 170px;
+  border-bottom: 1px solid #14213d;
+  margin-bottom: 6px;
+  height: 34px;
+}
+.rx-sign-label {
+  font-size: 11px;
+  color: #8a8f98;
+  letter-spacing: 0.04em;
+}
+.rx-seal {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1.5px solid #b98b33;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #b98b33;
+  position: relative;
+}
+.rx-seal::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid #b98b33;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+.rx-seal-text {
+  font-size: 7px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.rx-seal-cross {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rx-footer {
+  margin-top: 26px;
+  padding: 14px 44px;
+  background: #14213d;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.rx-footer-item {
+  font-size: 10.5px;
+  color: #b7c0d1;
+  letter-spacing: 0.02em;
+}
+.rx-footer-brand {
+  font-family: "Lora", serif;
+  font-size: 11px;
+  color: #fff;
+  letter-spacing: 0.03em;
+}
