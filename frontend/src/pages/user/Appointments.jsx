@@ -247,9 +247,9 @@ export default function Appointments() {
                           ? `Dr. ${appt.doctorId.name}`
                           : "Doctor assignment pending"}
                       </h4>
-                      <p className="appt-doctor-email">
+                      {/* <p className="appt-doctor-email">
                         {appt.doctorId?.email || appt.specialty || ""}
-                      </p>
+                      </p> */}
                     </div>
                     <span className={`appt-badge appt-badge--${activeTab}`}>
                       {activeTab === "pending" && "⏳ Pending"}

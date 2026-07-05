@@ -483,6 +483,7 @@
   justify-content: space-between;
   gap: 12px;
   margin-top: auto;
+  flex-wrap: wrap;
 }
 
 .hcc-sx .catcard .meta {
@@ -494,6 +495,25 @@
   padding: 4px 10px;
   border-radius: var(--pill);
   margin: 0;
+}
+
+.hcc-sx .hcc-price-pill {
+  font-size: 12.5px;
+  color: #166534;
+  font-weight: 700;
+  background: rgba(22, 163, 74, 0.10);
+  border: 1px solid rgba(22, 163, 74, 0.16);
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 4px 10px;
+  border-radius: var(--pill);
+}
+
+.hcc-sx .hcc-price-pill--missing {
+  color: #9f1239;
+  background: rgba(225, 29, 72, 0.08);
+  border-color: rgba(225, 29, 72, 0.16);
 }
 
 .hcc-sx .catcard .go {
@@ -605,6 +625,21 @@
   font-weight: 600;
 }
 
+.hcc-sx .spec--price-missing .count {
+  color: #9f1239;
+}
+
+.hcc-sx .hcc-price-alert {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: rgba(225, 29, 72, 0.08);
+  border: 1px solid rgba(225, 29, 72, 0.16);
+  color: #9f1239;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .hcc-sx .spec .condcount {
   font-size: 11.5px;
   /* [SIZE+] was 10.5px */
@@ -691,6 +726,15 @@
   /* [FIX] was hard-coded #ffffff, identical to the resting state,
      so hovering produced no visible background change */
   background: rgba(255, 255, 255, 0.85);
+}
+
+.hcc-sx .condcard--disabled,
+.hcc-sx .condcard--disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  box-shadow: 0 1px 3px rgba(17, 28, 46, 0.04);
+  border-color: rgba(225, 29, 72, 0.18);
 }
 
 .hcc-sx .condcard-ico {

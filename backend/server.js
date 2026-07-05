@@ -418,6 +418,7 @@ app.use("/api/appointments", require("./routes/appointments"));
 app.use("/api/upload", require("./routes/upload"));
 app.use("/api/tickets", require("./routes/tickets"));
 app.use("/api/medical", require("./routes/medical"));
+app.use("/api/notes", require("./routes/consultationNotes"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));

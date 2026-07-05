@@ -87,6 +87,23 @@ const IconQna = () => (
     <path d="M20 2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6l4 4 4-4h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
   </svg>
 );
+const IconNotes = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M8 13h8" />
+    <path d="M8 17h6" />
+  </svg>
+);
 const IconTicket = () => (
   <svg
     width="16"
@@ -167,6 +184,11 @@ const menuItems = [
     path: "/doctor-dashboard/patients",
     label: "My Patients",
     icon: <IconPatients />,
+  },
+  {
+    path: "/doctor-dashboard/notes",
+    label: "Notes",
+    icon: <IconNotes />,
   },
   { path: "/doctor-dashboard/qna", label: "Medical Q&A", icon: <IconQna /> },
   {

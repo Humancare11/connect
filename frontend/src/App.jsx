@@ -359,6 +359,7 @@ const DoctorAppointments = lazy(
 );
 const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
+const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
 const DoctorQnA = lazy(() => import("./pages/doctors/DoctorQnA"));
 const DoctorAnalytics = lazy(() => import("./pages/doctors/DoctorAnalytics"));
@@ -812,6 +813,14 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <DoctorMessages />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/notes"
+            element={
+              <DoctorLayout>
+                <DoctorNotes />
               </DoctorLayout>
             }
           />

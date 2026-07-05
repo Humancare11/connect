@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./AppointmentBooking.css";
-import { usePrices } from "../context/PricingContext";
+import { usePrices, usePricingMeta } from "../context/PricingContext";
 
 // ─── Search helpers ─────────────────────────────────────────────────────────
 // Plain `.includes()` matches a query ANYWHERE inside a string, including
@@ -34,7 +34,6 @@ const HCC_TREE = [
         ico: "🧒",
         live: true,
         count: "41 doctors",
-        cost: 699,
         desc: "Kids’ Care Comprehensive care for infants, children and teens, from routine wellness exams and vaccinations to illness treatment, developmental support and preventive care that promotes healthy growth.",
         conds: [
           ["Pediatric Fever", "🌡️"],
@@ -47,7 +46,6 @@ const HCC_TREE = [
       {
         name: "Adolescent Care",
         ico: "🧑",
-        cost: 699,
         desc: "Adolescent Medicine Comprehensive health care for teenagers and young adults with support for puberty, mental health, growth, nutrition, sports injuries and overall adolescent wellness",
         conds: [
           ["Mood & Anxiety in Teens", "🔴"],
@@ -69,7 +67,6 @@ const HCC_TREE = [
         ico: "🫀",
         live: true,
         count: "48 doctors",
-        cost: 1799,
         desc: "Expert heart and cardiovascular care for high blood pressure, cholesterol management, heart disease, palpitations, preventive screenings, and long-term heart health support.",
         conds: [
           ["High blood pressure", "💉"],
@@ -85,7 +82,6 @@ const HCC_TREE = [
         ico: "🧬",
         live: true,
         count: "32 doctors",
-        cost: 1699,
         desc: "Specialized care for migraines, dizziness, memory concerns, seizures, tremors, nerve disorders, and neurological conditions affecting brain and nerve health.",
         conds: [
           ["Migraine", "🤕"],
@@ -100,7 +96,6 @@ const HCC_TREE = [
       {
         name: "Endocrinology",
         ico: "⚕️",
-        cost: 1499,
         desc: "Specialized care for hormone imbalances, diabetes, thyroid disorders, metabolic conditions, bone health concerns, and long-term endocrine wellness through personalized treatment plans.",
         conds: [
           ["Thyroid disorders", "🦋"],
@@ -112,7 +107,6 @@ const HCC_TREE = [
       {
         name: "Gastroenterology",
         ico: "🍽️",
-        cost: 1399,
         desc: "Expert digestive health care for acid reflux, abdominal pain, bloating, IBS, liver conditions, bowel concerns, and long-term gastrointestinal wellness.",
         conds: [
           ["Acid Reflux / GERD", "🔥"],
@@ -125,7 +119,6 @@ const HCC_TREE = [
       {
         name: "Pulmonology",
         ico: "🫁",
-        cost: 1299,
         desc: "Expert respiratory care for asthma, COPD, chronic cough, sleep apnea, breathing difficulties, lung conditions, and long-term respiratory health management.",
         conds: [
           ["Asthma", "💨"],
@@ -139,7 +132,6 @@ const HCC_TREE = [
       {
         name: "Expert Medical Opinion",
         ico: "📑",
-        cost: 2499,
         desc: "Authoritative second opinions on cancer, surgery, complex diagnoses, and treatment plans.",
         conds: [
           ["Cancer second opinion", "🎗️"],
@@ -162,7 +154,6 @@ const HCC_TREE = [
         ico: "👀",
         live: true,
         count: "22 doctors",
-        cost: 999,
         desc: "Expert eye care for dry eyes, vision changes, eye infections, redness, eye strain, and long-term vision health with personalized treatment and support.",
         conds: [
           ["Eye Irritation", "👁️"],
@@ -176,7 +167,6 @@ const HCC_TREE = [
       {
         name: "ENT (Ear, Nose & Throat)",
         ico: "👂",
-        cost: 899,
         desc: "Specialized care for ear infections, sinus problems, sore throats, hearing concerns, vertigo, voice disorders, and conditions affecting the ear, nose, and throat.",
         conds: [
           ["Nasal Congestion", "👃"],
@@ -194,7 +184,6 @@ const HCC_TREE = [
         ico: "🦴",
         live: true,
         count: "29 doctors",
-        cost: 1299,
         desc: "Specialized care for joint pain, arthritis, back and neck pain, sports injuries, muscle strains, and musculoskeletal conditions to improve mobility and quality of life.",
         conds: [
           ["Back pain", "🔙"],
@@ -219,7 +208,6 @@ const HCC_TREE = [
         ico: "🩺",
         live: true,
         count: "98 doctors",
-        cost: 100,
         desc: "Trusted primary healthcare for common illnesses, preventive care, chronic condition management, routine checkups, and everyday medical concerns for adults and families.",
         conds: [
           ["Sinus Infection", "👃"],
@@ -237,7 +225,6 @@ const HCC_TREE = [
       {
         name: "Internal Medicine",
         ico: "🏥",
-        cost: 100,
         desc: "Expert adult healthcare for chronic conditions, preventive screenings, medication reviews, complex symptoms, and personalized care focused on long-term health and wellness.",
         conds: [
           ["Undiagnosed Symptoms", "❓"],
@@ -249,7 +236,6 @@ const HCC_TREE = [
       {
         name: "Family Medicine",
         ico: "👨‍👩‍👧",
-        cost: 100,
         desc: "Comprehensive healthcare for individuals and families of all ages, including preventive care, routine checkups, chronic condition management, vaccinations, and everyday medical needs.",
         conds: [
           ["Routine Check-Ups", "✅"],
@@ -270,7 +256,6 @@ const HCC_TREE = [
         name: "Men's Health",
         ico: "♂️",
         count: "19 doctors",
-        cost: 100,
         desc: "Expert care for testosterone imbalance, erectile dysfunction, prostate health, fertility concerns, hair loss, sexual wellness, and healthy aging with personalized treatment plans.",
         conds: [
           ["Erectile Dysfunction", "💙"],
@@ -283,7 +268,6 @@ const HCC_TREE = [
       {
         name: "Urology",
         ico: "🚹",
-        cost: 100,
         desc: "Specialized care for urinary tract conditions, kidney stones, bladder problems, UTIs, urinary incontinence, and male urological health with personalized treatment and support.",
         conds: [
           ["Urinary Tract Infection (UTI)", "🚻"],
@@ -307,7 +291,6 @@ const HCC_TREE = [
         ico: "🧠",
         live: true,
         count: "76 doctors",
-        cost: 1499,
         desc: "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support",
         conds: [
           ["Anxiety", "😟"],
@@ -323,7 +306,6 @@ const HCC_TREE = [
       {
         name: "Psychology Counseling",
         ico: "💬",
-        cost: 1299,
         desc: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
         conds: [
           ["Stress", "😣"],
@@ -336,7 +318,6 @@ const HCC_TREE = [
       {
         name: "Behavioral Health",
         ico: "🧩",
-        cost: 999,
         desc: "Professional support for stress, anxiety-related concerns, life transitions, emotional wellness, anger management, sleep challenges, and healthier coping strategies.",
         conds: [
           ["Anger Management", "🔥"],
@@ -357,7 +338,6 @@ const HCC_TREE = [
       {
         name: "Sexual Health",
         ico: "💗",
-        cost: 799,
         desc: "Confidential care for STI concerns, HIV prevention, PrEP guidance, herpes, chlamydia, gonorrhea, partner exposure risks, and overall sexual wellness.",
         conds: [
           ["STI Consultation", "🔬"],
@@ -383,7 +363,6 @@ const HCC_TREE = [
         ico: "🧴",
         live: true,
         count: "35 doctors",
-        cost: 100,
         desc: "Expert care for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail disorders, skin rashes, and long-term skin, hair, and nail health.",
         conds: [
           ["Acne", "😣"],
@@ -414,7 +393,6 @@ const HCC_TREE = [
       {
         name: "Travel Medicine",
         ico: "✈️",
-        cost: 899,
         desc: " Expert travel health support for pre-travel consultations, vaccination guidance, malaria prevention, traveler's diarrhea, altitude sickness, post-travel illness evaluations, and destination-specific health risks.",
         conds: [
           ["Food Poisoning While Traveling", "🍽️"],
@@ -429,7 +407,6 @@ const HCC_TREE = [
       {
         name: "Global Cross-Border Care",
         ico: "🌍",
-        cost: 1999,
         desc: "International healthcare support for travelers, expatriates, medical tourists, medication refill assistance, specialist referrals, chronic care follow-ups, and secure telemedicine consultations across borders.",
         conds: [
           ["Cross-Border Consultation", "🌐"],
@@ -450,7 +427,6 @@ const HCC_TREE = [
       {
         name: "Weight Management",
         ico: "⚖️",
-        cost: 999,
         desc: "Personalized support for weight loss, obesity management, binge eating concerns, GLP-1 eligibility assessments, nutrition planning, appetite control, and sustainable long-term weight management.",
         conds: [
           ["Obesity", "📊"],
@@ -463,7 +439,6 @@ const HCC_TREE = [
       {
         name: "Nutrition & Dietetics ",
         ico: "🥗",
-        cost: 699,
         desc: "Personalized nutrition support for diabetic diets, cholesterol management, weight loss, pregnancy nutrition, sports nutrition, food intolerance planning, healthy eating habits, and long-term wellness goals.",
         conds: [
           ["Diabetic diet", "🩸"],
@@ -476,7 +451,6 @@ const HCC_TREE = [
       {
         name: "Lifestyle Medicine",
         ico: "🌱",
-        cost: 599,
         desc: "Personalized support for healthy habit coaching, nutrition planning, exercise guidance, sleep improvement, stress management, weight management, preventive wellness, and long-term health optimization.",
         conds: [
           ["Healthy Habit Coaching", "✅"],
@@ -498,7 +472,6 @@ const HCC_TREE = [
         name: "Obstetrics & Gynaecology (OB-GYN) ",
         ico: "🌸",
         count: "44 doctors",
-        cost: 1199,
         desc: "Comprehensive women's healthcare for PCOS, fertility concerns, pregnancy support, birth control consultations, menstrual health, pelvic pain, vaginal infections, hormonal balance, and reproductive wellness.",
         conds: [
           ["Bacterial Vaginosis", "🦠"],
@@ -515,7 +488,6 @@ const HCC_TREE = [
       {
         name: "Menopause Care",
         ico: "🌙",
-        cost: 999,
         desc: "Personalized support for menopause symptoms, hot flashes, night sweats, hormone replacement therapy (HRT) guidance, sleep disturbances, mood changes, vaginal health, and healthy aging.",
         conds: [
           ["Hot Flashes", "🔥"],
@@ -526,19 +498,17 @@ const HCC_TREE = [
       {
         name: "Women's Mental Health",
         ico: "💗",
-        cost: 1099,
         desc: "Compassionate support for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, parenting stress, emotional wellness, anxiety management, and women's mental health care.",
         conds: [
           ["Postnatal Depression", "🍼"],
           ["Perinatal Anxiety", "🤱"],
           ["PMDD", "📆"],
         ],
-        
+
       },
       {
         name: "Lactation Consulting",
         ico: "🤱",
-        cost: 699,
         desc: "Expert breastfeeding support for latch difficulties, low milk supply, nipple pain, pumping guidance, infant feeding concerns, weaning transitions, and postpartum feeding success.",
         conds: [
           ["Low milk supply", "🍼"],
@@ -551,7 +521,59 @@ const HCC_TREE = [
   },
 ];
 
-// Build flat helpers from a (possibly price-enriched) tree
+function formatPrice(amount) {
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return "";
+  return `$${value.toLocaleString("en-US", {
+    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+  })}`;
+}
+
+function getPricingState(catId, prices, meta) {
+  if (meta.loading) {
+    return {
+      price: null,
+      currency: "USD",
+      priceAvailable: false,
+      priceLabel: "Loading price...",
+      priceMessage: "Pricing is loading. Please wait before booking.",
+    };
+  }
+
+  if (meta.error) {
+    return {
+      price: null,
+      currency: "USD",
+      priceAvailable: false,
+      priceLabel: "Price unavailable",
+      priceMessage: "Pricing could not be loaded. Please try again shortly.",
+    };
+  }
+
+  const record = prices?.[catId];
+  const price = Number(record?.price);
+  const currency = record?.currency || "USD";
+
+  if (!record || !Number.isFinite(price) || price <= 0) {
+    return {
+      price: null,
+      currency,
+      priceAvailable: false,
+      priceLabel: "Price unavailable",
+      priceMessage: "No valid database price is configured for this category.",
+    };
+  }
+
+  return {
+    price,
+    currency,
+    priceAvailable: true,
+    priceLabel: formatPrice(price),
+    priceMessage: "",
+  };
+}
+
+// Build flat helpers from a price-enriched tree
 function buildFlatHelpers(tree) {
   const specs = [];
   const conds = [];
@@ -565,7 +587,11 @@ function buildFlatHelpers(tree) {
           to: s.name,
           catId: cat.id,
           catLabel: cat.label,
-          cost: s.cost,
+          price: s.price,
+          currency: s.currency,
+          priceAvailable: s.priceAvailable,
+          priceLabel: s.priceLabel,
+          priceMessage: s.priceMessage,
         }),
       );
     }),
@@ -648,23 +674,24 @@ export default function AppointmentBooking() {
   const navigate = useNavigate();
   const location = useLocation();
   const categoryPrices = usePrices();
+  const pricingMeta = usePricingMeta();
   const [drillLevel, setDrillLevel] = useState("cat");
   const [activeCat, setActiveCat] = useState(null);
   const [activeSpec, setActiveSpec] = useState(null);
   const [browseTab, setBrowseTab] = useState(null);
   const [query, setQuery] = useState("");
 
-  // Apply Super Admin category prices to all specialties in each category
+  // Apply API-backed category prices to all specialties in each category.
   const enrichedTree = useMemo(() => {
-    if (!categoryPrices) return HCC_TREE;
     return HCC_TREE.map((cat) => ({
       ...cat,
+      ...getPricingState(cat.id, categoryPrices, pricingMeta),
       specs: cat.specs.map((spec) => ({
         ...spec,
-        cost: categoryPrices[cat.id]?.price ?? spec.cost,
+        ...getPricingState(cat.id, categoryPrices, pricingMeta),
       })),
     }));
-  }, [categoryPrices]);
+  }, [categoryPrices, pricingMeta]);
 
   const { specs: HCC_SPECS, conds: HCC_CONDS } = useMemo(
     () => buildFlatHelpers(enrichedTree),
@@ -681,6 +708,10 @@ export default function AppointmentBooking() {
   ];
 
   const activeTabId = browseTab ?? drillLevel;
+
+  useEffect(() => {
+    pricingMeta.refresh?.({ silent: true });
+  }, [pricingMeta.refresh]);
 
   const moveGlider = () => {
     if (!switchRef.current || !gliderRef.current) return;
@@ -767,14 +798,17 @@ export default function AppointmentBooking() {
   };
 
   const handleSelectCond = (condName, condIco, spec) => {
+    if (!spec.priceAvailable) return;
     navigate("/appointment-booking/form", {
       state: {
         selection: {
           specName: spec.name,
           specIco: spec.ico,
           live: spec.live,
+          catId: spec.catId,
           catLabel: spec.catLabel,
-          cost: spec.cost,
+          cost: spec.price,
+          currency: spec.currency,
           condName,
           condIco,
         },
@@ -942,6 +976,11 @@ export default function AppointmentBooking() {
                               <div className="meta">
                                 {sc} specialties · {cc} conditions
                               </div>
+                              <div
+                                className={`hcc-price-pill${c.priceAvailable ? "" : " hcc-price-pill--missing"}`}
+                              >
+                                {c.priceAvailable ? c.priceLabel : c.priceMessage}
+                              </div>
                               <div className="go">Explore →</div>
                             </div>
                           </div>
@@ -972,13 +1011,12 @@ export default function AppointmentBooking() {
                           ...s,
                           catId: activeCat.id,
                           catLabel: activeCat.label,
-                          cost: s.cost,
                         };
                         const condCount = s.conds.length;
                         return (
                           <div
                             key={s.name}
-                            className="spec"
+                            className={`spec${!s.priceAvailable ? " spec--price-missing" : ""}`}
                             onClick={(e) =>
                               handleCardClick(e, () =>
                                 handleOpenSpec(specWithCat),
@@ -994,7 +1032,7 @@ export default function AppointmentBooking() {
                             <div className="spec-desc">{s.desc}</div>
                             <div className="spec-row3">
                               <span className="count">
-                                {s.count || "Book now"}
+                                {s.priceAvailable ? s.priceLabel : s.priceMessage}
                               </span>
                               <span className="condcount">
                                 {condCount} condition
@@ -1015,13 +1053,18 @@ export default function AppointmentBooking() {
                     <span style={{ fontSize: 20 }}>{activeSpec.ico}</span>
                     {activeSpec.name} — select your condition
                   </div>
+                  {!activeSpec.priceAvailable && (
+                    <div className="hcc-price-alert">
+                      {activeSpec.priceMessage}
+                    </div>
+                  )}
                   <div className="condgrid">
                     {drillConds
                       .filter(([name]) => matchQuery(name, q))
                       .map(([name, ico]) => (
                         <div
                           key={name}
-                          className="condcard"
+                          className={`condcard${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
                           onClick={(e) =>
                             handleCardClick(e, () =>
                               handleSelectCond(name, ico, activeSpec),
@@ -1038,7 +1081,7 @@ export default function AppointmentBooking() {
                         </div>
                       ))}
                     <div
-                      className="condcard condcard-other"
+                      className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
                       onClick={(e) =>
                         handleCardClick(e, () =>
                           handleSelectCond(
@@ -1071,7 +1114,7 @@ export default function AppointmentBooking() {
                     return (
                       <div
                         key={s.name + s.catId}
-                        className="spec"
+                        className={`spec${!s.priceAvailable ? " spec--price-missing" : ""}`}
                         onClick={(e) =>
                           handleCardClick(e, () => handleFlatSpecClick(s))
                         }
@@ -1084,7 +1127,9 @@ export default function AppointmentBooking() {
                         {/* ── CHANGED: render custom spec desc in flat browse too ── */}
                         <div className="spec-desc">{s.desc}</div>
                         <div className="spec-row3">
-                          <span className="count">{s.count || "Book now"}</span>
+                          <span className="count">
+                            {s.priceAvailable ? s.priceLabel : s.priceMessage}
+                          </span>
                           <span className="condcount">
                             {condCount} condition{condCount === 1 ? "" : "s"}
                           </span>
@@ -1109,7 +1154,7 @@ export default function AppointmentBooking() {
                   visibleFlatConds.map((c, i) => (
                     <div
                       key={i}
-                      className="condcard"
+                      className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
                       onClick={(e) =>
                         handleCardClick(e, () => handleFlatCondClick(c))
                       }
@@ -1117,7 +1162,9 @@ export default function AppointmentBooking() {
                       <div className="condcard-ico">{c.ico}</div>
                       <div className="condcard-body">
                         <div className="condcard-name">{c.name}</div>
-                        <div className="condcard-desc">{c.to}</div>
+                        <div className="condcard-desc">
+                          {c.priceAvailable ? `${c.to} · ${c.priceLabel}` : c.priceMessage}
+                        </div>
                       </div>
                     </div>
                   ))

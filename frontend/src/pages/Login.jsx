@@ -756,14 +756,17 @@ export default function AuthPage() {
                 required
               />
               I agree to the{" "}
-              <a href="/terms" target="_blank" rel="noreferrer">
+              <a href="/terms-of-service" target="_blank" rel="noreferrer">
                 Terms
               </a>
               ,{" "}
-              <a href="/privacy" target="_blank" rel="noreferrer">
+              <a href="/privacy-policy" target="_blank" rel="noreferrer">
                 Privacy Policy
               </a>
-              , and HIPAA consent requirements.
+              , and 
+               <a href="/patient-informed-consent-form" target="_blank" rel="noreferrer">
+                HIPAA consent requirements.
+              </a>
             </label>
             <button
               type="submit"
