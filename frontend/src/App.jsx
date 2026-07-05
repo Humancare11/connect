@@ -1085,7 +1085,7 @@ function AppLayout() {
                   <AuditLogs />
                 </AdminLayout>
               </PrivateRoute>
-            }
+            } 
           />
           <Route path="/video-call/:appointmentId" element={<VideoCall />} />
           {/* ALL*/}
