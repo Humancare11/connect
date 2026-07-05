@@ -243,27 +243,27 @@ function HeroCarousel() {
    STATIC DATA
 ───────────────────────────────────────────────────────────── */
 const CATEGORIES = [
-  { path: "/child-and-family-care", icon: "child", name: "Children & Family Care ", tagline: "Expert medical guidance, pediatric support, preventive care and treatment for everyday health concerns, when you need it. Compassionate online healthcare for children & families.", specialtyCount: 2, conditionsCount: 8, color: "#059669", bgTint: "rgba(5,150,105,0.07)" },
+  { path: "/child-and-family-care", icon: "child", name: "Children & Family Care ", tagline: "Expert medical guidance, pediatric support, preventive care and treatment for everyday health concerns, when you need it. Compassionate online healthcare for children & families.", specialtyCount: 2, conditionsCount: 8, color: "#059669", bgTint: "rgba(5,150,105,0.07)", keywords: ["pediatrics", "child", "kids", "family"] },
 
-  { path: "/chronic-care-and-expert-opinion", icon: "activity", name: "Chronic Care & Expert Opinion", tagline: "Ongoing support for chronic health conditions with personalized treatment guidance, regular follow-ups, and expert medical opinions to help you make informed healthcare decisions.", specialtyCount: 6, conditionsCount: 34, color: "#0B57E8", bgTint: "rgba(11,87,232,0.07)" },
+  { path: "/chronic-care-and-expert-opinion", icon: "activity", name: "Chronic Care & Expert Opinion", tagline: "Ongoing support for chronic health conditions with personalized treatment guidance, regular follow-ups, and expert medical opinions to help you make informed healthcare decisions.", specialtyCount: 6, conditionsCount: 34, color: "#0B57E8", bgTint: "rgba(11,87,232,0.07)", keywords: ["cardiology", "diabetes", "hypertension", "kidney", "arthritis", "cancer", "second opinion"] },
 
-  { path: "/eye-ear-bone", icon: "eye", name: "Eye, Ear & Bone", tagline: "Comprehensive care for vision concerns, hearing issues, ear conditions, joint pain, bone health, and musculoskeletal problems with expert medical guidance and support.", specialtyCount: 3, conditionsCount: 19, color: "#0EA5E9", bgTint: "rgba(14,165,233,0.07)" },
+  { path: "/eye-ear-bone", icon: "eye", name: "Eye, Ear & Bone", tagline: "Comprehensive care for vision concerns, hearing issues, ear conditions, joint pain, bone health, and musculoskeletal problems with expert medical guidance and support.", specialtyCount: 3, conditionsCount: 19, color: "#0EA5E9", bgTint: "rgba(14,165,233,0.07)", keywords: ["ophthalmology", "vision", "hearing", "orthopedics", "arthritis"] },
 
-  { path: "/general-and-everyday-care", icon: "stethoscope", name: "General & Everyday Care", tagline: "Convenient access to healthcare professionals for common illnesses, preventive care, routine health concerns, follow-up support, and personalized medical guidance whenever you need it.", specialtyCount: 3,conditionsCount: 17, color: "#4C5F87", bgTint: "rgba(76,95,135,0.07)" },
+  { path: "/general-and-everyday-care", icon: "stethoscope", name: "General & Everyday Care", tagline: "Convenient access to healthcare professionals for common illnesses, preventive care, routine health concerns, follow-up support, and personalized medical guidance whenever you need it.", specialtyCount: 3,conditionsCount: 17, color: "#4C5F87", bgTint: "rgba(76,95,135,0.07)", keywords: ["general physician", "gp", "internal medicine", "cold", "flu", "fever"] },
 
-  { path: "/men-health", icon: "activity", name: "Men's Health", tagline: "Confidential healthcare for men, including sexual wellness, hormonal health, hair loss, urinary concerns, preventive care, and personalized support for long-term well-being.", specialtyCount: 2, conditionsCount: 10, color: "#D97706", bgTint: "rgba(217,119,6,0.07)" },
+  { path: "/men-health", icon: "activity", name: "Men's Health", tagline: "Confidential healthcare for men, including sexual wellness, hormonal health, hair loss, urinary concerns, preventive care, and personalized support for long-term well-being.", specialtyCount: 2, conditionsCount: 10, color: "#D97706", bgTint: "rgba(217,119,6,0.07)", keywords: ["urology", "testosterone", "erectile dysfunction", "prostate"] },
 
-  { path: "/mental-health", icon: "mental", name: "Mental Health", tagline: "Compassionate support for anxiety, depression, stress, burnout, emotional challenges, sleep concerns, and overall mental well-being through confidential consultations.", specialtyCount: 3, conditionsCount: 17, color: "#7C3AED", bgTint: "rgba(124,58,237,0.07)" },
+  { path: "/mental-health", icon: "mental", name: "Mental Health", tagline: "Compassionate support for anxiety, depression, stress, burnout, emotional challenges, sleep concerns, and overall mental well-being through confidential consultations.", specialtyCount: 3, conditionsCount: 17, color: "#7C3AED", bgTint: "rgba(124,58,237,0.07)", keywords: ["psychiatry", "therapy", "anxiety", "depression", "ptsd"] },
 
-  { path: "/categories-sexual-health", icon: "heart", name: "Sexual Health", tagline: "Confidential sexual healthcare for STI concerns, sexual wellness, contraception guidance, intimate health issues, and personalized support in a secure, judgment-free environment.", specialtyCount: 1, conditionsCount: 7, color: "#DB2777", bgTint: "rgba(219,39,119,0.07)" },
+  { path: "/categories-sexual-health", icon: "heart", name: "Sexual Health", tagline: "Confidential sexual healthcare for STI concerns, sexual wellness, contraception guidance, intimate health issues, and personalized support in a secure, judgment-free environment.", specialtyCount: 1, conditionsCount: 7, color: "#DB2777", bgTint: "rgba(219,39,119,0.07)", keywords: ["sti", "std", "contraception"] },
 
-  { path: "/skin-and-hair-care", icon: "skin", name: "Skin & Hair Care", tagline: "Expert support for acne, eczema, rashes, hair loss, scalp conditions, skin allergies, and healthy skin and hair care through personalized treatment guidance.", specialtyCount: 1, conditionsCount: 12, color: "#C026D3", bgTint: "rgba(192,38,211,0.07)" },
+  { path: "/skin-and-hair-care", icon: "skin", name: "Skin & Hair Care", tagline: "Expert support for acne, eczema, rashes, hair loss, scalp conditions, skin allergies, and healthy skin and hair care through personalized treatment guidance.", specialtyCount: 1, conditionsCount: 12, color: "#C026D3", bgTint: "rgba(192,38,211,0.07)", keywords: ["dermatology", "acne", "eczema", "psoriasis", "rash", "hair loss"] },
 
-  { path: "/travel-global-care", icon: "globe", name: "Travel & Global Care", tagline: "Expert healthcare support for international travelers, expatriates, medical tourists, cross-border healthcare needs, travel-related concerns, medication guidance, and ongoing care anywhere in the world.", specialtyCount: 2, conditionsCount: 11, color: "#0891B2", bgTint: "rgba(8,145,178,0.07)" },
+  { path: "/travel-global-care", icon: "globe", name: "Travel & Global Care", tagline: "Expert healthcare support for international travelers, expatriates, medical tourists, cross-border healthcare needs, travel-related concerns, medication guidance, and ongoing care anywhere in the world.", specialtyCount: 2, conditionsCount: 11, color: "#0891B2", bgTint: "rgba(8,145,178,0.07)", keywords: ["expat", "vaccination", "abroad"] },
 
-  {  path: "/weight-and-nurtrition", icon: "pill", name: "Weight & Nutrition", tagline: "Personalized nutrition support for weight management, healthy eating habits, nutritional deficiencies, digestive wellness, chronic disease management, meal planning, and long-term health goals.", specialtyCount: 3, conditionsCount: 12, color: "#65A30D", bgTint: "rgba(101,163,13,0.07)" },
+  {  path: "/weight-and-nurtrition", icon: "pill", name: "Weight & Nutrition", tagline: "Personalized nutrition support for weight management, healthy eating habits, nutritional deficiencies, digestive wellness, chronic disease management, meal planning, and long-term health goals.", specialtyCount: 3, conditionsCount: 12, color: "#65A30D", bgTint: "rgba(101,163,13,0.07)", keywords: ["diet", "obesity", "fatty liver", "digestion"] },
 
-  { path: "/women-health", icon: "women", name: "Women's Health", tagline: "Personalized care for menstrual health, hormonal concerns, fertility support, pregnancy guidance, menopause management, reproductive wellness, birth control consultations, and preventive women's healthcare.", specialtyCount:  4, conditionsCount: 19, color: "#E8470B", bgTint: "rgba(232,71,11,0.07)" },
+  { path: "/women-health", icon: "women", name: "Women's Health", tagline: "Personalized care for menstrual health, hormonal concerns, fertility support, pregnancy guidance, menopause management, reproductive wellness, birth control consultations, and preventive women's healthcare.", specialtyCount:  4, conditionsCount: 19, color: "#E8470B", bgTint: "rgba(232,71,11,0.07)", keywords: ["gynecology", "obgyn", "pregnancy", "menopause", "fertility"] },
 ];
 
 const SPECIALTIES = [
@@ -451,10 +451,10 @@ function FaqSection() {
             <p className="cat-faq__copy">
               Everything you need to know about primary care at Humancare Connect. Can&apos;t find an answer?
             </p>
-            <button type="button" className="cat-faq__chat-btn">
+            {/* <button type="button" className="cat-faq__chat-btn">
               <Icon name="chat" size={16} />
               Chat with our team
-            </button>
+            </button> */}
             <div className="cat-faq__info-list">
               <div className="cat-faq__info-item">
                 <Icon name="clock" size={14} />
@@ -515,15 +515,52 @@ function FaqSection() {
 /* ─────────────────────────────────────────────────────────────
    PAGE
 ───────────────────────────────────────────────────────────── */
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Word-boundary + prefix match (case-insensitive).
+ * Using \b before the query (not around it) means the query must start
+ * a word in the target text — so "men" matches "Men's Health" / "Mental"
+ * but NOT "treatment" or "management" (where "men" sits mid-word).
+ * It also lets partial terms like "derma" match "dermatology".
+ */
+function wordMatch(text, query) {
+  if (!text) return false;
+  const re = new RegExp(`\\b${escapeRegExp(query)}`, "i");
+  return re.test(text);
+}
+
+/**
+ * Scores a category against the query so more relevant matches
+ * (name match) rank above weaker ones (tagline-only match).
+ * Returns null if there's no match at all.
+ */
+function scoreCategory(category, query) {
+  if (wordMatch(category.name, query)) return 3;
+  if ((category.keywords || []).some(k => wordMatch(k, query))) return 2;
+  if (wordMatch(category.tagline, query)) return 1;
+  return null;
+}
+
 export default function Categories() {
   const [query, setQuery] = useState("");
 
+  /* FIX: previously used `.includes()`, a raw substring match, which
+     matched "men" inside unrelated words like "treatment" and
+     "management" (false positives), and had no way to prioritize a
+     direct name match over an incidental tagline mention. This now
+     matches on word boundaries (so "men" only matches text where a
+     word actually starts with "men") and checks category-specific
+     keywords too (so "derma"/"dermatology" correctly finds Skin &
+     Hair Care), then sorts by how relevant the match is. */
   const filtered = query.trim()
-    ? CATEGORIES.filter(c =>
-      c.name.toLowerCase().includes(query.toLowerCase()) ||
-      c.tagline.toLowerCase().includes(query.toLowerCase()) ||
-      c.conditions.some(cond => cond.toLowerCase().includes(query.toLowerCase()))
-    )
+    ? CATEGORIES
+        .map(c => ({ category: c, score: scoreCategory(c, query.trim()) }))
+        .filter(r => r.score !== null)
+        .sort((a, b) => b.score - a.score)
+        .map(r => r.category)
     : CATEGORIES;
 
   return (
@@ -610,7 +647,7 @@ export default function Categories() {
             <div className="cat-grid">
               {filtered.map((cat, i) => (
                 <Link
-                  key={cat.slug}
+                  key={cat.path}
                   to={cat.path}
                   className="cat-card"
                   style={{ animationDelay: `${i * 50}ms` }}

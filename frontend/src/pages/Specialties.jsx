@@ -973,8 +973,8 @@ export default function Specialties() {
             >
               Book a consultation <ArrowRight size={15} />
             </a>
-            <a href="#specialties" className="sp-cta__btn sp-cta__btn--secondary">
-              Browse specialties
+            <a href="/conditions" className="sp-cta__btn sp-cta__btn--secondary">
+              Browse Conditions
             </a>
           </div>
         </div>
