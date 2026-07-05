@@ -369,6 +369,7 @@ const DoctorProfileForUser = lazy(
 
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
+const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
@@ -376,7 +377,6 @@ const ManageDoctors = lazy(() => import("./pages/admin/ManageDoctors"));
 const AdminDoctorProfile = lazy(
   () => import("./pages/admin/AdminDoctorProfile"),
 );
-const DoctorPayments = lazy(() => import("./pages/admin/DoctorPayments"));
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminAppointmentDetails = lazy(
@@ -527,7 +527,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -601,7 +601,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -849,6 +849,7 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
+          <Route path="/superadmin-dashboard/pricing-management" element={<PricingManagement />} />
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/employee-dashboard"
@@ -998,16 +999,7 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route
-            path="/admin-dashboard/doctor-payments"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <DoctorPayments />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
+
           <Route
             path="/admin-dashboard/manage-users"
             element={

@@ -25,6 +25,7 @@ import {
 } from "react-icons/fi";
 
 import searchIndex from "../data/searchIndex.js";
+import { searchTreatments } from "../utils/search";
 
 import { useNavigate } from "react-router-dom";
 
@@ -137,58 +138,6 @@ const STEP_DURATION = 4000;
 const CIRCUMFERENCE = 2 * Math.PI * 10;
 const STEP_CIRCUMFERENCE = 2 * Math.PI * 20;
 
-// ─── Search data defined outside component to avoid re-creation on every render
-const SEARCH_DATA = [
-  {
-    id: 1,
-    title: "Cardiologist",
-    keywords: ["heart", "cardiac", "chest pain", "bp"],
-    route: "/findadoctor",
-    sectionId: "cardiology",
-    type: "Specialty",
-  },
-  {
-    id: 2,
-    title: "Dermatologist",
-    keywords: ["skin", "acne", "rash", "eczema"],
-    route: "/findadoctor",
-    sectionId: "dermatology",
-    type: "Specialty",
-  },
-  {
-    id: 3,
-    title: "Mental Health",
-    keywords: ["stress", "anxiety", "depression", "therapy"],
-    route: "/mental-health",
-    sectionId: "therapy-section",
-    type: "Condition",
-  },
-  {
-    id: 4,
-    title: "Pediatrics",
-    keywords: ["kids", "child", "baby", "children"],
-    route: "/findadoctor",
-    sectionId: "pediatrics",
-    type: "Department",
-  },
-  {
-    id: 5,
-    title: "Book Video Consultation",
-    keywords: ["video call", "online doctor", "consultation"],
-    route: "/consultation",
-    sectionId: "video-consult",
-    type: "Service",
-  },
-  {
-    id: 6,
-    title: "Prescriptions",
-    keywords: ["medicine", "rx", "drugs"],
-    route: "/prescriptions",
-    sectionId: "rx-section",
-    type: "Service",
-  },
-];
-
 export default function HomePage() {
   const navigate = useNavigate();
 
@@ -201,6 +150,16 @@ export default function HomePage() {
   const [noResults, setNoResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
+  const itemRefs = useRef([]);
+
+  useEffect(() => {
+    if (activeIndex >= 0 && itemRefs.current[activeIndex]) {
+      itemRefs.current[activeIndex].scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }
+  }, [activeIndex]);
   // Video lazy loading with Intersection Observer
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   useEffect(() => {
@@ -227,32 +186,18 @@ export default function HomePage() {
       return;
     }
 
-    const controller = new AbortController();
-    const delay = setTimeout(async () => {
-      setIsSearching(true);
-      setNoResults(false);
-      try {
-        const res = await fetch("/api/search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: searchQuery, routes: searchIndex }),
-          signal: controller.signal,
-        });
-        const data = await res.json();
-        const results = data.results || [];
-        setFilteredSuggestions(results);
-        setNoResults(results.length === 0);
-      } catch (err) {
-        if (err.name !== "AbortError") setNoResults(true);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
+    setIsSearching(true);
+    setNoResults(false);
 
-    return () => {
-      clearTimeout(delay);
-      controller.abort();
-    };
+    // small debounce just for smoother UX while typing
+    const delay = setTimeout(() => {
+      const { conditions } = searchTreatments(searchQuery);
+      setFilteredSuggestions(conditions);
+      setNoResults(conditions.length === 0);
+      setIsSearching(false);
+    }, 150);
+
+    return () => clearTimeout(delay);
   }, [searchQuery]);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
@@ -271,7 +216,7 @@ export default function HomePage() {
     (selectedItem = null) => {
       const item = selectedItem || filteredSuggestions[0];
       if (!item) return;
-      navigate(item.route, { state: { scrollTo: item.sectionId } });
+      navigate(item.route); // route is already the full path, e.g. "/knee-pain"
       setSearchQuery("");
       setShowSuggestions(false);
     },
@@ -776,9 +721,14 @@ export default function HomePage() {
                 {/* Results */}
                 {!isSearching &&
                   !noResults &&
+                  (itemRefs.current = itemRefs.current.slice(
+                    0,
+                    filteredSuggestions.length,
+                  )) &&
                   filteredSuggestions.map((item, index) => (
                     <div
                       key={item.id}
+                      ref={(el) => (itemRefs.current[index] = el)}
                       className={`suggestion-item${activeIndex === index ? " active" : ""}`}
                       onClick={() => handleSearch(item)}
                     >

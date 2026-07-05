@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./AppointmentBooking.css";
 import { usePrices } from "../context/PricingContext";
 
@@ -25,7 +25,7 @@ const HCC_TREE = [
   // Child and Family care
   {
     id: "family",
-    label: "Children & Family Care ",
+    label: "Children & Family Care",
     e: "🧒",
     desc: "Expert medical guidance, pediatric support, preventive care and treatment for everyday health concerns, when you need it. Compassionate online healthcare for children & families.",
     specs: [
@@ -646,6 +646,7 @@ function Breadcrumb({ items, onNavigate }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AppointmentBooking() {
   const navigate = useNavigate();
+  const location = useLocation();
   const categoryPrices = usePrices();
   const [drillLevel, setDrillLevel] = useState("cat");
   const [activeCat, setActiveCat] = useState(null);
@@ -696,6 +697,20 @@ export default function AppointmentBooking() {
     window.addEventListener("resize", moveGlider);
     return () => window.removeEventListener("resize", moveGlider);
   }, []);
+
+  // Handle incoming category from navigation state
+  useEffect(() => {
+    if (location.state?.categoryId && enrichedTree.length > 0) {
+      const cat = enrichedTree.find((c) => c.id === location.state.categoryId);
+      if (cat) {
+        setActiveCat(cat);
+        setDrillLevel("spec");
+        setBrowseTab(null);
+        // Clear the state after using it
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, enrichedTree, navigate, location.pathname]);
 
   const q = query.trim().toLowerCase();
 
