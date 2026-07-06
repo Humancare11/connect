@@ -1,153 +1,159 @@
-﻿import { useState, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AppointmentBooking.css";
 import { usePrices } from "../context/PricingContext";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
-// Only fields the pricing API does NOT own live here: id, icon, specialties
-// (name, icon, live, count, conditions). Category `label`, specialty `cost`,
-// and `currency` all come from the pricing API (see enrichedTree below), so
-// they are intentionally NOT duplicated in this tree.
 const HCC_TREE = [
   {
     id: "general",
-    icon: "🩺",
-    specialties: [
+    label: "General & Everyday Care",
+    e: "🩺",
+    specs: [
       {
-        name: "General Physician", icon: "🩺", live: true, count: "98 doctors",
-        conditions: [["Fever", "🌡️"], ["Cold & flu", "🤧"], ["Cough & sore throat", "😷"], ["Headache", "🤕"], ["Sinus infection", "👃"], ["Body aches", "💪"], ["Fatigue", "😮‍💨"], ["Minor infections", "🩹"]],
+        name: "General Physician", ico: "🩺", live: true, count: "98 doctors", cost: 100,
+        conds: [["Fever", "🌡️"], ["Cold & flu", "🤧"], ["Cough & sore throat", "😷"], ["Headache", "🤕"], ["Sinus infection", "👃"], ["Body aches", "💪"], ["Fatigue", "😮‍💨"], ["Minor infections", "🩹"]],
       },
       {
-        name: "Internal Medicine", icon: "🏥",
-        conditions: [["Undiagnosed symptoms", "❓"], ["Multi-system complaints", "🩺"], ["Preventive screening", "🛡️"], ["Medication review", "💊"]],
+        name: "Internal Medicine", ico: "🏥", cost: 100,
+        conds: [["Undiagnosed symptoms", "❓"], ["Multi-system complaints", "🩺"], ["Preventive screening", "🛡️"], ["Medication review", "💊"]],
       },
       {
-        name: "Family Medicine", icon: "👨‍👩‍👧",
-        conditions: [["Routine check-ups", "✅"], ["Whole-family illness", "👪"], ["Chronic-disease review", "📋"], ["Vaccination advice", "💉"]],
+        name: "Family Medicine", ico: "👨‍👩‍👧", cost: 100,
+        conds: [["Routine check-ups", "✅"], ["Whole-family illness", "👪"], ["Chronic-disease review", "📋"], ["Vaccination advice", "💉"]],
       },
     ],
   },
   {
     id: "mental",
-    icon: "🧠",
-    specialties: [
+    label: "Mental Health",
+    e: "🧠",
+    specs: [
       {
-        name: "Psychiatry", icon: "🧠", live: true, count: "76 doctors",
-        conditions: [["Anxiety", "😟"], ["Depression", "💭"], ["Bipolar follow-up", "🔄"], ["OCD", "🔁"], ["PTSD", "🌀"], ["Panic attacks", "⚡"], ["Insomnia", "😴"], ["ADHD follow-up", "🎯"]],
+        name: "Psychiatry", ico: "🧠", live: true, count: "76 doctors", cost: 1499,
+        conds: [["Anxiety", "😟"], ["Depression", "💭"], ["Bipolar follow-up", "🔄"], ["OCD", "🔁"], ["PTSD", "🌀"], ["Panic attacks", "⚡"], ["Insomnia", "😴"], ["ADHD follow-up", "🎯"]],
       },
       {
-        name: "Psychology / Counselling", icon: "💬",
-        conditions: [["Stress", "😣"], ["Grief & loss", "🕊️"], ["Relationship issues", "💔"], ["Low self-esteem", "🪞"], ["Trauma support", "🤝"]],
+        name: "Psychology / Counselling", ico: "💬", cost: 1299,
+        conds: [["Stress", "😣"], ["Grief & loss", "🕊️"], ["Relationship issues", "💔"], ["Low self-esteem", "🪞"], ["Trauma support", "🤝"]],
       },
       {
-        name: "Behavioral Health", icon: "🧩",
-        conditions: [["Anger management", "🔥"], ["Adjustment difficulties", "🔀"], ["Substance-use concerns", "🚭"], ["Sleep-related anxiety", "🌙"]],
+        name: "Behavioral Health", ico: "🧩", cost: 999,
+        conds: [["Anger management", "🔥"], ["Adjustment difficulties", "🔀"], ["Substance-use concerns", "🚭"], ["Sleep-related anxiety", "🌙"]],
       },
     ],
   },
   {
     id: "skin",
-    icon: "🧴",
-    specialties: [
+    label: "Skin & Hair",
+    e: "🧴",
+    specs: [
       {
-        name: "Dermatology", icon: "🧴", live: true, count: "35 doctors",
-        conditions: [["Acne", "🔴"], ["Eczema", "🌾"], ["Psoriasis", "🩹"], ["Skin rashes", "🌡️"], ["Hives", "🐝"], ["Rosacea", "🌹"], ["Fungal infections", "🍄"], ["Hair loss", "💈"], ["Nail problems", "💅"], ["Mole & skin checks", "🔎"]],
+        name: "Dermatology", ico: "🧴", live: true, count: "35 doctors", cost: 100,
+        conds: [["Acne", "🔴"], ["Eczema", "🌾"], ["Psoriasis", "🩹"], ["Skin rashes", "🌡️"], ["Hives", "🐝"], ["Rosacea", "🌹"], ["Fungal infections", "🍄"], ["Hair loss", "💈"], ["Nail problems", "💅"], ["Mole & skin checks", "🔎"]],
       },
     ],
   },
   {
     id: "women",
-    icon: "🌸",
-    specialties: [
+    label: "Women's Health",
+    e: "🌸",
+    specs: [
       {
-        name: "OB-GYN", icon: "🌸", count: "44 doctors",
-        conditions: [["Irregular periods", "📅"], ["Painful periods", "😣"], ["PCOS", "🌺"], ["Contraception advice", "💊"], ["Vaginal infections", "🩺"], ["Pelvic pain", "⚡"], ["Prenatal teleconsult", "🤰"]],
+        name: "OB-GYN", ico: "🌸", count: "44 doctors", cost: 1199,
+        conds: [["Irregular periods", "📅"], ["Painful periods", "😣"], ["PCOS", "🌺"], ["Contraception advice", "💊"], ["Vaginal infections", "🩺"], ["Pelvic pain", "⚡"], ["Prenatal teleconsult", "🤰"]],
       },
-      { name: "Menopause Care", icon: "🌙", conditions: [["Hot flashes", "🔥"], ["Mood changes", "🎭"], ["Sleep disturbance", "😴"], ["HRT guidance", "💊"]] },
-      { name: "Women's Mental Health", icon: "💗", conditions: [["Postnatal depression", "🍼"], ["Perinatal anxiety", "🤱"], ["PMDD", "📆"]] },
-      { name: "Lactation Consulting", icon: "🤱", conditions: [["Low milk supply", "🍼"], ["Latch problems", "👶"], ["Nipple pain", "🩹"], ["Weaning guidance", "🥄"]] },
+      { name: "Menopause Care", ico: "🌙", cost: 999, conds: [["Hot flashes", "🔥"], ["Mood changes", "🎭"], ["Sleep disturbance", "😴"], ["HRT guidance", "💊"]] },
+      { name: "Women's Mental Health", ico: "💗", cost: 1099, conds: [["Postnatal depression", "🍼"], ["Perinatal anxiety", "🤱"], ["PMDD", "📆"]] },
+      { name: "Lactation Consulting", ico: "🤱", cost: 699, conds: [["Low milk supply", "🍼"], ["Latch problems", "👶"], ["Nipple pain", "🩹"], ["Weaning guidance", "🥄"]] },
     ],
   },
   {
     id: "men",
-    icon: "♂️",
-    specialties: [
-      { name: "Men's Health", icon: "♂️", count: "19 doctors", conditions: [["Erectile dysfunction", "💙"], ["Low testosterone", "📉"], ["Hair loss", "💈"], ["Prostate concerns", "🔬"], ["Low libido", "💤"]] },
-      { name: "Urology", icon: "🚹", conditions: [["UTIs", "🚻"], ["Kidney stones follow-up", "🪨"], ["Blood in urine", "🩸"], ["Incontinence", "💧"], ["Bladder problems", "🚽"]] },
+    label: "Men's Health",
+    e: "♂️",
+    specs: [
+      { name: "Men's Health", ico: "♂️", count: "19 doctors", cost: 100, conds: [["Erectile dysfunction", "💙"], ["Low testosterone", "📉"], ["Hair loss", "💈"], ["Prostate concerns", "🔬"], ["Low libido", "💤"]] },
+      { name: "Urology", ico: "🚹", cost: 100, conds: [["UTIs", "🚻"], ["Kidney stones follow-up", "🪨"], ["Blood in urine", "🩸"], ["Incontinence", "💧"], ["Bladder problems", "🚽"]] },
     ],
   },
   {
     id: "family",
-    icon: "🧒",
-    specialties: [
+    label: "Children & Family",
+    e: "🧒",
+    specs: [
       {
-        name: "Pediatrics", icon: "🧒", live: true, count: "41 doctors",
-        conditions: [["Fever in children", "🌡️"], ["Cough & cold", "🤧"], ["Childhood rashes", "🌸"], ["Ear infections", "👂"], ["Feeding concerns", "🍼"], ["Growth & development", "📏"], ["Vaccination advice", "💉"]],
+        name: "Pediatrics", ico: "🧒", live: true, count: "41 doctors", cost: 699,
+        conds: [["Fever in children", "🌡️"], ["Cough & cold", "🤧"], ["Childhood rashes", "🌸"], ["Ear infections", "👂"], ["Feeding concerns", "🍼"], ["Growth & development", "📏"], ["Vaccination advice", "💉"]],
       },
-      { name: "Adolescent Care", icon: "🧑", conditions: [["Teen acne", "🔴"], ["Puberty concerns", "🌱"], ["Teen mood & anxiety", "😟"], ["Menstrual problems", "📅"], ["Sports injuries", "🏃"]] },
+      { name: "Adolescent Care", ico: "🧑", cost: 699, conds: [["Teen acne", "🔴"], ["Puberty concerns", "🌱"], ["Teen mood & anxiety", "😟"], ["Menstrual problems", "📅"], ["Sports injuries", "🏃"]] },
     ],
   },
   {
     id: "weight",
-    icon: "🥗",
-    specialties: [
-      { name: "Weight Management", icon: "⚖️", conditions: [["Obesity", "📊"], ["GLP-1 eligibility", "💉"], ["Metabolic syndrome", "🔬"], ["Weight-loss planning", "🎯"], ["Binge eating", "🍽️"]] },
-      { name: "Nutrition & Dietetics", icon: "🥗", conditions: [["Diabetic diet", "🩸"], ["Cholesterol diet", "🫀"], ["Food-intolerance plan", "🚫"], ["Pregnancy nutrition", "🤰"], ["Sports nutrition", "🏋️"]] },
-      { name: "Lifestyle Medicine", icon: "🌱", conditions: [["Healthy-habit coaching", "✅"], ["Diet & exercise plan", "🏃"], ["Sleep hygiene", "😴"], ["Stress reduction", "🧘"]] },
+    label: "Weight & Nutrition",
+    e: "🥗",
+    specs: [
+      { name: "Weight Management", ico: "⚖️", cost: 999, conds: [["Obesity", "📊"], ["GLP-1 eligibility", "💉"], ["Metabolic syndrome", "🔬"], ["Weight-loss planning", "🎯"], ["Binge eating", "🍽️"]] },
+      { name: "Nutrition & Dietetics", ico: "🥗", cost: 699, conds: [["Diabetic diet", "🩸"], ["Cholesterol diet", "🫀"], ["Food-intolerance plan", "🚫"], ["Pregnancy nutrition", "🤰"], ["Sports nutrition", "🏋️"]] },
+      { name: "Lifestyle Medicine", ico: "🌱", cost: 599, conds: [["Healthy-habit coaching", "✅"], ["Diet & exercise plan", "🏃"], ["Sleep hygiene", "😴"], ["Stress reduction", "🧘"]] },
     ],
   },
   {
     id: "chronic",
-    icon: "📋",
-    specialties: [
-      { name: "Cardiology", icon: "🫀", live: true, count: "48 doctors", conditions: [["High blood pressure", "💉"], ["Chest pain (non-emerg.)", "❤️"], ["Palpitations", "💓"], ["High cholesterol", "🩸"], ["Heart failure follow-up", "🫀"]] },
-      { name: "Neurology", icon: "🧬", live: true, count: "32 doctors", conditions: [["Migraine & headaches", "🤕"], ["Seizures follow-up", "⚡"], ["Numbness & tingling", "🖐️"], ["Tremor", "🤲"], ["Dizziness", "💫"], ["Memory concerns", "🧠"]] },
-      { name: "Endocrinology", icon: "⚕️", conditions: [["Thyroid disorders", "🦋"], ["Diabetes (Type 1 & 2)", "🩸"], ["PCOS", "🌺"], ["Hormone imbalance", "⚗️"], ["Osteoporosis", "🦴"]] },
-      { name: "Gastroenterology", icon: "🍽️", conditions: [["Acid reflux / GERD", "🔥"], ["IBS", "🌀"], ["Constipation", "🚽"], ["Stomach pain", "😣"], ["Bloating", "🎈"]] },
-      { name: "Pulmonology", icon: "🫁", conditions: [["Asthma", "💨"], ["COPD", "🫁"], ["Chronic cough", "😷"], ["Shortness of breath", "😮‍💨"], ["Sleep apnea screening", "😴"]] },
-      { name: "Expert Medical Opinion", icon: "📑", conditions: [["Cancer second opinion", "🎗️"], ["Surgery second opinion", "🏥"], ["Complex-diagnosis review", "🔍"], ["Treatment-plan review", "📋"]] },
+    label: "Chronic Care & Expert Opinion",
+    e: "📋",
+    specs: [
+      { name: "Cardiology", ico: "🫀", live: true, count: "48 doctors", cost: 1799, conds: [["High blood pressure", "💉"], ["Chest pain (non-emerg.)", "❤️"], ["Palpitations", "💓"], ["High cholesterol", "🩸"], ["Heart failure follow-up", "🫀"]] },
+      { name: "Neurology", ico: "🧬", live: true, count: "32 doctors", cost: 1699, conds: [["Migraine & headaches", "🤕"], ["Seizures follow-up", "⚡"], ["Numbness & tingling", "🖐️"], ["Tremor", "🤲"], ["Dizziness", "💫"], ["Memory concerns", "🧠"]] },
+      { name: "Endocrinology", ico: "⚕️", cost: 1499, conds: [["Thyroid disorders", "🦋"], ["Diabetes (Type 1 & 2)", "🩸"], ["PCOS", "🌺"], ["Hormone imbalance", "⚗️"], ["Osteoporosis", "🦴"]] },
+      { name: "Gastroenterology", ico: "🍽️", cost: 1399, conds: [["Acid reflux / GERD", "🔥"], ["IBS", "🌀"], ["Constipation", "🚽"], ["Stomach pain", "😣"], ["Bloating", "🎈"]] },
+      { name: "Pulmonology", ico: "🫁", cost: 1299, conds: [["Asthma", "💨"], ["COPD", "🫁"], ["Chronic cough", "😷"], ["Shortness of breath", "😮‍💨"], ["Sleep apnea screening", "😴"]] },
+      { name: "Expert Medical Opinion", ico: "📑", cost: 2499, conds: [["Cancer second opinion", "🎗️"], ["Surgery second opinion", "🏥"], ["Complex-diagnosis review", "🔍"], ["Treatment-plan review", "📋"]] },
     ],
   },
   {
     id: "eeb",
-    icon: "🦴",
-    specialties: [
-      { name: "Ophthalmology", icon: "👁️", live: true, count: "22 doctors", conditions: [["Red / irritated eyes", "👁️"], ["Dry eyes", "🌵"], ["Vision changes", "🔭"], ["Eye infections", "🦠"], ["Stye", "💢"]] },
-      { name: "ENT", icon: "👂", conditions: [["Sinusitis", "👃"], ["Sore throat / tonsillitis", "😮"], ["Ear infections", "👂"], ["Vertigo", "💫"], ["Nasal congestion", "🤧"]] },
-      { name: "Orthopedics", icon: "🦴", live: true, count: "29 doctors", conditions: [["Back pain", "🔙"], ["Neck pain", "🧍"], ["Knee & joint pain", "🦵"], ["Sprains & strains", "🤕"], ["Sports injuries", "🏃"]] },
+    label: "Eye, Ear & Bone",
+    e: "🦴",
+    specs: [
+      { name: "Ophthalmology", ico: "👁️", live: true, count: "22 doctors", cost: 999, conds: [["Red / irritated eyes", "👁️"], ["Dry eyes", "🌵"], ["Vision changes", "🔭"], ["Eye infections", "🦠"], ["Stye", "💢"]] },
+      { name: "ENT", ico: "👂", cost: 899, conds: [["Sinusitis", "👃"], ["Sore throat / tonsillitis", "😮"], ["Ear infections", "👂"], ["Vertigo", "💫"], ["Nasal congestion", "🤧"]] },
+      { name: "Orthopedics", ico: "🦴", live: true, count: "29 doctors", cost: 1299, conds: [["Back pain", "🔙"], ["Neck pain", "🧍"], ["Knee & joint pain", "🦵"], ["Sprains & strains", "🤕"], ["Sports injuries", "🏃"]] },
     ],
   },
   {
     id: "sexual",
-    icon: "💗",
-    specialties: [
-      { name: "Sexual Health", icon: "💗", conditions: [["STI advice & testing", "🔬"], ["Contraception advice", "💊"], ["Erectile dysfunction", "💙"], ["Confidential care", "🤐"], ["Safe-sex counselling", "🤝"]] },
+    label: "Sexual Health",
+    e: "💗",
+    specs: [
+      { name: "Sexual Health", ico: "💗", cost: 799, conds: [["STI advice & testing", "🔬"], ["Contraception advice", "💊"], ["Erectile dysfunction", "💙"], ["Confidential care", "🤐"], ["Safe-sex counselling", "🤝"]] },
     ],
   },
   {
     id: "travel",
-    icon: "✈️",
-    specialties: [
-      { name: "Travel Medicine", icon: "✈️", conditions: [["Pre-travel vaccination", "💉"], ["Malaria prevention", "🦟"], ["Altitude sickness", "⛰️"], ["Travel-illness advice", "🤒"], ["Post-travel symptoms", "🌡️"]] },
-      { name: "Global / Cross-Border Care", icon: "🌍", conditions: [["Cross-border consult", "🌐"], ["Care continuity abroad", "🔄"], ["Referral coordination", "🗺️"], ["Travel medical assistance", "🆘"], ["Prescription continuity", "💊"]] },
+    label: "Travel & Global Care",
+    e: "✈️",
+    specs: [
+      { name: "Travel Medicine", ico: "✈️", cost: 899, conds: [["Pre-travel vaccination", "💉"], ["Malaria prevention", "🦟"], ["Altitude sickness", "⛰️"], ["Travel-illness advice", "🤒"], ["Post-travel symptoms", "🌡️"]] },
+      { name: "Global / Cross-Border Care", ico: "🌍", cost: 1999, conds: [["Cross-border consult", "🌐"], ["Care continuity abroad", "🔄"], ["Referral coordination", "🗺️"], ["Travel medical assistance", "🆘"], ["Prescription continuity", "💊"]] },
     ],
   },
 ];
 
-// Build flat helpers from the price-enriched tree. `label`, `cost`, and
-// `currency` all originate from the API (attached in enrichedTree).
+// Build flat helpers from a (possibly price-enriched) tree
 function buildFlatHelpers(tree) {
-  const specialties = [];
-  const conditions = [];
+  const specs = [];
+  const conds = [];
   tree.forEach((cat) =>
-    cat.specialties.forEach((s) => {
-      specialties.push({ ...s, catId: cat.id, catLabel: cat.label });
-      s.conditions.forEach(([name, icon]) =>
-        conditions.push({ name, icon, to: s.name, catId: cat.id, catLabel: cat.label, cost: s.cost, currency: s.currency }),
+    cat.specs.forEach((s) => {
+      specs.push({ ...s, catId: cat.id, catLabel: cat.label });
+      s.conds.forEach(([cn, ci]) =>
+        conds.push({ name: cn, ico: ci, to: s.name, catId: cat.id, catLabel: cat.label, cost: s.cost }),
       );
     }),
   );
-  return { specialties, conditions };
+  return { specs, conds };
 }
 
 // ─── Time slots ───────────────────────────────────────────────────────────────
@@ -203,30 +209,27 @@ export default function AppointmentBooking() {
   const [browseTab, setBrowseTab] = useState(null);
   const [query, setQuery] = useState("");
 
-  // Attach the API-owned fields — label, price, currency — onto the tree.
-  // These are the single source of truth; the tree itself no longer carries them.
+  // Apply Super Admin category prices to all specialties in each category
   const enrichedTree = useMemo(() => {
     if (!categoryPrices) return HCC_TREE;
-    return HCC_TREE.map((cat) => {
-      const api = categoryPrices[cat.id];
-      const currency = api?.currency ?? "INR";
-      return {
-        ...cat,
-        label: api?.label,     // category name — from API
-        currency,              // currency — from API
-        specialties: cat.specialties.map((specialty) => ({
-          ...specialty,
-          cost: api?.price,    // price — from API
-          currency,
-        })),
-      };
-    });
+    return HCC_TREE.map((cat) => ({
+      ...cat,
+      specs: cat.specs.map((spec) => ({
+        ...spec,
+        cost: categoryPrices[cat.id]?.price ?? spec.cost,
+      })),
+    }));
   }, [categoryPrices]);
 
-  const { specialties: flatSpecialties, conditions: flatConditions } = useMemo(
+  const { specs: HCC_SPECS, conds: HCC_CONDS } = useMemo(
     () => buildFlatHelpers(enrichedTree),
     [enrichedTree],
   );
+
+  // Keep switchRef / gliderRef in the tree so the glider animation code still runs
+  // even though we've hidden the glider element (it does no harm).
+  const switchRef = useRef(null);
+  const gliderRef = useRef(null);
 
   // Map internal tab ids → display numbers + labels (matches screenshot numbering)
   const tabs = [
@@ -237,18 +240,33 @@ export default function AppointmentBooking() {
 
   const activeTabId = browseTab ?? drillLevel;
 
+  // Keep original glider logic (hidden element, no visual effect but logic preserved)
+  const moveGlider = () => {
+    if (!switchRef.current || !gliderRef.current) return;
+    const active = switchRef.current.querySelector("button.active");
+    if (!active) return;
+    gliderRef.current.style.width = active.offsetWidth + "px";
+    gliderRef.current.style.transform = `translateX(${active.offsetLeft - 5}px)`;
+  };
+
+  useEffect(() => { moveGlider(); }, [activeTabId]);
+  useEffect(() => {
+    window.addEventListener("resize", moveGlider);
+    return () => window.removeEventListener("resize", moveGlider);
+  }, []);
+
   const q = query.trim().toLowerCase();
 
-  const visibleFlatSpecialties = useMemo(
-    () => flatSpecialties.filter((s) => !q || s.name.toLowerCase().includes(q)),
-    [q, flatSpecialties],
+  const visibleFlatSpecs = useMemo(
+    () => HCC_SPECS.filter((s) => !q || s.name.toLowerCase().includes(q)),
+    [q, HCC_SPECS],
   );
-  const visibleFlatConditions = useMemo(
-    () => flatConditions.filter((c) => !q || c.name.toLowerCase().includes(q) || c.to.toLowerCase().includes(q)),
-    [q, flatConditions],
+  const visibleFlatConds = useMemo(
+    () => HCC_CONDS.filter((c) => !q || c.name.toLowerCase().includes(q) || c.to.toLowerCase().includes(q)),
+    [q, HCC_CONDS],
   );
   const visibleCats = useMemo(
-    () => enrichedTree.filter((c) => !q || c.label?.toLowerCase().includes(q) || c.specialties.some((s) => s.name.toLowerCase().includes(q))),
+    () => enrichedTree.filter((c) => !q || c.label.toLowerCase().includes(q) || c.specs.some((s) => s.name.toLowerCase().includes(q))),
     [q, enrichedTree],
   );
 
@@ -273,40 +291,39 @@ export default function AppointmentBooking() {
     setQuery("");
   };
 
-  const handleOpenSpec = (specialty) => {
+  const handleOpenSpec = (spec) => {
     setBrowseTab(null);
-    setActiveSpec(specialty);
+    setActiveSpec(spec);
     setDrillLevel("cond");
     setQuery("");
   };
 
-  const handleSelectCond = (condName, condIcon, specialty) => {
+  const handleSelectCond = (condName, condIco, spec) => {
     navigate("/appointment-booking/form", {
       state: {
         selection: {
-          specName: specialty.name,
-          specIco: specialty.icon,               // payload key kept for the booking form contract
-          live: specialty.live,
-          catLabel: specialty.catLabel,
-          cost: specialty.cost,
-          currency: specialty.currency ?? "INR", // dynamic currency → booking form
+          specName: spec.name,
+          specIco: spec.ico,
+          live: spec.live,
+          catLabel: spec.catLabel,
+          cost: spec.cost,
           condName,
-          condIco: condIcon,                     // payload key kept for the booking form contract
+          condIco,
         },
       },
     });
   };
 
-  const handleFlatCondClick = (condition) => {
-    const specialty = flatSpecialties.find((s) => s.name === condition.to && s.catId === condition.catId);
-    if (specialty) handleSelectCond(condition.name, condition.icon, specialty);
+  const handleFlatCondClick = (cond) => {
+    const spec = HCC_SPECS.find((s) => s.name === cond.to && s.catId === cond.catId);
+    if (spec) handleSelectCond(cond.name, cond.ico, spec);
   };
 
-  const handleFlatSpecClick = (specialty) => {
-    const cat = enrichedTree.find((c) => c.id === specialty.catId);
+  const handleFlatSpecClick = (spec) => {
+    const cat = enrichedTree.find((c) => c.id === spec.catId);
     setBrowseTab(null);
     setActiveCat(cat);
-    setActiveSpec(specialty);
+    setActiveSpec(spec);
     setDrillLevel("cond");
     setQuery("");
   };
@@ -332,12 +349,17 @@ export default function AppointmentBooking() {
   if (activeCat) breadcrumbItems.push(activeCat.label);
   if (activeSpec) breadcrumbItems.push(activeSpec.name);
 
+  // const viewAllLabel =
+  //   activeTabId === "cat" ? "View all categories →" :
+  //     activeTabId === "spec" ? "View all specialties →" :
+  //       "View all conditions →";
+
   const searchPlaceholder =
     activeTabId === "cat" ? "Search categories…" :
       activeTabId === "spec" ? "Search specialties…" :
         "Search conditions / symptoms…";
 
-  const drillConditions = activeSpec ? activeSpec.conditions : [];
+  const drillConds = activeSpec ? activeSpec.conds : [];
 
   // Derive the numbered label shown in level-label (e.g. "01 — General & Everyday Care")
   const activeCatIndex = activeCat
@@ -372,7 +394,9 @@ export default function AppointmentBooking() {
         <div className="top-controls">
           {/* ── NUMBERED TAB BAR ── */}
           <div className="tab-bar-wrap">
-            <div className="switch">
+            <div className="switch" ref={switchRef}>
+              {/* Hidden glider — keeps original logic alive, CSS hides it */}
+              <span className="glider" ref={gliderRef} />
               {tabs.map((t) => (
                 <button
                   key={t.id}
@@ -421,19 +445,19 @@ export default function AppointmentBooking() {
                   <div className="catgrid">
                     {visibleCats.length ? (
                       visibleCats.map((c) => {
-                        const specialtyCount = c.specialties.length;
-                        const conditionCount = c.specialties.reduce((n, s) => n + s.conditions.length, 0);
-                        const sample = c.specialties.slice(0, 3).map((s) => s.name).join(", ") + (c.specialties.length > 3 ? "…" : "");
+                        const sc = c.specs.length;
+                        const cc = c.specs.reduce((n, s) => n + s.conds.length, 0);
+                        const samp = c.specs.slice(0, 3).map((s) => s.name).join(", ") + (c.specs.length > 3 ? "…" : "");
                         return (
                           <div
                             key={c.id}
                             className="catcard"
                             onClick={(e) => handleCardClick(e, () => handleOpenCat(c))}
                           >
-                            <div className="ic">{c.icon}</div>
+                            <div className="ic">{c.e}</div>
                             <h3>{c.label}</h3>
-                            <div className="meta">{specialtyCount} specialties · {conditionCount} conditions</div>
-                            <div className="samp">{sample}</div>
+                            <div className="meta">{sc} specialties · {cc} conditions</div>
+                            <div className="samp">{samp}</div>
                             <div className="go">Explore →</div>
                           </div>
                         );
@@ -450,22 +474,22 @@ export default function AppointmentBooking() {
                 <div className="panel">
                   <div className="hcc-level-label">
                     {catNumLabel && <>{catNumLabel} —</>}
-                    <span style={{ fontSize: 20 }}>{activeCat.icon}</span>
+                    <span style={{ fontSize: 20 }}>{activeCat.e}</span>
                     {activeCat.label}
                   </div>
                   <div className="grid">
-                    {activeCat.specialties
+                    {activeCat.specs
                       .filter((s) => !q || s.name.toLowerCase().includes(q))
                       .map((s) => {
-                        const specialtyWithCat = { ...s, catId: activeCat.id, catLabel: activeCat.label };
+                        const specWithCat = { ...s, catId: activeCat.id, catLabel: activeCat.label, cost: s.cost };
                         return (
                           <div
                             key={s.name}
                             className="spec"
-                            onClick={(e) => handleCardClick(e, () => handleOpenSpec(specialtyWithCat))}
+                            onClick={(e) => handleCardClick(e, () => handleOpenSpec(specWithCat))}
                           >
                             {s.live && <span className="live">LIVE</span>}
-                            <div className="ic">{s.icon}</div>
+                            <div className="ic">{s.ico}</div>
                             <h3>{s.name}</h3>
                             <div className="count">{s.count || "Book now"}</div>
                             <div className="catref">{activeCat.label}</div>
@@ -480,19 +504,19 @@ export default function AppointmentBooking() {
               {drillLevel === "cond" && activeSpec && (
                 <div className="panel">
                   <div className="hcc-level-label">
-                    <span style={{ fontSize: 20 }}>{activeSpec.icon}</span>
+                    <span style={{ fontSize: 20 }}>{activeSpec.ico}</span>
                     {activeSpec.name} — select your condition
                   </div>
                   <div className="condgrid">
-                    {drillConditions
+                    {drillConds
                       .filter(([name]) => !q || name.toLowerCase().includes(q))
-                      .map(([name, icon]) => (
+                      .map(([name, ico]) => (
                         <div
                           key={name}
                           className="condcard"
-                          onClick={(e) => handleCardClick(e, () => handleSelectCond(name, icon, activeSpec))}
+                          onClick={(e) => handleCardClick(e, () => handleSelectCond(name, ico, activeSpec))}
                         >
-                          <div className="condcard-ico">{icon}</div>
+                          <div className="condcard-ico">{ico}</div>
                           <div className="condcard-name">{name}</div>
                           <div className="condcard-go">Book →</div>
                         </div>
@@ -515,15 +539,15 @@ export default function AppointmentBooking() {
           {browseTab === "spec" && (
             <div className="panel">
               <div className="grid">
-                {visibleFlatSpecialties.length ? (
-                  visibleFlatSpecialties.map((s) => (
+                {visibleFlatSpecs.length ? (
+                  visibleFlatSpecs.map((s) => (
                     <div
                       key={s.name + s.catId}
                       className="spec"
                       onClick={(e) => handleCardClick(e, () => handleFlatSpecClick(s))}
                     >
                       {s.live && <span className="live">LIVE</span>}
-                      <div className="ic">{s.icon}</div>
+                      <div className="ic">{s.ico}</div>
                       <h3>{s.name}</h3>
                       <div className="count">{s.count || "Book now"}</div>
                       <div className="catref">{s.catLabel}</div>
@@ -540,14 +564,14 @@ export default function AppointmentBooking() {
           {browseTab === "cond" && (
             <div className="panel">
               <div className="condgrid">
-                {visibleFlatConditions.length ? (
-                  visibleFlatConditions.map((c, i) => (
+                {visibleFlatConds.length ? (
+                  visibleFlatConds.map((c, i) => (
                     <div
                       key={i}
                       className="condcard"
                       onClick={(e) => handleCardClick(e, () => handleFlatCondClick(c))}
                     >
-                      <div className="condcard-ico">{c.icon}</div>
+                      <div className="condcard-ico">{c.ico}</div>
                       <div className="condcard-name">{c.name}</div>
                       <div className="condcard-spec">{c.to}</div>
                       <div className="condcard-go">Book →</div>
@@ -559,6 +583,11 @@ export default function AppointmentBooking() {
               </div>
             </div>
           )}
+
+          {/* ── Footer inside card ── */}
+          {/* <div className="foot">
+            <button className="viewall">{viewAllLabel}</button>
+          </div> */}
 
         </div>{/* /content-card */}
 

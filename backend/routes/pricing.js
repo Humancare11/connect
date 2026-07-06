@@ -4,7 +4,8 @@ const { CategoryPricing, CATEGORY_IDS } = require("../models/CategoryPricing");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { logAudit } = require("../utils/auditLogger");
 
-// GET /api/pricing — public, returns all category prices as { categoryId: price }
+// GET /api/pricing — public, returns all category prices keyed by categoryId:
+//   { general: { price, label, currency }, mental: {...}, ... }
 router.get("/", async (req, res) => {
   try {
     const records = await CategoryPricing.find({}, "categoryId label price currency").lean();
@@ -36,7 +37,6 @@ router.get("/all", verifyAdminToken, superAdminOnly, async (req, res) => {
 // PUT /api/pricing/:categoryId — superadmin only, update a category price
 router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) => {
   const { categoryId } = req.params;
-
   if (!CATEGORY_IDS.includes(categoryId)) {
     return res.status(400).json({ msg: "Invalid category ID." });
   }
