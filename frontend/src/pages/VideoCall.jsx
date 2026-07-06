@@ -22,6 +22,7 @@ import {
   FiPaperclip,
   FiPhoneOff,
   FiRefreshCw,
+  FiFileText,
   FiSend,
   FiUser,
   FiVideo,
@@ -130,6 +131,23 @@ const STUN_SERVERS = {
     { urls: "stun:stun2.l.google.com:19302" },
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
+    // TURN servers for media relay when P2P fails (e.g., restrictive NATs/firewalls)
+    // ⚠️ CRITICAL: Replace with your own production TURN server for reliability
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ],
 };
 
@@ -143,8 +161,8 @@ const MEDIA_CONSTRAINTS = {
     sampleSize: { ideal: 16 },
   },
   video: {
-    width: { ideal: 1920, max: 1920 },
-    height: { ideal: 1080, max: 1080 },
+    width: { ideal: 1280, max: 1920 },
+    height: { ideal: 720, max: 1080 },
     frameRate: { ideal: 30, max: 30 },
     facingMode: "user",
   },
@@ -311,6 +329,16 @@ export default function VideoCall() {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  // ── Doctor notes state ────────────────────────────────────────────
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [noteContent, setNoteContent] = useState("");
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesError, setNotesError] = useState("");
+  const [notesSavedAt, setNotesSavedAt] = useState(null);
+  const [notesLoaded, setNotesLoaded] = useState(false);
+  const lastSavedNoteRef = useRef({ content: "" });
+
   // ── PiP drag ──────────────────────────────────────────────────────
   const [pipPos, setPipPos] = useState({ x: null, y: null });
   const pipRef = useRef(null);
@@ -341,6 +369,39 @@ export default function VideoCall() {
     if (!chatOpen) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, chatOpen]);
+
+  useEffect(() => {
+    if (!isDoctor || !appointmentId || !appt?._id) return;
+
+    let cancelled = false;
+    setNotesLoading(true);
+    setNotesError("");
+    setNotesLoaded(false);
+
+    api
+      .get(`/api/notes/appointment/${appointmentId}`)
+      .then((res) => {
+        if (cancelled) return;
+        const note = res.data?.note;
+        const content = note?.content || "";
+        setNoteContent(content);
+        setNotesSavedAt(note?.updatedAt || null);
+        lastSavedNoteRef.current = { content };
+        setNotesLoaded(true);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setNotesError(err.response?.data?.msg || "Could not load consultation notes.");
+        setNotesLoaded(true);
+      })
+      .finally(() => {
+        if (!cancelled) setNotesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isDoctor, appointmentId, appt?._id]);
 
   // ── Fetch appointment ─────────────────────────────────────────────
   // Wait for auth contexts so we know the caller's role, then hit a
@@ -411,8 +472,8 @@ export default function VideoCall() {
     };
   }, [appointmentId, doctor, user, doctorLoading, userLoading]);
 
-  // ── Reliable cleanup: stop tracks + notify peers + optional API ───
-  const performCleanup = useCallback((markComplete = false) => {
+  // ── Reliable cleanup: stop tracks + notify peers ───
+  const performCleanup = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
 
@@ -421,24 +482,15 @@ export default function VideoCall() {
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     pcRef.current?.close();
+  }, [appointmentId]);
 
-    if (markComplete && isDoctor) {
-      const base = import.meta.env.VITE_API_URL || "";
-      fetch(`${base}/api/appointments/${appointmentId}/complete`, {
-        method: "PUT",
-        keepalive: true,
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      }).catch(() => { });
-    }
-  }, [appointmentId, isDoctor]);
+  const canJoinConsultation = useMemo(() => {
+    return appt?.status === "confirmed" || (appt?.status === "assigned" && appt?.doctorId);
+  }, [appt]);
 
   // ── Block / intercept browser back button during confirmed call ───
   useEffect(() => {
-    if (!appt || appt.status !== "confirmed") return;
+    if (!canJoinConsultation) return;
 
     window.history.pushState(null, "", window.location.href);
 
@@ -451,19 +503,19 @@ export default function VideoCall() {
 
     window.addEventListener("popstate", handlePopstate);
     return () => window.removeEventListener("popstate", handlePopstate);
-  }, [appt, navigate, isDoctor, performCleanup]);
+  }, [canJoinConsultation, navigate, isDoctor, performCleanup]);
 
   // ── Tab close / reload → end call automatically ───────────────────
   useEffect(() => {
-    if (!appt || appt.status !== "confirmed") return;
+    if (!canJoinConsultation) return;
 
     const handleBeforeUnload = () => {
-      performCleanup(true);
+      performCleanup();
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [appt, performCleanup]);
+  }, [canJoinConsultation, performCleanup]);
 
   // ── Assign stream to a video element ──────────────────────────────
   const assignStreams = useCallback((swapped) => {
@@ -481,7 +533,7 @@ export default function VideoCall() {
 
   // ── Main WebRTC + Socket setup ────────────────────────────────────
   useEffect(() => {
-    if (!appt || appt.status !== "confirmed") return;
+    if (!canJoinConsultation) return;
 
     let mounted = true;
     completedRef.current = false;
@@ -573,7 +625,20 @@ export default function VideoCall() {
     };
 
     pc.onicecandidate = (e) => {
-      if (e.candidate) socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
+      if (e.candidate) {
+        // Log candidate type for debugging (helps identify if TURN is working)
+        if (e.candidate.candidate) {
+          const candidateStr = e.candidate.candidate;
+          let candidateType = "unknown";
+          if (candidateStr.includes("typ host")) candidateType = "host (local)";
+          else if (candidateStr.includes("typ srflx")) candidateType = "srflx (STUN)";
+          else if (candidateStr.includes("typ relay")) candidateType = "relay (TURN)";
+          console.log(`ICE candidate gathered: ${candidateType}`);
+        }
+        socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
+      } else {
+        console.log("ICE gathering complete");
+      }
     };
 
     pc.onconnectionstatechange = () => {
@@ -594,6 +659,7 @@ export default function VideoCall() {
     // Fallback for browsers where onconnectionstatechange fires late or not at all
     pc.oniceconnectionstatechange = () => {
       const s = pc.iceConnectionState;
+      console.log("ICE connection state:", s);
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
         setConnectionState("connected");
@@ -602,7 +668,26 @@ export default function VideoCall() {
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
       } else if (s === "failed") {
+        console.warn("ICE connection failed - connection may not work properly");
         setConnectionState("disconnected");
+        setIsRemoteConnected(false);
+        // Auto-retry ICE gathering after failure (helps with network issues)
+        if (isDoctor && mounted) {
+          console.log("Attempting ICE restart in 3 seconds...");
+          setTimeout(async () => {
+            if (!mounted || !pc) return;
+            try {
+              console.log("Restarting ICE...");
+              const offer = await pc.createOffer({ iceRestart: true });
+              await pc.setLocalDescription(offer);
+              socket.emit("video-offer", { appointmentId, offer });
+            } catch (err) {
+              console.error("ICE restart failed:", err);
+            }
+          }, 3000);
+        }
+      } else if (s === "disconnected") {
+        console.warn("ICE connection disconnected");
         setIsRemoteConnected(false);
       }
     };
@@ -729,7 +814,7 @@ export default function VideoCall() {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       clearInterval(callTimerRef.current);
     };
-  }, [appt, appointmentId, assignStreams, isDoctor, doctorId, userId]);
+  }, [appt, canJoinConsultation, appointmentId, assignStreams, isDoctor, doctorId, userId]);
 
   // ── Auto-start: patient sends offer when both sides ready ─────────
   useEffect(() => {
@@ -843,6 +928,24 @@ export default function VideoCall() {
     setIsSelfViewMinimized((prev) => !prev);
   }, []);
 
+  useEffect(() => {
+    if (isSelfViewMinimized) return;
+
+    const frameId = requestAnimationFrame(() => {
+      if (!pipVideoRef.current) return;
+
+      if (isScreenSharing && !isSwapped && screenStreamRef.current) {
+        pipVideoRef.current.srcObject = screenStreamRef.current;
+      } else {
+        assignStreams(isSwapped);
+      }
+
+      pipVideoRef.current.play?.().catch(() => { });
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [isSelfViewMinimized, isScreenSharing, isSwapped, assignStreams]);
+
   const toggleFullscreen = useCallback(async () => {
     const pageEl = pageRef.current;
     if (!pageEl) return;
@@ -863,17 +966,14 @@ export default function VideoCall() {
     setEndCallConfirm(false);
     setCompleting(true);
     try {
-      if (isDoctor && appt?.status === "confirmed") {
-        await api.put(`/api/appointments/${appointmentId}/complete`, {});
-      }
-      performCleanup(false);
+      performCleanup();
       navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", { replace: true });
     } catch (err) {
       setCompleting(false);
       setInlineError(err.response?.data?.msg || "Failed to end call. Please try again.");
       setTimeout(() => setInlineError(""), 5000);
     }
-  }, [completing, isDoctor, appt?.status, appointmentId, performCleanup, navigate]);
+  }, [completing, isDoctor, performCleanup, navigate]);
 
   const handleRxSaved = useCallback(() => {
     setShowRxModal(false);
@@ -914,9 +1014,54 @@ export default function VideoCall() {
   // ── Chat ──────────────────────────────────────────────────────────
   const toggleChat = useCallback(() => {
     setChatOpen((prev) => {
+      if (!prev) setNotesOpen(false);
       if (!prev) setUnreadCount(0);
       chatOpenRef.current = !prev;
       return !prev;
+    });
+  }, []);
+
+  const saveNotes = useCallback(async ({ manual = false } = {}) => {
+    if (!isDoctor || !appointmentId || !notesLoaded) return;
+
+    const next = {
+      content: noteContent,
+    };
+    const previous = lastSavedNoteRef.current;
+    if (!manual && previous.content === next.content) return;
+
+    setNotesSaving(true);
+    setNotesError("");
+    try {
+      const res = await api.put(`/api/notes/appointment/${appointmentId}`, next);
+      const saved = res.data?.note;
+      setNotesSavedAt(saved?.updatedAt || new Date().toISOString());
+      lastSavedNoteRef.current = next;
+    } catch (err) {
+      setNotesError(err.response?.data?.msg || "Could not save notes.");
+    } finally {
+      setNotesSaving(false);
+    }
+  }, [isDoctor, appointmentId, notesLoaded, noteContent]);
+
+  useEffect(() => {
+    if (!isDoctor || !notesLoaded) return;
+
+    const previous = lastSavedNoteRef.current;
+    if (previous.content === noteContent) return;
+
+    const timer = setTimeout(() => {
+      saveNotes();
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [isDoctor, notesLoaded, noteContent, saveNotes]);
+
+  const toggleNotes = useCallback(() => {
+    setNotesOpen((prev) => {
+      const next = !prev;
+      if (next) setChatOpen(false);
+      return next;
     });
   }, []);
 
@@ -1005,7 +1150,7 @@ export default function VideoCall() {
     );
   }
 
-  if (appt?.status === "pending") {
+  if (!canJoinConsultation && ["pending", "requested", "upcoming", "assigned"].includes(appt?.status)) {
     return (
       <div className="hc-vc__gate">
         <div className="hc-vc__gate-icon"><FiClock /></div>
@@ -1113,7 +1258,7 @@ export default function VideoCall() {
             </h3>
             <p style={{ margin: "0 0 24px", fontSize: 13, color: "#94a3b8" }}>
               {isDoctor
-                ? "This will end the call and mark the consultation as completed."
+                ? "This will end the video call. The appointment status will remain unchanged."
                 : "You will leave the video call. The doctor will be notified."}
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
@@ -1124,7 +1269,7 @@ export default function VideoCall() {
               <button
                 onClick={endCall}
                 style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >{isDoctor ? "End & Complete" : "Leave Call"}</button>
+              >{isDoctor ? "End Call" : "Leave Call"}</button>
             </div>
           </div>
         </div>
@@ -1156,7 +1301,7 @@ export default function VideoCall() {
               <button
                 onClick={() => {
                   setLeaveConfirm(false);
-                  performCleanup(true);
+                  performCleanup();
                   navigate(pendingLeaveRef.current || "/user/dashboard", { replace: true });
                 }}
                 style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
@@ -1204,7 +1349,7 @@ export default function VideoCall() {
       )} */}
 
       {/* Main stage + chat */}
-      <div className={`hc-vc__body ${chatOpen ? "hc-vc__body--chat" : ""}`}>
+      <div className={`hc-vc__body ${chatOpen || notesOpen ? "hc-vc__body--chat" : ""}`}>
 
         {/* Stage */}
         <div className="hc-vc__stage">
@@ -1392,6 +1537,51 @@ export default function VideoCall() {
             </div>
           </div>
         )}
+
+        {/* ── Doctor notes panel ────────────────────────────────── */}
+        {notesOpen && isDoctor && (
+          <div className="hc-vc__notes">
+            <div className="hc-vc__notes-head">
+              <div className="hc-vc__notes-head-left">
+                <span className="hc-vc__notes-icon"><FiFileText /></span>
+                <span className="hc-vc__notes-title">Consultation Notes</span>
+              </div>
+              <button className="hc-vc__notes-close-btn" onClick={toggleNotes}><FiX /></button>
+            </div>
+
+            <div className="hc-vc__notes-meta">
+              <span>{otherParty?.name || "Patient"}</span>
+              <span>{notesSaving ? "Saving..." : notesSavedAt ? `Saved ${fmtTime(notesSavedAt)}` : "Not saved yet"}</span>
+            </div>
+
+            {notesError && (
+              <div className="hc-vc__notes-error">
+                <FiAlertTriangle /> {notesError}
+              </div>
+            )}
+
+            <textarea
+              className="hc-vc__notes-textarea"
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder={notesLoading ? "Loading notes..." : "Write consultation observations, assessment, plan, and follow-up notes..."}
+              disabled={notesLoading}
+              maxLength={20000}
+            />
+
+            <div className="hc-vc__notes-foot">
+              <span>{noteContent.length}/20000</span>
+              <button
+                className="hc-vc__notes-save"
+                onClick={() => saveNotes({ manual: true })}
+                disabled={notesLoading || notesSaving}
+              >
+                {notesSaving ? <FiRefreshCw /> : <FiCheckCircle />}
+                <span>{notesSaving ? "Saving" : "Save"}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Controls bar ─────────────────────────────────────────── */}
@@ -1464,6 +1654,17 @@ export default function VideoCall() {
             )}
           </button>
 
+          {isDoctor && (
+            <button
+              className={`hc-vc__btn ${notesOpen ? "hc-vc__btn--notes-on" : ""}`}
+              onClick={toggleNotes}
+              title="Consultation notes"
+            >
+              <span className="hc-vc__btn-icon"><FiFileText /></span>
+              <span className="hc-vc__btn-label">Notes</span>
+            </button>
+          )}
+
 
 
           {/* {isDoctor && (
@@ -1481,7 +1682,7 @@ export default function VideoCall() {
             className="hc-vc__btn hc-vc__btn--end"
             onClick={() => setEndCallConfirm(true)}
             disabled={completing}
-            title={isDoctor ? "End call and complete consultation" : "End call"}
+            title="End call"
           >
             <span className="hc-vc__btn-icon">{completing ? <FiRefreshCw /> : <FiPhoneOff />}</span>
             <span className="hc-vc__btn-label">{completing ? "Ending..." : "End Call"}</span>

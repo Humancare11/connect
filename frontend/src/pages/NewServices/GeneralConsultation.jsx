@@ -53,6 +53,15 @@ import {
 
 import { Helmet } from "react-helmet-async";
 
+import heroBanner from "../../assets/MedicalServices/general-consultation-online.webp";
+
+const HERO_IMAGE = {
+  src: heroBanner,
+  alt: "Licensed healthcare provider conducting an online general consultation with a patient through secure telemedicine services",
+  width: 1920,
+  height: 700,
+};
+
 /* ──────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS — light theme
    Body copy uses solid slate, never low-opacity white-on-white, so contrast
@@ -316,7 +325,7 @@ const Pill = ({ children, ac }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: `${ac}12`,
+        background: "#fff",
         color: textColor,
         border: `1px solid ${ac}30`,
         fontSize: 11,
@@ -416,17 +425,51 @@ const Hero = ({ s }) => {
         flexDirection: "column",
         justifyContent: "center",
         overflow: "hidden",
-        background: BG_SURFACE,
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
+      {/* Background Image */}
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Overlay */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `
+            linear-gradient(
+              to bottom,
+              rgba(15, 23, 42, 0.35) 0%,
+              rgba(15, 23, 42, 0.65) 50%,
+              rgba(15, 23, 42, 0.95) 100%
+            )
+          `,
+          zIndex: 1,
+        }}
+      />
+
+      {/* Hero Content */}
       <motion.div
         style={{
           position: "relative",
           zIndex: 10,
           maxWidth: 1200,
           margin: "0 auto",
-          padding: "64px 24px",
+          padding: "100px 24px",
           width: "100%",
           opacity: op,
         }}
@@ -446,7 +489,7 @@ const Hero = ({ s }) => {
           style={{
             fontSize: "clamp(36px, 5.5vw, 60px)",
             fontWeight: 900,
-            color: TEXT_PRIMARY,
+            color: "#FFFFFF",
             lineHeight: 1.08,
             letterSpacing: "-0.03em",
             marginBottom: 18,
@@ -470,7 +513,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.5, delay: 0.26 }}
           style={{
             fontSize: 18,
-            color: TEXT_DIM,
+            color: "#E5E7EB",
             fontStyle: "italic",
             marginBottom: 10,
           }}
@@ -484,7 +527,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.45, delay: 0.32 }}
           style={{
             fontSize: 16,
-            color: TEXT_BODY,
+            color: "#F3F4F6",
             lineHeight: 1.7,
             maxWidth: 560,
             marginBottom: 28,
@@ -497,12 +540,20 @@ const Hero = ({ s }) => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.38 }}
-          style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
+          style={{
+            display: "flex",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
         >
-          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
-          <GhostBtn>
-            Contact Care Team <FiArrowRight />
-          </GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>
+            <a
+              href="/appointment-booking"
+              style={{ color: "#fff", textDecoration: "none" }}
+            >
+              Book Appointment
+            </a>
+          </PrimaryBtn>
         </motion.div>
       </motion.div>
     </section>
@@ -1096,7 +1147,7 @@ const HowItWorks = ({ s }) => (
               without leaving home.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
-              Get Started Today
+              <a href="/login">Get Started Today</a>
             </PrimaryBtn>
             <div
               style={{
@@ -1481,7 +1532,7 @@ const FAQ = ({ s }) => {
             We've answered the most common questions below. Our care team is one
             message away if yours isn't listed.
           </p>
-          <button
+          {/* <button
             style={{
               padding: "11px 20px",
               borderRadius: 12,
@@ -1504,7 +1555,7 @@ const FAQ = ({ s }) => {
             }
           >
             <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button>
+          </button> */}
         </motion.div>
 
         <motion.div
@@ -1661,9 +1712,13 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}>Get Started</PrimaryBtn>
-          <GhostBtn>Book Appointment</GhostBtn>
-          <button
+          <PrimaryBtn ac={s.accentColor}>
+            <a href="/login">Get Started</a>
+          </PrimaryBtn>
+          <GhostBtn>
+            <a href="/appointment-booking">Book Appointment</a>
+          </GhostBtn>
+          {/* <button
             style={{
               padding: "13px 24px",
               borderRadius: 12,
@@ -1676,7 +1731,7 @@ const FinalCTA = ({ s }) => (
             }}
           >
             Contact Us
-          </button>
+          </button> */}
         </div>
         <div
           style={{

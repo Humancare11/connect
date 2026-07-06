@@ -2,18 +2,18 @@
    DESIGN TOKENS
 ============================================================ */
 :root {
-  --ink:       #0A1F44;
-  --ink-2:     #2A3F66;
-  --muted:     #5C7099;
-  --blue:      #0B57E8;
-  --blue-2:    #1E6BFF;
-  --blue-3:    #7CB7FF;
-  --blue-4:    #C8DFFF;
-  --blue-deep: #08308E;
-  --navy:      #061333;
+  --ink: #0a1f44;
+  --ink-2: #2a3f66;
+  --muted: #5c7099;
+  --blue: #0b57e8;
+  --blue-2: #1e6bff;
+  --blue-3: #7cb7ff;
+  --blue-4: #c8dfff;
+  --blue-deep: #08308e;
+  --navy: #061333;
 
-  --shadow-1: 0 18px 50px -20px rgba(11,40,100,.18);
-  --shadow-2: 0 30px 80px -30px rgba(11,40,100,.30);
+  --shadow-1: 0 18px 50px -20px rgba(11, 40, 100, 0.18);
+  --shadow-2: 0 30px 80px -30px rgba(11, 40, 100, 0.3);
 
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
   --display: "Satoshi", sans-serif;
@@ -32,14 +32,14 @@
   max-width: 1328px;
   z-index: 80;
   transition:
-    top    .30s ease,
-    width  .30s ease,
-    transform .30s ease;
+    top 0.3s ease,
+    width 0.3s ease,
+    transform 0.3s ease;
 }
 
 .glass-header.shrink {
   top: 10px;
-  transform: translateX(-50%) scale(.985);
+  transform: translateX(-50%) scale(0.985);
 }
 
 /* ============================================================
@@ -52,10 +52,10 @@
   max-width: 1320px;
   margin: 0 auto;
 
-  background: rgba(255,255,255,.60);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(22px) saturate(140%);
   -webkit-backdrop-filter: blur(22px) saturate(140%);
-  border: 1px solid rgba(255,255,255,.70);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 100px;
   padding: 8px 14px 8px 20px;
   box-shadow: var(--shadow-1);
@@ -74,23 +74,25 @@
 }
 
 .logo-full {
-  height: 44px;
-  width: auto;
+  height: auto;
+  width: 8rem;
   object-fit: contain;
-  /* FIX: slowed down from .9s so the shrink crossfade feels less abrupt */
-  transition: opacity 1.6s var(--ease-out-expo), transform 1.6s var(--ease-out-expo);
+  transition:
+    opacity 3s var(--ease-out-expo),
+    transform 3s var(--ease-out-expo);
 }
 
 .logo-mini {
   position: absolute;
   left: 0;
   top: 50%;
-  height: 58px;
-  width: auto;
+  height: auto;
+  width: 4rem;
   opacity: 0;
   transform: translateY(-50%) scale(0.75);
-  /* FIX: slowed down from .9s so the shrink crossfade feels less abrupt */
-  transition: opacity 1.6s var(--ease-out-expo), transform 1.6s var(--ease-out-expo);
+  transition:
+    opacity 3s var(--ease-out-expo),
+    transform 3s var(--ease-out-expo);
 }
 
 .logo.scrolled .logo-full {
@@ -100,6 +102,18 @@
 .logo.scrolled .logo-mini {
   opacity: 1;
   transform: translateY(-50%) scale(1);
+}
+
+/* ============================================================
+   CENTER GROUP — 
+============================================================ */
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
 }
 
 /* ============================================================
@@ -122,31 +136,39 @@
   height: 42px;
   padding: 0 14px;
   border-radius: 100px;
-  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.08)
+  );
   backdrop-filter: blur(18px) saturate(180%);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border: 1px solid rgba(46,74,122,.22);
+  border: 1px solid rgba(46, 74, 122, 0.22);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.18),
-    inset 0 -1px 0 rgba(255,255,255,.05),
-    0 6px 20px rgba(46,74,122,.10);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 6px 20px rgba(46, 74, 122, 0.1);
   overflow: hidden;
   flex-shrink: 0;
   cursor: pointer;
   user-select: none;
   transition:
-    border-color  .22s ease,
-    box-shadow    .22s ease,
-    background    .22s ease;
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
 }
 
 .help-slider:hover,
 .help-slider--open {
-  border-color: rgba(11,87,232,.35);
+  border-color: rgba(11, 87, 232, 0.35);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.30),
-    0 6px 28px rgba(11,87,232,.14);
-  background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.14));
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 6px 28px rgba(11, 87, 232, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.24),
+    rgba(255, 255, 255, 0.14)
+  );
 }
 
 .help-slide-track.paused {
@@ -176,14 +198,14 @@
   transform: translateY(-50%);
   width: 1px;
   height: 16px;
-  background: rgba(11,87,232,.18);
+  background: rgba(11, 87, 232, 0.18);
 }
 
 .help-slide-wrapper {
   flex: 1;
   overflow: hidden;
   height: var(--item-h);
-  min-width: 80px; 
+  min-width: 80px;
 }
 
 .help-slide-track {
@@ -207,42 +229,49 @@
 }
 
 @keyframes verticalHelpSlider {
-  0%,  18% { transform: translateY(0px);   }
-  25%, 43% { transform: translateY(-24px); }
-  50%, 68% { transform: translateY(-48px); }
-  75%, 93% { transform: translateY(-72px); }
-  100%     { transform: translateY(0px);   }
+  0%,
+  18% {
+    transform: translateY(0px);
+  }
+  25%,
+  43% {
+    transform: translateY(-24px);
+  }
+  50%,
+  68% {
+    transform: translateY(-48px);
+  }
+  75%,
+  93% {
+    transform: translateY(-72px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 /* ============================================================
-   HELP DROPDOWN
-   FIX: enlarged the panel and switched the list to a proper
-   4 x 3 = 12 cell grid (one cell per help item) so the box
-   reads as a deliberate grid instead of an odd 3-column wrap.
+   HELP DROPDOWN — centered under the help slider pill
 ============================================================ */
 .help-dropdown {
   position: absolute;
   top: calc(100% + 15px);
-
-  left: 0;
-  transform: none;
-
-  width: clamp(620px, 56vw, 860px);
-
+  margin: 0 920px 0;
+  transform: translateX(-50%);
+  width: 1100px;
   z-index: 90;
-
-  background: rgba(255,255,255,.96);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(200,215,255,.50);
+  border: 1px solid rgba(200, 215, 255, 0.5);
   border-radius: 26px;
-  padding: 22px 20px 20px;
+  padding: 20px 20px 20px;
   box-shadow:
-    0 16px 48px rgba(11,40,100,.14),
-    0 4px 12px  rgba(11,40,100,.07),
-    inset 0 1px 0 rgba(255,255,255,.95);
+    0 16px 48px rgba(11, 40, 100, 0.14),
+    0 4px 12px rgba(11, 40, 100, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
 
-  animation: dropdownIn .22s var(--ease-out-expo);
+  animation: dropdownIn 0.22s var(--ease-out-expo);
   animation-fill-mode: both;
   will-change: translate, scale, opacity;
 }
@@ -250,35 +279,33 @@
 @keyframes dropdownIn {
   from {
     opacity: 0;
-    translate: 0 -6px;
-    scale: .98;
+    translate: -50% -6px;
+    scale: 0.98;
   }
   to {
     opacity: 1;
-    translate: 0 0;
+    translate: -50% 0;
     scale: 1;
   }
 }
 
 .help-dropdown-heading {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
   padding: 0 6px 12px;
   margin: 0 0 10px;
-  border-bottom: 1px solid rgba(11,40,100,.07);
+  border-bottom: 1px solid rgba(11, 40, 100, 0.07);
 }
 
-/* 4-column x 3-row grid = 12 cells, one per help item */
 .help-dropdown-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  /* gap: 8px; */
 }
 
 .help-dropdown-item {
@@ -290,17 +317,17 @@
   text-decoration: none;
   cursor: pointer;
   transition:
-    background .18s ease,
-    transform   .20s var(--ease-out-expo);
+    background 0.18s ease,
+    transform 0.2s var(--ease-out-expo);
 }
 
 .help-dropdown-item:hover {
-  background: rgba(11,87,232,.06);
+  background: rgba(11, 87, 232, 0.06);
   transform: translateY(-2px);
 }
 
 .help-dropdown-item:hover .help-dropdown-icon {
-  background: rgba(11,87,232,.12);
+  background: rgba(11, 87, 232, 0.12);
   color: var(--blue);
 }
 
@@ -308,13 +335,15 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(11,40,100,.05);
+  background: rgba(11, 40, 100, 0.05);
   color: var(--ink-2);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background .18s ease, color .18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
 }
 
 .help-dropdown-text {
@@ -342,7 +371,9 @@
   text-overflow: ellipsis;
 }
 
-.help-dropdown-arrow { display: none; }
+.help-dropdown-arrow {
+  display: none;
+}
 
 /* ============================================================
    DESKTOP NAV MENU + PILL
@@ -352,7 +383,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
   height: 42px;
   padding: 0 4px;
@@ -369,11 +400,11 @@
   z-index: 1;
   opacity: 0;
   transition:
-    left       0.36s var(--ease-out-expo),
-    width      0.36s var(--ease-out-expo),
-    opacity    0.18s ease,
+    left 0.36s var(--ease-out-expo),
+    width 0.36s var(--ease-out-expo),
+    opacity 0.18s ease,
     background 0.18s ease,
-    border     0.18s ease,
+    border 0.18s ease,
     box-shadow 0.18s ease;
   backdrop-filter: blur(8px) saturate(140%);
   -webkit-backdrop-filter: blur(8px) saturate(140%);
@@ -385,24 +416,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* height intentionally unchanged so the pill/hover hitbox stays identical */
   height: 38px;
   padding: 0 14px;
   border-radius: 999px;
   color: var(--ink-2);
   font-family: var(--display);
-  /* FIX: bumped up from 13px for better legibility, height untouched */
   font-size: 15px;
   font-weight: 600;
-  letter-spacing: -.01em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   text-decoration: none;
   flex-shrink: 0;
-  transition: color .20s ease;
+  transition: color 0.2s ease;
 }
 
-.nav-item:hover { color: var(--blue); }
-.nav-item.active { color: var(--blue); }
+.nav-item:hover {
+  color: var(--blue);
+}
+.nav-item.active {
+  color: var(--blue);
+}
 
 .nav-item.active::before {
   content: "";
@@ -414,19 +447,27 @@
   height: 16px;
   border-radius: 999px;
   background: var(--blue);
-  box-shadow: 0 0 6px rgba(11,87,232,.45);
-  animation: barIn .26s var(--ease-out-expo) both;
+  box-shadow: 0 0 6px rgba(11, 87, 232, 0.45);
+  animation: barIn 0.26s var(--ease-out-expo) both;
 }
 
 @keyframes barIn {
-  from { opacity: 0; transform: translateY(-50%) scaleY(0.2); }
-  to   { opacity: 1; transform: translateY(-50%) scaleY(1);   }
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scaleY(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scaleY(1);
+  }
 }
 
 /* ============================================================
    AUTH BUTTONS
 ============================================================ */
-.auth-buttons { flex-shrink: 0; }
+.auth-buttons {
+  flex-shrink: 0;
+}
 
 .auth-combined {
   display: inline-flex;
@@ -437,32 +478,43 @@
   font-weight: 600;
   font-size: 14px;
   font-family: var(--display);
-  background: #2E4A7A;
+  background: #2e4a7a;
   color: #fff;
   text-decoration: none;
   box-shadow:
-    0 10px 24px -10px rgba(46,74,122,.45),
-    inset 0 1px 0 rgba(255,255,255,.18);
-  transition: transform .20s ease, background .20s ease, box-shadow .20s ease;
+    0 10px 24px -10px rgba(46, 74, 122, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .auth-combined:hover {
   transform: translateY(-1px);
-  background: #35558B;
-  box-shadow: 0 14px 30px -10px rgba(46,74,122,.58);
+  background: #35558b;
+  box-shadow: 0 14px 30px -10px rgba(46, 74, 122, 0.58);
 }
 
-.auth-link    { color: #fff; text-decoration: none; }
-.divider      { opacity: .50; color: #fff; }
+.auth-link {
+  color: #fff;
+  text-decoration: none;
+}
+.divider {
+  opacity: 0.5;
+  color: #fff;
+}
 
 .profile-icon {
   font-size: 28px;
   color: var(--blue);
   display: flex;
   align-items: center;
-  transition: transform .22s ease;
+  transition: transform 0.22s ease;
 }
-.profile-icon:hover { transform: translateY(-1px); }
+.profile-icon:hover {
+  transform: translateY(-1px);
+}
 
 /* ============================================================
    HAMBURGER
@@ -484,12 +536,21 @@
   height: 2px;
   border-radius: 10px;
   background: var(--ink);
-  transition: transform .28s var(--ease-out-expo), opacity .20s ease;
+  transition:
+    transform 0.28s var(--ease-out-expo),
+    opacity 0.2s ease;
 }
 
-.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg);  }
-.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0);           }
-.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
 
 /* ============================================================
    MOBILE MENU
@@ -501,10 +562,10 @@
   left: 0;
   right: 0;
 
-  background: rgba(8,18,36,.94);
+  background: rgba(8, 18, 36, 0.94);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(255,255,255,.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 16px 12px 12px;
 
@@ -512,14 +573,22 @@
   gap: 2px;
 
   transform-origin: top center;
-  animation: mobileMenuIn .28s var(--ease-out-expo) both;
+  animation: mobileMenuIn 0.28s var(--ease-out-expo) both;
 }
 
-.mobile-menu.open { display: flex; }
+.mobile-menu.open {
+  display: flex;
+}
 
 @keyframes mobileMenuIn {
-  from { opacity: 0; transform: translateY(-8px) scale(.98); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .mobile-nav-item {
@@ -527,16 +596,18 @@
   align-items: center;
   padding: 12px 16px;
   border-radius: 14px;
-  color: rgba(255,255,255,.75);
+  color: rgba(255, 255, 255, 0.75);
   font-family: var(--display);
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
-  transition: background .18s ease, color .18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
 }
 .mobile-nav-item:hover,
 .mobile-nav-item.active {
-  background: rgba(255,255,255,.08);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
@@ -545,7 +616,7 @@
   gap: 10px;
   margin-top: 10px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .mobile-auth-link {
@@ -558,13 +629,25 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  color: rgba(255,255,255,.70);
-  border: 1px solid rgba(255,255,255,.12);
-  transition: background .18s ease, color .18s ease;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
 }
-.mobile-auth-link:hover        { background: rgba(255,255,255,.08); color: #fff; }
-.mobile-auth-cta               { background: #2E4A7A; color: #fff; border-color: transparent; }
-.mobile-auth-cta:hover         { background: #35558B; color: #fff; }
+.mobile-auth-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.mobile-auth-cta {
+  background: #2e4a7a;
+  color: #fff;
+  border-color: transparent;
+}
+.mobile-auth-cta:hover {
+  background: #35558b;
+  color: #fff;
+}
 
 /* ============================================================
    OVERLAY
@@ -583,24 +666,48 @@
 
 /* ── 1180px: tighten nav item spacing ── */
 @media (max-width: 1180px) {
-  .nav-item { font-size: 14px; padding: 0 9px; }
-  .nav-menu { gap: 0; }
-  .help-slider { width: 200px; min-width: 200px; }
+  .nav-item {
+    font-size: 14px;
+    padding: 0 9px;
+  }
+  .nav-menu {
+    gap: 0;
+  }
+  .nav-center {
+    gap: 8px;
+  }
+  .help-slider {
+    width: 200px;
+    min-width: 200px;
+  }
 }
 
 /* ── 1024px ── */
 @media (max-width: 1024px) {
-  .nav-item      { font-size: 14px; padding: 0 8px; }
-  .auth-combined { padding: 9px 14px; font-size: 13px; }
+  .nav-item {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+  .auth-combined {
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+  .nav-center {
+    gap: 6px;
+  }
 
-  /* keep the now-wider help dropdown from overflowing the viewport
-     on tablet widths, where it has less room to its left */
-  .help-dropdown { width: clamp(560px, 70vw, 700px); }
+  .help-dropdown {
+    width: clamp(560px, 70vw, 700px);
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 /* ── 980px: hide help slider at mid-tablet ── */
 @media (max-width: 980px) {
-  .help-slider-wrap { display: none; }
+  .help-slider-wrap {
+    display: none;
+  }
 }
 
 /* ── 768px: switch to mobile layout ── */
@@ -610,8 +717,12 @@
     top: 10px;
   }
 
-  .nav-menu     { display: none; }
-  .auth-buttons { display: none; }
+  .nav-center {
+    display: none;
+  }
+  .auth-buttons {
+    display: none;
+  }
 
   .hamburger {
     display: flex;
@@ -635,6 +746,7 @@
     gap: 0;
   }
 
+  /* On mobile shrink, show help slider outside nav-center */
   .help-slider-wrap {
     display: none;
     flex-shrink: 0;
@@ -650,7 +762,7 @@
   .glass-header.shrink .help-slider {
     width: auto;
     min-width: 200px;
-    max-width: calc(100vw - 160px); /* leaves room for logo + hamburger */
+    max-width: calc(100vw - 160px);
     height: 36px;
     padding: 0 14px;
   }
@@ -667,9 +779,7 @@
     font-size: 12px;
   }
 
-  /* ── MOBILE DROPDOWN ──────────────────────────────────────
-    
-  ──────────────────────────────────────────────────────────── */
+  /* ── MOBILE DROPDOWN ── */
   .help-dropdown {
     position: fixed;
     top: 72px;
@@ -728,8 +838,12 @@
 
 /* ── 480px: very small screens ── */
 @media (max-width: 480px) {
-  .glass-header { width: calc(100% - 16px); }
-  .logo         { max-width: 110px; }
+  .glass-header {
+    width: calc(100% - 16px);
+  }
+  .logo {
+    max-width: 110px;
+  }
 
   .glass-header.shrink .help-slider {
     min-width: 170px;
@@ -749,14 +863,17 @@
     font-size: 11px;
   }
 
-    .help-dropdown {
+  .help-dropdown {
     top: 66px;
     left: 8px;
     right: 8px;
     padding: 12px 8px 8px;
   }
 
-  .help-dropdown-label { font-size: 10.5px; }
-  .help-dropdown-desc  { font-size: 9px; }
-
+  .help-dropdown-label {
+    font-size: 10.5px;
+  }
+  .help-dropdown-desc {
+    font-size: 9px;
+  }
 }

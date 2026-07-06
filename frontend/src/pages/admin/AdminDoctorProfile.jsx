@@ -3,6 +3,44 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api, { normalizeFileUrl } from "../../api";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 
+import { Country, State } from "country-state-city";
+import PhoneInputField, {
+  COUNTRIES as PHONE_COUNTRIES,
+} from "../../components/PhoneInputField";
+
+// Helper functions to convert ISO codes to display names
+const getCountryName = (isoCode) => {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+};
+
+const getStateName = (stateIsoCode, countryIsoCode) => {
+  if (!stateIsoCode || !countryIsoCode) return "";
+  const state = State.getStateByCodeAndCountry(stateIsoCode, countryIsoCode);
+  return state?.name || stateIsoCode;
+};
+
+const splitPhoneValue = (fullValue, countryMeta) => {
+  const digits = String(fullValue || "").replace(/\D/g, "");
+  const dial = String(countryMeta?.dial || countryMeta?.dialCode || "").replace(
+    /\D/g,
+    "",
+  );
+  if (!dial) return { countryCode: "", phone: digits };
+  return {
+    countryCode: `+${dial}`,
+    phone: digits.startsWith(dial) ? digits.slice(dial.length) : digits,
+  };
+};
+
+const getCountryCodeFromDialCode = (dialCode) => {
+  if (!dialCode) return "auto";
+  const cleanDial = String(dialCode).replace(/\D/g, "");
+  const country = PHONE_COUNTRIES.find((c) => c.dial === cleanDial);
+  return country?.code || "auto";
+};
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 const DAYS = [
   "Monday",
@@ -86,6 +124,84 @@ const ID_PROOF_TYPES = [
   "Voter ID",
   "Other",
 ];
+const STATE_LICENSING_COUNTRIES = {
+  US: {
+    label: "State",
+    plural: "States",
+    items: [
+      "Alabama",
+      "Alaska",
+      "Arizona",
+      "Arkansas",
+      "California",
+      "Colorado",
+      "Connecticut",
+      "Delaware",
+      "District of Columbia",
+      "Florida",
+      "Georgia",
+      "Hawaii",
+      "Idaho",
+      "Illinois",
+      "Indiana",
+      "Iowa",
+      "Kansas",
+      "Kentucky",
+      "Louisiana",
+      "Maine",
+      "Maryland",
+      "Massachusetts",
+      "Michigan",
+      "Minnesota",
+      "Mississippi",
+      "Missouri",
+      "Montana",
+      "Nebraska",
+      "Nevada",
+      "New Hampshire",
+      "New Jersey",
+      "New Mexico",
+      "New York",
+      "North Carolina",
+      "North Dakota",
+      "Ohio",
+      "Oklahoma",
+      "Oregon",
+      "Pennsylvania",
+      "Rhode Island",
+      "South Carolina",
+      "South Dakota",
+      "Tennessee",
+      "Texas",
+      "Utah",
+      "Vermont",
+      "Virginia",
+      "Washington",
+      "West Virginia",
+      "Wisconsin",
+      "Wyoming",
+    ],
+  },
+  CA: {
+    label: "Province/Territory",
+    plural: "Provinces/Territories",
+    items: [
+      "Alberta",
+      "British Columbia",
+      "Manitoba",
+      "New Brunswick",
+      "Newfoundland and Labrador",
+      "Northwest Territories",
+      "Nova Scotia",
+      "Nunavut",
+      "Ontario",
+      "Prince Edward Island",
+      "Quebec",
+      "Saskatchewan",
+      "Yukon",
+    ],
+  },
+};
 const TIMEZONES = [
   "America/New_York (EST/EDT)",
   "America/Chicago (CST/CDT)",
@@ -237,7 +353,7 @@ function Section({ icon, title, children, accent }) {
         background: "#fff",
         border: `1px solid ${accent ? "#bfdbfe" : "#e2e8f0"}`,
         borderRadius: 14,
-        overflow: "hidden",
+        overflow: "visible",
         marginBottom: 20,
       }}
     >
@@ -316,6 +432,15 @@ function Field({ label, value, full }) {
   );
 }
 
+const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"]);
+const DOCUMENT_FIELDS = new Set([
+  "profilePhoto",
+  "idProof",
+  "degreeFile",
+  "medicalLicenseFile",
+  "malpracticeInsuranceFile",
+]);
+
 function formatChangeValue(value) {
   if (value === undefined || value === null || value === "") return "—";
   if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
@@ -325,6 +450,17 @@ function formatChangeValue(value) {
 
 function ProfileChangeSummary({ changes = [], requestedAt }) {
   if (!Array.isArray(changes) || changes.length === 0) return null;
+  const AVAIL_FIELDS = new Set(["availability", "timezone"]);
+  const docChanges = changes.filter((c) => DOCUMENT_FIELDS.has(c.field));
+  const availChanges = changes.filter((c) => AVAIL_FIELDS.has(c.field));
+  const textChanges = changes.filter(
+    (c) => !DOCUMENT_FIELDS.has(c.field) && !AVAIL_FIELDS.has(c.field),
+  );
+  // Display count: text fields individually + 1 per group (availability, documents) if any changed
+  const displayCount =
+    textChanges.length +
+    (availChanges.length > 0 ? 1 : 0) +
+    (docChanges.length > 0 ? 1 : 0);
   return (
     <Section icon="📝" title="Profile Changes Submitted by Doctor">
       <div
@@ -337,7 +473,7 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 700, color: "#92400e" }}>
-          {changes.length} field{changes.length === 1 ? "" : "s"} changed
+          {displayCount} field{displayCount === 1 ? "" : "s"} changed
         </div>
         {requestedAt && (
           <div style={{ fontSize: 12, color: "#a16207", marginTop: 3 }}>
@@ -346,7 +482,7 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
         )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {changes.map((change) => (
+        {textChanges.map((change) => (
           <div
             key={change.field}
             style={{
@@ -431,18 +567,78 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
             </div>
           </div>
         ))}
+        {availChanges.length > 0 && (
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              overflow: "hidden",
+              background: "#fff",
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 14px",
+                borderBottom: "1px solid #f1f5f9",
+                background: "#f8fafc",
+                fontSize: 13,
+                fontWeight: 800,
+                color: "#334155",
+              }}
+            >
+              Availability Schedule Updated
+            </div>
+            <div
+              style={{
+                padding: "12px 14px",
+                fontSize: 13,
+                color: "#475569",
+                lineHeight: 1.6,
+              }}
+            >
+              {availChanges.map((c) => c.label || c.field).join(", ")} — new
+              schedule submitted.
+            </div>
+          </div>
+        )}
+        {docChanges.length > 0 && (
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              overflow: "hidden",
+              background: "#fff",
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 14px",
+                borderBottom: "1px solid #f1f5f9",
+                background: "#f8fafc",
+                fontSize: 13,
+                fontWeight: 800,
+                color: "#334155",
+              }}
+            >
+              Uploaded Files Edited
+            </div>
+            <div
+              style={{
+                padding: "12px 14px",
+                fontSize: 13,
+                color: "#475569",
+                lineHeight: 1.6,
+              }}
+            >
+              {docChanges.map((c) => c.label || c.field).join(", ")} — new
+              file(s) submitted.
+            </div>
+          </div>
+        )}
       </div>
     </Section>
   );
 }
-const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"]);
-const DOCUMENT_FIELDS = new Set([
-  "profilePhoto",
-  "idProof",
-  "degreeFile",
-  "medicalLicenseFile",
-  "malpracticeInsuranceFile",
-]);
 function getFileType(url) {
   if (!url) return "other";
   const ext = url.split("?")[0].split(".").pop().toLowerCase();
@@ -941,6 +1137,50 @@ function AdminDocUpload({
 
   const handleFile = async (raw) => {
     if (!raw) return;
+
+    // Client-side validation — PDF only
+    const ext = raw.name.split(".").pop().toLowerCase();
+    const BLOCKED = [
+      "php",
+      "html",
+      "htm",
+      "js",
+      "exe",
+      "bat",
+      "cmd",
+      "sh",
+      "py",
+      "rb",
+      "dll",
+      "vbs",
+      "msi",
+      "ps1",
+      "jar",
+      "svg",
+      "xml",
+      "ts",
+      "jsx",
+      "tsx",
+    ];
+    if (BLOCKED.includes(ext)) {
+      setErr(
+        `".${ext}" files are not allowed. Only PDF files may be uploaded.`,
+      );
+      return;
+    }
+    if (ext !== "pdf") {
+      setErr(
+        `".${ext}" files are not accepted. Only PDF files may be uploaded.`,
+      );
+      return;
+    }
+    if (raw.type && raw.type !== "application/pdf") {
+      setErr(
+        "Only PDF files are accepted. Please select a valid PDF document.",
+      );
+      return;
+    }
+
     setErr("");
     setUploading(true);
     try {
@@ -950,8 +1190,9 @@ function AdminDocUpload({
       });
       setLocalUrl(uploaded.key);
       onChange(uploaded.key);
-    } catch {
-      setErr("Upload failed — please try again.");
+    } catch (uploadErr) {
+      const apiMsg = uploadErr?.response?.data?.msg;
+      setErr(apiMsg || "Upload failed — please try again.");
     } finally {
       setUploading(false);
     }
@@ -1129,9 +1370,185 @@ function AdminDocUpload({
         ref={ref}
         type="file"
         hidden
-        accept={accept || ".pdf,.jpg,.jpeg,.png,.doc,.docx"}
+        accept={accept || "application/pdf,.pdf"}
         onChange={(e) => handleFile(e.target.files[0])}
       />
+    </div>
+  );
+}
+
+// const FG = ({ label, children, full }) => (
+//   <div
+//     style={{
+//       display: "flex",
+//       flexDirection: "column",
+//       gap: 4,
+//       gridColumn: full ? "1/-1" : undefined,
+//     }}
+//   >
+//     <label style={LBL}>{label}</label>
+//     {children}
+//   </div>
+// );
+
+function FG({ label, children, full }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        gridColumn: full ? "1/-1" : undefined,
+      }}
+    >
+      <label
+        style={{
+          display: "block",
+          fontSize: 12,
+          fontWeight: 700,
+          color: "#475569",
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          marginBottom: 5,
+        }}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function AdminMultiSelect({ items, selected, onChange, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef();
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const toggle = (item) => {
+    onChange(
+      selected.includes(item)
+        ? selected.filter((s) => s !== item)
+        : [...selected, item],
+    );
+  };
+
+  return (
+    <div ref={wrapperRef} style={{ position: "relative" }}>
+      <div
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 6,
+          padding: "8px 12px",
+          border: "1.5px solid #e2e8f0",
+          borderRadius: 8,
+          minHeight: 44,
+          alignItems: "center",
+          cursor: "pointer",
+          background: "#fff",
+        }}
+      >
+        {selected.length === 0 ? (
+          <span style={{ fontSize: 14, color: "#94a3b8" }}>{placeholder}</span>
+        ) : (
+          selected.map((s) => (
+            <span
+              key={s}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "3px 10px",
+                background: "rgba(37,99,235,0.1)",
+                color: "#2563eb",
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              {s}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggle(s);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#2563eb",
+                  cursor: "pointer",
+                  fontSize: 14,
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >
+                ×
+              </button>
+            </span>
+          ))
+        )}
+      </div>
+      {open && (
+        <div
+          onMouseDown={(e) => e.preventDefault()}
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            background: "#fff",
+            border: "1.5px solid #e2e8f0",
+            borderRadius: 8,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            maxHeight: 220,
+            overflowY: "auto",
+            overflowX: "hidden",
+            zIndex: 9999,
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {items.map((item) => {
+            const isSelected = selected.includes(item);
+            return (
+              <div
+                key={item}
+                onClick={() => toggle(item)}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: 13,
+                  cursor: "pointer",
+                  background: isSelected ? "#f0fdf4" : "transparent",
+                  userSelect: "none",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = isSelected
+                    ? "#dcfce7"
+                    : "#f8fafc";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = isSelected
+                    ? "#f0fdf4"
+                    : "transparent";
+                }}
+              >
+                {isSelected ? "✓ " : ""}
+                {item}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1154,7 +1571,14 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     city: e.city || "",
     zip: e.zip || "",
     address: e.address || "",
-    specialization: e.specialization || "",
+    specialization: (() => {
+      const saved = e.specialization || "";
+      return saved && !SPECIALTIES.includes(saved) ? "Other" : saved;
+    })(),
+    customSpecialty: (() => {
+      const saved = e.specialization || "";
+      return saved && !SPECIALTIES.includes(saved) ? saved : "";
+    })(),
     subSpecialization: e.subSpecialization || "",
     qualification: e.qualification || "",
     experience: e.experience ? String(e.experience) : "",
@@ -1170,6 +1594,18 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     clinicName: e.clinicName || "",
     clinicAddress: e.clinicAddress || "",
     aboutDoctor: e.aboutDoctor || "",
+    licensedStates: Array.isArray(e.licensedStates)
+      ? e.licensedStates
+      : e.licensedStates
+        ? [e.licensedStates]
+        : e.state
+          ? [e.state]
+          : [],
+    internationalLicenses: Array.isArray(e.internationalLicenses)
+      ? e.internationalLicenses
+      : e.internationalLicenses
+        ? [e.internationalLicenses]
+        : [],
     bankName: e.bankName || "",
     accountHolderName: e.accountHolderName || "",
     accountNumber: e.accountNumber || "",
@@ -1180,6 +1616,10 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
   });
   const f = (k) => (v) =>
     setD((p) => ({ ...p, [k]: typeof v === "string" ? v : v.target.value }));
+  const [phoneCountryCode, setPhoneCountryCode] = useState(
+    getCountryCodeFromDialCode(e.countryCode),
+  );
+  const stateConfig = STATE_LICENSING_COUNTRIES[d.country] || null;
 
   // ── File URLs ──
   const [urls, setUrls] = useState({
@@ -1263,13 +1703,22 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         .filter(Boolean);
       const payload = {
         ...d,
+        specialization:
+          d.specialization === "Other"
+            ? d.customSpecialty || "Other"
+            : d.specialization,
         experience: d.experience ? Number(d.experience) : undefined,
         consultantFees: d.consultantFees ? Number(d.consultantFees) : undefined,
         languagesKnown,
+        licensedStates: Array.isArray(d.licensedStates) ? d.licensedStates : [],
+        internationalLicenses: Array.isArray(d.internationalLicenses)
+          ? d.internationalLicenses
+          : [],
         ...urls,
         timezone,
         availability: avail,
       };
+      delete payload.customSpecialty;
       const res = await api.put(`/api/admin/doctors/${e._id}`, payload);
       onSaved(res.data.enrollment);
       showToast("Doctor profile updated successfully.");
@@ -1319,19 +1768,6 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
     gap: "16px 20px",
   };
-  const FG = ({ label, children, full }) => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        gridColumn: full ? "1/-1" : undefined,
-      }}
-    >
-      <label style={LBL}>{label}</label>
-      {children}
-    </div>
-  );
 
   /* ── Save/Cancel toolbar ── */
   const Toolbar = () => (
@@ -1454,26 +1890,33 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
             />
           </FG>
           <FG label="Phone Number">
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                style={{ ...INP, width: 84, flexShrink: 0 }}
-                value={d.countryCode}
-                onChange={f("countryCode")}
-                placeholder="+1"
-              />
-              <input
-                style={{ ...INP, flex: 1 }}
-                value={d.phoneNumber}
-                onChange={f("phoneNumber")}
-                placeholder="Phone number"
-              />
-            </div>
+            <PhoneInputField
+              value={(d.countryCode || "") + (d.phoneNumber || "")}
+              onChange={(value, countryMeta) => {
+                const next = splitPhoneValue(value, countryMeta);
+                setD((p) => ({
+                  ...p,
+                  countryCode: next.countryCode,
+                  phoneNumber: next.phone,
+                }));
+              }}
+              onCountryChange={(countryMeta) => {
+                setPhoneCountryCode(countryMeta.code || "auto");
+                setD((p) => ({
+                  ...p,
+                  countryCode: countryMeta.dialCode || p.countryCode,
+                }));
+              }}
+              defaultCountry={phoneCountryCode}
+              placeholder="Mobile number"
+              showCountryNameInDropdown={true}
+            />
           </FG>
         </div>
       </Section>
 
       {/* ── 3. Location ── */}
-      <Section icon="📍" title="Location" accent>
+      {/* <Section icon="📍" title="Location" accent>
         <div style={G2}>
           <FG label="Country">
             <select style={SEL} value={d.country} onChange={f("country")}>
@@ -1518,6 +1961,81 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
             />
           </FG>
         </div>
+      </Section> */}
+      {/* ── 3. Location ── */}
+      <Section icon="📍" title="Location" accent>
+        <div style={G2}>
+          <FG label="Country">
+            <select
+              style={SEL}
+              value={d.country}
+              onChange={(ev) => {
+                f("country")(ev);
+                setD((p) => ({ ...p, state: "" })); // reset state when country changes
+              }}
+            >
+              <option value="">Select country…</option>
+              {Country.getAllCountries().map((c) => (
+                <option key={c.isoCode} value={c.isoCode}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </FG>
+          <FG label="State / Province">
+            {(() => {
+              const states = d.country
+                ? State.getStatesOfCountry(d.country)
+                : [];
+              return states.length > 0 ? (
+                <select style={SEL} value={d.state} onChange={f("state")}>
+                  <option value="">
+                    {d.country ? "Select state…" : "Select country first"}
+                  </option>
+                  {states.map((s) => (
+                    <option key={s.isoCode} value={s.isoCode}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  style={INP}
+                  value={d.state}
+                  onChange={f("state")}
+                  placeholder={
+                    d.country ? "State or province" : "Select country first"
+                  }
+                  disabled={!d.country}
+                />
+              );
+            })()}
+          </FG>
+          <FG label="City">
+            <input
+              style={INP}
+              value={d.city}
+              onChange={f("city")}
+              placeholder="City"
+            />
+          </FG>
+          <FG label="ZIP / Postal Code">
+            <input
+              style={INP}
+              value={d.zip}
+              onChange={f("zip")}
+              placeholder="ZIP or postal code"
+            />
+          </FG>
+          <FG label="Street Address" full>
+            <input
+              style={INP}
+              value={d.address}
+              onChange={f("address")}
+              placeholder="Full street address"
+            />
+          </FG>
+        </div>
       </Section>
 
       {/* ── 4. Professional Details ── */}
@@ -1526,8 +2044,28 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
           <FG label="Specialization">
             <select
               style={SEL}
-              value={d.specialization}
-              onChange={f("specialization")}
+              value={
+                SPECIALTIES.includes(d.specialization)
+                  ? d.specialization
+                  : d.specialization
+                    ? "Other"
+                    : ""
+              }
+              onChange={(ev) => {
+                if (ev.target.value === "Other") {
+                  f("specialization")("Other");
+                  if (
+                    !d.customSpecialty &&
+                    d.specialization &&
+                    !SPECIALTIES.includes(d.specialization)
+                  ) {
+                    f("customSpecialty")(d.specialization);
+                  }
+                } else {
+                  f("specialization")(ev.target.value);
+                  f("customSpecialty")("");
+                }
+              }}
             >
               <option value="">Select…</option>
               {SPECIALTIES.map((s) => (
@@ -1535,13 +2073,24 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                   {s}
                 </option>
               ))}
-              {d.specialization && !SPECIALTIES.includes(d.specialization) && (
-                <option value={d.specialization}>
-                  {d.specialization} (custom)
-                </option>
-              )}
             </select>
           </FG>
+          {(d.specialization === "Other" ||
+            (d.specialization && !SPECIALTIES.includes(d.specialization))) && (
+            <FG label="Custom Specialty">
+              <input
+                style={INP}
+                value={
+                  d.customSpecialty ||
+                  (d.specialization && !SPECIALTIES.includes(d.specialization)
+                    ? d.specialization
+                    : "")
+                }
+                onChange={f("customSpecialty")}
+                placeholder="e.g. Sports Medicine"
+              />
+            </FG>
+          )}
           <FG label="Sub-Specialization">
             <input
               style={INP}
@@ -1616,7 +2165,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               placeholder="License number"
             />
           </FG>
-          <FG label="ID Proof Type">
+          {/* <FG label="ID Proof Type">
             <select
               style={SEL}
               value={d.idProofType}
@@ -1629,6 +2178,34 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                 </option>
               ))}
             </select>
+          </FG> */}
+          {stateConfig && (
+            <FG label={`${stateConfig.label} Licensing`} full>
+              <AdminMultiSelect
+                items={stateConfig.items}
+                selected={
+                  Array.isArray(d.licensedStates) ? d.licensedStates : []
+                }
+                onChange={(v) => setD((p) => ({ ...p, licensedStates: v }))}
+                placeholder={`Select ${stateConfig.plural.toLowerCase()}...`}
+              />
+            </FG>
+          )}
+          <FG label="International Medical Licenses" full>
+            <AdminMultiSelect
+              items={Country.getAllCountries()
+                .filter((c) => c.isoCode !== d.country)
+                .map((c) => c.name)}
+              selected={
+                Array.isArray(d.internationalLicenses)
+                  ? d.internationalLicenses
+                  : []
+              }
+              onChange={(v) =>
+                setD((p) => ({ ...p, internationalLicenses: v }))
+              }
+              placeholder="Select countries where you hold a medical license..."
+            />
           </FG>
         </div>
       </Section>
@@ -1636,7 +2213,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
       {/* ── 5. Consultation & Practice ── */}
       <Section icon="🏥" title="Consultation & Practice" accent>
         <div style={G2}>
-          <FG label="Consultation Mode">
+          {/* <FG label="Consultation Mode">
             <select
               style={SEL}
               value={d.consultationMode}
@@ -1649,7 +2226,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                 </option>
               ))}
             </select>
-          </FG>
+          </FG> */}
           <FG label="Consultation Fee">
             <div
               style={{
@@ -2020,14 +2597,14 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
       {/* ── 9. Payout ── */}
       <Section icon="💳" title="Payout Information" accent>
         <div style={G2}>
-          <FG label="Bank Name">
+          {/* <FG label="Bank Name">
             <input
               style={INP}
               value={d.bankName}
               onChange={f("bankName")}
               placeholder="Bank name"
             />
-          </FG>
+          </FG> */}
           <FG label="Account Holder Name">
             <input
               style={INP}
@@ -2036,14 +2613,14 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               placeholder="Full name on account"
             />
           </FG>
-          <FG label="Account Number">
+          {/* <FG label="Account Number">
             <input
               style={INP}
               value={d.accountNumber}
               onChange={f("accountNumber")}
               placeholder="Account number"
             />
-          </FG>
+          </FG> */}
           <FG label="SWIFT / IFSC / BIC Code">
             <input
               style={INP}
@@ -2069,14 +2646,14 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               placeholder="Payout email address"
             />
           </FG>
-          <FG label="Stripe Account ID">
+          {/* <FG label="Stripe Account ID">
             <input
               style={INP}
               value={d.stripeAccountId}
               onChange={f("stripeAccountId")}
               placeholder="acct_xxxxxxxx"
             />
-          </FG>
+          </FG> */}
         </div>
       </Section>
 
@@ -2310,7 +2887,13 @@ export default function AdminDoctorProfile() {
   const initials =
     `${(e.firstName || e.doctorId?.name || "D")[0]}${(e.surname || " ")[0]}`.toUpperCase();
   const phone = [e.countryCode, e.phoneNumber].filter(Boolean).join(" ");
-  const location_ = [e.city, e.state, e.country].filter(Boolean).join(", ");
+  const location_ = [
+    e.city,
+    getStateName(e.state, e.country),
+    getCountryName(e.country),
+  ]
+    .filter(Boolean)
+    .join(", ");
   const langs = Array.isArray(e.languagesKnown)
     ? e.languagesKnown.join(", ")
     : e.languagesKnown || "";
@@ -2324,6 +2907,14 @@ export default function AdminDoctorProfile() {
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", paddingBottom: 40 }}>
+      <style>
+        {`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+        `}
+      </style>
       {/* Toast */}
       {toast && (
         <div
@@ -2509,6 +3100,31 @@ export default function AdminDoctorProfile() {
               ID: {e.doctorId.doctorId}
             </span>
           )}
+          <span
+            style={{
+              background: e.isOnline ? "#10b981" : "#6b7280",
+              color: "#fff",
+              padding: "5px 14px",
+              borderRadius: 50,
+              fontSize: 12,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#fff",
+                animation: e.isOnline ? "pulse 2s infinite" : "none",
+              }}
+            />
+            {e.isOnline ? "Online" : "Offline"}
+          </span>
         </div>
       </div>
 
@@ -2811,8 +3427,8 @@ export default function AdminDoctorProfile() {
                 gap: "16px 24px",
               }}
             >
-              <Field label="Country" value={e.country} />
-              <Field label="State" value={e.state} />
+              <Field label="Country" value={getCountryName(e.country)} />
+              <Field label="State" value={getStateName(e.state, e.country)} />
               <Field label="City" value={e.city} />
               <Field label="ZIP / Postal" value={e.zip} />
               <Field label="Street Address" value={e.address} full />
@@ -2840,8 +3456,8 @@ export default function AdminDoctorProfile() {
               <Field label="Medical Council" value={e.medicalCouncilName} />
               <Field label="NPI" value={e.medicalRegistrationNumber} />
               <Field label="Medical License No." value={e.medicalLicense} />
-              <Field label="ID Proof Type" value={e.idProofType} />
-              <Field label="Consultation Mode" value={e.consultationMode} />
+              {/* <Field label="ID Proof Type" value={e.idProofType} /> */}
+              {/* <Field label="Consultation Mode" value={e.consultationMode} /> */}
               <Field
                 label="Consultation Fee"
                 value={
@@ -2880,6 +3496,59 @@ export default function AdminDoctorProfile() {
                 >
                   <Field label="Clinic Name" value={e.clinicName} />
                   <Field label="Clinic Address" value={e.clinicAddress} full />
+                </div>
+              </div>
+            )}
+            {(Array.isArray(e.licensedStates)
+              ? e.licensedStates
+              : e.state
+                ? [e.state]
+                : []
+            ).length > 0 && (
+              <div
+                style={{
+                  marginTop: 16,
+                  paddingTop: 16,
+                  borderTop: "1px solid #f1f5f9",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    marginBottom: 10,
+                  }}
+                >
+                  🏛️ State/Territory Licensing (AU)
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {(Array.isArray(e.licensedStates)
+                    ? e.licensedStates
+                    : e.state
+                      ? [e.state]
+                      : []
+                  ).map((stateName) => (
+                    <span
+                      key={stateName}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "4px 12px",
+                        background: "#f8fafc",
+                        border: "1px solid #cbd5e1",
+                        borderRadius: 20,
+                        fontSize: 13,
+                        color: "#334155",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {stateName}
+                    </span>
+                  ))}
                 </div>
               </div>
             )}
@@ -3109,20 +3778,20 @@ export default function AdminDoctorProfile() {
                 gap: "16px 24px",
               }}
             >
-              <Field label="Bank Name" value={e.bankName} />
+              {/* <Field label="Bank Name" value={e.bankName} /> */}
               <Field label="Account Holder" value={e.accountHolderName} />
-              <Field
+              {/* <Field
                 label="Account Number"
                 value={
                   e.accountNumber
                     ? `****${String(e.accountNumber).slice(-4)}`
                     : ""
                 }
-              />
+              /> */}
               <Field label="SWIFT / BIC" value={e.ifscCode} />
               <Field label="PayPal ID" value={e.paypalId} />
               <Field label="Payout Email" value={e.payoutEmail} />
-              <Field label="Stripe Account" value={e.stripeAccountId} />
+              {/* <Field label="Stripe Account" value={e.stripeAccountId} /> */}
             </div>
           </Section>
 

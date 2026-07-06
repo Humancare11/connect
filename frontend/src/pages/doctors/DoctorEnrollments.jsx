@@ -7,12 +7,25 @@ import PhoneInputField, {
   getFlagUrl,
   findCountryByName,
 } from "../../components/PhoneInputField";
-import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
+// import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State, City } from "country-state-city";
-// ─── Constants ───
 
+// Helper functions to convert ISO codes to display names
+const getCountryName = (isoCode) => {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+};
+
+const getStateName = (stateIsoCode, countryIsoCode) => {
+  if (!stateIsoCode || !countryIsoCode) return "";
+  const state = State.getStateByCodeAndCountry(stateIsoCode, countryIsoCode);
+  return state?.name || stateIsoCode;
+};
+
+// ─── Constants ───
 
 const SPECIALTIES = [
   "General Practice",
@@ -637,7 +650,7 @@ h1,h2,h3,h4,h5,h6 {
 .field-select {
   cursor: pointer; appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+  background-repeat: no-repeat; background-position: right 14px center;
 }
 
 /* ─── Buttons ─── */
@@ -930,14 +943,12 @@ function MultiSelect({
   searchPlaceholder,
   hasError,
   showFlags = false,
-  showFlags = false,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const wrapperRef = useRef();
   const triggerRef = useRef();
   const dropdownRef = useRef();
-  const searchInputRef = useRef();
   const searchInputRef = useRef();
   const position = useDropdownPosition(triggerRef, open);
 
@@ -1290,6 +1301,7 @@ function SingleSelect({ items, value, onChange, placeholder, hasError }) {
             justifyContent: "space-between",
             alignItems: "center",
             userSelect: "none",
+            backgroundImage: "none",
           }}
           onClick={() => setOpen(!open)}
         >
@@ -1577,13 +1589,13 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
             <strong>Click to upload</strong> or drag and drop
           </div>
           <div className="upload-text" style={{ fontSize: 11, marginTop: 4 }}>
-            PDF, JPG, PNG up to 10MB
+            PDF only, up to 10MB
           </div>
           <input
             ref={ref}
             type="file"
             hidden
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            accept=".pdf"
             onChange={(e) => handlePick(e.target.files[0])}
           />
         </div>
@@ -1638,7 +1650,7 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
             ref={ref}
             type="file"
             hidden
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            accept=".pdf"
             onChange={(e) => handlePick(e.target.files[0])}
           />
         </div>
@@ -1783,9 +1795,14 @@ export default function DoctorOnboardingWizard({
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
+  // const isUS = s1.country === "US";
+  // const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
+  // const otherCountryOptions = countries.filter((c) => c.isoCode !== s1.country);
   const isUS = s1.country === "US";
-  const isUS = s1.country === "US";
-  const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
+  const stateConfig =
+    s1.country === "US" || s1.country === "CA"
+      ? STATE_LICENSING_COUNTRIES[s1.country]
+      : undefined;
   const otherCountryOptions = countries.filter((c) => c.isoCode !== s1.country);
   const mobileValue = `${s1.countryCode || ""}${s1.phone || ""}`;
   const handleMobileChange = (value, countryMeta) => {
@@ -1833,16 +1850,22 @@ export default function DoctorOnboardingWizard({
         ? rawLangs
         : typeof rawLangs === "string" && rawLangs.trim()
           ? rawLangs
-            .split(",")
-            .map((l) => l.trim())
-            .filter(Boolean)
+              .split(",")
+              .map((l) => l.trim())
+              .filter(Boolean)
           : [],
     );
+
+    // Handle specialty - if not in predefined list, it's a custom specialty
+    const savedSpecialty = data.specialization || "";
+    const isCustomSpecialty =
+      savedSpecialty && !SPECIALTIES.includes(savedSpecialty);
+
     setS2({
       npi: data.medicalRegistrationNumber || "",
       licenseNum: data.medicalLicense || data.medicalRegistrationNumber || "",
-      specialty: data.specialization || "",
-      customSpecialty: "",
+      specialty: isCustomSpecialty ? "Other" : savedSpecialty,
+      customSpecialty: isCustomSpecialty ? savedSpecialty : "",
       subSpecialization: data.subSpecialization || "",
       qualification: data.qualification || "",
       school: data.medicalSchool || "",
@@ -1866,7 +1889,17 @@ export default function DoctorOnboardingWizard({
       paypalId: data.paypalId || "",
     });
     if (data.timezone) setTimezone(data.timezone);
-    if (data.state) setLicensedStates([data.state]);
+    if (Array.isArray(data.licensedStates) && data.licensedStates.length) {
+      setLicensedStates(data.licensedStates);
+    } else if (data.state) {
+      setLicensedStates([data.state]);
+    }
+    if (
+      Array.isArray(data.internationalLicenses) &&
+      data.internationalLicenses.length
+    ) {
+      setOtherLicenseCountries(data.internationalLicenses);
+    }
 
     const makeFileRef = (nameOrUrl) => {
       if (!nameOrUrl) return null;
@@ -1902,7 +1935,7 @@ export default function DoctorOnboardingWizard({
       if (Array.isArray(d.otherLicenseCountries))
         setOtherLicenseCountries(d.otherLicenseCountries);
       if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
-    } catch { }
+    } catch {}
   }, [doctorId, initialData]);
 
   // Auto-detect timezone on mount.
@@ -1933,7 +1966,7 @@ export default function DoctorOnboardingWizard({
     try {
       const iana = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (iana) setTimezone((prev) => prev || matchTz(iana));
-    } catch { }
+    } catch {}
 
     // ── Step 2: async IP-based refinement (best-effort, 3 fallback APIs) ───
     const fetchTz = async (url, extract) => {
@@ -2014,7 +2047,7 @@ export default function DoctorOnboardingWizard({
             completedSteps,
             currentStep,
           })
-          .catch(() => { });
+          .catch(() => {});
       }, 250);
     },
     [doctorId],
@@ -2110,7 +2143,7 @@ export default function DoctorOnboardingWizard({
         `hc_enroll_draft_${doctorId}`,
         JSON.stringify(draftData),
       );
-    } catch { }
+    } catch {}
     setDraftSaved(true);
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => setDraftSaved(false), 2500);
@@ -2151,6 +2184,8 @@ export default function DoctorOnboardingWizard({
       dob: s1.dob,
       country: s1.country,
       state: licensedStates[0] || s1.state,
+      licensedStates,
+      internationalLicenses: otherLicenseCountries,
       city: s1.city.trim(),
       zip: s1.zip.trim(),
       address: s1.address.trim(),
@@ -2200,14 +2235,14 @@ export default function DoctorOnboardingWizard({
       // setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
       try {
         localStorage.removeItem(`hc_enroll_draft_${doctorId}`);
-      } catch { }
+      } catch {}
       setStep(5);
       if (enrollment && typeof onComplete === "function")
         onComplete(enrollment);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-        "Failed to submit enrollment. Please try again.",
+          "Failed to submit enrollment. Please try again.",
       );
     } finally {
       setSubmitBusy(false);
@@ -2371,7 +2406,7 @@ export default function DoctorOnboardingWizard({
                 {countryApi ? "Select country..." : "Loading countries..."}
               </option>
 
-              {countries.map(country => (
+              {countries.map((country) => (
                 <option key={country.isoCode} value={country.isoCode}>
                   {country.name}
                 </option>
@@ -2380,18 +2415,17 @@ export default function DoctorOnboardingWizard({
             {s1Errors.country && (
               <div className="field-error">{s1Errors.country}</div>
             )}
-              {!hasStates && !hasCities && s1.country && (
-  <div
-    style={{
-      fontSize: 13,
-      color: "var(--red-500)",
-      marginTop: 6,
-      
-    }}
-  >
-    This country does not have state or city data available.
-  </div>
-)}
+            {!hasStates && !hasCities && s1.country && (
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "var(--red-500)",
+                  marginTop: 6,
+                }}
+              >
+                This country does not have state or city data available.
+              </div>
+            )}
           </div>
           <div className="location-row">
             {hasStates && (
@@ -2725,11 +2759,12 @@ export default function DoctorOnboardingWizard({
             <div className="license-section-header">
               <div className="ls-icon state">🏛️</div>
               <h4>
-                {stateConfig.label} Licensing — {s1.country}
+                {stateConfig.label} Licensing — {getCountryName(s1.country)}
               </h4>
             </div>
             <p className="ls-desc">
-              In {s1.country}, doctors require {stateConfig.label.toLowerCase()}
+              In {getCountryName(s1.country)}, doctors require{" "}
+              {stateConfig.label.toLowerCase()}
               -level licensing. Select all {stateConfig.plural.toLowerCase()}{" "}
               where you are currently licensed to practice medicine.
             </p>
@@ -2769,8 +2804,9 @@ export default function DoctorOnboardingWizard({
           </div>
           <p className="ls-desc">
             Do you hold a valid medical license in any other countries besides{" "}
-            {s1.country || "your primary country"}? This helps us determine
-            cross-border telehealth eligibility and widen your patient reach.
+            {getCountryName(s1.country) || "your primary country"}? This helps
+            us determine cross-border telehealth eligibility and widen your
+            patient reach.
           </p>
           <div className="field-group">
             <label className="field-label">
@@ -3065,15 +3101,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3222,15 +3258,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3359,15 +3395,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                    background: "rgba(37,99,235,0.1)",
-                    color: "var(--teal)",
-                    border: "1.5px solid var(--teal)",
-                  }
+                      background: "rgba(37,99,235,0.1)",
+                      color: "var(--teal)",
+                      border: "1.5px solid var(--teal)",
+                    }
                   : {
-                    background: "transparent",
-                    border: "1.5px solid var(--gray-200)",
-                    color: "var(--navy)",
-                  }
+                      background: "transparent",
+                      border: "1.5px solid var(--gray-200)",
+                      color: "var(--navy)",
+                    }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}

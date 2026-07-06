@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { Link } from "react-router-dom";
 import "./Sa.css";
 import {
   FaBrain,
@@ -29,43 +30,44 @@ const fadeUp = (delay = 0) => ({
 });
 
 /* ─────────────────────────────────────────
-   RevealCard — scroll-triggered fade-up only (no tilt)
+   RevealCard — scroll-triggered fade-up, entire card is a Link
 ───────────────────────────────────────── */
-function RevealCard({ children, className, delay = 0 }) {
+function RevealCard({ children, className, delay = 0, to }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
     <Motion.div
       ref={ref}
-      className={className}
+      className={`services-card-link-wrapper ${className}`}
       variants={fadeUp(delay)}
       initial="hidden"
       animate={isInView ? "visible" : "hidden"}
     >
-      {children}
+      <Link to={to} className="services-card-inner-link" tabIndex={0}>
+        {children}
+      </Link>
     </Motion.div>
   );
 }
 
-const D = [0, 0.08, 0.16, 0.24, 0.32, 0.40];
+const D = [0, 0.08, 0.16, 0.24, 0.32, 0.4];
 
 /* ─────────────────────────────────────────
    Component
 ───────────────────────────────────────── */
-export default function ServicesSection() {
+export default function Sa() {
   /* ── Header reveal ── */
   const headerRef = useRef(null);
   const headerInView = useInView(headerRef, { once: true, margin: "-60px" });
 
-  /* ── Container "card pop-up" scroll effect ── */
+  /* ── Container scroll effect ── */
   const wrapperRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: wrapperRef,
-    offset: ["start end", "start 0.55"],   // fires as top of section crosses 55% of viewport
+    offset: ["start end", "start 0.55"],
   });
 
-  // Smooth spring on the raw progress
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 80,
     damping: 20,
@@ -83,7 +85,6 @@ export default function ServicesSection() {
       style={{ scale, opacity, y }}
     >
       <div className="services-inner-container">
-
         {/* ── Header ── */}
         <div className="services-header-block" ref={headerRef}>
           <Motion.span
@@ -111,29 +112,30 @@ export default function ServicesSection() {
 
         {/* ── Bento Grid ── */}
         <div className="services-bento-grid">
-
           {/* ── Prescription Refills (4-col wide) ── */}
           <RevealCard
             className="services-card-item services-bento-large"
             delay={D[0]}
+            to="/online-prescription-refills"
           >
             <div className="services-icon-row">
               <div className="services-icon-box">
                 <FaPills />
               </div>
-              {/* <span className="services-feature-badge">MOST REQUESTED</span> */}
             </div>
 
             <div className="services-content-split">
               <div className="services-content-left">
                 <h3 className="services-card-title">Prescription Refills</h3>
                 <p className="services-card-description">
-                  Need a medication refill without the wait? Connect with a licensed provider through a fast online doctor appointment and receive prescription refill support the same day through our secure virtual healthcare services.
-
+                  Need a medication refill without the wait? Connect with a
+                  licensed provider through a fast online doctor appointment and
+                  receive prescription refill support the same day through our
+                  secure virtual healthcare services.
                 </p>
-                <a href="#" className="services-card-cta-link">
-                  Refill Prescription →
-                </a>
+                <span className="services-card-cta-link">
+                  Refill Prescription <span className="cta-arrow">→</span>
+                </span>
               </div>
 
               <div className="services-content-right">
@@ -150,9 +152,10 @@ export default function ServicesSection() {
           </RevealCard>
 
           {/* ── Weight Loss (2-col) ── */}
-          <RevealCard
+          {/* <RevealCard
             className="services-card-item services-bento-small-weightloss"
             delay={D[1]}
+            to="/weight-loss-programs"
           >
             <div className="services-icon-box">
               <FaBalanceScale />
@@ -160,7 +163,6 @@ export default function ServicesSection() {
             <h3 className="services-card-title">Weight Loss Programs</h3>
             <p className="services-card-description">
               Personalized virtual weight loss programs with licensed providers, GLP-1 treatment support, lifestyle coaching, and ongoing telehealth services designed to help you reach long-term health goals safely.
-
             </p>
 
             <div className="services-weight-stat-block">
@@ -169,16 +171,41 @@ export default function ServicesSection() {
                 <span className="services-weight-stat-number">15 lbs</span>
                 <span className="services-weight-stat-period">/ 3 months</span>
               </div>
-              <a href="/weight-loss-planning" className="services-card-cta-link services-weight-cta">
-                Start Program →
-              </a>
+              <span className="services-card-cta-link services-weight-cta">
+                Start Program <span className="cta-arrow">→</span>
+              </span>
+            </div>
+          </RevealCard> */}
+
+          {/* Doctors Notes */}
+          <RevealCard
+            className="services-card-item services-bento-small-weightloss"
+            delay={D[1]}
+            to="/doctor-note-or-sick-notes"
+          >
+            <div className="services-icon-box">
+              <FaBalanceScale />
+            </div>
+            <h3 className="services-card-title">Doctor Note or Sick Note</h3>
+            <p className="services-card-description">
+              Doctor Notes and Sick Notes are medical documents that may be
+              provided by a healthcare professional after evaluating a patient's
+              health condition. These documents are commonly used to verify an
+              illness, medical condition, or healthcare visit for employers,
+              schools, universities, or other organizations.
+            </p>
+            <div className="services-weight-stat-block">
+              <span className="services-card-cta-link services-weight-cta">
+                Get Started <span className="cta-arrow">→</span>
+              </span>
             </div>
           </RevealCard>
 
           {/* ── Mental Health (2-col tall) ── */}
-          <RevealCard
+          {/* <RevealCard
             className="services-card-item services-bento-smal-1"
             delay={D[2]}
+            to="/mental-health-support"
           >
             <div className="services-icon-box">
               <FaBrain />
@@ -187,66 +214,110 @@ export default function ServicesSection() {
             <p className="services-card-description">
               Get compassionate mental health support through secure online therapy consultations for anxiety, stress, burnout, depression, and emotional wellness from experienced online providers.
             </p>
-            <a href="/mental-health" className="services-card-cta-link">
-              Get support →
-            </a>
-          </RevealCard>
+            <span className="services-card-cta-link">
+              Get support <span className="cta-arrow">→</span>
+            </span>
+          </RevealCard> */}
 
+          {/* Fit to Fly  */}
+          <RevealCard
+            className="services-card-item services-bento-smal-1"
+            delay={D[2]}
+            to="/fit-to-fly-certificate"
+          >
+            <div className="services-icon-box">
+              <FaBrain />
+            </div>
+            <h3 className="services-card-title"> Fit to Fly Certificate</h3>
+            <p className="services-card-description">
+              A Fit to Fly Certificate is a medical document that may be
+              required by airlines for passengers with certain health
+              conditions, recent surgeries, pregnancy-related travel
+              considerations, or ongoing medical concerns. The certificate
+              confirms that a healthcare provider has reviewed your condition
+              and assessed your ability to travel safely by air.
+            </p>
+            <span className="services-card-cta-link">
+              Get support <span className="cta-arrow">→</span>
+            </span>
+          </RevealCard>
           {/* ── General Consultation (2-col) ── */}
           <RevealCard
             className="services-card-item services-bento-small"
             delay={D[3]}
+            to="/general-consultation"
           >
             <div className="services-icon-box">
               <FaStethoscope />
             </div>
-            <h3 className="services-card-title">General Consultation
-            </h3>
+            <h3 className="services-card-title">General Consultation</h3>
             <p className="services-card-description">
-              Confidential online sexual health consultations for STI concerns, ED treatment, birth control guidance, prescriptions, and preventive virtual healthcare services with licensed providers.
-
+              Speak with a licensed doctor for common symptoms, referrals,
+              health advice, and follow-ups — all through a secure virtual visit
+              without leaving home.
             </p>
-            <a href="/general-consultation" className="services-card-cta-link">
-              See a Doctor →
-            </a>
+            <span className="services-card-cta-link">
+              See a Doctor <span className="cta-arrow">→</span>
+            </span>
           </RevealCard>
 
           {/* ── Sexual Health (2-col) ── */}
-          <RevealCard
+          {/* <RevealCard
             className="services-card-item services-bento-small-0"
             delay={D[4]}
+            to="/sexual-health"
           >
             <div className="services-icon-box">
               <FaHeart />
             </div>
             <h3 className="services-card-title">Sexual Health</h3>
             <p className="services-card-description">
-             Confidential online sexual health consultations for STI concerns, ED treatment, birth control guidance, prescriptions, and preventive virtual healthcare services with licensed providers. 
-
+              Confidential online sexual health consultations for STI concerns, ED treatment, birth control guidance, prescriptions, and preventive virtual healthcare services with licensed providers.
             </p>
-            <a href="/sexual-health" className="services-card-cta-link">
-              Learn more →
-            </a>
+            <span className="services-card-cta-link">
+              Learn more <span className="cta-arrow">→</span>
+            </span>
+          </RevealCard> */}
+          <RevealCard
+            className="services-card-item services-bento-small-0"
+            delay={D[4]}
+            to="/lab-requisitions"
+          >
+            <div className="services-icon-box">
+              <FaHeart />
+            </div>
+            <h3 className="services-card-title"> Lab Requisition</h3>
+            <p className="services-card-description">
+              A Lab Requisition is a medical order provided by a healthcare
+              professional that authorizes laboratory testing. These tests can
+              help evaluate symptoms, monitor chronic conditions, assess overall
+              health, and provide important information for diagnosis and
+              treatment planning.
+            </p>
+            <span className="services-card-cta-link">
+              Learn more <span className="cta-arrow">→</span>
+            </span>
           </RevealCard>
 
           {/* ── Chronic Care (4-col wide) ── */}
           <RevealCard
             className="services-card-item services-bento-wide"
             delay={D[5]}
+            to="/chronic-care-management"
           >
             <div className="services-icon-box">
               <FaHeartbeat />
             </div>
             <h3 className="services-card-title">Chronic Care</h3>
             <p className="services-card-description">
-             Ongoing chronic care management for diabetes, asthma, thyroid disorders, hypertension, cholesterol, and long-term health conditions through personalized telemedicine healthcare support.
-
+              Ongoing chronic care management for diabetes, asthma, thyroid
+              disorders, hypertension, cholesterol, and long-term health
+              conditions through personalized telemedicine healthcare support.
             </p>
-            <a href="/chronic-care" className="services-card-cta-link">
-              Manage condition →
-            </a>
+            <span className="services-card-cta-link">
+              Manage condition <span className="cta-arrow">→</span>
+            </span>
           </RevealCard>
-
         </div>
       </div>
     </Motion.section>

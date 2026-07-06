@@ -126,6 +126,8 @@ const approveDoctor = async (req, res) => {
         if (change?.field) enrollment.set(change.field, change.newValue);
       });
       enrollment.markModified("languagesKnown");
+      enrollment.markModified("licensedStates");
+      enrollment.markModified("internationalLicenses");
       enrollment.markModified("availability");
     }
 
@@ -194,6 +196,8 @@ const rejectDoctor = async (req, res) => {
       enrollment.markModified("pendingProfileChanges");
       enrollment.markModified("profileUpdateSnapshot");
       enrollment.markModified("languagesKnown");
+      enrollment.markModified("licensedStates");
+      enrollment.markModified("internationalLicenses");
       enrollment.markModified("availability");
     } else {
       enrollment.approvalStatus = "rejected";
@@ -477,23 +481,23 @@ const getDoctorPayments = async (req, res) => {
         : baseDoctorShare;
 
       return {
-        _id:               a._id,
-        appointmentId:     a._id,
-        doctorId:          a.doctorId,
-        patientId:         a.patientId,
-        date:              a.date,
-        time:              a.time,
+        _id: a._id,
+        appointmentId: a._id,
+        doctorId: a.doctorId,
+        patientId: a.patientId,
+        date: a.date,
+        time: a.time,
         consultationAmount,
         platformFee,
         baseDoctorPayable: baseDoctorShare,
-        doctorPayable:     doctorShare,
+        doctorPayable: doctorShare,
         doctorPayoutOverrideAmount: hasOverride ? doctorShare : null,
-        paymentStatus:     a.paymentStatus,
+        paymentStatus: a.paymentStatus,
         doctorPayoutStatus: a.doctorPayoutStatus || "pending",
-        doctorPayoutDate:  a.doctorPayoutDate,
-        doctorPayoutRef:   a.doctorPayoutRef,
-        paymentGateway:    a.paymentGateway || "stripe",
-        paymentDate:       a.createdAt,
+        doctorPayoutDate: a.doctorPayoutDate,
+        doctorPayoutRef: a.doctorPayoutRef,
+        paymentGateway: a.paymentGateway || "stripe",
+        paymentDate: a.createdAt,
         transactionReference: a.paymentIntentId || "",
       };
     });
@@ -523,8 +527,8 @@ const markDoctorPayout = async (req, res) => {
       req.params.id,
       {
         doctorPayoutStatus: "paid",
-        doctorPayoutDate:   new Date(),
-        doctorPayoutRef:    payoutRef || "",
+        doctorPayoutDate: new Date(),
+        doctorPayoutRef: payoutRef || "",
       },
       { returnDocument: 'after' }
     );
@@ -542,8 +546,8 @@ const editDoctorPayout = async (req, res) => {
     const { doctorPayoutStatus, doctorPayoutDate, doctorPayoutRef, doctorPayoutOverrideAmount } = req.body;
     const update = {};
     if (doctorPayoutStatus !== undefined) update.doctorPayoutStatus = doctorPayoutStatus;
-    if (doctorPayoutDate   !== undefined) update.doctorPayoutDate   = doctorPayoutDate;
-    if (doctorPayoutRef    !== undefined) update.doctorPayoutRef    = doctorPayoutRef;
+    if (doctorPayoutDate !== undefined) update.doctorPayoutDate = doctorPayoutDate;
+    if (doctorPayoutRef !== undefined) update.doctorPayoutRef = doctorPayoutRef;
     if (doctorPayoutOverrideAmount !== undefined) {
       if (doctorPayoutOverrideAmount === null || doctorPayoutOverrideAmount === "") {
         update.doctorPayoutOverrideAmount = null;
@@ -610,14 +614,14 @@ const processDoctorPayout = async (req, res) => {
       };
 
       const result = await paypalFetch("POST", "/v1/payments/payouts", payload);
-      
+
       if (result.batch_header && result.batch_header.payout_batch_id) {
         payoutRef = result.batch_header.payout_batch_id;
       } else {
         console.error("PayPal Payout Error:", result);
         return res.status(500).json({ msg: "PayPal payout failed", error: result });
       }
-    } 
+    }
     else if (method === "stripe") {
       const stripeId = enrollment.stripeAccountId;
       if (!stripeId) return res.status(400).json({ msg: "Doctor has no Stripe Account ID" });
@@ -635,7 +639,7 @@ const processDoctorPayout = async (req, res) => {
         console.error("Stripe Transfer Error:", stErr);
         return res.status(500).json({ msg: "Stripe transfer failed", error: stErr.message });
       }
-    } 
+    }
     else {
       return res.status(400).json({ msg: "Unsupported payout method" });
     }
@@ -645,10 +649,10 @@ const processDoctorPayout = async (req, res) => {
     appointment.doctorPayoutRef = payoutRef;
     await appointment.save();
 
-    res.status(200).json({ 
-      msg: `Payout successfully processed via ${method.toUpperCase()}`, 
+    res.status(200).json({
+      msg: `Payout successfully processed via ${method.toUpperCase()}`,
       payoutRef,
-      appointment 
+      appointment
     });
 
   } catch (error) {
@@ -676,6 +680,8 @@ const updateDoctorByAdmin = async (req, res) => {
       clinicName, clinicAddress, aboutDoctor,
       // Languages (array or CSV string)
       languagesKnown,
+      licensedStates,
+      internationalLicenses,
       // File URLs (uploaded separately by admin)
       profilePhoto, idProof, degreeFile, medicalLicenseFile, malpracticeInsuranceFile,
       // Payout
@@ -713,7 +719,7 @@ const updateDoctorByAdmin = async (req, res) => {
     Object.entries(strings).forEach(([k, v]) => { if (v !== undefined) updates[k] = v; });
 
     // ── Numeric fields ────────────────────────────────────────────────
-    if (experience   !== undefined) updates.experience    = Number(experience)    || 0;
+    if (experience !== undefined) updates.experience = Number(experience) || 0;
     if (consultantFees !== undefined) updates.consultantFees = Number(consultantFees) || 0;
 
     // ── Languages — accept array or comma-separated string ────────────
@@ -721,6 +727,18 @@ const updateDoctorByAdmin = async (req, res) => {
       updates.languagesKnown = Array.isArray(languagesKnown)
         ? languagesKnown.filter(Boolean)
         : String(languagesKnown).split(",").map(l => l.trim()).filter(Boolean);
+    }
+
+    if (licensedStates !== undefined) {
+      updates.licensedStates = Array.isArray(licensedStates)
+        ? licensedStates.filter(Boolean)
+        : String(licensedStates).split(",").map(s => s.trim()).filter(Boolean);
+    }
+
+    if (internationalLicenses !== undefined) {
+      updates.internationalLicenses = Array.isArray(internationalLicenses)
+        ? internationalLicenses.filter(Boolean)
+        : String(internationalLicenses).split(",").map(s => s.trim()).filter(Boolean);
     }
 
     // ── Availability (Mixed) ──────────────────────────────────────────
@@ -734,7 +752,7 @@ const updateDoctorByAdmin = async (req, res) => {
     }
     if (degreeFile !== undefined || medicalLicenseFile !== undefined) {
       const cert = (degreeFile !== undefined ? normalizedFileFields.degreeFile : enrollment.degreeFile) ||
-                   (medicalLicenseFile !== undefined ? normalizedFileFields.medicalLicenseFile : enrollment.medicalLicenseFile);
+        (medicalLicenseFile !== undefined ? normalizedFileFields.medicalLicenseFile : enrollment.medicalLicenseFile);
       updates.hasCertification = !!cert;
     }
 
@@ -742,6 +760,8 @@ const updateDoctorByAdmin = async (req, res) => {
 
     enrollment.set(updates);
     enrollment.markModified("languagesKnown");
+    if (licensedStates !== undefined) enrollment.markModified("licensedStates");
+    if (internationalLicenses !== undefined) enrollment.markModified("internationalLicenses");
     if (availability !== undefined) enrollment.markModified("availability");
     const syncedApprovalStatus = approvalStatusFromApplicationStatus(enrollment.applicationStatus);
     if (syncedApprovalStatus) {

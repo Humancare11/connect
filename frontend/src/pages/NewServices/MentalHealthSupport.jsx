@@ -503,9 +503,14 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
+          <PrimaryBtn ac={s.accentColor}>
+            <a href="/login">Get Started</a>
+          </PrimaryBtn>
           <GhostBtn>
-            Contact Care Team <FiArrowRight />
+            <a href="/appointment-booking">
+              {" "}
+              Request Your Lab Consultation Today
+            </a>
           </GhostBtn>
         </motion.div>
       </motion.div>

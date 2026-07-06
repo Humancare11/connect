@@ -96,6 +96,7 @@ import PhoneInputField, {
 } from "../components/PhoneInputField";
 import DatePickerField from "../components/DatePickerField";
 import useLocationData from "../hooks/useLocationData";
+import useCountries from "../hooks/useCountries";
 
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
@@ -277,6 +278,13 @@ export default function AuthPage() {
     registerForm.country,
     registerForm.state,
   );
+
+  const {
+    data: countries = [],
+    isLoading: loadingCountries,
+    error: countriesError,
+    refetch: refetchCountries,
+  } = useCountries();
 
   const clrErr = () => {
     setFormError("");
@@ -692,100 +700,32 @@ export default function AuthPage() {
                     setGoogleProfile((p) => ({ ...p, country: e.target.value }))
                   }
                   required
+                  disabled={loadingCountries}
                 >
-                  <option value="">Select Country</option>
-                  <option value="Afghanistan">Afghanistan</option>
-                  <option value="Albania">Albania</option>
-                  <option value="Algeria">Algeria</option>
-                  <option value="Argentina">Argentina</option>
-                  <option value="Australia">Australia</option>
-                  <option value="Austria">Austria</option>
-                  <option value="Azerbaijan">Azerbaijan</option>
-                  <option value="Bahrain">Bahrain</option>
-                  <option value="Bangladesh">Bangladesh</option>
-                  <option value="Belgium">Belgium</option>
-                  <option value="Bolivia">Bolivia</option>
-                  <option value="Brazil">Brazil</option>
-                  <option value="Canada">Canada</option>
-                  <option value="Chile">Chile</option>
-                  <option value="China">China</option>
-                  <option value="Colombia">Colombia</option>
-                  <option value="Croatia">Croatia</option>
-                  <option value="Czech Republic">Czech Republic</option>
-                  <option value="Denmark">Denmark</option>
-                  <option value="Ecuador">Ecuador</option>
-                  <option value="Egypt">Egypt</option>
-                  <option value="Ethiopia">Ethiopia</option>
-                  <option value="Finland">Finland</option>
-                  <option value="France">France</option>
-                  <option value="Germany">Germany</option>
-                  <option value="Ghana">Ghana</option>
-                  <option value="Greece">Greece</option>
-                  <option value="Guatemala">Guatemala</option>
-                  <option value="Hungary">Hungary</option>
-                  <option value="India">India</option>
-                  <option value="Indonesia">Indonesia</option>
-                  <option value="Iran">Iran</option>
-                  <option value="Iraq">Iraq</option>
-                  <option value="Ireland">Ireland</option>
-                  <option value="Israel">Israel</option>
-                  <option value="Italy">Italy</option>
-                  <option value="Japan">Japan</option>
-                  <option value="Jordan">Jordan</option>
-                  <option value="Kazakhstan">Kazakhstan</option>
-                  <option value="Kenya">Kenya</option>
-                  <option value="Kuwait">Kuwait</option>
-                  <option value="Lebanon">Lebanon</option>
-                  <option value="Libya">Libya</option>
-                  <option value="Malaysia">Malaysia</option>
-                  <option value="Mexico">Mexico</option>
-                  <option value="Morocco">Morocco</option>
-                  <option value="Myanmar">Myanmar</option>
-                  <option value="Nepal">Nepal</option>
-                  <option value="Netherlands">Netherlands</option>
-                  <option value="New Zealand">New Zealand</option>
-                  <option value="Nigeria">Nigeria</option>
-                  <option value="Norway">Norway</option>
-                  <option value="Oman">Oman</option>
-                  <option value="Pakistan">Pakistan</option>
-                  <option value="Peru">Peru</option>
-                  <option value="Philippines">Philippines</option>
-                  <option value="Poland">Poland</option>
-                  <option value="Portugal">Portugal</option>
-                  <option value="Qatar">Qatar</option>
-                  <option value="Romania">Romania</option>
-                  <option value="Russia">Russia</option>
-                  <option value="Saudi Arabia">Saudi Arabia</option>
-                  <option value="Serbia">Serbia</option>
-                  <option value="Singapore">Singapore</option>
-                  <option value="South Africa">South Africa</option>
-                  <option value="South Korea">South Korea</option>
-                  <option value="Spain">Spain</option>
-                  <option value="Sri Lanka">Sri Lanka</option>
-                  <option value="Sudan">Sudan</option>
-                  <option value="Sweden">Sweden</option>
-                  <option value="Switzerland">Switzerland</option>
-                  <option value="Syria">Syria</option>
-                  <option value="Taiwan">Taiwan</option>
-                  <option value="Tanzania">Tanzania</option>
-                  <option value="Thailand">Thailand</option>
-                  <option value="Tunisia">Tunisia</option>
-                  <option value="Turkey">Turkey</option>
-                  <option value="Uganda">Uganda</option>
-                  <option value="Ukraine">Ukraine</option>
-                  <option value="United Arab Emirates">
-                    United Arab Emirates
+                  <option value="">
+                    {loadingCountries
+                      ? "Loading countries..."
+                      : countriesError
+                        ? "Failed to load countries"
+                        : "Select Country"}
                   </option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="United States">United States</option>
-                  <option value="Uruguay">Uruguay</option>
-                  <option value="Uzbekistan">Uzbekistan</option>
-                  <option value="Venezuela">Venezuela</option>
-                  <option value="Vietnam">Vietnam</option>
-                  <option value="Yemen">Yemen</option>
-                  <option value="Zambia">Zambia</option>
-                  <option value="Zimbabwe">Zimbabwe</option>
+                  {!loadingCountries &&
+                    !countriesError &&
+                    countries.map((c) => (
+                      <option key={c.isoCode} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
                 </select>
+                {countriesError && (
+                  <button
+                    type="button"
+                    onClick={() => refetchCountries()}
+                    className="hc-google-retry-btn"
+                  >
+                    Retry Loading Countries
+                  </button>
+                )}
               </div>
               <div className="hc-field-wrap">
                 <label className="hc-reg-label">Mobile Number</label>
@@ -816,14 +756,17 @@ export default function AuthPage() {
                 required
               />
               I agree to the{" "}
-              <a href="/terms" target="_blank" rel="noreferrer">
+              <a href="/terms-of-service" target="_blank" rel="noreferrer">
                 Terms
               </a>
               ,{" "}
-              <a href="/privacy" target="_blank" rel="noreferrer">
+              <a href="/privacy-policy" target="_blank" rel="noreferrer">
                 Privacy Policy
               </a>
-              , and HIPAA consent requirements.
+              , and 
+               <a href="/patient-informed-consent-form" target="_blank" rel="noreferrer">
+                HIPAA consent requirements.
+              </a>
             </label>
             <button
               type="submit"
@@ -1129,12 +1072,13 @@ export default function AuthPage() {
 
             <div className="hc-row hc-reg-row">
               <div className="hc-field-wrap">
-                <DatePickerField 
+                <DatePickerField
                   value={registerForm.dob}
                   onChange={(v) => setRegisterForm((p) => ({ ...p, dob: v }))}
                   min={DOB_MIN}
                   max={todayISO()}
                   placeholder="Date of Birth"
+                  required
                 />
               </div>
               <div className="hc-field-wrap">
@@ -1235,44 +1179,72 @@ export default function AuthPage() {
                           )}
                         </div>
                       </div>
-                      {PHONE_COUNTRIES.filter(
-                        (c) =>
-                          !countrySearch ||
-                          c.name
-                            .toLowerCase()
-                            .includes(countrySearch.toLowerCase()),
-                      ).map((c) => (
-                        <button
-                          key={c.code}
-                          type="button"
-                          className="hc-country-option"
-                          onClick={() => {
-                            const { local } = parsePhoneValue(
-                              registerForm.mobile,
-                              c.code,
-                            );
-                            setRegisterForm((p) => ({
-                              ...p,
-                              country: c.name,
-                              mobile: `+${c.dial}${local}`,
-                            }));
-                            setCountryOpen(false);
-                            setCountrySearch("");
-                          }}
-                        >
-                          <img
-                            src={getFlagUrl(c.code)}
-                            alt={c.name}
-                            style={{
-                              width: 20,
-                              height: 15,
-                              objectFit: "cover",
-                              borderRadius: 2,
-                            }}
-                          />
-                          <span>{c.name}</span>
-                        </button>
-                      ))}
+                      {loadingCountries ? (
+                        <div className="hc-country-loading">
+                          Loading countries...
+                        </div>
+                      ) : countriesError ? (
+                        <div className="hc-country-error">
+                          <p className="hc-country-error-text">
+                            Failed to load countries
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => refetchCountries()}
+                            className="hc-country-retry-btn"
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : countries.length === 0 ? (
+                        <div className="hc-country-loading">
+                          No countries available
+                        </div>
+                      ) : (
+                        countries
+                          .filter(
+                            (c) =>
+                              !countrySearch ||
+                              c.name
+                                .toLowerCase()
+                                .includes(countrySearch.toLowerCase()),
+                          )
+                          .map((c) => (
+                            <button
+                              key={c.isoCode}
+                              type="button"
+                              className="hc-country-option"
+                              onClick={() => {
+                                const { local } = parsePhoneValue(
+                                  registerForm.mobile,
+                                  c.isoCode,
+                                );
+
+                                setRegisterForm((p) => ({
+                                  ...p,
+                                  country: c.name,
+                                  mobile: `+${c.phonecode}${local}`,
+                                }));
+
+                                setCountryOpen(false);
+                                setCountrySearch("");
+                              }}
+                            >
+                              <img
+                                src={getFlagUrl(c.isoCode)}
+                                alt={c.name}
+                                style={{
+                                  width: 20,
+                                  height: 15,
+                                  objectFit: "cover",
+                                  borderRadius: 2,
+                                }}
+                              />
+
+                              <span>{c.name}</span>
+                            </button>
+                          ))
+                      )}
                     </div>
                   )}
                 </div>
@@ -1293,6 +1265,7 @@ export default function AuthPage() {
                   }
                   defaultCountry={selectedPhoneCountry?.code || "auto"}
                   placeholder="Mobile number"
+                  required
                 />
               </div>
             </div>

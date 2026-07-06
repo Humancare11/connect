@@ -6,6 +6,7 @@ import {
   submitEnrollment,
   getApprovedDoctors,
   getDoctorById,
+  toggleOnlineStatus,
 } from "../controllers/doctorController.js";
 
 const router = express.Router();
@@ -16,5 +17,6 @@ router.get("/enrollment/:doctorId", getEnrollment);
 router.post("/enrollment", submitEnrollment);
 router.get("/approved", getApprovedDoctors);
 router.get("/:id", getDoctorById);
+router.post("/toggle-online", toggleOnlineStatus);
 
 export default router;

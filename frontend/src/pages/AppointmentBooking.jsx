@@ -1,7 +1,26 @@
-﻿import { useState, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AppointmentBooking.css";
-import { usePrices } from "../context/PricingContext";
+import { usePrices, usePricingMeta } from "../context/PricingContext";
+
+// ─── Search helpers ─────────────────────────────────────────────────────────
+// Plain `.includes()` matches a query ANYWHERE inside a string, including
+// mid-word — e.g. searching "men" would match "Manage**men**t" or "Women's".
+// matchQuery() instead matches only at word boundaries (start of a word),
+// so "men" matches "Men's Health", "Mental Health", "Menstrual Cramps"
+// but NOT "Weight Management" or "Women's Health".
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function matchQuery(text, q) {
+  if (!q) return true;
+  if (!text) return false;
+  const re = new RegExp(`\\b${escapeRegExp(q)}`, "i");
+  return re.test(text);
+}
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 // Only fields the pricing API does NOT own live here: id, icon, specialties
@@ -9,6 +28,7 @@ import { usePrices } from "../context/PricingContext";
 // and `currency` all come from the pricing API (see enrichedTree below), so
 // they are intentionally NOT duplicated in this tree.
 const HCC_TREE = [
+  // Child and Family care
   {
     id: "general",
     icon: "🩺",
@@ -45,6 +65,7 @@ const HCC_TREE = [
       },
     ],
   },
+  // eye ear bone care
   {
     id: "skin",
     icon: "🧴",
@@ -68,6 +89,7 @@ const HCC_TREE = [
       { name: "Lactation Consulting", icon: "🤱", conditions: [["Low milk supply", "🍼"], ["Latch problems", "👶"], ["Nipple pain", "🩹"], ["Weaning guidance", "🥄"]] },
     ],
   },
+  // Mens Health
   {
     id: "men",
     icon: "♂️",
@@ -87,6 +109,7 @@ const HCC_TREE = [
       { name: "Adolescent Care", icon: "🧑", conditions: [["Teen acne", "🔴"], ["Puberty concerns", "🌱"], ["Teen mood & anxiety", "😟"], ["Menstrual problems", "📅"], ["Sports injuries", "🏃"]] },
     ],
   },
+  // Mental Health
   {
     id: "weight",
     icon: "🥗",
@@ -117,6 +140,7 @@ const HCC_TREE = [
       { name: "Orthopedics", icon: "🦴", live: true, count: "29 doctors", conditions: [["Back pain", "🔙"], ["Neck pain", "🧍"], ["Knee & joint pain", "🦵"], ["Sprains & strains", "🤕"], ["Sports injuries", "🏃"]] },
     ],
   },
+  // Sexual Health
   {
     id: "sexual",
     icon: "💗",
@@ -124,6 +148,9 @@ const HCC_TREE = [
       { name: "Sexual Health", icon: "💗", conditions: [["STI advice & testing", "🔬"], ["Contraception advice", "💊"], ["Erectile dysfunction", "💙"], ["Confidential care", "🤐"], ["Safe-sex counselling", "🤝"]] },
     ],
   },
+
+  // Travel and Global care
+
   {
     id: "travel",
     icon: "✈️",
@@ -152,10 +179,30 @@ function buildFlatHelpers(tree) {
 
 // ─── Time slots ───────────────────────────────────────────────────────────────
 const ALL_TIME_SLOTS = [
-  "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
-  "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
-  "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
-  "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
+  "8:00 AM",
+  "8:30 AM",
+  "9:00 AM",
+  "9:30 AM",
+  "10:00 AM",
+  "10:30 AM",
+  "11:00 AM",
+  "11:30 AM",
+  "12:00 PM",
+  "12:30 PM",
+  "1:00 PM",
+  "1:30 PM",
+  "2:00 PM",
+  "2:30 PM",
+  "3:00 PM",
+  "3:30 PM",
+  "4:00 PM",
+  "4:30 PM",
+  "5:00 PM",
+  "5:30 PM",
+  "6:00 PM",
+  "6:30 PM",
+  "7:00 PM",
+  "7:30 PM",
 ];
 
 function isSlotPassed(dateStr, slot) {
@@ -172,7 +219,12 @@ function isSlotPassed(dateStr, slot) {
 function formatDisplayDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  return d.toLocaleDateString("en-GB", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 // ─── Breadcrumb ───────────────────────────────────────────────────────────────
@@ -183,7 +235,9 @@ function Breadcrumb({ items, onNavigate }) {
         <span key={i} className="hcc-bc-item">
           {i > 0 && <span className="hcc-bc-sep">›</span>}
           {i < items.length - 1 ? (
-            <button className="hcc-bc-link" onClick={() => onNavigate(i)}>{item}</button>
+            <button className="hcc-bc-link" onClick={() => onNavigate(i)}>
+              {item}
+            </button>
           ) : (
             <span className="hcc-bc-current">{item}</span>
           )}
@@ -196,7 +250,9 @@ function Breadcrumb({ items, onNavigate }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AppointmentBooking() {
   const navigate = useNavigate();
+  const location = useLocation();
   const categoryPrices = usePrices();
+  const pricingMeta = usePricingMeta();
   const [drillLevel, setDrillLevel] = useState("cat");
   const [activeCat, setActiveCat] = useState(null);
   const [activeSpec, setActiveSpec] = useState(null);
@@ -228,7 +284,6 @@ export default function AppointmentBooking() {
     [enrichedTree],
   );
 
-  // Map internal tab ids → display numbers + labels (matches screenshot numbering)
   const tabs = [
     { id: "cat", num: "01", label: "Categories" },
     { id: "spec", num: "02", label: "Specialties" },
@@ -312,14 +367,17 @@ export default function AppointmentBooking() {
   };
 
   const handleBreadcrumb = (idx) => {
-    if (idx === 0) { setDrillLevel("cat"); setActiveCat(null); setActiveSpec(null); }
-    if (idx === 1) { setDrillLevel("spec"); setActiveSpec(null); }
+    if (idx === 0) {
+      setDrillLevel("cat");
+      setActiveCat(null);
+      setActiveSpec(null);
+    }
+    if (idx === 1) {
+      setDrillLevel("spec");
+      setActiveSpec(null);
+    }
   };
 
-  // [FIX] Prevents card onClick from firing when the user is click-dragging
-  // to select/copy text inside a card (name, count, etc). Without this guard,
-  // releasing the mouse after a text selection re-triggers navigation/drill-down
-  // instead of letting the selection stand so the user can copy it.
   const handleCardClick = (e, action) => {
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
@@ -333,39 +391,36 @@ export default function AppointmentBooking() {
   if (activeSpec) breadcrumbItems.push(activeSpec.name);
 
   const searchPlaceholder =
-    activeTabId === "cat" ? "Search categories…" :
-      activeTabId === "spec" ? "Search specialties…" :
-        "Search conditions / symptoms…";
+    activeTabId === "cat"
+      ? "Search categories…"
+      : activeTabId === "spec"
+        ? "Search specialties…"
+        : "Search conditions / symptoms…";
 
   const drillConditions = activeSpec ? activeSpec.conditions : [];
 
-  // Derive the numbered label shown in level-label (e.g. "01 — General & Everyday Care")
   const activeCatIndex = activeCat
     ? enrichedTree.findIndex((c) => c.id === activeCat.id)
     : -1;
-  const catNumLabel = activeCatIndex >= 0
-    ? String(activeCatIndex + 1).padStart(2, "0")
-    : null;
+  const catNumLabel =
+    activeCatIndex >= 0 ? String(activeCatIndex + 1).padStart(2, "0") : null;
 
   return (
-
     <section className="hcc-sx">
       <div className="wrap">
-
         {/* ── CENTERED HERO ── */}
         <div className="head">
-          {/* Small pill badge — "● THE PLATFORM" style from screenshot */}
           <span className="eyebrow">
             <span className="eyebrow-dot" />
             Discover Care
           </span>
 
-          <h2>Find the right online doctor for your needs.
-</h2>
+          <h2>Find the right online doctor for your needs.</h2>
 
           <p className="lead">
-          Book an online doctor appointment in minutes and access secure virtual healthcare services without long wait times or unnecessary clinic visits. 
-
+            Book an online doctor appointment in minutes and access secure
+            virtual healthcare services without long wait times or unnecessary
+            clinic visits.
           </p>
         </div>
 
@@ -390,7 +445,14 @@ export default function AppointmentBooking() {
           {/* ── SEARCH TOOLBAR ── */}
           <div className="toolbar">
             <div className="search">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="19"
+                height="19"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="11" cy="11" r="7" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
@@ -411,11 +473,14 @@ export default function AppointmentBooking() {
             <>
               {drillLevel !== "cat" && (
                 <div style={{ padding: "28px 40px 0" }}>
-                  <Breadcrumb items={breadcrumbItems} onNavigate={handleBreadcrumb} />
+                  <Breadcrumb
+                    items={breadcrumbItems}
+                    onNavigate={handleBreadcrumb}
+                  />
                 </div>
               )}
 
-              {/* Category grid */}
+              {/* ── Category grid ── */}
               {drillLevel === "cat" && (
                 <div className="panel">
                   <div className="catgrid">
@@ -428,7 +493,9 @@ export default function AppointmentBooking() {
                           <div
                             key={c.id}
                             className="catcard"
-                            onClick={(e) => handleCardClick(e, () => handleOpenCat(c))}
+                            onClick={(e) =>
+                              handleCardClick(e, () => handleOpenCat(c))
+                            }
                           >
                             <div className="ic">{c.icon}</div>
                             <h3>{c.label}</h3>
@@ -439,13 +506,15 @@ export default function AppointmentBooking() {
                         );
                       })
                     ) : (
-                      <div className="empty"><div className="big">🔍</div>No categories match.</div>
+                      <div className="empty">
+                        <div className="big">🔍</div>No categories match.
+                      </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Specialty list */}
+              {/* ── Specialty list ── */}
               {drillLevel === "spec" && activeCat && (
                 <div className="panel">
                   <div className="hcc-level-label">
@@ -476,13 +545,18 @@ export default function AppointmentBooking() {
                 </div>
               )}
 
-              {/* Condition list */}
+              {/* ── Condition list ── (unchanged) ── */}
               {drillLevel === "cond" && activeSpec && (
                 <div className="panel">
                   <div className="hcc-level-label">
                     <span style={{ fontSize: 20 }}>{activeSpec.icon}</span>
                     {activeSpec.name} — select your condition
                   </div>
+                  {!activeSpec.priceAvailable && (
+                    <div className="hcc-price-alert">
+                      {activeSpec.priceMessage}
+                    </div>
+                  )}
                   <div className="condgrid">
                     {drillConditions
                       .filter(([name]) => !q || name.toLowerCase().includes(q))
@@ -498,12 +572,22 @@ export default function AppointmentBooking() {
                         </div>
                       ))}
                     <div
-                      className="condcard condcard-other"
-                      onClick={(e) => handleCardClick(e, () => handleSelectCond("General Consultation", "🩺", activeSpec))}
+                      className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
+                      onClick={(e) =>
+                        handleCardClick(e, () =>
+                          handleSelectCond(
+                            "General Consultation",
+                            "🩺",
+                            activeSpec,
+                          ),
+                        )
+                      }
                     >
                       <div className="condcard-ico">💬</div>
-                      <div className="condcard-name">Other / not listed</div>
-                      <div className="condcard-go">Book →</div>
+                      <div className="condcard-body">
+                        <div className="condcard-name">Other / not listed</div>
+                        <div className="condcard-desc">{activeSpec.name}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -530,13 +614,15 @@ export default function AppointmentBooking() {
                     </div>
                   ))
                 ) : (
-                  <div className="empty"><div className="big">🔍</div>No specialties found.</div>
+                  <div className="empty">
+                    <div className="big">🔍</div>No specialties found.
+                  </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* ── FLAT BROWSE: Conditions ── */}
+          {/* ── FLAT BROWSE: Conditions ── (unchanged) ── */}
           {browseTab === "cond" && (
             <div className="panel">
               <div className="condgrid">
@@ -544,8 +630,10 @@ export default function AppointmentBooking() {
                   visibleFlatConditions.map((c, i) => (
                     <div
                       key={i}
-                      className="condcard"
-                      onClick={(e) => handleCardClick(e, () => handleFlatCondClick(c))}
+                      className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
+                      onClick={(e) =>
+                        handleCardClick(e, () => handleFlatCondClick(c))
+                      }
                     >
                       <div className="condcard-ico">{c.icon}</div>
                       <div className="condcard-name">{c.name}</div>
@@ -554,7 +642,9 @@ export default function AppointmentBooking() {
                     </div>
                   ))
                 ) : (
-                  <div className="empty"><div className="big">🔍</div>No conditions match.</div>
+                  <div className="empty">
+                    <div className="big">🔍</div>No conditions match.
+                  </div>
                 )}
               </div>
             </div>

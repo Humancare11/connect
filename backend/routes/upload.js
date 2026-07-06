@@ -14,6 +14,7 @@ const { getS3ObjectUrl } = require("../config/s3");
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const BLOCKED_EXTENSIONS = new Set([
   ".exe", ".dll", ".bat", ".cmd", ".com", ".scr", ".msi", ".ps1", ".sh", ".jar", ".js", ".vbs", ".php", ".py", ".rb",
+  ".html", ".htm", ".svg", ".xml", ".ts", ".tsx", ".jsx",
 ]);
 const BLOCKED_MIME_PREFIXES = ["application/x-msdownload", "application/x-dosexec", "application/x-sh"];
 const ALLOWED_TYPES = {

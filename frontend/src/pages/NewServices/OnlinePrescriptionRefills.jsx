@@ -53,24 +53,55 @@ import {
 
 import { Helmet } from "react-helmet-async";
 
-/* ──────────────────────────────────────────────────────────────────────────
-   DESIGN TOKENS — light theme
-   Body copy uses solid slate, never low-opacity white-on-white, so contrast
-   stays readable (point 6). Accent color is the only saturated color on the
-   page; everything else is neutral.
-────────────────────────────────────────────────────────────────────────── */
-const BG_BASE = "#FFFFFF"; // Page background
-const BG_SURFACE = "#F8FAFC"; // Alternating section background
-const BG_ELEVATED = "#FFFFFF"; // Card background (flat, bordered — no glass)
-const TEXT_PRIMARY = "#0F172A"; // Headings, high-emphasis body
-const TEXT_BODY = "#475569"; // Standard paragraph text
-const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
+import heroBanner from "../../assets/MedicalServices/online-prescription-digital-healthcare.webp";
+
+const HERO_IMAGE = {
+  src: heroBanner,
+  alt: "Healthcare professionals providing telemedicine and virtual healthcare solutions for businesses across corporate, insurance, maritime, legal, and hospitality industries",
+  width: 1920,
+  height: 700,
+};
+
+/* ─────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────────────────────────────────────── */
+const BG_BASE = "#FFFFFF";
+const BG_SURFACE = "#F8FAFC";
+const BG_ELEVATED = "#FFFFFF";
+const TEXT_PRIMARY = "#0F172A";
+const TEXT_BODY = "#475569";
+const TEXT_DIM = "#64748B";
 const BORDER = "#E2E8F0";
 const BORDER_HOVER = "#CBD5E1";
 
-/* ──────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
+   BREAKPOINT HOOK
+   Returns { isMobile, isTablet, isDesktop }
+   isMobile  < 640px
+   isTablet  640–1023px
+   isDesktop ≥ 1024px
+───────────────────────────────────────────────────────────────────────── */
+const useBreakpoint = () => {
+  const getBreakpoint = () => {
+    const w = typeof window !== "undefined" ? window.innerWidth : 1200;
+    return {
+      isMobile: w < 640,
+      isTablet: w >= 640 && w < 1024,
+      isDesktop: w >= 1024,
+    };
+  };
+  const [bp, setBp] = useState(getBreakpoint);
+  useEffect(() => {
+    const handler = () => setBp(getBreakpoint());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return bp;
+};
+
+/* ─────────────────────────────────────────────────────────────────────────
    DATA
-────────────────────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
     slug: "telehealth-services",
@@ -153,7 +184,6 @@ const SERVICES = {
         desc: "Consultations available in 14+ languages with live interpreter access.",
       },
     ],
-
     stats: [
       { value: 120000, suffix: "+", label: "Patients Served" },
       { value: 2800, suffix: "+", label: "Verified Providers" },
@@ -240,9 +270,10 @@ const SERVICES = {
     ],
   },
 };
-/* ──────────────────────────────────────────────────────────────────────────
+
+/* ─────────────────────────────────────────────────────────────────────────
    HOOKS & UTILS
-────────────────────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────────────────── */
 const useCountUp = (target, duration = 2200, start = false) => {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -275,9 +306,9 @@ const fadeUp = {
 };
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 
-/* ──────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
    MICRO COMPONENTS
-────────────────────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────────────────── */
 const SLabel = ({ text, ac }) => (
   <div
     style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}
@@ -297,8 +328,6 @@ const SLabel = ({ text, ac }) => (
   </div>
 );
 
-// Returns a hex color darkened toward black by `amount` (0-1), used to keep
-// small accent-tinted text safely above WCAG AA contrast on light tint backgrounds.
 const darken = (hex, amount) => {
   const h = hex.replace("#", "");
   const r = parseInt(h.slice(0, 2), 16),
@@ -311,7 +340,7 @@ const darken = (hex, amount) => {
 };
 
 const Pill = ({ children, ac }) => {
-  const textColor = darken(ac, 0.18); // verified >7:1 contrast at this font size, vs ~4.5:1 for the raw accent
+  const textColor = darken(ac, 0.18);
   return (
     <div
       style={{
@@ -320,7 +349,7 @@ const Pill = ({ children, ac }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: `${ac}12`,
+        background: "#FFFFFF",
         color: textColor,
         border: `1px solid ${ac}30`,
         fontSize: 11,
@@ -398,17 +427,19 @@ const GhostBtn = ({ children, onClick }) => (
   </button>
 );
 
-/* ──────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
    HERO
-  
-────────────────────────────────────────────────────────────────────────── */
-const Hero = ({ s }) => {
+───────────────────────────────────────────────────────────────────────── */
+const Hero = ({ s, bp }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
   });
   const op = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const words = s.name.split(" ");
+  const midIdx = Math.floor(words.length / 2);
+  const accentLight = s.accentColor === "#2563EB" ? "#60A5FA" : s.accentColor;
 
   return (
     <section
@@ -420,17 +451,51 @@ const Hero = ({ s }) => {
         flexDirection: "column",
         justifyContent: "center",
         overflow: "hidden",
-        background: BG_SURFACE,
         borderBottom: `1px solid ${BORDER}`,
       }}
     >
+      {/* Background Image */}
+      <img
+        src={HERO_IMAGE.src}
+        alt={HERO_IMAGE.alt}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        loading="eager"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Overlay */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `
+            linear-gradient(
+              to bottom,
+              rgba(15, 23, 42, 0.35) 0%,
+              rgba(15, 23, 42, 0.65) 50%,
+              rgba(15, 23, 42, 0.95) 100%
+            )
+          `,
+          zIndex: 1,
+        }}
+      />
+
+      {/* Hero Content */}
       <motion.div
         style={{
           position: "relative",
           zIndex: 10,
           maxWidth: 1200,
           margin: "0 auto",
-          padding: "64px 24px",
+          padding: "100px 24px",
           width: "100%",
           opacity: op,
         }}
@@ -450,7 +515,7 @@ const Hero = ({ s }) => {
           style={{
             fontSize: "clamp(36px, 5.5vw, 60px)",
             fontWeight: 900,
-            color: TEXT_PRIMARY,
+            color: "#FFFFFF",
             lineHeight: 1.08,
             letterSpacing: "-0.03em",
             marginBottom: 18,
@@ -474,7 +539,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.5, delay: 0.26 }}
           style={{
             fontSize: 18,
-            color: TEXT_DIM,
+            color: "#E5E7EB",
             fontStyle: "italic",
             marginBottom: 10,
           }}
@@ -488,7 +553,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.45, delay: 0.32 }}
           style={{
             fontSize: 16,
-            color: TEXT_BODY,
+            color: "#F3F4F6",
             lineHeight: 1.7,
             maxWidth: 560,
             marginBottom: 28,
@@ -501,21 +566,29 @@ const Hero = ({ s }) => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.38 }}
-          style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
+          style={{
+            display: "flex",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
         >
-          <PrimaryBtn ac={s.accentColor}>Book Appointment</PrimaryBtn>
-          <GhostBtn>
-            Contact Care Team <FiArrowRight />
-          </GhostBtn>
+          <PrimaryBtn ac={s.accentColor}>
+            <a
+              href="/appointment-booking"
+              style={{ color: "#fff", textDecoration: "none" }}
+            >
+              Book Appointment
+            </a>
+          </PrimaryBtn>
         </motion.div>
       </motion.div>
     </section>
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   CONSULTATION FORM — 
-────────────────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────
+   CONSULTATION FORM
+───────────────────────────────────────────────────────────────────────── */
 const ConsultationForm = ({ s }) => {
   const [values, setValues] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
@@ -539,6 +612,7 @@ const ConsultationForm = ({ s }) => {
     outline: "none",
     transition: "border-color 0.2s, box-shadow 0.2s",
     fontFamily: "inherit",
+    boxSizing: "border-box",
   };
 
   const labelStyle = {
@@ -734,420 +808,434 @@ const ConsultationForm = ({ s }) => {
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
    OVERVIEW
-   Fix 2: text block now sits left (was right), and the right column — which
-   previously held the icon visual panel — now holds the consultation form.
-   The outcomes strip at the bottom is unchanged in structure.
-────────────────────────────────────────────────────────────────────────── */
-const Overview = ({ s }) => (
-  <section
-    style={{
-      background: BG_BASE,
-      width: "100%",
-    }}
-  >
-    <div
+───────────────────────────────────────────────────────────────────────── */
+const Overview = ({ s, bp }) => {
+  const sectionPadding = bp.isMobile ? "52px 20px" : "88px 24px";
+
+  // Outcomes grid: 4-col desktop → 2-col tablet → 1-col mobile
+  const outcomesColumns = bp.isMobile
+    ? "1fr"
+    : bp.isTablet
+      ? "repeat(2, 1fr)"
+      : "repeat(4, 1fr)";
+
+  return (
+    <section style={{ background: BG_BASE, width: "100%" }}>
+      <div
+        style={{ maxWidth: 1200, margin: "0 auto", padding: sectionPadding }}
+      >
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              bp.isMobile || bp.isTablet ? "1fr" : "1.1fr 0.9fr",
+            gap: bp.isMobile ? 32 : 64,
+            alignItems: "start",
+          }}
+        >
+          {/* Text */}
+          <div>
+            <motion.div variants={fadeUp}>
+              <SLabel text="Service Overview" ac={s.accentColor} />
+              <h2
+                style={{
+                  fontSize: "clamp(26px, 3.5vw, 36px)",
+                  fontWeight: 900,
+                  color: TEXT_PRIMARY,
+                  lineHeight: 1.15,
+                  marginBottom: 20,
+                }}
+              >
+                What Are Online Prescription Refills?
+              </h2>
+            </motion.div>
+            <motion.p
+              variants={fadeUp}
+              style={{
+                color: TEXT_BODY,
+                lineHeight: 1.75,
+                marginBottom: 20,
+                fontSize: 15.5,
+              }}
+            >
+              {s.description}
+            </motion.p>
+            <motion.div
+              variants={fadeUp}
+              style={{
+                padding: "16px 18px",
+                borderRadius: 14,
+                marginBottom: 20,
+                background: `${s.accentColor}0A`,
+                border: `1px solid ${s.accentColor}25`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: s.accentColor,
+                  marginBottom: 6,
+                }}
+              >
+                Why It Matters
+              </div>
+              <p
+                style={{
+                  color: TEXT_BODY,
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  margin: 0,
+                }}
+              >
+                {s.whyItMatters}
+              </p>
+            </motion.div>
+            <motion.div variants={fadeUp}>
+              <div
+                style={{
+                  color: TEXT_PRIMARY,
+                  fontWeight: 700,
+                  fontSize: 14,
+                  marginBottom: 12,
+                }}
+              >
+                Who Can Benefit
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {s.whoBenefits.map((item, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 10,
+                      color: TEXT_BODY,
+                      fontSize: 14,
+                    }}
+                  >
+                    <FiCheckCircle
+                      style={{
+                        color: s.accentColor,
+                        fontSize: 16,
+                        marginTop: 1,
+                        flexShrink: 0,
+                      }}
+                    />
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Form — sticky only on desktop */}
+          <motion.div
+            variants={fadeUp}
+            style={{ position: bp.isDesktop ? "sticky" : "static", top: 96 }}
+          >
+            <ConsultationForm s={s} />
+          </motion.div>
+        </motion.div>
+
+        {/* Outcomes strip */}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          style={{
+            display: "grid",
+            gridTemplateColumns: outcomesColumns,
+            gap: 12,
+            marginTop: bp.isMobile ? 32 : 52,
+          }}
+        >
+          {s.keyOutcomes.map((o, i) => (
+            <motion.div
+              key={i}
+              variants={fadeUp}
+              custom={i}
+              style={{
+                display: "flex",
+                gap: 12,
+                alignItems: "flex-start",
+                padding: 16,
+                borderRadius: 14,
+                background: BG_ELEVATED,
+                border: `1px solid ${BORDER}`,
+              }}
+            >
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: s.accentColor,
+                  marginTop: 5,
+                  flexShrink: 0,
+                }}
+              />
+              <p
+                style={{
+                  color: TEXT_BODY,
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  margin: 0,
+                }}
+              >
+                {o}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────────────────
+   HOW IT WORKS
+───────────────────────────────────────────────────────────────────────── */
+const HowItWorks = ({ s, bp }) => {
+  const sectionPadding = bp.isMobile ? "52px 0" : "88px 0";
+
+  return (
+    <section
       style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: "88px 24px",
+        padding: sectionPadding,
+        background: BG_SURFACE,
+        borderTop: `1px solid ${BORDER}`,
+        borderBottom: `1px solid ${BORDER}`,
       }}
     >
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
+      <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "1.1fr 0.9fr",
-          gap: 64,
-          alignItems: "start",
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: bp.isMobile ? "0 20px" : "0 24px",
         }}
       >
-        {/* Text — now the left column */}
-        <div>
-          <motion.div variants={fadeUp}>
-            <SLabel text="Service Overview" ac={s.accentColor} />
-            <h2
-              style={{
-                fontSize: "clamp(26px, 3.5vw, 36px)",
-                fontWeight: 900,
-                color: TEXT_PRIMARY,
-                lineHeight: 1.15,
-                marginBottom: 20,
-              }}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          style={{
+            display: "grid",
+            gridTemplateColumns: bp.isMobile || bp.isTablet ? "1fr" : "1fr 1fr",
+            gap: bp.isMobile ? 32 : 64,
+            alignItems: "start",
+          }}
+        >
+          <div>
+            <motion.div variants={fadeUp}>
+              <SLabel text="Our Services" ac={s.accentColor} />
+              <h2
+                style={{
+                  fontSize: "clamp(26px, 3.5vw, 36px)",
+                  fontWeight: 900,
+                  color: TEXT_PRIMARY,
+                  lineHeight: 1.15,
+                  marginBottom: 8,
+                }}
+              >
+                Getting started is{" "}
+                <span style={{ color: s.accentColor }}>simple.</span>
+              </h2>
+              <p
+                style={{
+                  color: TEXT_DIM,
+                  fontSize: 15,
+                  lineHeight: 1.7,
+                  marginBottom: 36,
+                }}
+              >
+                Requesting an online prescription refill through Humancare
+                Connect is quick, secure, and convenient.
+              </p>
+            </motion.div>
+
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
             >
-              What Are Online Prescription Refills?
-            </h2>
-          </motion.div>
-          <motion.p
-            variants={fadeUp}
-            style={{
-              color: TEXT_BODY,
-              lineHeight: 1.75,
-              marginBottom: 20,
-              fontSize: 15.5,
-            }}
-          >
-            {s.description}
-          </motion.p>
-          <motion.div
-            variants={fadeUp}
-            style={{
-              padding: "16px 18px",
-              borderRadius: 14,
-              marginBottom: 20,
-              background: `${s.accentColor}0A`,
-              border: `1px solid ${s.accentColor}25`,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: s.accentColor,
-                marginBottom: 6,
-              }}
-            >
-              Why It Matters
-            </div>
-            <p
-              style={{
-                color: TEXT_BODY,
-                fontSize: 14,
-                lineHeight: 1.7,
-                margin: 0,
-              }}
-            >
-              {s.whyItMatters}
-            </p>
-          </motion.div>
-          <motion.div variants={fadeUp}>
-            <div
-              style={{
-                color: TEXT_PRIMARY,
-                fontWeight: 700,
-                fontSize: 14,
-                marginBottom: 12,
-              }}
-            >
-              Who Can Benefit
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {s.whoBenefits.map((item, i) => (
-                <div
+              {s.steps.map((step, i) => (
+                <motion.div
                   key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    color: TEXT_BODY,
-                    fontSize: 14,
-                  }}
+                  variants={fadeUp}
+                  custom={i}
+                  style={{ position: "relative", display: "flex", gap: 18 }}
                 >
-                  <FiCheckCircle
+                  {i < s.steps.length - 1 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 19,
+                        top: 46,
+                        width: 1,
+                        height: "calc(100% - 8px)",
+                        background: BORDER_HOVER,
+                      }}
+                    />
+                  )}
+                  <div
                     style={{
-                      color: s.accentColor,
-                      fontSize: 16,
-                      marginTop: 1,
+                      position: "relative",
+                      zIndex: 1,
                       flexShrink: 0,
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: s.accentColor,
                     }}
-                  />
-                  {item}
-                </div>
+                  >
+                    {React.createElement(step.Icon, {
+                      style: { fontSize: 18, color: "#fff" },
+                    })}
+                  </div>
+                  <div style={{ paddingBottom: 28, flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        color: s.accentColor,
+                        marginBottom: 4,
+                      }}
+                    >
+                      Step {i + 1}
+                    </div>
+                    <div
+                      style={{
+                        color: TEXT_PRIMARY,
+                        fontWeight: 700,
+                        fontSize: 15,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {step.title}
+                    </div>
+                    <p
+                      style={{
+                        color: TEXT_DIM,
+                        fontSize: 14,
+                        lineHeight: 1.65,
+                        margin: 0,
+                      }}
+                    >
+                      {step.body}
+                    </p>
+                  </div>
+                </motion.div>
               ))}
-            </div>
-          </motion.div>
-        </div>
+            </motion.div>
+          </div>
 
-        {/* Form — now the right column, replacing the old icon visual panel */}
-        <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
-          <ConsultationForm s={s} />
-        </motion.div>
-      </motion.div>
-
-      {/* Outcomes strip — unchanged */}
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 12,
-          marginTop: 52,
-        }}
-      >
-        {s.keyOutcomes.map((o, i) => (
+          {/* Sticky card — static on mobile/tablet */}
           <motion.div
-            key={i}
             variants={fadeUp}
-            custom={i}
-            style={{
-              display: "flex",
-              gap: 12,
-              alignItems: "flex-start",
-              padding: 16,
-              borderRadius: 14,
-              background: BG_ELEVATED,
-              border: `1px solid ${BORDER}`,
-            }}
+            style={{ position: bp.isDesktop ? "sticky" : "static", top: 96 }}
           >
             <div
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: s.accentColor,
-                marginTop: 5,
-                flexShrink: 0,
-              }}
-            />
-            <p
-              style={{
-                color: TEXT_BODY,
-                fontSize: 13,
-                lineHeight: 1.6,
-                margin: 0,
+                borderRadius: 24,
+                padding: bp.isMobile ? 24 : 36,
+                background: "#fff",
+                border: `1px solid ${BORDER}`,
               }}
             >
-              {o}
-            </p>
+              {React.createElement(s.heroIcon, {
+                style: { fontSize: 44, color: s.accentColor, marginBottom: 16 },
+              })}
+              <h3
+                style={{
+                  color: TEXT_PRIMARY,
+                  fontSize: 20,
+                  fontWeight: 800,
+                  marginBottom: 8,
+                }}
+              >
+                Ready to begin?
+              </h3>
+              <p
+                style={{
+                  color: TEXT_DIM,
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  marginBottom: 24,
+                }}
+              >
+                Get convenient access to online prescription refills through
+                trusted telemedicine services. Most appointments take just a few
+                minutes, helping you stay on track with your medications and
+                ongoing care.
+              </p>
+              <PrimaryBtn ac={s.accentColor} fullWidth>
+                <a href="/login"> Get Started Today</a>
+              </PrimaryBtn>
+              <div
+                style={{
+                  marginTop: 20,
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 8,
+                }}
+              >
+                {[
+                  [FiLock, "Secure & Private"],
+                  [FiZap, "Fast Response"],
+                  [FiUserCheck, "Verified Providers"],
+                  [FiFileText, "Insurance Accepted"],
+                ].map(([Icon, lb], i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      color: TEXT_DIM,
+                      fontSize: 12,
+                    }}
+                  >
+                    <Icon style={{ fontSize: 13, color: s.accentColor }} />
+                    {lb}
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
-        ))}
-      </motion.div>
-    </div>
-  </section>
-);
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
-/* ──────────────────────────────────────────────────────────────────────────
-   OUR SERVICES (was "How It Works")
-   Fix 3: heading text changed only — content (the 4-step process) is
-   unchanged since it's still accurate underneath the new label.
-   Fix 5: sticky card glass effect removed — flat surface, no backdrop-filter,
-   no glow blob.
-────────────────────────────────────────────────────────────────────────── */
-const HowItWorks = ({ s }) => (
+/* ─────────────────────────────────────────────────────────────────────────
+   FEATURES & BENEFITS
+───────────────────────────────────────────────────────────────────────── */
+const Features = ({ s, bp }) => (
   <section
     style={{
-      padding: "88px 0",
-      background: BG_SURFACE,
-      borderTop: `1px solid ${BORDER}`,
-      borderBottom: `1px solid ${BORDER}`,
+      maxWidth: 1200,
+      margin: "0 auto",
+      padding: bp.isMobile ? "52px 20px" : "88px 24px",
     }}
   >
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 64,
-          alignItems: "start",
-        }}
-      >
-        <div>
-          <motion.div variants={fadeUp}>
-            <SLabel text="Our Services" ac={s.accentColor} />
-            <h2
-              style={{
-                fontSize: "clamp(26px, 3.5vw, 36px)",
-                fontWeight: 900,
-                color: TEXT_PRIMARY,
-                lineHeight: 1.15,
-                marginBottom: 8,
-              }}
-            >
-              Getting started is{" "}
-              <span style={{ color: s.accentColor }}>simple.</span>
-            </h2>
-            <p
-              style={{
-                color: TEXT_DIM,
-                fontSize: 15,
-                lineHeight: 1.7,
-                marginBottom: 36,
-              }}
-            >
-              Requesting an online prescription refill through Humancare Connect
-              is quick, secure, and convenient.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {s.steps.map((step, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                custom={i}
-                style={{ position: "relative", display: "flex", gap: 18 }}
-              >
-                {i < s.steps.length - 1 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: 19,
-                      top: 46,
-                      width: 1,
-                      height: "calc(100% - 8px)",
-                      background: BORDER_HOVER,
-                    }}
-                  />
-                )}
-                <div
-                  style={{
-                    position: "relative",
-                    zIndex: 1,
-                    flexShrink: 0,
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: s.accentColor,
-                  }}
-                >
-                  {React.createElement(step.Icon, {
-                    style: { fontSize: 18, color: "#fff" },
-                  })}
-                </div>
-                <div style={{ paddingBottom: 28, flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: s.accentColor,
-                      marginBottom: 4,
-                    }}
-                  >
-                    Step {i + 1}
-                  </div>
-                  <div
-                    style={{
-                      color: TEXT_PRIMARY,
-                      fontWeight: 700,
-                      fontSize: 15,
-                      marginBottom: 4,
-                    }}
-                  >
-                    {step.title}
-                  </div>
-                  <p
-                    style={{
-                      color: TEXT_DIM,
-                      fontSize: 14,
-                      lineHeight: 1.65,
-                      margin: 0,
-                    }}
-                  >
-                    {step.body}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-
-        {/* Sticky card — flat surface, no blur, no glow blob */}
-        <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
-          <div
-            style={{
-              borderRadius: 24,
-              padding: 36,
-              background: "#fff",
-              border: `1px solid ${BORDER}`,
-            }}
-          >
-            {React.createElement(s.heroIcon, {
-              style: { fontSize: 44, color: s.accentColor, marginBottom: 16 },
-            })}
-            <h3
-              style={{
-                color: TEXT_PRIMARY,
-                fontSize: 20,
-                fontWeight: 800,
-                marginBottom: 8,
-              }}
-            >
-              Ready to begin?
-            </h3>
-            <p
-              style={{
-                color: TEXT_DIM,
-                fontSize: 14,
-                lineHeight: 1.7,
-                marginBottom: 24,
-              }}
-            >
-              Get convenient access to online prescription refills through
-              trusted telemedicine services. Most appointments take just a few
-              minutes, helping you stay on track with your medications and
-              ongoing care.
-            </p>
-            <PrimaryBtn ac={s.accentColor} fullWidth>
-              Get Started Today
-            </PrimaryBtn>
-            <div
-              style={{
-                marginTop: 20,
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 8,
-              }}
-            >
-              {[
-                [FiLock, "Secure & Private"],
-                [FiZap, "Fast Response"],
-                [FiUserCheck, "Verified Providers"],
-                [FiFileText, "Insurance Accepted"],
-              ].map(([Icon, lb], i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    color: TEXT_DIM,
-                    fontSize: 12,
-                  }}
-                >
-                  <Icon style={{ fontSize: 13, color: s.accentColor }} />
-                  {lb}
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </div>
-  </section>
-);
-
-/* ──────────────────────────────────────────────────────────────────────────
-   FEATURES & BENEFITS
-   Fix 4: the 6 separate small cards are consolidated into a single large
-   card. Each feature is now a row inside one bordered container rather than
-   its own tile, so it reads as one consolidated "service details" panel.
-   Fix 5: no glass effect, no hover glow-shadow — flat row dividers instead.
-────────────────────────────────────────────────────────────────────────── */
-const Features = ({ s }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
     <motion.div
       variants={stagger}
       initial="hidden"
@@ -1186,7 +1274,7 @@ const Features = ({ s }) => (
           overflow: "hidden",
         }}
       >
-        <div style={{ padding: 28 }}>
+        <div style={{ padding: bp.isMobile ? 20 : 28 }}>
           <p
             style={{
               color: TEXT_BODY,
@@ -1243,10 +1331,9 @@ const Features = ({ s }) => (
   </section>
 );
 
-/* ──────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
    STATS / WHY US
-   Fix 5: no glass effect on stat or info cards — flat bordered surfaces.
-────────────────────────────────────────────────────────────────────────── */
+───────────────────────────────────────────────────────────────────────── */
 const StatCard = ({ value, suffix, label, ac, go }) => {
   const c = useCountUp(value, 2200, go);
   return (
@@ -1324,7 +1411,7 @@ const whyUsItems = [
   ],
 ];
 
-const WhyUs = ({ s }) => {
+const WhyUs = ({ s, bp }) => {
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
@@ -1338,10 +1425,23 @@ const WhyUs = ({ s }) => {
     return () => obs.disconnect();
   }, []);
 
+  // Stats: 4-col desktop → 2-col tablet+mobile
+  const statsColumns = bp.isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)";
+  // Why-us items: 3-col desktop → 2-col tablet → 1-col mobile
+  const whyColumns = bp.isMobile
+    ? "1fr"
+    : bp.isTablet
+      ? "repeat(2, 1fr)"
+      : "repeat(3, 1fr)";
+
   return (
     <section
       ref={ref}
-      style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}
+      style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: bp.isMobile ? "52px 20px" : "88px 24px",
+      }}
     >
       <motion.div
         variants={stagger}
@@ -1374,7 +1474,7 @@ const WhyUs = ({ s }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: statsColumns,
             gap: 12,
             marginBottom: 44,
           }}
@@ -1394,7 +1494,7 @@ const WhyUs = ({ s }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: whyColumns,
             gap: 12,
           }}
         >
@@ -1450,20 +1550,29 @@ const WhyUs = ({ s }) => {
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
    FAQ
-   Fix 5: container is a flat bordered surface, no backdrop blur.
-────────────────────────────────────────────────────────────────────────── */
-const FAQ = ({ s }) => {
+───────────────────────────────────────────────────────────────────────── */
+const FAQ = ({ s, bp }) => {
   const [open, setOpen] = useState(null);
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+    <section
+      style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: bp.isMobile ? "52px 20px" : "88px 24px",
+      }}
+    >
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: bp.isMobile || bp.isTablet ? "1fr" : "1fr 1fr",
+          gap: bp.isMobile ? 32 : 64,
+        }}
       >
         <motion.div variants={fadeUp}>
           <SLabel text="FAQ" ac={s.accentColor} />
@@ -1491,7 +1600,7 @@ const FAQ = ({ s }) => {
             We've answered the most common questions below. Our care team is one
             message away if yours isn't listed.
           </p>
-          <button
+          {/* <button
             style={{
               padding: "11px 20px",
               borderRadius: 12,
@@ -1514,13 +1623,13 @@ const FAQ = ({ s }) => {
             }
           >
             <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button>
+          </button> */}
         </motion.div>
 
         <motion.div
           variants={fadeUp}
           style={{
-            padding: 20,
+            padding: bp.isMobile ? 16 : 20,
             borderRadius: 22,
             background: "#fff",
             border: `1px solid ${BORDER}`,
@@ -1552,7 +1661,7 @@ const FAQ = ({ s }) => {
                   style={{
                     color: TEXT_PRIMARY,
                     fontWeight: 700,
-                    fontSize: 14,
+                    fontSize: bp.isMobile ? 13 : 14,
                     paddingRight: 16,
                   }}
                 >
@@ -1592,7 +1701,7 @@ const FAQ = ({ s }) => {
                     <div
                       style={{
                         paddingBottom: 16,
-                        paddingRight: 40,
+                        paddingRight: bp.isMobile ? 8 : 40,
                         color: TEXT_BODY,
                         fontSize: 14,
                         lineHeight: 1.7,
@@ -1611,13 +1720,17 @@ const FAQ = ({ s }) => {
   );
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────
    FINAL CTA
-   Fix 5: glow blobs and translucent layered gradient removed — flat tinted
-   surface instead.
-────────────────────────────────────────────────────────────────────────── */
-const FinalCTA = ({ s }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+───────────────────────────────────────────────────────────────────────── */
+const FinalCTA = ({ s, bp }) => (
+  <section
+    style={{
+      maxWidth: 1200,
+      margin: "0 auto",
+      padding: bp.isMobile ? "52px 20px" : "88px 24px",
+    }}
+  >
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -1626,7 +1739,7 @@ const FinalCTA = ({ s }) => (
       style={{
         position: "relative",
         borderRadius: 28,
-        padding: "72px 48px",
+        padding: bp.isMobile ? "44px 24px" : "72px 48px",
         textAlign: "center",
         background: `${s.accentColor}08`,
         border: `1px solid ${s.accentColor}25`,
@@ -1636,7 +1749,9 @@ const FinalCTA = ({ s }) => (
         <Pill ac={s.accentColor}>Start Today</Pill>
         <h2
           style={{
-            fontSize: "clamp(32px, 5vw, 52px)",
+            fontSize: bp.isMobile
+              ? "clamp(28px, 8vw, 36px)"
+              : "clamp(32px, 5vw, 52px)",
             fontWeight: 900,
             color: TEXT_PRIMARY,
             lineHeight: 1.1,
@@ -1653,7 +1768,7 @@ const FinalCTA = ({ s }) => (
             lineHeight: 1.7,
             maxWidth: 500,
             margin: "0 auto 36px",
-            fontSize: 16,
+            fontSize: bp.isMobile ? 15 : 16,
           }}
         >
           Stay on track with your treatment plan through secure online
@@ -1669,11 +1784,17 @@ const FinalCTA = ({ s }) => (
             gap: 12,
             marginBottom: 36,
             flexWrap: "wrap",
+            flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}>Get Started</PrimaryBtn>
-          <GhostBtn>Book Appointment</GhostBtn>
-          <button
+          <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
+            <a href="/login"> Get Started Today</a>
+          </PrimaryBtn>
+          <GhostBtn>
+            {" "}
+            <a href="/appointment-booking"> Book Appointment </a>
+          </GhostBtn>
+          {/* <button
             style={{
               padding: "13px 24px",
               borderRadius: 12,
@@ -1683,10 +1804,11 @@ const FinalCTA = ({ s }) => (
               color: TEXT_DIM,
               border: `1px solid ${BORDER_HOVER}`,
               cursor: "pointer",
+              width: bp.isMobile ? "100%" : "auto",
             }}
           >
             Contact Us
-          </button>
+          </button> */}
         </div>
         <div
           style={{
@@ -1694,7 +1816,7 @@ const FinalCTA = ({ s }) => (
             flexWrap: "wrap",
             alignItems: "center",
             justifyContent: "center",
-            gap: 28,
+            gap: bp.isMobile ? 16 : 28,
           }}
         >
           {[
@@ -1724,15 +1846,14 @@ const FinalCTA = ({ s }) => (
   </section>
 );
 
-/* ──────────────────────────────────────────────────────────────────────────
-   ROOT APP
-   Fix 6: wrapper background now matches the token system used throughout
-   every child component, instead of a hardcoded color disconnected from it.
-────────────────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────
+   ROOT
+───────────────────────────────────────────────────────────────────────── */
 export default function OnlinePrescriptionRefills() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
+  const bp = useBreakpoint();
 
   return (
     <>
@@ -1743,16 +1864,10 @@ export default function OnlinePrescriptionRefills() {
         </title>
         <meta
           name="description"
-          content=" Need a prescription refill? Connect with licensed healthcare providers through secure telemedicine services and renew eligible medications online."
+          content="Need a prescription refill? Connect with licensed healthcare providers through secure telemedicine services and renew eligible medications online."
         />
       </Helmet>
-      <div
-      // style={{
-      //   backgroundColor: BG_BASE,
-      //   minHeight: "700px",
-      //   width: "100%",
-      // }}
-      >
+      <div>
         <AnimatePresence mode="wait">
           <motion.div
             key={slug}
@@ -1761,13 +1876,13 @@ export default function OnlinePrescriptionRefills() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} />
-            <Overview s={s} />
-            <HowItWorks s={s} />
-            <Features s={s} />
-            <WhyUs s={s} />
-            <FAQ s={s} />
-            <FinalCTA s={s} />
+            <Hero s={s} bp={bp} />
+            <Overview s={s} bp={bp} />
+            <HowItWorks s={s} bp={bp} />
+            <Features s={s} bp={bp} />
+            <WhyUs s={s} bp={bp} />
+            <FAQ s={s} bp={bp} />
+            <FinalCTA s={s} bp={bp} />
           </motion.div>
         </AnimatePresence>
       </div>

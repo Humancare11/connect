@@ -33,6 +33,7 @@ const enrollmentSchema = new mongoose.Schema({
   aboutDoctor: String,
   consultationMode: String,
   languagesKnown: [String],
+  licensedStates: [String],
   internationalLicenses: [String],
   clinicName: String,
   clinicAddress: String,
@@ -69,6 +70,8 @@ const enrollmentSchema = new mongoose.Schema({
   hasCertification: { type: Boolean, default: false },
   verified: { type: Boolean, default: false },
   formCompleted: { type: Boolean, default: false },
+  isOnline: { type: Boolean, default: false },
+  lastOnlineAt: { type: Date, default: null },
 
   // Live onboarding progress
   completedSteps: { type: Number, default: 0, min: 0, max: 5 },

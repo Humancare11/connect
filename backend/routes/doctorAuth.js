@@ -52,6 +52,8 @@ const PROFILE_CHANGE_LABELS = {
   zip: "ZIP / Postal Code",
   address: "Address",
   languagesKnown: "Languages Known",
+  licensedStates: "State/Territory Licensing",
+  internationalLicenses: "International Medical Licenses",
   specialization: "Specialization",
   subSpecialization: "Sub-Specialization",
   qualification: "Qualification",
@@ -76,10 +78,14 @@ const PROFILE_CHANGE_LABELS = {
   ifscCode: "SWIFT / BIC Code",
   payoutEmail: "Payout Email",
   paypalId: "PayPal ID",
+  timezone: "Timezone",
+  availability: "Availability Schedule",
 };
 
 const TRACKED_PROFILE_FIELDS = Object.keys(PROFILE_CHANGE_LABELS);
 const DOCTOR_DOCUMENT_FIELDS = new Set(["profilePhoto", "idProof", "degreeFile", "medicalLicenseFile", "malpracticeInsuranceFile"]);
+// Fields whose values are complex objects — compare with stable JSON (sorted keys).
+const DOCTOR_OBJECT_FIELDS = new Set(["availability"]);
 
 const normalizeComparableValue = (value) => {
   if (value === undefined || value === null) return "";
@@ -93,15 +99,44 @@ const normalizeComparableValue = (value) => {
 const valuesEqual = (left, right) =>
   JSON.stringify(normalizeComparableValue(left)) === JSON.stringify(normalizeComparableValue(right));
 
+// For document fields the frontend may send a normalised URL (e.g.
+// "/api/uploads/uploads/doctors/…") instead of the bare S3 key stored in the
+// database. Reduce both sides to their S3 key before comparing.
+const normalizeDocValue = (value) => keyFromStoredValue(value || "");
+
+// Stable JSON serialisation for complex objects (sorts keys recursively so
+// that insertion-order differences don't produce false positives).
+function stableStringify(value) {
+  if (value === null || value === undefined) return JSON.stringify(null);
+  if (typeof value !== "object" || Array.isArray(value)) return JSON.stringify(value);
+  return "{" + Object.keys(value).sort().map((k) => JSON.stringify(k) + ":" + stableStringify(value[k])).join(",") + "}";
+}
+
 const buildPendingProfileChanges = (enrollment, updates) =>
   TRACKED_PROFILE_FIELDS
     .filter((field) => Object.prototype.hasOwnProperty.call(updates, field))
-    .filter((field) => !valuesEqual(enrollment.get(field), updates[field]))
+    .filter((field) => {
+      const stored = enrollment.get(field);
+      const submitted = updates[field];
+      if (DOCTOR_DOCUMENT_FIELDS.has(field)) {
+        return normalizeDocValue(stored) !== normalizeDocValue(submitted);
+      }
+      if (DOCTOR_OBJECT_FIELDS.has(field)) {
+        return stableStringify(stored) !== stableStringify(submitted);
+      }
+      return !valuesEqual(stored, submitted);
+    })
     .map((field) => ({
       field,
       label: PROFILE_CHANGE_LABELS[field],
-      previousValue: enrollment.get(field),
-      newValue: updates[field],
+      // Always store the bare S3 key for document fields so comparisons
+      // remain stable regardless of how the frontend serialises the URL.
+      previousValue: DOCTOR_DOCUMENT_FIELDS.has(field)
+        ? normalizeDocValue(enrollment.get(field))
+        : enrollment.get(field),
+      newValue: DOCTOR_DOCUMENT_FIELDS.has(field)
+        ? normalizeDocValue(updates[field])
+        : updates[field],
     }));
 
 // ── POST /api/doctor/send-register-otp ───────────────────────────────────────
@@ -726,6 +761,41 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ message: "Doctor not found" });
     }
     return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ── POST /api/doctor/toggle-online ────────────────────────────────────────────
+router.post("/toggle-online", verifyDoctorToken, async (req, res) => {
+  try {
+    const { doctorId } = req.body;
+
+    if (!doctorId) {
+      return res.status(400).json({ message: "Doctor ID required" });
+    }
+
+    // Verify the doctor can only toggle their own status
+    if (req.user.id !== doctorId) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const enrollment = await Enrollment.findOne({ doctorId });
+    if (!enrollment) {
+      return res.status(404).json({ message: "Enrollment not found" });
+    }
+
+    // Toggle the online status
+    enrollment.isOnline = !enrollment.isOnline;
+    enrollment.lastOnlineAt = enrollment.isOnline ? new Date() : enrollment.lastOnlineAt;
+    await enrollment.save();
+
+    res.status(200).json({
+      message: `Doctor is now ${enrollment.isOnline ? "online" : "offline"}`,
+      isOnline: enrollment.isOnline,
+      lastOnlineAt: enrollment.lastOnlineAt,
+    });
+  } catch (err) {
+    console.error("toggleOnlineStatus error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
