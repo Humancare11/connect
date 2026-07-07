@@ -1,7 +1,5 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import "./AppointmentBooking.css";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 
