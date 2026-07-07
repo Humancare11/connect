@@ -290,6 +290,23 @@ import ProstateHealth1 from "./pages/Conditions/Conditions/ProstateHealth";
 import UrinarySymptomsMen1 from "./pages/Conditions/Conditions/UrinarySymptomsMen";
 import Vertigo from "./pages/Conditions/Conditions/Vertigo";
 import Stress from "./pages/Conditions/Conditions/Stress";
+import AngerManagement from "./pages/Conditions/Conditions/AngerManagement";
+import AdjustmentDifficulties from "./pages/Conditions/Conditions/AdjustmentDifficulties";
+import SubstanceUseSupport from "./pages/Conditions/Conditions/SubstanceUseSupport";
+import SleepRelatedAnxiety from "./pages/Conditions/Conditions/SleepRelatedAnxiety";
+import Depression from "./pages/Conditions/Conditions/Depression";
+import Anxiety from "./pages/Conditions/Conditions/Anxiety";
+import BipolarDisorderFollowUp from "./pages/Conditions/Conditions/BipolarDisorderFollowUp";
+import PTSD from "./pages/Conditions/Conditions/Ptsd";
+import PanicAttacks from "./pages/Conditions/Conditions/PanicAttacks";
+import Insomnia from "./pages/Conditions/Conditions/Insomnia";
+import AdhdEvaluation from "./pages/Conditions/Conditions/AdhdEvaluation";
+import GriefAndLoss from "./pages/Conditions/Conditions/GriefAndLoss";
+import RelationshipStress from "./pages/Conditions/Conditions/RelationshipStress";
+import LowSelfEsteem from "./pages/Conditions/Conditions/LowSelfEsteem";
+import TraumaSupport from "./pages/Conditions/Conditions/TraumaSupport";
+import HotFlashes from "./pages/Conditions/Conditions/HotFlashes";
+import HrtGuidance from "./pages/Conditions/Conditions/HrtGuidance";
 
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
@@ -528,7 +545,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => { });
+        api.post("/api/auth/refresh").catch(() => {});
       },
       10 * 60 * 1000,
     );
@@ -602,7 +619,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -858,7 +875,10 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-          <Route path="/superadmin-dashboard/pricing-management" element={<PricingManagement />} />
+          <Route
+            path="/superadmin-dashboard/pricing-management"
+            element={<PricingManagement />}
+          />
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/employee-dashboard"
@@ -1008,7 +1028,6 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/admin-dashboard/manage-users"
             element={
@@ -1085,7 +1104,7 @@ function AppLayout() {
                   <AuditLogs />
                 </AdminLayout>
               </PrivateRoute>
-            } 
+            }
           />
           <Route path="/video-call/:appointmentId" element={<VideoCall />} />
           {/* ALL*/}
@@ -1508,10 +1527,36 @@ function AppLayout() {
             element={<VaginalYeastInfection />}
           />
           <Route path="/weaning-guidance" element={<WeaningGuidance />} />
+          <Route path="/stress" element={<Stress />} />
+          <Route path="/anger-management" element={<AngerManagement />} />
           <Route
-            path="/stress"
-            element={<Stress />}
+            path="/adjustment-difficulties"
+            element={<AdjustmentDifficulties />}
           />
+          <Route
+            path="/substance-use-support"
+            element={<SubstanceUseSupport />}
+          />
+          <Route
+            path="/sleep-related-anxiety"
+            element={<SleepRelatedAnxiety />}
+          />
+          <Route path="/depression" element={<Depression />} />
+          <Route path="/anxiety" element={<Anxiety />} />
+          <Route
+            path="/bipolar-disorder-follow-up"
+            element={<BipolarDisorderFollowUp />}
+          />
+          <Route path="/ptsd" element={<PTSD />} />
+          <Route path="/panic-attack" element={<PanicAttacks />} />
+          <Route path="/insomnia" element={<Insomnia />} />
+          <Route path="/ADHD-evaluation" element={<AdhdEvaluation />} />
+          <Route path="/grief-and-loss" element={<GriefAndLoss />} />
+          <Route path="/relationship-stress" element={<RelationshipStress />} />
+          <Route path="/low-self-esteem" element={<LowSelfEsteem />} />
+          <Route path="/trauma-support" element={<TraumaSupport />} />
+          <Route path="/hot-flashes" element={<HotFlashes />} />
+          <Route path="/hrt-guidance" element={<HrtGuidance />} />
           {/* <Route path="/bladder-problems" element={<BladderProblems />} /> */}
           {/* <Route
             path="/erectile-dysfunction"
