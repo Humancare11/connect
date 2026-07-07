@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+//import miniLogo from "../assets/single-logo.png";
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_SECURE =
