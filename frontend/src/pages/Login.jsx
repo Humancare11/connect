@@ -763,8 +763,12 @@ export default function AuthPage() {
               <a href="/privacy-policy" target="_blank" rel="noreferrer">
                 Privacy Policy
               </a>
-              , and 
-               <a href="/patient-informed-consent-form" target="_blank" rel="noreferrer">
+              , and
+              <a
+                href="/patient-informed-consent-form"
+                target="_blank"
+                rel="noreferrer"
+              >
                 HIPAA consent requirements.
               </a>
             </label>
@@ -1372,8 +1376,23 @@ export default function AuthPage() {
                 required
               />
               <span>
-                I agree to <a href="/terms">Terms</a>,{" "}
-                <a href="/privacy">Privacy Policy</a> & HIPAA Consent.
+                I agree to{" "}
+                <a href="/terms-of-service" target="_blank" rel="noreferrer">
+                  Terms
+                </a>
+                ,{" "}
+                <a href="/privacy-policy" target="_blank" rel="noreferrer">
+                  Privacy Policy
+                </a>{" "}
+                &{" "}
+                <a
+                  href="/notice-of-privacy-practices"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  HIPAA Consent
+                </a>
+                .
               </span>
             </label>
 
