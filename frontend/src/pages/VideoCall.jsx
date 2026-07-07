@@ -124,31 +124,83 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
   );
 }
 
-const STUN_SERVERS = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "stun:stun3.l.google.com:19302" },
-    { urls: "stun:stun4.l.google.com:19302" },
-    // TURN servers for media relay when P2P fails (e.g., restrictive NATs/firewalls)
-    // ⚠️ CRITICAL: Replace with your own production TURN server for reliability
-    {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-  ],
+const FALLBACK_STUN_URLS = [
+  "stun:stun.l.google.com:19302",
+  "stun:stun1.l.google.com:19302",
+  "stun:stun2.l.google.com:19302",
+  "stun:stun3.l.google.com:19302",
+  "stun:stun4.l.google.com:19302",
+];
+
+const FALLBACK_TURN_SERVERS = [
+  {
+    urls: "turn:openrelay.metered.ca:80",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+];
+
+const parseCsv = (value) =>
+  String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const buildIceServerConfig = () => {
+  const jsonConfig = import.meta.env.VITE_RTC_ICE_SERVERS_JSON;
+  if (jsonConfig) {
+    try {
+      const parsed = JSON.parse(jsonConfig);
+      const iceServers = Array.isArray(parsed) ? parsed : parsed?.iceServers;
+      if (Array.isArray(iceServers) && iceServers.length) {
+        return { iceServers };
+      }
+      console.warn("VITE_RTC_ICE_SERVERS_JSON did not contain iceServers.");
+    } catch (err) {
+      console.warn("Invalid VITE_RTC_ICE_SERVERS_JSON:", err.message);
+    }
+  }
+
+  const stunUrls = parseCsv(import.meta.env.VITE_RTC_STUN_URLS);
+  const turnUrls = parseCsv(import.meta.env.VITE_RTC_TURN_URLS);
+  const turnUsername = import.meta.env.VITE_RTC_TURN_USERNAME || "";
+  const turnCredential = import.meta.env.VITE_RTC_TURN_CREDENTIAL || "";
+
+  const iceServers = [
+    ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({ urls })),
+  ];
+
+  if (turnUrls.length) {
+    iceServers.push({
+      urls: turnUrls,
+      ...(turnUsername ? { username: turnUsername } : {}),
+      ...(turnCredential ? { credential: turnCredential } : {}),
+    });
+  } else {
+    iceServers.push(...FALLBACK_TURN_SERVERS);
+  }
+
+  return { iceServers };
+};
+
+const RTC_CONFIG = buildIceServerConfig();
+
+const getIceCandidateType = (candidate = "") => {
+  if (candidate.includes(" typ host")) return "host (local)";
+  if (candidate.includes(" typ srflx")) return "srflx (STUN)";
+  if (candidate.includes(" typ relay")) return "relay (TURN)";
+  if (candidate.includes(" typ prflx")) return "prflx";
+  return "unknown";
 };
 
 const MEDIA_CONSTRAINTS = {
@@ -297,6 +349,9 @@ export default function VideoCall() {
   const completedRef = useRef(false);
   const isSwappedRef = useRef(false);
   const callTimerRef = useRef(null);
+  const iceRestartTimerRef = useRef(null);
+  const pendingRemoteCandidatesRef = useRef([]);
+  const joinedSocketIdRef = useRef("");
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
@@ -478,10 +533,13 @@ export default function VideoCall() {
     completedRef.current = true;
 
     clearInterval(callTimerRef.current);
+    clearTimeout(iceRestartTimerRef.current);
     socket.emit("leave-appointment-room", { appointmentId });
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     pcRef.current?.close();
+    pendingRemoteCandidatesRef.current = [];
+    joinedSocketIdRef.current = "";
   }, [appointmentId]);
 
   const canJoinConsultation = useMemo(() => {
@@ -537,17 +595,58 @@ export default function VideoCall() {
 
     let mounted = true;
     completedRef.current = false;
+    pendingRemoteCandidatesRef.current = [];
+    clearTimeout(iceRestartTimerRef.current);
     let resolveLocalReady = () => { };
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
 
-    const pc = new RTCPeerConnection(STUN_SERVERS);
+    if (pcRef.current && pcRef.current.signalingState !== "closed") {
+      pcRef.current.close();
+    }
+
+    const pc = new RTCPeerConnection(RTC_CONFIG);
     pcRef.current = pc;
+    console.info("WebRTC peer connection created", {
+      iceServers: RTC_CONFIG.iceServers.map((server) => ({
+        urls: server.urls,
+        hasUsername: Boolean(server.username),
+      })),
+    });
 
     const remoteStream = new MediaStream();
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
+
+    const flushPendingIceCandidates = async () => {
+      if (!pc.remoteDescription) return;
+      const pending = pendingRemoteCandidatesRef.current.splice(0);
+      for (const candidate of pending) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.warn("Queued ICE candidate rejected:", err.message);
+        }
+      }
+    };
+
+    const scheduleIceRestart = () => {
+      if (!mounted || iceRestartTimerRef.current) return;
+      if (isDoctor) return;
+      iceRestartTimerRef.current = setTimeout(async () => {
+        iceRestartTimerRef.current = null;
+        if (!mounted || pc.signalingState === "closed") return;
+        try {
+          console.log("Restarting ICE...");
+          const offer = await pc.createOffer({ iceRestart: true });
+          await pc.setLocalDescription(offer);
+          socket.emit("video-offer", { appointmentId, offer });
+        } catch (err) {
+          console.error("ICE restart failed:", err);
+        }
+      }, 3000);
+    };
 
     // Get local media
     (async () => {
@@ -628,12 +727,7 @@ export default function VideoCall() {
       if (e.candidate) {
         // Log candidate type for debugging (helps identify if TURN is working)
         if (e.candidate.candidate) {
-          const candidateStr = e.candidate.candidate;
-          let candidateType = "unknown";
-          if (candidateStr.includes("typ host")) candidateType = "host (local)";
-          else if (candidateStr.includes("typ srflx")) candidateType = "srflx (STUN)";
-          else if (candidateStr.includes("typ relay")) candidateType = "relay (TURN)";
-          console.log(`ICE candidate gathered: ${candidateType}`);
+          console.log(`ICE candidate gathered: ${getIceCandidateType(e.candidate.candidate)}`);
         }
         socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
       } else {
@@ -645,6 +739,8 @@ export default function VideoCall() {
       const s = pc.connectionState;
       if (!mounted) return;
       if (s === "connected") {
+        clearTimeout(iceRestartTimerRef.current);
+        iceRestartTimerRef.current = null;
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
@@ -662,6 +758,8 @@ export default function VideoCall() {
       console.log("ICE connection state:", s);
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
+        clearTimeout(iceRestartTimerRef.current);
+        iceRestartTimerRef.current = null;
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
@@ -671,24 +769,12 @@ export default function VideoCall() {
         console.warn("ICE connection failed - connection may not work properly");
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
-        // Auto-retry ICE gathering after failure (helps with network issues)
-        if (isDoctor && mounted) {
-          console.log("Attempting ICE restart in 3 seconds...");
-          setTimeout(async () => {
-            if (!mounted || !pc) return;
-            try {
-              console.log("Restarting ICE...");
-              const offer = await pc.createOffer({ iceRestart: true });
-              await pc.setLocalDescription(offer);
-              socket.emit("video-offer", { appointmentId, offer });
-            } catch (err) {
-              console.error("ICE restart failed:", err);
-            }
-          }, 3000);
-        }
+        if (!isDoctor) console.log("Attempting ICE restart in 3 seconds...");
+        scheduleIceRestart();
       } else if (s === "disconnected") {
         console.warn("ICE connection disconnected");
-        setIsRemoteConnected(false);
+        setConnectionState("connecting");
+        scheduleIceRestart();
       }
     };
 
@@ -700,6 +786,7 @@ export default function VideoCall() {
         // Set remote description immediately so ICE gathering starts on both
         // sides in parallel, rather than waiting for local camera first.
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        await flushPendingIceCandidates();
         // Now wait for local tracks so the answer includes our video/audio.
         await localReadyPromise;
         if (!mounted) return;
@@ -714,13 +801,22 @@ export default function VideoCall() {
       if (!answer || !mounted) return;
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        await flushPendingIceCandidates();
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
       } catch (err) { console.error("Answer error:", err); }
     };
 
     const handleIce = async ({ candidate }) => {
       if (!candidate || !mounted) return;
-      try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (_) { }
+      if (!pc.remoteDescription) {
+        pendingRemoteCandidatesRef.current.push(candidate);
+        return;
+      }
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.warn("ICE candidate rejected:", err.message);
+      }
     };
 
     const handlePeerJoined = () => {
@@ -780,6 +876,9 @@ export default function VideoCall() {
 
     const activeUserId = isDoctor ? doctorId : userId;
     const joinRoom = () => {
+      if (!socket.connected) return;
+      if (joinedSocketIdRef.current === socket.id) return;
+      joinedSocketIdRef.current = socket.id || "";
       if (activeUserId) {
         socket.emit("user-online", {
           userId: activeUserId,
@@ -787,19 +886,32 @@ export default function VideoCall() {
         });
       }
       socket.emit("join-appointment-room", { appointmentId });
+      console.info("Joined appointment socket room", {
+        appointmentId,
+        socketId: socket.id,
+        role: isDoctor ? "doctor" : "user",
+      });
+    };
+
+    const handleSocketDisconnect = () => {
+      joinedSocketIdRef.current = "";
     };
 
     if (socket.connected) {
       joinRoom();
     } else {
-      socket.once("connect", joinRoom);
       socket.connect();
     }
+    socket.on("connect", joinRoom);
+    socket.on("disconnect", handleSocketDisconnect);
 
     return () => {
       mounted = false;
       resolveLocalReady(false);
+      clearTimeout(iceRestartTimerRef.current);
+      iceRestartTimerRef.current = null;
       socket.off("connect", joinRoom);
+      socket.off("disconnect", handleSocketDisconnect);
       socket.off("video-offer", handleOffer);
       socket.off("video-answer", handleAnswer);
       socket.off("ice-candidate", handleIce);
@@ -810,8 +922,14 @@ export default function VideoCall() {
       socket.off("appointment-updated", handleApptUpdated);
       socket.off("new-prescription", handleNewPrescription);
       socket.off("room-access-denied", handleRoomDenied);
+      pc.ontrack = null;
+      pc.onicecandidate = null;
+      pc.onconnectionstatechange = null;
+      pc.oniceconnectionstatechange = null;
       pc.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      pendingRemoteCandidatesRef.current = [];
+      joinedSocketIdRef.current = "";
       clearInterval(callTimerRef.current);
     };
   }, [appt, canJoinConsultation, appointmentId, assignStreams, isDoctor, doctorId, userId]);

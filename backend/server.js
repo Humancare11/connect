@@ -138,10 +138,33 @@ const allowedOrigins = Array.from(
     ...parseOriginList(process.env.CORS_ALLOWED_ORIGINS),
     "https://humancareconnect.co",
     "https://www.humancareconnect.co",
+    "https://uat.humancareconnect.co",
     "http://localhost:5173",
     "http://localhost:3000",
   ].filter(Boolean))
 );
+
+function validateRuntimeConfig() {
+  const required = ["JWT_SECRET", "MONGO_URI"];
+  const missing = required.filter((key) => !process.env[key]);
+  if (missing.length) {
+    console.warn(`[config] Missing required environment variable(s): ${missing.join(", ")}`);
+  }
+
+  if (process.env.NODE_ENV === "uat" && !process.env.HTTPS) {
+    console.warn("[config] UAT should set HTTPS=true so auth cookies use SameSite=None; Secure.");
+  }
+
+  if (!process.env.FRONTEND_URL && !process.env.CORS_ALLOWED_ORIGINS) {
+    console.warn("[config] FRONTEND_URL/CORS_ALLOWED_ORIGINS not set; using built-in origin fallbacks only.");
+  }
+
+  console.info("[config] Runtime", {
+    nodeEnv: process.env.NODE_ENV || "development",
+    https: process.env.HTTPS || "false",
+    allowedOrigins,
+  });
+}
 
 const awsS3Region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "us-east-1";
 const s3AssetSources = [
@@ -531,10 +554,23 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true,
   },
-  transports: ["websocket", "polling"],
+  transports: ["polling", "websocket"],
+  connectTimeout: Number(process.env.SOCKET_CONNECT_TIMEOUT_MS || 45000),
+  pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 25000),
+  pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 30000),
 });
 
 app.set("io", io);
+
+io.engine.on("connection_error", (err) => {
+  console.warn("[socket] connection_error", {
+    code: err.code,
+    message: err.message,
+    context: err.context,
+    origin: err.req?.headers?.origin,
+    transport: err.req?._query?.transport,
+  });
+});
 
 function parseCookieHeader(header = "") {
   return Object.fromEntries(
@@ -566,7 +602,20 @@ io.use((socket, next) => {
 
 // Socket Events
 io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
+  console.log("[socket] connected", {
+    id: socket.id,
+    transport: socket.conn.transport.name,
+    origin: socket.handshake.headers.origin,
+    userId: socket.userId || null,
+    role: socket.userRole || null,
+  });
+
+  socket.conn.on("upgrade", (transport) => {
+    console.log("[socket] transport upgraded", {
+      id: socket.id,
+      transport: transport.name,
+    });
+  });
 
   socket.on("user-online", ({ userId, role }) => {
     if (!userId) return;
@@ -776,7 +825,7 @@ io.on("connection", (socket) => {
       .emit("ice-candidate", { candidate });
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (reason) => {
     // Notify peer if this socket was in an appointment room
     const appointmentId = socketRooms.get(socket.id);
     if (appointmentId) {
@@ -795,11 +844,17 @@ io.on("connection", (socket) => {
     }
 
     io.emit("active-users-count", onlineUsers.size);
-    console.log("Active users:", onlineUsers.size);
+    console.log("[socket] disconnected", {
+      id: socket.id,
+      reason,
+      activeUsers: onlineUsers.size,
+    });
   });
 });
 
 const PORT = process.env.PORT || 5000;
+
+validateRuntimeConfig();
 
 startServer()
   .then(() => {
