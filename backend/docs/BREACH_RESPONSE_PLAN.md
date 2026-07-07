@@ -1,7 +1,7 @@
 # Breach Response Plan
 
 ## Purpose
-This workflow defines how Humancare Connect identifies, investigates, contains, documents, and closes suspected security incidents involving PHI, authentication systems, or privileged access.
+This workflow defines how Humancare Connect identifies, investigates, contains, documents, and closes suspected security events involving PHI, authentication systems, or privileged access.
 
 ## Incident Sources
 - Multiple failed login attempts and rate-limit events.
@@ -12,11 +12,11 @@ This workflow defines how Humancare Connect identifies, investigates, contains, 
 - Manual reports from users, doctors, administrators, or infrastructure providers.
 
 ## Response Workflow
-1. Detect and log the incident in `SecurityIncident`.
+1. Detect and log the security event in `AuditLog`.
 2. Alert the security team using `SECURITY_ALERT_EMAILS` when configured.
 3. Triage severity as low, medium, high, or critical.
 4. Contain the issue by revoking sessions, forcing logout, disabling accounts, or blocking affected workflows.
-5. Investigate by recording actions, notes, status changes, affected users, IPs, user agents, and resources in the incident history.
+5. Investigate using audit log details, affected users, IPs, user agents, and resources.
 6. Preserve audit logs and related evidence.
 7. Determine whether PHI was accessed, acquired, used, or disclosed without authorization.
 8. Notify required parties according to applicable HIPAA breach notification obligations and internal counsel guidance.

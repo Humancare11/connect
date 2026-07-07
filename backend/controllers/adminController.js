@@ -6,7 +6,7 @@ const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { logAudit } = require("../utils/auditLogger");
 const { randomInt } = require("crypto");
-const { recordSecurityIncident } = require("../utils/securityMonitor");
+const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { revokeUserSessions } = require("../utils/tokenRevocation");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
@@ -301,7 +301,7 @@ const getAllUsers = async (req, res) => {
       .lean();
 
     if (users.length >= 100) {
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "large_data_export",
         severity: "medium",
         title: "Large user dataset accessed",
@@ -503,7 +503,7 @@ const getDoctorPayments = async (req, res) => {
     });
 
     if (result.length >= 100) {
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "large_data_export",
         severity: "medium",
         title: "Large doctor payment dataset accessed",

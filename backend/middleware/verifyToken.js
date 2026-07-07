@@ -3,7 +3,7 @@ const Session = require("../models/Session");
 const RevokedToken = require("../models/RevokedToken");
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
-const { recordSecurityIncident } = require("../utils/securityMonitor");
+const { recordSecurityEvent } = require("../utils/securityMonitor");
 
 const ACCESS_TOKEN_MS = 15 * 60 * 1000;
 const REFRESH_TOKEN_MS = 8 * 60 * 60 * 1000;
@@ -129,7 +129,7 @@ function makeVerify(cookieName) {
     const candidates = [req.cookies?.[cookieName], extractBearerToken(req)].filter(Boolean);
 
     if (candidates.length === 0) {
-      recordSecurityIncident(req, {
+      recordSecurityEvent(req, {
         type: "unauthorized_access",
         severity: "medium",
         title: "Authenticated endpoint accessed without token",
@@ -150,7 +150,7 @@ function makeVerify(cookieName) {
       }
     }
 
-    recordSecurityIncident(req, {
+    recordSecurityEvent(req, {
       type: "unauthorized_access",
       severity: "medium",
       title: "Authenticated endpoint accessed with invalid or revoked token",
@@ -171,7 +171,7 @@ const verifyToken = async (req, res, next) => {
   ].filter(Boolean);
 
   if (candidates.length === 0) {
-    recordSecurityIncident(req, {
+    recordSecurityEvent(req, {
       type: "unauthorized_access",
       severity: "medium",
       title: "Authenticated endpoint accessed without token",
@@ -191,7 +191,7 @@ const verifyToken = async (req, res, next) => {
     }
   }
 
-  recordSecurityIncident(req, {
+  recordSecurityEvent(req, {
     type: "unauthorized_access",
     severity: "medium",
     title: "Authenticated endpoint accessed with invalid or revoked token",
@@ -207,7 +207,7 @@ const verifyEmployeeAdminToken = makeVerify("employeeAdminToken");
 
 const doctorOnly = (req, res, next) => {
   if (req.user?.role !== "doctor") {
-    recordSecurityIncident(req, {
+    recordSecurityEvent(req, {
       type: "privilege_escalation",
       severity: "high",
       title: "Non-doctor attempted doctor-only access",
@@ -221,7 +221,7 @@ const doctorOnly = (req, res, next) => {
 
 const adminOnly = (req, res, next) => {
   if (req.user?.role !== "admin" && req.user?.role !== "superadmin") {
-    recordSecurityIncident(req, {
+    recordSecurityEvent(req, {
       type: "unauthorized_access",
       severity: "high",
       title: "Non-admin attempted admin access",
@@ -235,7 +235,7 @@ const adminOnly = (req, res, next) => {
 
 const paymentAdminOnly = (req, res, next) => {
   if (!["superadmin", "paymentadmin"].includes(req.user?.role)) {
-    recordSecurityIncident(req, {
+    recordSecurityEvent(req, {
       type: "unauthorized_access",
       severity: "high",
       title: "Non-payment-admin attempted payment-link access",
@@ -249,7 +249,7 @@ const paymentAdminOnly = (req, res, next) => {
 
 const employeeAdminOnly = (req, res, next) => {
   if (req.user?.role !== "employeeadmin") {
-    recordSecurityIncident(req, {
+    recordSecurityEvent(req, {
       type: "unauthorized_access",
       severity: "high",
       title: "Non-employee-admin attempted employee-admin access",
@@ -263,7 +263,7 @@ const employeeAdminOnly = (req, res, next) => {
 
 const superAdminOnly = (req, res, next) => {
   if (req.user?.role !== "superadmin") {
-    recordSecurityIncident(req, {
+    recordSecurityEvent(req, {
       type: "privilege_escalation",
       severity: "critical",
       title: "Non-superadmin attempted superadmin access",

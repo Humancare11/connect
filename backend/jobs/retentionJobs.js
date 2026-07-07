@@ -1,5 +1,4 @@
 const AuditLog = require("../models/AuditLog");
-const SecurityIncident = require("../models/SecurityIncident");
 const ChatMessage = require("../models/ChatMessage");
 const Prescription = require("../models/Prescription");
 const MedicalCertificate = require("../models/MedicalCertificate");
@@ -49,14 +48,6 @@ async function runRetentionCleanup(req = null) {
   if (byKey.uploadedFiles) {
     const olderThan = cutoff(byKey.uploadedFiles.retentionDays);
     result.uploadedFiles = await deleteUploadsOlderThan(olderThan);
-  }
-
-  if (byKey.securityIncidents) {
-    const deleted = await SecurityIncident.deleteMany({
-      createdAt: { $lt: cutoff(byKey.securityIncidents.retentionDays) },
-      status: { $in: ["resolved", "false_positive"] },
-    });
-    result.securityIncidents = deleted.deletedCount || 0;
   }
 
   await logAudit(req, {

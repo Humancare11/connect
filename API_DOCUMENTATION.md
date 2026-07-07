@@ -1332,37 +1332,7 @@ Response:
 
 ---
 
-## 13. Security Incidents
-
-### GET /api/security-incidents
-Requires: `verifyAdminToken`, `superAdminOnly`
-
-Query params:
-- `status`, `severity`, `type`, `page`, `limit`
-
-Response:
-```json
-{ "items": [...], "total": 10, "page": 1, "pages": 1, "summary": [...] }
-```
-
----
-
-### POST /api/security-incidents/:id/actions
-Requires: `verifyAdminToken`, `superAdminOnly`
-
-Request body:
-```json
-{ "action": "Marked under review", "notes": "Investigating", "status": "reviewed" }
-```
-
-Response:
-```json
-{ "msg": "Incident updated.", "incident": { ... } }
-```
-
----
-
-## 14. Retention Policies
+## 13. Retention Policies
 
 ### GET /api/retention-policies
 Requires: `verifyAdminToken`, `superAdminOnly`
@@ -1395,7 +1365,7 @@ Response:
 
 ---
 
-## 15. Health Check
+## 14. Health Check
 
 ### GET /api/health
 Public.

@@ -19,6 +19,7 @@ const ACTION_LABELS = {
   ADMIN_REJECT_DOCTOR:     { label: "Reject Doctor",           color: "#dc2626", bg: "#fee2e2" },
   ADMIN_DELETE_DOCTOR:     { label: "Delete Doctor",           color: "#dc2626", bg: "#fee2e2" },
   ADMIN_VIEW_AUDIT_LOGS:   { label: "View Audit Logs",         color: "#6b7280", bg: "#f3f4f6" },
+  SECURITY_EVENT:          { label: "Security Event",          color: "#dc2626", bg: "#fee2e2" },
 };
 
 const ROLE_COLORS = {

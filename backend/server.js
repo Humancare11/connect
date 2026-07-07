@@ -33,7 +33,7 @@ const { logAudit } = require("./utils/auditLogger");
 const { findUploadInS3, streamUploadFromS3, keyFromStoredValue } = require("./utils/uploadStorage");
 const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
-const { recordSecurityIncident } = require("./utils/securityMonitor");
+const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
@@ -400,7 +400,7 @@ async function serveProtectedUpload(req, res, next) {
 
     const hour = new Date().getHours();
     if (hour < 6 || hour >= 22) {
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "phi_after_hours",
         severity: "medium",
         title: "Medical file accessed outside normal hours",
@@ -446,7 +446,6 @@ app.use("/api/payments", require("./routes/payments"));
 app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/audit-logs", require("./routes/auditLogs"));
-app.use("/api/security-incidents", require("./routes/securityIncidents"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));
 
@@ -772,7 +771,7 @@ io.on("connection", (socket) => {
         .catch((err) => console.error("chat message persist error:", err));
 
       if (hour < 6 || hour >= 22) {
-        recordSecurityIncident(
+        recordSecurityEvent(
           { user: { id: senderUserId, role: senderRole }, headers: socket.handshake.headers, socket },
           {
             type: "phi_after_hours",

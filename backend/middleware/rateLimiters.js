@@ -1,4 +1,4 @@
-const { recordSecurityIncident } = require("../utils/securityMonitor");
+const { recordSecurityEvent } = require("../utils/securityMonitor");
 
 const registrationStore = new Map();
 
@@ -32,7 +32,7 @@ function buildEmailLimiter({ windowMs, max, message, store }) {
       const retryAfterSec = Math.ceil((entry.firstAttemptAt + windowMs - Date.now()) / 1000);
       const retryMin      = Math.ceil(retryAfterSec / 60);
 
-      recordSecurityIncident(req, {
+      recordSecurityEvent(req, {
         type: "suspicious_activity",
         severity: "high",
         title: "Rate limit exceeded",
