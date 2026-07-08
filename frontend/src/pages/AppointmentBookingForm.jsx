@@ -9,7 +9,9 @@ import {
 } from "@stripe/react-stripe-js";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../api";
+import HealthcareIcon from "../components/HealthcareIcon";
 import { useAuth } from "../context/AuthContext";
+import { usePrices, usePricingMeta } from "../context/PricingContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import "./Appointment.css";
 
@@ -135,6 +137,14 @@ function formatDisplayDate(dateStr) {
   });
 }
 
+function formatPrice(amount) {
+  const value = Number(amount);
+  if (!Number.isFinite(value)) return "";
+  return `$${value.toLocaleString("en-US", {
+    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+  })}`;
+}
+
 // ─── Stripe form (inside <Elements>) ─────────────────────────────────────────
 function StripeForm({
   clientSecret,
@@ -245,7 +255,7 @@ function StripeForm({
             <span className="ap-spinner ap-spinner--white" /> Processing…
           </>
         ) : (
-          `Pay $${amount?.toLocaleString("en-US")} →`
+          `Pay ${formatPrice(amount)} ->`
         )}
       </button>
     </form>
@@ -267,7 +277,6 @@ function PaymentStage({
   const [stripeError, setStripeError] = useState("");
   const [paypalLoading, setPaypalLoading] = useState(false);
   const [paypalError, setPaypalError] = useState("");
-
   const selectStripe = async () => {
     setStripeError("");
     if (clientSecret) {
@@ -320,7 +329,7 @@ function PaymentStage({
     <PayPalScriptProvider
       options={{
         "client-id": PAYPAL_CLIENT_ID,
-        currency: "INR",
+        currency: "USD",
         intent: "capture",
       }}
     >
@@ -354,7 +363,7 @@ function PaymentStage({
           <div className="ap-pay-summary-row">
             <span>Condition</span>
             <strong>
-              {selection.condIco} {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
             </strong>
           </div>
           <div className="ap-pay-summary-row">
@@ -368,7 +377,7 @@ function PaymentStage({
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
             <strong className="ap-pay-fee-amount">
-              ${amount?.toLocaleString("en-IN")}
+              {formatPrice(amount)}
             </strong>
           </div>
         </div>
@@ -487,6 +496,8 @@ function PaymentStage({
 export default function AppointmentBookingForm() {
   const { state } = useLocation();
   const { user, loading: authLoading } = useAuth();
+  const categoryPrices = usePrices();
+  const pricingMeta = usePricingMeta();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -525,6 +536,46 @@ export default function AppointmentBookingForm() {
     setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const today = new Date().toISOString().split("T")[0];
+  const pricingRecord = selection?.catId ? categoryPrices?.[selection.catId] : null;
+  const pricingAmount = Number(pricingRecord?.price);
+  const selectionAmount = Number(selection?.cost);
+  const hasDbPrice =
+    !!selection?.catId &&
+    !!pricingRecord &&
+    Number.isFinite(pricingAmount) &&
+    pricingAmount > 0;
+  const hasSelectionPrice =
+    Number.isFinite(selectionAmount) &&
+    selectionAmount > 0;
+  const hasAppointmentPrice = hasDbPrice || hasSelectionPrice;
+  const effectivePrice = hasDbPrice ? pricingAmount : selectionAmount;
+  const effectiveCurrency = hasDbPrice ? pricingRecord.currency || "USD" : selection?.currency || "USD";
+  const pricingIssue = !selection?.catId
+    ? "Please reselect your appointment category so the current database price can be loaded."
+    : pricingMeta.loading && !hasSelectionPrice
+      ? "Loading the latest appointment price. Please wait."
+      : pricingMeta.error && !hasSelectionPrice
+        ? "Pricing could not be loaded. Please try again shortly."
+        : !hasAppointmentPrice
+          ? "No valid database price is configured for this category."
+          : "";
+  useEffect(() => {
+    if (!hasAppointmentPrice) return;
+    setSelection((prev) => {
+      if (
+        !prev ||
+        prev.cost === effectivePrice &&
+          prev.currency === effectiveCurrency
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        cost: effectivePrice,
+        currency: effectiveCurrency,
+      };
+    });
+  }, [hasAppointmentPrice, effectivePrice, effectiveCurrency]);
 
   const availableSlots = useMemo(
     () => ALL_TIME_SLOTS.filter((t) => !isSlotPassed(form.date, t)),
@@ -674,6 +725,10 @@ export default function AppointmentBookingForm() {
   // };
   const handleProceedClick = () => {
     if (!validate()) return;
+    if (pricingIssue) {
+      setProceedErr(pricingIssue);
+      return;
+    }
     setConsents({ telehealth: false, terms: false, hipaa: false, age: false }); // reset
     setShowConsentModal(true);
   };
@@ -716,7 +771,7 @@ export default function AppointmentBookingForm() {
         category: selection.catLabel,
         specialty: selection.specName,
         condition: selection.condName,
-        consultationPrice: selection.cost || 0,
+        consultationPrice: Number(selection.cost),
         date: formData.date,
         time: formData.time,
         appointmentDateTimeUtc: toAppointmentUtc(formData.date, formData.time),
@@ -784,19 +839,21 @@ export default function AppointmentBookingForm() {
       <div className="ap-card">
         {/* ── Hero: selection badge ── */}
         <div className="ap-hero">
-          <div className="ap-hero-avatar">{selection.specIco}</div>
+          <div className="ap-hero-avatar">
+            <HealthcareIcon name={selection.specIco} size={30} />
+          </div>
           <div className="ap-hero-body">
             <span className="ap-hero-eyebrow">{selection.catLabel}</span>
             <h2 className="ap-hero-name">{selection.specName}</h2>
             <span className="ap-hero-spec">
-              {selection.condIco} {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
             </span>
           </div>
-          {selection.cost > 0 && stage === "form" && (
+          {hasAppointmentPrice && stage === "form" && (
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
-                ${selection.cost.toLocaleString("en-US")}
+                {formatPrice(selection.cost)}
               </span>
             </div>
           )}
@@ -1040,13 +1097,15 @@ export default function AppointmentBookingForm() {
               )}
             </div>
 
-            {proceedErr && <p className="ap-error">{proceedErr}</p>}
+            {(pricingIssue || proceedErr) && (
+              <p className="ap-error">{proceedErr || pricingIssue}</p>
+            )}
 
             {/* ── CTA — now opens consent modal ── */}
             <button
               className="ap-submit"
               type="button"
-              disabled={proceeding}
+              disabled={proceeding || !!pricingIssue}
               onClick={handleProceedClick}
             >
               {proceeding ? (
@@ -1054,7 +1113,7 @@ export default function AppointmentBookingForm() {
                   <span className="ap-spinner ap-spinner--white" /> Preparing…
                 </>
               ) : (
-                `Proceed to Payment${selection.cost ? ` — $${selection.cost.toLocaleString("en-US")}` : ""} →`
+                `Proceed to Payment${hasAppointmentPrice ? ` - ${formatPrice(selection.cost)}` : ""} ->`
               )}
             </button>
 
@@ -1129,7 +1188,7 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
                 <span className="ap-success-val">
-                  {selection.condIco} {selection.condName}
+                  <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
                 </span>
               </div>
               <div className="ap-success-row">
@@ -1145,7 +1204,7 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Amount Paid</span>
                 <span className="ap-success-val ap-success-val--green">
-                  ${selection.cost?.toLocaleString("en-US")}
+                  {formatPrice(selection.cost)}
                 </span>
               </div>
               <div className="ap-success-row">

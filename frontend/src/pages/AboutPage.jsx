@@ -9,14 +9,8 @@ import PatientTrustImg from "../assets/AboutUsPage/global-healthcare-professiona
 import NetworkDoctorsImg from "../assets/AboutUsPage//patient-virtual-healthcare-experience.webp";
 
 import DoctorTrustImg from "../assets/AboutUsPage/doctor-telemedicine-consultation.webp";
-// ADD your why-section and network images to assets and import them:
-// import WhyImg from "../assets/why-us.webp";
-// import NetworkImg from "../assets/network.webp";
 
-/* ─── Reusable Hooks ─── */
 
-// FIX: wrap immediate bounding-rect checks in requestAnimationFrame so they
-// run after the first paint — not before layout is available.
 function useRevealObserver() {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -813,7 +807,7 @@ function ContactSection() {
       label: "United States",
       name: "Humancare Connect, Inc.",
       lines: ["4 Peddlers Row, #1091", "Newark, DE 19702, USA"],
-      email: "head.operations@humancareconnect.com",
+      email: "support@humancareconnect.co",
     },
   ];
 

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowRight,
@@ -55,7 +56,6 @@ const cat = {
       desc: " Personalized support for weight loss, obesity management, binge eating concerns, GLP-1 eligibility assessments, nutrition planning, appetite control, and sustainable long-term weight management.",
       path: "/weight-management",
     },
-    
   ],
 
   conditions: [
@@ -139,120 +139,145 @@ const cat = {
     },
   ],
 
-faqGroups: [
-  {
-    label: "Weight & Nutrition Care",
-    items: [
-      {
-        q: "What is Weight & Nutrition care?",
-        a: "Weight & Nutrition care focuses on helping individuals achieve and maintain a healthy lifestyle through personalized nutrition guidance, weight management strategies, and professional medical support.",
-      },
-      {
-        q: "Can I get help with weight loss through an online consultation?",
-        a: "Yes, healthcare professionals can evaluate your health goals, discuss factors affecting your weight, and provide personalized guidance for safe and sustainable weight management.",
-      },
-      {
-        q: "Can virtual consultations help with weight gain concerns?",
-        a: "Yes, online consultations can help identify possible causes of unintentional weight loss or difficulty gaining weight and provide recommendations to support healthy weight goals.",
-      },
-      {
-        q: "Can I receive personalized nutrition advice online?",
-        a: "Yes, healthcare professionals can provide guidance on balanced eating habits, dietary choices, meal planning, and nutrition strategies based on your individual health needs.",
-      },
-      {
-        q: "Can nutrition affect chronic health conditions?",
-        a: "Yes, proper nutrition can play an important role in managing conditions such as diabetes, high blood pressure, heart disease, and other long-term health concerns.",
-      },
-    ],
-  },
+  faqGroups: [
+    {
+      label: "Weight & Nutrition Care",
+      items: [
+        {
+          q: "What is Weight & Nutrition care?",
+          a: "Weight & Nutrition care focuses on helping individuals achieve and maintain a healthy lifestyle through personalized nutrition guidance, weight management strategies, and professional medical support.",
+        },
+        {
+          q: "Can I get help with weight loss through an online consultation?",
+          a: "Yes, healthcare professionals can evaluate your health goals, discuss factors affecting your weight, and provide personalized guidance for safe and sustainable weight management.",
+        },
+        {
+          q: "Can virtual consultations help with weight gain concerns?",
+          a: "Yes, online consultations can help identify possible causes of unintentional weight loss or difficulty gaining weight and provide recommendations to support healthy weight goals.",
+        },
+        {
+          q: "Can I receive personalized nutrition advice online?",
+          a: "Yes, healthcare professionals can provide guidance on balanced eating habits, dietary choices, meal planning, and nutrition strategies based on your individual health needs.",
+        },
+        {
+          q: "Can nutrition affect chronic health conditions?",
+          a: "Yes, proper nutrition can play an important role in managing conditions such as diabetes, high blood pressure, heart disease, and other long-term health concerns.",
+        },
+      ],
+    },
 
-  {
-    label: "Weight Management",
-    items: [
-      {
-        q: "Can I discuss my eating habits with a healthcare professional?",
-        a: "Yes, virtual consultations provide a comfortable way to discuss eating patterns, nutritional challenges, and lifestyle habits that may affect your overall health.",
-      },
-      {
-        q: "Can online doctors help with obesity or overweight concerns?",
-        a: "Yes, healthcare professionals can discuss weight-related concerns, assess potential health risks, and create a personalized approach to support healthy weight management.",
-      },
-      {
-        q: "Can I get guidance for healthy weight maintenance?",
-        a: "Yes, professional support can help you develop sustainable habits involving nutrition, physical activity, and overall wellness to maintain a healthy weight.",
-      },
-      {
-        q: "Can I receive a second opinion about my diet or weight management plan?",
-        a: "Yes, Humancare Connect provides access to experienced healthcare professionals who can review your current approach and provide additional medical guidance.",
-      },
-      {
-        q: "Is Weight & Nutrition care suitable for long-term wellness?",
-        a: "Yes, consistent nutrition support and healthy lifestyle guidance can contribute to long-term wellness, improved energy levels, and better overall health.",
-      },
-    ],
-  },
+    {
+      label: "Weight Management",
+      items: [
+        {
+          q: "Can I discuss my eating habits with a healthcare professional?",
+          a: "Yes, virtual consultations provide a comfortable way to discuss eating patterns, nutritional challenges, and lifestyle habits that may affect your overall health.",
+        },
+        {
+          q: "Can online doctors help with obesity or overweight concerns?",
+          a: "Yes, healthcare professionals can discuss weight-related concerns, assess potential health risks, and create a personalized approach to support healthy weight management.",
+        },
+        {
+          q: "Can I get guidance for healthy weight maintenance?",
+          a: "Yes, professional support can help you develop sustainable habits involving nutrition, physical activity, and overall wellness to maintain a healthy weight.",
+        },
+        {
+          q: "Can I receive a second opinion about my diet or weight management plan?",
+          a: "Yes, Humancare Connect provides access to experienced healthcare professionals who can review your current approach and provide additional medical guidance.",
+        },
+        {
+          q: "Is Weight & Nutrition care suitable for long-term wellness?",
+          a: "Yes, consistent nutrition support and healthy lifestyle guidance can contribute to long-term wellness, improved energy levels, and better overall health.",
+        },
+      ],
+    },
 
-  {
-    label: "Nutrition & Wellness",
-    items: [
-      {
-        q: "Can I receive advice for vitamin or nutritional deficiencies?",
-        a: "Yes, healthcare professionals can discuss symptoms related to possible deficiencies, recommend appropriate evaluations, and provide nutritional guidance.",
-      },
-      {
-        q: "Can Weight & Nutrition care support digestive health?",
-        a: "Yes, nutrition and eating habits can influence digestive health, and healthcare professionals can provide guidance for concerns related to food choices and overall gut wellness.",
-      },
-      {
-        q: "Can nutrition consultations help improve overall wellness?",
-        a: "Yes, personalized nutrition guidance can support energy levels, immune function, healthy aging, and overall physical well-being.",
-      },
-      {
-        q: "Can healthcare professionals help create healthy eating plans?",
-        a: "Yes, nutrition consultations may include recommendations for balanced meal planning and healthy eating habits tailored to your goals and lifestyle.",
-      },
-    ],
-  },
+    {
+      label: "Nutrition & Wellness",
+      items: [
+        {
+          q: "Can I receive advice for vitamin or nutritional deficiencies?",
+          a: "Yes, healthcare professionals can discuss symptoms related to possible deficiencies, recommend appropriate evaluations, and provide nutritional guidance.",
+        },
+        {
+          q: "Can Weight & Nutrition care support digestive health?",
+          a: "Yes, nutrition and eating habits can influence digestive health, and healthcare professionals can provide guidance for concerns related to food choices and overall gut wellness.",
+        },
+        {
+          q: "Can nutrition consultations help improve overall wellness?",
+          a: "Yes, personalized nutrition guidance can support energy levels, immune function, healthy aging, and overall physical well-being.",
+        },
+        {
+          q: "Can healthcare professionals help create healthy eating plans?",
+          a: "Yes, nutrition consultations may include recommendations for balanced meal planning and healthy eating habits tailored to your goals and lifestyle.",
+        },
+      ],
+    },
 
-  {
-    label: "Patient Support & Safety",
-    items: [
-      {
-        q: "What should I prepare before a weight and nutrition consultation?",
-        a: "It is helpful to share your current weight goals, medical history, medications, dietary habits, exercise routine, and any previous health assessments.",
-      },
-      {
-        q: "Are online Weight & Nutrition consultations private and secure?",
-        a: "Yes, Humancare Connect prioritizes patient privacy and uses secure virtual healthcare technology to protect your personal health information and consultation details.",
-      },
-      {
-        q: "What are the benefits of virtual Weight & Nutrition care?",
-        a: "Virtual consultations provide convenient access to healthcare professionals, personalized nutrition support, flexible scheduling, and ongoing guidance to help you achieve your health goals.",
-      },
-      {
-        q: "Why choose Humancare Connect for Weight & Nutrition care?",
-        a: "Humancare Connect provides secure online doctor consultations with trusted healthcare professionals, delivering personalized nutrition guidance, compassionate support, and practical weight management solutions tailored to your individual needs.",
-      },
-    ],
-  },
-],
+    {
+      label: "Patient Support & Safety",
+      items: [
+        {
+          q: "What should I prepare before a weight and nutrition consultation?",
+          a: "It is helpful to share your current weight goals, medical history, medications, dietary habits, exercise routine, and any previous health assessments.",
+        },
+        {
+          q: "Are online Weight & Nutrition consultations private and secure?",
+          a: "Yes, Humancare Connect prioritizes patient privacy and uses secure virtual healthcare technology to protect your personal health information and consultation details.",
+        },
+        {
+          q: "What are the benefits of virtual Weight & Nutrition care?",
+          a: "Virtual consultations provide convenient access to healthcare professionals, personalized nutrition support, flexible scheduling, and ongoing guidance to help you achieve your health goals.",
+        },
+        {
+          q: "Why choose Humancare Connect for Weight & Nutrition care?",
+          a: "Humancare Connect provides secure online doctor consultations with trusted healthcare professionals, delivering personalized nutrition guidance, compassionate support, and practical weight management solutions tailored to your individual needs.",
+        },
+      ],
+    },
+  ],
 
-ctaHeadline: "Personalized Nutrition & Weight Support for a Healthier You",
+  ctaHeadline: "Personalized Nutrition & Weight Support for a Healthier You",
 
-ctaBody:
-  "Connect with trusted healthcare professionals for expert nutrition guidance, healthy weight management strategies, wellness support, and personalized recommendations designed to help you achieve your long-term health goals.",
-
-
-  };
+  ctaBody:
+    "Connect with trusted healthcare professionals for expert nutrition guidance, healthy weight management strategies, wellness support, and personalized recommendations designed to help you achieve your long-term health goals.",
+};
 
 // ─── Booking Form ─────────────────────────────────────────────────────────────
 
 function BookingForm({ specialtyPlaceholder }) {
   const [form, setForm] = useState({
-    name: "", phone: "", date: "", time: "", type: "", specialty: "",
+    name: "",
+    phone: "",
+    date: "",
+    time: "",
+    type: "",
+    specialty: "",
   });
   const [submitted, setSubmitted] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const response = await api.get("/api/pricing");
+        const familyPricing = response.data?.family;
+        if (familyPricing) {
+          setPrice(familyPricing.price);
+        }
+      } catch (error) {
+        console.error("Failed to fetch pricing:", error);
+        // Fallback to default price if API fails
+        setPrice(49);
+      } finally {
+        setPriceLoading(false);
+      }
+    };
+    fetchPrice();
+  }, []);
 
   const handleSubmit = () => {
     if (!form.name || !form.phone || !form.date) return;
@@ -265,7 +290,14 @@ function BookingForm({ specialtyPlaceholder }) {
       <div className="hcc-book-card" style={{ textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
         <div className="hcc-book-title">Appointment Requested!</div>
-        <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8, lineHeight: 1.6 }}>
+        <p
+          style={{
+            fontSize: 13,
+            color: "var(--muted)",
+            marginTop: 8,
+            lineHeight: 1.6,
+          }}
+        >
           We'll confirm your slot via call or SMS within 15 minutes.
         </p>
       </div>
@@ -273,53 +305,64 @@ function BookingForm({ specialtyPlaceholder }) {
   }
 
   return (
-    <div className="hcc-book-card">
-      <div className="hcc-book-title">Book an Appointment</div>
-      <p className="hcc-book-sub">Same-day slots often available</p>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Full Name</label>
-        <input className="hcc-form-input" placeholder="Your full name" value={form.name} onChange={(e) => set("name", e.target.value)} />
+    <div className="hcc-booking-card">
+      <div className="hcc-booking-badge">
+        <span className="hcc-booking-badge-dot" />
+        Doctors Available Now
       </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Phone Number</label>
-        <input className="hcc-form-input" placeholder="+91 98765 43210" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-      </div>
-      <div className="hcc-form-row">
-        <div className="hcc-form-group">
-          <label className="hcc-form-label">Date</label>
-          <input className="hcc-form-input" type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
+
+      <div className="hcc-booking-price-block">
+        <div className="hcc-booking-price">
+          {priceLoading ? (
+            <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
+          ) : (
+            `$${price || 49}`
+          )}
         </div>
-        <div className="hcc-form-group">
-          <label className="hcc-form-label">Time</label>
-          <div className="hcc-select-wrap">
-            <select className="hcc-form-select" value={form.time} onChange={(e) => set("time", e.target.value)}>
-              <option value="">Select</option>
-              <option>Morning (9–12)</option>
-              <option>Afternoon (12–4)</option>
-              <option>Evening (4–8)</option>
-            </select>
+        <p className="hcc-booking-price-sub">
+          One-time consultation fee · No subscription required
+        </p>
+      </div>
+
+      <div className="hcc-booking-info">
+        <FiShield size={15} className="hcc-booking-info-icon" />
+        <p className="hcc-booking-info-text">
+          No extra fee for doctor notes, prescriptions, or specialist referrals.{" "}
+          <strong className="hcc-booking-info-strong">
+            Everything is included.
+          </strong>
+        </p>
+      </div>
+
+      <div className="hcc-booking-features">
+        {[
+          "Board-certified physician",
+          "Rx to your pharmacy",
+          "Doctor's note included",
+          "24hr follow-up support",
+          "HIPAA secure session",
+        ].map((item, i) => (
+          <div
+            key={item}
+            className="hcc-booking-feature-row"
+            style={{ animationDelay: `${0.35 + i * 0.07}s` }}
+          >
+            <FiCheckCircle size={15} className="hcc-booking-check" />
+            <span className="hcc-booking-feature-text">{item}</span>
           </div>
-        </div>
+        ))}
       </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Consultation Type</label>
-        <div className="hcc-select-wrap">
-          <select className="hcc-form-select" value={form.type} onChange={(e) => set("type", e.target.value)}>
-            <option value="">Select type</option>
-            <option>Video Consultation</option>
-            <option>In-Person Visit</option>
-          </select>
-        </div>
-      </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Specialty (optional)</label>
-        <input className="hcc-form-input" placeholder={specialtyPlaceholder || "e.g. Specialist"} value={form.specialty} onChange={(e) => set("specialty", e.target.value)} />
-      </div>
-      <button className="hcc-book-submit" onClick={handleSubmit}>
-        <FiCalendar /> Confirm Appointment
-      </button>
-      <p className="hcc-book-note">
-        <FiShield size={11} /> Free cancellation up to 2 hours before
+
+      <button className="hcc-booking-cta">Start Consultation →</button>
+      <p className="hcc-booking-terms">
+        By continuing, you agree to our{" "}
+        <a href="#" className="hcc-booking-link">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="#" className="hcc-booking-link">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );
@@ -406,7 +449,8 @@ function FaqSection({ faqGroups, catLabel }) {
           <span className="hcc-faq-sidebar-eyebrow">FAQ</span>
           <h2 className="hcc-faq-sidebar-title">Frequently Asked Questions</h2>
           <p className="hcc-faq-sidebar-desc">
-            Everything you need to know about {catLabel} care at HumanCare Connect. Can't find an answer?
+            Everything you need to know about {catLabel} care at HumanCare
+            Connect. Can't find an answer?
           </p>
           <button
             className="hcc-faq-chat-btn"
@@ -422,15 +466,24 @@ function FaqSection({ faqGroups, catLabel }) {
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div><strong>Avg. response in 2 min</strong><div>Live chat available</div></div>
+              <div>
+                <strong>Avg. response in 2 min</strong>
+                <div>Live chat available</div>
+              </div>
             </div>
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">🏥</span>
-              <div><strong>HIPAA secure &amp; private</strong><div>Your data is protected</div></div>
+              <div>
+                <strong>HIPAA secure &amp; private</strong>
+                <div>Your data is protected</div>
+              </div>
             </div>
             <div className="hcc-faq-trust-badge">
               <span className="badge-dot" />
-              <div><strong>Available on all devices</strong><div>Web, iOS &amp; Android</div></div>
+              <div>
+                <strong>Available on all devices</strong>
+                <div>Web, iOS &amp; Android</div>
+              </div>
             </div>
           </div>
         </div>
@@ -447,11 +500,21 @@ function FaqSection({ faqGroups, catLabel }) {
                   const key = `${gi}-${fi}`;
                   const isOpen = openItem === key;
                   return (
-                    <div key={fi} className={`hcc-faq-item${isOpen ? " open" : ""}`}>
-                      <button className="hcc-faq-btn" onClick={() => toggle(key)}>
+                    <div
+                      key={fi}
+                      className={`hcc-faq-item${isOpen ? " open" : ""}`}
+                    >
+                      <button
+                        className="hcc-faq-btn"
+                        onClick={() => toggle(key)}
+                      >
                         <span className="hcc-faq-question">{faq.q}</span>
                         <span className="hcc-faq-toggle">
-                          {isOpen ? <FiMinus size={12} /> : <FiPlus size={12} />}
+                          {isOpen ? (
+                            <FiMinus size={12} />
+                          ) : (
+                            <FiPlus size={12} />
+                          )}
                         </span>
                       </button>
                       <AnimatePresence>
@@ -493,17 +556,29 @@ function FaqSection({ faqGroups, catLabel }) {
 
 export default function WeightNutrition() {
   const navigate = useNavigate();
-  const goToBooking = () => navigate("/appointment-booking");
+  const goToBooking = () =>
+    navigate("/appointment-booking", { state: { categoryId: "weight" } });
   const goToContact = () => navigate("/contact");
 
   return (
-    <div style={{ fontFamily: "'Satoshi', sans-serif", background: "var(--bg)", color: "var(--navy)", minHeight: "100vh" }}>
-
+    <div
+      style={{
+        fontFamily: "'Satoshi', sans-serif",
+        background: "var(--bg)",
+        color: "var(--navy)",
+        minHeight: "100vh",
+      }}
+    >
       <Helmet>
-        <title>Online Weight & Nutrition Care | Virtual Diet & Wellness Consultation | Humancare Connect
-</title>
-        <meta name="description" content="Access online weight and nutrition care with trusted healthcare professionals. Get virtual consultations for weight management, healthy eating, personalized nutrition plans, and wellness support.
-" />
+        <title>
+          Online Weight & Nutrition Care | Virtual Diet & Wellness Consultation
+          | Humancare Connect
+        </title>
+        <meta
+          name="description"
+          content="Access online weight and nutrition care with trusted healthcare professionals. Get virtual consultations for weight management, healthy eating, personalized nutrition plans, and wellness support.
+"
+        />
       </Helmet>
 
       {/* ── Hero ── */}
@@ -511,13 +586,29 @@ export default function WeightNutrition() {
         <div className="hcc-hero-overlay" />
         <div className="hcc-hero-deco-1" />
         <div className="hcc-hero-deco-2" />
-        <FiHeart       className="hcc-hero-icon" style={{ top: 48,    right: 420, fontSize: 48 }} />
-        <FiShield      className="hcc-hero-icon" style={{ bottom: 60, right: 500, fontSize: 36 }} />
-        <FiActivity    className="hcc-hero-icon" style={{ top: 140,   right: 340, fontSize: 30 }} />
-        <FiCheckCircle className="hcc-hero-icon" style={{ bottom: 120, right: 420, fontSize: 28 }} />
+        <FiHeart
+          className="hcc-hero-icon"
+          style={{ top: 48, right: 420, fontSize: 48 }}
+        />
+        <FiShield
+          className="hcc-hero-icon"
+          style={{ bottom: 60, right: 500, fontSize: 36 }}
+        />
+        <FiActivity
+          className="hcc-hero-icon"
+          style={{ top: 140, right: 340, fontSize: 30 }}
+        />
+        <FiCheckCircle
+          className="hcc-hero-icon"
+          style={{ bottom: 120, right: 420, fontSize: 28 }}
+        />
 
         <div className="hcc-inner">
-          <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+          >
             <div className="hcc-badge">
               <span className="hcc-badge-dot" />
               Trusted {cat.label}
@@ -525,37 +616,58 @@ export default function WeightNutrition() {
             <h1 className="hcc-headline">
               {cat.headline}
               <br />
-              <span style={{ color: "var(--blue-lt)" }}>{cat.headlineAccent}</span>
+              <span style={{ color: "var(--blue-lt)" }}>
+                {cat.headlineAccent}
+              </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
             <div className="hcc-cta-row">
-              <button className="hcc-btn-primary" onClick={goToBooking}><FiCalendar /> Book Appointment</button>
-              <button className="hcc-btn-secondary" onClick={goToContact}><FiUser size={15} /> Know More</button>
+              <button className="hcc-btn-primary" onClick={goToBooking}>
+                <FiCalendar /> Book Appointment
+              </button>
+              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+                <FiUser size={15} /> Know More
+              </button> */}
             </div>
             <div className="hcc-trust-row">
-              <div className="hcc-trust-item"><FiCheckCircle size={14} /> Same Day Visits</div>
-              <div className="hcc-trust-item"><FiShield size={14} /> Insurance Accepted</div>
-              <div className="hcc-trust-item"><FiVideo size={14} /> Virtual Care</div>
+              <div className="hcc-trust-item">
+                <FiCheckCircle size={14} /> Same Day Visits
+              </div>
+              <div className="hcc-trust-item">
+                <FiShield size={14} /> Insurance Accepted
+              </div>
+              <div className="hcc-trust-item">
+                <FiVideo size={14} /> Virtual Care
+              </div>
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.15 }}>
-            <BookingForm specialtyPlaceholder={cat.bookingSpecialtyPlaceholder} />
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.15 }}
+          >
+            <BookingForm
+              specialtyPlaceholder={cat.bookingSpecialtyPlaceholder}
+            />
           </motion.div>
         </div>
       </section>
 
       {/* ── Body ── */}
       <div className="hcc-body">
-
         {/* Specialties */}
         {cat.specialties?.length > 0 && (
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Expertise</span>
             <h2 className="hcc-section-title">Specialties Covered</h2>
-            <p className="hcc-section-sub">All {cat.label} specialties available on Humancare Connect.</p>
+            <p className="hcc-section-sub">
+              All {cat.label} specialties available on Humancare Connect.
+            </p>
             <div className="hcc-specialty-grid">
-              {cat.specialties.map((sp, i) => <SpecialtyCard key={i} sp={sp} index={i} />)}
+              {cat.specialties.map((sp, i) => (
+                <SpecialtyCard key={i} sp={sp} index={i} />
+              ))}
             </div>
           </section>
         )}
@@ -565,9 +677,13 @@ export default function WeightNutrition() {
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Conditions</span>
             <h2 className="hcc-section-title">Conditions We Treat</h2>
-            <p className="hcc-section-sub">Click on any condition to learn more.</p>
+            <p className="hcc-section-sub">
+              Click on any condition to learn more.
+            </p>
             <div className="hcc-condition-grid">
-              {cat.conditions.map((cond, i) => <ConditionCard key={cond.name} cond={cond} index={i} />)}
+              {cat.conditions.map((cond, i) => (
+                <ConditionCard key={cond.name} cond={cond} index={i} />
+              ))}
             </div>
           </section>
         )}
@@ -577,7 +693,10 @@ export default function WeightNutrition() {
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Care Options</span>
             <h2 className="hcc-section-title">Treatment & Care Pathways</h2>
-            <p className="hcc-section-sub">Multiple ways to access quality care for your child, on your terms.</p>
+            <p className="hcc-section-sub">
+              Multiple ways to access quality care for your child, on your
+              terms.
+            </p>
             <div className="hcc-treatment-grid">
               {cat.treatments.map((t, i) => (
                 <motion.div
@@ -610,10 +729,22 @@ export default function WeightNutrition() {
             <p>{cat.ctaBody}</p>
           </div>
           <div className="hcc-cta-actions">
-           <button className="hcc-btn-primary" style={{ background: "#fff", color: "var(--blue)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} onClick={goToBooking}>
+            <button
+              className="hcc-btn-primary"
+              style={{
+                background: "#fff",
+                color: "var(--blue)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              }}
+              onClick={goToBooking}
+            >
               Find Doctors <FiArrowRight />
             </button>
-            <button className="hcc-btn-secondary" style={{ borderColor: "rgba(255,255,255,0.35)" }} onClick={goToContact}>
+            <button
+              className="hcc-btn-secondary"
+              style={{ borderColor: "rgba(255,255,255,0.35)" }}
+              onClick={goToContact}
+            >
               <FiPhone size={14} /> Call Us Now
             </button>
           </div>
@@ -622,11 +753,14 @@ export default function WeightNutrition() {
 
       {/* Mobile sticky CTA */}
       <div className="hcc-mobile-cta">
-        <button className="hcc-btn-primary" style={{ flex: 1, justifyContent: "center", borderRadius: 12 }} onClick={goToBooking}>
+        <button
+          className="hcc-btn-primary"
+          style={{ flex: 1, justifyContent: "center", borderRadius: 12 }}
+          onClick={goToBooking}
+        >
           Book Appointment
         </button>
       </div>
-
     </div>
   );
-} 
+}

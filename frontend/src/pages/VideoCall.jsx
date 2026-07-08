@@ -22,6 +22,7 @@ import {
   FiPaperclip,
   FiPhoneOff,
   FiRefreshCw,
+  FiFileText,
   FiSend,
   FiUser,
   FiVideo,
@@ -123,14 +124,83 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
   );
 }
 
-const STUN_SERVERS = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "stun:stun3.l.google.com:19302" },
-    { urls: "stun:stun4.l.google.com:19302" },
-  ],
+const FALLBACK_STUN_URLS = [
+  "stun:stun.l.google.com:19302",
+  "stun:stun1.l.google.com:19302",
+  "stun:stun2.l.google.com:19302",
+  "stun:stun3.l.google.com:19302",
+  "stun:stun4.l.google.com:19302",
+];
+
+const FALLBACK_TURN_SERVERS = [
+  {
+    urls: "turn:openrelay.metered.ca:80",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+];
+
+const parseCsv = (value) =>
+  String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const buildIceServerConfig = () => {
+  const jsonConfig = import.meta.env.VITE_RTC_ICE_SERVERS_JSON;
+  if (jsonConfig) {
+    try {
+      const parsed = JSON.parse(jsonConfig);
+      const iceServers = Array.isArray(parsed) ? parsed : parsed?.iceServers;
+      if (Array.isArray(iceServers) && iceServers.length) {
+        return { iceServers };
+      }
+      console.warn("VITE_RTC_ICE_SERVERS_JSON did not contain iceServers.");
+    } catch (err) {
+      console.warn("Invalid VITE_RTC_ICE_SERVERS_JSON:", err.message);
+    }
+  }
+
+  const stunUrls = parseCsv(import.meta.env.VITE_RTC_STUN_URLS);
+  const turnUrls = parseCsv(import.meta.env.VITE_RTC_TURN_URLS);
+  const turnUsername = import.meta.env.VITE_RTC_TURN_USERNAME || "";
+  const turnCredential = import.meta.env.VITE_RTC_TURN_CREDENTIAL || "";
+
+  const iceServers = [
+    ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({ urls })),
+  ];
+
+  if (turnUrls.length) {
+    iceServers.push({
+      urls: turnUrls,
+      ...(turnUsername ? { username: turnUsername } : {}),
+      ...(turnCredential ? { credential: turnCredential } : {}),
+    });
+  } else {
+    iceServers.push(...FALLBACK_TURN_SERVERS);
+  }
+
+  return { iceServers };
+};
+
+const RTC_CONFIG = buildIceServerConfig();
+
+const getIceCandidateType = (candidate = "") => {
+  if (candidate.includes(" typ host")) return "host (local)";
+  if (candidate.includes(" typ srflx")) return "srflx (STUN)";
+  if (candidate.includes(" typ relay")) return "relay (TURN)";
+  if (candidate.includes(" typ prflx")) return "prflx";
+  return "unknown";
 };
 
 const MEDIA_CONSTRAINTS = {
@@ -143,8 +213,8 @@ const MEDIA_CONSTRAINTS = {
     sampleSize: { ideal: 16 },
   },
   video: {
-    width: { ideal: 1920, max: 1920 },
-    height: { ideal: 1080, max: 1080 },
+    width: { ideal: 1280, max: 1920 },
+    height: { ideal: 720, max: 1080 },
     frameRate: { ideal: 30, max: 30 },
     facingMode: "user",
   },
@@ -279,6 +349,9 @@ export default function VideoCall() {
   const completedRef = useRef(false);
   const isSwappedRef = useRef(false);
   const callTimerRef = useRef(null);
+  const iceRestartTimerRef = useRef(null);
+  const pendingRemoteCandidatesRef = useRef([]);
+  const joinedSocketIdRef = useRef("");
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
@@ -311,6 +384,16 @@ export default function VideoCall() {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  // ── Doctor notes state ────────────────────────────────────────────
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [noteContent, setNoteContent] = useState("");
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesError, setNotesError] = useState("");
+  const [notesSavedAt, setNotesSavedAt] = useState(null);
+  const [notesLoaded, setNotesLoaded] = useState(false);
+  const lastSavedNoteRef = useRef({ content: "" });
+
   // ── PiP drag ──────────────────────────────────────────────────────
   const [pipPos, setPipPos] = useState({ x: null, y: null });
   const pipRef = useRef(null);
@@ -341,6 +424,39 @@ export default function VideoCall() {
     if (!chatOpen) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, chatOpen]);
+
+  useEffect(() => {
+    if (!isDoctor || !appointmentId || !appt?._id) return;
+
+    let cancelled = false;
+    setNotesLoading(true);
+    setNotesError("");
+    setNotesLoaded(false);
+
+    api
+      .get(`/api/notes/appointment/${appointmentId}`)
+      .then((res) => {
+        if (cancelled) return;
+        const note = res.data?.note;
+        const content = note?.content || "";
+        setNoteContent(content);
+        setNotesSavedAt(note?.updatedAt || null);
+        lastSavedNoteRef.current = { content };
+        setNotesLoaded(true);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setNotesError(err.response?.data?.msg || "Could not load consultation notes.");
+        setNotesLoaded(true);
+      })
+      .finally(() => {
+        if (!cancelled) setNotesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isDoctor, appointmentId, appt?._id]);
 
   // ── Fetch appointment ─────────────────────────────────────────────
   // Wait for auth contexts so we know the caller's role, then hit a
@@ -411,30 +527,20 @@ export default function VideoCall() {
     };
   }, [appointmentId, doctor, user, doctorLoading, userLoading]);
 
-  // ── Reliable cleanup: stop tracks + notify peers + optional API ───
-  const performCleanup = useCallback((markComplete = false) => {
+  // ── Reliable cleanup: stop tracks + notify peers ───
+  const performCleanup = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
 
     clearInterval(callTimerRef.current);
+    clearTimeout(iceRestartTimerRef.current);
     socket.emit("leave-appointment-room", { appointmentId });
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     pcRef.current?.close();
-
-    if (markComplete && isDoctor) {
-      const base = import.meta.env.VITE_API_URL || "";
-      fetch(`${base}/api/appointments/${appointmentId}/complete`, {
-        method: "PUT",
-        keepalive: true,
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      }).catch(() => { });
-    }
-  }, [appointmentId, isDoctor]);
+    pendingRemoteCandidatesRef.current = [];
+    joinedSocketIdRef.current = "";
+  }, [appointmentId]);
 
   const canJoinConsultation = useMemo(() => {
     return appt?.status === "confirmed" || (appt?.status === "assigned" && appt?.doctorId);
@@ -462,7 +568,7 @@ export default function VideoCall() {
     if (!canJoinConsultation) return;
 
     const handleBeforeUnload = () => {
-      performCleanup(true);
+      performCleanup();
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -489,17 +595,58 @@ export default function VideoCall() {
 
     let mounted = true;
     completedRef.current = false;
+    pendingRemoteCandidatesRef.current = [];
+    clearTimeout(iceRestartTimerRef.current);
     let resolveLocalReady = () => { };
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
 
-    const pc = new RTCPeerConnection(STUN_SERVERS);
+    if (pcRef.current && pcRef.current.signalingState !== "closed") {
+      pcRef.current.close();
+    }
+
+    const pc = new RTCPeerConnection(RTC_CONFIG);
     pcRef.current = pc;
+    console.info("WebRTC peer connection created", {
+      iceServers: RTC_CONFIG.iceServers.map((server) => ({
+        urls: server.urls,
+        hasUsername: Boolean(server.username),
+      })),
+    });
 
     const remoteStream = new MediaStream();
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
+
+    const flushPendingIceCandidates = async () => {
+      if (!pc.remoteDescription) return;
+      const pending = pendingRemoteCandidatesRef.current.splice(0);
+      for (const candidate of pending) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.warn("Queued ICE candidate rejected:", err.message);
+        }
+      }
+    };
+
+    const scheduleIceRestart = () => {
+      if (!mounted || iceRestartTimerRef.current) return;
+      if (isDoctor) return;
+      iceRestartTimerRef.current = setTimeout(async () => {
+        iceRestartTimerRef.current = null;
+        if (!mounted || pc.signalingState === "closed") return;
+        try {
+          console.log("Restarting ICE...");
+          const offer = await pc.createOffer({ iceRestart: true });
+          await pc.setLocalDescription(offer);
+          socket.emit("video-offer", { appointmentId, offer });
+        } catch (err) {
+          console.error("ICE restart failed:", err);
+        }
+      }, 3000);
+    };
 
     // Get local media
     (async () => {
@@ -577,13 +724,23 @@ export default function VideoCall() {
     };
 
     pc.onicecandidate = (e) => {
-      if (e.candidate) socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
+      if (e.candidate) {
+        // Log candidate type for debugging (helps identify if TURN is working)
+        if (e.candidate.candidate) {
+          console.log(`ICE candidate gathered: ${getIceCandidateType(e.candidate.candidate)}`);
+        }
+        socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
+      } else {
+        console.log("ICE gathering complete");
+      }
     };
 
     pc.onconnectionstatechange = () => {
       const s = pc.connectionState;
       if (!mounted) return;
       if (s === "connected") {
+        clearTimeout(iceRestartTimerRef.current);
+        iceRestartTimerRef.current = null;
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
@@ -598,16 +755,26 @@ export default function VideoCall() {
     // Fallback for browsers where onconnectionstatechange fires late or not at all
     pc.oniceconnectionstatechange = () => {
       const s = pc.iceConnectionState;
+      console.log("ICE connection state:", s);
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
+        clearTimeout(iceRestartTimerRef.current);
+        iceRestartTimerRef.current = null;
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
       } else if (s === "failed") {
+        console.warn("ICE connection failed - connection may not work properly");
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
+        if (!isDoctor) console.log("Attempting ICE restart in 3 seconds...");
+        scheduleIceRestart();
+      } else if (s === "disconnected") {
+        console.warn("ICE connection disconnected");
+        setConnectionState("connecting");
+        scheduleIceRestart();
       }
     };
 
@@ -619,6 +786,7 @@ export default function VideoCall() {
         // Set remote description immediately so ICE gathering starts on both
         // sides in parallel, rather than waiting for local camera first.
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        await flushPendingIceCandidates();
         // Now wait for local tracks so the answer includes our video/audio.
         await localReadyPromise;
         if (!mounted) return;
@@ -633,13 +801,22 @@ export default function VideoCall() {
       if (!answer || !mounted) return;
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        await flushPendingIceCandidates();
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
       } catch (err) { console.error("Answer error:", err); }
     };
 
     const handleIce = async ({ candidate }) => {
       if (!candidate || !mounted) return;
-      try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (_) { }
+      if (!pc.remoteDescription) {
+        pendingRemoteCandidatesRef.current.push(candidate);
+        return;
+      }
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.warn("ICE candidate rejected:", err.message);
+      }
     };
 
     const handlePeerJoined = () => {
@@ -699,6 +876,9 @@ export default function VideoCall() {
 
     const activeUserId = isDoctor ? doctorId : userId;
     const joinRoom = () => {
+      if (!socket.connected) return;
+      if (joinedSocketIdRef.current === socket.id) return;
+      joinedSocketIdRef.current = socket.id || "";
       if (activeUserId) {
         socket.emit("user-online", {
           userId: activeUserId,
@@ -706,19 +886,32 @@ export default function VideoCall() {
         });
       }
       socket.emit("join-appointment-room", { appointmentId });
+      console.info("Joined appointment socket room", {
+        appointmentId,
+        socketId: socket.id,
+        role: isDoctor ? "doctor" : "user",
+      });
+    };
+
+    const handleSocketDisconnect = () => {
+      joinedSocketIdRef.current = "";
     };
 
     if (socket.connected) {
       joinRoom();
     } else {
-      socket.once("connect", joinRoom);
       socket.connect();
     }
+    socket.on("connect", joinRoom);
+    socket.on("disconnect", handleSocketDisconnect);
 
     return () => {
       mounted = false;
       resolveLocalReady(false);
+      clearTimeout(iceRestartTimerRef.current);
+      iceRestartTimerRef.current = null;
       socket.off("connect", joinRoom);
+      socket.off("disconnect", handleSocketDisconnect);
       socket.off("video-offer", handleOffer);
       socket.off("video-answer", handleAnswer);
       socket.off("ice-candidate", handleIce);
@@ -729,8 +922,14 @@ export default function VideoCall() {
       socket.off("appointment-updated", handleApptUpdated);
       socket.off("new-prescription", handleNewPrescription);
       socket.off("room-access-denied", handleRoomDenied);
+      pc.ontrack = null;
+      pc.onicecandidate = null;
+      pc.onconnectionstatechange = null;
+      pc.oniceconnectionstatechange = null;
       pc.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      pendingRemoteCandidatesRef.current = [];
+      joinedSocketIdRef.current = "";
       clearInterval(callTimerRef.current);
     };
   }, [appt, canJoinConsultation, appointmentId, assignStreams, isDoctor, doctorId, userId]);
@@ -847,6 +1046,24 @@ export default function VideoCall() {
     setIsSelfViewMinimized((prev) => !prev);
   }, []);
 
+  useEffect(() => {
+    if (isSelfViewMinimized) return;
+
+    const frameId = requestAnimationFrame(() => {
+      if (!pipVideoRef.current) return;
+
+      if (isScreenSharing && !isSwapped && screenStreamRef.current) {
+        pipVideoRef.current.srcObject = screenStreamRef.current;
+      } else {
+        assignStreams(isSwapped);
+      }
+
+      pipVideoRef.current.play?.().catch(() => { });
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [isSelfViewMinimized, isScreenSharing, isSwapped, assignStreams]);
+
   const toggleFullscreen = useCallback(async () => {
     const pageEl = pageRef.current;
     if (!pageEl) return;
@@ -867,17 +1084,14 @@ export default function VideoCall() {
     setEndCallConfirm(false);
     setCompleting(true);
     try {
-      if (isDoctor && canJoinConsultation) {
-        await api.put(`/api/appointments/${appointmentId}/complete`, {});
-      }
-      performCleanup(false);
+      performCleanup();
       navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", { replace: true });
     } catch (err) {
       setCompleting(false);
       setInlineError(err.response?.data?.msg || "Failed to end call. Please try again.");
       setTimeout(() => setInlineError(""), 5000);
     }
-  }, [completing, isDoctor, canJoinConsultation, appointmentId, performCleanup, navigate]);
+  }, [completing, isDoctor, performCleanup, navigate]);
 
   const handleRxSaved = useCallback(() => {
     setShowRxModal(false);
@@ -918,9 +1132,54 @@ export default function VideoCall() {
   // ── Chat ──────────────────────────────────────────────────────────
   const toggleChat = useCallback(() => {
     setChatOpen((prev) => {
+      if (!prev) setNotesOpen(false);
       if (!prev) setUnreadCount(0);
       chatOpenRef.current = !prev;
       return !prev;
+    });
+  }, []);
+
+  const saveNotes = useCallback(async ({ manual = false } = {}) => {
+    if (!isDoctor || !appointmentId || !notesLoaded) return;
+
+    const next = {
+      content: noteContent,
+    };
+    const previous = lastSavedNoteRef.current;
+    if (!manual && previous.content === next.content) return;
+
+    setNotesSaving(true);
+    setNotesError("");
+    try {
+      const res = await api.put(`/api/notes/appointment/${appointmentId}`, next);
+      const saved = res.data?.note;
+      setNotesSavedAt(saved?.updatedAt || new Date().toISOString());
+      lastSavedNoteRef.current = next;
+    } catch (err) {
+      setNotesError(err.response?.data?.msg || "Could not save notes.");
+    } finally {
+      setNotesSaving(false);
+    }
+  }, [isDoctor, appointmentId, notesLoaded, noteContent]);
+
+  useEffect(() => {
+    if (!isDoctor || !notesLoaded) return;
+
+    const previous = lastSavedNoteRef.current;
+    if (previous.content === noteContent) return;
+
+    const timer = setTimeout(() => {
+      saveNotes();
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [isDoctor, notesLoaded, noteContent, saveNotes]);
+
+  const toggleNotes = useCallback(() => {
+    setNotesOpen((prev) => {
+      const next = !prev;
+      if (next) setChatOpen(false);
+      return next;
     });
   }, []);
 
@@ -1117,7 +1376,7 @@ export default function VideoCall() {
             </h3>
             <p style={{ margin: "0 0 24px", fontSize: 13, color: "#94a3b8" }}>
               {isDoctor
-                ? "This will end the call and mark the consultation as completed."
+                ? "This will end the video call. The appointment status will remain unchanged."
                 : "You will leave the video call. The doctor will be notified."}
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
@@ -1128,7 +1387,7 @@ export default function VideoCall() {
               <button
                 onClick={endCall}
                 style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >{isDoctor ? "End & Complete" : "Leave Call"}</button>
+              >{isDoctor ? "End Call" : "Leave Call"}</button>
             </div>
           </div>
         </div>
@@ -1160,7 +1419,7 @@ export default function VideoCall() {
               <button
                 onClick={() => {
                   setLeaveConfirm(false);
-                  performCleanup(true);
+                  performCleanup();
                   navigate(pendingLeaveRef.current || "/user/dashboard", { replace: true });
                 }}
                 style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
@@ -1208,7 +1467,7 @@ export default function VideoCall() {
       )} */}
 
       {/* Main stage + chat */}
-      <div className={`hc-vc__body ${chatOpen ? "hc-vc__body--chat" : ""}`}>
+      <div className={`hc-vc__body ${chatOpen || notesOpen ? "hc-vc__body--chat" : ""}`}>
 
         {/* Stage */}
         <div className="hc-vc__stage">
@@ -1396,6 +1655,51 @@ export default function VideoCall() {
             </div>
           </div>
         )}
+
+        {/* ── Doctor notes panel ────────────────────────────────── */}
+        {notesOpen && isDoctor && (
+          <div className="hc-vc__notes">
+            <div className="hc-vc__notes-head">
+              <div className="hc-vc__notes-head-left">
+                <span className="hc-vc__notes-icon"><FiFileText /></span>
+                <span className="hc-vc__notes-title">Consultation Notes</span>
+              </div>
+              <button className="hc-vc__notes-close-btn" onClick={toggleNotes}><FiX /></button>
+            </div>
+
+            <div className="hc-vc__notes-meta">
+              <span>{otherParty?.name || "Patient"}</span>
+              <span>{notesSaving ? "Saving..." : notesSavedAt ? `Saved ${fmtTime(notesSavedAt)}` : "Not saved yet"}</span>
+            </div>
+
+            {notesError && (
+              <div className="hc-vc__notes-error">
+                <FiAlertTriangle /> {notesError}
+              </div>
+            )}
+
+            <textarea
+              className="hc-vc__notes-textarea"
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder={notesLoading ? "Loading notes..." : "Write consultation observations, assessment, plan, and follow-up notes..."}
+              disabled={notesLoading}
+              maxLength={20000}
+            />
+
+            <div className="hc-vc__notes-foot">
+              <span>{noteContent.length}/20000</span>
+              <button
+                className="hc-vc__notes-save"
+                onClick={() => saveNotes({ manual: true })}
+                disabled={notesLoading || notesSaving}
+              >
+                {notesSaving ? <FiRefreshCw /> : <FiCheckCircle />}
+                <span>{notesSaving ? "Saving" : "Save"}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Controls bar ─────────────────────────────────────────── */}
@@ -1468,6 +1772,17 @@ export default function VideoCall() {
             )}
           </button>
 
+          {isDoctor && (
+            <button
+              className={`hc-vc__btn ${notesOpen ? "hc-vc__btn--notes-on" : ""}`}
+              onClick={toggleNotes}
+              title="Consultation notes"
+            >
+              <span className="hc-vc__btn-icon"><FiFileText /></span>
+              <span className="hc-vc__btn-label">Notes</span>
+            </button>
+          )}
+
 
 
           {/* {isDoctor && (
@@ -1485,7 +1800,7 @@ export default function VideoCall() {
             className="hc-vc__btn hc-vc__btn--end"
             onClick={() => setEndCallConfirm(true)}
             disabled={completing}
-            title={isDoctor ? "End call and complete consultation" : "End call"}
+            title="End call"
           >
             <span className="hc-vc__btn-icon">{completing ? <FiRefreshCw /> : <FiPhoneOff />}</span>
             <span className="hc-vc__btn-label">{completing ? "Ending..." : "End Call"}</span>

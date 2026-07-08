@@ -19,7 +19,7 @@ const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const Corporates = lazy(() => import("./pages/Corporates"));
 const Contact = lazy(() => import("./pages/Contact"));
-
+const Ab = lazy(() => import("./pages/Ab"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
@@ -31,7 +31,7 @@ import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
 import useLenis from "./hooks/useLenis";
-import api from "./api";
+import api, { clearUserAuthToken } from "./api";
 import {
   ROLE_TIMEOUT_MS,
   SESSION_ACTIVITY_EVENT,
@@ -40,11 +40,11 @@ import {
   getLogoutRedirectPath,
 } from "./utils/session";
 
-// import AboutUs from "./pages/AboutPage"; 
+// import AboutUs from "./pages/AboutPage";
 import AboutPage from "./pages/AboutPage"; // about us page
 
 import PCP from "./pages/PCP";
-import DoctorCareers from "./pages/DoctorCareers";       // Career Page for Doctors
+import DoctorCareers from "./pages/DoctorCareers"; // Career Page for Doctors
 import FAQ from "./pages/FAQPage"; // FAQ page
 // privacy concerns
 import PrivacyConcerns from "./pages/PrivacyPolicies/PrivacyConcerns";
@@ -289,7 +289,27 @@ import PrematureEjaculation1 from "./pages/Conditions/Conditions/PrematureEjacul
 import ProstateHealth1 from "./pages/Conditions/Conditions/ProstateHealth";
 import UrinarySymptomsMen1 from "./pages/Conditions/Conditions/UrinarySymptomsMen";
 import Vertigo from "./pages/Conditions/Conditions/Vertigo";
-
+import Stress from "./pages/Conditions/Conditions/Stress";
+import AngerManagement from "./pages/Conditions/Conditions/AngerManagement";
+import AdjustmentDifficulties from "./pages/Conditions/Conditions/AdjustmentDifficulties";
+import SubstanceUseSupport from "./pages/Conditions/Conditions/SubstanceUseSupport";
+import SleepRelatedAnxiety from "./pages/Conditions/Conditions/SleepRelatedAnxiety";
+import Depression from "./pages/Conditions/Conditions/Depression";
+import Anxiety from "./pages/Conditions/Conditions/Anxiety";
+import BipolarDisorderFollowUp from "./pages/Conditions/Conditions/BipolarDisorderFollowUp";
+import PTSD from "./pages/Conditions/Conditions/Ptsd";
+import PanicAttacks from "./pages/Conditions/Conditions/PanicAttacks";
+import Insomnia from "./pages/Conditions/Conditions/Insomnia";
+import AdhdEvaluation from "./pages/Conditions/Conditions/AdhdEvaluation";
+import GriefAndLoss from "./pages/Conditions/Conditions/GriefAndLoss";
+import RelationshipStress from "./pages/Conditions/Conditions/RelationshipStress";
+import LowSelfEsteem from "./pages/Conditions/Conditions/LowSelfEsteem";
+import TraumaSupport from "./pages/Conditions/Conditions/TraumaSupport";
+import HotFlashes from "./pages/Conditions/Conditions/HotFlashes";
+import HrtGuidance from "./pages/Conditions/Conditions/HrtGuidance";
+import FertilityConcerns from "./pages/Conditions/Conditions/FertilityConcerns";
+import OCD from "./pages/Conditions/Conditions/OCD";
+import EyeIrritation from "./pages/Conditions/EyeIrritation";
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
 import Pediatrics from "./pages/Specialty/Children&FamilyCare/Pediatrics";
@@ -358,6 +378,7 @@ const DoctorAppointments = lazy(
 );
 const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
+const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
 const DoctorQnA = lazy(() => import("./pages/doctors/DoctorQnA"));
 const DoctorAnalytics = lazy(() => import("./pages/doctors/DoctorAnalytics"));
@@ -368,6 +389,8 @@ const DoctorProfileForUser = lazy(
 
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
+const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
+const HealthcareManagement = lazy(() => import("./pages/admin/HealthcareManagement"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
@@ -375,7 +398,6 @@ const ManageDoctors = lazy(() => import("./pages/admin/ManageDoctors"));
 const AdminDoctorProfile = lazy(
   () => import("./pages/admin/AdminDoctorProfile"),
 );
-const DoctorPayments = lazy(() => import("./pages/admin/DoctorPayments"));
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminAppointmentDetails = lazy(
@@ -479,6 +501,7 @@ function SessionTimeoutManager() {
     let refreshTimer;
 
     const logoutAll = async () => {
+      clearUserAuthToken();
       clearClientSession();
       await Promise.allSettled([logoutUser(), logoutDoctor(), logoutAdmin()]);
       setWarningOpen(false);
@@ -672,13 +695,13 @@ function AppLayout() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/ab" element={<Ab />} />
           {/* <Route path="/register" element={<Register />} /> */}
           <Route path="/book-appointment" element={<BookAppointment />} />
           <Route path="/test" element={<Test />} />
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-          
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
@@ -778,6 +801,14 @@ function AppLayout() {
               </DoctorLayout>
             }
           />
+          <Route
+            path="/doctor-dashboard/doctor-profile-for-patients"
+            element={
+              <DoctorLayout>
+                <DoctorProfileForUser showOwnProfile />
+              </DoctorLayout>
+            }
+          />
           {/* Enrollment is standalone — no sidebar/header until approved */}
           <Route
             path="/doctor-dashboard/enrollments"
@@ -804,6 +835,14 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <DoctorMessages />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/notes"
+            element={
+              <DoctorLayout>
+                <DoctorNotes />
               </DoctorLayout>
             }
           />
@@ -841,6 +880,10 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
+          <Route
+            path="/superadmin-dashboard/pricing-management"
+            element={<PricingManagement />}
+          />
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/employee-dashboard"
@@ -991,16 +1034,6 @@ function AppLayout() {
             }
           />
           <Route
-            path="/admin-dashboard/doctor-payments"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <DoctorPayments />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
             path="/admin-dashboard/manage-users"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
@@ -1074,6 +1107,16 @@ function AppLayout() {
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <AdminLayout>
                   <AuditLogs />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/superadmin-dashboard/healthcare-management"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <HealthcareManagement />
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1171,7 +1214,7 @@ function AppLayout() {
           <Route path="/chronic-migraine" element={<ChronicMigraine />} />
           <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} />
           <Route path="/fatty-liver" element={<FattyLiver />} />
-          <Route path="/heart-disease" element={<HeartDisease />} />
+          <Route path="/heart-disease-follow-up" element={<HeartDisease />} />
           <Route path="/high-blood-pressure" element={<HighBloodPressure />} />
           <Route path="/high-cholesterol" element={<HighCholesterol />} />
           <Route path="/hormone-imblance" element={<HormoneImblance />} />
@@ -1499,6 +1542,36 @@ function AppLayout() {
             element={<VaginalYeastInfection />}
           />
           <Route path="/weaning-guidance" element={<WeaningGuidance />} />
+          <Route path="/stress" element={<Stress />} />
+          <Route path="/anger-management" element={<AngerManagement />} />
+          <Route
+            path="/adjustment-difficulties"
+            element={<AdjustmentDifficulties />}
+          />
+          <Route
+            path="/substance-use-support"
+            element={<SubstanceUseSupport />}
+          />
+          <Route
+            path="/sleep-related-anxiety"
+            element={<SleepRelatedAnxiety />}
+          />
+          <Route path="/depression" element={<Depression />} />
+          <Route path="/anxiety" element={<Anxiety />} />
+          <Route
+            path="/bipolar-disorder-follow-up"
+            element={<BipolarDisorderFollowUp />}
+          />
+          <Route path="/ptsd" element={<PTSD />} />
+          <Route path="/panic-attack" element={<PanicAttacks />} />
+          <Route path="/insomnia" element={<Insomnia />} />
+          <Route path="/ADHD-evaluation" element={<AdhdEvaluation />} />
+          <Route path="/grief-and-loss" element={<GriefAndLoss />} />
+          <Route path="/relationship-stress" element={<RelationshipStress />} />
+          <Route path="/low-self-esteem" element={<LowSelfEsteem />} />
+          <Route path="/trauma-support" element={<TraumaSupport />} />
+          <Route path="/hot-flashes" element={<HotFlashes />} />
+          <Route path="/hrt-guidance" element={<HrtGuidance />} />
           {/* <Route path="/bladder-problems" element={<BladderProblems />} /> */}
           {/* <Route
             path="/erectile-dysfunction"
@@ -1553,7 +1626,10 @@ function AppLayout() {
             path="/urinary-symptoms-in-men"
             element={<UrinarySymptomsMen1 />}
           />
-          {/* <Route path="/ADHD-evaluation" element={<ADHDEvaluation />} /> */}
+
+           <Route path="/fertility-concerns" element={<FertilityConcerns />} />
+          <Route path="/OCD" element={<OCD />} />
+          <Route path="/eye-irritation" element={<EyeIrritation />} />
           {/* <Route
             path="/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
@@ -1619,7 +1695,6 @@ function AppLayout() {
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/career" element={<DoctorCareers />} />
           <Route path="/faq" element={<FAQ />} />
-
           {/* ---------------------Service Pages---------------------------- */}
           <Route path="/ServiceDemo" element={<ServiceDemo />} />
           <Route

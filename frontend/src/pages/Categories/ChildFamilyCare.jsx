@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowRight,
@@ -240,10 +241,37 @@ const cat = {
 
 function BookingForm({ specialtyPlaceholder }) {
   const [form, setForm] = useState({
-    name: "", phone: "", date: "", time: "", type: "", specialty: "",
+    name: "",
+    phone: "",
+    date: "",
+    time: "",
+    type: "",
+    specialty: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Fetch dynamic pricing for the "family" category
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const response = await api.get("/api/pricing");
+        const familyPricing = response.data?.family;
+        if (familyPricing) {
+          setPrice(familyPricing.price);
+        }
+      } catch (error) {
+        console.error("Failed to fetch pricing:", error);
+        // Fallback to default price if API fails
+        setPrice(49);
+      } finally {
+        setPriceLoading(false);
+      }
+    };
+    fetchPrice();
+  }, []);
 
   const handleSubmit = () => {
     if (!form.name || !form.phone || !form.date) return;
@@ -256,7 +284,14 @@ function BookingForm({ specialtyPlaceholder }) {
       <div className="hcc-book-card" style={{ textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
         <div className="hcc-book-title">Appointment Requested!</div>
-        <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 8, lineHeight: 1.6 }}>
+        <p
+          style={{
+            fontSize: 13,
+            color: "var(--muted)",
+            marginTop: 8,
+            lineHeight: 1.6,
+          }}
+        >
           We'll confirm your slot via call or SMS within 15 minutes.
         </p>
       </div>
@@ -264,53 +299,64 @@ function BookingForm({ specialtyPlaceholder }) {
   }
 
   return (
-    <div className="hcc-book-card">
-      <div className="hcc-book-title">Book an Appointment</div>
-      <p className="hcc-book-sub">Same-day slots often available</p>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Full Name</label>
-        <input className="hcc-form-input" placeholder="Your full name" value={form.name} onChange={(e) => set("name", e.target.value)} />
+    <div className="hcc-booking-card">
+      <div className="hcc-booking-badge">
+        <span className="hcc-booking-badge-dot" />
+        Doctors Available Now
       </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Phone Number</label>
-        <input className="hcc-form-input" placeholder="+91 98765 43210" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-      </div>
-      <div className="hcc-form-row">
-        <div className="hcc-form-group">
-          <label className="hcc-form-label">Date</label>
-          <input className="hcc-form-input" type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
+
+      <div className="hcc-booking-price-block">
+        <div className="hcc-booking-price">
+          {priceLoading ? (
+            <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
+          ) : (
+            `$${price || 49}`
+          )}
         </div>
-        <div className="hcc-form-group">
-          <label className="hcc-form-label">Time</label>
-          <div className="hcc-select-wrap">
-            <select className="hcc-form-select" value={form.time} onChange={(e) => set("time", e.target.value)}>
-              <option value="">Select</option>
-              <option>Morning (9–12)</option>
-              <option>Afternoon (12–4)</option>
-              <option>Evening (4–8)</option>
-            </select>
+        <p className="hcc-booking-price-sub">
+          One-time consultation fee · No subscription required
+        </p>
+      </div>
+
+      <div className="hcc-booking-info">
+        <FiShield size={15} className="hcc-booking-info-icon" />
+        <p className="hcc-booking-info-text">
+          No extra fee for doctor notes, prescriptions, or specialist referrals.{" "}
+          <strong className="hcc-booking-info-strong">
+            Everything is included.
+          </strong>
+        </p>
+      </div>
+
+      <div className="hcc-booking-features">
+        {[
+          "Board-certified physician",
+          "Rx to your pharmacy",
+          "Doctor's note included",
+          "24hr follow-up support",
+          "HIPAA secure session",
+        ].map((item, i) => (
+          <div
+            key={item}
+            className="hcc-booking-feature-row"
+            style={{ animationDelay: `${0.35 + i * 0.07}s` }}
+          >
+            <FiCheckCircle size={15} className="hcc-booking-check" />
+            <span className="hcc-booking-feature-text">{item}</span>
           </div>
-        </div>
+        ))}
       </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Consultation Type</label>
-        <div className="hcc-select-wrap">
-          <select className="hcc-form-select" value={form.type} onChange={(e) => set("type", e.target.value)}>
-            <option value="">Select type</option>
-            <option>Video Consultation</option>
-            <option>In-Person Visit</option>
-          </select>
-        </div>
-      </div>
-      <div className="hcc-form-group">
-        <label className="hcc-form-label">Specialty (optional)</label>
-        <input className="hcc-form-input" placeholder={specialtyPlaceholder || "e.g. Specialist"} value={form.specialty} onChange={(e) => set("specialty", e.target.value)} />
-      </div>
-      <button className="hcc-book-submit" onClick={handleSubmit}>
-        <FiCalendar /> Confirm Appointment
-      </button>
-      <p className="hcc-book-note">
-        <FiShield size={11} /> Free cancellation up to 2 hours before
+
+      <button className="hcc-booking-cta">Start Consultation →</button>
+      <p className="hcc-booking-terms">
+        By continuing, you agree to our{" "}
+        <a href="#" className="hcc-booking-link">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="#" className="hcc-booking-link">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );
@@ -377,7 +423,7 @@ function ConditionCard({ cond, index }) {
       <p className="hcc-condition-desc">{cond.desc}</p>
       {cond.path && (
         <div className="hcc-condition-expand">
-          Learn more <FiArrowRight size={11} />
+          Learn more <FiArrowRight size={13} />
         </div>
       )}
     </motion.div>
@@ -397,7 +443,8 @@ function FaqSection({ faqGroups, catLabel }) {
           <span className="hcc-faq-sidebar-eyebrow">FAQ</span>
           <h2 className="hcc-faq-sidebar-title">Frequently Asked Questions</h2>
           <p className="hcc-faq-sidebar-desc">
-            Everything you need to know about {catLabel} care at HumanCare Connect. Can't find an answer?
+            Everything you need to know about {catLabel} care at HumanCare
+            Connect. Can't find an answer?
           </p>
 
           <button
@@ -414,15 +461,24 @@ function FaqSection({ faqGroups, catLabel }) {
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div><strong>Avg. response in 2 min</strong><div>Live chat available</div></div>
+              <div>
+                <strong>Avg. response in 2 min</strong>
+                <div>Live chat available</div>
+              </div>
             </div>
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">🏥</span>
-              <div><strong>HIPAA secure &amp; private</strong><div>Your data is protected</div></div>
+              <div>
+                <strong>HIPAA secure &amp; private</strong>
+                <div>Your data is protected</div>
+              </div>
             </div>
             <div className="hcc-faq-trust-badge">
               <span className="badge-dot" />
-              <div><strong>Available on all devices</strong><div>Web, iOS &amp; Android</div></div>
+              <div>
+                <strong>Available on all devices</strong>
+                <div>Web, iOS &amp; Android</div>
+              </div>
             </div>
           </div>
         </div>
@@ -439,11 +495,21 @@ function FaqSection({ faqGroups, catLabel }) {
                   const key = `${gi}-${fi}`;
                   const isOpen = openItem === key;
                   return (
-                    <div key={fi} className={`hcc-faq-item${isOpen ? " open" : ""}`}>
-                      <button className="hcc-faq-btn" onClick={() => toggle(key)}>
+                    <div
+                      key={fi}
+                      className={`hcc-faq-item${isOpen ? " open" : ""}`}
+                    >
+                      <button
+                        className="hcc-faq-btn"
+                        onClick={() => toggle(key)}
+                      >
                         <span className="hcc-faq-question">{faq.q}</span>
                         <span className="hcc-faq-toggle">
-                          {isOpen ? <FiMinus size={12} /> : <FiPlus size={12} />}
+                          {isOpen ? (
+                            <FiMinus size={12} />
+                          ) : (
+                            <FiPlus size={12} />
+                          )}
                         </span>
                       </button>
                       <AnimatePresence>
@@ -485,16 +551,28 @@ function FaqSection({ faqGroups, catLabel }) {
 
 export default function ChildFamilyCare() {
   const navigate = useNavigate();
-  const goToBooking = () => navigate("/appointment-booking");
+  const goToBooking = () =>
+    navigate("/appointment-booking", { state: { categoryId: "family" } });
   const goToContact = () => navigate("/contact");
 
-
   return (
-    <div style={{ fontFamily: "'Satoshi', sans-serif", background: "var(--bg)", color: "var(--navy)", minHeight: "100vh" }}>
-
+    <div
+      style={{
+        fontFamily: "'Satoshi', sans-serif",
+        background: "var(--bg)",
+        color: "var(--navy)",
+        minHeight: "100vh",
+      }}
+    >
       <Helmet>
-        <title>Online Children &amp; Family Care | Virtual Doctor Consultation | Humancare Connect</title>
-        <meta name="description" content="Access online children and family care with trusted healthcare professionals. Get virtual doctor consultations, pediatric guidance, family healthcare support, and personalized medical advice from home." />
+        <title>
+          Online Children &amp; Family Care | Virtual Doctor Consultation |
+          Humancare Connect
+        </title>
+        <meta
+          name="description"
+          content="Access online children and family care with trusted healthcare professionals. Get virtual doctor consultations, pediatric guidance, family healthcare support, and personalized medical advice from home."
+        />
       </Helmet>
 
       {/* ── Hero ── */}
@@ -502,13 +580,29 @@ export default function ChildFamilyCare() {
         <div className="hcc-hero-overlay" />
         <div className="hcc-hero-deco-1" />
         <div className="hcc-hero-deco-2" />
-        <FiHeart       className="hcc-hero-icon" style={{ top: 48,    right: 420, fontSize: 48 }} />
-        <FiShield      className="hcc-hero-icon" style={{ bottom: 60, right: 500, fontSize: 36 }} />
-        <FiActivity    className="hcc-hero-icon" style={{ top: 140,   right: 340, fontSize: 30 }} />
-        <FiCheckCircle className="hcc-hero-icon" style={{ bottom: 120, right: 420, fontSize: 28 }} />
+        <FiHeart
+          className="hcc-hero-icon"
+          style={{ top: 48, right: 420, fontSize: 48 }}
+        />
+        <FiShield
+          className="hcc-hero-icon"
+          style={{ bottom: 60, right: 500, fontSize: 36 }}
+        />
+        <FiActivity
+          className="hcc-hero-icon"
+          style={{ top: 140, right: 340, fontSize: 30 }}
+        />
+        <FiCheckCircle
+          className="hcc-hero-icon"
+          style={{ bottom: 120, right: 420, fontSize: 28 }}
+        />
 
         <div className="hcc-inner">
-          <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+          >
             <div className="hcc-badge">
               <span className="hcc-badge-dot" />
               Trusted {cat.label}
@@ -516,37 +610,58 @@ export default function ChildFamilyCare() {
             <h1 className="hcc-headline">
               {cat.headline}
               <br />
-              <span style={{ color: "var(--blue-lt)" }}>{cat.headlineAccent}</span>
+              <span style={{ color: "var(--blue-lt)" }}>
+                {cat.headlineAccent}
+              </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
             <div className="hcc-cta-row">
-              <button className="hcc-btn-primary" onClick={goToBooking}><FiCalendar /> Book Appointment</button>
-              <button className="hcc-btn-secondary" onClick={goToContact}><FiUser size={15} /> Know More</button>
+              <button className="hcc-btn-primary" onClick={goToBooking}>
+                <FiCalendar /> Book Appointment
+              </button>
+              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+                <FiUser size={15} /> Know More
+              </button> */}
             </div>
             <div className="hcc-trust-row">
-              <div className="hcc-trust-item"><FiCheckCircle size={14} /> Same Day Visits</div>
-              <div className="hcc-trust-item"><FiShield size={14} /> Insurance Accepted</div>
-              <div className="hcc-trust-item"><FiVideo size={14} /> Virtual Care</div>
+              <div className="hcc-trust-item">
+                <FiCheckCircle size={14} /> Same Day Visits
+              </div>
+              <div className="hcc-trust-item">
+                <FiShield size={14} /> Insurance Accepted
+              </div>
+              <div className="hcc-trust-item">
+                <FiVideo size={14} /> Virtual Care
+              </div>
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.15 }}>
-            <BookingForm specialtyPlaceholder={cat.bookingSpecialtyPlaceholder} />
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.15 }}
+          >
+            <BookingForm
+              specialtyPlaceholder={cat.bookingSpecialtyPlaceholder}
+            />
           </motion.div>
         </div>
       </section>
 
       {/* ── Body ── */}
       <div className="hcc-body">
-
         {/* Specialties */}
         {cat.specialties?.length > 0 && (
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Expertise</span>
             <h2 className="hcc-section-title">Specialties Covered</h2>
-            <p className="hcc-section-sub">All {cat.label} specialties available on Humancare Connect.</p>
+            <p className="hcc-section-sub">
+              All {cat.label} specialties available on Humancare Connect.
+            </p>
             <div className="hcc-specialty-grid">
-              {cat.specialties.map((sp, i) => <SpecialtyCard key={i} sp={sp} index={i} />)}
+              {cat.specialties.map((sp, i) => (
+                <SpecialtyCard key={i} sp={sp} index={i} />
+              ))}
             </div>
           </section>
         )}
@@ -556,9 +671,13 @@ export default function ChildFamilyCare() {
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Conditions</span>
             <h2 className="hcc-section-title">Conditions We Treat</h2>
-            <p className="hcc-section-sub">Click on any condition to learn more.</p>
+            <p className="hcc-section-sub">
+              Click on any condition to learn more.
+            </p>
             <div className="hcc-condition-grid">
-              {cat.conditions.map((cond, i) => <ConditionCard key={cond.name} cond={cond} index={i} />)}
+              {cat.conditions.map((cond, i) => (
+                <ConditionCard key={cond.name} cond={cond} index={i} />
+              ))}
             </div>
           </section>
         )}
@@ -568,7 +687,10 @@ export default function ChildFamilyCare() {
           <section className="hcc-section">
             <span className="hcc-section-eyebrow">Care Options</span>
             <h2 className="hcc-section-title">Treatment & Care Pathways</h2>
-            <p className="hcc-section-sub">Multiple ways to access quality care for your child, on your terms.</p>
+            <p className="hcc-section-sub">
+              Multiple ways to access quality care for your child, on your
+              terms.
+            </p>
             <div className="hcc-treatment-grid">
               {cat.treatments.map((t, i) => (
                 <motion.div
@@ -601,10 +723,22 @@ export default function ChildFamilyCare() {
             <p>{cat.ctaBody}</p>
           </div>
           <div className="hcc-cta-actions">
-            <button className="hcc-btn-primary" style={{ background: "#fff", color: "var(--blue)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} onClick={goToBooking}>
+            <button
+              className="hcc-btn-primary"
+              style={{
+                background: "#fff",
+                color: "var(--blue)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              }}
+              onClick={goToBooking}
+            >
               Find Doctors <FiArrowRight />
             </button>
-            <button className="hcc-btn-secondary" style={{ borderColor: "rgba(255,255,255,0.35)" }} onClick={goToContact}>
+            <button
+              className="hcc-btn-secondary"
+              style={{ borderColor: "rgba(255,255,255,0.35)" }}
+              onClick={goToContact}
+            >
               <FiPhone size={14} /> Call Us Now
             </button>
           </div>
@@ -613,11 +747,14 @@ export default function ChildFamilyCare() {
 
       {/* Mobile sticky CTA */}
       <div className="hcc-mobile-cta">
-        <button className="hcc-btn-primary" style={{ flex: 1, justifyContent: "center", borderRadius: 12 }} onClick={goToBooking}>
+        <button
+          className="hcc-btn-primary"
+          style={{ flex: 1, justifyContent: "center", borderRadius: 12 }}
+          onClick={goToBooking}
+        >
           Book Appointment
         </button>
       </div>
-
     </div>
   );
 }

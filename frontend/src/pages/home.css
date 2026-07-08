@@ -1,6 +1,6 @@
 /* ═══ FONT IMPORTS ═══ */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
-@import url('https://api.fontshare.com/v2/css?f[]=satoshi@1&display=swap');
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@1&display=swap");
 
 /* ═══ CSS VARIABLES ═════ */
 :root {
@@ -739,7 +739,6 @@ h4 {
   background: #1e3457;
 }
 
-/* Search Suggestions */
 .search-suggestions {
   position: absolute;
   top: calc(100% + 12px);
@@ -753,13 +752,37 @@ h4 {
   backdrop-filter: blur(22px) saturate(180%);
   -webkit-backdrop-filter: blur(22px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 22px;
+  border-radius: 10px;
   /* FIX: must sit above hero-right (z-index: 1) and step dots */
   z-index: 200;
   box-shadow:
     0 20px 60px rgba(15, 23, 42, 0.12),
     0 4px 18px rgba(15, 23, 42, 0.08);
   animation: searchDropdown 0.25s ease;
+
+  /* NEW: slim, professional scrollbar (Firefox) */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 58, 94, 0.25) transparent;
+}
+
+/* NEW: slim, professional scrollbar (Chrome/Safari/Edge) */
+.search-suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-suggestions::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 22px 0; /* keeps track clear of the rounded corners */
+}
+
+.search-suggestions::-webkit-scrollbar-thumb {
+  background-color: rgba(34, 58, 94, 0.25);
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(34, 58, 94, 0.45);
 }
 
 .suggestion-item {
@@ -1058,7 +1081,7 @@ h4 {
     padding: 5px 11px;
     margin-bottom: 16px;
     margin-left: 0;
-    margin-top: 0;
+    margin-top: 20px;
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
@@ -1221,7 +1244,7 @@ h4 {
     max-width: 38px;
   }
   .scene-viewport {
-    height: 200px;
+    height: auto;
   }
   .scene-title {
     font-size: 13px;
@@ -1402,13 +1425,21 @@ h4 {
 }
 
 @keyframes marqueeLeft {
-  from { transform: translateX(0%); }
-  to   { transform: translateX(-50%); }
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes marqueeRight {
-  from { transform: translateX(-50%); }
-  to   { transform: translateX(0%); }
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0%);
+  }
 }
 
 .testi-card-v2 {
@@ -1464,10 +1495,18 @@ h4 {
   box-shadow: 0 24px 60px rgba(15, 31, 61, 0.24);
 }
 
-.marquee-left .testi-quote  { color: #1e3461; }
-.marquee-left .testi-author-simple { color: #70819b; }
-.marquee-right .testi-quote { color: rgba(255, 255, 255, 0.96); }
-.marquee-right .testi-author-simple { color: rgba(255, 255, 255, 0.72); }
+.marquee-left .testi-quote {
+  color: #1e3461;
+}
+.marquee-left .testi-author-simple {
+  color: #70819b;
+}
+.marquee-right .testi-quote {
+  color: rgba(255, 255, 255, 0.96);
+}
+.marquee-right .testi-author-simple {
+  color: rgba(255, 255, 255, 0.72);
+}
 
 .testi-quote {
   font-size: 15px;
@@ -1801,7 +1840,8 @@ h4 {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 1;
   }
@@ -1812,29 +1852,55 @@ h4 {
 }
 
 @keyframes orbDrift {
-  0%, 100% { transform: translate(0, 0); }
-  33%       { transform: translate(20px, -25px); }
-  66%       { transform: translate(-15px, 18px); }
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(20px, -25px);
+  }
+  66% {
+    transform: translate(-15px, 18px);
+  }
 }
 
 @keyframes iconPulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.1); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 @keyframes progressPulse {
-  0%   { filter: drop-shadow(0 0 4px rgba(12, 139, 122, 0.5)); }
-  100% { filter: drop-shadow(0 0 8px rgba(12, 139, 122, 0.9)); }
+  0% {
+    filter: drop-shadow(0 0 4px rgba(12, 139, 122, 0.5));
+  }
+  100% {
+    filter: drop-shadow(0 0 8px rgba(12, 139, 122, 0.9));
+  }
 }
 
 @keyframes floatA {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes floatB {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
 }
 
 /* ═══════════════════════════════════════════════

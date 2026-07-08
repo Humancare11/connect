@@ -405,79 +405,74 @@
    ═══════════════════════════════════════════════════════════════ */
 .hcc-sx .catgrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 18px;
   width: 100%;
 }
 
 .hcc-sx .catcard {
-  background: rgba(255, 255, 255, 0.52);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: var(--r-md);
-  padding: 22px 22px 20px;
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: var(--r-lg);
+  padding: 26px 24px 24px;
+  min-height: 240px;
   cursor: pointer;
   transition: transform var(--t), box-shadow var(--t), border-color var(--t), background var(--t);
   position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .hcc-sx .catcard:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(11, 87, 232, 0.14);
-  border-color: rgba(11, 87, 232, 0.25);
-  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 12px 28px rgba(11, 87, 232, 0.16);
+  border-color: rgba(11, 87, 232, 0.32);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 /* [NEW] Row 1 — icon + title side by side */
 .hcc-sx .catcard-row1 {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 14px;
 }
 
 .hcc-sx .catcard .ic {
-  width: 46px;
-  /* [SIZE+] was 40px */
-  height: 46px;
-  /* [SIZE+] was 40px */
-  border-radius: 11px;
-  /* [SIZE+] was 10px */
-  background: rgba(11, 87, 232, 0.07);
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(11, 87, 232, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  /* [SIZE+] was 20px */
+  font-size: 24px;
   flex-shrink: 0;
   transition: transform var(--t);
 }
 
 .hcc-sx .catcard:hover .ic {
-  transform: scale(1.07);
+  transform: scale(1.08);
 }
 
 .hcc-sx .catcard h3 {
-  font-size: 15.5px;
-  /* [SIZE+] was 14px */
+  font-size: 17px;
   font-weight: 700;
   color: var(--navy-deep);
-  margin: 0;
-  letter-spacing: -0.2px;
+  margin: 10px 0 0;
+  letter-spacing: -0.25px;
   font-family: var(--font);
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 /* [NEW] Row 2 — description / sample specialties */
 .hcc-sx .catcard .samp {
-  font-size: 12.5px;
-  /* [SIZE+] was 11.5px */
+  font-size: 13px;
   color: var(--muted);
-  line-height: 1.45;
+  line-height: 1.55;
   flex: 1;
 }
 
@@ -486,38 +481,55 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   margin-top: auto;
+  flex-wrap: wrap;
 }
 
 .hcc-sx .catcard .meta {
-  font-size: 12px;
-  /* [SIZE+] was 11px */
+  font-size: 12.5px;
   color: var(--accent);
   font-weight: 600;
   background: var(--accent-lt);
   display: inline-block;
-  padding: 3px 9px;
-  /* [SIZE+] was 2px 8px */
+  padding: 4px 10px;
   border-radius: var(--pill);
   margin: 0;
 }
 
+.hcc-sx .hcc-price-pill {
+  font-size: 12.5px;
+  color: #166534;
+  font-weight: 700;
+  background: rgba(22, 163, 74, 0.10);
+  border: 1px solid rgba(22, 163, 74, 0.16);
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 4px 10px;
+  border-radius: var(--pill);
+}
+
+.hcc-sx .hcc-price-pill--missing {
+  color: #9f1239;
+  background: rgba(225, 29, 72, 0.08);
+  border-color: rgba(225, 29, 72, 0.16);
+}
+
 .hcc-sx .catcard .go {
   margin: 0;
-  font-size: 13px;
-  /* [SIZE+] was 12px */
+  font-size: 13.5px;
   color: var(--accent);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-shrink: 0;
   transition: gap var(--t);
 }
 
 .hcc-sx .catcard:hover .go {
-  gap: 9px;
+  gap: 8px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -609,8 +621,43 @@
 .hcc-sx .spec .count {
   font-size: 12px;
   /* [SIZE+] was 11px */
-  color: var(--accent);
+  color: var(--muted);
   font-weight: 600;
+}
+
+.hcc-sx .spec-book-btn {
+  align-self: flex-start;
+  margin-top: auto;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--t), box-shadow var(--t), background var(--t);
+}
+
+.hcc-sx .spec-book-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(11, 87, 232, 0.18);
+}
+
+.hcc-sx .spec--price-missing .count {
+  color: #9f1239;
+}
+
+.hcc-sx .hcc-price-alert {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  background: rgba(225, 29, 72, 0.08);
+  border: 1px solid rgba(225, 29, 72, 0.16);
+  color: #9f1239;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .hcc-sx .spec .condcount {
@@ -699,6 +746,15 @@
   /* [FIX] was hard-coded #ffffff, identical to the resting state,
      so hovering produced no visible background change */
   background: rgba(255, 255, 255, 0.85);
+}
+
+.hcc-sx .condcard--disabled,
+.hcc-sx .condcard--disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+  box-shadow: 0 1px 3px rgba(17, 28, 46, 0.04);
+  border-color: rgba(225, 29, 72, 0.18);
 }
 
 .hcc-sx .condcard-ico {
@@ -914,4 +970,18 @@
   .hcc-sx .grid {
     grid-template-columns: 1fr;
   }
+}
+
+.spec-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.book-link {
+font-size: 12px;
+  /* [SIZE+] was 11px */
+  color: var(--accent);
+  font-weight: 600;
 }

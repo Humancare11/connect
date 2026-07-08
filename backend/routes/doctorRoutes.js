@@ -1,5 +1,6 @@
 import express from "express";
 import {
+<<<<<<< HEAD
     registerDoctor,
     loginDoctor,
     getEnrollment,
@@ -8,6 +9,15 @@ import {
     saveEnrollmentProgress,
     getApprovedDoctors,
     getDoctorById,
+=======
+  registerDoctor,
+  loginDoctor,
+  getEnrollment,
+  submitEnrollment,
+  getApprovedDoctors,
+  getDoctorById,
+  toggleOnlineStatus,
+>>>>>>> b2bdd25824ca393da17fdd2d1d40c54357d86015
 } from "../controllers/doctorController.js";
 
 const router = express.Router();
@@ -25,5 +35,6 @@ router.patch("/enrollment/progress", saveEnrollmentProgress);
 router.post("/enrollment", submitEnrollment);
 router.get("/approved", getApprovedDoctors);
 router.get("/:id", getDoctorById);
+router.post("/toggle-online", toggleOnlineStatus);
 
 export default router;

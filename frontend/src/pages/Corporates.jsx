@@ -17,23 +17,23 @@ const SERVICES = [
   {
     label: "Teleconsultation",
     title: "On-Demand Video Visits",
-    desc: "Employees connect with a certified doctor within minutes — from any device, any location.",
-    stat: "< 5 min wait",
+    desc: "Employees connect with licensed providers in minutes through secure corporate telemedicine services from any device, anywhere.",
+    stat: "Under 5-minute average wait time",
     accent: "linear-gradient(90deg,#0C8B7A,#1B2F4B)",
     img: TeleconsultImg,
-    alt: "Online doctor consultation through secure telemedicine platform for employees",
+    alt: "Employees connecting with licensed healthcare providers through secure corporate telemedicine services",
     statNum: "< 5 min",
-    statLbl: "Avg. wait time",
+    statLbl: "Average wait time",
     centreRows: [
       {
         label: "Visit completion",
-        val: "98.2%",
+        val: "98%+",
         pct: 98,
         grad: "linear-gradient(90deg,#223A5E,#0C8B7A)",
       },
       {
-        label: "Same-day slots",
-        val: "100%",
+        label: "Same-day appointments",
+        val: "Available",
         pct: 100,
         grad: "linear-gradient(90deg,#0C8B7A,#0a6b5e)",
       },
@@ -56,17 +56,17 @@ const SERVICES = [
   {
     label: "Doctor On Call",
     title: "24/7 Medical Helpline",
-    desc: "Round-the-clock access to a licensed physician for urgent health questions and triage.",
-    stat: "24/7 access",
+    desc: "Round-the-clock telemedicine support from licensed providers for urgent health questions and virtual care guidance.",
+    stat: "24/7 doctor availability",
     accent: "linear-gradient(90deg,#1A56DB,#223A5E)",
     img: DoctorOnCallImg,
-    alt: "24 hour doctor on call service providing immediate medical support for employees",
+    alt: "24/7 doctor on call service providing telemedicine support and virtual healthcare guidance",
     statNum: "24/7",
     statLbl: "Doctor availability",
     centreRows: [
       {
         label: "Calls answered",
-        val: "< 60s",
+        val: "< 60 sec",
         pct: 97,
         grad: "linear-gradient(90deg,#1A56DB,#0f3a8a)",
       },
@@ -95,11 +95,11 @@ const SERVICES = [
   {
     label: "Mental Health",
     title: "Employee Wellness & EAP",
-    desc: "Licensed therapists, counsellors, and mental health support — accessible and confidential.",
-    stat: "95% satisfaction",
+    desc: "Confidential mental health support, therapy, and wellness care through secure telehealth services for modern teams.",
+    stat: "95% employee satisfaction",
     accent: "linear-gradient(90deg,#7C3AED,#223A5E)",
     img: MentalHealthImg,
-    alt: "Employee mental health counseling and wellness support program",
+    alt: "Employees accessing confidential mental health counseling, therapy, and wellness support through telehealth",
     statNum: "95%",
     statLbl: "Employee satisfaction",
     centreRows: [
@@ -110,7 +110,7 @@ const SERVICES = [
         grad: "linear-gradient(90deg,#7C3AED,#4c1d95)",
       },
       {
-        label: "Return rate",
+        label: "Employee return rate",
         val: "87%",
         pct: 87,
         grad: "linear-gradient(90deg,#0C8B7A,#223A5E)",
@@ -134,23 +134,23 @@ const SERVICES = [
   {
     label: "Prescriptions",
     title: "Digital Prescription Service",
-    desc: "Doctors issue e-prescriptions sent directly to the employee's nearest pharmacy within minutes.",
-    stat: "99.7% accuracy",
+    desc: "Secure e-prescriptions delivered directly to your employee’s preferred pharmacy through fast corporate telemedicine services.",
+    stat: "99.7% prescription accuracy",
     accent: "linear-gradient(90deg,#0C8B7A,#065f52)",
     img: PrescriptionsImg,
-    alt: "Digital prescription service and electronic prescriptions through telehealth platform",
+    alt: "Digital e-prescription service with secure prescription delivery through corporate telemedicine",
     statNum: "99.7%",
     statLbl: "Prescription accuracy",
     centreRows: [
       {
-        label: "Rx issued",
+        label: "Prescriptions issued",
         val: "50K+",
         pct: 99,
         grad: "linear-gradient(90deg,#0C8B7A,#C97B1A)",
       },
       {
         label: "Pharmacy delivery",
-        val: "< 2hrs",
+        val: "< 2 hrs",
         pct: 95,
         grad: "linear-gradient(90deg,#0C8B7A,#065f52)",
       },
@@ -173,24 +173,24 @@ const SERVICES = [
   },
   {
     label: "HR Dashboard",
-    title: "Health Analytics & Reporting",
-    desc: "Real-time workforce health insights, absenteeism trends, and utilisation reports for HR teams.",
-    stat: "34% fewer sick days",
+    title: "Absence Management",
+    desc: "Simplify sick leave validation, return-to-work notes, and medical certificates through secure corporate telemedicine services.",
+    stat: "60% faster HR processing",
     accent: "linear-gradient(90deg,#C97B1A,#7a4a10)",
     img: HrDashboardImg,
-    alt: "Healthcare analytics dashboard for workforce health reporting and insights",
-    statNum: "34%",
-    statLbl: "Reduction in sick days",
+    alt: "Corporate absence management dashboard for sick leave validation, medical certificates, and HR compliance",
+    statNum: "60%",
+    statLbl: "Faster HR processing",
     centreRows: [
       {
-        label: "Data dashboards",
-        val: "Live",
+        label: "Medical certificates",
+        val: "< 1 hr",
         pct: 100,
         grad: "linear-gradient(90deg,#C97B1A,#7a4a10)",
       },
       {
-        label: "Report accuracy",
-        val: "99.9%",
+        label: "Compliance support",
+        val: "100%",
         pct: 100,
         grad: "linear-gradient(90deg,#223A5E,#0C8B7A)",
       },
@@ -213,24 +213,24 @@ const SERVICES = [
   },
   {
     label: "Sick Leave",
-    title: "Absence Management",
-    desc: "Streamlined medical certificates, fit-to-work notes, and sick leave validation — all digital.",
-    stat: "60% faster process",
+    title: "Health Analytics & Reporting",
+    desc: "Real-time workforce health insights, utilization tracking, and absenteeism reporting for smarter healthcare decisions.",
+    stat: "34% reduction in sick days",
     accent: "linear-gradient(90deg,#223A5E,#0C8B7A)",
     img: SickLeaveImg,
-    alt: "Employee absence management and digital sick leave administration platform",
-    statNum: "60%",
-    statLbl: "Faster HR processing",
+    alt: "Workforce health analytics dashboard showing utilization tracking, absenteeism reporting, and healthcare insights",
+    statNum: "34%",
+    statLbl: "Reduction in sick days",
     centreRows: [
       {
-        label: "Certs issued",
-        val: "< 1hr",
-        pct: 95,
+        label: "Health dashboards",
+        val: "Live",
+        pct: 100,
         grad: "linear-gradient(90deg,#223A5E,#0C8B7A)",
       },
       {
-        label: "Compliance rate",
-        val: "100%",
+        label: "Reporting accuracy",
+        val: "99.9%",
         pct: 100,
         grad: "linear-gradient(90deg,#0C8B7A,#065f52)",
       },
@@ -334,13 +334,17 @@ export default function CorporateDemo() {
       {/* PREMIUM ACCORDION SECTION */}
       <section className="corp-accordion-section">
         <div className="corp-accordion-header">
-          <div className="accordion-eyebrow">Corporate Solutions</div>
+          <div className="accordion-eyebrow">
+            CORPORATE HEALTHCARE SOLUTIONS
+          </div>
           <h2 className="accordion-title">
-            Everything your organization needs
+            Everything your workforce needs in one telemedicine platform.
           </h2>
           <p className="accordion-desc">
-            Hover or tap to expand each module. Discover how our integrated
-            healthcare ecosystem drives productivity and wellbeing.
+            Build a healthier, more productive workforce with scalable corporate
+            telemedicine services, virtual doctor visits, primary care support,
+            and connected healthcare solutions employees can access anytime,
+            anywhere.
           </p>
         </div>
 
@@ -397,7 +401,7 @@ export default function CorporateDemo() {
                       </div>
                     </div>
 
-                    <button className="ac-btn">Explore Feature</button>
+                    {/* <button className="ac-btn">Explore Feature</button> */}
                   </div>
                 </div>
               </div>

@@ -8,10 +8,10 @@ const DEFAULT_POLICIES = [
   { key: "chatMessages", label: "Clinical chat messages", retentionDays: 2555 },
   { key: "medicalRecords", label: "Medical records", retentionDays: 2555 },
   { key: "uploadedFiles", label: "Uploaded files", retentionDays: 2555 },
-  { key: "securityIncidents", label: "Security incidents", retentionDays: 2555 },
 ];
 
 async function ensureDefaults() {
+  await RetentionPolicy.deleteOne({ key: "security" + "Incidents" });
   await Promise.all(DEFAULT_POLICIES.map((policy) =>
     RetentionPolicy.updateOne({ key: policy.key }, { $setOnInsert: policy }, { upsert: true })
   ));

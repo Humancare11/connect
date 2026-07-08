@@ -235,10 +235,10 @@ export default function SpecialtiesSection() {
     },
     {
       img: cod3,
-      name: "Cold & Cough",
-      alt: "Cold and cough treatment and respiratory care services",
+      name: "Cold & Flu",
+      alt: "Fever, chills, cough, congestion, body aches, and fatigue caused by common viral infections.",
       count: "110 doctors",
-      path: "/cold-cough",
+      path: "/cold-and-flu",
     },
     {
       img: cod4,
@@ -256,10 +256,10 @@ export default function SpecialtiesSection() {
     },
     {
       img: cod6,
-      name: "Eye Problems",
-      alt: "Eye problems diagnosis and vision care services",
+      name: "Eye Strain",
+      alt: "Eye strain diagnosis and vision care services",
       count: "40 doctors",
-      path: "/eye-problems",
+      path: "/eye-strain",
     },
     {
       img: cod7,
@@ -270,10 +270,10 @@ export default function SpecialtiesSection() {
     },
     {
       img: cod8,
-      name: "Skin Issues",
-      alt: "Skin condition diagnosis and dermatology care services",
+      name: "Skin Rash",
+      alt: "Red, itchy, irritated skin",
       count: "55 doctors",
-      path: "/skin-issues",
+      path: "/skin-rash",
     },
   ];
 

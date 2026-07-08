@@ -98,7 +98,7 @@ export default function PricingManagement() {
       <aside className="dash-sidebar" style={{ background: "#1e1b4b" }}>
         <div className="dash-sidebar-brand">
           <div className="dash-brand-mark" style={{ background: "#6d28d9" }}>H</div>
-          <span>HumaniCare</span>
+          <span>Humancare Connect</span>
         </div>
         <div className="dash-profile">
           <div className="dash-avatar" style={{ background: "#6d28d9" }}>{user.name?.[0]?.toUpperCase()}</div>
@@ -139,7 +139,6 @@ export default function PricingManagement() {
                   <thead>
                     <tr style={{ background: "#f5f3ff", borderBottom: "2px solid #ede9fe" }}>
                       <th style={thStyle}>Category</th>
-                      <th style={{ ...thStyle, textAlign: "center" }}>Currency</th>
                       <th style={{ ...thStyle, textAlign: "right" }}>Current Price</th>
                       <th style={{ ...thStyle, textAlign: "center" }}>Last Updated</th>
                       <th style={{ ...thStyle, textAlign: "center" }}>Updated By</th>
@@ -152,9 +151,6 @@ export default function PricingManagement() {
                         <td style={tdStyle}>
                           <span style={{ fontSize: 18, marginRight: 8 }}>{CATEGORY_ICONS[rec.categoryId]}</span>
                           <strong>{CATEGORY_LABELS[rec.categoryId] || rec.label}</strong>
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: "center", color: "#6b7280" }}>
-                          {rec.currency || "USD"}
                         </td>
                         <td style={{ ...tdStyle, textAlign: "right" }}>
                           {editing === rec.categoryId ? (

@@ -3,7 +3,13 @@
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Reset & base ─────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 /* ── Page shell ───────────────────────────────────────────────── */
 .dl-page {
@@ -28,14 +34,22 @@
 .dl-page::before {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.10) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.1) 0%,
+    transparent 70%
+  );
   top: -150px;
   left: -100px;
 }
 .dl-page::after {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.08) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(20, 184, 166, 0.08) 0%,
+    transparent 70%
+  );
   bottom: -100px;
   right: 60px;
 }
@@ -61,7 +75,7 @@
   width: 248px;
   z-index: 50;
 
-  background: #01164a!important;
+  background: #01164a !important;
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
@@ -87,7 +101,7 @@
 .dl-brand-name {
   font-size: 15px;
   font-weight: 600;
-  color: #ffffff!important;
+  color: #ffffff !important;
   letter-spacing: 0.3px;
 }
 
@@ -107,8 +121,8 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  color: #fff!important;
-  background-color: #01164a!important;
+  color: #fff !important;
+  background-color: #01164a !important;
   font-size: 20px;
   font-weight: 600;
   display: flex;
@@ -125,7 +139,7 @@
 }
 .dl-profile-email {
   font-size: 11px;
-  color: #ffffff!important;
+  color: #ffffff !important;
   text-align: center;
   max-width: 180px;
   overflow: hidden;
@@ -141,7 +155,7 @@
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: rgba(165, 180, 252, 0.9)!important;
+  color: rgba(165, 180, 252, 0.9) !important;
   background: #01164a;
   border: 1px solid rgba(99, 102, 241, 0.3);
   border-radius: 20px;
@@ -168,9 +182,11 @@
   padding: 14px 12px;
   overflow-y: auto;
   scrollbar-width: none;
-  padding: 15px!important;
+  padding: 15px !important;
 }
-.dl-nav::-webkit-scrollbar { display: none; }
+.dl-nav::-webkit-scrollbar {
+  display: none;
+}
 
 .dl-nav-item {
   position: relative;
@@ -179,7 +195,7 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  color: #c3c3c3!important;
+  color: #c3c3c3 !important;
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
@@ -189,8 +205,8 @@
     transform 0.15s ease;
 }
 .dl-nav-item:hover {
-  background: #ffffff80!important;
-  color: #ffffff!important;
+  background: #ffffff80 !important;
+  color: #ffffff !important;
   transform: translateX(2px);
 }
 .dl-nav-item--active {
@@ -202,7 +218,9 @@
   color: #ffffff;
   border: 1px solid rgba(99, 102, 241, 0.2);
 }
-.dl-nav-item--active:hover { transform: none; }
+.dl-nav-item--active:hover {
+  transform: none;
+}
 
 .dl-nav-icon {
   flex-shrink: 0;
@@ -212,9 +230,11 @@
 }
 .dl-nav-item--active .dl-nav-icon {
   opacity: 1;
-  color: #ffffff!important;
+  color: #ffffff !important;
 }
-.dl-nav-label { flex: 1; }
+.dl-nav-label {
+  flex: 1;
+}
 .dl-nav-active-dot {
   width: 6px;
   height: 6px;
@@ -238,7 +258,9 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
   width: calc(100% - 24px);
 }
 .dl-logout:hover {
@@ -299,24 +321,31 @@
   transition: background 0.15s;
   flex-shrink: 0;
 }
-.dl-burger:hover { background: rgba(99, 102, 241, 0.08); }
+.dl-burger:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
 .dl-burger span {
   display: block;
   width: 20px;
   height: 1.5px;
   background: #6b7280;
   border-radius: 2px;
-  transition: transform 0.25s, opacity 0.25s;
+  transition:
+    transform 0.25s,
+    opacity 0.25s;
 }
 
 /* ── Topbar left ──────────────────────────────────────────────── */
-.dl-topbar-left { flex: 1; min-width: 0; }
+.dl-topbar-left {
+  flex: 1;
+  min-width: 0;
+}
 .dl-topbar-eyebrow {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #ffffff!important;
+  color: #ffffff !important;
   margin-bottom: 1px;
 }
 .dl-topbar-title {
@@ -331,7 +360,7 @@
   text-overflow: ellipsis;
 }
 .dl-topbar-title svg {
-  color: #ffffff!important;
+  color: #ffffff !important;
   flex-shrink: 0;
 }
 
@@ -348,22 +377,29 @@
   gap: 6px;
   padding: 8px 14px;
   border-radius: 12px;
-  background-color: #08308E!important;
-  color: #fff!important;
+  background-color: #08308e !important;
+  color: #fff !important;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  transition: opacity 0.18s, transform 0.15s;
+  transition:
+    opacity 0.18s,
+    transform 0.15s;
   white-space: nowrap;
 }
-.dl-topbar-book:hover { opacity: 0.9; transform: translateY(-1px); }
-.dl-topbar-book:active { transform: translateY(0); }
+.dl-topbar-book:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.dl-topbar-book:active {
+  transform: translateY(0);
+}
 
 /* ── Content area ─────────────────────────────────────────────── */
 .dl-content {
   flex: 1;
   padding: 4px 0 24px;
-  color: #374151!important;
+  color: #374151 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -394,17 +430,36 @@
     margin-bottom: 14px;
   }
 
-  .dl-burger { display: flex; }
+  .dl-burger {
+    display: flex;
+  }
 
   .dl-topbar-book {
     padding: 7px 10px;
     font-size: 12px;
   }
 
-  .dl-topbar-eyebrow { display: none; }
+  .dl-topbar-eyebrow {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
-  .dl-topbar-book span { display: none; }
-  .dl-topbar-book { padding: 8px; }
+  .dl-topbar-book span {
+    display: none;
+  }
+  .dl-topbar-book {
+    padding: 8px;
+  }
+}
+
+/* ── Pulse animation for online status indicator ────────────── */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }

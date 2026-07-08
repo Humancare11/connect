@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { paypalFetch } = require("../utils/paypal");
 const { sendEmail } = require("../utils/sendEmail");
-const { recordSecurityIncident } = require("../utils/securityMonitor");
+const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { getS3ObjectUrl } = require("../config/s3");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
@@ -689,7 +689,7 @@ const getAllAppointments = async (req, res) => {
     });
 
     if (enhancedAppointments.length >= 100) {
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "large_data_export",
         severity: "medium",
         title: "Large appointment dataset accessed",
