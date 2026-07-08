@@ -308,7 +308,7 @@ import TraumaSupport from "./pages/Conditions/Conditions/TraumaSupport";
 import HotFlashes from "./pages/Conditions/Conditions/HotFlashes";
 import HrtGuidance from "./pages/Conditions/Conditions/HrtGuidance";
 import FertilityConcerns from "./pages/Conditions/Conditions/FertilityConcerns";
-import OCD from "./pages/Conditions/Conditions/OCD";
+// import OCD from "./pages/Conditions/Conditions/OCD";
 import EyeIrritation from "./pages/Conditions/EyeIrritation";
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
@@ -1628,7 +1628,7 @@ function AppLayout() {
           />
 
            <Route path="/fertility-concerns" element={<FertilityConcerns />} />
-          <Route path="/OCD" element={<OCD />} />
+          {/* <Route path="/OCD" element={<OCD />} /> */}
           <Route path="/eye-irritation" element={<EyeIrritation />} />
           {/* <Route
             path="/adjustment-difficulties"
