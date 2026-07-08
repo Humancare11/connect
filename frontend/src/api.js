@@ -1,13 +1,38 @@
 import axios from "axios";
 import { dispatchSessionActivity } from "./utils/session";
 
+let accessToken = "";
+let refreshToken = "";
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "",
   withCredentials: true,
 });
 
+export function setUserAuthToken(nextAccessToken = "", nextRefreshToken = "") {
+  accessToken = nextAccessToken || "";
+  refreshToken = nextRefreshToken || "";
+}
+
+export function clearUserAuthToken() {
+  accessToken = "";
+  refreshToken = "";
+}
+
+export function getUserAuthToken() {
+  return accessToken;
+}
+
 api.interceptors.request.use((config) => {
   dispatchSessionActivity();
+  const url = config.url || "";
+  const token = url.includes("/api/auth/refresh") ? refreshToken : accessToken;
+  config.headers = config.headers || {};
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    delete config.headers.Authorization;
+  }
   return config;
 });
 
@@ -15,6 +40,9 @@ let refreshPromise = null;
 
 api.interceptors.response.use(
   (response) => {
+    if (response.data?.accessToken) {
+      setUserAuthToken(response.data.accessToken, response.data.refreshToken || refreshToken);
+    }
     if (response.data) response.data = _deepNormalizeUrls(response.data);
     return response;
   },
@@ -32,6 +60,7 @@ api.interceptors.response.use(
         await refreshPromise;
         return api(original);
       } catch {
+        clearUserAuthToken();
         window.dispatchEvent(new CustomEvent("hc:session-expired"));
       }
     }
@@ -39,10 +68,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-export function getUserAuthToken() {
-  return "";
-}
 
 const _apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 const UPLOAD_URL_RE = /^(https?:\/\/[^/]+)\/(?:api\/)?(uploads\/.+)$/;

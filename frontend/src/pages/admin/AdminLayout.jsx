@@ -162,6 +162,7 @@ export default function AdminLayout({ children }) {
     "/superadmin-dashboard":    "Manage Admins",
     "/admin-dashboard/audit-logs": "Audit Logs",
     "/payment-admin/payment-links": "Payment Links",
+    "/superadmin-dashboard/healthcare-management": "Healthcare Management",
   };
   const pageTitle = NAV_ITEMS.flatMap(s => s.items)
     .find(i => i.path === location.pathname || i.paymentAdminPath === location.pathname)?.label
@@ -275,6 +276,21 @@ export default function AdminLayout({ children }) {
                   </svg>
                 </span>
                 Pricing Management
+              </Link>
+              <Link
+                to="/superadmin-dashboard/healthcare-management"
+                className={`ad-nav-item${location.pathname === "/superadmin-dashboard/healthcare-management" ? " active" : ""}`}
+                onClick={() => setSideOpen(false)}
+              >
+                <span className="ad-nav-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19V5"/>
+                    <path d="M4 5h16l-2 5 2 5H4"/>
+                    <path d="M8 9h5"/>
+                    <path d="M8 13h7"/>
+                  </svg>
+                </span>
+                Healthcare Management
               </Link>
             </>
           )}

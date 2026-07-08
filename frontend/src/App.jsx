@@ -19,7 +19,7 @@ const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const Corporates = lazy(() => import("./pages/Corporates"));
 const Contact = lazy(() => import("./pages/Contact"));
-
+const Ab = lazy(() => import("./pages/Ab"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
@@ -31,7 +31,7 @@ import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
 import useLenis from "./hooks/useLenis";
-import api from "./api";
+import api, { clearUserAuthToken } from "./api";
 import {
   ROLE_TIMEOUT_MS,
   SESSION_ACTIVITY_EVENT,
@@ -390,6 +390,7 @@ const DoctorProfileForUser = lazy(
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
 const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
+const HealthcareManagement = lazy(() => import("./pages/admin/HealthcareManagement"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
@@ -500,6 +501,7 @@ function SessionTimeoutManager() {
     let refreshTimer;
 
     const logoutAll = async () => {
+      clearUserAuthToken();
       clearClientSession();
       await Promise.allSettled([logoutUser(), logoutDoctor(), logoutAdmin()]);
       setWarningOpen(false);
@@ -693,6 +695,7 @@ function AppLayout() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/ab" element={<Ab />} />
           {/* <Route path="/register" element={<Register />} /> */}
           <Route path="/book-appointment" element={<BookAppointment />} />
           <Route path="/test" element={<Test />} />
@@ -1104,6 +1107,16 @@ function AppLayout() {
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <AdminLayout>
                   <AuditLogs />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/superadmin-dashboard/healthcare-management"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <HealthcareManagement />
                 </AdminLayout>
               </PrivateRoute>
             }

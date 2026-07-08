@@ -85,7 +85,7 @@ function getDobError(dob) {
   if (dob < DOB_MIN) return "Date of Birth must be in or after 1900";
   return "";
 }
-import api from "../api";
+import api, { setUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import PhoneInputField, {
   COUNTRIES as PHONE_COUNTRIES,
@@ -290,7 +290,9 @@ export default function AuthPage() {
     setFormError("");
     setFormSuccess("");
   };
-  const saveUserToken = () => {};
+  const saveUserToken = ({ accessToken, refreshToken } = {}) => {
+    setUserAuthToken(accessToken, refreshToken);
+  };
 
   const startTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -367,7 +369,7 @@ export default function AuthPage() {
           setIsRegister(true);
           return;
         }
-        saveUserToken(res.data.token);
+        saveUserToken(res.data);
         afterLogin(res.data.user);
       } catch (err) {
         setFormError(err.response?.data?.msg || "Google Sign-In failed.");
@@ -400,7 +402,7 @@ export default function AuthPage() {
         privacyConsent: googleProfile.privacyConsent,
         hipaaConsent: googleProfile.hipaaConsent,
       });
-      saveUserToken(res.data.token);
+      saveUserToken(res.data);
       afterLogin(res.data.user);
     } catch (err) {
       setFormError(err.response?.data?.msg || "Registration failed.");
@@ -416,7 +418,7 @@ export default function AuthPage() {
     clrErr();
     try {
       const res = await api.post("/api/auth/login", loginForm);
-      saveUserToken(res.data.token);
+      saveUserToken(res.data);
       afterLogin(res.data.user);
     } catch (err) {
       setFormError(err.response?.data?.msg || "Login failed.");
@@ -488,7 +490,7 @@ export default function AuthPage() {
         ...data,
         otp: otpValue,
       });
-      saveUserToken(res.data.token);
+      saveUserToken(res.data);
       if (timerRef.current) clearInterval(timerRef.current);
       setOtpValue("");
       setRegisterForm({

@@ -9,6 +9,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../api";
+import HealthcareIcon from "../components/HealthcareIcon";
 import { useAuth } from "../context/AuthContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
@@ -362,7 +363,7 @@ function PaymentStage({
           <div className="ap-pay-summary-row">
             <span>Condition</span>
             <strong>
-              {selection.condIco} {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
             </strong>
           </div>
           <div className="ap-pay-summary-row">
@@ -537,37 +538,44 @@ export default function AppointmentBookingForm() {
   const today = new Date().toISOString().split("T")[0];
   const pricingRecord = selection?.catId ? categoryPrices?.[selection.catId] : null;
   const pricingAmount = Number(pricingRecord?.price);
+  const selectionAmount = Number(selection?.cost);
   const hasDbPrice =
     !!selection?.catId &&
     !!pricingRecord &&
     Number.isFinite(pricingAmount) &&
     pricingAmount > 0;
+  const hasSelectionPrice =
+    Number.isFinite(selectionAmount) &&
+    selectionAmount > 0;
+  const hasAppointmentPrice = hasDbPrice || hasSelectionPrice;
+  const effectivePrice = hasDbPrice ? pricingAmount : selectionAmount;
+  const effectiveCurrency = hasDbPrice ? pricingRecord.currency || "USD" : selection?.currency || "USD";
   const pricingIssue = !selection?.catId
     ? "Please reselect your appointment category so the current database price can be loaded."
-    : pricingMeta.loading
+    : pricingMeta.loading && !hasSelectionPrice
       ? "Loading the latest appointment price. Please wait."
-      : pricingMeta.error
+      : pricingMeta.error && !hasSelectionPrice
         ? "Pricing could not be loaded. Please try again shortly."
-        : !hasDbPrice
+        : !hasAppointmentPrice
           ? "No valid database price is configured for this category."
           : "";
   useEffect(() => {
-    if (!hasDbPrice) return;
+    if (!hasAppointmentPrice) return;
     setSelection((prev) => {
       if (
         !prev ||
-        prev.cost === pricingAmount &&
-          prev.currency === (pricingRecord.currency || "USD")
+        prev.cost === effectivePrice &&
+          prev.currency === effectiveCurrency
       ) {
         return prev;
       }
       return {
         ...prev,
-        cost: pricingAmount,
-        currency: pricingRecord.currency || "USD",
+        cost: effectivePrice,
+        currency: effectiveCurrency,
       };
     });
-  }, [hasDbPrice, pricingAmount, pricingRecord?.currency]);
+  }, [hasAppointmentPrice, effectivePrice, effectiveCurrency]);
 
   const availableSlots = useMemo(
     () => ALL_TIME_SLOTS.filter((t) => !isSlotPassed(form.date, t)),
@@ -831,15 +839,17 @@ export default function AppointmentBookingForm() {
       <div className="ap-card">
         {/* ── Hero: selection badge ── */}
         <div className="ap-hero">
-          <div className="ap-hero-avatar">{selection.specIco}</div>
+          <div className="ap-hero-avatar">
+            <HealthcareIcon name={selection.specIco} size={30} />
+          </div>
           <div className="ap-hero-body">
             <span className="ap-hero-eyebrow">{selection.catLabel}</span>
             <h2 className="ap-hero-name">{selection.specName}</h2>
             <span className="ap-hero-spec">
-              {selection.condIco} {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
             </span>
           </div>
-          {hasDbPrice && stage === "form" && (
+          {hasAppointmentPrice && stage === "form" && (
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
@@ -1103,7 +1113,7 @@ export default function AppointmentBookingForm() {
                   <span className="ap-spinner ap-spinner--white" /> Preparing…
                 </>
               ) : (
-                `Proceed to Payment${hasDbPrice ? ` - ${formatPrice(selection.cost)}` : ""} ->`
+                `Proceed to Payment${hasAppointmentPrice ? ` - ${formatPrice(selection.cost)}` : ""} ->`
               )}
             </button>
 
@@ -1178,7 +1188,7 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
                 <span className="ap-success-val">
-                  {selection.condIco} {selection.condName}
+                  <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
                 </span>
               </div>
               <div className="ap-success-row">
