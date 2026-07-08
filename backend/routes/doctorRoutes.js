@@ -1,6 +1,5 @@
 import express from "express";
 import {
-<<<<<<< HEAD
     registerDoctor,
     loginDoctor,
     getEnrollment,
@@ -9,15 +8,7 @@ import {
     saveEnrollmentProgress,
     getApprovedDoctors,
     getDoctorById,
-=======
-  registerDoctor,
-  loginDoctor,
-  getEnrollment,
-  submitEnrollment,
-  getApprovedDoctors,
-  getDoctorById,
-  toggleOnlineStatus,
->>>>>>> b2bdd25824ca393da17fdd2d1d40c54357d86015
+    toggleOnlineStatus,
 } from "../controllers/doctorController.js";
 
 const router = express.Router();

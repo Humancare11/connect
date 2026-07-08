@@ -374,48 +374,38 @@ export const getApprovedDoctors = async (req, res) => {
             rating: 4.8, // Default rating
         }));
 
-<<<<<<< HEAD
         res.status(200).json(doctors);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server error", error: err.message });
     }
 };
-=======
-    res.status(200).json(doctors);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
 
 export const toggleOnlineStatus = async (req, res) => {
-  try {
-    const { doctorId } = req.body;
+    try {
+        const { doctorId } = req.body;
 
-    if (!doctorId) {
-      return res.status(400).json({ message: "Doctor ID required" });
+        if (!doctorId) {
+            return res.status(400).json({ message: "Doctor ID required" });
+        }
+
+        const enrollment = await Enrollment.findOne({ doctorId });
+        if (!enrollment) {
+            return res.status(404).json({ message: "Enrollment not found" });
+        }
+
+        // Toggle the online status
+        enrollment.isOnline = !enrollment.isOnline;
+        enrollment.lastOnlineAt = enrollment.isOnline ? new Date() : enrollment.lastOnlineAt;
+        await enrollment.save();
+
+        res.status(200).json({
+            message: `Doctor is now ${enrollment.isOnline ? "online" : "offline"}`,
+            isOnline: enrollment.isOnline,
+            lastOnlineAt: enrollment.lastOnlineAt,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error", error: err.message });
     }
-
-    const enrollment = await Enrollment.findOne({ doctorId });
-    if (!enrollment) {
-      return res.status(404).json({ message: "Enrollment not found" });
-    }
-
-    // Toggle the online status
-    enrollment.isOnline = !enrollment.isOnline;
-    enrollment.lastOnlineAt = enrollment.isOnline ? new Date() : enrollment.lastOnlineAt;
-    await enrollment.save();
-
-    res.status(200).json({
-      message: `Doctor is now ${enrollment.isOnline ? "online" : "offline"}`,
-      isOnline: enrollment.isOnline,
-      lastOnlineAt: enrollment.lastOnlineAt,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
 };
-
->>>>>>> b2bdd25824ca393da17fdd2d1d40c54357d86015
