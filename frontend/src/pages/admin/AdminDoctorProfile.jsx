@@ -1350,15 +1350,15 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     return hasData
       ? saved
       : DAYS.reduce(
-          (a, day) => ({
-            ...a,
-            [day]: {
-              enabled: false,
-              blocks: [{ start: "09:00", end: "17:00" }],
-            },
-          }),
-          {},
-        );
+        (a, day) => ({
+          ...a,
+          [day]: {
+            enabled: false,
+            blocks: [{ start: "09:00", end: "17:00" }],
+          },
+        }),
+        {},
+      );
   });
 
   const toggleDay = (day) =>
@@ -1412,15 +1412,15 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         languagesKnown,
         licensedStates: d.licensedStates
           ? d.licensedStates
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
           : [],
         internationalLicenses: d.internationalLicenses
           ? d.internationalLicenses
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
           : [],
         ...urls,
         timezone,
@@ -1791,20 +1791,20 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
           </FG>
           {(d.specialization === "Other" ||
             (d.specialization && !SPECIALTIES.includes(d.specialization))) && (
-            <FG label="Custom Specialty">
-              <input
-                style={INP}
-                value={
-                  d.customSpecialty ||
-                  (d.specialization && !SPECIALTIES.includes(d.specialization)
-                    ? d.specialization
-                    : "")
-                }
-                onChange={f("customSpecialty")}
-                placeholder="e.g. Sports Medicine"
-              />
-            </FG>
-          )}
+              <FG label="Custom Specialty">
+                <input
+                  style={INP}
+                  value={
+                    d.customSpecialty ||
+                    (d.specialization && !SPECIALTIES.includes(d.specialization)
+                      ? d.specialization
+                      : "")
+                  }
+                  onChange={f("customSpecialty")}
+                  placeholder="e.g. Sports Medicine"
+                />
+              </FG>
+            )}
           <FG label="Sub-Specialization">
             <input
               style={INP}
@@ -2471,7 +2471,7 @@ export default function AdminDoctorProfile() {
     try {
       const res = await api.get(`/api/admin/doctors/${id}`);
       setEnrollment(res.data);
-    } catch {}
+    } catch { }
   }, [id]);
 
   const handleApprove = async () => {
@@ -3168,53 +3168,53 @@ export default function AdminDoctorProfile() {
                 ? [e.state]
                 : []
             ).length > 0 && (
-              <div
-                style={{
-                  marginTop: 16,
-                  paddingTop: 16,
-                  borderTop: "1px solid #f1f5f9",
-                }}
-              >
                 <div
                   style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    marginBottom: 10,
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: "1px solid #f1f5f9",
                   }}
                 >
-                  🏛️ State/Territory Licensing (AU)
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      marginBottom: 10,
+                    }}
+                  >
+                    🏛️ State/Territory Licensing (AU)
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {(Array.isArray(e.licensedStates)
+                      ? e.licensedStates
+                      : e.state
+                        ? [e.state]
+                        : []
+                    ).map((stateName) => (
+                      <span
+                        key={stateName}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "4px 12px",
+                          background: "#f8fafc",
+                          border: "1px solid #cbd5e1",
+                          borderRadius: 20,
+                          fontSize: 13,
+                          color: "#334155",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {stateName}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {(Array.isArray(e.licensedStates)
-                    ? e.licensedStates
-                    : e.state
-                      ? [e.state]
-                      : []
-                  ).map((stateName) => (
-                    <span
-                      key={stateName}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "4px 12px",
-                        background: "#f8fafc",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: 20,
-                        fontSize: 13,
-                        color: "#334155",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {stateName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
             {Array.isArray(e.internationalLicenses) &&
               e.internationalLicenses.length > 0 && (
                 <div
@@ -3352,8 +3352,8 @@ export default function AdminDoctorProfile() {
               </div>
             )}
             {e.availability &&
-            typeof e.availability === "object" &&
-            Object.keys(e.availability).length > 0 ? (
+              typeof e.availability === "object" &&
+              Object.keys(e.availability).length > 0 ? (
               <div
                 style={{
                   display: "grid",

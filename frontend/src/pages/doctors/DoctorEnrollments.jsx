@@ -827,6 +827,15 @@ h1,h2,h3,h4,h5,h6 {
 }
 .postal-section h4 { color: var(--gold); font-size: 14px; margin-bottom: 8px; }
 
+/* ─── Step Save Banner ─── */
+.step-save-banner {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; margin-left: 12px;
+}
+.step-save-banner.ok { color: var(--green); }
+.step-save-banner.err { color: var(--red); }
+.step-save-banner.saving { color: var(--gray-500); }
+
 
 /* ─── Responsive ─── */
 @media (max-width: 900px) {
@@ -977,188 +986,188 @@ function MultiSelect({
 
   const dropdown = open
     ? createPortal(
+      <div
+        ref={dropdownRef}
+        style={{
+          position: "fixed",
+          top: `${position.top - window.scrollY}px`,
+          left: `${position.left}px`,
+          width: `${position.width}px`,
+          background: "#fff",
+          border: "1.5px solid #e2e8f0",
+          borderRadius: 12,
+          boxShadow:
+            "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
+          zIndex: 9999,
+          overflow: "hidden",
+        }}
+      >
+        {/* Search */}
         <div
-          ref={dropdownRef}
           style={{
-            position: "fixed",
-            top: `${position.top - window.scrollY}px`,
-            left: `${position.left}px`,
-            width: `${position.width}px`,
-            background: "#fff",
-            border: "1.5px solid #e2e8f0",
-            borderRadius: 12,
-            boxShadow:
-              "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
-            zIndex: 9999,
-            overflow: "hidden",
+            padding: "10px 10px 6px",
+            borderBottom: "1px solid #f1f5f9",
           }}
         >
-          {/* Search */}
           <div
             style={{
-              padding: "10px 10px 6px",
-              borderBottom: "1px solid #f1f5f9",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              background: "#f8fafc",
+              border: "1.5px solid #e8edf2",
+              borderRadius: 10,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 12px",
-                background: "#f8fafc",
-                border: "1.5px solid #e8edf2",
-                borderRadius: 10,
-              }}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#94a3b8"
+              strokeWidth="2"
+              style={{ flexShrink: 0 }}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#94a3b8"
-                strokeWidth="2"
-                style={{ flexShrink: 0 }}
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={searchPlaceholder || "Search..."}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder={searchPlaceholder || "Search..."}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                flex: 1,
+                border: "none",
+                background: "transparent",
+                fontSize: 13,
+                fontFamily: "inherit",
+                color: "#1e293b",
+                outline: "none",
+              }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
                 style={{
-                  flex: 1,
+                  background: "none",
                   border: "none",
-                  background: "transparent",
-                  fontSize: 13,
-                  fontFamily: "inherit",
-                  color: "#1e293b",
-                  outline: "none",
-                }}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#cbd5e1",
-                    fontSize: 14,
-                    lineHeight: 1,
-                  }}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* List */}
-          <div style={{ maxHeight: 280, overflowY: "auto" }}>
-            {filtered.length === 0 ? (
-              <div
-                style={{
-                  padding: "18px 16px",
-                  textAlign: "center",
-                  color: "#94a3b8",
-                  fontSize: 13,
+                  cursor: "pointer",
+                  padding: 0,
+                  color: "#cbd5e1",
+                  fontSize: 14,
+                  lineHeight: 1,
                 }}
               >
-                No results found
-              </div>
-            ) : (
-              filtered.map((item) => {
-                const displayName = getDisplayName(item);
-                const countryData =
-                  typeof item === "string" ? findCountryByName(item) : null;
-                const isSelected = selected.includes(displayName);
-
-                return (
-                  <div
-                    key={displayName}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      width: "100%",
-                      padding: "9px 14px",
-                      border: "none",
-                      background: isSelected ? "#f0fdf4" : "transparent",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      fontFamily: "inherit",
-                      transition: "background 0.1s",
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      toggle(item);
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected)
-                        e.currentTarget.style.background = "#f8fafc";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = isSelected
-                        ? "#f0fdf4"
-                        : "transparent";
-                    }}
-                  >
-                    {showFlags && countryData && (
-                      <img
-                        src={getFlagUrl(countryData.code)}
-                        alt={countryData.code}
-                        style={{
-                          width: 20,
-                          height: 15,
-                          objectFit: "cover",
-                          borderRadius: 2,
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
-                    <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
-                      {displayName}
-                    </span>
-                    <div
-                      style={{
-                        width: 16,
-                        height: 16,
-                        border: "1.5px solid #cbd5e1",
-                        borderRadius: 3,
-                        background: isSelected ? "#10b981" : "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {isSelected && (
-                        <span
-                          style={{
-                            color: "#fff",
-                            fontSize: 12,
-                            fontWeight: "bold",
-                          }}
-                        >
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
+                ✕
+              </button>
             )}
           </div>
-        </div>,
-        document.body,
-      )
+        </div>
+
+        {/* List */}
+        <div style={{ maxHeight: 280, overflowY: "auto" }}>
+          {filtered.length === 0 ? (
+            <div
+              style={{
+                padding: "18px 16px",
+                textAlign: "center",
+                color: "#94a3b8",
+                fontSize: 13,
+              }}
+            >
+              No results found
+            </div>
+          ) : (
+            filtered.map((item) => {
+              const displayName = getDisplayName(item);
+              const countryData =
+                typeof item === "string" ? findCountryByName(item) : null;
+              const isSelected = selected.includes(displayName);
+
+              return (
+                <div
+                  key={displayName}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    width: "100%",
+                    padding: "9px 14px",
+                    border: "none",
+                    background: isSelected ? "#f0fdf4" : "transparent",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontFamily: "inherit",
+                    transition: "background 0.1s",
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggle(item);
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected)
+                      e.currentTarget.style.background = "#f8fafc";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = isSelected
+                      ? "#f0fdf4"
+                      : "transparent";
+                  }}
+                >
+                  {showFlags && countryData && (
+                    <img
+                      src={getFlagUrl(countryData.code)}
+                      alt={countryData.code}
+                      style={{
+                        width: 20,
+                        height: 15,
+                        objectFit: "cover",
+                        borderRadius: 2,
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
+                    {displayName}
+                  </span>
+                  <div
+                    style={{
+                      width: 16,
+                      height: 16,
+                      border: "1.5px solid #cbd5e1",
+                      borderRadius: 3,
+                      background: isSelected ? "#10b981" : "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isSelected && (
+                      <span
+                        style={{
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>,
+      document.body,
+    )
     : null;
 
   return (
@@ -1229,50 +1238,50 @@ function SingleSelect({ items, value, onChange, placeholder, hasError }) {
 
   const dropdown = open
     ? createPortal(
-        <div
-          ref={dropdownRef}
-          className="ms-dropdown animate-in"
-          style={{
-            position: "absolute",
-            top: `${position.top}px`,
-            left: `${position.left}px`,
-            width: `${position.width}px`,
-          }}
-        >
-          <input
-            className="ms-search"
-            placeholder="Search specialty..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            autoFocus
-          />
-          <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
-            {filtered.length === 0 ? (
-              <div className="ms-empty">No results found</div>
-            ) : (
-              filtered.map((item) => (
-                <div
-                  key={item}
-                  className="ms-option"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    onChange(item);
-                    setOpen(false);
-                    setSearch("");
-                  }}
-                >
-                  <div className={`ms-check ${value === item ? "on" : ""}`}>
-                    {value === item && "✓"}
-                  </div>
-                  <span>{item}</span>
+      <div
+        ref={dropdownRef}
+        className="ms-dropdown animate-in"
+        style={{
+          position: "absolute",
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          width: `${position.width}px`,
+        }}
+      >
+        <input
+          className="ms-search"
+          placeholder="Search specialty..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          autoFocus
+        />
+        <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
+          {filtered.length === 0 ? (
+            <div className="ms-empty">No results found</div>
+          ) : (
+            filtered.map((item) => (
+              <div
+                key={item}
+                className="ms-option"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(item);
+                  setOpen(false);
+                  setSearch("");
+                }}
+              >
+                <div className={`ms-check ${value === item ? "on" : ""}`}>
+                  {value === item && "✓"}
                 </div>
-              ))
-            )}
-          </div>
-        </div>,
-        document.body,
-      )
+                <span>{item}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>,
+      document.body,
+    )
     : null;
 
   return (
@@ -1659,6 +1668,12 @@ export default function DoctorOnboardingWizard({
   const lastProgressKeyRef = useRef("");
   const progressSyncTimerRef = useRef(null);
 
+  // ── Step-data save (persists actual field values to the DB, per step) ──
+  // "idle" | "saving" | "saved" | "error"
+  const [stepSaveStatus, setStepSaveStatus] = useState("idle");
+  const stepSaveBannerTimerRef = useRef(null);
+  const hasLoadedRef = useRef(false); // guards against saving before initial load finishes
+
   // Step 1
   const [s1, setS1] = useState({
     firstName: "",
@@ -1835,9 +1850,9 @@ export default function DoctorOnboardingWizard({
         ? rawLangs
         : typeof rawLangs === "string" && rawLangs.trim()
           ? rawLangs
-              .split(",")
-              .map((l) => l.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((l) => l.trim())
+            .filter(Boolean)
           : [],
     );
 
@@ -1885,6 +1900,12 @@ export default function DoctorOnboardingWizard({
     ) {
       setOtherLicenseCountries(data.internationalLicenses);
     }
+    if (Array.isArray(data.availability)) {
+      // no-op placeholder: availability is object-keyed by day, handled below if present
+    }
+    if (data.availability && typeof data.availability === "object") {
+      setAvailability((prev) => ({ ...prev, ...data.availability }));
+    }
 
     const makeFileRef = (nameOrUrl) => {
       if (!nameOrUrl) return null;
@@ -1902,26 +1923,53 @@ export default function DoctorOnboardingWizard({
     });
   }, []);
 
-  // Restore draft from localStorage when no backend data yet
-  useEffect(() => {
-    if (!doctorId || initialData) return;
+  // Restore draft from localStorage — used as a fast fallback for anything the
+  // server copy (initialData) does not have yet. This runs regardless of
+  // whether initialData exists, since the server may only have partial data
+  // (or, previously, only step numbers).
+  const loadFromLocalDraft = useCallback(() => {
+    if (!doctorId) return null;
     const saved = localStorage.getItem(`hc_enroll_draft_${doctorId}`);
-    if (!saved) return;
+    if (!saved) return null;
     try {
-      const d = JSON.parse(saved);
-      if (d.s1) setS1((prev) => ({ ...prev, ...d.s1 }));
-      if (d.s2) setS2((prev) => ({ ...prev, ...d.s2 }));
-      if (Array.isArray(d.languagesKnown)) setLanguagesKnown(d.languagesKnown);
-      if (d.availability) setAvailability(d.availability);
-      if (d.timezone) setTimezone(d.timezone);
-      if (d.s4) setS4((prev) => ({ ...prev, ...d.s4 }));
-      if (d.payoutFreq) setPayoutFreq(d.payoutFreq);
-      if (Array.isArray(d.licensedStates)) setLicensedStates(d.licensedStates);
-      if (Array.isArray(d.otherLicenseCountries))
-        setOtherLicenseCountries(d.otherLicenseCountries);
-      if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
-    } catch {}
-  }, [doctorId, initialData]);
+      return JSON.parse(saved);
+    } catch {
+      return null;
+    }
+  }, [doctorId]);
+
+  const applyLocalDraft = useCallback((d) => {
+    if (!d) return;
+    if (d.s1) setS1((prev) => ({ ...prev, ...d.s1 }));
+    if (d.s2) setS2((prev) => ({ ...prev, ...d.s2 }));
+    if (Array.isArray(d.languagesKnown)) setLanguagesKnown(d.languagesKnown);
+    if (d.availability) setAvailability((prev) => ({ ...prev, ...d.availability }));
+    if (d.timezone) setTimezone(d.timezone);
+    if (d.s4) setS4((prev) => ({ ...prev, ...d.s4 }));
+    if (d.payoutFreq) setPayoutFreq(d.payoutFreq);
+    if (Array.isArray(d.licensedStates)) setLicensedStates(d.licensedStates);
+    if (Array.isArray(d.otherLicenseCountries))
+      setOtherLicenseCountries(d.otherLicenseCountries);
+    if (d.files) {
+      setFiles((prev) => {
+        const merged = { ...prev };
+        Object.keys(d.files).forEach((key) => {
+          const cached = d.files[key];
+          // Only restore a cached file slot if it actually finished
+          // uploading (has a real url). A file that was still mid-upload
+          // when the page was left/refreshed can't be resumed from here —
+          // showing it as "present" would be misleading, and worse, could
+          // let a doctor submit believing a document is attached when the
+          // server never received it. Drop that slot instead and let the
+          // doctor re-upload it.
+          if (cached && cached.url) {
+            merged[key] = cached;
+          }
+        });
+        return merged;
+      });
+    }
+  }, []);
 
   // Auto-detect timezone on mount.
   // Strategy:
@@ -1951,7 +1999,7 @@ export default function DoctorOnboardingWizard({
     try {
       const iana = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (iana) setTimezone((prev) => prev || matchTz(iana));
-    } catch {}
+    } catch { }
 
     // ── Step 2: async IP-based refinement (best-effort, 3 fallback APIs) ───
     const fetchTz = async (url, extract) => {
@@ -1978,33 +2026,64 @@ export default function DoctorOnboardingWizard({
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Initial load: merge server data (source of truth for what's been
+  // submitted) with the local draft (fast fallback / offline safety net) ──
   useEffect(() => {
-    if (!initialData) return;
-    const nextStatus = ["pending", "approved", "rejected"].includes(
-      initialData.approvalStatus,
-    )
-      ? initialData.approvalStatus
-      : "pending";
-    setRegStatus(nextStatus);
+    // Always check the local draft first — it may hold data the server
+    // doesn't have yet (e.g. a save that failed to reach the network).
+    const localDraft = loadFromLocalDraft();
 
-    if (initialData.formCompleted) {
-      // Full form was already submitted — show status screen
-      setStep(5);
-    } else {
-      // Resume from saved in-progress step when available.
+    if (initialData) {
+      const nextStatus = ["pending", "approved", "rejected"].includes(
+        initialData.approvalStatus,
+      )
+        ? initialData.approvalStatus
+        : "pending";
+      setRegStatus(nextStatus);
+
+      if (initialData.formCompleted) {
+        // Full form was already submitted — show status screen
+        setStep(5);
+        hasLoadedRef.current = true;
+        return;
+      }
+
+      // Load whatever the server already has for this doctor's fields
       loadFromData(initialData);
-      const apiStep = Number(initialData.currentStep);
-      const apiCompleted = Number(initialData.completedSteps);
+
+      // Then layer the local draft on top for anything more recent that
+      // hasn't made it to the server yet (per-field, only fills gaps —
+      // local draft here intentionally overrides since it's assumed newer
+      // than the last confirmed server save when both exist).
+      if (localDraft) applyLocalDraft(localDraft);
+
+      // Resume from saved in-progress step. Prefer local draft's step if
+      // present (most recent), otherwise fall back to server step markers.
       let nextStep = 1;
-      if (Number.isFinite(apiStep) && apiStep >= 1 && apiStep <= 4) {
-        nextStep = Math.trunc(apiStep);
-      } else if (Number.isFinite(apiCompleted)) {
-        nextStep = Math.max(1, Math.min(4, Math.trunc(apiCompleted) + 1));
+      if (localDraft?.step && localDraft.step >= 1 && localDraft.step <= 4) {
+        nextStep = localDraft.step;
+      } else {
+        const apiStep = Number(initialData.currentStep);
+        const apiCompleted = Number(initialData.completedSteps);
+        if (Number.isFinite(apiStep) && apiStep >= 1 && apiStep <= 4) {
+          nextStep = Math.trunc(apiStep);
+        } else if (Number.isFinite(apiCompleted)) {
+          nextStep = Math.max(1, Math.min(4, Math.trunc(apiCompleted) + 1));
+        }
       }
       setStep(nextStep);
+    } else if (localDraft) {
+      // No server record at all yet — local draft is all we have.
+      applyLocalDraft(localDraft);
+      if (localDraft.step && localDraft.step >= 1 && localDraft.step <= 4) {
+        setStep(localDraft.step);
+      }
     }
+
+    hasLoadedRef.current = true;
     window.scrollTo(0, 0);
-  }, [initialData, loadFromData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData, loadFromData, loadFromLocalDraft, applyLocalDraft]);
 
   const handleEditResubmit = () => {
     loadFromData(initialData);
@@ -2032,13 +2111,16 @@ export default function DoctorOnboardingWizard({
             completedSteps,
             currentStep,
           })
-          .catch(() => {});
+          .catch(() => { });
       }, 250);
     },
     [doctorId],
   );
 
   useEffect(() => {
+    // Don't fire progress syncs until the initial load/merge above has run,
+    // otherwise the very first render could overwrite server step data.
+    if (!hasLoadedRef.current) return;
     persistProgress(step);
     window.scrollTo(0, 0);
   }, [step, persistProgress]);
@@ -2047,6 +2129,8 @@ export default function DoctorOnboardingWizard({
     return () => {
       if (progressSyncTimerRef.current)
         clearTimeout(progressSyncTimerRef.current);
+      if (stepSaveBannerTimerRef.current)
+        clearTimeout(stepSaveBannerTimerRef.current);
     };
   }, []);
 
@@ -2098,19 +2182,157 @@ export default function DoctorOnboardingWizard({
     return true;
   };
 
-  const handleNext = () => {
+  // ── Build the partial payload for a single step ──
+  // Only the fields owned by that step are sent, so saving step 2 never
+  // clobbers step 1/3/4 data already stored server-side.
+  const buildStepPayload = useCallback(
+    (wizardStep) => {
+      switch (wizardStep) {
+        case 1:
+          return {
+            firstName: s1.firstName.trim(),
+            surname: s1.surname.trim(),
+            email: s1.email.trim(),
+            countryCode: s1.countryCode.trim(),
+            phoneNumber: s1.phone.trim(),
+            gender: s1.gender,
+            dob: s1.dob,
+            country: s1.country,
+            state: licensedStates[0] || s1.state,
+            city: s1.city.trim(),
+            zip: s1.zip.trim(),
+            address: s1.address.trim(),
+            languagesKnown,
+            profilePhoto:
+              files.profilePhoto?.url || files.profilePhoto?.name || "",
+          };
+        case 2:
+          return {
+            specialization:
+              s2.specialty === "Other"
+                ? s2.customSpecialty.trim() || "Other"
+                : s2.specialty,
+            subSpecialization: s2.subSpecialization.trim(),
+            qualification: s2.qualification,
+            experience: s2.experience ? Number(s2.experience) : undefined,
+            medicalSchool: s2.school.trim(),
+            registrationYear: s2.gradYear.trim(),
+            medicalCouncilName: s2.medicalCouncilName.trim(),
+            medicalRegistrationNumber: isUS
+              ? s2.npi.trim()
+              : s2.licenseNum.trim(),
+            medicalLicense: s2.licenseNum.trim(),
+            consultationMode: s2.consultationMode,
+            consultantFees: s2.consultantFees ? Number(s2.consultantFees) : 0,
+            feeCurrency: s2.feeCurrency || "USD",
+            clinicName: s2.clinicName.trim(),
+            clinicAddress: s2.clinicAddress.trim(),
+            aboutDoctor: s2.aboutDoctor.trim() || s2.certifications.trim(),
+            licensedStates,
+            internationalLicenses: otherLicenseCountries,
+            idProof: files.govId?.url || files.govId?.name || "",
+            degreeFile: files.degree?.url || files.degree?.name || "",
+            medicalLicenseFile:
+              files.medicalLicense?.url || files.medicalLicense?.name || "",
+            malpracticeInsuranceFile:
+              files.malpractice?.url || files.malpractice?.name || "",
+          };
+        case 3:
+          return { availability, timezone };
+        case 4:
+          return {
+            accountHolderName: `${s1.firstName} ${s1.surname}`.trim(),
+            payoutEmail: s1.email.trim(),
+            payoutFrequency: payoutFreq,
+            bankName: s4.bankName.trim(),
+            accountNumber: s4.accountNum.trim(),
+            ifscCode: s4.swift.trim() || s4.iban.trim(),
+            paypalId: s4.paypalId.trim(),
+          };
+        default:
+          return {};
+      }
+    },
+    [
+      s1,
+      s2,
+      s4,
+      languagesKnown,
+      licensedStates,
+      otherLicenseCountries,
+      files,
+      availability,
+      timezone,
+      payoutFreq,
+      isUS,
+    ],
+  );
+
+  // ── Save one step's field data to the database (real persistence,
+  // separate from persistProgress which only tracks the step *number*) ──
+  const saveStepToServer = useCallback(
+    async (wizardStep) => {
+      if (!doctorId) return { ok: false };
+      setStepSaveStatus("saving");
+      try {
+        await api.patch("/api/doctor/enrollment/step", {
+          doctorId,
+          step: wizardStep,
+          data: buildStepPayload(wizardStep),
+        });
+        setStepSaveStatus("saved");
+        return { ok: true };
+      } catch (err) {
+        setStepSaveStatus("error");
+        return { ok: false, error: err };
+      } finally {
+        if (stepSaveBannerTimerRef.current)
+          clearTimeout(stepSaveBannerTimerRef.current);
+        stepSaveBannerTimerRef.current = setTimeout(
+          () => setStepSaveStatus("idle"),
+          2500,
+        );
+      }
+    },
+    [doctorId, buildStepPayload],
+  );
+
+  const handleNext = async () => {
     if (submitBusy) return;
-    if (step === 1 && validateS1()) setStep(2);
-    else if (step === 2 && validateS2()) setStep(3);
-    else if (step === 3) setStep(4);
-    else if (step === 4 && validateS4()) submitEnrollment();
+    if (step === 1 && validateS1()) {
+      await saveStepToServer(1);
+      saveDraft();
+      setStep(2);
+    } else if (step === 2 && validateS2()) {
+      await saveStepToServer(2);
+      saveDraft();
+      setStep(3);
+    } else if (step === 3) {
+      await saveStepToServer(3);
+      saveDraft();
+      setStep(4);
+    } else if (step === 4 && validateS4()) {
+      await saveStepToServer(4);
+      submitEnrollment();
+    }
   };
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
   };
+
+  // Local (browser) draft — kept as a fast, offline-safe fallback so a
+  // slow/failed network save never loses keystrokes. Source of truth is
+  // still the server once saveStepToServer succeeds.
   const saveDraft = useCallback(() => {
     if (!doctorId) return;
+    // Only cache file slots that actually finished uploading (have a url).
+    // A slot still mid-upload (url: null) is not resumable after a refresh,
+    // so it's deliberately left out — see applyLocalDraft for the matching
+    // restore-side guard.
+    const cacheableFiles = Object.fromEntries(
+      Object.entries(files).filter(([, f]) => f && f.url),
+    );
     const draftData = {
       s1,
       s2,
@@ -2121,6 +2343,7 @@ export default function DoctorOnboardingWizard({
       payoutFreq,
       licensedStates,
       otherLicenseCountries,
+      files: cacheableFiles,
       step,
     };
     try {
@@ -2128,7 +2351,7 @@ export default function DoctorOnboardingWizard({
         `hc_enroll_draft_${doctorId}`,
         JSON.stringify(draftData),
       );
-    } catch {}
+    } catch { }
     setDraftSaved(true);
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => setDraftSaved(false), 2500);
@@ -2142,9 +2365,18 @@ export default function DoctorOnboardingWizard({
     payoutFreq,
     licensedStates,
     otherLicenseCountries,
+    files,
     step,
     doctorId,
   ]);
+
+  // "Save" button handler — persists the *current* step's fields to the
+  // database immediately (without requiring the doctor to click Continue),
+  // and also refreshes the local draft as a fallback.
+  const handleSaveStep = async () => {
+    await saveStepToServer(step);
+    saveDraft();
+  };
 
   const submitEnrollment = async () => {
     if (!doctorId) {
@@ -2220,19 +2452,42 @@ export default function DoctorOnboardingWizard({
       // setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
       try {
         localStorage.removeItem(`hc_enroll_draft_${doctorId}`);
-      } catch {}
+      } catch { }
       setStep(5);
       if (enrollment && typeof onComplete === "function")
         onComplete(enrollment);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-          "Failed to submit enrollment. Please try again.",
+        "Failed to submit enrollment. Please try again.",
       );
     } finally {
       setSubmitBusy(false);
     }
   };
+
+  // Small reusable "Save" button + status banner shown on every step's
+  // button row (steps 1–4). Saves this step's field data to the database.
+  const renderStepSaveControl = () => (
+    <>
+      <button
+        type="button"
+        className="btn btn-outline btn-sm"
+        onClick={handleSaveStep}
+        disabled={stepSaveStatus === "saving"}
+      >
+        {stepSaveStatus === "saving" ? "Saving..." : "Save"}
+      </button>
+      {stepSaveStatus === "saved" && (
+        <span className="step-save-banner ok">✓ Saved</span>
+      )}
+      {stepSaveStatus === "error" && (
+        <span className="step-save-banner err">
+          ⚠ Save failed — kept locally
+        </span>
+      )}
+    </>
+  );
 
   // ─── STEP 1 ───
   const renderStep1 = () => (
@@ -2560,9 +2815,12 @@ export default function DoctorOnboardingWizard({
 
         <div className="btn-row">
           <div />
-          <button className="btn btn-primary" onClick={handleNext}>
-            Continue to Professional Info →
-          </button>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {renderStepSaveControl()}
+            <button className="btn btn-primary" onClick={handleNext}>
+              Continue to Professional Info →
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -3077,26 +3335,8 @@ export default function DoctorOnboardingWizard({
           <button className="btn btn-secondary" onClick={handleBack}>
             ← Back
           </button>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              className="btn btn-sm"
-              onClick={saveDraft}
-              style={
-                draftSaved
-                  ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
-                  : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
-              }
-            >
-              {draftSaved ? "Saved ✓" : "Save Draft"}
-            </button>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {renderStepSaveControl()}
             <button className="btn btn-primary" onClick={handleNext}>
               Continue →
             </button>
@@ -3234,26 +3474,8 @@ export default function DoctorOnboardingWizard({
           <button className="btn btn-secondary" onClick={handleBack}>
             ← Back
           </button>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              className="btn btn-sm"
-              onClick={saveDraft}
-              style={
-                draftSaved
-                  ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
-                  : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
-              }
-            >
-              {draftSaved ? "Saved ✓" : "Save Draft"}
-            </button>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {renderStepSaveControl()}
             <button className="btn btn-primary" onClick={handleNext}>
               Continue →
             </button>
@@ -3371,26 +3593,8 @@ export default function DoctorOnboardingWizard({
           <button className="btn btn-secondary" onClick={handleBack}>
             ← Back
           </button>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              className="btn btn-sm"
-              onClick={saveDraft}
-              style={
-                draftSaved
-                  ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
-                  : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
-              }
-            >
-              {draftSaved ? "Saved ✓" : "Save Draft"}
-            </button>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {renderStepSaveControl()}
             <button
               className="btn btn-primary"
               onClick={handleNext}
