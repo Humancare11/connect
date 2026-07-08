@@ -870,45 +870,39 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-<<<<<<< HEAD
-module.exports = router;
-=======
 // ── POST /api/doctor/toggle-online ────────────────────────────────────────────
 router.post("/toggle-online", verifyDoctorToken, async (req, res) => {
-  try {
-    const { doctorId } = req.body;
+    try {
+        const { doctorId } = req.body;
 
-    if (!doctorId) {
-      return res.status(400).json({ message: "Doctor ID required" });
+        if (!doctorId) {
+            return res.status(400).json({ message: "Doctor ID required" });
+        }
+
+        // Verify the doctor can only toggle their own status
+        if (req.user.id !== doctorId) {
+            return res.status(403).json({ message: "Access denied." });
+        }
+
+        const enrollment = await Enrollment.findOne({ doctorId });
+        if (!enrollment) {
+            return res.status(404).json({ message: "Enrollment not found" });
+        }
+
+        // Toggle the online status
+        enrollment.isOnline = !enrollment.isOnline;
+        enrollment.lastOnlineAt = enrollment.isOnline ? new Date() : enrollment.lastOnlineAt;
+        await enrollment.save();
+
+        res.status(200).json({
+            message: `Doctor is now ${enrollment.isOnline ? "online" : "offline"}`,
+            isOnline: enrollment.isOnline,
+            lastOnlineAt: enrollment.lastOnlineAt,
+        });
+    } catch (err) {
+        console.error("toggleOnlineStatus error:", err);
+        res.status(500).json({ message: "Server error", error: err.message });
     }
-
-    // Verify the doctor can only toggle their own status
-    if (req.user.id !== doctorId) {
-      return res.status(403).json({ message: "Access denied." });
-    }
-
-    const enrollment = await Enrollment.findOne({ doctorId });
-    if (!enrollment) {
-      return res.status(404).json({ message: "Enrollment not found" });
-    }
-
-    // Toggle the online status
-    enrollment.isOnline = !enrollment.isOnline;
-    enrollment.lastOnlineAt = enrollment.isOnline ? new Date() : enrollment.lastOnlineAt;
-    await enrollment.save();
-
-    res.status(200).json({
-      message: `Doctor is now ${enrollment.isOnline ? "online" : "offline"}`,
-      isOnline: enrollment.isOnline,
-      lastOnlineAt: enrollment.lastOnlineAt,
-    });
-  } catch (err) {
-    console.error("toggleOnlineStatus error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
 });
 
 module.exports = router;
-
-
->>>>>>> b2bdd25824ca393da17fdd2d1d40c54357d86015

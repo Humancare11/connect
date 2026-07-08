@@ -1710,10 +1710,16 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         experience: d.experience ? Number(d.experience) : undefined,
         consultantFees: d.consultantFees ? Number(d.consultantFees) : undefined,
         languagesKnown,
-        licensedStates: Array.isArray(d.licensedStates) ? d.licensedStates : [],
+        licensedStates: Array.isArray(d.licensedStates)
+          ? d.licensedStates
+          : typeof d.licensedStates === "string"
+            ? d.licensedStates.split(",").map((s) => s.trim()).filter(Boolean)
+            : [],
         internationalLicenses: Array.isArray(d.internationalLicenses)
           ? d.internationalLicenses
-          : [],
+          : typeof d.internationalLicenses === "string"
+            ? d.internationalLicenses.split(",").map((s) => s.trim()).filter(Boolean)
+            : [],
         ...urls,
         timezone,
         availability: avail,
