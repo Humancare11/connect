@@ -307,7 +307,9 @@ import LowSelfEsteem from "./pages/Conditions/Conditions/LowSelfEsteem";
 import TraumaSupport from "./pages/Conditions/Conditions/TraumaSupport";
 import HotFlashes from "./pages/Conditions/Conditions/HotFlashes";
 import HrtGuidance from "./pages/Conditions/Conditions/HrtGuidance";
-
+import FertilityConcerns from "./pages/Conditions/Conditions/FertilityConcerns";
+import OCD from "./pages/Conditions/Conditions/OCD";
+import EyeIrritation from "./pages/Conditions/EyeIrritation";
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
 import Pediatrics from "./pages/Specialty/Children&FamilyCare/Pediatrics";
@@ -1199,7 +1201,7 @@ function AppLayout() {
           <Route path="/chronic-migraine" element={<ChronicMigraine />} />
           <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} />
           <Route path="/fatty-liver" element={<FattyLiver />} />
-          <Route path="/heart-disease" element={<HeartDisease />} />
+          <Route path="/heart-disease-follow-up" element={<HeartDisease />} />
           <Route path="/high-blood-pressure" element={<HighBloodPressure />} />
           <Route path="/high-cholesterol" element={<HighCholesterol />} />
           <Route path="/hormone-imblance" element={<HormoneImblance />} />
@@ -1611,7 +1613,10 @@ function AppLayout() {
             path="/urinary-symptoms-in-men"
             element={<UrinarySymptomsMen1 />}
           />
-          {/* <Route path="/ADHD-evaluation" element={<ADHDEvaluation />} /> */}
+
+           <Route path="/fertility-concerns" element={<FertilityConcerns />} />
+          <Route path="/OCD" element={<OCD />} />
+          <Route path="/eye-irritation" element={<EyeIrritation />} />
           {/* <Route
             path="/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
