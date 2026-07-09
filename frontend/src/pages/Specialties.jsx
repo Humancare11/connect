@@ -905,9 +905,9 @@ export default function Specialties() {
               Everything you need to know about primary care at Humancare
               Connect. Can't find an answer?
             </p>
-            <button type="button" className="sp-faq__chat-btn">
+            {/* <button type="button" className="sp-faq__chat-btn">
               <MessageCircle size={16} /> Chat with our team
-            </button>
+            </button> */}
 
             <div className="sp-faq__trust">
               <div className="sp-faq__trust-item">
