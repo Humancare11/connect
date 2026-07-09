@@ -1798,8 +1798,6 @@ export default function DoctorOnboardingWizard({
     bankName: "",
     accountNum: "",
     swift: "",
-    iban: "",
-    currency: "USD",
     paypalId: "",
   });
   const [s4Errors, setS4Errors] = useState({});
@@ -1899,8 +1897,6 @@ export default function DoctorOnboardingWizard({
       bankName: data.bankName || "",
       accountNum: data.accountNumber || "",
       swift: data.ifscCode || "",
-      iban: data.ifscCode || "",
-      currency: "USD",
       paypalId: data.paypalId || "",
     });
     if (data.timezone) setTimezone(data.timezone);
@@ -3503,127 +3499,81 @@ export default function DoctorOnboardingWizard({
   );
 
   // ─── STEP 4 ───
-  const renderStep4 = () => (
-    <div className="animate-in">
-      <div className="de-card-header">
-        <h2>Payout Setup</h2>
-        <p>
-          Configure how and when you'd like to receive payments.
-          {isUS
-            ? " US banking details required."
-            : " International transfer details required."}
-        </p>
-      </div>
-      <div className="de-card-body">
-        <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-          {["weekly", "monthly"].map((f) => (
-            <button
-              key={f}
-              className={`btn ${payoutFreq === f ? "btn-primary" : "btn-outline"} btn-sm`}
-              onClick={() => setPayoutFreq(f)}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)} Payout
-            </button>
-          ))}
-        </div>
-        {isUS ? (
-          <div className="form-grid">
-            <div className="field-group">
-              <label className="field-label">Bank Name</label>
-              <input
-                className="field-input"
-                placeholder="Bank name"
-                value={s4.bankName}
-                onChange={(e) => setS4({ ...s4, bankName: e.target.value })}
-              />
-            </div>
-            <div className="field-group">
-              <label className="field-label">Account Number</label>
-              <input
-                className="field-input"
-                placeholder="Account number"
-                value={s4.accountNum}
-                onChange={(e) => setS4({ ...s4, accountNum: e.target.value })}
-              />
-            </div>
-            <div className="field-group">
-              <label className="field-label">SWIFT / BIC Code</label>
-              <input
-                className="field-input"
-                placeholder="SWIFT code"
-                value={s4.swift}
-                onChange={(e) => setS4({ ...s4, swift: e.target.value })}
-              />
-            </div>
-            <div className="field-group">
-              <label className="field-label">PayPal ID</label>
-              <input
-                className="field-input"
-                placeholder="PayPal email or username"
-                value={s4.paypalId}
-                onChange={(e) => setS4({ ...s4, paypalId: e.target.value })}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="form-grid">
-            <div className="field-group">
-              <label className="field-label">IBAN</label>
-              <input
-                className="field-input"
-                placeholder="International Bank Account Number"
-                value={s4.iban}
-                onChange={(e) => setS4({ ...s4, iban: e.target.value })}
-              />
-            </div>
-            <div className="field-group">
-              <label className="field-label">SWIFT / BIC Code</label>
-              <input
-                className="field-input"
-                placeholder="SWIFT code"
-                value={s4.swift}
-                onChange={(e) => setS4({ ...s4, swift: e.target.value })}
-              />
-            </div>
-            <div className="field-group">
-              <label className="field-label">PayPal ID</label>
-              <input
-                className="field-input"
-                placeholder="PayPal email or username"
-                value={s4.paypalId}
-                onChange={(e) => setS4({ ...s4, paypalId: e.target.value })}
-              />
-            </div>
-          </div>
-        )}
-        {submitError && (
-          <div className="field-error" style={{ marginTop: 12 }}>
-            {submitError}
-          </div>
-        )}
-        {submitSuccess && (
-          <div className="success-banner" style={{ marginTop: 12 }}>
-            {submitSuccess}
-          </div>
-        )}
-        <div className="btn-row">
-          <button className="btn btn-secondary" onClick={handleBack}>
-            ← Back
+ // ─── STEP 4 ───
+const renderStep4 = () => (
+  <div className="animate-in">
+    <div className="de-card-header">
+      <h2>Payout Setup</h2>
+      <p>Configure how and when you'd like to receive payments.</p>
+    </div>
+
+    <div className="de-card-body">
+      <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+        {["weekly", "monthly"].map((f) => (
+          <button
+            key={f}
+            className={`btn ${payoutFreq === f ? "btn-primary" : "btn-outline"} btn-sm`}
+            onClick={() => setPayoutFreq(f)}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)} Payout
           </button>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            {renderStepSaveControl()}
-            <button
-              className="btn btn-primary"
-              onClick={handleNext}
-              disabled={submitBusy}
-            >
-              {submitBusy ? "Submitting..." : "Submit Application →"}
-            </button>
-          </div>
+        ))}
+      </div>
+
+      <div className="form-grid">
+        <div className="field-group">
+          <label className="field-label">Bank Name</label>
+          <input
+            className="field-input"
+            placeholder="Bank name"
+            value={s4.bankName}
+            onChange={(e) => setS4({ ...s4, bankName: e.target.value })}
+          />
         </div>
+
+        <div className="field-group">
+          <label className="field-label">Account Number</label>
+          <input
+            className="field-input"
+            placeholder="Account number"
+            value={s4.accountNum}
+            onChange={(e) => setS4({ ...s4, accountNum: e.target.value })}
+          />
+        </div>
+
+        <div className="field-group">
+          <label className="field-label">SWIFT / BIC Code</label>
+          <input
+            className="field-input"
+            placeholder="SWIFT / BIC Code"
+            value={s4.swift}
+            onChange={(e) => setS4({ ...s4, swift: e.target.value })}
+          />
+        </div>
+
+        <div className="field-group">
+          <label className="field-label">PayPal ID</label>
+          <input
+            className="field-input"
+            placeholder="PayPal email or username"
+            value={s4.paypalId}
+            onChange={(e) => setS4({ ...s4, paypalId: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="btn-row">
+        <button className="btn btn-secondary" onClick={handleBack}>
+          ← Back
+        </button>
+
+        <button className="btn btn-primary" onClick={handleNext}>
+          Submit Application →
+        </button>
       </div>
     </div>
-  );
+  </div>
+);
 
   // ─── STEP 5 ───
   const approvalPipeline = [

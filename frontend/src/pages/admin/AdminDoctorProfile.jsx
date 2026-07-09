@@ -1607,12 +1607,12 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         ? [e.internationalLicenses]
         : [],
     bankName: e.bankName || "",
-    accountHolderName: e.accountHolderName || "",
+    // accountHolderName: e.accountHolderName || "",
     accountNumber: e.accountNumber || "",
     ifscCode: e.ifscCode || "",
     paypalId: e.paypalId || "",
-    payoutEmail: e.payoutEmail || "",
-    stripeAccountId: e.stripeAccountId || "",
+    // payoutEmail: e.payoutEmail || "",
+    // stripeAccountId: e.stripeAccountId || "",
   });
   const f = (k) => (v) =>
     setD((p) => ({ ...p, [k]: typeof v === "string" ? v : v.target.value }));
@@ -2603,30 +2603,30 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
       {/* ── 9. Payout ── */}
       <Section icon="💳" title="Payout Information" accent>
         <div style={G2}>
-          {/* <FG label="Bank Name">
+          <FG label="Bank Name">
             <input
               style={INP}
               value={d.bankName}
               onChange={f("bankName")}
               placeholder="Bank name"
             />
-          </FG> */}
-          <FG label="Account Holder Name">
+          </FG>
+          {/* <FG label="Account Holder Name">
             <input
               style={INP}
               value={d.accountHolderName}
               onChange={f("accountHolderName")}
               placeholder="Full name on account"
             />
-          </FG>
-          {/* <FG label="Account Number">
+          </FG> */}
+          <FG label="Account Number">
             <input
               style={INP}
               value={d.accountNumber}
               onChange={f("accountNumber")}
               placeholder="Account number"
             />
-          </FG> */}
+          </FG>
           <FG label="SWIFT / IFSC / BIC Code">
             <input
               style={INP}
@@ -2643,15 +2643,15 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               placeholder="PayPal email or username"
             />
           </FG>
-          <FG label="Payout Email">
+          {/* <FG label="Payout Email">
             <input
               style={INP}
               type="email"
               value={d.payoutEmail}
               onChange={f("payoutEmail")}
               placeholder="Payout email address"
-            />
-          </FG>
+            /> 
+          </FG> */}
           {/* <FG label="Stripe Account ID">
             <input
               style={INP}
@@ -3784,8 +3784,11 @@ export default function AdminDoctorProfile() {
                 gap: "16px 24px",
               }}
             >
-              {/* <Field label="Bank Name" value={e.bankName} /> */}
-              <Field label="Account Holder" value={e.accountHolderName} />
+              <Field label="Bank Name" value={e.bankName} />
+              {/* <Field label="Account Holder" value={e.accountHolderName} /> */}
+              
+                            <Field label="Account Number" value={e.accountNumber} />
+
               {/* <Field
                 label="Account Number"
                 value={
@@ -3796,7 +3799,7 @@ export default function AdminDoctorProfile() {
               /> */}
               <Field label="SWIFT / BIC" value={e.ifscCode} />
               <Field label="PayPal ID" value={e.paypalId} />
-              <Field label="Payout Email" value={e.payoutEmail} />
+              {/* <Field label="Payout Email" value={e.payoutEmail} /> */}
               {/* <Field label="Stripe Account" value={e.stripeAccountId} /> */}
             </div>
           </Section>
