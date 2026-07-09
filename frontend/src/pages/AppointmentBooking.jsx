@@ -1,11 +1,12 @@
-﻿import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import "./AppointmentBooking.css";
-import { usePrices, usePricingMeta } from "../context/PricingContext";
+import api from "../api";
+import HealthcareIcon from "../components/HealthcareIcon";
 
-// ─── Search helpers ─────────────────────────────────────────────────────────
+// --- Search helpers ---------------------------------------------------------
 // Plain `.includes()` matches a query ANYWHERE inside a string, including
-// mid-word — e.g. searching "men" would match "Manage**men**t" or "Women's".
+// mid-word - e.g. searching "men" would match "Manage**men**t" or "Women's".
 // matchQuery() instead matches only at word boundaries (start of a word),
 // so "men" matches "Men's Health", "Mental Health", "Menstrual Cramps"
 // but NOT "Weight Management" or "Women's Health".
@@ -20,145 +21,29 @@ function matchQuery(text, q) {
   return re.test(text);
 }
 
-// ─── Data ────────────────────────────────────────────────────────────────────
-// Only fields the pricing API does NOT own live here: id, icon, specialties
-// (name, icon, live, count, conditions). Category `label`, specialty `cost`,
-// and `currency` all come from the pricing API (see enrichedTree below), so
-// they are intentionally NOT duplicated in this tree.
-const HCC_TREE = [
-  // Child and Family care
-  {
-    id: "general",
-    icon: "🩺",
-    specialties: [
-      {
-        name: "General Physician", icon: "🩺", live: true, count: "98 doctors",
-        conditions: [["Fever", "🌡️"], ["Cold & flu", "🤧"], ["Cough & sore throat", "😷"], ["Headache", "🤕"], ["Sinus infection", "👃"], ["Body aches", "💪"], ["Fatigue", "😮‍💨"], ["Minor infections", "🩹"]],
-      },
-      {
-        name: "Internal Medicine", icon: "🏥",
-        conditions: [["Undiagnosed symptoms", "❓"], ["Multi-system complaints", "🩺"], ["Preventive screening", "🛡️"], ["Medication review", "💊"]],
-      },
-      {
-        name: "Family Medicine", icon: "👨‍👩‍👧",
-        conditions: [["Routine check-ups", "✅"], ["Whole-family illness", "👪"], ["Chronic-disease review", "📋"], ["Vaccination advice", "💉"]],
-      },
-    ],
-  },
-  {
-    id: "mental",
-    icon: "🧠",
-    specialties: [
-      {
-        name: "Psychiatry", icon: "🧠", live: true, count: "76 doctors",
-        conditions: [["Anxiety", "😟"], ["Depression", "💭"], ["Bipolar follow-up", "🔄"], ["OCD", "🔁"], ["PTSD", "🌀"], ["Panic attacks", "⚡"], ["Insomnia", "😴"], ["ADHD follow-up", "🎯"]],
-      },
-      {
-        name: "Psychology / Counselling", icon: "💬",
-        conditions: [["Stress", "😣"], ["Grief & loss", "🕊️"], ["Relationship issues", "💔"], ["Low self-esteem", "🪞"], ["Trauma support", "🤝"]],
-      },
-      {
-        name: "Behavioral Health", icon: "🧩",
-        conditions: [["Anger management", "🔥"], ["Adjustment difficulties", "🔀"], ["Substance-use concerns", "🚭"], ["Sleep-related anxiety", "🌙"]],
-      },
-    ],
-  },
-  // eye ear bone care
-  {
-    id: "skin",
-    icon: "🧴",
-    specialties: [
-      {
-        name: "Dermatology", icon: "🧴", live: true, count: "35 doctors",
-        conditions: [["Acne", "🔴"], ["Eczema", "🌾"], ["Psoriasis", "🩹"], ["Skin rashes", "🌡️"], ["Hives", "🐝"], ["Rosacea", "🌹"], ["Fungal infections", "🍄"], ["Hair loss", "💈"], ["Nail problems", "💅"], ["Mole & skin checks", "🔎"]],
-      },
-    ],
-  },
-  {
-    id: "women",
-    icon: "🌸",
-    specialties: [
-      {
-        name: "OB-GYN", icon: "🌸", count: "44 doctors",
-        conditions: [["Irregular periods", "📅"], ["Painful periods", "😣"], ["PCOS", "🌺"], ["Contraception advice", "💊"], ["Vaginal infections", "🩺"], ["Pelvic pain", "⚡"], ["Prenatal teleconsult", "🤰"]],
-      },
-      { name: "Menopause Care", icon: "🌙", conditions: [["Hot flashes", "🔥"], ["Mood changes", "🎭"], ["Sleep disturbance", "😴"], ["HRT guidance", "💊"]] },
-      { name: "Women's Mental Health", icon: "💗", conditions: [["Postnatal depression", "🍼"], ["Perinatal anxiety", "🤱"], ["PMDD", "📆"]] },
-      { name: "Lactation Consulting", icon: "🤱", conditions: [["Low milk supply", "🍼"], ["Latch problems", "👶"], ["Nipple pain", "🩹"], ["Weaning guidance", "🥄"]] },
-    ],
-  },
-  // Mens Health
-  {
-    id: "men",
-    icon: "♂️",
-    specialties: [
-      { name: "Men's Health", icon: "♂️", count: "19 doctors", conditions: [["Erectile dysfunction", "💙"], ["Low testosterone", "📉"], ["Hair loss", "💈"], ["Prostate concerns", "🔬"], ["Low libido", "💤"]] },
-      { name: "Urology", icon: "🚹", conditions: [["UTIs", "🚻"], ["Kidney stones follow-up", "🪨"], ["Blood in urine", "🩸"], ["Incontinence", "💧"], ["Bladder problems", "🚽"]] },
-    ],
-  },
-  {
-    id: "family",
-    icon: "🧒",
-    specialties: [
-      {
-        name: "Pediatrics", icon: "🧒", live: true, count: "41 doctors",
-        conditions: [["Fever in children", "🌡️"], ["Cough & cold", "🤧"], ["Childhood rashes", "🌸"], ["Ear infections", "👂"], ["Feeding concerns", "🍼"], ["Growth & development", "📏"], ["Vaccination advice", "💉"]],
-      },
-      { name: "Adolescent Care", icon: "🧑", conditions: [["Teen acne", "🔴"], ["Puberty concerns", "🌱"], ["Teen mood & anxiety", "😟"], ["Menstrual problems", "📅"], ["Sports injuries", "🏃"]] },
-    ],
-  },
-  // Mental Health
-  {
-    id: "weight",
-    icon: "🥗",
-    specialties: [
-      { name: "Weight Management", icon: "⚖️", conditions: [["Obesity", "📊"], ["GLP-1 eligibility", "💉"], ["Metabolic syndrome", "🔬"], ["Weight-loss planning", "🎯"], ["Binge eating", "🍽️"]] },
-      { name: "Nutrition & Dietetics", icon: "🥗", conditions: [["Diabetic diet", "🩸"], ["Cholesterol diet", "🫀"], ["Food-intolerance plan", "🚫"], ["Pregnancy nutrition", "🤰"], ["Sports nutrition", "🏋️"]] },
-      { name: "Lifestyle Medicine", icon: "🌱", conditions: [["Healthy-habit coaching", "✅"], ["Diet & exercise plan", "🏃"], ["Sleep hygiene", "😴"], ["Stress reduction", "🧘"]] },
-    ],
-  },
-  {
-    id: "chronic",
-    icon: "📋",
-    specialties: [
-      { name: "Cardiology", icon: "🫀", live: true, count: "48 doctors", conditions: [["High blood pressure", "💉"], ["Chest pain (non-emerg.)", "❤️"], ["Palpitations", "💓"], ["High cholesterol", "🩸"], ["Heart failure follow-up", "🫀"]] },
-      { name: "Neurology", icon: "🧬", live: true, count: "32 doctors", conditions: [["Migraine & headaches", "🤕"], ["Seizures follow-up", "⚡"], ["Numbness & tingling", "🖐️"], ["Tremor", "🤲"], ["Dizziness", "💫"], ["Memory concerns", "🧠"]] },
-      { name: "Endocrinology", icon: "⚕️", conditions: [["Thyroid disorders", "🦋"], ["Diabetes (Type 1 & 2)", "🩸"], ["PCOS", "🌺"], ["Hormone imbalance", "⚗️"], ["Osteoporosis", "🦴"]] },
-      { name: "Gastroenterology", icon: "🍽️", conditions: [["Acid reflux / GERD", "🔥"], ["IBS", "🌀"], ["Constipation", "🚽"], ["Stomach pain", "😣"], ["Bloating", "🎈"]] },
-      { name: "Pulmonology", icon: "🫁", conditions: [["Asthma", "💨"], ["COPD", "🫁"], ["Chronic cough", "😷"], ["Shortness of breath", "😮‍💨"], ["Sleep apnea screening", "😴"]] },
-      { name: "Expert Medical Opinion", icon: "📑", conditions: [["Cancer second opinion", "🎗️"], ["Surgery second opinion", "🏥"], ["Complex-diagnosis review", "🔍"], ["Treatment-plan review", "📋"]] },
-    ],
-  },
-  {
-    id: "eeb",
-    icon: "🦴",
-    specialties: [
-      { name: "Ophthalmology", icon: "👁️", live: true, count: "22 doctors", conditions: [["Red / irritated eyes", "👁️"], ["Dry eyes", "🌵"], ["Vision changes", "🔭"], ["Eye infections", "🦠"], ["Stye", "💢"]] },
-      { name: "ENT", icon: "👂", conditions: [["Sinusitis", "👃"], ["Sore throat / tonsillitis", "😮"], ["Ear infections", "👂"], ["Vertigo", "💫"], ["Nasal congestion", "🤧"]] },
-      { name: "Orthopedics", icon: "🦴", live: true, count: "29 doctors", conditions: [["Back pain", "🔙"], ["Neck pain", "🧍"], ["Knee & joint pain", "🦵"], ["Sprains & strains", "🤕"], ["Sports injuries", "🏃"]] },
-    ],
-  },
-  // Sexual Health
-  {
-    id: "sexual",
-    icon: "💗",
-    specialties: [
-      { name: "Sexual Health", icon: "💗", conditions: [["STI advice & testing", "🔬"], ["Contraception advice", "💊"], ["Erectile dysfunction", "💙"], ["Confidential care", "🤐"], ["Safe-sex counselling", "🤝"]] },
-    ],
-  },
-
-  // Travel and Global care
-
-  {
-    id: "travel",
-    icon: "✈️",
-    specialties: [
-      { name: "Travel Medicine", icon: "✈️", conditions: [["Pre-travel vaccination", "💉"], ["Malaria prevention", "🦟"], ["Altitude sickness", "⛰️"], ["Travel-illness advice", "🤒"], ["Post-travel symptoms", "🌡️"]] },
-      { name: "Global / Cross-Border Care", icon: "🌍", conditions: [["Cross-border consult", "🌐"], ["Care continuity abroad", "🔄"], ["Referral coordination", "🗺️"], ["Travel medical assistance", "🆘"], ["Prescription continuity", "💊"]] },
-    ],
-  },
-];
-
+// Convert the database-owned appointment tree into the shape this UI already uses.
+function normalizeAppointmentTree(tree) {
+  return (Array.isArray(tree) ? tree : []).map((category) => ({
+    id: category._id,
+    icon: category.icon || "stethoscope",
+    label: category.name || "Untitled Category",
+    description: category.description || "",
+    price: Number.isFinite(Number(category.price)) ? Number(category.price) : 0,
+    currency: category.currency || "USD",
+    specialties: (Array.isArray(category.specialties) ? category.specialties : []).map((specialty) => ({
+      id: specialty._id,
+      name: specialty.name || "Untitled Specialty",
+      icon: specialty.icon || "stethoscope",
+      description: specialty.description || "",
+      conditions: (Array.isArray(specialty.conditions) ? specialty.conditions : []).map((condition) => [
+        condition.name || "Untitled Condition",
+        condition.icon || "stethoscope",
+        condition._id,
+        condition.description || "",
+      ]),
+    })),
+  }));
+}
 // Build flat helpers from the price-enriched tree. `label`, `cost`, and
 // `currency` all originate from the API (attached in enrichedTree).
 function buildFlatHelpers(tree) {
@@ -168,14 +53,24 @@ function buildFlatHelpers(tree) {
     cat.specialties.forEach((s) => {
       specialties.push({ ...s, catId: cat.id, catLabel: cat.label });
       s.conditions.forEach(([name, icon]) =>
-        conditions.push({ name, icon, to: s.name, catId: cat.id, catLabel: cat.label, cost: s.cost, currency: s.currency }),
+        conditions.push({
+          name,
+          icon,
+          to: s.name,
+          catId: cat.id,
+          catLabel: cat.label,
+          cost: s.cost,
+          currency: s.currency,
+          priceAvailable: s.priceAvailable,
+          priceMessage: s.priceMessage,
+        }),
       );
     }),
   );
   return { specialties, conditions };
 }
 
-// ─── Time slots ───────────────────────────────────────────────────────────────
+// --- Time slots ---------------------------------------------------------------
 const ALL_TIME_SLOTS = [
   "8:00 AM",
   "8:30 AM",
@@ -225,13 +120,13 @@ function formatDisplayDate(dateStr) {
   });
 }
 
-// ─── Breadcrumb ───────────────────────────────────────────────────────────────
+// --- Breadcrumb ---------------------------------------------------------------
 function Breadcrumb({ items, onNavigate }) {
   return (
     <div className="hcc-breadcrumb">
       {items.map((item, i) => (
         <span key={i} className="hcc-bc-item">
-          {i > 0 && <span className="hcc-bc-sep">›</span>}
+          {i > 0 && <span className="hcc-bc-sep">&gt;</span>}
           {i < items.length - 1 ? (
             <button className="hcc-bc-link" onClick={() => onNavigate(i)}>
               {item}
@@ -245,37 +140,84 @@ function Breadcrumb({ items, onNavigate }) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-export default function AppointmentBooking() {
+// --- Main Component -----------------------------------------------------------
+export default function Ab() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const categoryPrices = usePrices();
-  const pricingMeta = usePricingMeta();
+  const [appointmentTree, setAppointmentTree] = useState([]);
+  const [treeLoading, setTreeLoading] = useState(true);
+  const [treeError, setTreeError] = useState("");
   const [drillLevel, setDrillLevel] = useState("cat");
   const [activeCat, setActiveCat] = useState(null);
   const [activeSpec, setActiveSpec] = useState(null);
   const [browseTab, setBrowseTab] = useState(null);
   const [query, setQuery] = useState("");
 
-  // Attach the API-owned fields — label, price, currency — onto the tree.
-  // These are the single source of truth; the tree itself no longer carries them.
+  const fetchAppointmentTree = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setTreeLoading(true);
+    try {
+      const res = await api.get("/api/appointment-tree");
+      setAppointmentTree(normalizeAppointmentTree(res.data));
+      setTreeError("");
+    } catch (err) {
+      setTreeError(err.response?.data?.msg || "Unable to load healthcare categories.");
+    } finally {
+      if (!silent) setTreeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAppointmentTree();
+  }, [fetchAppointmentTree]);
+
+  useEffect(() => {
+    const refresh = () => fetchAppointmentTree({ silent: true });
+    const intervalId = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [fetchAppointmentTree]);
+
+  // Category, specialty, condition, and pricing data comes only from /api/appointment-tree.
   const enrichedTree = useMemo(() => {
-    if (!categoryPrices) return HCC_TREE;
-    return HCC_TREE.map((cat) => {
-      const api = categoryPrices[cat.id];
-      const currency = api?.currency ?? "INR";
+    return appointmentTree.map((cat) => {
+      const price = Number(cat.price);
+      const priceAvailable = Number.isFinite(price) && price > 0;
       return {
         ...cat,
-        label: api?.label,     // category name — from API
-        currency,              // currency — from API
+        currency: "USD",
         specialties: cat.specialties.map((specialty) => ({
           ...specialty,
-          cost: api?.price,    // price — from API
-          currency,
+          cost: priceAvailable ? price : undefined,
+          currency: "USD",
+          priceAvailable,
+          priceMessage: "No valid database price is configured for this category.",
         })),
       };
     });
-  }, [categoryPrices]);
+  }, [appointmentTree]);
+
+  useEffect(() => {
+    if (!activeCat) return;
+    const refreshedCat = enrichedTree.find((cat) => cat.id === activeCat.id);
+    if (!refreshedCat) {
+      setActiveCat(null);
+      setActiveSpec(null);
+      setDrillLevel("cat");
+      return;
+    }
+    setActiveCat(refreshedCat);
+    if (activeSpec) {
+      const refreshedSpec = refreshedCat.specialties.find((spec) => spec.id === activeSpec.id);
+      if (refreshedSpec) {
+        setActiveSpec({ ...refreshedSpec, catId: refreshedCat.id, catLabel: refreshedCat.label });
+      } else {
+        setActiveSpec(null);
+        setDrillLevel("spec");
+      }
+    }
+  }, [enrichedTree, activeCat?.id, activeSpec?.id]);
 
   const { specialties: flatSpecialties, conditions: flatConditions } = useMemo(
     () => buildFlatHelpers(enrichedTree),
@@ -339,10 +281,10 @@ export default function AppointmentBooking() {
         selection: {
           specName: specialty.name,
           specIco: specialty.icon,               // payload key kept for the booking form contract
-          live: specialty.live,
+          catId: specialty.catId,
           catLabel: specialty.catLabel,
           cost: specialty.cost,
-          currency: specialty.currency ?? "INR", // dynamic currency → booking form
+          currency: specialty.currency ?? "USD", // dynamic currency for booking form
           condName,
           condIco: condIcon,                     // payload key kept for the booking form contract
         },
@@ -390,10 +332,10 @@ export default function AppointmentBooking() {
 
   const searchPlaceholder =
     activeTabId === "cat"
-      ? "Search categories…"
+      ? "Search categories..."
       : activeTabId === "spec"
-        ? "Search specialties…"
-        : "Search conditions / symptoms…";
+        ? "Search specialties..."
+        : "Search conditions / symptoms...";
 
   const drillConditions = activeSpec ? activeSpec.conditions : [];
 
@@ -406,7 +348,7 @@ export default function AppointmentBooking() {
   return (
     <section className="hcc-sx">
       <div className="wrap">
-        {/* ── CENTERED HERO ── */}
+        {/* -- CENTERED HERO -- */}
         <div className="head">
           <span className="eyebrow">
             <span className="eyebrow-dot" />
@@ -423,7 +365,7 @@ export default function AppointmentBooking() {
         </div>
 
         <div className="top-controls">
-          {/* ── NUMBERED TAB BAR ── */}
+          {/* -- NUMBERED TAB BAR -- */}
           <div className="tab-bar-wrap">
             <div className="switch">
               {tabs.map((t) => (
@@ -440,7 +382,7 @@ export default function AppointmentBooking() {
             </div>
           </div>
 
-          {/* ── SEARCH TOOLBAR ── */}
+          {/* -- SEARCH TOOLBAR -- */}
           <div className="toolbar">
             <div className="search">
               <svg
@@ -463,10 +405,10 @@ export default function AppointmentBooking() {
             </div>
           </div>
         </div>
-        {/* ── CONTENT CARD (white rounded container) ── */}
+        {/* -- CONTENT CARD (white rounded container) -- */}
         <div className="content-card">
 
-          {/* ── DRILL MODE ── */}
+          {/* -- DRILL MODE -- */}
           {!browseTab && (
             <>
               {drillLevel !== "cat" && (
@@ -478,7 +420,7 @@ export default function AppointmentBooking() {
                 </div>
               )}
 
-              {/* ── Category grid ── */}
+              {/* -- Category grid -- */}
               {drillLevel === "cat" && (
                 <div className="panel">
                   <div className="catgrid">
@@ -486,7 +428,7 @@ export default function AppointmentBooking() {
                       visibleCats.map((c) => {
                         const specialtyCount = c.specialties.length;
                         const conditionCount = c.specialties.reduce((n, s) => n + s.conditions.length, 0);
-                        const sample = c.specialties.slice(0, 3).map((s) => s.name).join(", ") + (c.specialties.length > 3 ? "…" : "");
+                        const description = c.description || "No description added yet.";
                         return (
                           <div
                             key={c.id}
@@ -495,29 +437,36 @@ export default function AppointmentBooking() {
                               handleCardClick(e, () => handleOpenCat(c))
                             }
                           >
-                            <div className="ic">{c.icon}</div>
+                            <div className="ic">
+                              <HealthcareIcon name={c.icon} size={30} />
+                            </div>
                             <h3>{c.label}</h3>
-                            <div className="meta">{specialtyCount} specialties · {conditionCount} conditions</div>
-                            <div className="samp">{sample}</div>
-                            <div className="go">Explore →</div>
+                            <div className="meta">{specialtyCount} specialties - {conditionCount} conditions</div>
+                            <div className="samp">{description}</div>
+                            <div className="go">Explore → </div>
                           </div>
                         );
                       })
                     ) : (
                       <div className="empty">
-                        <div className="big">🔍</div>No categories match.
+                        <div className="big">Search</div>
+                        {treeLoading
+                          ? "Loading categories..."
+                          : treeError || "No categories match."}
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* ── Specialty list ── */}
+              {/* -- Specialty list -- */}
               {drillLevel === "spec" && activeCat && (
                 <div className="panel">
                   <div className="hcc-level-label">
-                    {catNumLabel && <>{catNumLabel} —</>}
-                    <span style={{ fontSize: 20 }}>{activeCat.icon}</span>
+                    {catNumLabel && <>{catNumLabel} -</>}
+                    <span style={{ fontSize: 20 }}>
+                      <HealthcareIcon name={activeCat.icon} size={20} />
+                    </span>
                     {activeCat.label}
                   </div>
                   <div className="grid">
@@ -527,15 +476,19 @@ export default function AppointmentBooking() {
                         const specialtyWithCat = { ...s, catId: activeCat.id, catLabel: activeCat.label };
                         return (
                           <div
-                            key={s.name}
+                            key={s.id || s.name}
                             className="spec"
                             onClick={(e) => handleCardClick(e, () => handleOpenSpec(specialtyWithCat))}
                           >
-                            {s.live && <span className="live">LIVE</span>}
-                            <div className="ic">{s.icon}</div>
+                            <div className="ic">
+                              <HealthcareIcon name={s.icon} size={30} />
+                            </div>
                             <h3>{s.name}</h3>
-                            <div className="count">{s.count || "Book now"}</div>
-                            <div className="catref">{activeCat.label}</div>
+                            <div className="spec-desc">{s.description || "No description added yet."}</div>
+                            <div className="spec-footer">
+  <div className="count">{s.conditions.length} conditions</div>
+  <div className="book-link">Book →</div>
+</div>
                           </div>
                         );
                       })}
@@ -543,18 +496,20 @@ export default function AppointmentBooking() {
                 </div>
               )}
 
-              {/* ── Condition list ── (unchanged) ── */}
+              {/* -- Condition list -- (unchanged) -- */}
               {drillLevel === "cond" && activeSpec && (
                 <div className="panel">
                   <div className="hcc-level-label">
-                    <span style={{ fontSize: 20 }}>{activeSpec.icon}</span>
-                    {activeSpec.name} — select your condition
+                    <span style={{ fontSize: 20 }}>
+                      <HealthcareIcon name={activeSpec.icon} size={20} />
+                    </span>
+                    {activeSpec.name} - select your condition
                   </div>
-                  {!activeSpec.priceAvailable && (
+                  {/* {!activeSpec.priceAvailable && (
                     <div className="hcc-price-alert">
                       {activeSpec.priceMessage}
                     </div>
-                  )}
+                  )} */}
                   <div className="condgrid">
                     {drillConditions
                       .filter(([name]) => !q || name.toLowerCase().includes(q))
@@ -564,9 +519,11 @@ export default function AppointmentBooking() {
                           className="condcard"
                           onClick={(e) => handleCardClick(e, () => handleSelectCond(name, icon, activeSpec))}
                         >
-                          <div className="condcard-ico">{icon}</div>
+                          <div className="condcard-ico">
+                            <HealthcareIcon name={icon} size={23} />
+                          </div>
                           <div className="condcard-name">{name}</div>
-                          <div className="condcard-go">Book →</div>
+  <div className="book-link">Book →</div>
                         </div>
                       ))}
                     <div
@@ -575,13 +532,15 @@ export default function AppointmentBooking() {
                         handleCardClick(e, () =>
                           handleSelectCond(
                             "General Consultation",
-                            "🩺",
+                            "stethoscope",
                             activeSpec,
                           ),
                         )
                       }
                     >
-                      <div className="condcard-ico">💬</div>
+                      <div className="condcard-ico">
+                        <HealthcareIcon name="stethoscope" size={23} />
+                      </div>
                       <div className="condcard-body">
                         <div className="condcard-name">Other / not listed</div>
                         <div className="condcard-desc">{activeSpec.name}</div>
@@ -593,34 +552,39 @@ export default function AppointmentBooking() {
             </>
           )}
 
-          {/* ── FLAT BROWSE: Specialties ── */}
+          {/* -- FLAT BROWSE: Specialties -- */}
           {browseTab === "spec" && (
             <div className="panel">
               <div className="grid">
                 {visibleFlatSpecialties.length ? (
                   visibleFlatSpecialties.map((s) => (
                     <div
-                      key={s.name + s.catId}
+                      key={(s.id || s.name) + s.catId}
                       className="spec"
                       onClick={(e) => handleCardClick(e, () => handleFlatSpecClick(s))}
                     >
-                      {s.live && <span className="live">LIVE</span>}
-                      <div className="ic">{s.icon}</div>
+                      <div className="ic">
+                        <HealthcareIcon name={s.icon} size={30} />
+                      </div>
                       <h3>{s.name}</h3>
-                      <div className="count">{s.count || "Book now"}</div>
-                      <div className="catref">{s.catLabel}</div>
+                      <div className="spec-desc">{s.description || "No description added yet."}</div>
+                      <div className="spec-footer">
+  <div className="count">{s.conditions.length} conditions</div>
+  <div className="book-link">Book →</div>
+</div>
+
                     </div>
                   ))
                 ) : (
                   <div className="empty">
-                    <div className="big">🔍</div>No specialties found.
+                    <div className="big">Search</div>No specialties found.
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* ── FLAT BROWSE: Conditions ── (unchanged) ── */}
+          {/* -- FLAT BROWSE: Conditions -- (unchanged) -- */}
           {browseTab === "cond" && (
             <div className="panel">
               <div className="condgrid">
@@ -633,15 +597,17 @@ export default function AppointmentBooking() {
                         handleCardClick(e, () => handleFlatCondClick(c))
                       }
                     >
-                      <div className="condcard-ico">{c.icon}</div>
+                      <div className="condcard-ico">
+                        <HealthcareIcon name={c.icon} size={23} />
+                      </div>
                       <div className="condcard-name">{c.name}</div>
-                      <div className="condcard-spec">{c.to}</div>
-                      <div className="condcard-go">Book →</div>
+                      {/* <div className="condcard-spec">{c.to}</div> */}
+  <div className="book-link">Book →</div>
                     </div>
                   ))
                 ) : (
                   <div className="empty">
-                    <div className="big">🔍</div>No conditions match.
+                    <div className="big">Search</div>No conditions match.
                   </div>
                 )}
               </div>
@@ -654,3 +620,4 @@ export default function AppointmentBooking() {
     </section>
   );
 }
+
