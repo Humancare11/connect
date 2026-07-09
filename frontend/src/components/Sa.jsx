@@ -128,17 +128,14 @@ export default function Sa() {
               <div className="services-content-left">
                 <h3 className="services-card-title">Prescription Refills</h3>
                 <p className="services-card-description">
-                  Need a medication refill without the wait? Connect with a
-                  licensed provider through a fast online doctor appointment and
-                  receive prescription refill support the same day through our
-                  secure virtual healthcare services.
+                  Need a refill but don’t want to wait? Refill prescriptions online with a quick online doctor appointment with a licensed telemedicine doctor. If you have a chronic condition or just need to renew a prescription, get care when you need it and save yourself a trip to the clinic with quick, easy telemedicine appointments.
                 </p>
                 <span className="services-card-cta-link">
                   Refill Prescription <span className="cta-arrow">→</span>
                 </span>
               </div>
 
-              <div className="services-content-right">
+              {/* <div className="services-content-right">
                 <div className="services-stat-mini">
                   <span className="services-stat-value-text">2 hrs</span>
                   <span className="services-stat-label-text">Avg. time</span>
@@ -147,35 +144,10 @@ export default function Sa() {
                   <span className="services-stat-value-text">94%</span>
                   <span className="services-stat-label-text">Same-day</span>
                 </div>
-              </div>
+              </div> */}
             </div>
           </RevealCard>
 
-          {/* ── Weight Loss (2-col) ── */}
-          {/* <RevealCard
-            className="services-card-item services-bento-small-weightloss"
-            delay={D[1]}
-            to="/weight-loss-programs"
-          >
-            <div className="services-icon-box">
-              <FaBalanceScale />
-            </div>
-            <h3 className="services-card-title">Weight Loss Programs</h3>
-            <p className="services-card-description">
-              Personalized virtual weight loss programs with licensed providers, GLP-1 treatment support, lifestyle coaching, and ongoing telehealth services designed to help you reach long-term health goals safely.
-            </p>
-
-            <div className="services-weight-stat-block">
-              <span className="services-weight-stat-eyebrow">AVG. WEIGHT LOSS</span>
-              <div className="services-weight-stat-row">
-                <span className="services-weight-stat-number">15 lbs</span>
-                <span className="services-weight-stat-period">/ 3 months</span>
-              </div>
-              <span className="services-card-cta-link services-weight-cta">
-                Start Program <span className="cta-arrow">→</span>
-              </span>
-            </div>
-          </RevealCard> */}
 
           {/* Doctors Notes */}
           <RevealCard
@@ -188,11 +160,8 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title">Doctor Note or Sick Note</h3>
             <p className="services-card-description">
-              Doctor Notes and Sick Notes are medical documents that may be
-              provided by a healthcare professional after evaluating a patient's
-              health condition. These documents are commonly used to verify an
-              illness, medical condition, or healthcare visit for employers,
-              schools, universities, or other organizations.
+             Need a doctor’s note for work, school or daily activities? Chat with a licensed telemedicine doctor & receive a medical note when clinically indicated through a fast online doctor appointment. Convenient telemedicine services save you time, avoid unnecessary clinic visits, and provide the documentation you need.
+
             </p>
             <div className="services-weight-stat-block">
               <span className="services-card-cta-link services-weight-cta">
@@ -230,15 +199,11 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title"> Fit to Fly Certificate</h3>
             <p className="services-card-description">
-              A Fit to Fly Certificate is a medical document that may be
-              required by airlines for passengers with certain health
-              conditions, recent surgeries, pregnancy-related travel
-              considerations, or ongoing medical concerns. The certificate
-              confirms that a healthcare provider has reviewed your condition
-              and assessed your ability to travel safely by air.
+              Travel with confidence by getting a fit to fly certificate from a licensed telemedicine provider. If medically appropriate, obtain a professional fitness-to-travel assessment to meet airline requirements, recent surgery, pregnancy, or other health conditions without an unnecessary clinic visit.
+
             </p>
             <span className="services-card-cta-link">
-              Get support <span className="cta-arrow">→</span>
+              Get Certificate  <span className="cta-arrow">→</span>
             </span>
           </RevealCard>
           {/* ── General Consultation (2-col) ── */}
@@ -252,9 +217,7 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title">General Consultation</h3>
             <p className="services-card-description">
-              Speak with a licensed doctor for common symptoms, referrals,
-              health advice, and follow-ups — all through a secure virtual visit
-              without leaving home.
+              Get expert care for everyday health concerns with a licensed primary care doctor through a fast online doctor appointment. From cold and flu symptoms to infections, headaches, minor injuries, and preventive healthcare, our telemedicine services make it easy to get timely medical advice and personalized treatment from the comfort of home. 
             </p>
             <span className="services-card-cta-link">
               See a Doctor <span className="cta-arrow">→</span>
@@ -288,11 +251,7 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title"> Lab Requisition</h3>
             <p className="services-card-description">
-              A Lab Requisition is a medical order provided by a healthcare
-              professional that authorizes laboratory testing. These tests can
-              help evaluate symptoms, monitor chronic conditions, assess overall
-              health, and provide important information for diagnosis and
-              treatment planning.
+              Need lab testing for new symptoms, ongoing conditions, or routine health monitoring? Connect with a licensed healthcare provider to receive a lab requisition when medically appropriate, helping you take the next step toward an accurate diagnosis and personalized treatment.
             </p>
             <span className="services-card-cta-link">
               Learn more <span className="cta-arrow">→</span>
@@ -310,9 +269,8 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title">Chronic Care</h3>
             <p className="services-card-description">
-              Ongoing chronic care management for diabetes, asthma, thyroid
-              disorders, hypertension, cholesterol, and long-term health
-              conditions through personalized telemedicine healthcare support.
+              Manage chronic conditions with ongoing support from licensed healthcare providers through our telemedicine services. Whether you're living with diabetes, asthma, thyroid disorders, hypertension, or high cholesterol, receive personalized treatment plans, regular follow-ups, and continuity of care to help you stay healthier every day. 
+
             </p>
             <span className="services-card-cta-link">
               Manage condition <span className="cta-arrow">→</span>

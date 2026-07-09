@@ -565,17 +565,14 @@ export default function HomePage() {
           </div>
 
           <h1>
-            Talk to a <span className="fancy-underline">licensed doctor </span>
+            Talk to a <span className="fancy-underline">licensed doctor online </span>
             {/* <br /> */}
             in minutes.
           </h1>
 
           <p>
-            Get fast, reliable telemedicine services from board-certified
-            healthcare providers without leaving home. Schedule an online doctor
-            appointment, discuss symptoms, receive treatment guidance, and get
-            prescriptions through our secure virtual healthcare platform
-            available across globally.
+            Get rapid, reliable telemedicine services from expert doctors on our secure virtual healthcare platform. Book an online doctor appointment. Contact A Telemedicine Doctor for Expert Medical Advice, Personalized Treatment Plans & Prescriptions From Licensed Healthcare Providers At Your Home. Our HIPAA compliant telemedicine and secure healthcare platform makes it easy, convenient, and available worldwide to access quality digital healthcare.
+
           </p>
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">

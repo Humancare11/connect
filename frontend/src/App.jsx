@@ -1389,7 +1389,7 @@ function AppLayout() {
             path="/fungal-skin-infection"
             element={<FungalSkinInfection />}
           />
-          {/* <Route path="/hair-loss" element={<HairLoss />} /> */}
+          <Route path="/hair-loss" element={<HairLoss1 />} />
           <Route path="/hives" element={<Hives />} />
           <Route path="/itchy-skin" element={<ItchySkin />} />
           <Route path="/mole-skin-checks" element={<MoleSkinChecks />} />
@@ -1453,7 +1453,7 @@ function AppLayout() {
           <Route path="/body-aches" element={<BodyAches />} />
           <Route path="/bronchitis" element={<Bronchitis />} />
           <Route path="/cold-and-flu" element={<ColdAndFlu />} />
-          <Route path="constipation" element={<Constipation />} />
+          <Route path="/constipation" element={<Constipation />} />
           <Route path="/cough" element={<Cough />} />
           <Route path="/covid-19" element={<Covid19 />} />
           <Route path="/diarrhea" element={<Diarrhea />} />

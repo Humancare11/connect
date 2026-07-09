@@ -26,6 +26,8 @@ import {
   Lock,
   MapPin,
   Sparkles,
+  Eye,
+  Utensils,
 } from "lucide-react";
 import "./symptoms.css";
 
@@ -36,20 +38,11 @@ const previewSpecialties = [
   { name: "Chronic Care", path: "/chronic-care", icon: Activity, tags: ["Diabetes", "Hypertension"] },
 ];
 
-const heroRows = [
-  ["Condition", "Food Poisoning While Traveling"],
-  ["Need", "Telehealth consult + medical report"],
-  ["Route", "English-speaking doctor"],
-  ["Status", "Non-emergency triage"],
-];
-
 const stats = [
   ["11", "Categories"],
   ["30", "Specialties"],
-  ["160+", "Conditions"],
-  
+  ["140+", "Conditions"],
 ];
-
 
 const heroSlides = [
   {
@@ -102,167 +95,148 @@ const heroSlides = [
   },
 ];
 
-// -----------Symptoms Conditions --------
+// ----------- Conditions--------
 
 const conditionCategories = [
   {
     category: "Children & Family Care",
     icon: Baby,
     conditions: [
-      { name: "Childhood Allergies", path: "/childhood-allergies" },
-      { name: "Ear Pain In Children", path: "/ear-pain-children" },
+      { name: "Ear Pain Children", path: "/ear-pain-children" },
       { name: "Feeding Concerns", path: "/feeding-concerns" },
-      { name: "Mild Asthma Symptoms", path: "/mild-asthma-symptoms" },
-      { name: "Mood & Anxiety In Teens", path: "/mood-anxiety-teens" },
-      { name: "Cough & Cold", path: "/pediatric-cold-flu" },
-      { name: "Fever In Children", path: "/pediatric-fever" },
-      { name: "Pink Eye In Children", path: "/pink-eye-children" },
+      { name: "Pediatrics Cold and Flu", path: "/pediatric-cold-flu" },
+      { name: "Pediatrics Fever", path: "/pediatric-fever" },
+      { name: "Skin Rash Children", path: "/skin-rash-children" },
+      { name: "Mood & Anxiety in Teens", path: "/mood-anxiety-teens" },
       { name: "Puberty Concerns", path: "/puberty-concerns" },
-      { name: "Childhood Rashes", path: "/skin-rash-children" },
-      { name: "Sore Throat In Children", path: "/sore-throat-children" },
       { name: "Sports Injuries", path: "/sports-injuries" },
-      { name: "Stomach Pain In Children", path: "/stomach-pain-children" },
-      { name: "Growth & Development", path: "/growth-development" },
-      { name: "Vomiting & Diarrhea In Children", path: "/vomiting-diarrhea-children" },
     ],
   },
   {
     category: "Chronic Care & Expert Opinion",
     icon: Activity,
     conditions: [
-      { name: "Arthritis", path: "/arthritis" },
-      { name: "Cancer Second Opinion", path: "/cancer-second-opinion" },
-      { name: "Chest Pain (Non-Emergency)", path: "/chest-pain" },
-      { name: "Chronic Kidney Disease", path: "/chronic-kidney-disease" },
-      { name: "Chronic Migraine", path: "/chronic-migraine" },
-      { name: "Complex Diagnosis Review", path: "/complex-diagnosis" },
-      { name: "Fatty Liver", path: "/fatty-liver" },
-      { name: "Heart Disease", path: "/heart-disease" },
       { name: "High Blood Pressure", path: "/high-blood-pressure" },
-      { name: "High Cholesterol", path: "/high-cholesterol" },
-      { name: "Hormone Imbalance", path: "/hormone-imblance" },
-      { name: "Memory Concerns", path: "/memory-concerns" },
-      { name: "Osteoarthritis", path: "/osteoarthritis" },
-      { name: "Osteoporosis", path: "/osteoporosis" },
+      { name: "Chest Pain (Non-Emergency)", path: "/chest-pain" },
       { name: "Palpitations", path: "/palpitations" },
-      { name: "Post-COVID Concerns", path: "/post-covid-concerns" },
+      { name: "High Cholesterol", path: "/high-cholesterol" },
+      { name: "Heart Disease Follow-Up", path: "/heart-disease-follow-up" },
       { name: "Pre-Op Cardiac Clearance", path: "/pre-op-cardiac-clearance" },
-      { name: "Rheumatoid Arthritis", path: "/rheumatoid-arthritis" },
-      { name: "Seizures / Epilepsy Follow-Up", path: "/seizures-epilepsy-follow-up" },
-      { name: "Sleep Apnea", path: "/sleep-apnea" },
-      { name: "Surgery Second Opinion", path: "/surgery-second-opinion" },
       { name: "Thyroid Disorders", path: "/thyroid-disorders" },
-      { name: "Treatment Plan Review", path: "/treatment-plan-review" },
+      { name: "Diabetes Type 2", path: "/type-2-diabetes" },
+      { name: "Hormone Imbalance", path: "/hormone-imblance" },
+      { name: "Osteoporosis", path: "/osteoporosis" },
+      { name: "Cancer Second Opinion", path: "/cancer-second-opinion" },
+      { name: "Surgery Second Opinion", path: "/surgery-second-opinion" },
+      { name: "Complex-Diagnosis Review", path: "/complex-diagnosis" },
+      { name: "Treatment-Plan Review", path: "/treatment-plan-review" },
+      { name: "Second Medical Opinion", path: "/second-medical-opinion" },
+      { name: "Acid Reflux / GERD", path: "/acid-reflux-gerd" },
+      { name: "IBS", path: "/irritable-bowel-syndrome" },
+      { name: "Constipation", path: "/constipation" }, 
+      { name: "Abdominal Pain", path: "/abdominal-pain" },
+      { name: "Bloating", path: "/bloating" },
+      { name: "Fatty Liver Follow-Up", path: "/fatty-liver" },
+      { name: "Migraine", path: "/migraines" },
+      { name: "Chronic Migraine", path: "/chronic-migraine" },
+      { name: "Seizures / Epilepsy Follow-Up", path: "/seizures-epilepsy-follow-up" },
+      { name: "Numbness & Tingling", path: "/numbness-tingling" },
       { name: "Tremor", path: "/tremor" },
-      { name: "Type 2 Diabetes", path: "/type-2-diabetes" },
+      { name: "Dizziness", path: "/dizziness" },
+      { name: "Memory Concerns", path: "/memory-concerns" },
       { name: "Asthma", path: "/asthma" },
       { name: "COPD", path: "/copd" },
-      { name: "Kidney Stones", path: "/kidney-stones" },
-      { name: "Urinary Incontinence", path: "/urinary-incontinence" },
-    ],
-  },
-  {
-    category: "Eye, Ear & Bone",
-    icon: HeartPulse,
-    conditions: [
-      { name: "Back Pain", path: "/back-pain" },
-      { name: "Dry Eyes", path: "/dry-eyes" },
-      { name: "Ear Infection", path: "/ear-infection" },
-      { name: "Ear Pain", path: "/ear-pain" },
-      { name: "Eye Redness", path: "/eye-redness" },
-      { name: "Eye Strain", path: "/eye-strain" },
-      { name: "Hoarseness", path: "/hoarseness" },
-      { name: "Knee Pain", path: "/knee-pain" },
-      { name: "Muscle Strain", path: "/muscle-strain" },
-      { name: "Nasal Congestion", path: "/nasal-congestion" },
-      { name: "Neck Pain", path: "/neck-pain" },
-      { name: "Numbness & Tingling", path: "/numbness-tingling" },
-      { name: "Stye", path: "/stye" },
-      { name: "Swollen Feet & Ankles", path: "/swollen-feet-ankles" },
-      { name: "Tonsillitis", path: "/tonsillitis" },
-      { name: "Joint Pain", path: "/joint-pain" },
-      { name: "Vision Changes", path: "/vision-changes" },
+      { name: "Persistent Cough", path: "/persistent-cough" },
+      { name: "Shortness of Breath", path: "/shortness-of-breath" },
+      { name: "Sleep Apnea Screening", path: "/sleep-apnea" },
+      { name: "Post-COVID Concerns", path: "/post-covid-concerns" },
     ],
   },
   {
     category: "General & Everyday Care",
     icon: ClipboardPlus,
     conditions: [
-      { name: "Acid Reflux / GERD", path: "/acid-reflux-gerd" },
-      { name: "Body Aches", path: "/body-aches" },
-      { name: "Bronchitis", path: "/bronchitis" },
-      { name: "Cold & Flu", path: "/cold-and-flu" },
-      { name: "Constipation", path: "/constipation" },
-      { name: "Cough", path: "/cough" },
-      { name: "COVID-19", path: "/covid-19" },
-      { name: "Diarrhea", path: "/diarrhea" },
-      { name: "Dizziness", path: "/dizziness" },
-      { name: "Fatigue", path: "/fatigue" },
-      { name: "Fever", path: "/fever" },
-      { name: "Food Poisoning", path: "/food-poisoning" },
-      { name: "Headache", path: "/headache" },
-      { name: "Insect Bites", path: "/insect-bite" },
-      { name: "Migraines", path: "/migraines" },
-      { name: "Minor Burns", path: "/minor-burns" },
-      { name: "Minor Infections", path: "/minor-infections" },
+      { name: "Routine Check-Ups", path: "/routine-check-ups" },
+      { name: "Whole-Family Illnesses", path: "/whole-family-illnesses" },
+      { name: "Vaccination Advice", path: "/vaccination-advice" },
+      { name: "Undiagnosed Symptoms", path: "/undiagnosed-symptoms" },
       { name: "Multi-System Complaints", path: "/multi-system-complaints" },
+      { name: "Preventive Screening", path: "/preventive-screening" },
+      { name: "Medication Review", path: "/medication-review" },
+      { name: "Fever", path: "/fever" },
+      { name: "Cold & Flu", path: "/cold-and-flu" },
+      { name: "Cough", path: "/cough" },
+      { name: "Body Aches", path: "/body-aches" },
+      { name: "Headache", path: "/headache" },
+      { name: "Sinus Infection", path: "/sinus-infection" },
+      { name: "Minor Infections", path: "/minor-infections" },
+      { name: "Fatigue", path: "/fatigue" },
       { name: "Nausea & Vomiting", path: "/nausea-and-vomiting" },
       { name: "Pink Eye", path: "/pink-eye" },
-      { name: "Preventive Screening", path: "/preventive-screening" },
-      { name: "Routine Check-Ups", path: "/routine-check-ups" },
-      { name: "Seasonal Allergies", path: "/seasonal-allergies" },
-      { name: "Sinus Infection", path: "/sinus-infection" },
+    ],
+  },
+  {
+    category: "Eye, Ear & Bone",
+    icon: Eye,
+    conditions: [
+      { name: "Eye Redness", path: "/eye-redness" },
+      { name: "Dry Eyes", path: "/dry-eyes" },
+      { name: "Vision Changes", path: "/vision-changes" },
+      { name: "Eye Irritation", path: "/eye-irritation" },
+      { name: "Stye", path: "/stye" },
+      { name: "Eye-Strain", path: "/eye-strain" },
+      { name: "Back Pain", path: "/back-pain" },
+      { name: "Neck Pain", path: "/neck-pain" },
+      { name: "Knee Pain", path: "/knee-pain" },
+      { name: "Muscle Strains", path: "/muscle-strain" },
+      { name: "Osteoarthritis", path: "/osteoarthritis" },
+      { name: "Arthritis Advice", path: "/arthritis" },
+      { name: "Ear Pain", path: "/ear-pain" },
       { name: "Sore Throat", path: "/sore-throat" },
-      { name: "Strep Throat", path: "/strep-throat" },
-      { name: "Undiagnosed Symptoms", path: "/undiagnosed-symptoms" },
-      { name: "Vaccination Advice", path: "/vaccination-advice" },
-      { name: "Whole-Family Illnesses", path: "/whole-family-illnesses" },
-      { name: "Doctor's Note", path: "/doctors-note" },
-      { name: "Follow-Up Consultation", path: "/follow-up-consultation" },
-      { name: "Lab Results Review", path: "/lab-results-review" },
-      { name: "Medical Certificate", path: "/medical-certificate" },
-      { name: "Medication Review", path: "/medication-review" },
-      { name: "Prescription Refill", path: "/prescription-refill" },
-      { name: "Return-To-Work Clearance", path: "/return-to-work-clearance" },
-      { name: "Second Medical Opinion", path: "/second-medical-opinion" },
-      { name: "Specialist Referral", path: "/specialist-referral" },
-      { name: "Allergic Rhinitis", path: "/allergic-rhinitis" },
-      { name: "Persistent Cough", path: "/persistent-cough" },
-      { name: "Pneumonia Follow-Up", path: "/pneumonia-follow-up" },
-      { name: "Shortness Of Breath", path: "/shortness-of-breath" },
-      { name: "Upper Respiratory Infection", path: "/upper-respiratory-infection" },
-      { name: "Wheezing", path: "/wheezing" },
-      { name: "Asthma Flare-Up", path: "/asthma-flare-up" },
-      { name: "Bladder Infection", path: "/bladder-infection" },
-      { name: "Burning Urination", path: "/burning-urination" },
-      { name: "Frequent Urination", path: "/frequent-urination" },
-      { name: "Urinary Tract Infection", path: "/urinary-tract-infection" },
-      { name: "Blood In Urine", path: "/blood-in-urine" },
+      { name: "Ear Infections", path: "/ear-infection" },
+      { name: "Vertigo", path: "/vertigo" }, 
+      { name: "Nasal Congestion", path: "/nasal-congestion" },
+      { name: "Hoarseness", path: "/hoarseness" },
+      { name: "Tonsillitis", path: "/tonsillitis" },
     ],
   },
   {
     category: "Men's Health",
     icon: Mars,
     conditions: [
-      { name: "Bladder Problems", path: "/bladder-problems" },
       { name: "Erectile Dysfunction", path: "/erectile-dysfunction" },
-      { name: "Hair Loss", path: "/hair-loss-mens-health" },
-      { name: "Low Libido", path: "/low-libido" },
       { name: "Low Testosterone", path: "/low-testosterone-symptoms" },
-      { name: "Men's Wellness Consultation", path: "/mens-wellness-consultation" },
-      { name: "Premature Ejaculation", path: "/premature-ejaculation" },
+      { name: "Hair Loss in men", path: "/hair-loss-mens-health" },
       { name: "Prostate Health", path: "/prostate-health" },
-      { name: "Urinary Symptoms In Men", path: "/urinary-symptoms-in-men" },
+      { name: "Low Libido", path: "/low-libido" },
+      { name: "Urinary Tract Infections", path: "/urinary-tract-infection" },
+      { name: "Kidney Stones", path: "/kidney-stones" },
+      { name: "Blood in Urine", path: "/blood-in-urine" },
+      { name: "Urinary Incontinence", path: "/urinary-incontinence" },
+      { name: "Bladder Problems", path: "/bladder-problems" },
     ],
   },
   {
     category: "Mental Health",
     icon: Brain,
     conditions: [
-      { name: "Perinatal Anxiety", path: "/perinatal-anxiety" },
-      { name: "Postnatal Depression", path: "/postnatal-depression" },
-      { name: "Postpartum Concerns", path: "/postpartum-concerns" },
-      { name: "Sleep Hygiene", path: "/sleep-hygiene" },
+      { name: "Anger Management", path: "/anger-management" },
+      { name: "Adjustment Difficulties", path: "/adjustment-difficulties" },
+      { name: "Substance-Use Concerns", path: "/substance-use-support" },
+      { name: "Sleep-Related Anxiety", path: "/sleep-related-anxiety" },
+      { name: "Anxiety", path: "/anxiety" },
+      { name: "Depression", path: "/depression" },
+      { name: "Bipolar Disorder Follow-Up", path: "/bipolar-disorder-follow-up" },
+      { name: "OCD", path: "/OCD" },
+      { name: "PTSD", path: "/ptsd" },
+      { name: "Panic Attacks", path: "/panic-attack" },
+      { name: "Insomnia", path: "/insomnia" },
+      { name: "ADHD (Assessment & Follow-Up)", path: "/ADHD-evaluation" },
+      { name: "Stress", path: "/stress" },
+      { name: "Grief & Loss", path: "/grief-and-loss" },
+      { name: "Relationship Issues", path: "/relationship-stress" },
+      { name: "Low Self-Esteem", path: "/low-self-esteem" },
+      { name: "Trauma Support", path: "/trauma-support" },
     ],
   },
   {
@@ -270,114 +244,90 @@ const conditionCategories = [
     icon: ShieldCheck,
     conditions: [
       { name: "Chlamydia", path: "/chlamydia" },
-      { name: "Genital Itching", path: "/genital-itching" },
-      { name: "Genital Rash", path: "/genital-rash" },
       { name: "Gonorrhea", path: "/gonorrhea" },
       { name: "Herpes", path: "/herpes" },
       { name: "HIV Prevention Guidance", path: "/hiv-prevention-guidance" },
       { name: "Partner Exposure Concerns", path: "/partner-exposure-concerns" },
-      { name: "Safe-Sex Counseling", path: "/safe-sex-counseling" },
+      { name: "Safe Sex Counseling", path: "/safe-sex-counseling" },
       { name: "STI Consultation", path: "/sti-consultation" },
     ],
   },
   {
-    category: "Skin & Hair Care",
-    icon: HeartPulse,
+    category: "Skin & Hair",
+    icon: Sparkles,
     conditions: [
       { name: "Acne", path: "/acne" },
-      { name: "Athlete's Foot", path: "/athletes-foot" },
-      { name: "Cellulitis", path: "/cellulitis" },
-      { name: "Cold Sores", path: "/cold-sores" },
-      { name: "Contact Dermatitis", path: "/contact-dermatitis" },
       { name: "Eczema", path: "/eczema" },
-      { name: "Fungal Skin Infection", path: "/fungal-skin-infection" },
-      { name: "Hives", path: "/hives" },
-      { name: "Itchy Skin", path: "/itchy-skin" },
-      { name: "Mole & Skin Checks", path: "/mole-skin-checks" },
-      { name: "Nail Problems", path: "/nail-problems" },
       { name: "Psoriasis", path: "/psoriasis" },
-      { name: "Ringworm", path: "/ringworm" },
+      { name: "Skin Rashes", path: "/skin-rash" },
+      { name: "Hives", path: "/hives" },
       { name: "Rosacea", path: "/rosacea" },
-      { name: "Shingles", path: "/shingles" },
-      { name: "Skin Rash", path: "/skin-rash" },
+      { name: "Fungal Infections", path: "/fungal-skin-infection" },
       { name: "Warts", path: "/warts" },
+      { name: "Cold Sores", path: "/cold-sores" },
+      { name: "Hair Loss", path: "/hair-loss" }, 
+      { name: "Nail Problems", path: "/nail-problems" },
+      { name: "Mole & Skin Checks", path: "/mole-skin-checks" },
     ],
   },
   {
     category: "Travel & Global Care",
     icon: Plane,
     conditions: [
-      { name: "Altitude Sickness", path: "/altitude-sickness" },
-      { name: "Cross-Border Consultation", path: "/cross-border-consultation" },
-      { name: "Emergency Teleconsultation Abroad", path: "/emergency-teleconsultation-abroad" },
-      { name: "Fitness For Travel Evaluation", path: "/fitness-travel-evaluation" },
-      { name: "Food Poisoning While Traveling", path: "/food-poisoning-while-traveling" },
-      { name: "International Medical Assistance", path: "/international-medical-assistance" },
+      { name: "Pre-Travel Vaccination", path: "/pre-travel-vaccinations" },
       { name: "Malaria Prevention", path: "/malaria-prevention" },
-      { name: "Jet Lag", path: "/jet-lag" },
-      { name: "Medication Refills While Traveling", path: "/medication-refills-traveling" },
-      { name: "Motion Sickness", path: "/motion-sickness" },
+      { name: "Altitude-Sickness Guidance", path: "/altitude-sickness" },
       { name: "Post-Travel Symptoms", path: "/post-travel-symptoms" },
-      { name: "Pre-Travel Vaccinations", path: "/pre-travel-vaccinations" },
-      { name: "Referral Coordination Overseas", path: "/referral-coordination-overseas" },
-      { name: "Travel Medical Certification", path: "/travel-medical-certification" },
-      { name: "Travel-Related Fever", path: "/travel-related-fever" },
       { name: "Traveler's Diarrhea", path: "/travelers-diarrhea" },
+      { name: "Food Poisoning While Traveling", path: "/food-poisoning-while-traveling" },
+      { name: "Travel-Related Fever", path: "/travel-related-fever" },
+      { name: "Cross-Border Consultation", path: "/cross-border-consultation" },
+      { name: "International Medical Assistance", path: "/international-medical-assistance" },
+      { name: "Medication Refill While Traveling", path: "/medication-refills-traveling" },
+      { name: "Referral Coordination Overseas", path: "/referral-coordination-overseas" },
     ],
   },
   {
     category: "Weight & Nutrition",
-    icon: Activity,
+    icon: Utensils,
     conditions: [
-      { name: "Abdominal Pain", path: "/abdominal-pain" },
-      { name: "Binge Eating", path: "/binge-eating" },
-      { name: "Bloating", path: "/bloating" },
-      { name: "Cholesterol-Lowering Diet", path: "/cholesterol-lowering-diet" },
-      { name: "Dehydration", path: "/dehydration" },
-      { name: "Diabetic Diet", path: "/diabetic-diet" },
-      { name: "Diet & Exercise Planning", path: "/diet-exercise-planning" },
-      { name: "Food-Intolerance Planning", path: "/food-intolerance-planning" },
-      { name: "Gastritis", path: "/gastritis" },
-      { name: "GLP-1 Program Eligibility", path: "/glp-program-eligibility" },
       { name: "Healthy-Habit Coaching", path: "/healthy-habit-coaching" },
-      { name: "Hemorrhoids", path: "/hemorrhoids" },
-      { name: "Indigestion", path: "/indigestion" },
-      { name: "IBS", path: "/irritable-bowel-syndrome" },
+      { name: "Diet & Exercise Planning", path: "/diet-exercise-planning" },
+      { name: "Sleep Hygiene", path: "/sleep-hygiene" },
+      { name: "Diabetic Diet", path: "/diabetic-diet" },
+      { name: "Cholesterol-Lowering Diet", path: "/cholesterol-lowering-diet" },
+      { name: "Food-Intolerance Planning", path: "/food-intolerance-planning" },
       { name: "Pregnancy Nutrition", path: "/pregnancy-nutrition" },
       { name: "Sports Nutrition", path: "/sports-nutrition" },
-      { name: "Metabolic Syndrome", path: "/metabolic-syndrome" },
-      { name: "Vomiting", path: "/vomiting" },
-      { name: "Weight-Loss Planning", path: "/weight-loss-planning" },
       { name: "Obesity", path: "/obesity" },
+      { name: "Weight-Loss Planning", path: "/weight-loss-planning" },
+      { name: "Binge Eating", path: "/binge-eating" },
     ],
   },
   {
     category: "Women's Health",
     icon: Venus,
     conditions: [
-      { name: "Bacterial Vaginosis", path: "/bacterial-vaginosis" },
-      { name: "Birth Control Consultation", path: "/birth-control-consultation" },
-      { name: "Emergency Contraception Guidance", path: "/emergency-contraception-guidance" },
-      { name: "Heavy Periods", path: "/heavy-periods" },
-      { name: "Irregular Periods", path: "/irregular-periods" },
-      { name: "Latch Problems", path: "/latch-problems" },
       { name: "Low Milk Supply", path: "/low-milk-supply" },
-      { name: "Menopause Symptoms", path: "/menopause-symptoms" },
-      { name: "Menstrual Cramps", path: "/menstrual-cramps" },
+      { name: "Latch Problems", path: "/latch-problems" },
       { name: "Nipple Pain", path: "/nipple-pain" },
-      { name: "PCOS", path: "/pcos" },
-      { name: "Pelvic Pain", path: "/pelvic-pain" },
-      { name: "PMDD", path: "/pmdd" },
-      { name: "Pregnancy-Related Questions", path: "/pregnancy-related-questions" },
-      { name: "Prenatal Consultation", path: "/prenatal-consultation" },
-      { name: "Vaginal Yeast Infection", path: "/vaginal-yeast-infection" },
       { name: "Weaning Guidance", path: "/weaning-guidance" },
+      { name: "Hot Flashes", path: "/hot-flashes" },
+      { name: "HRT Guidance", path: "/hrt-guidance" },
+      { name: "Menopause Symptoms", path: "/menopause-symptoms" },
+      { name: "Irregular Periods", path: "/irregular-periods" },
+      { name: "Birth Control", path: "/birth-control-consultation" },
+      { name: "PCOS", path: "/pcos" },
+      { name: "Bacterial Vaginosis", path: "/bacterial-vaginosis" },
+      { name: "Menstrual Cramps", path: "/menstrual-cramps" },
+      { name: "Pelvic Pain", path: "/pelvic-pain" },
+      { name: "Prenatal Teleconsult", path: "/prenatal-consultation" },
+      { name: "Fertility Concerns", path: "/fertility-concerns" },
     ],
   },
 ];
 
-
-// -----------Care section --------
+// ----------- Care section --------
 const careFeatures = [
   {
     title: "Symptom Based Medical Guidance",
@@ -405,7 +355,7 @@ const careFeatures = [
   },
 ];
 
-// -----------FAQ section --------
+// ----------- FAQ section --------
 const faqGroups = [
   {
     group: "Consult a Doctor Online for Symptoms",
@@ -482,6 +432,7 @@ export default function Symptoms() {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState("All");
   const [showAll, setShowAll] = useState(false);
+  const [hoveredFilter, setHoveredFilter] = useState(null);
 
   // Hero carousel state
   const [slide, setSlide] = useState(0);
@@ -507,7 +458,6 @@ export default function Symptoms() {
 
   // FAQ state — track which item is open within each group (one open per group)
   const [openFaq, setOpenFaq] = useState("0-0");
-  const faqRightRef = useRef(null);
 
   const allConditions = useMemo(
     () =>
@@ -543,6 +493,7 @@ export default function Symptoms() {
   const remainingCount = Math.max(filtered.length - 96, 0);
 
   const categories = ["All", ...conditionCategories.map((c) => c.category)];
+
   return (
     <>
       <Helmet>
@@ -555,7 +506,6 @@ export default function Symptoms() {
 
       <section id="top" className="sy-hero">
         <div className="sy-hero-inner">
-          {/* ── Left column ── */}
           <div>
             <div className="sy-hero-badge">
               <Globe2 size={14} />
@@ -570,15 +520,6 @@ export default function Symptoms() {
               Consult a Doctor Online for Symptoms and Get the Right Care
             </p>
 
-            {/* <div className="sy-hero-ctas">
-                            <a href="#specialties" className="sy-hero-btn-primary">
-                                View Specialties <ArrowRight size={16} />
-                            </a>
-                            <a href="#conditions" className="sy-hero-btn-secondary">
-                                Search Conditions
-                            </a>
-                        </div> */}
-
             <div className="sy-hero__stats">
               {stats.map(([num, label]) => (
                 <div key={label} className="sy-hero__stat">
@@ -589,7 +530,6 @@ export default function Symptoms() {
             </div>
           </div>
 
-          {/* ── Right panel: carousel ── */}
           <div className="sy-hero-panel">
             <div className="sy-hero__card">
               <div className="sy-hero__card-dark">
@@ -626,7 +566,6 @@ export default function Symptoms() {
                 ))}
               </div>
 
-              {/* Featured / active specialty footer row */}
               <Link
                 to={previewSpecialties[current.activeIndex].path}
                 className="sy-hero__feature-row"
@@ -647,14 +586,8 @@ export default function Symptoms() {
                 </div>
               </Link>
 
-              {/* Carousel nav: arrows + dots */}
               <div className="sy-hero__nav">
-                <button
-                  type="button"
-                  className="sy-hero__nav-arrow"
-                  onClick={goPrev}
-                  aria-label="Previous"
-                >
+                <button type="button" className="sy-hero__nav-arrow" onClick={goPrev} aria-label="Previous">
                   <ArrowLeft size={16} />
                 </button>
                 <div className="sy-hero__nav-dots">
@@ -668,12 +601,7 @@ export default function Symptoms() {
                     />
                   ))}
                 </div>
-                <button
-                  type="button"
-                  className="sy-hero__nav-arrow"
-                  onClick={goNext}
-                  aria-label="Next"
-                >
+                <button type="button" className="sy-hero__nav-arrow" onClick={goNext} aria-label="Next">
                   <ArrowRight size={16} />
                 </button>
               </div>
@@ -713,16 +641,55 @@ export default function Symptoms() {
               <div className="symptoms__count">{filtered.length} results</div>
             </div>
 
-            <div className="symptoms__filters">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  className={`symptoms__filter-btn${active === cat ? " symptoms__filter-btn--active" : ""}`}
-                  onClick={() => setActive(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/*
+              Filter row: scroll + colors are handled inline here rather than
+              purely in symptoms.css, since the previous CSS had hover rules
+              overriding the active state (active pill would go white on
+              click, then flip blue on mouseout). This guarantees correct
+              behavior regardless of what's currently in symptoms.css.
+              Move these into real classes any time — just keep the same logic.
+            */}
+            <div
+              className="symptoms__filters"
+              style={{
+                display: "flex",
+                flexWrap: "nowrap",
+                gap: "8px",
+                overflowX: "auto",
+                WebkitOverflowScrolling: "touch",
+                paddingBottom: "10px",
+                scrollbarWidth: "thin",
+              }}
+            >
+              {categories.map((cat) => {
+                const isActive = active === cat;
+                const isHovered = hoveredFilter === cat && !isActive;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={`symptoms__filter-btn${isActive ? " symptoms__filter-btn--active" : ""}`}
+                    onClick={() => setActive(cat)}
+                    onMouseEnter={() => setHoveredFilter(cat)}
+                    onMouseLeave={() => setHoveredFilter(null)}
+                    style={{
+                      flexShrink: 0,
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                      padding: "8px 16px",
+                      borderRadius: "999px",
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      border: isActive ? "1px solid #0B57E8" : "1px solid rgba(6, 19, 51, 0.15)",
+                      background: isActive ? "#0B57E8" : isHovered ? "#EAF1FF" : "#FFFFFF",
+                      color: isActive ? "#FFFFFF" : "#061333",
+                      transition: "background 0.15s ease, border-color 0.15s ease",
+                    }}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -784,11 +751,9 @@ export default function Symptoms() {
       <section id="sy-care" className="sy-care">
         <div className="sy-care__inner">
           <div className="sy-care__left">
-            <span className="sy-care__eyebrow">SYMPTOM-BASED ONLINE CARE
-</span>
+            <span className="sy-care__eyebrow">SYMPTOM-BASED ONLINE CARE</span>
             <h2 className="sy-care__heading">
               Consult a Doctor Online for Symptoms with Confidence
-
             </h2>
             <p className="sy-care__copy">
               Humancare Connect helps you consult a doctor online for symptoms through secure and convenient virtual healthcare services. Whether you are experiencing a new health concern or managing ongoing symptoms, our online consultations provide access to trusted healthcare professionals who can guide you toward appropriate care.
@@ -810,7 +775,6 @@ export default function Symptoms() {
 
       <section id="sy-faq" className="sy-faq">
         <div className="sy-faq__inner">
-          {/* Left — sticky */}
           <div className="sy-faq__left">
             <span className="sy-faq__eyebrow">FAQ</span>
             <h2 className="sy-faq__heading">
@@ -820,11 +784,6 @@ export default function Symptoms() {
               Everything you need to know about consulting a doctor online for
               symptoms with Humancare Connect. Can't find an answer?
             </p>
-
-            {/* <button type="button" className="sy-faq__chat-btn">
-              <MessageCircle size={16} />
-              Chat with our team
-            </button> */}
 
             <div className="sy-faq__meta">
               <div className="sy-faq__meta-item">
@@ -842,7 +801,6 @@ export default function Symptoms() {
             </div>
           </div>
 
-          {/* Right — scrolls within the section as the page scrolls */}
           <div className="sy-faq__right">
             {faqGroups.map((group, gi) => (
               <div key={group.group} className="sy-faq__group">

@@ -258,15 +258,17 @@ const useCountUp = (target, duration = 2200, start = false) => {
   useEffect(() => {
     if (!start) return;
     let t0 = null;
+    let raf;
     const isFloat = String(target).includes(".");
     const tick = (ts) => {
       if (!t0) t0 = ts;
       const p = Math.min((ts - t0) / duration, 1);
       const e = 1 - Math.pow(1 - p, 3);
       setCount(isFloat ? +(e * target).toFixed(1) : Math.floor(e * target));
-      if (p < 1) requestAnimationFrame(tick);
+      if (p < 1) raf = requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [target, duration, start]);
   return count;
 };
@@ -288,9 +290,15 @@ const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 /* ──────────────────────────────────────────────────────────────────────────
    MICRO COMPONENTS
 ────────────────────────────────────────────────────────────────────────── */
-const SLabel = ({ text, ac }) => (
+const SLabel = ({ text, ac, center = false }) => (
   <div
-    style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: center ? "center" : "flex-start",
+      gap: 10,
+      marginBottom: 14,
+    }}
   >
     <div style={{ width: 24, height: 1, background: ac }} />
     <span
@@ -1015,7 +1023,7 @@ const HowItWorks = ({ s }) => (
                 marginBottom: 8,
               }}
             >
-              Getting started is simple.{" "}
+              Getting started is{" "}
               <span style={{ color: s.accentColor }}>simple.</span>
             </h2>
             <p
@@ -1203,7 +1211,7 @@ const Features = ({ s }) => (
         variants={fadeUp}
         style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
       >
-        <SLabel text="Features & Benefits" ac={s.accentColor} />
+        <SLabel text="Features & Benefits" ac={s.accentColor} center />
         <h2
           style={{
             fontSize: "clamp(26px, 3.5vw, 36px)",
@@ -1343,13 +1351,13 @@ const whyUsItems = [
   ],
   [
     FiHeart,
-    "Patient-Centred Care",
+    "Patient-Centered Care",
     "Clinical decisions are made in partnership with you — never without your input.",
   ],
   [
     FiGlobe,
     "Nationwide Access",
-    "Care without geographic limits — from metro centres to remote districts.",
+    "Care without geographic limits — from metro centers to remote districts.",
   ],
   [
     FiZap,
@@ -1369,22 +1377,10 @@ const whyUsItems = [
 ];
 
 const WhyUs = ({ s }) => {
-  const ref = useRef(null);
   const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) setInView(true);
-      },
-      { threshold: 0.2 },
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
 
   return (
     <section
-      ref={ref}
       style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}
     >
       <motion.div
@@ -1397,7 +1393,7 @@ const WhyUs = ({ s }) => {
           variants={fadeUp}
           style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
         >
-          <SLabel text="Why Choose Us" ac={s.accentColor} />
+          <SLabel text="Why Choose Us" ac={s.accentColor} center />
           <h2
             style={{
               fontSize: "clamp(26px, 3.5vw, 36px)",
@@ -1415,7 +1411,9 @@ const WhyUs = ({ s }) => {
           </p>
         </motion.div>
 
-        <div
+         <motion.div
+          onViewportEnter={() => setInView(true)}
+          viewport={{ once: true, amount: 0.3 }}
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
@@ -1433,7 +1431,7 @@ const WhyUs = ({ s }) => {
               go={inView}
             />
           ))}
-        </div>
+        </motion.div>
 
         <div
           style={{

@@ -227,7 +227,7 @@ export default function WhyChooseUs() {
 
           <h2 className="wcu-heading">
            The corporate telemedicine partner 
-            <em className="wcu-heading__em">modern Organizations trust.</em>
+            <em className="wcu-heading__em">modern organizations trust.</em>
           </h2>
 
           <p className="wcu-desc">
@@ -239,22 +239,22 @@ export default function WhyChooseUs() {
               <span className="wcu-metric__num">
                 2.4M<sup>+</sup>
               </span>
-              <span className="wcu-metric__lbl">2.4M+ patients supported
+              <span className="wcu-metric__lbl"> patients supported
 </span>
             </div>
             <div className="wcu-metric__sep" />
             <div className="wcu-metric">
               <span className="wcu-metric__num">
-                500<sup>+</sup>
+                1200<sup>+</sup>
               </span>
-              <span className="wcu-metric__lbl">500+ licensed providers</span>
+              <span className="wcu-metric__lbl"> licensed providers</span>
             </div>
             <div className="wcu-metric__sep" />
             <div className="wcu-metric">
               <span className="wcu-metric__num">
                 98<sup>%</sup>
               </span>
-              <span className="wcu-metric__lbl">98% patient satisfaction
+              <span className="wcu-metric__lbl"> patient satisfaction
 </span>
             </div>
           </div>

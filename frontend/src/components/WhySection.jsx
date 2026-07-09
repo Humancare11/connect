@@ -88,19 +88,16 @@ export default function WhySection() {
             >
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">HIPAA & SOC 2 Certified
-</div>
+                  <div className="why-item-title">HIPAA  Certified</div>
                   <div className="why-item-desc">
                     Your privacy comes first. Our secure telemedicine platform uses advanced encryption and compliance standards to protect every online doctor consultation, medical record, prescription, and patient interaction.
-
                   </div>
                 </div>
               </Motion.div>
 
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">Board-Certified Physicians Only
-</div>
+                  <div className="why-item-title">Board-Certified Physicians Only</div>
                   <div className="why-item-desc">
                     Every provider on Humancare Connect is carefully credentialed and licensed to deliver trusted telehealth services, virtual healthcare consultations, and high-quality patient care across multiple specialties.
 
@@ -110,8 +107,7 @@ export default function WhySection() {
 
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">Transparent, Flat-Fee Pricing
-</div>
+                  <div className="why-item-title">Transparent, Flat-Fee Pricing</div>
                   <div className="why-item-desc">
                    No surprise medical bills or hidden costs. Get affordable telemedicine services, upfront pricing, and flexible online healthcare access with or without insurance coverage.
 
