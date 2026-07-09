@@ -134,7 +134,7 @@ export default function IndustrySlider() {
           transition={{ duration: 0.8 }}
         >
           <h2 className="slider-h1-v2">
-            Telemedicine expertise across every<span>Industries</span>
+            Telemedicine expertise across every <span> industry.</span>
           </h2>
           <p className="slider-subtitle">
            Flexible telehealth services, online doctor appointments, and virtual healthcare solutions designed for corporate teams, healthcare organizations, logistics, technology, hospitality, education, manufacturing, and more.

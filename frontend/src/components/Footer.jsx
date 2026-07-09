@@ -27,7 +27,7 @@ export default function Footer() {
           <Link to="/">
             <img
               src={logo}
-              alt="Humancare Logo"
+              alt="Humancare Connect Logo"
               className="footer-logo-full"
               decoding="async"
             />
@@ -227,7 +227,7 @@ export default function Footer() {
 
       {/* FOOTER BOTTOM */}
       <div className="footer-bottom">
-        <span>© 2026 HumanCare Connect, Inc.</span>
+        <span>© 2026 Humancare Connect, Inc.</span>
 
         <div className="footer-socials">
           <a
