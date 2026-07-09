@@ -58,7 +58,27 @@ const COMMON_PASSWORDS = new Set([
   "patient123",
 ]);
 const DOB_MIN = "1900-01-01";
+const IP_COUNTRY_ENDPOINT = "https://api.country.is/";
+const IP_COUNTRY_TIMEOUT_MS = 3500;
 const todayISO = () => new Date().toISOString().slice(0, 10);
+
+async function getIpCountryCode() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), IP_COUNTRY_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(IP_COUNTRY_ENDPOINT, {
+      signal: controller.signal,
+    });
+    if (!res.ok) return "";
+    const data = await res.json();
+    return String(data?.country || "").toUpperCase();
+  } catch {
+    return "";
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function getPasswordError(password) {
   const value = String(password || "");
@@ -252,6 +272,8 @@ export default function AuthPage() {
   const [otpValue, setOtpValue] = useState("");
   const [otpTimer, setOtpTimer] = useState(0);
   const timerRef = useRef(null);
+  const countryManuallySelectedRef = useRef(false);
+  const ipCountryAppliedRef = useRef(false);
 
   const [forgotEmail, setForgotEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
@@ -315,6 +337,7 @@ export default function AuthPage() {
   };
 
   const handleCountrySelect = (e) => {
+    countryManuallySelectedRef.current = true;
     const countryName = e.target.value;
     const selected = findCountryByName(countryName);
     if (!selected) {
@@ -329,6 +352,55 @@ export default function AuthPage() {
   };
 
   const selectedPhoneCountry = findCountryByName(registerForm.country);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (ipCountryAppliedRef.current || countries.length === 0) return;
+    if (countryManuallySelectedRef.current) return;
+
+    getIpCountryCode().then((countryCode) => {
+      if (cancelled || !countryCode || countryManuallySelectedRef.current) {
+        return;
+      }
+
+      const detectedCountry = countries.find(
+        (country) => country.isoCode?.toUpperCase() === countryCode,
+      );
+      if (!detectedCountry) return;
+
+      ipCountryAppliedRef.current = true;
+      setRegisterForm((prev) => {
+        if (countryManuallySelectedRef.current) return prev;
+        const existingCountry = findCountryByName(prev.country);
+        const canReplaceCountry =
+          !prev.country ||
+          (!countryManuallySelectedRef.current &&
+            existingCountry?.code === "IN");
+
+        if (!canReplaceCountry) return prev;
+
+        const phoneCountry = findCountryByName(detectedCountry.name);
+        const dialCode = phoneCountry?.dial || detectedCountry.phonecode;
+        const { local } = parsePhoneValue(
+          prev.mobile,
+          existingCountry?.code || "auto",
+        );
+
+        return {
+          ...prev,
+          country: detectedCountry.name,
+          state: "",
+          city: "",
+          mobile: dialCode ? `+${dialCode}${local}` : prev.mobile,
+        };
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [countries]);
 
   useEffect(() => {
     if (!countryOpen) return;
@@ -1221,6 +1293,7 @@ export default function AuthPage() {
                               type="button"
                               className="hc-country-option"
                               onClick={() => {
+                                countryManuallySelectedRef.current = true;
                                 const { local } = parsePhoneValue(
                                   registerForm.mobile,
                                   c.isoCode,

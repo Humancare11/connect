@@ -13,6 +13,8 @@ import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
+import CookieBanner from "./components/CookieBanner";
+
 const Home = lazy(() => import("./pages/Home"));
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
@@ -701,6 +703,7 @@ function AppLayout() {
           <Route path="/test" element={<Test />} />
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
+          <Route path="/cookies" element={<CookieBanner />} />
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
