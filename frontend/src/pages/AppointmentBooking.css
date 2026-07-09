@@ -984,4 +984,5 @@ font-size: 12px;
   /* [SIZE+] was 11px */
   color: var(--accent);
   font-weight: 600;
+  text-align: right !important;
 }

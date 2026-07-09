@@ -88,33 +88,72 @@ const ELEMENTS_APPEARANCE = {
   },
 };
 
-// ─── Time slots ───────────────────────────────────────────────────────────────
-const ALL_TIME_SLOTS = [
-  "8:00 AM",
-  "8:30 AM",
-  "9:00 AM",
-  "9:30 AM",
-  "10:00 AM",
-  "10:30 AM",
-  "11:00 AM",
-  "11:30 AM",
-  "12:00 PM",
-  "12:30 PM",
-  "1:00 PM",
-  "1:30 PM",
-  "2:00 PM",
-  "2:30 PM",
-  "3:00 PM",
-  "3:30 PM",
-  "4:00 PM",
-  "4:30 PM",
-  "5:00 PM",
-  "5:30 PM",
-  "6:00 PM",
-  "6:30 PM",
-  "7:00 PM",
-  "7:30 PM",
-];
+// const ALL_TIME_SLOTS = [
+//   "12:00 AM",
+//   "12:30 AM",
+//   "1:00 AM",
+//   "1:30 AM",
+//   "2:00 AM",
+//   "2:30 AM",
+//   "3:00 AM",
+//   "3:30 AM",
+//   "4:00 AM",
+//   "4:30 AM",
+//   "5:00 AM",
+//   "5:30 AM",
+//   "6:00 AM",
+//   "6:30 AM",
+//   "7:00 AM",
+//   "7:30 AM",
+//   "8:00 AM",
+//   "8:30 AM",
+//   "9:00 AM",
+//   "9:30 AM",
+//   "10:00 AM",
+//   "10:30 AM",
+//   "11:00 AM",
+//   "11:30 AM",
+//   "12:00 PM",
+//   "12:30 PM",
+//   "1:00 PM",
+//   "1:30 PM",
+//   "2:00 PM",
+//   "2:30 PM",
+//   "3:00 PM",
+//   "3:30 PM",
+//   "4:00 PM",
+//   "4:30 PM",
+//   "5:00 PM",
+//   "5:30 PM",
+//   "6:00 PM",
+//   "6:30 PM",
+//   "7:00 PM",
+//   "7:30 PM",
+//   "8:00 PM",
+//   "8:30 PM",
+//   "9:00 PM",
+//   "9:30 PM",
+//   "10:00 PM",
+//   "10:30 PM",
+//   "11:00 PM",
+//   "11:30 PM",
+// ];
+const ALL_TIME_SLOTS = [];
+
+for (let hour = 0; hour < 24; hour++) {
+  for (let minute = 0; minute < 60; minute += 30) {
+    const date = new Date();
+    date.setHours(hour, minute, 0, 0);
+
+    ALL_TIME_SLOTS.push(
+      date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+    );
+  }
+}
 
 function isSlotPassed(dateStr, slot) {
   const today = new Date().toISOString().split("T")[0];
@@ -293,7 +332,7 @@ function PaymentStage({
     } catch (err) {
       setStripeError(
         err.response?.data?.msg ||
-          "Failed to initialize payment. Please try again.",
+        "Failed to initialize payment. Please try again.",
       );
     } finally {
       setStripeCreating(false);
@@ -565,7 +604,7 @@ export default function AppointmentBookingForm() {
       if (
         !prev ||
         prev.cost === effectivePrice &&
-          prev.currency === effectiveCurrency
+        prev.currency === effectiveCurrency
       ) {
         return prev;
       }
@@ -607,7 +646,7 @@ export default function AppointmentBookingForm() {
     } catch (err) {
       setProceedErr(
         err?.response?.data?.msg ||
-          "Failed to upload reports. Please try again.",
+        "Failed to upload reports. Please try again.",
       );
     } finally {
       setProceeding(false);
@@ -788,7 +827,7 @@ export default function AppointmentBookingForm() {
     } catch (err) {
       setConfirmErr(
         err?.response?.data?.msg ||
-          "Appointment creation failed after payment. Please contact support.",
+        "Appointment creation failed after payment. Please contact support.",
       );
       setStage("payment");
     }
@@ -999,7 +1038,15 @@ export default function AppointmentBookingForm() {
             <div className="ap-step">
               <div className="ap-step-header">
                 <span className="ap-step-num">3</span>
-                <div className="ap-step-title">Describe Your Problem</div>
+
+                 <div className="ap-step-title">
+                      Describe Your Problem{" "}
+                      <span style={{ color: "#e11d48" }}>*</span>
+                    </div>
+                {/* <div className="ap-step-title">Describe Your Problem</div> */}
+
+                {/* <span style={{ color: "#e11d48" }}>*</span> */}
+
               </div>
 
               <textarea

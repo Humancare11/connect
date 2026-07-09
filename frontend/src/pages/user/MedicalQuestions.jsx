@@ -247,7 +247,7 @@ export default function MedicalQuestions() {
       )}
 
       <div className="mq-header">
-        <span className="mq-eyebrow">HumaniCare</span>
+        <span className="mq-eyebrow">Humancare Connect</span>
         <h1 className="mq-title">Medical Questions</h1>
         <p className="mq-sub">Ask a question and get a verified doctor's answer within 12 hours.</p>
       </div>

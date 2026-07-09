@@ -19,7 +19,7 @@ const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const Corporates = lazy(() => import("./pages/Corporates"));
 const Contact = lazy(() => import("./pages/Contact"));
-const Ab = lazy(() => import("./pages/Ab"));
+const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
@@ -308,7 +308,7 @@ import TraumaSupport from "./pages/Conditions/Conditions/TraumaSupport";
 import HotFlashes from "./pages/Conditions/Conditions/HotFlashes";
 import HrtGuidance from "./pages/Conditions/Conditions/HrtGuidance";
 import FertilityConcerns from "./pages/Conditions/Conditions/FertilityConcerns";
-import OCD from "./pages/Conditions/Conditions/OCD";
+// import OCD from "./pages/Conditions/Conditions/OCD";
 import EyeIrritation from "./pages/Conditions/EyeIrritation";
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
@@ -444,7 +444,7 @@ const Specialties = lazy(() => import("./pages/Specialties"));
 const Symptoms = lazy(() => import("./pages/Symptoms"));
 const Categories = lazy(() => import("./pages/Categories"));
 
-const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
+// const AppointmentBooking = lazy(() => import("./pages/AppointmentBookingold"));
 const AppointmentBookingForm = lazy(
   () => import("./pages/AppointmentBookingForm"),
 );
@@ -695,7 +695,7 @@ function AppLayout() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/ab" element={<Ab />} />
+          <Route path="/appointment-booking" element={<AppointmentBooking />} />
           {/* <Route path="/register" element={<Register />} /> */}
           <Route path="/book-appointment" element={<BookAppointment />} />
           <Route path="/test" element={<Test />} />
@@ -1628,14 +1628,14 @@ function AppLayout() {
           />
 
            <Route path="/fertility-concerns" element={<FertilityConcerns />} />
-          <Route path="/OCD" element={<OCD />} />
+          {/* <Route path="/OCD" element={<OCD />} /> */}
           <Route path="/eye-irritation" element={<EyeIrritation />} />
           {/* <Route
             path="/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
           /> */}
           <Route path="/doctors-note" element={<DoctorsNote />} />
-          <Route path="/appointment-booking" element={<AppointmentBooking />} />
+          {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
           <Route
             path="/appointment-booking/form"
             element={<AppointmentBookingForm />}
