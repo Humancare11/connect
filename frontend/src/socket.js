@@ -16,9 +16,9 @@ const socket = io(socketUrl, {
   transports: parseTransports(import.meta.env.VITE_SOCKET_TRANSPORTS),
   reconnection: true,
   timeout: Number(import.meta.env.VITE_SOCKET_TIMEOUT_MS || 20000),
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 10000,
-  reconnectionAttempts: Number(import.meta.env.VITE_SOCKET_RECONNECTION_ATTEMPTS || 10),
+  reconnectionDelay: Number(import.meta.env.VITE_SOCKET_RECONNECTION_DELAY_MS || 1000),
+  reconnectionDelayMax: Number(import.meta.env.VITE_SOCKET_RECONNECTION_DELAY_MAX_MS || 30000),
+  reconnectionAttempts: Infinity,
   randomizationFactor: 0.5,
   withCredentials: true,
 });
