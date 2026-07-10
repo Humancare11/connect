@@ -4,7 +4,7 @@ const retentionPolicySchema = new mongoose.Schema(
   {
     key: {
       type: String,
-      enum: ["auditLogs", "authLogs", "chatMessages", "medicalRecords", "uploadedFiles", "securityIncidents"],
+      enum: ["auditLogs", "authLogs", "chatMessages", "medicalRecords", "uploadedFiles"],
       required: true,
       unique: true,
     },

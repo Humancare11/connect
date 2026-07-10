@@ -578,8 +578,8 @@ const StatCard = ({ value, suffix, label, ac, go }) => {
 
 const whyUsItems = [
   [FiAward, "Verified Providers", "Every clinician is credentialed, licensed, and continuously reviewed."],
-  [FiHeart, "Patient-Centred Care", "Clinical decisions are made in partnership with you — never without your input."],
-  [FiGlobe, "Nationwide Access", "Care without geographic limits — from metro centres to remote districts."],
+  [FiHeart,"Patient-Centered Care","Clinical decisions are made in partnership with you — never without your input.",],
+  [FiGlobe,"Nationwide Access","Care without geographic limits — from metro centers to remote districts.",],
   [FiZap, "Fast Scheduling", "From first contact to first appointment in hours, not weeks."],
   [FiLock, "Secure Platform", "Enterprise-grade encryption protects every record and transaction."],
   [FiBarChart2, "Outcome Accountability", "We track results and publicly report our care quality standards."],

@@ -23,7 +23,7 @@ const {
 const { logAudit, getIp }                 = require("../utils/auditLogger");
 const { assertPasswordAllowed, rememberPassword, validatePasswordStrength } = require("../utils/passwordPolicy");
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
-const { recordFailedLogin, recordSecurityIncident } = require("../utils/securityMonitor");
+const { recordFailedLogin, recordSecurityEvent } = require("../utils/securityMonitor");
 
 const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
 const passwordError = (res, result) => res.status(400).json({ msg: result.errors.join(" ") });
@@ -254,7 +254,7 @@ const login = async (req, res) => {
     }
 
     if (user.accountDisabled) {
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "unauthorized_access",
         severity: "high",
         title: "Disabled account login attempt",
@@ -277,7 +277,7 @@ const login = async (req, res) => {
         success: false,
         details: { reason: "Wrong portal — doctor using patient login" },
       });
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "privilege_escalation",
         severity: "high",
         title: "Doctor account used patient login portal",
@@ -299,7 +299,7 @@ const login = async (req, res) => {
         success: false,
         details: { reason: "Wrong portal — admin using patient login" },
       });
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "privilege_escalation",
         severity: "high",
         title: "Admin account used patient login portal",
@@ -454,7 +454,7 @@ const adminLogin = async (req, res) => {
     }
 
     if (user.accountDisabled) {
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "unauthorized_access",
         severity: "high",
         title: "Disabled admin login attempt",
@@ -876,7 +876,7 @@ const paymentAdminLogin = async (req, res) => {
     }
 
     if (user.accountDisabled) {
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "unauthorized_access",
         severity: "high",
         title: "Disabled payment admin login attempt",
@@ -1039,7 +1039,7 @@ const employeeAdminLogin = async (req, res) => {
     }
 
     if (user.accountDisabled) {
-      await recordSecurityIncident(req, {
+      await recordSecurityEvent(req, {
         type: "unauthorized_access",
         severity: "high",
         title: "Disabled employee admin login attempt",

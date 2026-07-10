@@ -1292,15 +1292,15 @@ const whyUsItems = [
     "Verified Providers",
     "Every clinician is credentialed, licensed, and continuously reviewed.",
   ],
-  [
+ [
     FiHeart,
-    "Patient-Centred Care",
+    "Patient-Centered Care",
     "Clinical decisions are made in partnership with you — never without your input.",
   ],
   [
     FiGlobe,
     "Nationwide Access",
-    "Care without geographic limits — from metro centres to remote districts.",
+    "Care without geographic limits — from metro centers to remote districts.",
   ],
   [
     FiZap,
@@ -1320,24 +1320,10 @@ const whyUsItems = [
 ];
 
 const WhyUs = ({ s }) => {
-  const ref = useRef(null);
   const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) setInView(true);
-      },
-      { threshold: 0.2 },
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
 
   return (
-    <section
-      ref={ref}
-      style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}
-    >
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -1348,7 +1334,7 @@ const WhyUs = ({ s }) => {
           variants={fadeUp}
           style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
         >
-          <SLabel text="Why Choose Us" ac={s.accentColor} />
+          <SLabel text="Why Choose Us" ac={s.accentColor} center />
           <h2
             style={{
               fontSize: "clamp(26px, 3.5vw, 36px)",

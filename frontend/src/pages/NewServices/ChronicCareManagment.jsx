@@ -257,15 +257,17 @@ const useCountUp = (target, duration = 2200, start = false) => {
   useEffect(() => {
     if (!start) return;
     let t0 = null;
+    let raf;
     const isFloat = String(target).includes(".");
     const tick = (ts) => {
       if (!t0) t0 = ts;
       const p = Math.min((ts - t0) / duration, 1);
       const e = 1 - Math.pow(1 - p, 3);
       setCount(isFloat ? +(e * target).toFixed(1) : Math.floor(e * target));
-      if (p < 1) requestAnimationFrame(tick);
+      if (p < 1) raf = requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [target, duration, start]);
   return count;
 };
@@ -287,9 +289,22 @@ const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 /* ──────────────────────────────────────────────────────────────────────────
    MICRO COMPONENTS
 ────────────────────────────────────────────────────────────────────────── */
-const SLabel = ({ text, ac }) => (
+// Fix 1 (labels off-center): SLabel is a flex row (divider line + text). A
+// flex container is block-level by default, so it stretches to the full
+// width of its parent and its children sit at the start of that row —
+// `text-align: center` on an ancestor has no effect on it. Sections that
+// want a centered eyebrow label (Features, WhyUs) now pass `center`, which
+// switches `justifyContent` so the divider+text pair is actually centered
+// instead of hugging the left edge of the centered text block.
+const SLabel = ({ text, ac, center = false }) => (
   <div
-    style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: center ? "center" : "flex-start",
+      gap: 10,
+      marginBottom: 14,
+    }}
   >
     <div style={{ width: 24, height: 1, background: ac }} />
     <span
@@ -787,9 +802,6 @@ const ConsultationForm = ({ s }) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    OVERVIEW
-   Fix 2: text block now sits left (was right), and the right column — which
-   previously held the icon visual panel — now holds the consultation form.
-   The outcomes strip at the bottom is unchanged in structure.
 ────────────────────────────────────────────────────────────────────────── */
 const Overview = ({ s }) => (
   <section
@@ -817,7 +829,7 @@ const Overview = ({ s }) => (
           alignItems: "start",
         }}
       >
-        {/* Text — now the left column */}
+        {/* Text — left column */}
         <div>
           <motion.div variants={fadeUp}>
             <SLabel text="Service Overview" ac={s.accentColor} />
@@ -915,13 +927,13 @@ const Overview = ({ s }) => (
           </motion.div>
         </div>
 
-        {/* Form — now the right column, replacing the old icon visual panel */}
+        {/* Form — right column */}
         <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
           <ConsultationForm s={s} />
         </motion.div>
       </motion.div>
 
-      {/* Outcomes strip — unchanged */}
+      {/* Outcomes strip */}
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -977,11 +989,7 @@ const Overview = ({ s }) => (
 );
 
 /* ──────────────────────────────────────────────────────────────────────────
-   OUR SERVICES (was "How It Works")
-   Fix 3: heading text changed only — content (the 4-step process) is
-   unchanged since it's still accurate underneath the new label.
-   Fix 5: sticky card glass effect removed — flat surface, no backdrop-filter,
-   no glow blob.
+   OUR SERVICES
 ────────────────────────────────────────────────────────────────────────── */
 const HowItWorks = ({ s }) => (
   <section
@@ -1115,7 +1123,7 @@ const HowItWorks = ({ s }) => (
           </motion.div>
         </div>
 
-        {/* Sticky card — flat surface, no blur, no glow blob */}
+        {/* Sticky card */}
         <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
           <div
             style={{
@@ -1191,10 +1199,6 @@ const HowItWorks = ({ s }) => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    FEATURES & BENEFITS
-   Fix 4: the 6 separate small cards are consolidated into a single large
-   card. Each feature is now a row inside one bordered container rather than
-   its own tile, so it reads as one consolidated "service details" panel.
-   Fix 5: no glass effect, no hover glow-shadow — flat row dividers instead.
 ────────────────────────────────────────────────────────────────────────── */
 const Features = ({ s }) => (
   <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
@@ -1208,7 +1212,10 @@ const Features = ({ s }) => (
         variants={fadeUp}
         style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
       >
-        <SLabel text="Features & Benefits" ac={s.accentColor} />
+        {/* Fix: pass center so the divider+label row is actually centered
+            under this centered heading block, instead of hugging the left
+            edge of the 560px box (see SLabel comment above). */}
+        <SLabel text="Features & Benefits" ac={s.accentColor} center />
         <h2
           style={{
             fontSize: "clamp(26px, 3.5vw, 36px)",
@@ -1295,7 +1302,6 @@ const Features = ({ s }) => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    STATS / WHY US
-   Fix 5: no glass effect on stat or info cards — flat bordered surfaces.
 ────────────────────────────────────────────────────────────────────────── */
 const StatCard = ({ value, suffix, label, ac, go }) => {
   const c = useCountUp(value, 2200, go);
@@ -1349,13 +1355,13 @@ const whyUsItems = [
   ],
   [
     FiHeart,
-    "Patient-Centred Care",
+    "Patient-Centered Care",
     "Clinical decisions are made in partnership with you — never without your input.",
   ],
   [
     FiGlobe,
     "Nationwide Access",
-    "Care without geographic limits — from metro centres to remote districts.",
+    "Care without geographic limits — from metro centers to remote districts.",
   ],
   [
     FiZap,
@@ -1375,24 +1381,12 @@ const whyUsItems = [
 ];
 
 const WhyUs = ({ s }) => {
-  const ref = useRef(null);
+  
+  // numbers are actually visible.
   const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) setInView(true);
-      },
-      { threshold: 0.2 },
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
 
   return (
-    <section
-      ref={ref}
-      style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}
-    >
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -1403,7 +1397,8 @@ const WhyUs = ({ s }) => {
           variants={fadeUp}
           style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
         >
-          <SLabel text="Why Choose Us" ac={s.accentColor} />
+          {/* Fix: centered label row (see SLabel + Features fix above). */}
+          <SLabel text="Why Choose Us" ac={s.accentColor} center />
           <h2
             style={{
               fontSize: "clamp(26px, 3.5vw, 36px)",
@@ -1421,7 +1416,9 @@ const WhyUs = ({ s }) => {
           </p>
         </motion.div>
 
-        <div
+        <motion.div
+          onViewportEnter={() => setInView(true)}
+          viewport={{ once: true, amount: 0.3 }}
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
@@ -1439,7 +1436,7 @@ const WhyUs = ({ s }) => {
               go={inView}
             />
           ))}
-        </div>
+        </motion.div>
 
         <div
           style={{
@@ -1502,7 +1499,6 @@ const WhyUs = ({ s }) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    FAQ
-   Fix 5: container is a flat bordered surface, no backdrop blur.
 ────────────────────────────────────────────────────────────────────────── */
 const FAQ = ({ s }) => {
   const [open, setOpen] = useState(null);
@@ -1541,30 +1537,6 @@ const FAQ = ({ s }) => {
             We've answered the most common questions below. Our care team is one
             message away if yours isn't listed.
           </p>
-          {/* <button
-            style={{
-              padding: "11px 20px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              background: `${s.accentColor}10`,
-              color: s.accentColor,
-              border: `1px solid ${s.accentColor}30`,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}1A`)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}10`)
-            }
-          >
-            <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button> */}
         </motion.div>
 
         <motion.div
@@ -1663,8 +1635,6 @@ const FAQ = ({ s }) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    FINAL CTA
-   Fix 5: glow blobs and translucent layered gradient removed — flat tinted
-   surface instead.
 ────────────────────────────────────────────────────────────────────────── */
 const FinalCTA = ({ s }) => (
   <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
@@ -1727,20 +1697,6 @@ const FinalCTA = ({ s }) => (
           <GhostBtn>
             <a href="/appointment-booking">Book Appointment</a>
           </GhostBtn>
-          {/* <button
-            style={{
-              padding: "13px 24px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              background: "transparent",
-              color: TEXT_DIM,
-              border: `1px solid ${BORDER_HOVER}`,
-              cursor: "pointer",
-            }}
-          >
-            Contact Us
-          </button> */}
         </div>
         <div
           style={{
@@ -1780,8 +1736,6 @@ const FinalCTA = ({ s }) => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    ROOT APP
-   Fix 6: wrapper background now matches the token system used throughout
-   every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
 export default function ChronicCareManagement() {
   const [slug, setSlug] = useState("telehealth-services");
@@ -1800,13 +1754,7 @@ export default function ChronicCareManagement() {
           content="Manage chronic health conditions through secure telemedicine services. Connect with licensed healthcare providers for ongoing care, monitoring, and personalized support."
         />
       </Helmet>
-      <div
-      // style={{
-      //   backgroundColor: BG_BASE,
-      //   minHeight: "700px",
-      //   width: "100%",
-      // }}
-      >
+      <div>
         <AnimatePresence mode="wait">
           <motion.div
             key={slug}

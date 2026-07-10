@@ -70,7 +70,7 @@ JWT sessions can be revoked through the session and revoked token system. Revoke
 ## 14. Data Retention Policy
 Status: Fixed
 
-Retention policies define retention periods for audit logs, authentication logs, chat messages, medical records, uploaded files, and security incidents. Automated cleanup jobs remove expired records and log retention cleanup activity.
+Retention policies define retention periods for audit logs, authentication logs, chat messages, medical records, and uploaded files. Automated cleanup jobs remove expired records and log retention cleanup activity.
 
 ## Remaining Operational Notes
 

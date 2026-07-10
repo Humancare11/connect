@@ -1287,15 +1287,15 @@ const whyUsItems = [
     "Verified Providers",
     "Every clinician is credentialed, licensed, and continuously reviewed.",
   ],
-  [
+ [
     FiHeart,
-    "Patient-Centred Care",
+    "Patient-Centered Care",
     "Clinical decisions are made in partnership with you — never without your input.",
   ],
   [
     FiGlobe,
     "Nationwide Access",
-    "Care without geographic limits — from metro centres to remote districts.",
+    "Care without geographic limits — from metro centers to remote districts.",
   ],
   [
     FiZap,

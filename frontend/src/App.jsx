@@ -13,13 +13,15 @@ import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
+import CookieBanner from "./components/CookieBanner";
+
 const Home = lazy(() => import("./pages/Home"));
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const Corporates = lazy(() => import("./pages/Corporates"));
 const Contact = lazy(() => import("./pages/Contact"));
-
+const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
@@ -31,7 +33,7 @@ import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
 import useLenis from "./hooks/useLenis";
-import api from "./api";
+import api, { clearUserAuthToken } from "./api";
 import {
   ROLE_TIMEOUT_MS,
   SESSION_ACTIVITY_EVENT,
@@ -307,7 +309,9 @@ import LowSelfEsteem from "./pages/Conditions/Conditions/LowSelfEsteem";
 import TraumaSupport from "./pages/Conditions/Conditions/TraumaSupport";
 import HotFlashes from "./pages/Conditions/Conditions/HotFlashes";
 import HrtGuidance from "./pages/Conditions/Conditions/HrtGuidance";
-
+import FertilityConcerns from "./pages/Conditions/Conditions/FertilityConcerns";
+// import OCD from "./pages/Conditions/Conditions/OCD";
+import EyeIrritation from "./pages/Conditions/EyeIrritation";
 // ----------Speciality Pages-------------------
 import AdolescentMedicine from "./pages/Specialty/Children&FamilyCare/AdolescentMedicine";
 import Pediatrics from "./pages/Specialty/Children&FamilyCare/Pediatrics";
@@ -388,6 +392,7 @@ const DoctorProfileForUser = lazy(
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
 const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
+const HealthcareManagement = lazy(() => import("./pages/admin/HealthcareManagement"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
@@ -441,7 +446,7 @@ const Specialties = lazy(() => import("./pages/Specialties"));
 const Symptoms = lazy(() => import("./pages/Symptoms"));
 const Categories = lazy(() => import("./pages/Categories"));
 
-const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
+// const AppointmentBooking = lazy(() => import("./pages/AppointmentBookingold"));
 const AppointmentBookingForm = lazy(
   () => import("./pages/AppointmentBookingForm"),
 );
@@ -498,6 +503,7 @@ function SessionTimeoutManager() {
     let refreshTimer;
 
     const logoutAll = async () => {
+      clearUserAuthToken();
       clearClientSession();
       await Promise.allSettled([logoutUser(), logoutDoctor(), logoutAdmin()]);
       setWarningOpen(false);
@@ -691,11 +697,13 @@ function AppLayout() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/appointment-booking" element={<AppointmentBooking />} />
           {/* <Route path="/register" element={<Register />} /> */}
           <Route path="/book-appointment" element={<BookAppointment />} />
           <Route path="/test" element={<Test />} />
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
+          <Route path="/cookies" element={<CookieBanner />} />
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
@@ -1106,6 +1114,16 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/superadmin-dashboard/healthcare-management"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <HealthcareManagement />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
           <Route path="/video-call/:appointmentId" element={<VideoCall />} />
           {/* ALL*/}
           <Route path="/categories" element={<Categories />} />
@@ -1199,7 +1217,7 @@ function AppLayout() {
           <Route path="/chronic-migraine" element={<ChronicMigraine />} />
           <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} />
           <Route path="/fatty-liver" element={<FattyLiver />} />
-          <Route path="/heart-disease" element={<HeartDisease />} />
+          <Route path="/heart-disease-follow-up" element={<HeartDisease />} />
           <Route path="/high-blood-pressure" element={<HighBloodPressure />} />
           <Route path="/high-cholesterol" element={<HighCholesterol />} />
           <Route path="/hormone-imblance" element={<HormoneImblance />} />
@@ -1374,7 +1392,7 @@ function AppLayout() {
             path="/fungal-skin-infection"
             element={<FungalSkinInfection />}
           />
-          {/* <Route path="/hair-loss" element={<HairLoss />} /> */}
+          <Route path="/hair-loss" element={<HairLoss1 />} />
           <Route path="/hives" element={<Hives />} />
           <Route path="/itchy-skin" element={<ItchySkin />} />
           <Route path="/mole-skin-checks" element={<MoleSkinChecks />} />
@@ -1438,7 +1456,7 @@ function AppLayout() {
           <Route path="/body-aches" element={<BodyAches />} />
           <Route path="/bronchitis" element={<Bronchitis />} />
           <Route path="/cold-and-flu" element={<ColdAndFlu />} />
-          <Route path="constipation" element={<Constipation />} />
+          <Route path="/constipation" element={<Constipation />} />
           <Route path="/cough" element={<Cough />} />
           <Route path="/covid-19" element={<Covid19 />} />
           <Route path="/diarrhea" element={<Diarrhea />} />
@@ -1611,13 +1629,16 @@ function AppLayout() {
             path="/urinary-symptoms-in-men"
             element={<UrinarySymptomsMen1 />}
           />
-          {/* <Route path="/ADHD-evaluation" element={<ADHDEvaluation />} /> */}
+
+           <Route path="/fertility-concerns" element={<FertilityConcerns />} />
+          {/* <Route path="/OCD" element={<OCD />} /> */}
+          <Route path="/eye-irritation" element={<EyeIrritation />} />
           {/* <Route
             path="/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
           /> */}
           <Route path="/doctors-note" element={<DoctorsNote />} />
-          <Route path="/appointment-booking" element={<AppointmentBooking />} />
+          {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
           <Route
             path="/appointment-booking/form"
             element={<AppointmentBookingForm />}

@@ -403,7 +403,7 @@ const STYLES = `
 const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Eye Irritation",
-  description: "Burning, itching, and eye discomfort",
+  description: "",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
   bgImage:
     "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",

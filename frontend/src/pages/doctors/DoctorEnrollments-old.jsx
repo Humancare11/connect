@@ -7,7 +7,9 @@ import PhoneInputField, {
   getFlagUrl,
   findCountryByName,
 } from "../../components/PhoneInputField";
+// import PhoneInputField, { COUNTRIES as PHONE_COUNTRIES, getFlagUrl, findCountryByName } from "../../components/PhoneInputField";
 import DatePickerField from "../../components/DatePickerField";
+import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State, City } from "country-state-city";
 // ─── Constants ───
 
@@ -973,192 +975,191 @@ function MultiSelect({
     );
   };
 
-  const dropdown =
-    open && position.width > 0
-      ? createPortal(
+  const dropdown = open
+    ? createPortal(
+      <div
+        ref={dropdownRef}
+        style={{
+          position: "fixed",
+          top: `${position.top - window.scrollY}px`,
+          left: `${position.left}px`,
+          width: `${position.width}px`,
+          background: "#fff",
+          border: "1.5px solid #e2e8f0",
+          borderRadius: 12,
+          boxShadow:
+            "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
+          zIndex: 9999,
+          overflow: "hidden",
+        }}
+      >
+        {/* Search */}
+        <div
+          style={{
+            padding: "10px 10px 6px",
+            borderBottom: "1px solid #f1f5f9",
+          }}
+        >
           <div
-            ref={dropdownRef}
             style={{
-              position: "absolute",
-              top: `${position.top}px`,
-              left: `${position.left}px`,
-              width: `${position.width}px`,
-              background: "#fff",
-              border: "1.5px solid #e2e8f0",
-              borderRadius: 12,
-              boxShadow:
-                "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
-              zIndex: 9999,
-              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              background: "#f8fafc",
+              border: "1.5px solid #e8edf2",
+              borderRadius: 10,
             }}
           >
-            {/* Search */}
-            <div
-              style={{
-                padding: "10px 10px 6px",
-                borderBottom: "1px solid #f1f5f9",
-              }}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#94a3b8"
+              strokeWidth="2"
+              style={{ flexShrink: 0 }}
             >
-              <div
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder={searchPlaceholder || "Search..."}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                flex: 1,
+                border: "none",
+                background: "transparent",
+                fontSize: 13,
+                fontFamily: "inherit",
+                color: "#1e293b",
+                outline: "none",
+              }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "8px 12px",
-                  background: "#f8fafc",
-                  border: "1.5px solid #e8edf2",
-                  borderRadius: 10,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  color: "#cbd5e1",
+                  fontSize: 14,
+                  lineHeight: 1,
                 }}
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#94a3b8"
-                  strokeWidth="2"
-                  style={{ flexShrink: 0 }}
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder={searchPlaceholder || "Search..."}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* List */}
+        <div style={{ maxHeight: 280, overflowY: "auto" }}>
+          {filtered.length === 0 ? (
+            <div
+              style={{
+                padding: "18px 16px",
+                textAlign: "center",
+                color: "#94a3b8",
+                fontSize: 13,
+              }}
+            >
+              No results found
+            </div>
+          ) : (
+            filtered.map((item) => {
+              const displayName = getDisplayName(item);
+              const countryData =
+                typeof item === "string" ? findCountryByName(item) : null;
+              const isSelected = selected.includes(displayName);
+
+              return (
+                <div
+                  key={displayName}
                   style={{
-                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    width: "100%",
+                    padding: "9px 14px",
                     border: "none",
-                    background: "transparent",
-                    fontSize: 13,
+                    background: isSelected ? "#f0fdf4" : "transparent",
+                    cursor: "pointer",
+                    textAlign: "left",
                     fontFamily: "inherit",
-                    color: "#1e293b",
-                    outline: "none",
+                    transition: "background 0.1s",
                   }}
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggle(item);
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected)
+                      e.currentTarget.style.background = "#f8fafc";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = isSelected
+                      ? "#f0fdf4"
+                      : "transparent";
+                  }}
+                >
+                  {showFlags && countryData && (
+                    <img
+                      src={getFlagUrl(countryData.code)}
+                      alt={countryData.code}
+                      style={{
+                        width: 20,
+                        height: 15,
+                        objectFit: "cover",
+                        borderRadius: 2,
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
+                    {displayName}
+                  </span>
+                  <div
                     style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
-                      color: "#cbd5e1",
-                      fontSize: 14,
-                      lineHeight: 1,
+                      width: 16,
+                      height: 16,
+                      border: "1.5px solid #cbd5e1",
+                      borderRadius: 3,
+                      background: isSelected ? "#10b981" : "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
                     }}
                   >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* List */}
-            <div style={{ maxHeight: 280, overflowY: "auto" }}>
-              {filtered.length === 0 ? (
-                <div
-                  style={{
-                    padding: "18px 16px",
-                    textAlign: "center",
-                    color: "#94a3b8",
-                    fontSize: 13,
-                  }}
-                >
-                  No results found
-                </div>
-              ) : (
-                filtered.map((item) => {
-                  const displayName = getDisplayName(item);
-                  const countryData =
-                    typeof item === "string" ? findCountryByName(item) : null;
-                  const isSelected = selected.includes(displayName);
-
-                  return (
-                    <div
-                      key={displayName}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        width: "100%",
-                        padding: "9px 14px",
-                        border: "none",
-                        background: isSelected ? "#f0fdf4" : "transparent",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        fontFamily: "inherit",
-                        transition: "background 0.1s",
-                      }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        toggle(item);
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected)
-                          e.currentTarget.style.background = "#f8fafc";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = isSelected
-                          ? "#f0fdf4"
-                          : "transparent";
-                      }}
-                    >
-                      {showFlags && countryData && (
-                        <img
-                          src={getFlagUrl(countryData.code)}
-                          alt={countryData.code}
-                          style={{
-                            width: 20,
-                            height: 15,
-                            objectFit: "cover",
-                            borderRadius: 2,
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
-                      <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
-                        {displayName}
-                      </span>
-                      <div
+                    {isSelected && (
+                      <span
                         style={{
-                          width: 16,
-                          height: 16,
-                          border: "1.5px solid #cbd5e1",
-                          borderRadius: 3,
-                          background: isSelected ? "#10b981" : "#fff",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: "bold",
                         }}
                       >
-                        {isSelected && (
-                          <span
-                            style={{
-                              color: "#fff",
-                              fontSize: 12,
-                              fontWeight: "bold",
-                            }}
-                          >
-                            ✓
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>,
+      document.body,
+    )
+    : null;
 
   return (
     <>
@@ -1226,54 +1227,53 @@ function SingleSelect({ items, value, onChange, placeholder, hasError }) {
     i.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const dropdown =
-    open && position.width > 0
-      ? createPortal(
-          <div
-            ref={dropdownRef}
-            className="ms-dropdown animate-in"
-            style={{
-              position: "absolute",
-              top: `${position.top}px`,
-              left: `${position.left}px`,
-              width: `${position.width}px`,
-            }}
-          >
-            <input
-              className="ms-search"
-              placeholder="Search specialty..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              autoFocus
-            />
-            <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
-              {filtered.length === 0 ? (
-                <div className="ms-empty">No results found</div>
-              ) : (
-                filtered.map((item) => (
-                  <div
-                    key={item}
-                    className="ms-option"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      onChange(item);
-                      setOpen(false);
-                      setSearch("");
-                    }}
-                  >
-                    <div className={`ms-check ${value === item ? "on" : ""}`}>
-                      {value === item && "✓"}
-                    </div>
-                    <span>{item}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
+  const dropdown = open
+    ? createPortal(
+      <div
+        ref={dropdownRef}
+        className="ms-dropdown animate-in"
+        style={{
+          position: "absolute",
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          width: `${position.width}px`,
+        }}
+      >
+        <input
+          className="ms-search"
+          placeholder="Search specialty..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          autoFocus
+        />
+        <div className="ms-list" onWheel={(e) => e.stopPropagation()}>
+          {filtered.length === 0 ? (
+            <div className="ms-empty">No results found</div>
+          ) : (
+            filtered.map((item) => (
+              <div
+                key={item}
+                className="ms-option"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(item);
+                  setOpen(false);
+                  setSearch("");
+                }}
+              >
+                <div className={`ms-check ${value === item ? "on" : ""}`}>
+                  {value === item && "✓"}
+                </div>
+                <span>{item}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>,
+      document.body,
+    )
+    : null;
 
   return (
     <>
@@ -1356,10 +1356,11 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
     setUploading(true);
     onFile({ name: rawFile.name, url: null });
     try {
-      const fd = new FormData();
-      fd.append("file", rawFile);
-      const { data } = await api.post("/api/upload", fd);
-      onFile({ name: data.name || rawFile.name, url: data.url });
+      const uploaded = await uploadFileDirectToS3(rawFile);
+      onFile({
+        name: uploaded.name || rawFile.name,
+        url: uploaded.key || uploaded.url,
+      });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
     } finally {
@@ -1474,7 +1475,7 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
           >
             A professional headshot helps patients identify you.
             <br />
-            Accepted: JPG, PNG, WebP · Max 5 MB
+            Accepted: JPG, PNG, Webp · Max 5 MB
           </div>
           {(uploadErr || showValidationErr) && (
             <div className="field-error">
@@ -1520,7 +1521,7 @@ function ProfilePhotoUpload({ file, onFile, onRemove, hasError, errorMsg }) {
 }
 
 // file prop shape: null | { name: string, url: string|null }
-// Uploads to /api/upload immediately when a file is picked, then calls onFile({ name, url })
+// Uploads directly to S3 immediately when a file is picked, then calls onFile({ name, url })
 function FileUpload({ label, file, onFile, onRemove, required }) {
   const ref = useRef();
   const [uploading, setUploading] = useState(false);
@@ -1533,10 +1534,11 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
     // Optimistically show the filename while uploading
     onFile({ name: rawFile.name, url: null });
     try {
-      const fd = new FormData();
-      fd.append("file", rawFile);
-      const { data } = await api.post("/api/upload", fd);
-      onFile({ name: data.name || rawFile.name, url: data.url });
+      const uploaded = await uploadFileDirectToS3(rawFile);
+      onFile({
+        name: uploaded.name || rawFile.name,
+        url: uploaded.key || uploaded.url,
+      });
     } catch {
       setUploadErr("Upload failed — please remove and try again.");
       // Keep the { name, url: null } so the user sees the error state
@@ -1572,13 +1574,13 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
             <strong>Click to upload</strong> or drag and drop
           </div>
           <div className="upload-text" style={{ fontSize: 11, marginTop: 4 }}>
-            PDF, JPG, PNG up to 10MB
+            PDF only, up to 10MB
           </div>
           <input
             ref={ref}
             type="file"
             hidden
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            accept=".pdf"
             onChange={(e) => handlePick(e.target.files[0])}
           />
         </div>
@@ -1633,7 +1635,7 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
             ref={ref}
             type="file"
             hidden
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            accept=".pdf"
             onChange={(e) => handlePick(e.target.files[0])}
           />
         </div>
@@ -1672,18 +1674,38 @@ export default function DoctorOnboardingWizard({
     zip: "",
     address: "",
   });
-  const countries = Country.getAllCountries();
+  const [countryApi, setCountryApi] = useState(null);
+  const [stateApi, setStateApi] = useState(null);
 
-  const states = s1.country ? State.getStatesOfCountry(s1.country) : [];
+  useEffect(() => {
+    let active = true;
+    import("country-state-city/lib/country.js").then(({ default: Country }) => {
+      if (active) setCountryApi(Country);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!s1.country || stateApi) return undefined;
+
+    let active = true;
+    import("country-state-city/lib/state.js").then(({ default: State }) => {
+      if (active) setStateApi(State);
+    });
+    return () => {
+      active = false;
+    };
+  }, [s1.country, stateApi]);
+
+  const countries = countryApi?.getAllCountries() || [];
+
+  const states =
+    s1.country && stateApi ? stateApi.getStatesOfCountry(s1.country) : [];
   const hasStates = states.length > 0;
-  const cities = s1.country
-    ? hasStates
-      ? s1.state
-        ? City.getCitiesOfState(s1.country, s1.state)
-        : []
-      : City.getCitiesOfCountry(s1.country)
-    : [];
-  const hasCities = cities.length > 0;
+  const cities = [];
+  const hasCities = false;
 
   useEffect(() => {
     if (!hasStates && s1.state) {
@@ -1758,8 +1780,14 @@ export default function DoctorOnboardingWizard({
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
 
+  // const isUS = s1.country === "US";
+  // const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
+  // const otherCountryOptions = countries.filter((c) => c.isoCode !== s1.country);
   const isUS = s1.country === "US";
-  const stateConfig = STATE_LICENSING_COUNTRIES[s1.country];
+  const stateConfig =
+    s1.country === "US" || s1.country === "CA"
+      ? STATE_LICENSING_COUNTRIES[s1.country]
+      : undefined;
   const otherCountryOptions = countries.filter((c) => c.isoCode !== s1.country);
   const mobileValue = `${s1.countryCode || ""}${s1.phone || ""}`;
   const handleMobileChange = (value, countryMeta) => {
@@ -1807,16 +1835,22 @@ export default function DoctorOnboardingWizard({
         ? rawLangs
         : typeof rawLangs === "string" && rawLangs.trim()
           ? rawLangs
-              .split(",")
-              .map((l) => l.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((l) => l.trim())
+            .filter(Boolean)
           : [],
     );
+
+    // Handle specialty - if not in predefined list, it's a custom specialty
+    const savedSpecialty = data.specialization || "";
+    const isCustomSpecialty =
+      savedSpecialty && !SPECIALTIES.includes(savedSpecialty);
+
     setS2({
       npi: data.medicalRegistrationNumber || "",
       licenseNum: data.medicalLicense || data.medicalRegistrationNumber || "",
-      specialty: data.specialization || "",
-      customSpecialty: "",
+      specialty: isCustomSpecialty ? "Other" : savedSpecialty,
+      customSpecialty: isCustomSpecialty ? savedSpecialty : "",
       subSpecialization: data.subSpecialization || "",
       qualification: data.qualification || "",
       school: data.medicalSchool || "",
@@ -1840,7 +1874,17 @@ export default function DoctorOnboardingWizard({
       paypalId: data.paypalId || "",
     });
     if (data.timezone) setTimezone(data.timezone);
-    if (data.state) setLicensedStates([data.state]);
+    if (Array.isArray(data.licensedStates) && data.licensedStates.length) {
+      setLicensedStates(data.licensedStates);
+    } else if (data.state) {
+      setLicensedStates([data.state]);
+    }
+    if (
+      Array.isArray(data.internationalLicenses) &&
+      data.internationalLicenses.length
+    ) {
+      setOtherLicenseCountries(data.internationalLicenses);
+    }
 
     const makeFileRef = (nameOrUrl) => {
       if (!nameOrUrl) return null;
@@ -1876,7 +1920,7 @@ export default function DoctorOnboardingWizard({
       if (Array.isArray(d.otherLicenseCountries))
         setOtherLicenseCountries(d.otherLicenseCountries);
       if (d.step && d.step >= 1 && d.step <= 4) setStep(d.step);
-    } catch {}
+    } catch { }
   }, [doctorId, initialData]);
 
   // Auto-detect timezone on mount.
@@ -1907,7 +1951,7 @@ export default function DoctorOnboardingWizard({
     try {
       const iana = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (iana) setTimezone((prev) => prev || matchTz(iana));
-    } catch {}
+    } catch { }
 
     // ── Step 2: async IP-based refinement (best-effort, 3 fallback APIs) ───
     const fetchTz = async (url, extract) => {
@@ -1988,7 +2032,7 @@ export default function DoctorOnboardingWizard({
             completedSteps,
             currentStep,
           })
-          .catch(() => {});
+          .catch(() => { });
       }, 250);
     },
     [doctorId],
@@ -2019,8 +2063,7 @@ export default function DoctorOnboardingWizard({
     if (!s1.gender) e.gender = "Required";
     if (!s1.dob) e.dob = "Required";
     if (!s1.country) e.country = "Required";
-    if (s1.country === "United States" && !s1.state.trim())
-      e.state = "Required for US";
+    if (s1.country === "US" && !s1.state.trim()) e.state = "Required for US";
     if (languagesKnown.length === 0) e.languages = "Required";
     setS1Errors(e);
     return Object.keys(e).length === 0;
@@ -2085,7 +2128,7 @@ export default function DoctorOnboardingWizard({
         `hc_enroll_draft_${doctorId}`,
         JSON.stringify(draftData),
       );
-    } catch {}
+    } catch { }
     setDraftSaved(true);
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(() => setDraftSaved(false), 2500);
@@ -2126,6 +2169,8 @@ export default function DoctorOnboardingWizard({
       dob: s1.dob,
       country: s1.country,
       state: licensedStates[0] || s1.state,
+      licensedStates,
+      internationalLicenses: otherLicenseCountries,
       city: s1.city.trim(),
       zip: s1.zip.trim(),
       address: s1.address.trim(),
@@ -2175,14 +2220,14 @@ export default function DoctorOnboardingWizard({
       // setSubmitSuccess(res.data?.message || "Enrollment submitted successfully.");
       try {
         localStorage.removeItem(`hc_enroll_draft_${doctorId}`);
-      } catch {}
+      } catch { }
       setStep(5);
       if (enrollment && typeof onComplete === "function")
         onComplete(enrollment);
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-          "Failed to submit enrollment. Please try again.",
+        "Failed to submit enrollment. Please try again.",
       );
     } finally {
       setSubmitBusy(false);
@@ -2252,7 +2297,7 @@ export default function DoctorOnboardingWizard({
         </h4>
         <div className="form-grid">
           <div className="field-group">
-            <label className="field-label">
+            <label className="field-label ">
               Mobile Number <span className="req">*</span>
             </label>
             <div className={`de-phone-input ${s1Errors.phone ? "error" : ""}`}>
@@ -2333,20 +2378,18 @@ export default function DoctorOnboardingWizard({
             <label className="field-label">
               Country <span className="req">*</span>
             </label>
-
             <select
               className={`field-select ${s1Errors.country ? "error" : ""}`}
               value={s1.country}
-              onChange={(e) =>
-                setS1((prev) => ({
-                  ...prev,
-                  country: e.target.value,
-                  state: "",
-                  city: "",
-                }))
-              }
+              onChange={(e) => {
+                setS1({ ...s1, country: e.target.value, state: "", city: "" });
+                setLicensedStates([]);
+                setOtherLicenseCountries([]);
+              }}
             >
-              <option value="">Select country...</option>
+              <option value="">
+                {countryApi ? "Select country..." : "Loading countries..."}
+              </option>
 
               {countries.map((country) => (
                 <option key={country.isoCode} value={country.isoCode}>
@@ -2374,9 +2417,7 @@ export default function DoctorOnboardingWizard({
               <div className="field-group">
                 <label className="field-label">
                   State / Province
-                  {s1.country === "United States" && (
-                    <span className="req">*</span>
-                  )}
+                  {s1.country === "US" && <span className="req">*</span>}
                   {!s1.country && (
                     <span
                       style={{
@@ -2453,6 +2494,21 @@ export default function DoctorOnboardingWizard({
                 </select>
               </div>
             )}
+
+            <div className="field-group">
+              <label className="field-label">City</label>
+              <input
+                className="field-input"
+                placeholder="City"
+                value={s1.city}
+                onChange={(e) =>
+                  setS1((prev) => ({
+                    ...prev,
+                    city: e.target.value,
+                  }))
+                }
+              />
+            </div>
 
             <div className="field-group">
               <label className="field-label">ZIP / Postal Code</label>
@@ -2791,11 +2847,39 @@ export default function DoctorOnboardingWizard({
             <label className="field-label">
               Graduation Year <span className="req">*</span>
             </label>
-            <input
+            {/* <input
               className={`field-input ${s2Errors.gradYear ? "error" : ""}`}
               placeholder="YYYY"
               value={s2.gradYear}
               onChange={(e) => setS2({ ...s2, gradYear: e.target.value })}
+            /> */}
+            <input
+              className={`field-input ${s2Errors.gradYear ? "error" : ""}`}
+              placeholder="YYYY"
+              value={s2.gradYear}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              onChange={(e) =>
+                setS2({
+                  ...s2,
+                  gradYear: e.target.value.replace(/[^0-9]/g, ""),
+                })
+              }
+              onKeyDown={(e) => {
+                const allowed = [
+                  "Backspace",
+                  "Delete",
+                  "ArrowLeft",
+                  "ArrowRight",
+                  "Tab",
+                  "Enter",
+                  "Home",
+                  "End",
+                ];
+                if (!allowed.includes(e.key) && !/^[0-9]$/.test(e.key))
+                  e.preventDefault();
+              }}
             />
             {s2Errors.gradYear && (
               <div className="field-error">{s2Errors.gradYear}</div>
@@ -2875,14 +2959,34 @@ export default function DoctorOnboardingWizard({
               <input
                 className="field-input"
                 style={{ border: "none", borderRadius: 0, boxShadow: "none" }}
-                type="number"
-                min="0"
-                step="1"
+                type="text"
+                inputMode="decimal"
                 placeholder="e.g. 500"
                 value={s2.consultantFees}
                 onChange={(e) =>
-                  setS2({ ...s2, consultantFees: e.target.value })
+                  setS2({
+                    ...s2,
+                    consultantFees: e.target.value
+                      .replace(/[^0-9.]/g, "")
+                      .replace(/^(\d*\.?\d*).*$/, "$1"),
+                  })
                 }
+                onKeyDown={(e) => {
+                  const allowed = [
+                    "Backspace",
+                    "Delete",
+                    "ArrowLeft",
+                    "ArrowRight",
+                    "Tab",
+                    "Enter",
+                    "Home",
+                    "End",
+                  ];
+                  // Allow one decimal point
+                  if (e.key === "." && !s2.consultantFees.includes(".")) return;
+                  if (!allowed.includes(e.key) && !/^[0-9]$/.test(e.key))
+                    e.preventDefault();
+                }}
               />
             </div>
             {s2Errors.consultantFees && (
@@ -2913,7 +3017,15 @@ export default function DoctorOnboardingWizard({
               className="field-textarea"
               placeholder="Brief professional bio, areas of focus, patient care philosophy..."
               value={s2.aboutDoctor}
-              onChange={(e) => setS2({ ...s2, aboutDoctor: e.target.value })}
+              onChange={(e) =>
+                setS2({
+                  ...s2,
+                  aboutDoctor: e.target.value.replace(
+                    /[-+=*^%$#@!~`|\\<>{}[\]]/g,
+                    "",
+                  ),
+                })
+              }
             />
           </div>
         </div>
@@ -2972,15 +3084,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3129,15 +3241,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}
@@ -3266,15 +3378,15 @@ export default function DoctorOnboardingWizard({
               style={
                 draftSaved
                   ? {
-                      background: "rgba(37,99,235,0.1)",
-                      color: "var(--teal)",
-                      border: "1.5px solid var(--teal)",
-                    }
+                    background: "rgba(37,99,235,0.1)",
+                    color: "var(--teal)",
+                    border: "1.5px solid var(--teal)",
+                  }
                   : {
-                      background: "transparent",
-                      border: "1.5px solid var(--gray-200)",
-                      color: "var(--navy)",
-                    }
+                    background: "transparent",
+                    border: "1.5px solid var(--gray-200)",
+                    color: "var(--navy)",
+                  }
               }
             >
               {draftSaved ? "Saved ✓" : "Save Draft"}

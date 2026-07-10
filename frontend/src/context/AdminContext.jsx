@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import api from "../api";
+import api, { clearUserAuthToken } from "../api";
 import { clearClientSession } from "../utils/session";
 
 const AdminContext = createContext(null);
@@ -19,6 +19,7 @@ export function AdminProvider({ children }) {
 
   const logout = useCallback(async () => {
     try { await api.post("/api/auth/admin-logout"); } catch { /* ignore */ }
+    clearUserAuthToken();
     clearClientSession();
     setAdmin(null);
   }, []);

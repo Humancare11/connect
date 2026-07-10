@@ -9,6 +9,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../api";
+import HealthcareIcon from "../components/HealthcareIcon";
 import { useAuth } from "../context/AuthContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
@@ -87,33 +88,72 @@ const ELEMENTS_APPEARANCE = {
   },
 };
 
-// ─── Time slots ───────────────────────────────────────────────────────────────
-const ALL_TIME_SLOTS = [
-  "8:00 AM",
-  "8:30 AM",
-  "9:00 AM",
-  "9:30 AM",
-  "10:00 AM",
-  "10:30 AM",
-  "11:00 AM",
-  "11:30 AM",
-  "12:00 PM",
-  "12:30 PM",
-  "1:00 PM",
-  "1:30 PM",
-  "2:00 PM",
-  "2:30 PM",
-  "3:00 PM",
-  "3:30 PM",
-  "4:00 PM",
-  "4:30 PM",
-  "5:00 PM",
-  "5:30 PM",
-  "6:00 PM",
-  "6:30 PM",
-  "7:00 PM",
-  "7:30 PM",
-];
+// const ALL_TIME_SLOTS = [
+//   "12:00 AM",
+//   "12:30 AM",
+//   "1:00 AM",
+//   "1:30 AM",
+//   "2:00 AM",
+//   "2:30 AM",
+//   "3:00 AM",
+//   "3:30 AM",
+//   "4:00 AM",
+//   "4:30 AM",
+//   "5:00 AM",
+//   "5:30 AM",
+//   "6:00 AM",
+//   "6:30 AM",
+//   "7:00 AM",
+//   "7:30 AM",
+//   "8:00 AM",
+//   "8:30 AM",
+//   "9:00 AM",
+//   "9:30 AM",
+//   "10:00 AM",
+//   "10:30 AM",
+//   "11:00 AM",
+//   "11:30 AM",
+//   "12:00 PM",
+//   "12:30 PM",
+//   "1:00 PM",
+//   "1:30 PM",
+//   "2:00 PM",
+//   "2:30 PM",
+//   "3:00 PM",
+//   "3:30 PM",
+//   "4:00 PM",
+//   "4:30 PM",
+//   "5:00 PM",
+//   "5:30 PM",
+//   "6:00 PM",
+//   "6:30 PM",
+//   "7:00 PM",
+//   "7:30 PM",
+//   "8:00 PM",
+//   "8:30 PM",
+//   "9:00 PM",
+//   "9:30 PM",
+//   "10:00 PM",
+//   "10:30 PM",
+//   "11:00 PM",
+//   "11:30 PM",
+// ];
+const ALL_TIME_SLOTS = [];
+
+for (let hour = 0; hour < 24; hour++) {
+  for (let minute = 0; minute < 60; minute += 30) {
+    const date = new Date();
+    date.setHours(hour, minute, 0, 0);
+
+    ALL_TIME_SLOTS.push(
+      date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+    );
+  }
+}
 
 function isSlotPassed(dateStr, slot) {
   const today = new Date().toISOString().split("T")[0];
@@ -292,7 +332,7 @@ function PaymentStage({
     } catch (err) {
       setStripeError(
         err.response?.data?.msg ||
-          "Failed to initialize payment. Please try again.",
+        "Failed to initialize payment. Please try again.",
       );
     } finally {
       setStripeCreating(false);
@@ -362,7 +402,7 @@ function PaymentStage({
           <div className="ap-pay-summary-row">
             <span>Condition</span>
             <strong>
-              {selection.condIco} {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
             </strong>
           </div>
           <div className="ap-pay-summary-row">
@@ -537,37 +577,44 @@ export default function AppointmentBookingForm() {
   const today = new Date().toISOString().split("T")[0];
   const pricingRecord = selection?.catId ? categoryPrices?.[selection.catId] : null;
   const pricingAmount = Number(pricingRecord?.price);
+  const selectionAmount = Number(selection?.cost);
   const hasDbPrice =
     !!selection?.catId &&
     !!pricingRecord &&
     Number.isFinite(pricingAmount) &&
     pricingAmount > 0;
+  const hasSelectionPrice =
+    Number.isFinite(selectionAmount) &&
+    selectionAmount > 0;
+  const hasAppointmentPrice = hasDbPrice || hasSelectionPrice;
+  const effectivePrice = hasDbPrice ? pricingAmount : selectionAmount;
+  const effectiveCurrency = hasDbPrice ? pricingRecord.currency || "USD" : selection?.currency || "USD";
   const pricingIssue = !selection?.catId
     ? "Please reselect your appointment category so the current database price can be loaded."
-    : pricingMeta.loading
+    : pricingMeta.loading && !hasSelectionPrice
       ? "Loading the latest appointment price. Please wait."
-      : pricingMeta.error
+      : pricingMeta.error && !hasSelectionPrice
         ? "Pricing could not be loaded. Please try again shortly."
-        : !hasDbPrice
+        : !hasAppointmentPrice
           ? "No valid database price is configured for this category."
           : "";
   useEffect(() => {
-    if (!hasDbPrice) return;
+    if (!hasAppointmentPrice) return;
     setSelection((prev) => {
       if (
         !prev ||
-        prev.cost === pricingAmount &&
-          prev.currency === (pricingRecord.currency || "USD")
+        prev.cost === effectivePrice &&
+        prev.currency === effectiveCurrency
       ) {
         return prev;
       }
       return {
         ...prev,
-        cost: pricingAmount,
-        currency: pricingRecord.currency || "USD",
+        cost: effectivePrice,
+        currency: effectiveCurrency,
       };
     });
-  }, [hasDbPrice, pricingAmount, pricingRecord?.currency]);
+  }, [hasAppointmentPrice, effectivePrice, effectiveCurrency]);
 
   const availableSlots = useMemo(
     () => ALL_TIME_SLOTS.filter((t) => !isSlotPassed(form.date, t)),
@@ -599,7 +646,7 @@ export default function AppointmentBookingForm() {
     } catch (err) {
       setProceedErr(
         err?.response?.data?.msg ||
-          "Failed to upload reports. Please try again.",
+        "Failed to upload reports. Please try again.",
       );
     } finally {
       setProceeding(false);
@@ -780,7 +827,7 @@ export default function AppointmentBookingForm() {
     } catch (err) {
       setConfirmErr(
         err?.response?.data?.msg ||
-          "Appointment creation failed after payment. Please contact support.",
+        "Appointment creation failed after payment. Please contact support.",
       );
       setStage("payment");
     }
@@ -831,15 +878,17 @@ export default function AppointmentBookingForm() {
       <div className="ap-card">
         {/* ── Hero: selection badge ── */}
         <div className="ap-hero">
-          <div className="ap-hero-avatar">{selection.specIco}</div>
+          <div className="ap-hero-avatar">
+            <HealthcareIcon name={selection.specIco} size={30} />
+          </div>
           <div className="ap-hero-body">
             <span className="ap-hero-eyebrow">{selection.catLabel}</span>
             <h2 className="ap-hero-name">{selection.specName}</h2>
             <span className="ap-hero-spec">
-              {selection.condIco} {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
             </span>
           </div>
-          {hasDbPrice && stage === "form" && (
+          {hasAppointmentPrice && stage === "form" && (
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
@@ -989,7 +1038,15 @@ export default function AppointmentBookingForm() {
             <div className="ap-step">
               <div className="ap-step-header">
                 <span className="ap-step-num">3</span>
-                <div className="ap-step-title">Describe Your Problem</div>
+
+                 <div className="ap-step-title">
+                      Describe Your Problem{" "}
+                      <span style={{ color: "#e11d48" }}>*</span>
+                    </div>
+                {/* <div className="ap-step-title">Describe Your Problem</div> */}
+
+                {/* <span style={{ color: "#e11d48" }}>*</span> */}
+
               </div>
 
               <textarea
@@ -1103,7 +1160,7 @@ export default function AppointmentBookingForm() {
                   <span className="ap-spinner ap-spinner--white" /> Preparing…
                 </>
               ) : (
-                `Proceed to Payment${hasDbPrice ? ` - ${formatPrice(selection.cost)}` : ""} ->`
+                `Proceed to Payment${hasAppointmentPrice ? ` - ${formatPrice(selection.cost)}` : ""} ->`
               )}
             </button>
 
@@ -1178,7 +1235,7 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
                 <span className="ap-success-val">
-                  {selection.condIco} {selection.condName}
+                  <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
                 </span>
               </div>
               <div className="ap-success-row">

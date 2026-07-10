@@ -1607,12 +1607,12 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         ? [e.internationalLicenses]
         : [],
     bankName: e.bankName || "",
-    accountHolderName: e.accountHolderName || "",
+    // accountHolderName: e.accountHolderName || "",
     accountNumber: e.accountNumber || "",
     ifscCode: e.ifscCode || "",
     paypalId: e.paypalId || "",
-    payoutEmail: e.payoutEmail || "",
-    stripeAccountId: e.stripeAccountId || "",
+    // payoutEmail: e.payoutEmail || "",
+    // stripeAccountId: e.stripeAccountId || "",
   });
   const f = (k) => (v) =>
     setD((p) => ({ ...p, [k]: typeof v === "string" ? v : v.target.value }));
@@ -1650,15 +1650,15 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
     return hasData
       ? saved
       : DAYS.reduce(
-          (a, day) => ({
-            ...a,
-            [day]: {
-              enabled: false,
-              blocks: [{ start: "09:00", end: "17:00" }],
-            },
-          }),
-          {},
-        );
+        (a, day) => ({
+          ...a,
+          [day]: {
+            enabled: false,
+            blocks: [{ start: "09:00", end: "17:00" }],
+          },
+        }),
+        {},
+      );
   });
 
   const toggleDay = (day) =>
@@ -1710,10 +1710,16 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         experience: d.experience ? Number(d.experience) : undefined,
         consultantFees: d.consultantFees ? Number(d.consultantFees) : undefined,
         languagesKnown,
-        licensedStates: Array.isArray(d.licensedStates) ? d.licensedStates : [],
+        licensedStates: Array.isArray(d.licensedStates)
+          ? d.licensedStates
+          : typeof d.licensedStates === "string"
+            ? d.licensedStates.split(",").map((s) => s.trim()).filter(Boolean)
+            : [],
         internationalLicenses: Array.isArray(d.internationalLicenses)
           ? d.internationalLicenses
-          : [],
+          : typeof d.internationalLicenses === "string"
+            ? d.internationalLicenses.split(",").map((s) => s.trim()).filter(Boolean)
+            : [],
         ...urls,
         timezone,
         availability: avail,
@@ -2077,20 +2083,20 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
           </FG>
           {(d.specialization === "Other" ||
             (d.specialization && !SPECIALTIES.includes(d.specialization))) && (
-            <FG label="Custom Specialty">
-              <input
-                style={INP}
-                value={
-                  d.customSpecialty ||
-                  (d.specialization && !SPECIALTIES.includes(d.specialization)
-                    ? d.specialization
-                    : "")
-                }
-                onChange={f("customSpecialty")}
-                placeholder="e.g. Sports Medicine"
-              />
-            </FG>
-          )}
+              <FG label="Custom Specialty">
+                <input
+                  style={INP}
+                  value={
+                    d.customSpecialty ||
+                    (d.specialization && !SPECIALTIES.includes(d.specialization)
+                      ? d.specialization
+                      : "")
+                  }
+                  onChange={f("customSpecialty")}
+                  placeholder="e.g. Sports Medicine"
+                />
+              </FG>
+            )}
           <FG label="Sub-Specialization">
             <input
               style={INP}
@@ -2597,30 +2603,30 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
       {/* ── 9. Payout ── */}
       <Section icon="💳" title="Payout Information" accent>
         <div style={G2}>
-          {/* <FG label="Bank Name">
+          <FG label="Bank Name">
             <input
               style={INP}
               value={d.bankName}
               onChange={f("bankName")}
               placeholder="Bank name"
             />
-          </FG> */}
-          <FG label="Account Holder Name">
+          </FG>
+          {/* <FG label="Account Holder Name">
             <input
               style={INP}
               value={d.accountHolderName}
               onChange={f("accountHolderName")}
               placeholder="Full name on account"
             />
-          </FG>
-          {/* <FG label="Account Number">
+          </FG> */}
+          <FG label="Account Number">
             <input
               style={INP}
               value={d.accountNumber}
               onChange={f("accountNumber")}
               placeholder="Account number"
             />
-          </FG> */}
+          </FG>
           <FG label="SWIFT / IFSC / BIC Code">
             <input
               style={INP}
@@ -2637,15 +2643,15 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
               placeholder="PayPal email or username"
             />
           </FG>
-          <FG label="Payout Email">
+          {/* <FG label="Payout Email">
             <input
               style={INP}
               type="email"
               value={d.payoutEmail}
               onChange={f("payoutEmail")}
               placeholder="Payout email address"
-            />
-          </FG>
+            /> 
+          </FG> */}
           {/* <FG label="Stripe Account ID">
             <input
               style={INP}
@@ -2769,7 +2775,7 @@ export default function AdminDoctorProfile() {
     try {
       const res = await api.get(`/api/admin/doctors/${id}`);
       setEnrollment(res.data);
-    } catch {}
+    } catch { }
   }, [id]);
 
   const handleApprove = async () => {
@@ -3505,53 +3511,53 @@ export default function AdminDoctorProfile() {
                 ? [e.state]
                 : []
             ).length > 0 && (
-              <div
-                style={{
-                  marginTop: 16,
-                  paddingTop: 16,
-                  borderTop: "1px solid #f1f5f9",
-                }}
-              >
                 <div
                   style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    marginBottom: 10,
+                    marginTop: 16,
+                    paddingTop: 16,
+                    borderTop: "1px solid #f1f5f9",
                   }}
                 >
-                  🏛️ State/Territory Licensing (AU)
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      marginBottom: 10,
+                    }}
+                  >
+                    🏛️ State/Territory Licensing (AU)
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {(Array.isArray(e.licensedStates)
+                      ? e.licensedStates
+                      : e.state
+                        ? [e.state]
+                        : []
+                    ).map((stateName) => (
+                      <span
+                        key={stateName}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "4px 12px",
+                          background: "#f8fafc",
+                          border: "1px solid #cbd5e1",
+                          borderRadius: 20,
+                          fontSize: 13,
+                          color: "#334155",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {stateName}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {(Array.isArray(e.licensedStates)
-                    ? e.licensedStates
-                    : e.state
-                      ? [e.state]
-                      : []
-                  ).map((stateName) => (
-                    <span
-                      key={stateName}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "4px 12px",
-                        background: "#f8fafc",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: 20,
-                        fontSize: 13,
-                        color: "#334155",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {stateName}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
             {Array.isArray(e.internationalLicenses) &&
               e.internationalLicenses.length > 0 && (
                 <div
@@ -3689,8 +3695,8 @@ export default function AdminDoctorProfile() {
               </div>
             )}
             {e.availability &&
-            typeof e.availability === "object" &&
-            Object.keys(e.availability).length > 0 ? (
+              typeof e.availability === "object" &&
+              Object.keys(e.availability).length > 0 ? (
               <div
                 style={{
                   display: "grid",
@@ -3778,8 +3784,11 @@ export default function AdminDoctorProfile() {
                 gap: "16px 24px",
               }}
             >
-              {/* <Field label="Bank Name" value={e.bankName} /> */}
-              <Field label="Account Holder" value={e.accountHolderName} />
+              <Field label="Bank Name" value={e.bankName} />
+              {/* <Field label="Account Holder" value={e.accountHolderName} /> */}
+              
+                            <Field label="Account Number" value={e.accountNumber} />
+
               {/* <Field
                 label="Account Number"
                 value={
@@ -3790,7 +3799,7 @@ export default function AdminDoctorProfile() {
               /> */}
               <Field label="SWIFT / BIC" value={e.ifscCode} />
               <Field label="PayPal ID" value={e.paypalId} />
-              <Field label="Payout Email" value={e.payoutEmail} />
+              {/* <Field label="Payout Email" value={e.payoutEmail} /> */}
               {/* <Field label="Stripe Account" value={e.stripeAccountId} /> */}
             </div>
           </Section>

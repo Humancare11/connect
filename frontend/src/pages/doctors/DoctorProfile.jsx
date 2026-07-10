@@ -1463,11 +1463,11 @@ export default function DoctorProfile() {
       medicalLicenseFile: e.medicalLicenseFile || "",
       malpracticeInsuranceFile: e.malpracticeInsuranceFile || "",
       bankName: e.bankName || "",
-      accountHolderName: e.accountHolderName || "",
+      // accountHolderName: e.accountHolderName || "",
       accountNumber: e.accountNumber || "",
       ifscCode: e.ifscCode || "",
       paypalId: e.paypalId || "",
-      payoutEmail: e.payoutEmail || "",
+      // payoutEmail: e.payoutEmail || "",
       timezone: e.timezone || "",
       availability: e.availability || {},
     };
@@ -1954,7 +1954,7 @@ export default function DoctorProfile() {
             <EditSection icon="📍" title="Location">
               <div className="drprofile__grid-wide">
                 <InputField label="Country">
-                  a
+                  
                   <select
                     value={form.country || ""}
                     onChange={(e) => {
@@ -2240,24 +2240,26 @@ export default function DoctorProfile() {
 
             <EditSection icon="�💳" title="Payout Information">
               <div className="drprofile__grid-wide">
-                {/* <InputField label="Bank Name">
+                <InputField label="Bank Name">
                   {inp("bankName", "Bank name")}
-                </InputField> */}
-                <InputField label="Account Holder">
-                  {inp("accountHolderName", "Account holder")}
                 </InputField>
-                {/* <InputField label="Account Number">
-                  {inp("accountNumber", "Account number")}
+
+                {/* <InputField label="Account Holder">
+                  {inp("accountHolderName", "Account holder")}
                 </InputField> */}
+                <InputField label="Account Number">
+                  {inp("accountNumber", "Account number")}
+                </InputField>
+
                 <InputField label="SWIFT / BIC">
                   {inp("ifscCode", "SWIFT / BIC")}
                 </InputField>
                 <InputField label="PayPal ID">
                   {inp("paypalId", "PayPal ID")}
                 </InputField>
-                <InputField label="Payout Email">
+                {/* <InputField label="Payout Email">
                   {inp("payoutEmail", "Payout email", "email")}
-                </InputField>
+                </InputField> */}
               </div>
             </EditSection>
           </>
@@ -2655,9 +2657,12 @@ export default function DoctorProfile() {
             {/* Payout Information */}
             <Section icon="💳" title="Payout Information">
               <div className="drprofile__grid-read">
-                {/* <ReadField label="Bank Name" value={e.bankName} /> */}
-                <ReadField label="Account Holder" value={e.accountHolderName} />
-                {/* <ReadField
+                <ReadField label="Bank Name" value={e.bankName} />
+                {/* <ReadField label="Account Holder" value={e.accountHolderName} /> */}
+                
+                                <ReadField label="Account Number" value={e.accountNumber} />
+
+{/* <ReadField
                   label="Account Number"
                   value={
                     e.accountNumber
@@ -2667,7 +2672,7 @@ export default function DoctorProfile() {
                 /> */}
                 <ReadField label="SWIFT / BIC" value={e.ifscCode} />
                 <ReadField label="PayPal ID" value={e.paypalId} />
-                <ReadField label="Payout Email" value={e.payoutEmail} />
+                {/* <ReadField label="Payout Email" value={e.payoutEmail} /> */}
               </div>
             </Section>
           </>

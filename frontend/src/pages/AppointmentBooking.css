@@ -621,8 +621,28 @@
 .hcc-sx .spec .count {
   font-size: 12px;
   /* [SIZE+] was 11px */
-  color: var(--accent);
+  color: var(--muted);
   font-weight: 600;
+}
+
+.hcc-sx .spec-book-btn {
+  align-self: flex-start;
+  margin-top: auto;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--t), box-shadow var(--t), background var(--t);
+}
+
+.hcc-sx .spec-book-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(11, 87, 232, 0.18);
 }
 
 .hcc-sx .spec--price-missing .count {
@@ -950,4 +970,19 @@
   .hcc-sx .grid {
     grid-template-columns: 1fr;
   }
+}
+
+.spec-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.book-link {
+font-size: 12px;
+  /* [SIZE+] was 11px */
+  color: var(--accent);
+  font-weight: 600;
+  text-align: right !important;
 }
