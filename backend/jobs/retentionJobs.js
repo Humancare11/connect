@@ -1,9 +1,8 @@
-const AuditLog = require("../models/AuditLog");
 const ChatMessage = require("../models/ChatMessage");
 const Prescription = require("../models/Prescription");
 const MedicalCertificate = require("../models/MedicalCertificate");
 const RetentionPolicy = require("../models/RetentionPolicy");
-const { logAudit } = require("../utils/auditLogger");
+const { recordActivity } = require("../utils/activityLogger");
 const { deleteUploadsOlderThan } = require("../utils/uploadStorage");
 
 function cutoff(days) {
@@ -14,22 +13,6 @@ async function runRetentionCleanup(req = null) {
   const policies = await RetentionPolicy.find({ enabled: true }).lean();
   const byKey = Object.fromEntries(policies.map((policy) => [policy.key, policy]));
   const result = {};
-
-  if (byKey.auditLogs) {
-    const deleted = await AuditLog.deleteMany({
-      timestamp: { $lt: cutoff(byKey.auditLogs.retentionDays) },
-      action: { $not: /^LOGIN_/ },
-    });
-    result.auditLogs = deleted.deletedCount || 0;
-  }
-
-  if (byKey.authLogs) {
-    const deleted = await AuditLog.deleteMany({
-      timestamp: { $lt: cutoff(byKey.authLogs.retentionDays) },
-      action: /^LOGIN_/,
-    });
-    result.authLogs = deleted.deletedCount || 0;
-  }
 
   if (byKey.chatMessages) {
     const deleted = await ChatMessage.deleteMany({ createdAt: { $lt: cutoff(byKey.chatMessages.retentionDays) } });
@@ -50,7 +33,7 @@ async function runRetentionCleanup(req = null) {
     result.uploadedFiles = await deleteUploadsOlderThan(olderThan);
   }
 
-  await logAudit(req, {
+  await recordActivity(req, {
     action: "RETENTION_CLEANUP_RUN",
     resource: "RetentionPolicy",
     details: result,

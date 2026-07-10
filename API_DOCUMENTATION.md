@@ -1309,30 +1309,7 @@ Requires: `verifyAdminToken`, `superAdminOnly`
 
 ---
 
-## 12. Audit Logs
-
-### GET /api/audit-logs
-Requires: `verifyAdminToken`, `superAdminOnly`
-
-Query params:
-- `page`, `limit`, `action`, `userRole`, `success`, `search`, `startDate`, `endDate`, `patientId`
-
-Response:
-```json
-{ "logs": [...], "total": 100, "page": 1, "totalPages": 2 }
-```
-
----
-
-### GET /api/audit-logs/stats
-Requires: `verifyAdminToken`, `superAdminOnly`
-
-Response:
-- aggregated audit metrics
-
----
-
-## 13. Retention Policies
+## 12. Retention Policies
 
 ### GET /api/retention-policies
 Requires: `verifyAdminToken`, `superAdminOnly`
@@ -1349,7 +1326,6 @@ Request body:
 ```json
 {
   "policies": [
-    { "key": "auditLogs", "retentionDays": 1800, "enabled": true },
     { "key": "medicalRecords", "retentionDays": 2555, "enabled": true }
   ]
 }
@@ -1365,7 +1341,7 @@ Response:
 
 ---
 
-## 14. Health Check
+## 13. Health Check
 
 ### GET /api/health
 Public.

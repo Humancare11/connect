@@ -263,7 +263,6 @@ function BookingForm({ specialtyPlaceholder }) {
         }
       } catch (error) {
         console.error("Failed to fetch pricing:", error);
-        // Fallback to default price if API fails
         setPrice(49);
       } finally {
         setPriceLoading(false);

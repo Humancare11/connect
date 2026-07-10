@@ -29,7 +29,7 @@ const Session = require("./models/Session");
 const ChatMessage = require("./models/ChatMessage");
 const Question = require("./models/Question");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
-const { logAudit } = require("./utils/auditLogger");
+const { recordActivity } = require("./utils/activityLogger");
 const { findUploadInS3, streamUploadFromS3, keyFromStoredValue } = require("./utils/uploadStorage");
 const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
@@ -367,7 +367,7 @@ async function serveProtectedUpload(req, res, next) {
   const key = decodeURIComponent((maybeParam || fromPath || "").replace(/^\/+|\/+$/g, ""));
 
   if (!key) {
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "MEDICAL_FILE_ACCESS_DENIED",
       resource: "MedicalFile",
       resourceId: null,
@@ -379,7 +379,7 @@ async function serveProtectedUpload(req, res, next) {
 
   try {
     const access = await canAccessUpload(req, key);
-    await logAudit(req, {
+    await recordActivity(req, {
       action: access.allowed ? "MEDICAL_FILE_ACCESS" : "MEDICAL_FILE_ACCESS_DENIED",
       resource: "MedicalFile",
       resourceId: key,
@@ -447,7 +447,6 @@ app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
-app.use("/api/audit-logs", require("./routes/auditLogs"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));
 
@@ -760,7 +759,7 @@ io.on("connection", (socket) => {
         fileType: fileType || "",
         deliveredAt: new Date(),
       })
-        .then((message) => logAudit(
+        .then((message) => recordActivity(
           { user: { id: senderUserId, role: senderRole }, headers: socket.handshake.headers, socket },
           {
             action: "CHAT_MESSAGE_DELIVERED",

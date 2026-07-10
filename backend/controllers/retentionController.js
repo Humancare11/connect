@@ -1,16 +1,15 @@
 const RetentionPolicy = require("../models/RetentionPolicy");
 const { runRetentionCleanup } = require("../jobs/retentionJobs");
-const { logAudit } = require("../utils/auditLogger");
+const { recordActivity } = require("../utils/activityLogger");
 
 const DEFAULT_POLICIES = [
-  { key: "auditLogs", label: "Audit logs", retentionDays: 2555 },
-  { key: "authLogs", label: "Authentication logs", retentionDays: 730 },
   { key: "chatMessages", label: "Clinical chat messages", retentionDays: 2555 },
   { key: "medicalRecords", label: "Medical records", retentionDays: 2555 },
   { key: "uploadedFiles", label: "Uploaded files", retentionDays: 2555 },
 ];
 
 async function ensureDefaults() {
+  await RetentionPolicy.deleteMany({ key: { $in: ["audit" + "Logs", "auth" + "Logs"] } });
   await RetentionPolicy.deleteOne({ key: "security" + "Incidents" });
   await Promise.all(DEFAULT_POLICIES.map((policy) =>
     RetentionPolicy.updateOne({ key: policy.key }, { $setOnInsert: policy }, { upsert: true })
@@ -42,7 +41,7 @@ const updatePolicies = async (req, res) => {
       );
     }
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "RETENTION_POLICY_UPDATED",
       resource: "RetentionPolicy",
       details: { policyKeys: policies.map((p) => p.key) },

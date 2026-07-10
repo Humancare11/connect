@@ -391,7 +391,6 @@ const DoctorProfileForUser = lazy(
 
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
-const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 const HealthcareManagement = lazy(() => import("./pages/admin/HealthcareManagement"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -415,7 +414,6 @@ const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
 const SuperAdminDashboard = lazy(
   () => import("./pages/admin/SuperAdminDashboard"),
 );
-const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 
 const EmployeeAdminLogin = lazy(() => import("./pages/employee/EmployeeLogin"));
 const EmployeeAdminLayout = lazy(
@@ -883,10 +881,7 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-          <Route
-            path="/superadmin-dashboard/pricing-management"
-            element={<PricingManagement />}
-          />
+          
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/employee-dashboard"
@@ -1101,16 +1096,6 @@ function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <SuperAdminDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/audit-logs"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <AdminLayout>
-                  <AuditLogs />
-                </AdminLayout>
               </PrivateRoute>
             }
           />

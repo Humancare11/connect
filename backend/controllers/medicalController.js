@@ -2,7 +2,7 @@ const Prescription       = require("../models/Prescription");
 const MedicalCertificate = require("../models/MedicalCertificate");
 const Appointment        = require("../models/Appointment");
 const Enrollment         = require("../models/Enrollment");
-const { logAudit }       = require("../utils/auditLogger");
+const { recordActivity }       = require("../utils/activityLogger");
 
 // ── Doctor: get distinct patients from completed appointments ─────────────────
 const getDoctorPatients = async (req, res) => {
@@ -37,7 +37,7 @@ const getDoctorPatients = async (req, res) => {
 
     const result = Array.from(seen.values());
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PHI_VIEW_PATIENT_LIST",
       resource: "Appointment",
       details: { patientCount: result.length },
@@ -88,7 +88,7 @@ const getPatientHistory = async (req, res) => {
       .select("specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName")
       .lean();
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PHI_VIEW_PATIENT_HISTORY",
       resource: "Appointment",
       patientId,
@@ -139,7 +139,7 @@ const createPrescription = async (req, res) => {
       });
     }
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PHI_CREATE_PRESCRIPTION",
       resource: "Prescription",
       resourceId: prescription._id,
@@ -191,7 +191,7 @@ const createMedicalCertificate = async (req, res) => {
       });
     }
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PHI_CREATE_CERTIFICATE",
       resource: "MedicalCertificate",
       resourceId: certificate._id,
@@ -215,7 +215,7 @@ const getMyPrescriptions = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PHI_VIEW_PRESCRIPTIONS",
       resource: "Prescription",
       patientId: req.user.id,
@@ -253,7 +253,7 @@ const getMyMedicalCertificates = async (req, res) => {
       doctorEnrollment: enrollMap[cert.doctorId?._id?.toString()] || null,
     }));
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PHI_VIEW_CERTIFICATES",
       resource: "MedicalCertificate",
       patientId: req.user.id,

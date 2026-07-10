@@ -274,6 +274,8 @@ export default function AuthPage() {
   const timerRef = useRef(null);
   const countryManuallySelectedRef = useRef(false);
   const ipCountryAppliedRef = useRef(false);
+  const googleCountryManuallySelectedRef = useRef(false);
+  const googleIpCountryAppliedRef = useRef(false);
 
   const [forgotEmail, setForgotEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
@@ -351,7 +353,36 @@ export default function AuthPage() {
     }));
   };
 
+  const getPhoneCountryForLocationCountry = (country) => {
+    if (!country) return null;
+    return (
+      PHONE_COUNTRIES.find(
+        (phoneCountry) =>
+          phoneCountry.code === String(country.isoCode || "").toUpperCase(),
+      ) || findCountryByName(country.name)
+    );
+  };
+
+  const getMobileWithCountryCode = (mobile, country, fallbackCode = "auto") => {
+    const phoneCountry = getPhoneCountryForLocationCountry(country);
+    const dialCode = String(
+      phoneCountry?.dial || country?.phonecode || "",
+    ).replace(/\D/g, "");
+    const { local } = parsePhoneValue(
+      mobile,
+      phoneCountry?.code || country?.isoCode || fallbackCode,
+    );
+
+    return dialCode ? `+${dialCode}${local}` : mobile;
+  };
+
   const selectedPhoneCountry = findCountryByName(registerForm.country);
+  const selectedGoogleCountry = countries.find(
+    (country) => country.name === googleProfile.country,
+  );
+  const selectedGooglePhoneCountry =
+    getPhoneCountryForLocationCountry(selectedGoogleCountry) ||
+    findCountryByName(googleProfile.country);
 
   useEffect(() => {
     let cancelled = false;
@@ -380,19 +411,16 @@ export default function AuthPage() {
 
         if (!canReplaceCountry) return prev;
 
-        const phoneCountry = findCountryByName(detectedCountry.name);
-        const dialCode = phoneCountry?.dial || detectedCountry.phonecode;
-        const { local } = parsePhoneValue(
-          prev.mobile,
-          existingCountry?.code || "auto",
-        );
-
         return {
           ...prev,
           country: detectedCountry.name,
           state: "",
           city: "",
-          mobile: dialCode ? `+${dialCode}${local}` : prev.mobile,
+          mobile: getMobileWithCountryCode(
+            prev.mobile,
+            detectedCountry,
+            existingCountry?.code || "auto",
+          ),
         };
       });
     });
@@ -401,6 +429,55 @@ export default function AuthPage() {
       cancelled = true;
     };
   }, [countries]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!googlePending || googleIpCountryAppliedRef.current) return;
+    if (countries.length === 0 || googleCountryManuallySelectedRef.current) {
+      return;
+    }
+
+    getIpCountryCode().then((countryCode) => {
+      if (
+        cancelled ||
+        !countryCode ||
+        googleCountryManuallySelectedRef.current
+      ) {
+        return;
+      }
+
+      const detectedCountry = countries.find(
+        (country) => country.isoCode?.toUpperCase() === countryCode,
+      );
+      if (!detectedCountry) return;
+
+      googleIpCountryAppliedRef.current = true;
+      setGoogleProfile((prev) => {
+        if (googleCountryManuallySelectedRef.current) {
+          return prev;
+        }
+        const existingCountry = findCountryByName(prev.country);
+        const canReplaceCountry = !prev.country || existingCountry?.code === "IN";
+
+        if (!canReplaceCountry) return prev;
+
+        return {
+          ...prev,
+          country: detectedCountry.name,
+          mobile: getMobileWithCountryCode(
+            prev.mobile,
+            detectedCountry,
+            existingCountry?.code || "auto",
+          ),
+        };
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [countries, googlePending]);
 
   useEffect(() => {
     if (!countryOpen) return;
@@ -770,9 +847,20 @@ export default function AuthPage() {
                 <select
                   className="hc-select hc-country-select"
                   value={googleProfile.country}
-                  onChange={(e) =>
-                    setGoogleProfile((p) => ({ ...p, country: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    googleCountryManuallySelectedRef.current = true;
+                    const selectedCountry = countries.find(
+                      (country) => country.name === e.target.value,
+                    );
+
+                    setGoogleProfile((p) => ({
+                      ...p,
+                      country: e.target.value,
+                      mobile: selectedCountry
+                        ? getMobileWithCountryCode(p.mobile, selectedCountry)
+                        : p.mobile,
+                    }));
+                  }}
                   required
                   disabled={loadingCountries}
                 >
@@ -805,10 +893,19 @@ export default function AuthPage() {
                 <label className="hc-reg-label">Mobile Number</label>
                 <PhoneInputField
                   value={googleProfile.mobile}
-                  onChange={(ph) =>
-                    setGoogleProfile((p) => ({ ...p, mobile: ph }))
+                  onChange={(ph, meta) => {
+                    googleCountryManuallySelectedRef.current = true;
+                    setGoogleProfile((p) => ({
+                      ...p,
+                      mobile: ph,
+                      country: meta?.name || p.country,
+                    }));
+                  }}
+                  onCountryChange={(meta) =>
+                    meta?.name &&
+                    setGoogleProfile((p) => ({ ...p, country: meta.name }))
                   }
-                  defaultCountry="auto"
+                  defaultCountry={selectedGooglePhoneCountry?.code || "auto"}
                   placeholder="Mobile number"
                   required
                 />
@@ -1331,13 +1428,14 @@ export default function AuthPage() {
               <div className="hc-field-wrap">
                 <PhoneInputField
                   value={registerForm.mobile}
-                  onChange={(ph, meta) =>
+                  onChange={(ph, meta) => {
+                    countryManuallySelectedRef.current = true;
                     setRegisterForm((p) => ({
                       ...p,
                       mobile: ph,
                       country: meta?.name || p.country,
-                    }))
-                  }
+                    }));
+                  }}
                   onCountryChange={(meta) =>
                     meta?.name &&
                     setRegisterForm((p) => ({ ...p, country: meta.name }))

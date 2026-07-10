@@ -20,7 +20,7 @@ const {
   INACTIVITY_TIMEOUT_MS,
   REFRESH_TOKEN_MS,
 } = require("../middleware/verifyToken");
-const { logAudit, getIp }                 = require("../utils/auditLogger");
+const { recordActivity, getIp }                 = require("../utils/activityLogger");
 const { assertPasswordAllowed, rememberPassword, validatePasswordStrength } = require("../utils/passwordPolicy");
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
 const { recordFailedLogin, recordSecurityEvent } = require("../utils/securityMonitor");
@@ -211,7 +211,7 @@ const register = async (req, res) => {
     const session = await issueAuthCookies(res, user);
     const tokens = buildTokenPayload(user, session);
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "REGISTER",
       resource: "User",
       resourceId: user._id,
@@ -242,7 +242,7 @@ const login = async (req, res) => {
     const user  = await User.findOne({ email: clean });
 
     if (!user) {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "User",
         userEmail: clean,
@@ -267,7 +267,7 @@ const login = async (req, res) => {
     }
 
     if (user.role === "doctor") {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "User",
         userId: user._id,
@@ -289,7 +289,7 @@ const login = async (req, res) => {
       return res.status(403).json({ msg: "Please use the Doctor Login page." });
     }
     if (["admin", "superadmin", "paymentadmin"].includes(user.role)) {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "User",
         userId: user._id,
@@ -313,7 +313,7 @@ const login = async (req, res) => {
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "User",
         userId: user._id,
@@ -340,7 +340,7 @@ const login = async (req, res) => {
     const session = await issueAuthCookies(res, user);
     const tokens = buildTokenPayload(user, session);
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "LOGIN_SUCCESS",
       resource: "User",
       userId: user._id,
@@ -442,7 +442,7 @@ const adminLogin = async (req, res) => {
     const user  = await User.findOne({ email: clean });
 
     if (!user || !["admin", "superadmin"].includes(user.role)) {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "Admin",
         userEmail: clean,
@@ -468,7 +468,7 @@ const adminLogin = async (req, res) => {
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "Admin",
         userId: user._id,
@@ -484,7 +484,7 @@ const adminLogin = async (req, res) => {
 
     await issueAuthCookies(res, user);
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "LOGIN_SUCCESS",
       resource: "Admin",
       userId: user._id,
@@ -519,7 +519,7 @@ const adminLogin = async (req, res) => {
 //     );
 //     if (!updated) return res.status(404).json({ msg: "User not found." });
 
-//     await logAudit(req, {
+//     await recordActivity(req, {
 //       action: "PROFILE_UPDATE",
 //       resource: "User",
 //       resourceId: updated._id,
@@ -577,7 +577,7 @@ const updateProfile = async (req, res) => {
     if (!updated)
       return res.status(404).json({ msg: "User not found." });
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PROFILE_UPDATE",
       resource: "User",
       resourceId: updated._id,
@@ -807,7 +807,7 @@ const changePassword = async (req, res) => {
     await rememberPassword({ userId: user._id, userType: "user", passwordHash: user.password });
     await revokeUserSessions(user._id, "password_change");
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PASSWORD_CHANGE",
       resource: "User",
       resourceId: user._id,
@@ -864,7 +864,7 @@ const paymentAdminLogin = async (req, res) => {
     const user = await User.findOne({ email: clean });
 
     if (!user || user.role !== "paymentadmin") {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "PaymentAdmin",
         userEmail: clean,
@@ -890,7 +890,7 @@ const paymentAdminLogin = async (req, res) => {
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "PaymentAdmin",
         userId: user._id,
@@ -907,7 +907,7 @@ const paymentAdminLogin = async (req, res) => {
     const session = await issueAuthCookies(res, user);
     const tokens = buildTokenPayload(user, session);
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "LOGIN_SUCCESS",
       resource: "PaymentAdmin",
       userId: user._id,
@@ -946,7 +946,7 @@ const recordConsent = async (req, user) => {
   };
   await user.save();
 
-  await logAudit(req, {
+  await recordActivity(req, {
     action: "PATIENT_CONSENT_ACCEPTED",
     resource: "Consent",
     resourceId: user._id,
@@ -1005,14 +1005,14 @@ const refresh = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  await logAudit(req, { action: "LOGOUT", resource: "User" });
+  await recordActivity(req, { action: "LOGOUT", resource: "User" });
   if (req.user?.sid) await revokeSession(req.user.sid, "logout");
   clearAuthCookies(res, "user");
   res.json({ msg: "Logged out." });
 };
 
 const adminLogout = async (req, res) => {
-  await logAudit(req, { action: "LOGOUT", resource: "Admin" });
+  await recordActivity(req, { action: "LOGOUT", resource: "Admin" });
   if (req.user?.sid) await revokeSession(req.user.sid, "logout");
   clearAuthCookies(res, req.user?.role === "superadmin" ? "superadmin" : "admin");
   res.json({ msg: "Logged out." });
@@ -1027,7 +1027,7 @@ const employeeAdminLogin = async (req, res) => {
     const user = await User.findOne({ email: clean });
 
     if (!user || user.role !== "employeeadmin") {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "EmployeeAdmin",
         userEmail: clean,
@@ -1053,7 +1053,7 @@ const employeeAdminLogin = async (req, res) => {
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      await logAudit(req, {
+      await recordActivity(req, {
         action: "LOGIN_FAILED",
         resource: "EmployeeAdmin",
         userId: user._id,
@@ -1070,7 +1070,7 @@ const employeeAdminLogin = async (req, res) => {
     const session = await issueAuthCookies(res, user);
     const tokens = buildTokenPayload(user, session);
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "LOGIN_SUCCESS",
       resource: "EmployeeAdmin",
       userId: user._id,
@@ -1098,7 +1098,7 @@ const employeeAdminMe = async (req, res) => {
 };
 
 const employeeAdminLogout = async (req, res) => {
-  await logAudit(req, { action: "LOGOUT", resource: "EmployeeAdmin" });
+  await recordActivity(req, { action: "LOGOUT", resource: "EmployeeAdmin" });
   if (req.user?.sid) await revokeSession(req.user.sid, "logout");
   clearAuthCookies(res, "employeeadmin");
   res.json({ msg: "Logged out." });
