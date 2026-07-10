@@ -142,43 +142,55 @@ const isTurnUrl = (url) => /^turns?:/i.test(String(url || ""));
 
 const normalizeIceUrls = (urls) => Array.isArray(urls) ? urls : parseCsv(urls);
 
-const validateIceServers = (iceServers, { requireTurn = false } = {}) => {
+const hasTurnCredentials = (server) =>
+  Boolean(server?.username) && Boolean(server?.credential);
+
+const sanitizeIceServers = (iceServers) => {
+  if (!Array.isArray(iceServers)) return [];
+
+  return iceServers
+    .map((server) => {
+      const urls = normalizeIceUrls(server?.urls);
+      if (!urls.length) return null;
+
+      const usableUrls = urls.filter((url) => {
+        if (!isTurnUrl(url)) return true;
+        if (hasTurnCredentials(server)) return true;
+        console.warn("Ignoring TURN server without username/credential:", url);
+        return false;
+      });
+
+      if (!usableUrls.length) return null;
+
+      return {
+        ...server,
+        urls: Array.isArray(server?.urls) ? usableUrls : usableUrls[0],
+      };
+    })
+    .filter(Boolean);
+};
+
+const validateIceServers = (iceServers) => {
   if (!Array.isArray(iceServers) || iceServers.length === 0) {
     return "No ICE servers are configured.";
   }
 
-  let hasTurnServer = false;
-
   for (const server of iceServers) {
     const urls = normalizeIceUrls(server?.urls);
     if (!urls.length) return "An ICE server is missing urls.";
-
-    for (const url of urls) {
-      if (isTurnUrl(url)) {
-        hasTurnServer = true;
-        if (!server.username || !server.credential) {
-          return "TURN servers require username and credential.";
-        }
-      }
-    }
-  }
-
-  if (requireTurn && !hasTurnServer) {
-    return "Production video calls require a configured TURN server.";
   }
 
   return "";
 };
 
 const buildIceServerConfig = () => {
-  const requireTurn = import.meta.env.PROD;
   const jsonConfig = import.meta.env.VITE_RTC_ICE_SERVERS_JSON;
   if (jsonConfig) {
     try {
       const parsed = JSON.parse(jsonConfig);
-      const iceServers = Array.isArray(parsed) ? parsed : parsed?.iceServers;
+      const iceServers = sanitizeIceServers(Array.isArray(parsed) ? parsed : parsed?.iceServers);
       if (Array.isArray(iceServers) && iceServers.length) {
-        const error = validateIceServers(iceServers, { requireTurn });
+        const error = validateIceServers(iceServers);
         return {
           config: {
             iceServers,
@@ -207,15 +219,17 @@ const buildIceServerConfig = () => {
     ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({ urls })),
   ];
 
-  if (turnUrls.length) {
+  if (turnUrls.length && turnUsername && turnCredential) {
     iceServers.push({
       urls: turnUrls,
-      ...(turnUsername ? { username: turnUsername } : {}),
-      ...(turnCredential ? { credential: turnCredential } : {}),
+      username: turnUsername,
+      credential: turnCredential,
     });
+  } else if (turnUrls.length) {
+    console.warn("VITE_RTC_TURN_URLS is set, but TURN username/credential is missing. Continuing with STUN-only ICE.");
   }
 
-  const error = validateIceServers(iceServers, { requireTurn });
+  const error = validateIceServers(iceServers);
 
   return {
     config: {
