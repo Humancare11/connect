@@ -419,7 +419,6 @@ const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
 const SuperAdminDashboard = lazy(
   () => import("./pages/admin/SuperAdminDashboard"),
 );
-const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 
 const EmployeeAdminLogin = lazy(() => import("./pages/employee/EmployeeLogin"));
 const EmployeeAdminLayout = lazy(
@@ -1105,16 +1104,6 @@ function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <SuperAdminDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/audit-logs"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <AdminLayout>
-                  <AuditLogs />
-                </AdminLayout>
               </PrivateRoute>
             }
           />

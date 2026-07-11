@@ -47,30 +47,25 @@ Status: Fixed
 
 Direct public upload URLs are disabled. Medical files are available through authenticated `/api/uploads/:filename` access only, with authorization checks for the owning patient, assigned doctor, admin, or super admin.
 
-## 10. Audit Logging System
-Status: Fixed
-
-Audit logging records authentication events, profile updates, medical record access, file access, password changes, administrative actions, and permission-related actions. Audit log access is restricted to Super Admin users.
-
-## 11. Breach Response Plan
+## 10. Breach Response Plan
 Status: Fixed
 
 A documented breach response workflow exists in `BREACH_RESPONSE_PLAN.md`. It covers detection, investigation, containment, notification, recovery, review, evidence requirements, and audit requirements.
 
-## 12. Strong Password Policy
+## 11. Strong Password Policy
 Status: Fixed
 
 Passwords must be at least 8 characters and include uppercase, lowercase, number, and special character requirements. Common passwords and password reuse are blocked across registration, reset, and password change flows.
 
-## 13. JWT Revocation and Forced Logout
+## 12. JWT Revocation and Forced Logout
 Status: Fixed
 
 JWT sessions can be revoked through the session and revoked token system. Revoked tokens are rejected on authenticated requests. Admin forced logout and password-change revocation are supported.
 
-## 14. Data Retention Policy
+## 13. Data Retention Policy
 Status: Fixed
 
-Retention policies define retention periods for audit logs, authentication logs, chat messages, medical records, and uploaded files. Automated cleanup jobs remove expired records and log retention cleanup activity.
+Retention policies define retention periods for chat messages, medical records, and uploaded files. Automated cleanup jobs remove expired records and track cleanup activity.
 
 ## Remaining Operational Notes
 

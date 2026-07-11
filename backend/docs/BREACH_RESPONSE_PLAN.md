@@ -12,12 +12,12 @@ This workflow defines how Humancare Connect identifies, investigates, contains, 
 - Manual reports from users, doctors, administrators, or infrastructure providers.
 
 ## Response Workflow
-1. Detect and log the security event in `AuditLog`.
+1. Detect and handle the security event through application controls.
 2. Alert the security team using `SECURITY_ALERT_EMAILS` when configured.
 3. Triage severity as low, medium, high, or critical.
 4. Contain the issue by revoking sessions, forcing logout, disabling accounts, or blocking affected workflows.
-5. Investigate using audit log details, affected users, IPs, user agents, and resources.
-6. Preserve audit logs and related evidence.
+5. Investigate using affected users, IPs, user agents, resources, and any available operational evidence.
+6. Preserve related evidence.
 7. Determine whether PHI was accessed, acquired, used, or disclosed without authorization.
 8. Notify required parties according to applicable HIPAA breach notification obligations and internal counsel guidance.
 9. Remediate root causes and validate controls.
@@ -34,9 +34,9 @@ This workflow defines how Humancare Connect identifies, investigates, contains, 
 - Incident ID and timestamps.
 - Affected user, patient, doctor, admin, and resource identifiers.
 - IP address and user agent.
-- Audit log references.
+- Operational evidence references.
 - Actions taken and by whom.
 - Notification and remediation decisions.
 
-## Audit Requirements
-All breach-related viewing and investigation updates must be logged in `AuditLog` and retained according to the active retention policy.
+## Evidence Requirements
+Breach-related evidence must be retained according to the active retention policy and applicable legal requirements.

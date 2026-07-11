@@ -86,7 +86,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/payment-links",
         paymentAdminPath: "/payment-admin/payment-links",
         label: "Payment Links",
-        roles: ["superadmin", "paymentadmin"],
+        roles: ["paymentadmin"],
         icon: (
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93"/>
@@ -98,7 +98,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/payment-link-history",
         paymentAdminPath: "/payment-admin/payment-history",
         label: "Payment History",
-        roles: ["superadmin", "paymentadmin"],
+        roles: ["paymentadmin"],
         icon: (
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 3v18h18"/>
@@ -159,10 +159,7 @@ export default function AdminLayout({ children }) {
     : "AD";
 
   const EXTRA_TITLES = {
-    "/superadmin-dashboard":    "Manage Admins",
-    "/admin-dashboard/audit-logs": "Audit Logs",
     "/payment-admin/payment-links": "Payment Links",
-    "/superadmin-dashboard/healthcare-management": "Healthcare Management",
   };
   const pageTitle = NAV_ITEMS.flatMap(s => s.items)
     .find(i => i.path === location.pathname || i.paymentAdminPath === location.pathname)?.label
@@ -232,68 +229,6 @@ export default function AdminLayout({ children }) {
                 })}
             </div>
           ))}
-
-          {user.role === "superadmin" && (
-            <>
-              <div className="ad-nav-section-label">Super Admin</div>
-              <Link
-                to="/superadmin-dashboard"
-                className={`ad-nav-item${location.pathname === "/superadmin-dashboard" ? " active" : ""}`}
-                onClick={() => setSideOpen(false)}
-              >
-                <span className="ad-nav-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
-                </span>
-                Manage Admins
-              </Link>
-              <Link
-                to="/admin-dashboard/audit-logs"
-                className={`ad-nav-item${location.pathname === "/admin-dashboard/audit-logs" ? " active" : ""}`}
-                onClick={() => setSideOpen(false)}
-              >
-                <span className="ad-nav-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10 9 9 9 8 9"/>
-                  </svg>
-                </span>
-                Audit Logs
-              </Link>
-              <Link
-                to="/superadmin-dashboard/pricing-management"
-                className={`ad-nav-item${location.pathname === "/superadmin-dashboard/pricing-management" ? " active" : ""}`}
-                onClick={() => setSideOpen(false)}
-              >
-                <span className="ad-nav-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="1" x2="12" y2="23"/>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                  </svg>
-                </span>
-                Pricing Management
-              </Link>
-              <Link
-                to="/superadmin-dashboard/healthcare-management"
-                className={`ad-nav-item${location.pathname === "/superadmin-dashboard/healthcare-management" ? " active" : ""}`}
-                onClick={() => setSideOpen(false)}
-              >
-                <span className="ad-nav-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 19V5"/>
-                    <path d="M4 5h16l-2 5 2 5H4"/>
-                    <path d="M8 9h5"/>
-                    <path d="M8 13h7"/>
-                  </svg>
-                </span>
-                Healthcare Management
-              </Link>
-            </>
-          )}
         </nav>
 
         <div className="ad-sidebar-footer">

@@ -11,7 +11,23 @@
   margin: 0;
   padding: 0;
 }
+.hc-gender-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none;
+}
+.hc-gender-wrap {
+  position: relative;
+}
 
+.hc-gender-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
 /* ── Page backdrop ───────────────────────────────────────── */
 .hc-page-bg {
   position: relative;
@@ -450,6 +466,7 @@
 }
 .hc-gender-wrap .hc-select {
   width: 100%;
+  background-image: none;
 }
 .hc-gender-arrow {
   position: absolute;

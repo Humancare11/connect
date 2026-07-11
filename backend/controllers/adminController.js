@@ -4,7 +4,7 @@ const Doctor = require("../models/Doctor");
 const Appointment = require("../models/Appointment");
 const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { logAudit } = require("../utils/auditLogger");
+const { recordActivity } = require("../utils/activityLogger");
 const { randomInt } = require("crypto");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { revokeUserSessions } = require("../utils/tokenRevocation");
@@ -154,7 +154,7 @@ const approveDoctor = async (req, res) => {
       await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: true });
     }
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "ADMIN_APPROVE_DOCTOR",
       resource: "Enrollment",
       resourceId: req.params.id,
@@ -211,7 +211,7 @@ const rejectDoctor = async (req, res) => {
       await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: isProfileUpdateRequest });
     }
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "ADMIN_REJECT_DOCTOR",
       resource: "Enrollment",
       resourceId: req.params.id,
@@ -251,7 +251,7 @@ const approveDoctorDeleteRequest = async (req, res) => {
       await Doctor.findByIdAndDelete(doctorId);
     }
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "ADMIN_DELETE_DOCTOR",
       resource: "Doctor",
       resourceId: doctorId?.toString() || req.params.id,
@@ -324,7 +324,7 @@ const deleteUser = async (req, res) => {
     if (!user) return res.status(404).json({ msg: "User not found" });
     await revokeUserSessions(user._id, "account_deleted");
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "ADMIN_DELETE_USER",
       resource: "User",
       resourceId: req.params.id,
@@ -344,7 +344,7 @@ const getUserDetails = async (req, res) => {
     const user = await User.findById(req.params.id).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "ADMIN_VIEW_USER",
       resource: "User",
       resourceId: req.params.id,
@@ -364,7 +364,7 @@ const forceLogoutUser = async (req, res) => {
     const user = await User.findById(req.params.id).select("email name role");
     if (!user) return res.status(404).json({ msg: "User not found" });
     const revokedCount = await revokeUserSessions(user._id, "forced_logout");
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "ADMIN_FORCE_LOGOUT_USER",
       resource: "User",
       resourceId: user._id,
@@ -387,7 +387,7 @@ const disableUser = async (req, res) => {
     ).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found" });
     const revokedCount = await revokeUserSessions(user._id, "account_disabled");
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "ADMIN_DISABLE_USER",
       resource: "User",
       resourceId: user._id,
@@ -813,7 +813,7 @@ const getDoctorDocumentAccessUrl = async (req, res) => {
     if (!key) return res.status(404).json({ msg: "Document not uploaded." });
 
     const signed = await createS3PresignedGetUrl(key, { expiresIn: DEFAULT_EXPIRY_SECONDS });
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "ADMIN_DOCUMENT_ACCESS_URL_CREATED",
       resource: "DoctorDocument",
       resourceId: id,

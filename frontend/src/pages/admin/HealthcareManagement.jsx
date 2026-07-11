@@ -21,7 +21,6 @@ const EMPTY_FORMS = {
     categoryId: "",
     name: "",
     icon: "",
-    description: "",
     isActive: true,
   },
   conditions: {
@@ -157,7 +156,6 @@ export default function HealthcareManagement() {
         categoryId: relationId(item.categoryId),
         name: item.name || "",
         icon: item.icon || "",
-        description: item.description || "",
         isActive: Boolean(item.isActive),
       });
       return;
@@ -310,10 +308,12 @@ export default function HealthcareManagement() {
                   </datalist>
                 </div>
 
-                <div className="hcm-field full">
-                  <label>Description</label>
-                  <textarea value={form.description} onChange={(e) => setField("description", e.target.value)} maxLength={1000} />
-                </div>
+                {active !== "specialties" && (
+                  <div className="hcm-field full">
+                    <label>Description</label>
+                    <textarea value={form.description} onChange={(e) => setField("description", e.target.value)} maxLength={1000} />
+                  </div>
+                )}
 
                 {active === "categories" && (
                   <div className="hcm-field">
@@ -364,7 +364,7 @@ export default function HealthcareManagement() {
                           <IconPreview value={item.icon} />
                           <div>
                             <div className="hcm-row-title">{item.name}</div>
-                            {item.description && <div className="hcm-row-sub">{item.description}</div>}
+                            {active !== "specialties" && item.description && <div className="hcm-row-sub">{item.description}</div>}
                           </div>
                         </div>
                       </td>

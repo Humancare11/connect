@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+﻿import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./AppointmentBooking.css";
 import api from "../api";
 import HealthcareIcon from "../components/HealthcareIcon";
@@ -34,7 +34,6 @@ function normalizeAppointmentTree(tree) {
       id: specialty._id,
       name: specialty.name || "Untitled Specialty",
       icon: specialty.icon || "stethoscope",
-      description: specialty.description || "",
       conditions: (Array.isArray(specialty.conditions) ? specialty.conditions : []).map((condition) => [
         condition.name || "Untitled Condition",
         condition.icon || "stethoscope",
@@ -484,7 +483,6 @@ export default function Ab() {
                               <HealthcareIcon name={s.icon} size={30} />
                             </div>
                             <h3>{s.name}</h3>
-                            <div className="spec-desc">{s.description || "No description added yet."}</div>
                             <div className="spec-footer">
   <div className="count">{s.conditions.length} conditions</div>
   <div className="book-link">Book →</div>
@@ -567,7 +565,6 @@ export default function Ab() {
                         <HealthcareIcon name={s.icon} size={30} />
                       </div>
                       <h3>{s.name}</h3>
-                      <div className="spec-desc">{s.description || "No description added yet."}</div>
                       <div className="spec-footer">
   <div className="count">{s.conditions.length} conditions</div>
   <div className="book-link">Book →</div>

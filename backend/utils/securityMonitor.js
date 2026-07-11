@@ -1,11 +1,20 @@
-const AuditLog = require("../models/AuditLog");
-const { logAudit, getIp } = require("./auditLogger");
+const { recordActivity, getIp } = require("./activityLogger");
 const { revokeUserSessions } = require("./tokenRevocation");
 
 const ALERT_RECIPIENTS = (process.env.SECURITY_ALERT_EMAILS || "")
   .split(",")
   .map((value) => value.trim())
   .filter(Boolean);
+const FAILED_LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const failedLoginAttempts = new Map();
+
+function pruneFailedLoginAttempts(now = Date.now()) {
+  for (const [key, attempts] of failedLoginAttempts.entries()) {
+    const recent = attempts.filter((timestamp) => now - timestamp < FAILED_LOGIN_WINDOW_MS);
+    if (recent.length) failedLoginAttempts.set(key, recent);
+    else failedLoginAttempts.delete(key);
+  }
+}
 
 async function recordSecurityEvent(req, opts) {
   try {
@@ -15,7 +24,7 @@ async function recordSecurityEvent(req, opts) {
     const severity = opts.severity || "medium";
     const type = opts.type;
     const title = opts.title;
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "SECURITY_EVENT",
       resource: opts.resource || "Security",
       resourceId: opts.resourceId ? String(opts.resourceId) : null,
@@ -58,14 +67,16 @@ async function recordSecurityEvent(req, opts) {
 }
 
 async function recordFailedLogin(req, { email, userId, userRole, portal }) {
-  const since = new Date(Date.now() - 15 * 60 * 1000);
+  const now = Date.now();
   const ipAddress = getIp(req);
-  const recentCount = await AuditLog.countDocuments({
-    action: "SECURITY_EVENT",
-    timestamp: { $gte: since },
-    "details.type": "failed_login",
-    $or: [{ ipAddress }, { userEmail: email || "" }],
-  });
+  const keys = [`ip:${ipAddress}`, `email:${email || ""}`];
+  pruneFailedLoginAttempts(now);
+  const recentCount = Math.max(...keys.map((key) => failedLoginAttempts.get(key)?.length || 0));
+  for (const key of keys) {
+    const attempts = failedLoginAttempts.get(key) || [];
+    attempts.push(now);
+    failedLoginAttempts.set(key, attempts);
+  }
 
   return recordSecurityEvent(req, {
     type: "failed_login",

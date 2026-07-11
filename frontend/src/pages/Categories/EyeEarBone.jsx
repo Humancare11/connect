@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowRight,
@@ -287,7 +288,6 @@ function BookingForm({ specialtyPlaceholder }) {
         }
       } catch (error) {
         console.error("Failed to fetch pricing:", error);
-        // Fallback to default price if API fails
         setPrice(49);
       } finally {
         setPriceLoading(false);
