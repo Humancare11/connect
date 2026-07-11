@@ -83,7 +83,7 @@ const SCENES = [
     title: "Consult your doctor",
     desc: " Connect by secure video from anywhere. Discuss your symptoms, get a diagnosis, and ask everything you need, face to face.",
     metricValue: "100% ",
-    metricLabel: " erified physicians",
+    metricLabel: "Verified physicians",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -565,14 +565,20 @@ export default function HomePage() {
           </div>
 
           <h1>
-            Talk to a <span className="fancy-underline">licensed doctor online </span>
+            Talk to a{" "}
+            <span className="fancy-underline">licensed doctor online </span>
             {/* <br /> */}
             in minutes.
           </h1>
 
           <p>
-            Get rapid, reliable telemedicine services from expert doctors on our secure virtual healthcare platform. Book an online doctor appointment. Contact A Telemedicine Doctor for Expert Medical Advice, Personalized Treatment Plans & Prescriptions From Licensed Healthcare Providers At Your Home. Our HIPAA compliant telemedicine and secure healthcare platform makes it easy, convenient, and available worldwide to access quality digital healthcare.
-
+            Get rapid, reliable telemedicine services from expert doctors on our
+            secure virtual healthcare platform. Book an online doctor
+            appointment. Contact A Telemedicine Doctor for Expert Medical
+            Advice, Personalized Treatment Plans & Prescriptions From Licensed
+            Healthcare Providers At Your Home. Our HIPAA compliant telemedicine
+            and secure healthcare platform makes it easy, convenient, and
+            available worldwide to access quality digital healthcare.
           </p>
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">
@@ -626,7 +632,7 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Rx / Sick Note's Available
+              Rx / Sick Notes Available
             </span>
           </div>
           {/* SEARCH BAR */}

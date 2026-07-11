@@ -3,11 +3,17 @@ import "./contact.css";
 
 const CONTACT_NOTE = {
   title: "Get in touch",
-  body: "Use the form to send your message directly to the HumaniCare Connect team. We’ll reply by email as soon as possible.",
+  body: "Use the form to send your message directly to the Humancare Connect team. We’ll reply by email as soon as possible.",
 };
 
 export default function Contact() {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -22,7 +28,8 @@ export default function Contact() {
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-    if (errors[e.target.name]) setErrors((er) => ({ ...er, [e.target.name]: undefined }));
+    if (errors[e.target.name])
+      setErrors((er) => ({ ...er, [e.target.name]: undefined }));
   };
 
   const handleSubmit = (e) => {
@@ -42,7 +49,8 @@ export default function Contact() {
           <p className="page-hero__eyebrow">Contact Us</p>
           <h1 className="page-hero__title">Let's start a conversation</h1>
           <p className="page-hero__desc">
-            Whether you're looking to onboard your team or just want to learn more, we're ready to help.
+            Whether you're looking to onboard your team or just want to learn
+            more, we're ready to help.
           </p>
         </div>
       </section>
@@ -53,7 +61,9 @@ export default function Contact() {
             <div className="contact-detail contact-detail--note hc-card">
               <div>
                 <p className="contact-detail__label">{CONTACT_NOTE.title}</p>
-                <p className="contact-detail__value contact-detail__value--note">{CONTACT_NOTE.body}</p>
+                <p className="contact-detail__value contact-detail__value--note">
+                  {CONTACT_NOTE.body}
+                </p>
               </div>
             </div>
 
@@ -65,8 +75,8 @@ export default function Contact() {
                 </span>
               </div>
               <p className="contact-badge__note">
-                Our team is available Monday–Friday, 9am–6pm IST. For medical emergencies, please contact local
-                emergency services immediately.
+                Our team is available 24/7. For medical emergencies, please
+                contact local emergency services immediately.
               </p>
             </div>
           </div>
@@ -91,22 +101,35 @@ export default function Contact() {
                 </div>
                 <h3 className="contact-success__heading">Message received!</h3>
                 <p className="contact-success__body">
-                  Thank you for reaching out. Our team will get back to you within 2 business hours.
+                  Thank you for reaching out. Our team will get back to you
+                  within 2 business hours.
                 </p>
                 <button
                   className="btn-outline"
                   onClick={() => {
                     setSent(false);
-                    setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+                    setForm({
+                      name: "",
+                      email: "",
+                      phone: "",
+                      subject: "",
+                      message: "",
+                    });
                   }}
                 >
                   Send another message
                 </button>
               </div>
             ) : (
-              <form className="contact-form hc-card" onSubmit={handleSubmit} noValidate>
+              <form
+                className="contact-form hc-card"
+                onSubmit={handleSubmit}
+                noValidate
+              >
                 <h2 className="contact-form__heading">Send us a message</h2>
-                <p className="contact-form__sub">Fill in the form and we'll be in touch shortly.</p>
+                <p className="contact-form__sub">
+                  Fill in the form and we'll be in touch shortly.
+                </p>
 
                 <div className="contact-form__row">
                   <div className="contact-field">
@@ -121,12 +144,25 @@ export default function Contact() {
                       placeholder="Jane Smith"
                       value={form.name}
                       onChange={handleChange}
+                      required
+                      aria-required="true"
+                      aria-invalid={!!errors.name}
+                      aria-describedby={errors.name ? "name-error" : undefined}
                     />
-                    {errors.name && <span className="contact-field__error">{errors.name}</span>}
+                    {errors.name && (
+                      <span
+                        className="contact-field__error"
+                        id="name-error"
+                        role="alert"
+                      >
+                        {errors.name}
+                      </span>
+                    )}
                   </div>
                   <div className="contact-field">
                     <label className="contact-field__label" htmlFor="email">
-                      Email Address <span className="contact-field__req">*</span>
+                      Email Address{" "}
+                      <span className="contact-field__req">*</span>
                     </label>
                     <input
                       className={`contact-field__input${errors.email ? " contact-field__input--error" : ""}`}
@@ -136,8 +172,22 @@ export default function Contact() {
                       placeholder="jane@company.com"
                       value={form.email}
                       onChange={handleChange}
+                      required
+                      aria-required="true"
+                      aria-invalid={!!errors.email}
+                      aria-describedby={
+                        errors.email ? "email-error" : undefined
+                      }
                     />
-                    {errors.email && <span className="contact-field__error">{errors.email}</span>}
+                    {errors.email && (
+                      <span
+                        className="contact-field__error"
+                        id="email-error"
+                        role="alert"
+                      >
+                        {errors.email}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -185,11 +235,28 @@ export default function Contact() {
                     placeholder="Tell us about your organisation and what you're looking for…"
                     value={form.message}
                     onChange={handleChange}
+                    required
+                    aria-required="true"
+                    aria-invalid={!!errors.message}
+                    aria-describedby={
+                      errors.message ? "message-error" : undefined
+                    }
                   />
-                  {errors.message && <span className="contact-field__error">{errors.message}</span>}
+                  {errors.message && (
+                    <span
+                      className="contact-field__error"
+                      id="message-error"
+                      role="alert"
+                    >
+                      {errors.message}
+                    </span>
+                  )}
                 </div>
 
-                <button type="submit" className="btn-primary contact-form__submit">
+                <button
+                  type="submit"
+                  className="btn-primary contact-form__submit"
+                >
                   Send Message
                   <svg
                     width="15"

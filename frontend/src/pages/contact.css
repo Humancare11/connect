@@ -12,7 +12,7 @@
 
 .page-hero {
   width: 100%;
-  padding: 56px 24px;
+  padding: 120px 24px 40px;
   text-align: center;
 }
 .page-hero__inner {
@@ -288,7 +288,7 @@
 /* Large phone / small tablet */
 @media (max-width: 600px) {
   .page-hero {
-    padding: 40px 20px;
+    padding: 120px 20px 40px;
   }
   .page-hero__title {
     font-size: 28px;
@@ -314,7 +314,7 @@
 }
 
 /* Small phones */
-@media (max-width: 400px) {
+@media (max-width: 390px) {
   .page-hero__title {
     font-size: 24px;
   }
