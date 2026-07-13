@@ -393,7 +393,7 @@ const DoctorProfileForUser = lazy(
 
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
-const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
+// const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 const HealthcareManagement = lazy(
   () => import("./pages/admin/HealthcareManagement"),
 );
@@ -886,10 +886,7 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-          <Route
-            path="/superadmin-dashboard/pricing-management"
-            element={<PricingManagement />}
-          />
+      
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/employee-dashboard"
