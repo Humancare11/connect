@@ -142,12 +142,10 @@ const isTurnUrl = (url) => /^turns?:/i.test(String(url || ""));
 
 const normalizeIceUrls = (urls) => Array.isArray(urls) ? urls : parseCsv(urls);
 
-const validateIceServers = (iceServers, { requireTurn = false } = {}) => {
+const validateIceServers = (iceServers) => {
   if (!Array.isArray(iceServers) || iceServers.length === 0) {
     return "No ICE servers are configured.";
   }
-
-  let hasTurnServer = false;
 
   for (const server of iceServers) {
     const urls = normalizeIceUrls(server?.urls);
@@ -155,7 +153,6 @@ const validateIceServers = (iceServers, { requireTurn = false } = {}) => {
 
     for (const url of urls) {
       if (isTurnUrl(url)) {
-        hasTurnServer = true;
         if (!server.username || !server.credential) {
           return "TURN servers require username and credential.";
         }
@@ -163,22 +160,26 @@ const validateIceServers = (iceServers, { requireTurn = false } = {}) => {
     }
   }
 
-  if (requireTurn && !hasTurnServer) {
-    return "Production video calls require a configured TURN server.";
-  }
-
   return "";
 };
 
+const hasTurnServer = (iceServers) =>
+  Array.isArray(iceServers) &&
+  iceServers.some((server) => normalizeIceUrls(server?.urls).some(isTurnUrl));
+
 const buildIceServerConfig = () => {
-  const requireTurn = import.meta.env.PROD;
   const jsonConfig = import.meta.env.VITE_RTC_ICE_SERVERS_JSON;
   if (jsonConfig) {
     try {
       const parsed = JSON.parse(jsonConfig);
       const iceServers = Array.isArray(parsed) ? parsed : parsed?.iceServers;
       if (Array.isArray(iceServers) && iceServers.length) {
-        const error = validateIceServers(iceServers, { requireTurn });
+        const error = validateIceServers(iceServers);
+        if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
+          console.warn(
+            "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail."
+          );
+        }
         return {
           config: {
             iceServers,
@@ -215,7 +216,12 @@ const buildIceServerConfig = () => {
     });
   }
 
-  const error = validateIceServers(iceServers, { requireTurn });
+  const error = validateIceServers(iceServers);
+  if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
+    console.warn(
+      "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail."
+    );
+  }
 
   return {
     config: {
@@ -238,6 +244,17 @@ const getIceCandidateType = (candidate = "") => {
   if (candidate.includes(" typ relay")) return "relay (TURN)";
   if (candidate.includes(" typ prflx")) return "prflx";
   return "unknown";
+};
+
+const describeIceCandidate = (candidate = "") => {
+  const value = String(candidate || "");
+  const addressMatch = value.match(/(?:^| )(?:raddr )?([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-z0-9-]+\.local)(?: |$)/i);
+  const protocolMatch = value.match(/ (udp|tcp) /i);
+  return {
+    type: getIceCandidateType(value),
+    protocol: protocolMatch?.[1]?.toLowerCase() || "unknown",
+    address: addressMatch?.[1] || "",
+  };
 };
 
 const MEDIA_CONSTRAINTS = {
@@ -295,8 +312,37 @@ const getConsultationMediaStream = async () => {
     try {
       return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
     } catch (secondErr) {
-      console.warn("Basic video+audio failed, trying audio only:", secondErr.name);
-      return navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      console.warn("Basic video+audio failed, trying separate devices:", secondErr.name);
+      const partialStream = new MediaStream();
+      let lastErr = secondErr;
+
+      try {
+        const videoOnly = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: MEDIA_CONSTRAINTS.video,
+        });
+        videoOnly.getTracks().forEach((track) => partialStream.addTrack(track));
+      } catch (videoErr) {
+        console.warn("Video-only media failed:", videoErr.name);
+        lastErr = videoErr;
+      }
+
+      try {
+        const audioOnly = await navigator.mediaDevices.getUserMedia({
+          audio: MEDIA_CONSTRAINTS.audio,
+          video: false,
+        });
+        audioOnly.getTracks().forEach((track) => partialStream.addTrack(track));
+      } catch (audioErr) {
+        console.warn("Audio-only media failed:", audioErr.name);
+        lastErr = audioErr;
+      }
+
+      if (partialStream.getTracks().length > 0) {
+        return partialStream;
+      }
+
+      throw lastErr;
     }
   }
 };
@@ -367,6 +413,24 @@ const getSenderForKind = (pc, kind) => {
     pc.getTransceivers?.().find((transceiver) => transceiver.receiver?.track?.kind === kind)?.sender ||
     null
   );
+};
+
+const hasTransceiverForKind = (pc, kind) =>
+  Boolean(
+    pc?.getTransceivers?.().some((transceiver) =>
+      transceiver.sender?.track?.kind === kind ||
+      transceiver.receiver?.track?.kind === kind
+    )
+  );
+
+const ensureMediaTransceivers = (pc, { audio = true, video = true } = {}) => {
+  if (!pc?.addTransceiver || pc.signalingState === "closed") return;
+  if (audio && !hasTransceiverForKind(pc, "audio")) {
+    pc.addTransceiver("audio", { direction: "sendrecv" });
+  }
+  if (video && !hasTransceiverForKind(pc, "video")) {
+    pc.addTransceiver("video", { direction: "sendrecv" });
+  }
 };
 
 const tuneSenderQuality = async (
@@ -484,6 +548,7 @@ export default function VideoCall() {
   const screenSharingRef = useRef(false);
   const screenShareStartInProgressRef = useRef(false);
   const screenShareStopInProgressRef = useRef(false);
+  const socketAuthRefreshedRef = useRef(false);
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
@@ -697,6 +762,7 @@ export default function VideoCall() {
     screenSharingRef.current = false;
     screenShareStartInProgressRef.current = false;
     screenShareStopInProgressRef.current = false;
+    socketAuthRefreshedRef.current = false;
   }, [appointmentId]);
 
   const canJoinConsultation = useMemo(() => {
@@ -743,7 +809,11 @@ export default function VideoCall() {
       });
     }
 
-    socket.emit("join-appointment-room", { appointmentId });
+    socket.emit("join-appointment-room", {
+      appointmentId,
+      userId: activeUserId,
+      role: isDoctor ? "doctor" : "user",
+    });
     logVideoEvent("appointment_room_join_requested", { socketId: socket.id });
     return true;
   }, [appointmentId, doctorId, isDoctor, logVideoEvent, userId]);
@@ -825,9 +895,10 @@ export default function VideoCall() {
     localStreamRef.current = stream;
     if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
 
-    if (stream.getVideoTracks().length === 0 && !getSenderForKind(pc, "video") && pc.addTransceiver) {
-      pc.addTransceiver("video", { direction: "sendrecv" });
-    }
+    ensureMediaTransceivers(pc, {
+      audio: stream.getAudioTracks().length === 0,
+      video: stream.getVideoTracks().length === 0,
+    });
 
     const senderTuning = stream.getTracks().map((track) => {
       const sender = getSenderForKind(pc, track.kind);
@@ -1046,20 +1117,47 @@ export default function VideoCall() {
         console.error("All media attempts failed:", err.name, err.message);
         logVideoEvent("media_permission_failed", { name: err.name, message: err.message });
         if (mounted) {
+          ensureMediaTransceivers(pc);
+          localStreamRef.current = new MediaStream();
+          assignStreams(isSwappedRef.current);
+          setIsReady(true);
+          isReadyRef.current = true;
           setCamError(true);
           setCamErrorReason(mediaErrorMessage(err));
           setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
+          if (socket.connected) joinRoom();
+          if (!isDoctor && peerJoinedRef.current) {
+            window.setTimeout(() => {
+              if (!mounted || pc.signalingState === "closed") return;
+              if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+              void createAndSendOffer({ iceRestart: inCallRef.current });
+            }, 300);
+          }
         }
-        resolveLocalReady(false);
-        if (mounted) { setIsReady(false); isReadyRef.current = false; }
+        resolveLocalReady(true);
       }
     })();
 
     pc.ontrack = (event) => {
-      event.streams[0]?.getTracks().forEach((track) => {
+      const incomingTracks = event.streams?.length
+        ? event.streams.flatMap((stream) => stream.getTracks())
+        : [event.track].filter(Boolean);
+
+      incomingTracks.forEach((track) => {
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
       });
+
       if (mounted) {
+        logVideoEvent("remote_track_received", {
+          tracks: incomingTracks.map((track) => ({
+            id: track.id,
+            kind: track.kind,
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState,
+          })),
+          streamCount: event.streams?.length || 0,
+        });
         assignStreams(isSwappedRef.current);
         void playAssignedVideos();
         setIsRemoteConnected(true);
@@ -1069,13 +1167,13 @@ export default function VideoCall() {
 
     pc.onicecandidate = (e) => {
       if (e.candidate) {
-        // Log candidate type for debugging (helps identify if TURN is working)
-        if (e.candidate.candidate) {
-          console.log(`ICE candidate gathered: ${getIceCandidateType(e.candidate.candidate)}`);
-        }
+        const candidateInfo = describeIceCandidate(e.candidate.candidate);
+        console.log("ICE candidate gathered:", candidateInfo);
+        logVideoEvent("ice_candidate_gathered", candidateInfo);
         socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
       } else {
         console.log("ICE gathering complete");
+        logVideoEvent("ice_gathering_complete", {});
       }
     };
 
@@ -1199,6 +1297,8 @@ export default function VideoCall() {
 
     const handleIce = async ({ candidate }) => {
       if (!candidate || !mounted) return;
+      const candidateInfo = describeIceCandidate(candidate.candidate);
+      logVideoEvent("ice_candidate_received", candidateInfo);
       if (!pc.remoteDescription) {
         if (ignoreOfferRef.current) {
           console.info("Dropping ICE candidate for ignored colliding offer.");
@@ -1334,9 +1434,14 @@ export default function VideoCall() {
       }
     };
 
-    if (socket.connected) {
+    if (socket.connected && !socketAuthRefreshedRef.current) {
+      socketAuthRefreshedRef.current = true;
+      socket.disconnect();
+      socket.connect();
+    } else if (socket.connected) {
       joinRoom();
     } else {
+      socketAuthRefreshedRef.current = true;
       socket.connect();
     }
     socket.on("connect", joinRoom);

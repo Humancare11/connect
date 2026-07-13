@@ -35,7 +35,7 @@ export default function AdminOverview() {
   return (
     <div>
       <div className="adp-header">
-        <span className="adp-eyebrow">HumaniCare Admin</span>
+        <span className="adp-eyebrow">Humancare Admin</span>
         <h1 className="adp-title">Welcome back, {user?.name?.split(" ")[0]} 👋</h1>
         <p className="adp-sub">Here's an overview of the platform.</p>
       </div>

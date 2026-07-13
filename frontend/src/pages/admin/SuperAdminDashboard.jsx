@@ -516,7 +516,7 @@ export default function SuperAdminDashboard() {
       <aside className="dash-sidebar" style={{ background: "#1e1b4b" }}>
         <div className="dash-sidebar-brand">
           <div className="dash-brand-mark" style={{ background: "#6d28d9" }}>H</div>
-          <span>HumaniCare</span>
+          <span>Humancare</span>
         </div>
         <div className="dash-profile">
           <div className="dash-avatar" style={{ background: "#6d28d9" }}>{user.name?.[0]?.toUpperCase()}</div>

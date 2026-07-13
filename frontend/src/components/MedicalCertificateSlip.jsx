@@ -116,7 +116,7 @@ export function MedicalCertificateSlip({ cert, patient, doctor, doctorEnrollment
   const qualification = enrollment.qualification  || "";
   const regNumber     = enrollment.medicalRegistrationNumber || "";
   const councilName   = enrollment.medicalCouncilName || "";
-  const clinicName    = enrollment.clinicName    || "HumaniCare Connect";
+  const clinicName    = enrollment.clinicName    || "Humancare Connect";
   const clinicAddress = enrollment.clinicAddress || COMPANY.address;
 
   const hasRestPeriod = cert?.restFromDate || cert?.restToDate;
@@ -383,7 +383,7 @@ export function MedicalCertificateSlip({ cert, patient, doctor, doctorEnrollment
         color: "#92400e",
         lineHeight: 1.5,
       }}>
-        <strong>Note:</strong> This certificate is issued based on the medical examination conducted via HumaniCare Connect telehealth platform. It is valid as an official medical document for the purpose stated above.
+        <strong>Note:</strong> This certificate is issued based on the medical examination conducted via Humancare Connect telehealth platform. It is valid as an official medical document for the purpose stated above.
       </div>
 
       {/* ── Footer — identical to PrescriptionSlip ──────────────────── */}

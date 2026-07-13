@@ -234,7 +234,7 @@ export default function DoctorLayout({ children }) {
         {/* Brand */}
         <div className="dl-brand">
           <div className="dl-brand-mark">H</div>
-          <span className="dl-brand-name">HumaniCare</span>
+          <span className="dl-brand-name">Humancare</span>
         </div>
 
         {/* Doctor Profile Card inside sidebar */}

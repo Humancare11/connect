@@ -3,7 +3,7 @@ import "./contact.css";
 
 const CONTACT_NOTE = {
   title: "Get in touch",
-  body: "Use the form to send your message directly to the HumaniCare Connect team. We’ll reply by email as soon as possible.",
+  body: "Use the form to send your message directly to the Humancare Connect team. We’ll reply by email as soon as possible.",
 };
 
 export default function Contact() {
