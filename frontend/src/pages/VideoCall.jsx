@@ -142,6 +142,37 @@ const isTurnUrl = (url) => /^turns?:/i.test(String(url || ""));
 
 const normalizeIceUrls = (urls) => Array.isArray(urls) ? urls : parseCsv(urls);
 
+const isSupportedIceUrl = (url) => /^(stun|stuns|turn|turns):/i.test(String(url || ""));
+
+const sanitizeIceCredential = (value) =>
+  typeof value === "string" ? value.trim() : value;
+
+const sanitizeIceServers = (iceServers) => {
+  if (!Array.isArray(iceServers)) return [];
+
+  return iceServers.reduce((servers, server) => {
+    if (!server || typeof server !== "object") return servers;
+
+    const urls = normalizeIceUrls(server.urls).filter(isSupportedIceUrl);
+    if (!urls.length) return servers;
+
+    const sanitized = {
+      urls: urls.length === 1 ? urls[0] : urls,
+    };
+    const username = sanitizeIceCredential(server.username);
+    const credential = sanitizeIceCredential(server.credential);
+
+    if (username) sanitized.username = username;
+    if (credential) sanitized.credential = credential;
+    if (server.credentialType === "password" || server.credentialType === "oauth") {
+      sanitized.credentialType = server.credentialType;
+    }
+
+    servers.push(sanitized);
+    return servers;
+  }, []);
+};
+
 const validateIceServers = (iceServers) => {
   if (!Array.isArray(iceServers) || iceServers.length === 0) {
     return "No ICE servers are configured.";
@@ -768,7 +799,7 @@ export default function VideoCall() {
   }, [appointmentId]);
 
   const canJoinConsultation = useMemo(() => {
-    return appt?.status === "confirmed" || (appt?.status === "assigned" && appt?.doctorId);
+    return appt?.status === "confirmed";
   }, [appt]);
 
   const showInlineMessage = useCallback((message, duration = 4000) => {

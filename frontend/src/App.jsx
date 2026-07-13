@@ -554,7 +554,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -628,7 +628,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -887,7 +887,7 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-      
+
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/employee-dashboard"
