@@ -314,9 +314,10 @@ const BITRATE_PROFILE = {
 };
 
 const ICE_RESTART_DELAY_MS = Number(import.meta.env.VITE_RTC_ICE_RESTART_DELAY_MS || 2500);
-const CONNECTION_FAIL_TIMEOUT_MS = Number(import.meta.env.VITE_RTC_CONNECT_TIMEOUT_MS || 15000);
+const CONNECTION_FAIL_TIMEOUT_MS = Number(import.meta.env.VITE_RTC_CONNECT_TIMEOUT_MS || 25000);
 const ICE_MAX_RECOVERY_ATTEMPTS = Number(import.meta.env.VITE_RTC_ICE_MAX_RECOVERY_ATTEMPTS || 4);
 const ICE_RECOVERY_COOLDOWN_MS = Number(import.meta.env.VITE_RTC_ICE_RECOVERY_COOLDOWN_MS || 30000);
+const STATS_INTERVAL_MS = Number(import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000);
 
 const mediaErrorMessage = (err) => {
   if (!navigator.mediaDevices?.getUserMedia) {
@@ -568,6 +569,7 @@ export default function VideoCall() {
   const callTimerRef = useRef(null);
   const iceRestartTimerRef = useRef(null);
   const connectionFailTimerRef = useRef(null);
+  const statsTimerRef = useRef(null);
   const pendingRemoteCandidatesRef = useRef([]);
   const joinedSocketIdRef = useRef("");
   const makingOfferRef = useRef(false);
@@ -779,6 +781,8 @@ export default function VideoCall() {
     clearTimeout(iceRestartTimerRef.current);
     clearTimeout(connectionFailTimerRef.current);
     clearTimeout(ignoreOfferResetTimerRef.current);
+    clearInterval(statsTimerRef.current);
+    statsTimerRef.current = null;
     socket.emit("leave-appointment-room", { appointmentId });
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current?.getTracks().forEach((t) => {
@@ -826,6 +830,63 @@ export default function VideoCall() {
       socket.emit("video-telemetry", payload);
     }
   }, [appointmentId, isDoctor]);
+
+  const stopStatsCollection = useCallback(() => {
+    clearInterval(statsTimerRef.current);
+    statsTimerRef.current = null;
+  }, []);
+
+  const startStatsCollection = useCallback((pc) => {
+    stopStatsCollection();
+    statsTimerRef.current = setInterval(async () => {
+      if (!pc || pc.signalingState === "closed") {
+        stopStatsCollection();
+        return;
+      }
+      try {
+        const stats = await pc.getStats();
+        const diagnostics = {
+          rtt: null,
+          packetsSent: 0,
+          packetsLost: 0,
+          bytesSent: 0,
+          bytesReceived: 0,
+          localCandidateType: "unknown",
+          remoteCandidateType: "unknown",
+          selectedPairState: "unknown",
+        };
+
+        for (const report of stats.values()) {
+          if (report.type === "candidate-pair" && report.state === "succeeded") {
+            diagnostics.selectedPairState = report.state;
+            if (typeof report.currentRoundTripTime === "number") {
+              diagnostics.rtt = Math.round(report.currentRoundTripTime * 1000);
+            }
+            if (typeof report.bytesSent === "number") diagnostics.bytesSent = report.bytesSent;
+            if (typeof report.bytesReceived === "number") diagnostics.bytesReceived = report.bytesReceived;
+            if (typeof report.packetsSent === "number") diagnostics.packetsSent = report.packetsSent;
+            if (typeof report.packetsLost === "number") diagnostics.packetsLost = report.packetsLost;
+
+            const localId = report.localCandidateId;
+            const remoteId = report.remoteCandidateId;
+            for (const inner of stats.values()) {
+              if (inner.type === "local-candidate" && inner.id === localId) {
+                diagnostics.localCandidateType = inner.candidateType || inner.type;
+              }
+              if (inner.type === "remote-candidate" && inner.id === remoteId) {
+                diagnostics.remoteCandidateType = inner.candidateType || inner.type;
+              }
+            }
+          }
+        }
+
+        console.info("[webrtc-stats]", diagnostics);
+        logVideoEvent("webrtc_stats", diagnostics);
+      } catch (err) {
+        console.warn("[webrtc-stats] getStats failed:", err.message);
+      }
+    }, STATS_INTERVAL_MS);
+  }, [logVideoEvent, stopStatsCollection]);
 
   const emitOnlineAndJoinRoom = useCallback(() => {
     if (!socket.connected || !isReadyRef.current) return false;
@@ -1150,22 +1211,9 @@ export default function VideoCall() {
         console.error("All media attempts failed:", err.name, err.message);
         logVideoEvent("media_permission_failed", { name: err.name, message: err.message });
         if (mounted) {
-          ensureMediaTransceivers(pc);
-          localStreamRef.current = new MediaStream();
-          assignStreams(isSwappedRef.current);
-          setIsReady(true);
-          isReadyRef.current = true;
           setCamError(true);
           setCamErrorReason(mediaErrorMessage(err));
           setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
-          if (socket.connected) joinRoom();
-          if (!isDoctor && peerJoinedRef.current) {
-            window.setTimeout(() => {
-              if (!mounted || pc.signalingState === "closed") return;
-              if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
-              void createAndSendOffer({ iceRestart: inCallRef.current });
-            }, 300);
-          }
         }
         resolveLocalReady(true);
       }
@@ -1222,6 +1270,7 @@ export default function VideoCall() {
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
+        startStatsCollection(pc);
       } else if (s === "connecting") {
         setConnectionState("connecting");
         startConnectionWatchdog();
@@ -1247,6 +1296,7 @@ export default function VideoCall() {
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
+        startStatsCollection(pc);
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
         startConnectionWatchdog();
@@ -1418,6 +1468,19 @@ export default function VideoCall() {
       setApptError(msg || "Access to this call room was denied.");
     };
 
+    const handleDuplicateSession = ({ msg } = {}) => {
+      if (!mounted) return;
+      // Close the local PC so the other peer detects disconnection and
+      // re-establishes signaling with the new session instead of staying
+      // connected to this stale peer connection.
+      if (pcRef.current && pcRef.current.signalingState !== "closed") {
+        pcRef.current.close();
+      }
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+      setApptError(msg || "Another consultation session was started elsewhere.");
+    };
+
     socket.on("video-offer", handleOffer);
     socket.on("video-answer", handleAnswer);
     socket.on("ice-candidate", handleIce);
@@ -1429,6 +1492,7 @@ export default function VideoCall() {
     socket.on("appointment-updated", handleApptUpdated);
     socket.on("new-prescription", handleNewPrescription);
     socket.on("room-access-denied", handleRoomDenied);
+    socket.on("duplicate-session", handleDuplicateSession);
 
     const joinRoom = () => {
       emitOnlineAndJoinRoom();
@@ -1507,6 +1571,7 @@ export default function VideoCall() {
       socket.off("appointment-updated", handleApptUpdated);
       socket.off("new-prescription", handleNewPrescription);
       socket.off("room-access-denied", handleRoomDenied);
+      socket.off("duplicate-session", handleDuplicateSession);
       pc.ontrack = null;
       pc.onicecandidate = null;
       pc.onconnectionstatechange = null;
@@ -1526,8 +1591,9 @@ export default function VideoCall() {
       screenShareStartInProgressRef.current = false;
       screenShareStopInProgressRef.current = false;
       clearInterval(callTimerRef.current);
+      stopStatsCollection();
     };
-  }, [appt, canJoinConsultation, appointmentId, assignStreams, playAssignedVideos, isDoctor, attachLocalMediaStream, emitOnlineAndJoinRoom, logVideoEvent]);
+  }, [appt, canJoinConsultation, appointmentId, assignStreams, playAssignedVideos, isDoctor, attachLocalMediaStream, emitOnlineAndJoinRoom, logVideoEvent, stopStatsCollection]);
 
   // ── Call timer ────────────────────────────────────────────────────
   useEffect(() => {

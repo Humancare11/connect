@@ -861,6 +861,32 @@ io.on("connection", (socket) => {
     }
 
     const alreadyInRoom = uniqueUsersInRoom.has(String(socketUserId));
+
+    // If this user already has a socket in the room, evict the old one.
+    // This prevents SDP corruption from duplicate sessions (same user,
+    // multiple tabs / refresh race) while still allowing reconnection.
+    // Evict the old socket for this user so the peer re-establishes
+    // signaling with the new socket. Without this, the peer's PC stays
+    // connected to the stale socket and the new session cannot negotiate.
+    // We deliberately do NOT emit participant-left here — the peer's
+    // connection stays up until the evicted tab closes its PC (triggered
+    // by duplicate-session), at which point natural ICE disconnection
+    // detection fires ice-restart to the new socket.
+    if (alreadyInRoom && currentSize > 0) {
+      for (const sid of existingSocketIds) {
+        if (sid === socket.id) continue;
+        const peerSocket = io.sockets.sockets.get(sid);
+        if (!peerSocket) continue;
+        const peerIdentity = getSocketIdentity(peerSocket);
+        if (peerIdentity?.userId === String(socketUserId)) {
+          peerSocket.leave(room);
+          socketRooms.delete(sid);
+          peerSocket.emit("duplicate-session", { msg: "Another consultation session was started elsewhere." });
+          break;
+        }
+      }
+    }
+
     if (uniqueUsersInRoom.size >= 2 && !alreadyInRoom) {
       socket.emit("room-access-denied", { msg: "This call room is full." });
       return;
