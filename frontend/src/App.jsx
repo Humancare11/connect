@@ -15,6 +15,7 @@ import Footer from "./components/Footer";
 
 import CookieBanner from "./components/CookieBanner";
 
+import NotFound from "./components/NotFound"; // 404 Page
 const Home = lazy(() => import("./pages/Home"));
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
@@ -44,8 +45,9 @@ import {
 
 // import AboutUs from "./pages/AboutPage";
 import AboutPage from "./pages/AboutPage"; // about us page
+import BlogDetails from "./pages/Blogs/IndividualBlog"; // blog details page
 
-import PCP from "./pages/PCP";
+import PCP from "./pages/PCP"; // PCP Page
 import DoctorCareers from "./pages/DoctorCareers"; // Career Page for Doctors
 import FAQ from "./pages/FAQPage"; // FAQ page
 // privacy concerns
@@ -391,7 +393,10 @@ const DoctorProfileForUser = lazy(
 
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
-const HealthcareManagement = lazy(() => import("./pages/admin/HealthcareManagement"));
+const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
+const HealthcareManagement = lazy(
+  () => import("./pages/admin/HealthcareManagement"),
+);
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
@@ -881,7 +886,10 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-          
+          <Route
+            path="/superadmin-dashboard/pricing-management"
+            element={<PricingManagement />}
+          />
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/employee-dashboard"
@@ -1614,8 +1622,7 @@ function AppLayout() {
             path="/urinary-symptoms-in-men"
             element={<UrinarySymptomsMen1 />}
           />
-
-           <Route path="/fertility-concerns" element={<FertilityConcerns />} />
+          <Route path="/fertility-concerns" element={<FertilityConcerns />} />
           {/* <Route path="/OCD" element={<OCD />} /> */}
           <Route path="/eye-irritation" element={<EyeIrritation />} />
           {/* <Route
@@ -1629,6 +1636,8 @@ function AppLayout() {
             element={<AppointmentBookingForm />}
           />
           <Route path="/primary-care-provider" element={<PCP />} /> {/* PCP */}
+          <Route path="/blog-details" element={<BlogDetails />} />{" "}
+          {/*BlogDetails */}
           {/* PRIVACY  */}
           <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
           {/* demo */}
@@ -1747,6 +1756,7 @@ function AppLayout() {
             element={<DoctorNoteSickNote />}
           />
           <Route path="/vertigo" element={<Vertigo />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
 
         {!hideLayout && <Footer />}

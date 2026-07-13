@@ -148,7 +148,7 @@ export default function CookiePolicy() {
           <SectionCard icon={Info} title="Introduction">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               Humancare Connect, Inc. uses cookies and similar tracking technologies on
-              humancareconeect.co and related subdomains.
+              humancareconnect.co and related subdomains.
             </p>
 
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
@@ -474,9 +474,9 @@ export default function CookiePolicy() {
                       margin: 0,
                     }}
                   >
-                    131 Continental Dr Suite 305
+                    4 Peddlers Row, 1091
                     <br />
-                    Newark, DE 19713
+                    Newark, DE 19702, USA
                   </p>
                 </div>
               </div>
