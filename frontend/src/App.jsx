@@ -29,6 +29,12 @@ const Login = lazy(() => import("./pages/Login"));
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
 
+
+
+
+
+
+
 import socket from "./socket";
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
