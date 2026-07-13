@@ -172,7 +172,7 @@ const buildIceServerConfig = () => {
   if (jsonConfig) {
     try {
       const parsed = JSON.parse(jsonConfig);
-      const iceServers = Array.isArray(parsed) ? parsed : parsed?.iceServers;
+      const iceServers = sanitizeIceServers(Array.isArray(parsed) ? parsed : parsed?.iceServers);
       if (Array.isArray(iceServers) && iceServers.length) {
         const error = validateIceServers(iceServers);
         if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
@@ -208,12 +208,14 @@ const buildIceServerConfig = () => {
     ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({ urls })),
   ];
 
-  if (turnUrls.length) {
+  if (turnUrls.length && turnUsername && turnCredential) {
     iceServers.push({
       urls: turnUrls,
-      ...(turnUsername ? { username: turnUsername } : {}),
-      ...(turnCredential ? { credential: turnCredential } : {}),
+      username: turnUsername,
+      credential: turnCredential,
     });
+  } else if (turnUrls.length) {
+    console.warn("VITE_RTC_TURN_URLS is set, but TURN username/credential is missing. Continuing with STUN-only ICE.");
   }
 
   const error = validateIceServers(iceServers);

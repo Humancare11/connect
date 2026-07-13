@@ -67,7 +67,7 @@ import PhysicianCredentialingPolicy from "./pages/PrivacyPolicies/PhysicianCrede
 import TeleconsultationWorkflowPolicy from "./pages/PrivacyPolicies/TeleconsultationWorkflowPolicy";
 import PrescriptionHandlingPolicy from "./pages/PrivacyPolicies/PrescriptionHandlingPolicy";
 import TelehealthProviderAgreement from "./pages/PrivacyPolicies/TelehealthProviderAgreement";
-
+import Images from "./components/Images";
 // category pages
 // import ChildCare from "./pages/Categories/ChildMain";
 import ChildFamilyCare from "./pages/Categories/ChildFamilyCare";
@@ -708,6 +708,7 @@ function AppLayout() {
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/cookies" element={<CookieBanner />} />
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
+          <Route path="/images" element={<Images />} />"
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
