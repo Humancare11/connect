@@ -393,327 +393,75 @@ export default function TopTelemedicinePlatforms() {
                     Introduction <HeadingLink id="introduction" />
                   </h2>
                   <p>
-                    Telemedicine has made healthcare more accessible than ever
-                    before. Patients can now consult doctors, receive specialist
-                    opinions, review medical reports, and manage ongoing health
-                    concerns without traveling to a hospital or clinic.
+                    Telemedicine has transformed the way patients access
+                    healthcare. Instead of traveling long distances or waiting
+                    for appointments, patients can now connect with healthcare
+                    professionals through secure online platforms from the
+                    comfort of their homes.
                   </p>
-                  {/* FIX: this paragraph was duplicated verbatim right after
-                      the one above — removed the repeat. */}
                   <p>
-                    Not every provider offers the same level of medical
-                    expertise, technology, patient support, or range of
-                    services. Selecting a trusted telemedicine provider is
-                    important because your healthcare decisions depend on
-                    accurate guidance, privacy, and a smooth patient experience.
+                    As virtual healthcare becomes more popular, many patients
+                    ask:
                   </p>
-
+                  <ul>
+                    <li>• Which telemedicine platform is best?</li>
+                    <li>• What features should I compare?</li>
+                    <li>• Are online healthcare providers safe?</li>
+                    <li>
+                      • How do I choose the right platform for my medical needs?
+                    </li>
+                  </ul>
                   <p>
-                    This guide explains the 10 most important factors to
-                    consider before choosing an online healthcare provider.
+                    The answer depends on several factors, including medical
+                    expertise, available specialties, technology, convenience,
+                    and patient support.
                   </p>
                 </section>
-                {/* 10 factors timeline */}
-                {/* FIX: this section previously had its <h2>/HeadingLink
-                    commented out, so it rendered with no title at all and
-                    wasn't reachable from the TOC. Restored a heading that
-                    matches the content and added it to TOC_ITEMS above. */}
+                <p>
+                  This guide explains the most important features of
+                  telemedicine platforms, their benefits, and how to choose the
+                  best provider for your healthcare journey.
+                </p>
                 <section id="factors-to-consider">
                   <h2>
-                    10 Factors to Consider When Choosing a Telemedicine Provider
+                    Important Features of a Good Telemedicine Platform
                     <HeadingLink id="factors-to-consider" />
                   </h2>
-                  <p>
+                  {/* <p>
                     The process of an online consultation is simple and
                     patient-friendly.
-                  </p>
-                  <div className="timeline">
-                    <div className="t-step reveal">
-                      <div className="t-num">1</div>
-                      <div className="t-body">
-                        <h4>Verify Doctor Qualifications and Experience</h4>
+                  </p> */}
+                  <div className="t-step reveal">
+                    <div className="t-num">1</div>
+                    <div className="t-body">
+                      <h4>Qualified Doctors and Specialists</h4>
 
-                        <p>
-                          The quality of a telemedicine service depends heavily
-                          on the healthcare professionals behind it. Before
-                          booking a consultation, check whether the provider
-                          works with qualified and appropriately licensed
-                          healthcare professionals according to applicable
-                          regulations.
-                        </p>
+                      <p>
+                        The quality of any telemedicine service depends on the
+                        healthcare professionals behind it.
+                      </p>
 
-                        <p>Consider:</p>
+                      <p>
+                        A reliable platform should provide access to qualified
+                        healthcare professionals across different specialties
+                        such as:
+                      </p>
 
-                        <ul>
-                          <li>• Medical qualifications</li>
-                          <li>• Clinical experience</li>
-                          <li>• Areas of specialization</li>
-                          <li>
-                            • Experience treating your type of health concern
-                          </li>
-                        </ul>
+                      <ul>
+                        <li>• Cardiology</li>
+                        <li>• Oncology</li>
+                        <li>• Neurology</li>
+                        <li>• Orthopedics</li>
+                        <li>• Dermatology</li>
+                        <li>• Gastroenterology</li>
+                        <li>• Endocrinology</li>
+                      </ul>
 
-                        <p>
-                          Experienced specialists can provide better guidance,
-                          especially for complex conditions and medical second
-                          opinions.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">2</div>
-                      <div className="t-body">
-                        <h4>Check the Availability of Medical Specialties</h4>
-
-                        <p>
-                          A strong telemedicine provider should offer access to
-                          multiple specialties to support a wide range of
-                          healthcare needs.
-                        </p>
-
-                        <p>
-                          Depending on your needs, you may require specialists
-                          in areas such as:
-                        </p>
-
-                        <ul>
-                          <li>• Cardiology</li>
-                          <li>• Oncology</li>
-                          <li>• Neurology</li>
-                          <li>• Orthopedics</li>
-                          <li>• Dermatology</li>
-                          <li>• Gastroenterology</li>
-                          <li>• Endocrinology</li>
-                        </ul>
-
-                        <p>
-                          Having multiple specialties available allows patients
-                          to receive more comprehensive healthcare support from
-                          a single platform.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">3</div>
-                      <div className="t-body">
-                        <h4>Evaluate Privacy and Data Security</h4>
-
-                        <p>
-                          Medical information is highly personal and should be
-                          protected. Choose a provider that uses secure
-                          communication methods and follows applicable privacy
-                          and data protection requirements.
-                        </p>
-
-                        <p>Important factors include:</p>
-
-                        <ul>
-                          <li>• Secure patient communication</li>
-                          <li>• Protected medical records</li>
-                          <li>• Clear privacy policies</li>
-                          <li>• Appropriate data handling practices</li>
-                        </ul>
-
-                        <p>
-                          Patients should avoid sharing sensitive medical
-                          information through unsecured channels.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">4</div>
-                      <div className="t-body">
-                        <h4>Consider Ease of Booking and Technology</h4>
-
-                        <p>
-                          A telemedicine platform should make healthcare simple
-                          and convenient.
-                        </p>
-
-                        <p>Look for features such as:</p>
-
-                        <ul>
-                          <li>• Easy online appointment booking</li>
-                          <li>• User-friendly website or mobile application</li>
-                          <li>• Stable video consultation technology</li>
-                          <li>• Simple medical report upload process</li>
-                          <li>• Clear appointment instructions</li>
-                        </ul>
-
-                        <p>
-                          Good technology improves the overall patient
-                          experience.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">5</div>
-                      <div className="t-body">
-                        <h4>Look at Available Consultation Types</h4>
-
-                        <p>
-                          Different patients have different healthcare needs.
-                          The best telemedicine providers usually offer a wide
-                          range of consultation services.
-                        </p>
-
-                        <p>These may include:</p>
-
-                        <ul>
-                          <li>• General online doctor consultations</li>
-                          <li>• Specialist consultations</li>
-                          <li>• Follow-up appointments</li>
-                          <li>• Medical second opinions</li>
-                          <li>• Chronic disease management</li>
-                        </ul>
-
-                        <p>
-                          Choosing a provider with a wide range of services
-                          helps support your current and future healthcare
-                          needs.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">6</div>
-                      <div className="t-body">
-                        <h4>Check Availability and Appointment Flexibility</h4>
-
-                        <p>
-                          Convenience is one of the biggest advantages of
-                          telemedicine.
-                        </p>
-
-                        <p>Before choosing a provider, consider:</p>
-
-                        <ul>
-                          <li>• Appointment availability</li>
-                          <li>• Waiting times</li>
-                          <li>
-                            • Time-zone flexibility for international patients
-                          </li>
-                          <li>• Ease of rescheduling appointments</li>
-                        </ul>
-
-                        <p>
-                          A provider that offers flexible scheduling can make
-                          healthcare more accessible.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">7</div>
-                      <div className="t-body">
-                        <h4>Review Patient Support and Communication</h4>
-
-                        <p>
-                          Reliable patient support can improve your telemedicine
-                          experience.
-                        </p>
-
-                        <p>Good providers should offer assistance with:</p>
-
-                        <ul>
-                          <li>• Appointment scheduling</li>
-                          <li>• Technical issues</li>
-                          <li>• Uploading medical records</li>
-                          <li>• General service-related questions</li>
-                        </ul>
-
-                        <p>
-                          Clear communication helps patients feel more
-                          comfortable throughout their healthcare journey.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">8</div>
-                      <div className="t-body">
-                        <h4>Understand Pricing and Payment Transparency</h4>
-
-                        <p>
-                          Before booking a consultation, understand the
-                          provider's pricing structure.
-                        </p>
-
-                        <p>Check:</p>
-
-                        <ul>
-                          <li>• Consultation fees</li>
-                          <li>• Additional service charges</li>
-                          <li>• Accepted payment methods</li>
-                          <li>• Insurance information where applicable</li>
-                        </ul>
-
-                        <p>
-                          Transparent pricing helps patients make informed
-                          decisions and avoid unexpected costs.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">9</div>
-                      <div className="t-body">
-                        <h4>Consider International Patient Support</h4>
-
-                        <p>
-                          For patients seeking healthcare beyond their country,
-                          international support is essential.
-                        </p>
-
-                        <p>Look for providers that can help with:</p>
-
-                        <ul>
-                          <li>• Sharing medical reports securely</li>
-                          <li>• Specialist consultations</li>
-                          <li>• Medical second opinions</li>
-                          <li>• Cross-border patient communication</li>
-                          <li>
-                            • Understanding treatment options before travel
-                          </li>
-                        </ul>
-
-                        <p>
-                          This is especially valuable for complex conditions
-                          requiring expert opinions.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="t-step reveal">
-                      <div className="t-num">10</div>
-                      <div className="t-body">
-                        <h4>Look for a Patient-Centered Approach</h4>
-
-                        <p>
-                          The best telemedicine provider does not only offer
-                          technology—it focuses on the patient's overall
-                          healthcare experience.
-                        </p>
-
-                        <p>A patient-centered provider should offer:</p>
-
-                        <ul>
-                          <li>• Clear communication</li>
-                          <li>• Respect for patient concerns</li>
-                          <li>• Personalized guidance</li>
-                          <li>• Convenient healthcare access</li>
-                          <li>• Support throughout the consultation process</li>
-                        </ul>
-
-                        <p>
-                          A positive healthcare experience builds trust and
-                          helps patients make informed decisions.
-                        </p>
-                      </div>
+                      <p>
+                        Specialist availability is particularly important for
+                        patients with chronic conditions or those seeking
+                        medical second opinions.
+                      </p>
                     </div>
                   </div>
                 </section>

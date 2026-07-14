@@ -1041,7 +1041,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
