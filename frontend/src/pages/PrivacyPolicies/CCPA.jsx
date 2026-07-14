@@ -591,9 +591,9 @@ export default function CCPA() {
               <p style={{ marginTop: "16px" }}>
                 <strong>Humancare Connect, Inc.</strong>
                 <br />
-                131 Continental Dr Suite 305
+                4 Peddlers Row, 1091
                 <br />
-                Newark, DE 19713
+                Newark, DE 19702, USA
               </p>
             </div>
           </SectionCard>

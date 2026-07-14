@@ -805,10 +805,7 @@ export default function Specialties() {
                     <h3 className="specialties__card-name">{s.name}</h3>
                   </div>
 
-                  {/* Row 2: Description */}
-                  <p className="specialties__card-desc">{s.description}</p>
-
-                  {/* Row 3: Conditions count */}
+                  {/* Row 2: Conditions count */}
                   <div className="specialties__card-conditions">
                     <span className="specialties__card-conditions-dot" />
                     {s.tags.length} condition{s.tags.length !== 1 ? "s" : ""}

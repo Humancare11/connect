@@ -9,7 +9,17 @@ export function DoctorAuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/api/doctor/me")
+    const path = window.location.pathname;
+    const shouldCheckDoctor =
+      path === "/doctor-login" ||
+      path.startsWith("/doctor-dashboard");
+
+    if (!shouldCheckDoctor) {
+      setLoading(false);
+      return;
+    }
+
+    api.get("/api/doctor/me", { skipAuthRefresh: true })
       .then((res) => setDoctor(res.data.doctor))
       .catch(() => setDoctor(null))
       .finally(() => setLoading(false));

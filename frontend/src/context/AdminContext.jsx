@@ -9,7 +9,20 @@ export function AdminProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/api/auth/admin-me")
+    const path = window.location.pathname;
+    const shouldCheckAdmin =
+      path === "/adminauth" ||
+      path === "/payment-admin-login" ||
+      path.startsWith("/admin") ||
+      path.startsWith("/superadmin") ||
+      path.startsWith("/payment-admin");
+
+    if (!shouldCheckAdmin) {
+      setLoading(false);
+      return;
+    }
+
+    api.get("/api/auth/admin-me", { skipAuthRefresh: true })
       .then((res) => setAdmin(res.data.user))
       .catch(() => setAdmin(null))
       .finally(() => setLoading(false));

@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
+<<<<<<< HEAD
 import { useNavigate, Link } from "react-router-dom";
+=======
+import { useNavigate } from "react-router-dom";
+import api from "../../api";
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowRight,

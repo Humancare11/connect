@@ -26,9 +26,8 @@ function ControlBadge({ value }) {
   };
   return (
     <span
-      className={`inline-flex items-center text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${
-        styles[value] ?? "bg-slate-50 text-slate-600 border-slate-200"
-      }`}
+      className={`inline-flex items-center text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${styles[value] ?? "bg-slate-50 text-slate-600 border-slate-200"
+        }`}
     >
       {value}
     </span>
@@ -163,7 +162,7 @@ export default function TermsService() {
           <SectionCard icon={FileText} title="Acceptance of Terms">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               By accessing or using the Humancare Connect platform at
-              humancareconeect.co (the "Platform"), you agree to be bound by
+              humancareconnect.co (the "Platform"), you agree to be bound by
               these Terms of Service ("Terms").
             </p>
 
@@ -221,8 +220,7 @@ export default function TermsService() {
             <p style={{ color: "#64748b", lineHeight: 1.9 }}>
               • Be at least 18 years of age
               <br />
-              • Be a resident of or located in the United States at the time of
-              consultation
+             Humancare Connect services may be available to users located outside the United States where permitted by applicable law. Certain services, providers, prescriptions, or features may not be available in all jurisdictions and may be subject to local regulatory requirements.
               <br />
               • Have the legal capacity to enter into a binding agreement
               <br />• Provide accurate, complete, and current registration
@@ -502,14 +500,14 @@ export default function TermsService() {
                     Email
                   </p>
                   <a
-                    href="mailto:support@humancareconnect.com"
+                    href="mailto:support@humancareconnect.co"
                     style={{
                       fontSize: "13px",
                       color: "#2563eb",
                       textDecoration: "none",
                     }}
                   >
-                    support@humancareconnect.com
+                    support@humancareconnect.co
                   </a>
                 </div>
               </div>

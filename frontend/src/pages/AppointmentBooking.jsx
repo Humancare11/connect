@@ -37,11 +37,15 @@ function normalizeAppointmentTree(tree) {
       id: specialty._id,
       name: specialty.name || "Untitled Specialty",
       icon: specialty.icon || "stethoscope",
+<<<<<<< HEAD
       description: specialty.description || "",
       conditions: (Array.isArray(specialty.conditions)
         ? specialty.conditions
         : []
       ).map((condition) => [
+=======
+      conditions: (Array.isArray(specialty.conditions) ? specialty.conditions : []).map((condition) => [
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
         condition.name || "Untitled Condition",
         condition.icon || "stethoscope",
         condition._id,
@@ -474,10 +478,15 @@ export default function Ab() {
                             </div>
                             <h3>{c.label}</h3>
                             <div className="meta">
+<<<<<<< HEAD
                               {specialtyCount} specialties - {conditionCount}{" "}
                               conditions
                             </div>
                             <div className="samp">{description}</div>
+=======
+  {specialtyCount} {specialtyCount === 1 ? "specialty" : "specialties"} - {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
+</div>                           <div className="samp">{description}</div>
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
                             <div className="go">Explore → </div>
                           </div>
                         );
@@ -527,12 +536,18 @@ export default function Ab() {
                               <HealthcareIcon name={s.icon} size={30} />
                             </div>
                             <h3>{s.name}</h3>
+<<<<<<< HEAD
                             <div className="spec-desc">
                               {s.description || "No description added yet."}
                             </div>
                             <div className="spec-footer">
                               <div className="count">
                                 {s.conditions.length} conditions
+=======
+                            <div className="spec-footer">
+                              <div className="count">
+                                {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
                               </div>
                               <div className="book-link">Book →</div>
                             </div>
@@ -620,6 +635,7 @@ export default function Ab() {
                         <HealthcareIcon name={s.icon} size={30} />
                       </div>
                       <h3>{s.name}</h3>
+<<<<<<< HEAD
                       <div className="spec-desc">
                         {s.description || "No description added yet."}
                       </div>
@@ -629,6 +645,15 @@ export default function Ab() {
                         </div>
                         <div className="book-link">Book →</div>
                       </div>
+=======
+                      <div className="spec-footer">
+                        <div className="count">
+                          {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+                        </div>
+                        <div className="book-link">Book →</div>
+                      </div>
+
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
                     </div>
                   ))
                 ) : (

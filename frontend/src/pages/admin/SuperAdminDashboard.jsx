@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import api from "../../api";
@@ -513,11 +513,10 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="dash-wrapper">
-      {/* Sidebar */}
       <aside className="dash-sidebar" style={{ background: "#1e1b4b" }}>
         <div className="dash-sidebar-brand">
           <div className="dash-brand-mark" style={{ background: "#6d28d9" }}>H</div>
-          <span>HumaniCare</span>
+          <span>Humancare</span>
         </div>
         <div className="dash-profile">
           <div className="dash-avatar" style={{ background: "#6d28d9" }}>{user.name?.[0]?.toUpperCase()}</div>
@@ -538,8 +537,14 @@ export default function SuperAdminDashboard() {
           >
             Employee Admins
           </button>
-          <button className="dash-nav-item" onClick={() => navigate("/superadmin-dashboard/pricing-management")}>
-            Pricing Management
+          <button className="dash-nav-item" onClick={() => navigate("/superadmin-dashboard/healthcare-management")}>
+            Healthcare Management
+          </button>
+          <button className="dash-nav-item" onClick={() => navigate("/admin-dashboard/payment-links")}>
+            Payment Links
+          </button>
+          <button className="dash-nav-item" onClick={() => navigate("/admin-dashboard/payment-link-history")}>
+            Payment History
           </button>
           <button className="dash-nav-item" onClick={() => navigate("/admin-dashboard")}>
             Admin Dashboard
@@ -548,7 +553,6 @@ export default function SuperAdminDashboard() {
         <button className="dash-logout" onClick={handleLogout}>Logout</button>
       </aside>
 
-      {/* Main */}
       <main className="dash-main">
         <header className="dash-topbar" style={{ borderBottom: "1px solid #ede9fe" }}>
           <div className="dash-topbar-title" style={{ color: "#6d28d9" }}>Super Admin Portal</div>

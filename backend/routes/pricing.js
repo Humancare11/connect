@@ -2,9 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { CategoryPricing, CATEGORY_IDS } = require("../models/CategoryPricing");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
-const { logAudit } = require("../utils/auditLogger");
+const { recordActivity } = require("../utils/activityLogger");
 
-// GET /api/pricing — public, returns all category prices keyed by categoryId:
+// GET /api/pricing - public, returns all category prices keyed by categoryId:
 //   { general: { price, label, currency }, mental: {...}, ... }
 router.get("/", async (req, res) => {
   try {
@@ -20,7 +20,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/pricing/all — superadmin only, full records with metadata
+// GET /api/pricing/all - superadmin only, full records with metadata
 router.get("/all", verifyAdminToken, superAdminOnly, async (req, res) => {
   try {
     const records = await CategoryPricing.find()
@@ -34,7 +34,7 @@ router.get("/all", verifyAdminToken, superAdminOnly, async (req, res) => {
   }
 });
 
-// PUT /api/pricing/:categoryId — superadmin only, update a category price
+// PUT /api/pricing/:categoryId - superadmin only, update a category price
 router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) => {
   const { categoryId } = req.params;
   if (!CATEGORY_IDS.includes(categoryId)) {
@@ -57,7 +57,7 @@ router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) =>
       return res.status(404).json({ msg: "Category not found." });
     }
 
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "PRICING_UPDATE",
       resource: "CategoryPricing",
       resourceId: categoryId,

@@ -14,6 +14,7 @@ import sceneVideo from "../assets/gifts/HeroVideo.mp4";
 import heroPoster from "../assets/gifts/HeroPoster.webp";
 import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
+import { Helmet } from "react-helmet-async";
 const LogoMarquee = lazy(() => import("../components/LogoMarquee"));
 import {
   FiSmartphone,
@@ -83,7 +84,7 @@ const SCENES = [
     title: "Consult your doctor",
     desc: " Connect by secure video from anywhere. Discuss your symptoms, get a diagnosis, and ask everything you need, face to face.",
     metricValue: "100% ",
-    metricLabel: " erified physicians",
+    metricLabel: "Verified physicians",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -551,7 +552,70 @@ export default function HomePage() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
+
+    
     <>
+
+    <Helmet>
+  <script type="application/ld+json">
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "MedicalOrganization",
+          "@id": "https://humancareconnect.co/#organization",
+          name: "Humancare Connect",
+          url: "https://humancareconnect.co/",
+          logo: "https://humancareconnect.co/logo.png",
+          image: "https://humancareconnect.co/preview.jpg",
+          description:
+            "Humancare Connect provides online doctor consultation and telehealth services across the United States.",
+          areaServed: {
+            "@type": "Country",
+            name: "United States",
+          },
+          availableService: [
+            {
+              "@type": "MedicalTherapy",
+              name: "Online Doctor Consultation",
+            },
+            {
+              "@type": "MedicalTherapy",
+              name: "Telehealth Consultation",
+            },
+          ],
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://humancareconnect.co/#website",
+          url: "https://humancareconnect.co/",
+          name: "Humancare Connect",
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://humancareconnect.co/#homepage",
+          url: "https://humancareconnect.co/",
+          name: "Humancare Connect | Online Doctor Consultation & Telehealth Services",
+          description:
+            "Consult licensed doctors online through Humancare Connect.",
+        },
+        {
+          "@type": "Service",
+          "@id": "https://humancareconnect.co/#telehealth-service",
+          name: "Online Doctor Consultation",
+          serviceType: "Telehealth",
+          provider: {
+            "@id": "https://humancareconnect.co/#organization",
+          },
+          areaServed: {
+            "@type": "Country",
+            name: "United States",
+          },
+        },
+      ],
+    })}
+  </script>
+</Helmet>
       <div className="hero-light" />
       <div className="hero-grid" />
 
@@ -565,14 +629,20 @@ export default function HomePage() {
           </div>
 
           <h1>
-            Talk to a <span className="fancy-underline">licensed doctor online </span>
+            Talk to a{" "}
+            <span className="fancy-underline">licensed doctor online </span>
             {/* <br /> */}
             in minutes.
           </h1>
 
           <p>
-            Get rapid, reliable telemedicine services from expert doctors on our secure virtual healthcare platform. Book an online doctor appointment. Contact A Telemedicine Doctor for Expert Medical Advice, Personalized Treatment Plans & Prescriptions From Licensed Healthcare Providers At Your Home. Our HIPAA compliant telemedicine and secure healthcare platform makes it easy, convenient, and available worldwide to access quality digital healthcare.
-
+            Get rapid, reliable telemedicine services from expert doctors on our
+            secure virtual healthcare platform. Book an online doctor
+            appointment. Contact A Telemedicine Doctor for Expert Medical
+            Advice, Personalized Treatment Plans & Prescriptions From Licensed
+            Healthcare Providers At Your Home. Our HIPAA compliant telemedicine
+            and secure healthcare platform makes it easy, convenient, and
+            available worldwide to access quality digital healthcare.
           </p>
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">
@@ -612,7 +682,7 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Board-Certified Doctor's
+               500+ Verified Providers
             </span>
 
             <span className="trust-chip">
@@ -626,7 +696,7 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Rx / Sick Note's Available
+              Prescriptions Available
             </span>
           </div>
           {/* SEARCH BAR */}
@@ -958,8 +1028,7 @@ export default function HomePage() {
               >
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-              HIPAA Compliant
-            </span>
+Same Day Appointments            </span>
             <span className="cta-pill">
               <svg
                 width="12"
@@ -971,8 +1040,7 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Board-Certified Doctors
-            </span>
+Care From Anywhere            </span>
             <span className="cta-pill">
               <svg
                 width="12"
@@ -985,8 +1053,7 @@ export default function HomePage() {
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
-              24/7 Available
-            </span>
+Easy Online Booking            </span>
             <span className="cta-pill">
               <svg
                 width="12"
@@ -999,8 +1066,7 @@ export default function HomePage() {
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
-              No Surprise Bills
-            </span>
+Transparent Pricing            </span>
           </div>
         </div>
       </section>

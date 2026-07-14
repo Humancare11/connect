@@ -233,7 +233,7 @@ export default function DoctorAppointments() {
       {/* Header */}
       <header className="da-header">
         <div>
-          <span className="da-eyebrow">HumaniCare</span>
+          <span className="da-eyebrow">Humancare</span>
           <h1 className="da-greeting">
             {getGreeting()}, {doctorName} <span className="da-wave">👋</span>
           </h1>

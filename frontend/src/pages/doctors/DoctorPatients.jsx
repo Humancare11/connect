@@ -1,9 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback, useRef } from "react";
 import "./DoctorPatients.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
-import { PrescriptionSlip, downloadPrescriptionPDF } from "../../components/PrescriptionSlip";
-import { MedicalCertificateSlip, downloadCertificatePDF } from "../../components/MedicalCertificateSlip";
+
+const PrescriptionSlip = lazy(() =>
+  import("../../components/PrescriptionSlip").then((module) => ({
+    default: module.PrescriptionSlip,
+  })),
+);
+
+const MedicalCertificateSlip = lazy(() =>
+  import("../../components/MedicalCertificateSlip").then((module) => ({
+    default: module.MedicalCertificateSlip,
+  })),
+);
 
 function formatDate(d) {
   if (!d) return "—";
@@ -193,13 +203,14 @@ function CertificateModal({ patient, appointments, onClose, onSaved }) {
 // ── Prescription letterhead preview modal ─────────────────────────────────────
 
 function RxSlipModal({ rx, patient, doctor, onClose }) {
-  const slipRef  = useRef(null);
+  const slipRef = useRef(null);
   const [busy, setBusy] = useState(false);
 
   const handleDownload = async () => {
     if (!slipRef.current) return;
     setBusy(true);
     try {
+      const { downloadPrescriptionPDF } = await import("../../components/PrescriptionSlip");
       const name = patient?.name?.replace(/\s+/g, "_") || "patient";
       const date = rx.createdAt ? new Date(rx.createdAt).toISOString().split("T")[0] : "rx";
       await downloadPrescriptionPDF(slipRef.current, `prescription_${name}_${date}.pdf`);
@@ -248,7 +259,9 @@ function RxSlipModal({ rx, patient, doctor, onClose }) {
         {/* Scrollable slip */}
         <div style={{ overflow: "auto", background: "#f1f5f9", padding: 20 }}>
           <div style={{ margin: "0 auto", display: "inline-block", boxShadow: "0 4px 24px rgba(15,23,42,.13)", border: "1px solid #d0daf0" }}>
-            <PrescriptionSlip rx={rx} patient={patient} doctor={doctor} slipRef={slipRef} />
+            <Suspense fallback={null}>
+              <PrescriptionSlip rx={rx} patient={patient} doctor={doctor} slipRef={slipRef} />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -266,6 +279,7 @@ function CertSlipModal({ cert, patient, doctor, doctorEnrollment, onClose }) {
     if (!slipRef.current) return;
     setBusy(true);
     try {
+      const { downloadCertificatePDF } = await import("../../components/MedicalCertificateSlip");
       const name = patient?.name?.replace(/\s+/g, "_") || "patient";
       const date = cert.issuedDate || (cert.createdAt ? new Date(cert.createdAt).toISOString().split("T")[0] : "cert");
       await downloadCertificatePDF(slipRef.current, `certificate_${name}_${date}.pdf`);
@@ -312,13 +326,15 @@ function CertSlipModal({ cert, patient, doctor, doctorEnrollment, onClose }) {
 
         <div style={{ overflow: "auto", maxHeight: "calc(90vh - 55px)", background: "#f1f5f9", padding: 20 }}>
           <div style={{ margin: "0 auto", display: "inline-block", boxShadow: "0 4px 24px rgba(15,23,42,.13)", border: "1px solid #d0daf0" }}>
-            <MedicalCertificateSlip
-              cert={cert}
-              patient={patient}
-              doctor={doctor}
-              doctorEnrollment={doctorEnrollment}
-              slipRef={slipRef}
-            />
+            <Suspense fallback={null}>
+              <MedicalCertificateSlip
+                cert={cert}
+                patient={patient}
+                doctor={doctor}
+                doctorEnrollment={doctorEnrollment}
+                slipRef={slipRef}
+              />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -331,12 +347,12 @@ function CertSlipModal({ cert, patient, doctor, doctorEnrollment, onClose }) {
 function PatientPanel({ entry, onClose }) {
   const { patient } = entry;
   const { doctor } = useDoctorAuth();
-  const [history,    setHistory]    = useState(null);
-  const [loading,    setLoading]    = useState(true);
-  const [modal,      setModal]      = useState(null);   // "rx" | "cert"
-  const [previewRx,  setPreviewRx]  = useState(null);   // rx object to preview
+  const [history, setHistory] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);   // "rx" | "cert"
+  const [previewRx, setPreviewRx] = useState(null);   // rx object to preview
   const [previewCert, setPreviewCert] = useState(null); // cert object to preview
-  const [toast,      setToast]      = useState("");
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     api.get(`/api/medical/patients/${patient._id}/history`)
@@ -516,8 +532,8 @@ function PatientPanel({ entry, onClose }) {
 
 export default function DoctorPatients() {
   const [patients, setPatients] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState("");
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
@@ -536,7 +552,7 @@ export default function DoctorPatients() {
     <div className="dp-root-mp">
       <header className="dp-header">
         <div>
-          <span className="dp-eyebrow">HumaniCare</span>
+          <span className="dp-eyebrow">Humancare</span>
           <h1 className="dp-title">My Patients</h1>
           <p className="dp-sub">Patients from completed consultations</p>
         </div>

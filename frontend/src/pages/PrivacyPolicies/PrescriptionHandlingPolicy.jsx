@@ -102,9 +102,8 @@ function ControlBadge({ value }) {
   };
   return (
     <span
-      className={`inline-flex items-center text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${
-        styles[value] ?? "bg-slate-50 text-slate-600 border-slate-200"
-      }`}
+      className={`inline-flex items-center text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${styles[value] ?? "bg-slate-50 text-slate-600 border-slate-200"
+        }`}
     >
       {value}
     </span>
@@ -365,8 +364,8 @@ export default function PrescriptionHandlingPolicy() {
                 </div>
                 <div>
                   <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#94a3b8", margin: "0 0 3px" }}>Email</p>
-                  <a href="mailto:support@humancareconnect.com" style={{ fontSize: "13px", color: "#2563eb", textDecoration: "none" }}>
-                    support@humancareconnect.com
+                  <a href="mailto:support@humancareconnect.co" style={{ fontSize: "13px", color: "#2563eb", textDecoration: "none" }}>
+                    support@humancareconnect.co
                   </a>
                 </div>
               </div>

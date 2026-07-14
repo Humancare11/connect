@@ -26,10 +26,11 @@ const User = require("./models/User");
 const Appointment = require("./models/Appointment");
 const Doctor = require("./models/Doctor");
 const Session = require("./models/Session");
+const RevokedToken = require("./models/RevokedToken");
 const ChatMessage = require("./models/ChatMessage");
 const Question = require("./models/Question");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
-const { logAudit } = require("./utils/auditLogger");
+const { recordActivity } = require("./utils/activityLogger");
 const { findUploadInS3, streamUploadFromS3, keyFromStoredValue } = require("./utils/uploadStorage");
 const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
@@ -367,7 +368,7 @@ async function serveProtectedUpload(req, res, next) {
   const key = decodeURIComponent((maybeParam || fromPath || "").replace(/^\/+|\/+$/g, ""));
 
   if (!key) {
-    await logAudit(req, {
+    await recordActivity(req, {
       action: "MEDICAL_FILE_ACCESS_DENIED",
       resource: "MedicalFile",
       resourceId: null,
@@ -379,7 +380,7 @@ async function serveProtectedUpload(req, res, next) {
 
   try {
     const access = await canAccessUpload(req, key);
-    await logAudit(req, {
+    await recordActivity(req, {
       action: access.allowed ? "MEDICAL_FILE_ACCESS" : "MEDICAL_FILE_ACCESS_DENIED",
       resource: "MedicalFile",
       resourceId: key,
@@ -447,7 +448,6 @@ app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
-app.use("/api/audit-logs", require("./routes/auditLogs"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));
 app.use(
@@ -563,6 +563,10 @@ const io = new Server(server, {
   connectTimeout: Number(process.env.SOCKET_CONNECT_TIMEOUT_MS || 45000),
   pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 25000),
   pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 30000),
+  connectionStateRecovery: {
+    maxDisconnectionDuration: Number(process.env.SOCKET_STATE_RECOVERY_MS || 120000),
+    skipMiddlewares: false,
+  },
 });
 
 app.set("io", io);
@@ -587,19 +591,147 @@ function parseCookieHeader(header = "") {
   );
 }
 
+async function validateSocketAccessToken(token) {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type === "refresh" || !decoded.sid || !decoded.id || !decoded.role) return null;
+
+    const session = await Session.findById(decoded.sid).select("userId role revokedAt").lean();
+    if (!session || session.revokedAt) return null;
+    if (session.userId !== String(decoded.id) || session.role !== decoded.role) return null;
+
+    const revoked = await RevokedToken.exists({ sessionId: String(decoded.sid), userId: String(decoded.id) });
+    if (revoked) return null;
+
+    return {
+      id: String(decoded.id),
+      role: decoded.role,
+      email: decoded.email || "",
+      sid: String(decoded.sid),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function validateSocketRefreshToken(token) {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type !== "refresh" || !decoded.sid || !decoded.id || !decoded.role) return null;
+
+    const session = await Session.findById(decoded.sid).select("userId role revokedAt").lean();
+    if (!session || session.revokedAt) return null;
+    if (session.userId !== String(decoded.id) || session.role !== decoded.role) return null;
+
+    return {
+      id: String(decoded.id),
+      role: decoded.role,
+      email: decoded.email || "",
+      sid: String(decoded.sid),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function appointmentRoomName(appointmentId) {
+  return `appointment_${appointmentId}`;
+}
+
+function getRequestedSocketIdentity(socket, requested = {}) {
+  const requestedUserId = requested.userId;
+  const requestedRole = requested.role;
+  if (!requestedUserId && !requestedRole) return null;
+
+  return Array.isArray(socket.authIdentities)
+    ? socket.authIdentities.find((identity) =>
+      (!requestedUserId || String(identity.id) === String(requestedUserId)) &&
+      (!requestedRole || identity.role === requestedRole)
+    ) || null
+    : null;
+}
+
+function getSocketIdentity(socket, requested = {}) {
+  const requestedIdentity = getRequestedSocketIdentity(socket, requested);
+  if (requestedIdentity) {
+    return { userId: String(requestedIdentity.id), role: requestedIdentity.role };
+  }
+
+  const liveIdentity = socketUsers.get(socket.id);
+  const userId = liveIdentity?.userId || socket.userId;
+  const role = liveIdentity?.role || socket.userRole;
+  if (!userId || !role) return null;
+  return { userId: String(userId), role };
+}
+
+function isSocketInAppointmentRoom(socket, appointmentId) {
+  if (!appointmentId) return false;
+  const room = appointmentRoomName(appointmentId);
+  return String(socketRooms.get(socket.id) || "") === String(appointmentId) && socket.rooms.has(room);
+}
+
+async function canSocketAccessAppointment(socket, appointmentId, requestedIdentity = {}) {
+  if (!appointmentId) return { allowed: false, reason: "missing_appointment" };
+
+  const identity = getSocketIdentity(socket, requestedIdentity);
+  if (!identity) return { allowed: false, reason: "unauthenticated" };
+
+  let appointment = null;
+  try {
+    appointment = await Appointment.findById(appointmentId)
+      .select("patientId doctorId")
+      .lean();
+  } catch {
+    return { allowed: false, reason: "invalid_appointment" };
+  }
+
+  if (!appointment) return { allowed: false, reason: "appointment_not_found" };
+
+  const userId = String(identity.userId);
+  const allowed =
+    (identity.role === "user" && String(appointment.patientId) === userId) ||
+    (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
+
+  return {
+    allowed,
+    reason: allowed ? "participant" : "not_participant",
+    identity,
+    appointment,
+  };
+}
+
 // Authenticate socket connections via HttpOnly cookies.
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   const cookies = parseCookieHeader(socket.handshake.headers.cookie || "");
-  const tokens = [cookies.userToken, cookies.doctorToken, cookies.adminToken].filter(Boolean);
-  for (const token of tokens) {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      if (decoded.type === "refresh") continue;
-      socket.userId = decoded.id;
-      socket.userRole = decoded.role;
-      break;
-    } catch (_) {
-      // Try next cookie.
+  const accessTokens = [cookies.userToken, cookies.doctorToken, cookies.adminToken].filter(Boolean);
+  const refreshTokens = [cookies.userRefreshToken, cookies.doctorRefreshToken, cookies.adminRefreshToken].filter(Boolean);
+  socket.authIdentities = [];
+  for (const token of accessTokens) {
+    const identity = await validateSocketAccessToken(token);
+    if (identity) {
+      socket.authIdentities.push(identity);
+      if (!socket.userId) {
+        socket.userId = identity.id;
+        socket.userRole = identity.role;
+        socket.userEmail = identity.email;
+        socket.sessionId = identity.sid;
+      }
+    }
+  }
+  for (const token of refreshTokens) {
+    const identity = await validateSocketRefreshToken(token);
+    if (!identity) continue;
+    const alreadyAdded = socket.authIdentities.some((existing) =>
+      existing.id === identity.id && existing.role === identity.role
+    );
+    if (!alreadyAdded) socket.authIdentities.push(identity);
+    if (!socket.userId) {
+      socket.userId = identity.id;
+      socket.userRole = identity.role;
+      socket.userEmail = identity.email;
+      socket.sessionId = identity.sid;
     }
   }
   next();
@@ -622,8 +754,42 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("user-online", ({ userId, role }) => {
-    if (!userId) return;
+  socket.on("user-online", ({ userId: requestedUserId, role: requestedRole } = {}) => {
+    const matchingIdentity = Array.isArray(socket.authIdentities)
+      ? socket.authIdentities.find((identity) =>
+        (!requestedUserId || String(identity.id) === String(requestedUserId)) &&
+        (!requestedRole || identity.role === requestedRole)
+      )
+      : null;
+
+    const identity = matchingIdentity || (
+      socket.userId && socket.userRole
+        ? { id: socket.userId, role: socket.userRole, email: socket.userEmail, sid: socket.sessionId }
+        : null
+    );
+
+    if (!identity?.id || !identity?.role) return;
+
+    const previousIdentity = socketUsers.get(socket.id);
+    if (
+      previousIdentity?.userId &&
+      (previousIdentity.userId !== String(identity.id) || previousIdentity.role !== identity.role)
+    ) {
+      const previousSockets = onlineUsers.get(previousIdentity.userId);
+      previousSockets?.delete(socket.id);
+      if (previousSockets?.size === 0) onlineUsers.delete(previousIdentity.userId);
+      if (previousIdentity.role === "doctor") socket.leave(`doctor_${previousIdentity.userId}`);
+      if (previousIdentity.role === "user") socket.leave(`patient_${previousIdentity.userId}`);
+      if (previousIdentity.role === "admin" || previousIdentity.role === "superadmin") socket.leave("admin_room");
+    }
+
+    socket.userId = String(identity.id);
+    socket.userRole = identity.role;
+    socket.userEmail = identity.email || socket.userEmail || "";
+    socket.sessionId = identity.sid || socket.sessionId || "";
+
+    const userId = String(identity.id);
+    const role = identity.role;
 
     if (!onlineUsers.has(userId)) {
       onlineUsers.set(userId, new Set());
@@ -651,10 +817,23 @@ io.on("connection", (socket) => {
     console.log("Socket joined rooms:", userId, role);
   });
 
-  socket.on("join-appointment-room", ({ appointmentId }) => {
+  socket.on("join-appointment-room", async ({ appointmentId, userId, role } = {}) => {
     if (!appointmentId) return;
 
-    const room = `appointment_${appointmentId}`;
+    const room = appointmentRoomName(appointmentId);
+    const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role });
+
+    if (!access.allowed) {
+      socket.emit("room-access-denied", { msg: "Access to this call room was denied." });
+      console.warn("[socket] appointment room access denied", {
+        socketId: socket.id,
+        appointmentId,
+        reason: access.reason,
+        userId: access.identity?.userId || socket.userId || null,
+        role: access.identity?.role || socket.userRole || null,
+      });
+      return;
+    }
 
     // If this socket is already in the room (e.g. duplicate emit from an
     // effect re-run), re-notify peers AND tell ourselves about any peer
@@ -671,30 +850,50 @@ io.on("connection", (socket) => {
     const existing = io.sockets.adapter.rooms.get(room);
     const currentSize = existing ? existing.size : 0;
 
-    // Prefer runtime identity registered via user-online; fall back to JWT handshake.
-    const liveIdentity = socketUsers.get(socket.id);
-    const socketUserId = liveIdentity?.userId || socket.userId;
-    const socketUserRole = liveIdentity?.role || socket.userRole;
+    const socketUserId = access.identity.userId;
 
     // Seat limit: max 2 unique users (not 2 raw sockets). This avoids false
     // denials during reconnects / duplicate tabs from the same participant.
-    if (socketUserId && socketUserRole) {
-      const existingSocketIds = existing ? Array.from(existing) : [];
-      const uniqueUsersInRoom = new Set();
+    const existingSocketIds = existing ? Array.from(existing) : [];
+    const uniqueUsersInRoom = new Set();
 
+    for (const sid of existingSocketIds) {
+      const peerSocket = io.sockets.sockets.get(sid);
+      if (!peerSocket) continue;
+      const peerIdentity = getSocketIdentity(peerSocket);
+      if (peerIdentity?.userId) uniqueUsersInRoom.add(String(peerIdentity.userId));
+    }
+
+    const alreadyInRoom = uniqueUsersInRoom.has(String(socketUserId));
+
+    // If this user already has a socket in the room, evict the old one.
+    // This prevents SDP corruption from duplicate sessions (same user,
+    // multiple tabs / refresh race) while still allowing reconnection.
+    // Evict the old socket for this user so the peer re-establishes
+    // signaling with the new socket. Without this, the peer's PC stays
+    // connected to the stale socket and the new session cannot negotiate.
+    // We deliberately do NOT emit participant-left here — the peer's
+    // connection stays up until the evicted tab closes its PC (triggered
+    // by duplicate-session), at which point natural ICE disconnection
+    // detection fires ice-restart to the new socket.
+    if (alreadyInRoom && currentSize > 0) {
       for (const sid of existingSocketIds) {
+        if (sid === socket.id) continue;
         const peerSocket = io.sockets.sockets.get(sid);
         if (!peerSocket) continue;
-        const peerLiveIdentity = socketUsers.get(sid);
-        const peerUserId = peerLiveIdentity?.userId || peerSocket.userId;
-        if (peerUserId) uniqueUsersInRoom.add(String(peerUserId));
+        const peerIdentity = getSocketIdentity(peerSocket);
+        if (peerIdentity?.userId === String(socketUserId)) {
+          peerSocket.leave(room);
+          socketRooms.delete(sid);
+          peerSocket.emit("duplicate-session", { msg: "Another consultation session was started elsewhere." });
+          break;
+        }
       }
+    }
 
-      const alreadyInRoom = uniqueUsersInRoom.has(String(socketUserId));
-      if (uniqueUsersInRoom.size >= 2 && !alreadyInRoom) {
-        socket.emit("room-access-denied", { msg: "This call room is full." });
-        return;
-      }
+    if (uniqueUsersInRoom.size >= 2 && !alreadyInRoom) {
+      socket.emit("room-access-denied", { msg: "This call room is full." });
+      return;
     }
 
     socket.join(room);
@@ -726,8 +925,9 @@ io.on("connection", (socket) => {
 
   socket.on("leave-appointment-room", ({ appointmentId }) => {
     if (!appointmentId) return;
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
-    const room = `appointment_${appointmentId}`;
+    const room = appointmentRoomName(appointmentId);
     socket.to(room).emit("participant-left");
     socket.leave(room);
     socketRooms.delete(socket.id);
@@ -745,6 +945,7 @@ io.on("connection", (socket) => {
       fileType,
     }) => {
       if (!appointmentId || (!text && !fileUrl)) return;
+      if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
       const liveIdentity = socketUsers.get(socket.id);
       const senderRole = liveIdentity?.role || socket.userRole || "user";
@@ -764,7 +965,7 @@ io.on("connection", (socket) => {
         fileType: fileType || "",
         deliveredAt: new Date(),
       })
-        .then((message) => logAudit(
+        .then((message) => recordActivity(
           { user: { id: senderUserId, role: senderRole }, headers: socket.handshake.headers, socket },
           {
             action: "CHAT_MESSAGE_DELIVERED",
@@ -794,7 +995,7 @@ io.on("connection", (socket) => {
         "appointment-message",
         {
           appointmentId,
-          senderId,
+          senderId: String(senderUserId || senderId || ""),
           senderName,
           text: text || "",
           fileUrl: uploadAccessPath(fileKey),
@@ -806,35 +1007,82 @@ io.on("connection", (socket) => {
     }
   );
 
+  socket.on("video-telemetry", async ({ appointmentId, event, role, timestamp, details } = {}) => {
+    if (!appointmentId || !event) return;
+
+    const access = await canSocketAccessAppointment(socket, appointmentId);
+    if (!access.allowed) return;
+
+    console.info("[video-telemetry]", {
+      appointmentId,
+      event: String(event).slice(0, 80),
+      role: role || access.identity?.role || socket.userRole || "",
+      userId: access.identity?.userId || socket.userId || "",
+      timestamp: timestamp || new Date().toISOString(),
+      details: details && typeof details === "object" ? details : {},
+    });
+  });
+
   socket.on("video-offer", ({ appointmentId, offer }) => {
     if (!appointmentId || !offer) return;
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
     socket
-      .to(`appointment_${appointmentId}`)
+      .to(appointmentRoomName(appointmentId))
       .emit("video-offer", { offer });
   });
 
   socket.on("video-answer", ({ appointmentId, answer }) => {
     if (!appointmentId || !answer) return;
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
     socket
-      .to(`appointment_${appointmentId}`)
+      .to(appointmentRoomName(appointmentId))
       .emit("video-answer", { answer });
   });
 
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
     if (!appointmentId || !candidate) return;
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
     socket
-      .to(`appointment_${appointmentId}`)
+      .to(appointmentRoomName(appointmentId))
       .emit("ice-candidate", { candidate });
   });
 
+  socket.on("ice-restart-request", ({ appointmentId }) => {
+    if (!appointmentId) return;
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+
+    socket
+      .to(appointmentRoomName(appointmentId))
+      .emit("ice-restart-request");
+  });
+
   socket.on("disconnect", (reason) => {
-    // Notify peer if this socket was in an appointment room
+    // Notify the peer only after a short grace period. Mobile browsers can
+    // briefly reconnect sockets during app/background or transport changes.
     const appointmentId = socketRooms.get(socket.id);
     if (appointmentId) {
-      socket.to(`appointment_${appointmentId}`).emit("participant-left");
+      const liveIdentity = socketUsers.get(socket.id);
+      const disconnectedUserId = liveIdentity?.userId || socket.userId || "";
+      const appointmentRoom = `appointment_${appointmentId}`;
+
+      setTimeout(() => {
+        const sameUserStillInRoom = Array.from(socketRooms.entries()).some(([sid, roomAppointmentId]) => {
+          if (String(roomAppointmentId) !== String(appointmentId)) return false;
+          const peerSocket = io.sockets.sockets.get(sid);
+          if (!peerSocket) return false;
+          const peerIdentity = socketUsers.get(sid);
+          const peerUserId = peerIdentity?.userId || peerSocket.userId || "";
+          return disconnectedUserId && String(peerUserId) === String(disconnectedUserId);
+        });
+
+        if (!sameUserStillInRoom) {
+          io.to(appointmentRoom).emit("participant-left");
+        }
+      }, Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000));
+
       socketRooms.delete(socket.id);
     }
 
@@ -871,4 +1119,3 @@ startServer()
     console.error("Startup error:", err);
     process.exit(1);
   });
-

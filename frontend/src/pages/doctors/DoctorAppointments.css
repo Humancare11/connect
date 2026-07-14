@@ -1,5 +1,5 @@
 /* ================================================
-   DoctorAppointments.css  —  HumaniCare Light Theme
+   DoctorAppointments.css  —  Humancare Light Theme
    ================================================ */
 
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap");
@@ -68,19 +68,24 @@
 }
 
 @keyframes da-wave-anim {
+
   0%,
   100% {
     transform: rotate(0deg);
   }
+
   20% {
     transform: rotate(-10deg);
   }
+
   40% {
     transform: rotate(12deg);
   }
+
   60% {
     transform: rotate(-8deg);
   }
+
   80% {
     transform: rotate(8deg);
   }
@@ -148,14 +153,17 @@
   background: var(--amber);
   box-shadow: 0 0 7px rgba(245, 158, 11, 0.5);
 }
+
 .da-dot--teal {
   background: var(--teal);
   box-shadow: 0 0 7px rgba(12, 139, 122, 0.5);
 }
+
 .da-dot--green {
   background: var(--green);
   box-shadow: 0 0 7px rgba(22, 163, 74, 0.5);
 }
+
 .da-dot--purple {
   background: #6366f1;
   box-shadow: 0 0 7px rgba(99, 102, 241, 0.5);
@@ -298,9 +306,11 @@
 .da-row:hover {
   background: #f8fafc;
 }
+
 .da-row--open {
   background: #f0f4ff;
 }
+
 .da-row--focused {
   outline: 2px solid rgba(1, 22, 74, 0.25);
   outline-offset: -2px;
@@ -318,6 +328,7 @@
   font-size: 13px !important;
   color: var(--text-2) !important;
 }
+
 .da-problem {
   color: var(--text-2) !important;
   font-style: italic;
@@ -371,21 +382,25 @@
   color: var(--teal);
   border: 1px solid rgba(12, 139, 122, 0.2);
 }
+
 .da-badge--amber {
   background: var(--amber-dim);
   color: #b45309;
   border: 1px solid rgba(245, 158, 11, 0.25);
 }
+
 .da-badge--green {
   background: var(--green-dim);
   color: var(--green);
   border: 1px solid rgba(22, 163, 74, 0.25);
 }
+
 .da-badge--red {
   background: var(--red-dim);
   color: var(--red);
   border: 1px solid rgba(220, 38, 38, 0.2);
 }
+
 .da-badge--slate {
   background: #f1f5f9;
   color: var(--text-2);
@@ -428,6 +443,7 @@
   color: #fff;
   font-weight: 600;
 }
+
 .da-btn--join:hover {
   background-color: var(--blue-mid);
   box-shadow: 0 4px 14px rgba(1, 22, 74, 0.25);
@@ -440,9 +456,11 @@
   min-width: 76px;
   justify-content: center;
 }
+
 .da-btn--confirm:hover {
   background: rgba(245, 158, 11, 0.18);
 }
+
 .da-btn--confirm:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -456,9 +474,11 @@
   align-items: center;
   justify-content: center;
 }
+
 .da-btn--complete:hover {
   background: rgba(5, 150, 105, 0.12);
 }
+
 .da-btn--complete:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -470,6 +490,7 @@
   border: 1px solid var(--border);
   padding: 7px 10px;
 }
+
 .da-btn--ghost:hover,
 .da-btn--ghost-on {
   background: var(--blue-soft);
@@ -495,6 +516,7 @@
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -513,6 +535,7 @@
   flex-direction: column;
   gap: 4px;
 }
+
 .da-exp-item--full {
   grid-column: 1 / -1;
 }
@@ -570,20 +593,24 @@
     background 0.15s,
     box-shadow 0.15s;
 }
+
 .da-report-chip:hover {
   background: rgba(1, 22, 74, 0.12);
   box-shadow: 0 2px 8px rgba(1, 22, 74, 0.12);
 }
+
 .da-report-chip-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .da-report-chip-arrow {
   font-size: 10px;
   opacity: 0.6;
   flex-shrink: 0;
 }
+
 .da-no-reports {
   font-size: 13px;
   color: var(--text-3);
@@ -610,6 +637,7 @@
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -625,6 +653,7 @@
   color: var(--text-3);
   font-size: 14px;
 }
+
 .da-empty span {
   font-size: 32px;
   opacity: 0.5;
@@ -640,6 +669,7 @@
   border-radius: 50%;
   animation: da-spin 0.7s linear infinite;
 }
+
 @keyframes da-spin {
   to {
     transform: rotate(360deg);
@@ -652,6 +682,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -663,28 +694,35 @@
   .da-root {
     padding: 16px 0 24px;
   }
+
   .da-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .da-greeting {
     font-size: 22px;
   }
+
   .da-panel-top {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .da-tabs {
     overflow-x: auto;
     width: 100%;
     scrollbar-width: none;
   }
+
   .da-tabs::-webkit-scrollbar {
     display: none;
   }
+
   .da-table th,
   .da-table td {
     padding: 12px 14px;
   }
+
   .da-problem {
     max-width: 100px;
   }
@@ -695,9 +733,11 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
+
   .da-stat-num {
     font-size: 24px;
   }
+
   .da-table th:nth-child(3),
   .da-table td:nth-child(3) {
     display: none;

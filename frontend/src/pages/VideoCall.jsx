@@ -107,7 +107,7 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
           </button>
 
           <label className="hc-vc__rx-label">Instructions</label>
-          <textarea className="hc-vc__rx-input hc-vc__rx-textarea" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Diet, rest, special instructions…" rows={2} />
+          <textarea className="hc-vc__rx-input hc-vc__rx-textarea" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Diet, rest, special instructions..." rows={2} />
 
           <label className="hc-vc__rx-label">Follow-up Date</label>
           <input className="hc-vc__rx-input" type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} />
@@ -115,7 +115,7 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
           <div className="hc-vc__rx-modal-foot">
             <button type="button" className="hc-vc__rx-btn-ghost" onClick={onClose}>Cancel</button>
             <button type="submit" className="hc-vc__rx-btn-primary" disabled={saving}>
-              {saving ? "Saving…" : "Issue Prescription"}
+              {saving ? "Saving..." : "Issue Prescription"}
             </button>
           </div>
         </form>
@@ -132,42 +132,101 @@ const FALLBACK_STUN_URLS = [
   "stun:stun4.l.google.com:19302",
 ];
 
-const FALLBACK_TURN_SERVERS = [
-  {
-    urls: "turn:openrelay.metered.ca:80",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-  {
-    urls: "turn:openrelay.metered.ca:443",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-  {
-    urls: "turn:openrelay.metered.ca:443?transport=tcp",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-];
-
 const parseCsv = (value) =>
   String(value || "")
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 
+const isTurnUrl = (url) => /^turns?:/i.test(String(url || ""));
+
+const normalizeIceUrls = (urls) => Array.isArray(urls) ? urls : parseCsv(urls);
+
+const isSupportedIceUrl = (url) => /^(stun|stuns|turn|turns):/i.test(String(url || ""));
+
+const sanitizeIceCredential = (value) =>
+  typeof value === "string" ? value.trim() : value;
+
+const sanitizeIceServers = (iceServers) => {
+  if (!Array.isArray(iceServers)) return [];
+
+  return iceServers.reduce((servers, server) => {
+    if (!server || typeof server !== "object") return servers;
+
+    const urls = normalizeIceUrls(server.urls).filter(isSupportedIceUrl);
+    if (!urls.length) return servers;
+
+    const sanitized = {
+      urls: urls.length === 1 ? urls[0] : urls,
+    };
+    const username = sanitizeIceCredential(server.username);
+    const credential = sanitizeIceCredential(server.credential);
+
+    if (username) sanitized.username = username;
+    if (credential) sanitized.credential = credential;
+    if (server.credentialType === "password" || server.credentialType === "oauth") {
+      sanitized.credentialType = server.credentialType;
+    }
+
+    servers.push(sanitized);
+    return servers;
+  }, []);
+};
+
+const validateIceServers = (iceServers) => {
+  if (!Array.isArray(iceServers) || iceServers.length === 0) {
+    return "No ICE servers are configured.";
+  }
+
+  for (const server of iceServers) {
+    const urls = normalizeIceUrls(server?.urls);
+    if (!urls.length) return "An ICE server is missing urls.";
+
+    for (const url of urls) {
+      if (isTurnUrl(url)) {
+        if (!server.username || !server.credential) {
+          return "TURN servers require username and credential.";
+        }
+      }
+    }
+  }
+
+  return "";
+};
+
+const hasTurnServer = (iceServers) =>
+  Array.isArray(iceServers) &&
+  iceServers.some((server) => normalizeIceUrls(server?.urls).some(isTurnUrl));
+
 const buildIceServerConfig = () => {
   const jsonConfig = import.meta.env.VITE_RTC_ICE_SERVERS_JSON;
   if (jsonConfig) {
     try {
       const parsed = JSON.parse(jsonConfig);
-      const iceServers = Array.isArray(parsed) ? parsed : parsed?.iceServers;
+      const iceServers = sanitizeIceServers(Array.isArray(parsed) ? parsed : parsed?.iceServers);
       if (Array.isArray(iceServers) && iceServers.length) {
-        return { iceServers };
+        const error = validateIceServers(iceServers);
+        if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
+          console.warn(
+            "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail."
+          );
+        }
+        return {
+          config: {
+            iceServers,
+            iceCandidatePoolSize: Number(import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10),
+            bundlePolicy: "max-bundle",
+            rtcpMuxPolicy: "require",
+          },
+          error,
+        };
       }
       console.warn("VITE_RTC_ICE_SERVERS_JSON did not contain iceServers.");
     } catch (err) {
-      console.warn("Invalid VITE_RTC_ICE_SERVERS_JSON:", err.message);
+      return {
+        config: null,
+        error: `Invalid VITE_RTC_ICE_SERVERS_JSON: ${err.message}`,
+      };
     }
   }
 
@@ -180,20 +239,37 @@ const buildIceServerConfig = () => {
     ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({ urls })),
   ];
 
-  if (turnUrls.length) {
+  if (turnUrls.length && turnUsername && turnCredential) {
     iceServers.push({
       urls: turnUrls,
-      ...(turnUsername ? { username: turnUsername } : {}),
-      ...(turnCredential ? { credential: turnCredential } : {}),
+      username: turnUsername,
+      credential: turnCredential,
     });
-  } else {
-    iceServers.push(...FALLBACK_TURN_SERVERS);
+  } else if (turnUrls.length) {
+    console.warn("VITE_RTC_TURN_URLS is set, but TURN username/credential is missing. Continuing with STUN-only ICE.");
   }
 
-  return { iceServers };
+  const error = validateIceServers(iceServers);
+  if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
+    console.warn(
+      "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail."
+    );
+  }
+
+  return {
+    config: {
+      iceServers,
+      iceCandidatePoolSize: Number(import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10),
+      bundlePolicy: "max-bundle",
+      rtcpMuxPolicy: "require",
+    },
+    error,
+  };
 };
 
-const RTC_CONFIG = buildIceServerConfig();
+const RTC_SETUP = buildIceServerConfig();
+const RTC_CONFIG = RTC_SETUP.config;
+const RTC_CONFIG_ERROR = RTC_SETUP.error;
 
 const getIceCandidateType = (candidate = "") => {
   if (candidate.includes(" typ host")) return "host (local)";
@@ -201,6 +277,17 @@ const getIceCandidateType = (candidate = "") => {
   if (candidate.includes(" typ relay")) return "relay (TURN)";
   if (candidate.includes(" typ prflx")) return "prflx";
   return "unknown";
+};
+
+const describeIceCandidate = (candidate = "") => {
+  const value = String(candidate || "");
+  const addressMatch = value.match(/(?:^| )(?:raddr )?([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-z0-9-]+\.local)(?: |$)/i);
+  const protocolMatch = value.match(/ (udp|tcp) /i);
+  return {
+    type: getIceCandidateType(value),
+    protocol: protocolMatch?.[1]?.toLowerCase() || "unknown",
+    address: addressMatch?.[1] || "",
+  };
 };
 
 const MEDIA_CONSTRAINTS = {
@@ -221,10 +308,16 @@ const MEDIA_CONSTRAINTS = {
 };
 
 const BITRATE_PROFILE = {
-  cameraVideo: 2_500_000,
-  screenShareVideo: 4_000_000,
-  voiceAudio: 128_000,
+  cameraVideo: Number(import.meta.env.VITE_RTC_CAMERA_BITRATE || 1_200_000),
+  screenShareVideo: Number(import.meta.env.VITE_RTC_SCREEN_BITRATE || 2_000_000),
+  voiceAudio: Number(import.meta.env.VITE_RTC_AUDIO_BITRATE || 64_000),
 };
+
+const ICE_RESTART_DELAY_MS = Number(import.meta.env.VITE_RTC_ICE_RESTART_DELAY_MS || 2500);
+const CONNECTION_FAIL_TIMEOUT_MS = Number(import.meta.env.VITE_RTC_CONNECT_TIMEOUT_MS || 25000);
+const ICE_MAX_RECOVERY_ATTEMPTS = Number(import.meta.env.VITE_RTC_ICE_MAX_RECOVERY_ATTEMPTS || 4);
+const ICE_RECOVERY_COOLDOWN_MS = Number(import.meta.env.VITE_RTC_ICE_RECOVERY_COOLDOWN_MS || 30000);
+const STATS_INTERVAL_MS = Number(import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000);
 
 const mediaErrorMessage = (err) => {
   if (!navigator.mediaDevices?.getUserMedia) {
@@ -245,11 +338,133 @@ const mediaErrorMessage = (err) => {
   }
 };
 
+const getConsultationMediaStream = async () => {
+  try {
+    return await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
+  } catch (firstErr) {
+    console.warn("High-quality media failed, trying basic constraints:", firstErr.name);
+    try {
+      return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    } catch (secondErr) {
+      console.warn("Basic video+audio failed, trying separate devices:", secondErr.name);
+      const partialStream = new MediaStream();
+      let lastErr = secondErr;
+
+      try {
+        const videoOnly = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: MEDIA_CONSTRAINTS.video,
+        });
+        videoOnly.getTracks().forEach((track) => partialStream.addTrack(track));
+      } catch (videoErr) {
+        console.warn("Video-only media failed:", videoErr.name);
+        lastErr = videoErr;
+      }
+
+      try {
+        const audioOnly = await navigator.mediaDevices.getUserMedia({
+          audio: MEDIA_CONSTRAINTS.audio,
+          video: false,
+        });
+        audioOnly.getTracks().forEach((track) => partialStream.addTrack(track));
+      } catch (audioErr) {
+        console.warn("Audio-only media failed:", audioErr.name);
+        lastErr = audioErr;
+      }
+
+      if (partialStream.getTracks().length > 0) {
+        return partialStream;
+      }
+
+      throw lastErr;
+    }
+  }
+};
+
+const getDeviceCheckSummary = async () => {
+  if (!navigator.mediaDevices?.enumerateDevices) {
+    return {
+      camera: "unknown",
+      microphone: "unknown",
+      speaker: "unknown",
+      labelsAvailable: false,
+    };
+  }
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return {
+      camera: devices.some((device) => device.kind === "videoinput") ? "available" : "missing",
+      microphone: devices.some((device) => device.kind === "audioinput") ? "available" : "missing",
+      speaker: devices.some((device) => device.kind === "audiooutput") ? "available" : "unknown",
+      labelsAvailable: devices.some((device) => Boolean(device.label)),
+    };
+  } catch {
+    return {
+      camera: "unknown",
+      microphone: "unknown",
+      speaker: "unknown",
+      labelsAvailable: false,
+    };
+  }
+};
+
+const canUseScreenShare = () =>
+  typeof navigator !== "undefined" &&
+  Boolean(navigator.mediaDevices?.getDisplayMedia);
+
+const isIPhoneSafari = () =>
+  typeof navigator !== "undefined" &&
+  /iPhone|iPod/.test(navigator.userAgent || "") &&
+  /Safari/.test(navigator.userAgent || "") &&
+  !/CriOS|FxiOS|EdgiOS/.test(navigator.userAgent || "");
+
+const playVideoElement = async (videoEl) => {
+  if (!videoEl) return true;
+  try {
+    const playResult = videoEl.play?.();
+    if (playResult && typeof playResult.then === "function") {
+      await playResult;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Video playback was blocked:", err?.message || err);
+    return false;
+  }
+};
+
 const setTrackHint = (track, hint) => {
   if (!track || !("contentHint" in track)) return;
   try {
     track.contentHint = hint;
   } catch (_) { }
+};
+
+const getSenderForKind = (pc, kind) => {
+  if (!pc) return null;
+  return (
+    pc.getSenders?.().find((sender) => sender.track?.kind === kind) ||
+    pc.getTransceivers?.().find((transceiver) => transceiver.receiver?.track?.kind === kind)?.sender ||
+    null
+  );
+};
+
+const hasTransceiverForKind = (pc, kind) =>
+  Boolean(
+    pc?.getTransceivers?.().some((transceiver) =>
+      transceiver.sender?.track?.kind === kind ||
+      transceiver.receiver?.track?.kind === kind
+    )
+  );
+
+const ensureMediaTransceivers = (pc, { audio = true, video = true } = {}) => {
+  if (!pc?.addTransceiver || pc.signalingState === "closed") return;
+  if (audio && !hasTransceiverForKind(pc, "audio")) {
+    pc.addTransceiver("audio", { direction: "sendrecv" });
+  }
+  if (video && !hasTransceiverForKind(pc, "video")) {
+    pc.addTransceiver("video", { direction: "sendrecv" });
+  }
 };
 
 const tuneSenderQuality = async (
@@ -345,13 +560,30 @@ export default function VideoCall() {
   // ── Stable state refs ─────────────────────────────────────────────
   const inCallRef = useRef(false);
   const isReadyRef = useRef(false);
+  const isMutedRef = useRef(false);
+  const isCamOffRef = useRef(false);
+  const peerJoinedRef = useRef(false);
   const chatOpenRef = useRef(false);
   const completedRef = useRef(false);
   const isSwappedRef = useRef(false);
   const callTimerRef = useRef(null);
   const iceRestartTimerRef = useRef(null);
+  const connectionFailTimerRef = useRef(null);
+  const statsTimerRef = useRef(null);
   const pendingRemoteCandidatesRef = useRef([]);
   const joinedSocketIdRef = useRef("");
+  const makingOfferRef = useRef(false);
+  const ignoreOfferRef = useRef(false);
+  const ignoreOfferResetTimerRef = useRef(null);
+  const settingRemoteAnswerPendingRef = useRef(false);
+  const restartRequestInFlightRef = useRef(false);
+  const iceRecoveryAttemptsRef = useRef(0);
+  const lastIceRecoveryAtRef = useRef(0);
+  const pageUnloadingRef = useRef(false);
+  const screenSharingRef = useRef(false);
+  const screenShareStartInProgressRef = useRef(false);
+  const screenShareStopInProgressRef = useRef(false);
+  const socketAuthRefreshedRef = useRef(false);
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
@@ -368,11 +600,20 @@ export default function VideoCall() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [camError, setCamError] = useState(false);
   const [camErrorReason, setCamErrorReason] = useState("");
+  const [deviceCheck, setDeviceCheck] = useState({
+    status: "idle",
+    camera: "unknown",
+    microphone: "unknown",
+    speaker: "unknown",
+    labelsAvailable: false,
+  });
+  const [retryingMedia, setRetryingMedia] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [peerLeft, setPeerLeft] = useState(false);
   const [endCallConfirm, setEndCallConfirm] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [inlineError, setInlineError] = useState("");
+  const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const pendingLeaveRef = useRef(null);
 
   // ── Chat state ────────────────────────────────────────────────────
@@ -408,8 +649,12 @@ export default function VideoCall() {
   // ── Sync refs ─────────────────────────────────────────────────────
   useEffect(() => { inCallRef.current = inCall; }, [inCall]);
   useEffect(() => { isReadyRef.current = isReady; }, [isReady]);
+  useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
+  useEffect(() => { isCamOffRef.current = isCamOff; }, [isCamOff]);
+  useEffect(() => { peerJoinedRef.current = peerJoined; }, [peerJoined]);
   useEffect(() => { chatOpenRef.current = chatOpen; }, [chatOpen]);
   useEffect(() => { isSwappedRef.current = isSwapped; }, [isSwapped]);
+  useEffect(() => { screenSharingRef.current = isScreenSharing; }, [isScreenSharing]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -534,17 +779,138 @@ export default function VideoCall() {
 
     clearInterval(callTimerRef.current);
     clearTimeout(iceRestartTimerRef.current);
+    clearTimeout(connectionFailTimerRef.current);
+    clearTimeout(ignoreOfferResetTimerRef.current);
+    clearInterval(statsTimerRef.current);
+    statsTimerRef.current = null;
     socket.emit("leave-appointment-room", { appointmentId });
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current?.getTracks().forEach((t) => {
+      t.onended = null;
+      t.stop();
+    });
+    screenStreamRef.current = null;
     pcRef.current?.close();
     pendingRemoteCandidatesRef.current = [];
     joinedSocketIdRef.current = "";
+    peerJoinedRef.current = false;
+    ignoreOfferRef.current = false;
+    restartRequestInFlightRef.current = false;
+    screenSharingRef.current = false;
+    screenShareStartInProgressRef.current = false;
+    screenShareStopInProgressRef.current = false;
+    socketAuthRefreshedRef.current = false;
   }, [appointmentId]);
 
   const canJoinConsultation = useMemo(() => {
-    return appt?.status === "confirmed" || (appt?.status === "assigned" && appt?.doctorId);
+    return appt?.status === "confirmed";
   }, [appt]);
+
+  const showInlineMessage = useCallback((message, duration = 4000) => {
+    setInlineError(message);
+    window.setTimeout(() => setInlineError(""), duration);
+  }, []);
+
+  const logVideoEvent = useCallback((event, details = {}) => {
+    const payload = {
+      appointmentId,
+      event,
+      role: isDoctor ? "doctor" : "user",
+      timestamp: new Date().toISOString(),
+      details,
+    };
+
+    if (import.meta.env.DEV) {
+      console.info("[video-call]", payload);
+    } else {
+      console.info("[video-call]", event, details);
+    }
+
+    if (socket.connected && appointmentId) {
+      socket.emit("video-telemetry", payload);
+    }
+  }, [appointmentId, isDoctor]);
+
+  const stopStatsCollection = useCallback(() => {
+    clearInterval(statsTimerRef.current);
+    statsTimerRef.current = null;
+  }, []);
+
+  const startStatsCollection = useCallback((pc) => {
+    stopStatsCollection();
+    statsTimerRef.current = setInterval(async () => {
+      if (!pc || pc.signalingState === "closed") {
+        stopStatsCollection();
+        return;
+      }
+      try {
+        const stats = await pc.getStats();
+        const diagnostics = {
+          rtt: null,
+          packetsSent: 0,
+          packetsLost: 0,
+          bytesSent: 0,
+          bytesReceived: 0,
+          localCandidateType: "unknown",
+          remoteCandidateType: "unknown",
+          selectedPairState: "unknown",
+        };
+
+        for (const report of stats.values()) {
+          if (report.type === "candidate-pair" && report.state === "succeeded") {
+            diagnostics.selectedPairState = report.state;
+            if (typeof report.currentRoundTripTime === "number") {
+              diagnostics.rtt = Math.round(report.currentRoundTripTime * 1000);
+            }
+            if (typeof report.bytesSent === "number") diagnostics.bytesSent = report.bytesSent;
+            if (typeof report.bytesReceived === "number") diagnostics.bytesReceived = report.bytesReceived;
+            if (typeof report.packetsSent === "number") diagnostics.packetsSent = report.packetsSent;
+            if (typeof report.packetsLost === "number") diagnostics.packetsLost = report.packetsLost;
+
+            const localId = report.localCandidateId;
+            const remoteId = report.remoteCandidateId;
+            for (const inner of stats.values()) {
+              if (inner.type === "local-candidate" && inner.id === localId) {
+                diagnostics.localCandidateType = inner.candidateType || inner.type;
+              }
+              if (inner.type === "remote-candidate" && inner.id === remoteId) {
+                diagnostics.remoteCandidateType = inner.candidateType || inner.type;
+              }
+            }
+          }
+        }
+
+        console.info("[webrtc-stats]", diagnostics);
+        logVideoEvent("webrtc_stats", diagnostics);
+      } catch (err) {
+        console.warn("[webrtc-stats] getStats failed:", err.message);
+      }
+    }, STATS_INTERVAL_MS);
+  }, [logVideoEvent, stopStatsCollection]);
+
+  const emitOnlineAndJoinRoom = useCallback(() => {
+    if (!socket.connected || !isReadyRef.current) return false;
+    if (joinedSocketIdRef.current === socket.id) return true;
+
+    joinedSocketIdRef.current = socket.id || "";
+    setConnectionState((prev) => (prev === "connected" ? prev : "connecting"));
+
+    const activeUserId = isDoctor ? doctorId : userId;
+    if (activeUserId) {
+      socket.emit("user-online", {
+        userId: activeUserId,
+        role: isDoctor ? "doctor" : "user",
+      });
+    }
+
+    socket.emit("join-appointment-room", {
+      appointmentId,
+      userId: activeUserId,
+      role: isDoctor ? "doctor" : "user",
+    });
+    logVideoEvent("appointment_room_join_requested", { socketId: socket.id });
+    return true;
+  }, [appointmentId, doctorId, isDoctor, logVideoEvent, userId]);
 
   // ── Block / intercept browser back button during confirmed call ───
   useEffect(() => {
@@ -554,7 +920,6 @@ export default function VideoCall() {
 
     const handlePopstate = () => {
       window.history.pushState(null, "", window.location.href);
-      if (!inCallRef.current) return;
       pendingLeaveRef.current = isDoctor ? "/doctor-dashboard" : "/user/dashboard";
       setLeaveConfirm(true);
     };
@@ -563,19 +928,37 @@ export default function VideoCall() {
     return () => window.removeEventListener("popstate", handlePopstate);
   }, [canJoinConsultation, navigate, isDoctor, performCleanup]);
 
-  // ── Tab close / reload → end call automatically ───────────────────
+  // ── Tab close / reload → allow socket reconnect recovery ──────────
   useEffect(() => {
     if (!canJoinConsultation) return;
 
+    pageUnloadingRef.current = false;
     const handleBeforeUnload = () => {
-      performCleanup();
+      pageUnloadingRef.current = true;
+    };
+    const handlePageShow = () => {
+      pageUnloadingRef.current = false;
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [canJoinConsultation, performCleanup]);
+    window.addEventListener("pagehide", handleBeforeUnload);
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handleBeforeUnload);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [canJoinConsultation]);
 
   // ── Assign stream to a video element ──────────────────────────────
+  const playAssignedVideos = useCallback(async () => {
+    const remoteVideo = isSwappedRef.current ? pipVideoRef.current : mainVideoRef.current;
+    const mainOk = await playVideoElement(mainVideoRef.current);
+    const pipOk = await playVideoElement(pipVideoRef.current);
+    const remoteOk = remoteVideo === pipVideoRef.current ? pipOk : mainOk;
+    setPlaybackBlocked(Boolean(remoteVideo?.srcObject) && !remoteVideo.muted && !remoteOk);
+  }, []);
+
   const assignStreams = useCallback((swapped) => {
     if (mainVideoRef.current) {
       mainVideoRef.current.srcObject = swapped
@@ -587,16 +970,67 @@ export default function VideoCall() {
         ? remoteStreamRef.current
         : localStreamRef.current;
     }
-  }, []);
+    void playAssignedVideos();
+  }, [playAssignedVideos]);
+
+  const attachLocalMediaStream = useCallback(async (stream, pc) => {
+    if (!stream || !pc || pc.signalingState === "closed") return false;
+
+    const previousStream = localStreamRef.current;
+    stream.getVideoTracks().forEach((track) => {
+      track.enabled = !isCamOffRef.current;
+      setTrackHint(track, "detail");
+    });
+    stream.getAudioTracks().forEach((track) => {
+      track.enabled = !isMutedRef.current;
+      setTrackHint(track, "speech");
+    });
+
+    localStreamRef.current = stream;
+    if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
+
+    ensureMediaTransceivers(pc, {
+      audio: stream.getAudioTracks().length === 0,
+      video: stream.getVideoTracks().length === 0,
+    });
+
+    const senderTuning = stream.getTracks().map((track) => {
+      const sender = getSenderForKind(pc, track.kind);
+      const activeSender = sender || pc.addTrack(track, stream);
+      const replace = sender ? sender.replaceTrack(track) : Promise.resolve();
+      return replace.then(() => tuneSenderQuality(
+        activeSender,
+        track.kind === "video"
+          ? { maxBitrate: BITRATE_PROFILE.cameraVideo, maxFramerate: 30, maintainResolution: true }
+          : { maxBitrate: BITRATE_PROFILE.voiceAudio }
+      ));
+    });
+
+    await Promise.allSettled(senderTuning);
+
+    if (previousStream && previousStream !== stream) {
+      previousStream.getTracks().forEach((track) => track.stop());
+    }
+
+    assignStreams(isSwappedRef.current);
+    return true;
+  }, [assignStreams]);
 
   // ── Main WebRTC + Socket setup ────────────────────────────────────
   useEffect(() => {
     if (!canJoinConsultation) return;
+    if (RTC_CONFIG_ERROR || !RTC_CONFIG) {
+      setApptError(`Video consultation is not configured: ${RTC_CONFIG_ERROR}`);
+      return;
+    }
 
     let mounted = true;
     completedRef.current = false;
     pendingRemoteCandidatesRef.current = [];
+    ignoreOfferRef.current = false;
+    settingRemoteAnswerPendingRef.current = false;
     clearTimeout(iceRestartTimerRef.current);
+    clearTimeout(ignoreOfferResetTimerRef.current);
     let resolveLocalReady = () => { };
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
@@ -618,6 +1052,22 @@ export default function VideoCall() {
     const remoteStream = new MediaStream();
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
+    const isPolitePeer = isDoctor;
+
+    const resetIgnoredOffer = () => {
+      clearTimeout(ignoreOfferResetTimerRef.current);
+      ignoreOfferResetTimerRef.current = null;
+      ignoreOfferRef.current = false;
+    };
+
+    const markIgnoredOffer = () => {
+      ignoreOfferRef.current = true;
+      clearTimeout(ignoreOfferResetTimerRef.current);
+      ignoreOfferResetTimerRef.current = window.setTimeout(() => {
+        ignoreOfferRef.current = false;
+        ignoreOfferResetTimerRef.current = null;
+      }, ICE_RESTART_DELAY_MS * 2);
+    };
 
     const flushPendingIceCandidates = async () => {
       if (!pc.remoteDescription) return;
@@ -631,93 +1081,166 @@ export default function VideoCall() {
       }
     };
 
+    const createAndSendOffer = async ({ iceRestart = false } = {}) => {
+      if (!mounted || pc.signalingState === "closed" || makingOfferRef.current) return false;
+      if (!isReadyRef.current) return false;
+      if (pc.signalingState !== "stable") {
+        console.info("Skipping offer because signaling state is", pc.signalingState);
+        return false;
+      }
+      try {
+        makingOfferRef.current = true;
+        resetIgnoredOffer();
+        const offer = await pc.createOffer({
+          iceRestart,
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true,
+        });
+        if (!mounted || pc.signalingState === "closed") return false;
+        await pc.setLocalDescription(offer);
+        socket.emit("video-offer", { appointmentId, offer: pc.localDescription });
+        if (iceRestart) logVideoEvent("ice_restart_offer_sent", { signalingState: pc.signalingState });
+        return true;
+      } catch (err) {
+        console.error(iceRestart ? "ICE restart offer failed:" : "Offer failed:", err);
+        if (iceRestart) logVideoEvent("ice_restart_offer_failed", { message: err.message });
+        return false;
+      } finally {
+        makingOfferRef.current = false;
+      }
+    };
+
+    const startConnectionWatchdog = () => {
+      clearTimeout(connectionFailTimerRef.current);
+      connectionFailTimerRef.current = setTimeout(() => {
+        if (!mounted || pc.signalingState === "closed") return;
+        if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+        console.warn("Connection establishment timed out; requesting ICE recovery.");
+        scheduleIceRestart();
+      }, CONNECTION_FAIL_TIMEOUT_MS);
+    };
+
+    const requestPeerIceRestart = () => {
+      if (restartRequestInFlightRef.current) return;
+      restartRequestInFlightRef.current = true;
+      socket.emit("ice-restart-request", { appointmentId });
+      logVideoEvent("ice_restart_requested_from_peer", {
+        connectionState: pc.connectionState,
+        iceConnectionState: pc.iceConnectionState,
+      });
+      window.setTimeout(() => {
+        restartRequestInFlightRef.current = false;
+      }, ICE_RESTART_DELAY_MS * 2);
+    };
+
     const scheduleIceRestart = () => {
       if (!mounted || iceRestartTimerRef.current) return;
-      if (isDoctor) return;
       iceRestartTimerRef.current = setTimeout(async () => {
         iceRestartTimerRef.current = null;
         if (!mounted || pc.signalingState === "closed") return;
-        try {
-          console.log("Restarting ICE...");
-          const offer = await pc.createOffer({ iceRestart: true });
-          await pc.setLocalDescription(offer);
-          socket.emit("video-offer", { appointmentId, offer });
-        } catch (err) {
-          console.error("ICE restart failed:", err);
+        if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+
+        const now = Date.now();
+        if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
+          iceRecoveryAttemptsRef.current = 0;
         }
-      }, 3000);
+        lastIceRecoveryAtRef.current = now;
+
+        if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
+          logVideoEvent("ice_recovery_exhausted", {
+            connectionState: pc.connectionState,
+            iceConnectionState: pc.iceConnectionState,
+            attempts: iceRecoveryAttemptsRef.current,
+          });
+          requestPeerIceRestart();
+          return;
+        }
+
+        iceRecoveryAttemptsRef.current += 1;
+        logVideoEvent("ice_recovery_attempt", {
+          attempts: iceRecoveryAttemptsRef.current,
+          connectionState: pc.connectionState,
+          iceConnectionState: pc.iceConnectionState,
+        });
+
+        if (isDoctor) {
+          requestPeerIceRestart();
+          return;
+        }
+        console.log("Restarting ICE...");
+        await createAndSendOffer({ iceRestart: true });
+      }, ICE_RESTART_DELAY_MS);
     };
 
-    // Get local media
+    // Get local media after a lightweight device check.
     (async () => {
       try {
-        // First try high-quality constraints
-        let stream;
-        try {
-          stream = await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
-        } catch (firstErr) {
-          console.warn("High-quality media failed, trying basic constraints:", firstErr.name);
+        setDeviceCheck((prev) => ({ ...prev, status: "checking" }));
+        const summary = await getDeviceCheckSummary();
+        if (!mounted) return;
+        setDeviceCheck({ ...summary, status: "checking" });
+        logVideoEvent("device_check", summary);
 
-          // Fallback 1: Basic constraints
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
-              video: true,
-            });
-          } catch (secondErr) {
-            console.warn("Basic video+audio failed, trying audio only:", secondErr.name);
-
-            // Fallback 2: Audio only
-            try {
-              stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: false,
-              });
-            } catch (finalErr) {
-              // All attempts failed
-              throw finalErr;
-            }
-          }
-        }
-
-        
+        const stream = await getConsultationMediaStream();
         if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
 
-        localStreamRef.current = stream;
-        if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
+        await attachLocalMediaStream(stream, pc);
 
-        stream.getVideoTracks().forEach((t) => setTrackHint(t, "detail"));
-        stream.getAudioTracks().forEach((t) => setTrackHint(t, "speech"));
-
-        const senderTuning = stream.getTracks().map((track) => {
-          const sender = pc.addTrack(track, stream);
-          return tuneSenderQuality(
-            sender,
-            track.kind === "video"
-              ? { maxBitrate: BITRATE_PROFILE.cameraVideo, maxFramerate: 30, maintainResolution: true }
-              : { maxBitrate: BITRATE_PROFILE.voiceAudio }
-          );
-        });
-        await Promise.allSettled(senderTuning);
-
-        if (mounted) { setIsReady(true); isReadyRef.current = true; setCamError(false); }
+        if (mounted) {
+          setIsReady(true);
+          isReadyRef.current = true;
+          setCamError(false);
+          setCamErrorReason("");
+          setDeviceCheck((prev) => ({ ...prev, status: "ready" }));
+          logVideoEvent("media_ready", {
+            audioTracks: stream.getAudioTracks().length,
+            videoTracks: stream.getVideoTracks().length,
+          });
+          if (socket.connected) joinRoom();
+          if (!isDoctor && peerJoinedRef.current) {
+            window.setTimeout(() => {
+              if (!mounted || pc.signalingState === "closed") return;
+              if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+              void createAndSendOffer({ iceRestart: inCallRef.current });
+            }, 300);
+          }
+        }
         resolveLocalReady(true);
 
       } catch (err) {
         console.error("All media attempts failed:", err.name, err.message);
-        if (mounted) { setCamError(true); setCamErrorReason(mediaErrorMessage(err)); }
-        resolveLocalReady(false);
-        // Still mark ready so call can proceed (audio-only or no media)
-        if (mounted) { setIsReady(true); isReadyRef.current = true; }
+        logVideoEvent("media_permission_failed", { name: err.name, message: err.message });
+        if (mounted) {
+          setCamError(true);
+          setCamErrorReason(mediaErrorMessage(err));
+          setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
+        }
+        resolveLocalReady(true);
       }
     })();
 
     pc.ontrack = (event) => {
-      event.streams[0]?.getTracks().forEach((track) => {
+      const incomingTracks = event.streams?.length
+        ? event.streams.flatMap((stream) => stream.getTracks())
+        : [event.track].filter(Boolean);
+
+      incomingTracks.forEach((track) => {
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
       });
+
       if (mounted) {
+        logVideoEvent("remote_track_received", {
+          tracks: incomingTracks.map((track) => ({
+            id: track.id,
+            kind: track.kind,
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState,
+          })),
+          streamCount: event.streams?.length || 0,
+        });
         assignStreams(isSwappedRef.current);
+        void playAssignedVideos();
         setIsRemoteConnected(true);
         setPeerLeft(false);
       }
@@ -725,13 +1248,13 @@ export default function VideoCall() {
 
     pc.onicecandidate = (e) => {
       if (e.candidate) {
-        // Log candidate type for debugging (helps identify if TURN is working)
-        if (e.candidate.candidate) {
-          console.log(`ICE candidate gathered: ${getIceCandidateType(e.candidate.candidate)}`);
-        }
+        const candidateInfo = describeIceCandidate(e.candidate.candidate);
+        console.log("ICE candidate gathered:", candidateInfo);
+        logVideoEvent("ice_candidate_gathered", candidateInfo);
         socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
       } else {
         console.log("ICE gathering complete");
+        logVideoEvent("ice_gathering_complete", {});
       }
     };
 
@@ -740,15 +1263,22 @@ export default function VideoCall() {
       if (!mounted) return;
       if (s === "connected") {
         clearTimeout(iceRestartTimerRef.current);
+        clearTimeout(connectionFailTimerRef.current);
         iceRestartTimerRef.current = null;
+        restartRequestInFlightRef.current = false;
+        iceRecoveryAttemptsRef.current = 0;
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
+        startStatsCollection(pc);
       } else if (s === "connecting") {
         setConnectionState("connecting");
+        startConnectionWatchdog();
       } else if (s === "disconnected" || s === "failed") {
+        logVideoEvent("peer_connection_unhealthy", { state: s, iceConnectionState: pc.iceConnectionState });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
+        scheduleIceRestart();
       }
     };
 
@@ -759,20 +1289,27 @@ export default function VideoCall() {
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
         clearTimeout(iceRestartTimerRef.current);
+        clearTimeout(connectionFailTimerRef.current);
         iceRestartTimerRef.current = null;
+        restartRequestInFlightRef.current = false;
+        iceRecoveryAttemptsRef.current = 0;
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
+        startStatsCollection(pc);
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
+        startConnectionWatchdog();
       } else if (s === "failed") {
         console.warn("ICE connection failed - connection may not work properly");
+        logVideoEvent("ice_connection_failed", { state: s, connectionState: pc.connectionState });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
-        if (!isDoctor) console.log("Attempting ICE restart in 3 seconds...");
+        console.log("Attempting ICE recovery...");
         scheduleIceRestart();
       } else if (s === "disconnected") {
         console.warn("ICE connection disconnected");
+        logVideoEvent("ice_connection_disconnected", { state: s, connectionState: pc.connectionState });
         setConnectionState("connecting");
         scheduleIceRestart();
       }
@@ -783,16 +1320,44 @@ export default function VideoCall() {
       if (!offer || !mounted) return;
       try {
         setConnectionState("connecting");
-        // Set remote description immediately so ICE gathering starts on both
-        // sides in parallel, rather than waiting for local camera first.
+        const readyForOffer =
+          !makingOfferRef.current &&
+          (pc.signalingState === "stable" || settingRemoteAnswerPendingRef.current);
+        const offerCollision = !readyForOffer;
+
+        const shouldIgnoreOffer = !isPolitePeer && offerCollision;
+        if (shouldIgnoreOffer) {
+          markIgnoredOffer();
+        } else {
+          resetIgnoredOffer();
+        }
+        if (shouldIgnoreOffer) {
+          console.info("Ignoring colliding offer from peer.");
+          return;
+        }
+
+        if (offerCollision && pc.signalingState === "have-local-offer") {
+          console.info("Rolling back local offer to accept peer offer.");
+          await pc.setLocalDescription({ type: "rollback" });
+        } else if (offerCollision) {
+          console.info("Ignoring offer while negotiation is already in progress.");
+          return;
+        }
+
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        resetIgnoredOffer();
         await flushPendingIceCandidates();
         // Now wait for local tracks so the answer includes our video/audio.
-        await localReadyPromise;
+        const localReady = await localReadyPromise;
         if (!mounted) return;
+        if (!localReady) {
+          setCamError(true);
+          setCamErrorReason("Allow camera or microphone access, then retry to join the consultation.");
+          return;
+        }
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        socket.emit("video-answer", { appointmentId, answer });
+        socket.emit("video-answer", { appointmentId, answer: pc.localDescription });
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
       } catch (err) { console.error("Offer error:", err); }
     };
@@ -800,31 +1365,71 @@ export default function VideoCall() {
     const handleAnswer = async ({ answer }) => {
       if (!answer || !mounted) return;
       try {
+        if (pc.signalingState !== "have-local-offer") {
+          console.info("Ignoring stale answer while signaling state is", pc.signalingState);
+          return;
+        }
+        settingRemoteAnswerPendingRef.current = true;
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        resetIgnoredOffer();
         await flushPendingIceCandidates();
         if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
       } catch (err) { console.error("Answer error:", err); }
+      finally { settingRemoteAnswerPendingRef.current = false; }
     };
 
     const handleIce = async ({ candidate }) => {
       if (!candidate || !mounted) return;
+      const candidateInfo = describeIceCandidate(candidate.candidate);
+      logVideoEvent("ice_candidate_received", candidateInfo);
       if (!pc.remoteDescription) {
+        if (ignoreOfferRef.current) {
+          console.info("Dropping ICE candidate for ignored colliding offer.");
+          return;
+        }
         pendingRemoteCandidatesRef.current.push(candidate);
         return;
       }
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
+        if (ignoreOfferRef.current) {
+          console.info("Ignoring ICE candidate rejected after offer collision:", err.message);
+          return;
+        }
         console.warn("ICE candidate rejected:", err.message);
       }
     };
 
+    const handleIceRestartRequest = async () => {
+      if (!mounted || isDoctor || !isReadyRef.current) return;
+      console.info("Peer requested ICE restart.");
+      logVideoEvent("ice_restart_request_received", {
+        connectionState: pc.connectionState,
+        iceConnectionState: pc.iceConnectionState,
+      });
+      await createAndSendOffer({ iceRestart: true });
+    };
+
     const handlePeerJoined = () => {
-      if (mounted) { setPeerJoined(true); setPeerLeft(false); }
+      if (mounted) {
+        peerJoinedRef.current = true;
+        setPeerJoined(true);
+        setPeerLeft(false);
+        if (isReadyRef.current && !inCallRef.current) startConnectionWatchdog();
+        if (!isDoctor && isReadyRef.current) {
+          window.setTimeout(() => {
+            if (!mounted || pc.signalingState === "closed") return;
+            if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+            void createAndSendOffer({ iceRestart: inCallRef.current });
+          }, 300);
+        }
+      }
     };
 
     const handleParticipantLeft = () => {
       if (mounted) {
+        peerJoinedRef.current = false;
         setIsRemoteConnected(false);
         setConnectionState("disconnected");
         setPeerJoined(false);
@@ -863,9 +1468,23 @@ export default function VideoCall() {
       setApptError(msg || "Access to this call room was denied.");
     };
 
+    const handleDuplicateSession = ({ msg } = {}) => {
+      if (!mounted) return;
+      // Close the local PC so the other peer detects disconnection and
+      // re-establishes signaling with the new session instead of staying
+      // connected to this stale peer connection.
+      if (pcRef.current && pcRef.current.signalingState !== "closed") {
+        pcRef.current.close();
+      }
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+      setApptError(msg || "Another consultation session was started elsewhere.");
+    };
+
     socket.on("video-offer", handleOffer);
     socket.on("video-answer", handleAnswer);
     socket.on("ice-candidate", handleIce);
+    socket.on("ice-restart-request", handleIceRestartRequest);
     socket.on("peer-joined", handlePeerJoined);
     socket.on("participant-left", handleParticipantLeft);
     socket.on("appointment-message", handleChatMessage);
@@ -873,48 +1492,78 @@ export default function VideoCall() {
     socket.on("appointment-updated", handleApptUpdated);
     socket.on("new-prescription", handleNewPrescription);
     socket.on("room-access-denied", handleRoomDenied);
+    socket.on("duplicate-session", handleDuplicateSession);
 
-    const activeUserId = isDoctor ? doctorId : userId;
     const joinRoom = () => {
-      if (!socket.connected) return;
-      if (joinedSocketIdRef.current === socket.id) return;
-      joinedSocketIdRef.current = socket.id || "";
-      if (activeUserId) {
-        socket.emit("user-online", {
-          userId: activeUserId,
-          role: isDoctor ? "doctor" : "user",
-        });
-      }
-      socket.emit("join-appointment-room", { appointmentId });
-      console.info("Joined appointment socket room", {
-        appointmentId,
-        socketId: socket.id,
-        role: isDoctor ? "doctor" : "user",
-      });
+      emitOnlineAndJoinRoom();
     };
 
     const handleSocketDisconnect = () => {
       joinedSocketIdRef.current = "";
+      if (!mounted) return;
+      logVideoEvent("socket_disconnected_during_call", { inCall: inCallRef.current });
+      setConnectionState("disconnected");
+      setIsRemoteConnected(false);
     };
 
-    if (socket.connected) {
+    const handleSocketReconnect = () => {
+      if (!mounted) return;
+      joinedSocketIdRef.current = "";
+      joinRoom();
+      logVideoEvent("socket_reconnected_during_call", {
+        inCall: inCallRef.current,
+        role: isDoctor ? "doctor" : "user",
+      });
+      if (isDoctor) {
+        window.setTimeout(() => {
+          if (!mounted || !socket.connected || pc.signalingState === "closed") return;
+          if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+          requestPeerIceRestart();
+        }, 500);
+        return;
+      }
+      if (!isDoctor && isReadyRef.current) {
+        window.setTimeout(() => {
+          if (!mounted || !socket.connected || pc.signalingState === "closed") return;
+          if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+          void createAndSendOffer({ iceRestart: inCallRef.current });
+        }, 500);
+      }
+    };
+
+    if (socket.connected && !socketAuthRefreshedRef.current) {
+      socketAuthRefreshedRef.current = true;
+      socket.disconnect();
+      socket.connect();
+    } else if (socket.connected) {
       joinRoom();
     } else {
+      socketAuthRefreshedRef.current = true;
       socket.connect();
     }
     socket.on("connect", joinRoom);
     socket.on("disconnect", handleSocketDisconnect);
+    socket.io.on("reconnect", handleSocketReconnect);
 
     return () => {
       mounted = false;
       resolveLocalReady(false);
       clearTimeout(iceRestartTimerRef.current);
+      clearTimeout(connectionFailTimerRef.current);
+      clearTimeout(ignoreOfferResetTimerRef.current);
       iceRestartTimerRef.current = null;
+      ignoreOfferResetTimerRef.current = null;
+      restartRequestInFlightRef.current = false;
+      if (joinedSocketIdRef.current && socket.connected && !pageUnloadingRef.current) {
+        socket.emit("leave-appointment-room", { appointmentId });
+      }
       socket.off("connect", joinRoom);
       socket.off("disconnect", handleSocketDisconnect);
+      socket.io.off("reconnect", handleSocketReconnect);
       socket.off("video-offer", handleOffer);
       socket.off("video-answer", handleAnswer);
       socket.off("ice-candidate", handleIce);
+      socket.off("ice-restart-request", handleIceRestartRequest);
       socket.off("peer-joined", handlePeerJoined);
       socket.off("participant-left", handleParticipantLeft);
       socket.off("appointment-message", handleChatMessage);
@@ -922,35 +1571,29 @@ export default function VideoCall() {
       socket.off("appointment-updated", handleApptUpdated);
       socket.off("new-prescription", handleNewPrescription);
       socket.off("room-access-denied", handleRoomDenied);
+      socket.off("duplicate-session", handleDuplicateSession);
       pc.ontrack = null;
       pc.onicecandidate = null;
       pc.onconnectionstatechange = null;
       pc.oniceconnectionstatechange = null;
       pc.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current?.getTracks().forEach((t) => {
+        t.onended = null;
+        t.stop();
+      });
+      screenStreamRef.current = null;
       pendingRemoteCandidatesRef.current = [];
       joinedSocketIdRef.current = "";
+      peerJoinedRef.current = false;
+      ignoreOfferRef.current = false;
+      screenSharingRef.current = false;
+      screenShareStartInProgressRef.current = false;
+      screenShareStopInProgressRef.current = false;
       clearInterval(callTimerRef.current);
+      stopStatsCollection();
     };
-  }, [appt, canJoinConsultation, appointmentId, assignStreams, isDoctor, doctorId, userId]);
-
-  // ── Auto-start: patient sends offer when both sides ready ─────────
-  useEffect(() => {
-    if (!peerJoined || !isReady || inCall || isDoctor) return;
-    const pc = pcRef.current;
-    if (!pc || inCallRef.current) return;
-
-    (async () => {
-      try {
-        setConnectionState("connecting");
-        const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-        await pc.setLocalDescription(offer);
-        socket.emit("video-offer", { appointmentId, offer });
-        setInCall(true);
-        inCallRef.current = true;
-      } catch (err) { console.error("Auto-start error:", err); }
-    })();
-  }, [peerJoined, isReady, inCall, isDoctor, appointmentId]);
+  }, [appt, canJoinConsultation, appointmentId, assignStreams, playAssignedVideos, isDoctor, attachLocalMediaStream, emitOnlineAndJoinRoom, logVideoEvent, stopStatsCollection]);
 
   // ── Call timer ────────────────────────────────────────────────────
   useEffect(() => {
@@ -978,61 +1621,147 @@ export default function VideoCall() {
 
   // ── Controls ──────────────────────────────────────────────────────
   const toggleMute = useCallback(() => {
-    localStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = !t.enabled; });
-    setIsMuted((p) => !p);
+    const next = !isMutedRef.current;
+    isMutedRef.current = next;
+    localStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = !next; });
+    setIsMuted(next);
   }, []);
 
   const toggleCamera = useCallback(() => {
-    localStreamRef.current?.getVideoTracks().forEach((t) => { t.enabled = !t.enabled; });
-    setIsCamOff((p) => !p);
+    const next = !isCamOffRef.current;
+    isCamOffRef.current = next;
+    localStreamRef.current?.getVideoTracks().forEach((t) => { t.enabled = !next; });
+    setIsCamOff(next);
   }, []);
 
-  const toggleScreenShare = useCallback(async () => {
+  const getVideoSender = useCallback((pc) => {
+    return getSenderForKind(pc, "video");
+  }, []);
+
+  const restoreCameraAfterScreenShare = useCallback(async () => {
     const pc = pcRef.current;
     if (!pc) return;
 
-    if (isScreenSharing) {
-      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-      screenStreamRef.current = null;
-      const camTrack = localStreamRef.current?.getVideoTracks()[0];
+    const camTrack = localStreamRef.current?.getVideoTracks()[0] || null;
+    const sender = getVideoSender(pc);
+
+    if (camTrack) {
+      setTrackHint(camTrack, "detail");
+    }
+
+    if (sender) {
+      await sender.replaceTrack(camTrack);
       if (camTrack) {
-        setTrackHint(camTrack, "detail");
-        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-        if (sender) {
-          await sender.replaceTrack(camTrack);
-          await tuneSenderQuality(sender, {
-            maxBitrate: BITRATE_PROFILE.cameraVideo,
-            maxFramerate: 30,
-            maintainResolution: true,
-          });
-        }
-      }
-      assignStreams(isSwappedRef.current);
-      setIsScreenSharing(false);
-    } else {
-      try {
-        const screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-        screenStreamRef.current = screen;
-        const screenTrack = screen.getVideoTracks()[0];
-        setTrackHint(screenTrack, "detail");
-        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-        if (sender) {
-          await sender.replaceTrack(screenTrack);
-          await tuneSenderQuality(sender, {
-            maxBitrate: BITRATE_PROFILE.screenShareVideo,
-            maxFramerate: 30,
-            maintainResolution: true,
-          });
-        }
-        // Show screen in pip (local position)
-        if (pipVideoRef.current) pipVideoRef.current.srcObject = screen;
-        screenTrack.onended = () => toggleScreenShare();
-        setIsScreenSharing(true);
-      } catch (err) {
-        if (err.name !== "NotAllowedError") console.error("Screen share error:", err);
+        await tuneSenderQuality(sender, {
+          maxBitrate: BITRATE_PROFILE.cameraVideo,
+          maxFramerate: 30,
+          maintainResolution: true,
+        });
       }
     }
-  }, [isScreenSharing, assignStreams]);
+
+    assignStreams(isSwappedRef.current);
+  }, [assignStreams, getVideoSender]);
+
+  const stopScreenShare = useCallback(async ({ stopTracks = true } = {}) => {
+    if (screenShareStopInProgressRef.current) return;
+    screenShareStopInProgressRef.current = true;
+
+    const screenStream = screenStreamRef.current;
+    screenStreamRef.current = null;
+
+    try {
+      if (screenStream) {
+        screenStream.getTracks().forEach((track) => {
+          track.onended = null;
+          if (stopTracks && track.readyState !== "ended") track.stop();
+        });
+      }
+      await restoreCameraAfterScreenShare();
+      logVideoEvent("screen_share_stopped", { stopTracks });
+    } catch (err) {
+      console.error("Camera restore after screen share failed:", err);
+      logVideoEvent("screen_share_restore_failed", { message: err.message });
+      showInlineMessage("Screen sharing stopped, but camera could not be restored. Toggle the camera or rejoin the call.");
+    } finally {
+      screenSharingRef.current = false;
+      setIsScreenSharing(false);
+      screenShareStartInProgressRef.current = false;
+      screenShareStopInProgressRef.current = false;
+    }
+  }, [logVideoEvent, restoreCameraAfterScreenShare, showInlineMessage]);
+
+  const startScreenShare = useCallback(async () => {
+    const pc = pcRef.current;
+    if (!pc || screenSharingRef.current || screenShareStartInProgressRef.current || screenShareStopInProgressRef.current) return;
+
+    if (!canUseScreenShare()) {
+      showInlineMessage("Screen sharing is not supported on this browser or device.");
+      return;
+    }
+
+    const sender = getVideoSender(pc);
+    if (!sender) {
+      showInlineMessage("Screen sharing requires an active video sender. Enable camera first, then try again.");
+      return;
+    }
+
+    let screen = null;
+    screenShareStartInProgressRef.current = true;
+    try {
+      screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      const screenTrack = screen.getVideoTracks()[0];
+      if (!screenTrack) {
+        screen.getTracks().forEach((track) => track.stop());
+        showInlineMessage("No screen video track was shared by the browser.");
+        return;
+      }
+      setTrackHint(screenTrack, "detail");
+      await sender.replaceTrack(screenTrack);
+      await tuneSenderQuality(sender, {
+        maxBitrate: BITRATE_PROFILE.screenShareVideo,
+        maxFramerate: 30,
+        maintainResolution: true,
+      });
+
+      screenStreamRef.current = screen;
+      screenSharingRef.current = true;
+      setIsScreenSharing(true);
+      if (pipVideoRef.current) pipVideoRef.current.srcObject = screen;
+      logVideoEvent("screen_share_started", {
+        displaySurface: screenTrack.getSettings?.().displaySurface || "unknown",
+      });
+
+      screenTrack.onended = () => {
+        void stopScreenShare({ stopTracks: false });
+      };
+    } catch (err) {
+      screen?.getTracks().forEach((track) => {
+        track.onended = null;
+        if (track.readyState !== "ended") track.stop();
+      });
+      try {
+        await restoreCameraAfterScreenShare();
+      } catch (restoreErr) {
+        console.error("Camera restore after failed screen share start failed:", restoreErr);
+      }
+      if (err.name !== "NotAllowedError") {
+        console.error("Screen share error:", err);
+        logVideoEvent("screen_share_failed", { name: err.name, message: err.message });
+        showInlineMessage("Screen sharing could not be started on this device.");
+      }
+    } finally {
+      screenShareStartInProgressRef.current = false;
+    }
+  }, [getVideoSender, logVideoEvent, restoreCameraAfterScreenShare, showInlineMessage, stopScreenShare]);
+
+  const toggleScreenShare = useCallback(() => {
+    if (screenSharingRef.current) {
+      void stopScreenShare();
+      return;
+    }
+    void startScreenShare();
+  }, [startScreenShare, stopScreenShare]);
 
   const toggleSwap = useCallback(() => {
     setIsSwapped((prev) => {
@@ -1071,27 +1800,91 @@ export default function VideoCall() {
     try {
       if (document.fullscreenElement) {
         await document.exitFullscreen();
-      } else {
+      } else if (pageEl.requestFullscreen) {
         await pageEl.requestFullscreen();
+      } else if (isIPhoneSafari()) {
+        showInlineMessage("Full screen is not available for this call layout on iPhone Safari.");
+      } else {
+        showInlineMessage("Full screen is not supported by this browser.");
       }
     } catch (err) {
       console.error("Fullscreen toggle failed:", err);
+      logVideoEvent("fullscreen_failed", { message: err.message });
+      showInlineMessage("Full screen could not be started on this device.");
     }
-  }, []);
+  }, [logVideoEvent, showInlineMessage]);
 
-  const endCall = useCallback(async () => {
+  const leaveCall = useCallback(() => {
     if (completing) return;
+    setEndCallConfirm(false);
+    performCleanup();
+    navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", { replace: true });
+  }, [completing, isDoctor, performCleanup, navigate]);
+
+  const completeAppointment = useCallback(async () => {
+    if (!isDoctor || completing) return;
     setEndCallConfirm(false);
     setCompleting(true);
     try {
+      if (["assigned", "confirmed"].includes(appt?.status)) {
+        await api.put(`/api/appointments/${appointmentId}/complete`);
+      }
       performCleanup();
-      navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", { replace: true });
+      navigate("/doctor-dashboard/patients", { replace: true });
     } catch (err) {
       setCompleting(false);
-      setInlineError(err.response?.data?.msg || "Failed to end call. Please try again.");
+      setInlineError(err.response?.data?.msg || "Failed to complete appointment. Please try again.");
       setTimeout(() => setInlineError(""), 5000);
     }
-  }, [completing, isDoctor, performCleanup, navigate]);
+  }, [completing, isDoctor, appt?.status, appointmentId, performCleanup, navigate]);
+
+  const retryMediaPermissions = useCallback(async () => {
+    if (retryingMedia) return;
+    const pc = pcRef.current;
+    if (!pc || pc.signalingState === "closed") {
+      setCamError(true);
+      setCamErrorReason("The call connection is no longer active. Rejoin the consultation and try again.");
+      return;
+    }
+
+    setRetryingMedia(true);
+    setCamError(false);
+    setDeviceCheck((prev) => ({ ...prev, status: "checking" }));
+
+    try {
+      const summary = await getDeviceCheckSummary();
+      setDeviceCheck({ ...summary, status: "checking" });
+      logVideoEvent("media_retry_started", summary);
+
+      const stream = await getConsultationMediaStream();
+      await attachLocalMediaStream(stream, pc);
+
+      setIsReady(true);
+      isReadyRef.current = true;
+      setCamError(false);
+      setCamErrorReason("");
+      setDeviceCheck((prev) => ({ ...prev, status: "ready" }));
+      logVideoEvent("media_retry_succeeded", {
+        audioTracks: stream.getAudioTracks().length,
+        videoTracks: stream.getVideoTracks().length,
+      });
+
+      emitOnlineAndJoinRoom();
+
+      if (pc.signalingState === "have-remote-offer") {
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("video-answer", { appointmentId, answer: pc.localDescription });
+      }
+    } catch (err) {
+      setCamError(true);
+      setCamErrorReason(mediaErrorMessage(err));
+      setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
+      logVideoEvent("media_retry_failed", { name: err.name, message: err.message });
+    } finally {
+      setRetryingMedia(false);
+    }
+  }, [appointmentId, attachLocalMediaStream, emitOnlineAndJoinRoom, logVideoEvent, retryingMedia]);
 
   const handleRxSaved = useCallback(() => {
     setShowRxModal(false);
@@ -1252,7 +2045,7 @@ export default function VideoCall() {
     return (
       <div className="hc-vc__gate">
         <div className="hc-vc__gate-spinner" />
-        <p>Loading appointment…</p>
+        <p>Loading appointment...</p>
       </div>
     );
   }
@@ -1300,6 +2093,7 @@ export default function VideoCall() {
   const pipStyle = pipPos.x !== null
     ? { position: "fixed", left: `${pipPos.x}px`, top: `${pipPos.y}px`, right: "auto", bottom: "auto" }
     : {};
+  const screenShareSupported = canUseScreenShare();
 
   // ── Main call UI ──────────────────────────────────────────────────
   return (
@@ -1372,24 +2166,47 @@ export default function VideoCall() {
               <FiPhoneOff style={{ color: "#ef4444" }} />
             </div>
             <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#f1f5f9" }}>
-              {isDoctor ? "End Consultation?" : "Leave Call?"}
+              {isDoctor ? "Leave or Complete?" : "Leave Call?"}
             </h3>
             <p style={{ margin: "0 0 24px", fontSize: 13, color: "#94a3b8" }}>
               {isDoctor
-                ? "This will end the video call. The appointment status will remain unchanged."
+                ? "Leave only exits the video call. Complete Appointment will mark the consultation complete."
                 : "You will leave the video call. The doctor will be notified."}
             </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
               <button
                 onClick={() => setEndCallConfirm(false)}
                 style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.07)", color: "#e2e8f0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
               >Stay</button>
               <button
-                onClick={endCall}
+                onClick={leaveCall}
                 style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >{isDoctor ? "End Call" : "Leave Call"}</button>
+              >Leave Call</button>
+              {isDoctor && (
+                <button
+                  onClick={completeAppointment}
+                  disabled={completing}
+                  style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontSize: 13, fontWeight: 700, cursor: completing ? "not-allowed" : "pointer", opacity: completing ? 0.7 : 1 }}
+                >{completing ? "Completing..." : "Complete Appointment"}</button>
+              )}
             </div>
           </div>
+        </div>
+      )}
+
+      {deviceCheck.status !== "idle" && deviceCheck.status !== "ready" && (
+        <div style={{
+          position: "fixed", top: inlineError ? 72 : 20, left: "50%", transform: "translateX(-50%)",
+          zIndex: 9999, background: deviceCheck.status === "failed" ? "#fef2f2" : "#eff6ff",
+          border: `1px solid ${deviceCheck.status === "failed" ? "#fca5a5" : "#93c5fd"}`,
+          color: deviceCheck.status === "failed" ? "#dc2626" : "#1d4ed8",
+          borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 600,
+          display: "flex", alignItems: "center", gap: 8,
+        }}>
+          {deviceCheck.status === "checking" ? <FiRefreshCw /> : <FiAlertTriangle />}
+          {deviceCheck.status === "checking"
+            ? "Checking camera and microphone..."
+            : "Device check failed. Review browser permissions and retry."}
         </div>
       )}
 
@@ -1436,7 +2253,7 @@ export default function VideoCall() {
             <div className="hc-vc__completed-icon"><FiCheckCircle /></div>
             <h2>Consultation Completed</h2>
             <p>Your doctor has marked this session as complete.</p>
-            <p className="hc-vc__completed-sub">Redirecting to your dashboard…</p>
+            <p className="hc-vc__completed-sub">Redirecting to your dashboard...</p>
             <div className="hc-vc__completed-spinner" />
           </div>
         </div>
@@ -1491,7 +2308,7 @@ export default function VideoCall() {
                   </div>
                 </div>
                 <p className="hc-vc__waiting-title">
-                  {peerJoined ? "Establishing secure connection…" : `Waiting for ${isDoctor ? "patient" : "doctor"}…`}
+                  {peerJoined ? "Establishing secure connection..." : `Waiting for ${isDoctor ? "patient" : "doctor"}...`}
                 </p>
                 <p className="hc-vc__waiting-sub">
                   {peerJoined
@@ -1499,6 +2316,16 @@ export default function VideoCall() {
                     : "Share the appointment link with the other person to begin."}
                 </p>
               </div>
+            )}
+
+            {playbackBlocked && (
+              <button
+                type="button"
+                className="hc-vc__playback-unblock"
+                onClick={() => void playAssignedVideos()}
+              >
+                Tap to resume audio/video
+              </button>
             )}
 
             {/* Peer left notice */}
@@ -1558,7 +2385,7 @@ export default function VideoCall() {
           {peerJoined && !isRemoteConnected && (
             <div className="hc-vc__join-toast">
               <span className="hc-vc__join-dot" />
-              {isDoctor ? "Patient" : "Doctor"} joined · connecting…
+              {isDoctor ? "Patient" : "Doctor"} joined - connecting...
             </div>
           )}
         </div>
@@ -1639,7 +2466,7 @@ export default function VideoCall() {
               <input
                 className="hc-vc__chat-input"
                 type="text"
-                placeholder="Type a message…"
+                placeholder="Type a message..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={handleChatKey}
@@ -1730,8 +2557,14 @@ export default function VideoCall() {
           <button
             className={`hc-vc__btn ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
             onClick={toggleScreenShare}
-            disabled={!isReady}
-            title={isScreenSharing ? "Stop sharing" : "Share screen"}
+            disabled={!isReady || (!isScreenSharing && !screenShareSupported)}
+            title={
+              !screenShareSupported
+                ? "Screen sharing is not supported on this browser"
+                : isScreenSharing
+                  ? "Stop sharing"
+                  : "Share screen"
+            }
           >
             <span className="hc-vc__btn-icon"><FiMonitor /></span>
             <span className="hc-vc__btn-label">{isScreenSharing ? "Stop" : "Share"}</span>
@@ -1800,43 +2633,28 @@ export default function VideoCall() {
             className="hc-vc__btn hc-vc__btn--end"
             onClick={() => setEndCallConfirm(true)}
             disabled={completing}
-            title="End call"
+            title={isDoctor ? "Leave or complete appointment" : "Leave call"}
           >
             <span className="hc-vc__btn-icon">{completing ? <FiRefreshCw /> : <FiPhoneOff />}</span>
-            <span className="hc-vc__btn-label">{completing ? "Ending..." : "End Call"}</span>
+            <span className="hc-vc__btn-label">{completing ? "Completing..." : "Leave Call"}</span>
           </button>
         </div>
       </div>
       {/* Cam error banner */}
       {camError && (
         <div className="hc-vc__error-bar">
-          <FiAlertTriangle /> {camErrorReason || "Camera or microphone access denied. Check browser permissions and reload."}
+          <FiAlertTriangle /> {camErrorReason || "Camera or microphone access denied. Check browser permissions and retry."}
           <button
-            onClick={async () => {
-              setCamError(false);
-              try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                localStreamRef.current = stream;
-                if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
-                stream.getTracks().forEach((track) => {
-                  const sender = pcRef.current?.getSenders().find(s => s.track?.kind === track.kind);
-                  if (sender) sender.replaceTrack(track);
-                  else pcRef.current?.addTrack(track, stream);
-                });
-                setIsReady(true);
-                setCamErrorReason("");
-              } catch (e) {
-                setCamError(true);
-                setCamErrorReason(mediaErrorMessage(e));
-              }
-            }}
+            onClick={retryMediaPermissions}
+            disabled={retryingMedia}
             style={{
               marginLeft: 12, padding: "4px 12px", borderRadius: 6,
               background: "#fff", color: "#dc2626", border: "none",
-              fontWeight: 700, cursor: "pointer"
+              fontWeight: 700, cursor: retryingMedia ? "not-allowed" : "pointer",
+              opacity: retryingMedia ? 0.7 : 1,
             }}
           >
-            Retry
+            {retryingMedia ? "Retrying..." : "Retry"}
           </button>
         </div>
       )}

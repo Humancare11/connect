@@ -40,6 +40,17 @@ function EyeIcon({ open }) {
 
 const PASSWORD_REQUIREMENTS =
   "8+ chars, uppercase, lowercase, number & symbol.";
+const VISUALLY_HIDDEN = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
 
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
@@ -72,7 +83,13 @@ function GoogleIcon() {
 }
 
 /* ─── 6-digit OTP input ──────────────────────────────────────── */
-function OTPInput({ value, onChange, boxClass = "otp-box" }) {
+function OTPInput({
+  value,
+  onChange,
+  boxClass = "otp-box",
+  idPrefix = "doctor-otp",
+  namePrefix = "doctorOtp",
+}) {
   const inputs = useRef([]);
   const digits = (value + "      ").slice(0, 6).split("");
 
@@ -111,6 +128,9 @@ function OTPInput({ value, onChange, boxClass = "otp-box" }) {
     <div className="otp-boxes">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <input
+          id={`${idPrefix}-${i + 1}`}
+          name={`${namePrefix}${i + 1}`}
+          aria-label={`OTP digit ${i + 1}`}
           key={i}
           ref={(el) => {
             inputs.current[i] = el;
@@ -474,6 +494,8 @@ export default function DoctorAuthPage() {
       >
         <form onSubmit={handleOTPSubmit} style={{ width: "100%" }}>
           <OTPInput
+            idPrefix="doctor-register-otp"
+            namePrefix="doctorRegisterOtp"
             value={otpValue}
             onChange={(v) => {
               setOtpValue(v);
@@ -516,7 +538,12 @@ export default function DoctorAuthPage() {
         onBack={() => goTo("auth")}
       >
         <form onSubmit={handleForgotSend} style={{ width: "100%" }}>
+          <label htmlFor="doctor-forgot-email" style={VISUALLY_HIDDEN}>
+            Registered Email
+          </label>
           <input
+            id="doctor-forgot-email"
+            name="doctorForgotEmail"
             type="email"
             placeholder="Your registered email"
             value={forgotEmail}
@@ -551,6 +578,8 @@ export default function DoctorAuthPage() {
       >
         <form onSubmit={handleForgotVerify} style={{ width: "100%" }}>
           <OTPInput
+            idPrefix="doctor-forgot-otp"
+            namePrefix="doctorForgotOtp"
             value={otpValue}
             onChange={(v) => {
               setOtpValue(v);
@@ -594,7 +623,12 @@ export default function DoctorAuthPage() {
       >
         <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
           <div className="password-wrapper">
+            <label htmlFor="doctor-new-password" style={VISUALLY_HIDDEN}>
+              New Password
+            </label>
             <input
+              id="doctor-new-password"
+              name="doctorNewPassword"
               type={showPasswords.newPass ? "text" : "password"}
               placeholder="Example: MySecurePass@123!"
               value={newPass}
@@ -616,7 +650,12 @@ export default function DoctorAuthPage() {
             </button>
           </div>
           <div className="password-wrapper">
+            <label htmlFor="doctor-confirm-new-password" style={VISUALLY_HIDDEN}>
+              Confirm New Password
+            </label>
             <input
+              id="doctor-confirm-new-password"
+              name="doctorConfirmNewPassword"
               type={showPasswords.confirmPass ? "text" : "password"}
               placeholder="Example: MySecurePass@123!"
               value={confirmPass}
@@ -683,7 +722,12 @@ export default function DoctorAuthPage() {
               }}
               required
             /> */}
+            <label htmlFor="doctor-register-name" style={VISUALLY_HIDDEN}>
+              Doctor Full Name
+            </label>
             <input
+              id="doctor-register-name"
+              name="doctorRegisterName"
               type="text"
               placeholder="Dr. Full Name"
               value={registerForm.name}
@@ -695,7 +739,12 @@ export default function DoctorAuthPage() {
               required
             />
 
+            <label htmlFor="doctor-register-email" style={VISUALLY_HIDDEN}>
+              Email Address
+            </label>
             <input
+              id="doctor-register-email"
+              name="doctorRegisterEmail"
               type="email"
               placeholder="doctor@example.com"
               value={registerForm.email}
@@ -707,7 +756,12 @@ export default function DoctorAuthPage() {
             />
 
             <div className="password-wrapper">
+              <label htmlFor="doctor-register-password" style={VISUALLY_HIDDEN}>
+                Password
+              </label>
               <input
+                id="doctor-register-password"
+                name="doctorRegisterPassword"
                 type={showPasswords.register ? "text" : "password"}
                 placeholder="Example: MySecurePass@123!"
                 value={registerForm.password}
@@ -731,7 +785,15 @@ export default function DoctorAuthPage() {
             <p className="password-requirements">{PASSWORD_REQUIREMENTS}</p>
 
             <div className="password-wrapper">
+              <label
+                htmlFor="doctor-register-confirm-password"
+                style={VISUALLY_HIDDEN}
+              >
+                Confirm Password
+              </label>
               <input
+                id="doctor-register-confirm-password"
+                name="doctorRegisterConfirmPassword"
                 type={showPasswords.confirm ? "text" : "password"}
                 placeholder="Example: MySecurePass@123!"
                 value={registerForm.confirmPassword}
@@ -814,7 +876,12 @@ export default function DoctorAuthPage() {
             {formError && <p className="form-error">{formError}</p>}
             <span>or use your email</span>
 
+            <label htmlFor="doctor-login-email" style={VISUALLY_HIDDEN}>
+              Email Address
+            </label>
             <input
+              id="doctor-login-email"
+              name="doctorLoginEmail"
               type="email"
               placeholder="doctor@example.com"
               value={loginForm.email}
@@ -826,7 +893,12 @@ export default function DoctorAuthPage() {
             />
 
             <div className="password-wrapper">
+              <label htmlFor="doctor-login-password" style={VISUALLY_HIDDEN}>
+                Password
+              </label>
               <input
+                id="doctor-login-password"
+                name="doctorLoginPassword"
                 type={showPasswords.login ? "text" : "password"}
                 placeholder="Password"
                 value={loginForm.password}

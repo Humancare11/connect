@@ -16,6 +16,17 @@ const MONTHS = [
   "December",
 ];
 const DAY_HEADERS = ["S", "M", "T", "W", "T", "F", "S"];
+const VISUALLY_HIDDEN = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
 
 function buildCalendar(year, month) {
   const first = new Date(year, month, 1).getDay();
@@ -38,6 +49,8 @@ function buildCalendar(year, month) {
 }
 
 export default function DatePickerField({
+  id,
+  name,
   value,
   onChange,
   min = "1880-01-01",
@@ -219,6 +232,7 @@ export default function DatePickerField({
       <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
         {/* Trigger */}
         <div
+          id={id}
           onClick={handleToggle}
           style={{
             display: "flex",
@@ -358,7 +372,14 @@ export default function DatePickerField({
                 </button>
 
                 {/* Month dropdown */}
+                {id && (
+                  <label htmlFor={`${id}-month`} style={VISUALLY_HIDDEN}>
+                    Month
+                  </label>
+                )}
                 <select
+                  id={id ? `${id}-month` : undefined}
+                  name={name ? `${name}Month` : undefined}
                   className="dp-hdr-sel"
                   style={{ flex: "1.4" }}
                   value={viewMonth}
@@ -372,7 +393,14 @@ export default function DatePickerField({
                 </select>
 
                 {/* Year dropdown */}
+                {id && (
+                  <label htmlFor={`${id}-year`} style={VISUALLY_HIDDEN}>
+                    Year
+                  </label>
+                )}
                 <select
+                  id={id ? `${id}-year` : undefined}
+                  name={name ? `${name}Year` : undefined}
                   className="dp-hdr-sel"
                   style={{ flex: "1" }}
                   value={viewYear}

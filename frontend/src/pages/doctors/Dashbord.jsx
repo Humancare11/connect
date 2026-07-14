@@ -167,7 +167,7 @@ export default function DoctorDashboard() {
       {/* ── Header ── */}
       <div className="hc-dash__header">
         <div className="hc-dash__header-text">
-          <p className="hc-dash__eyebrow">HumaniCare</p>
+          <p className="hc-dash__eyebrow">Humancare</p>
           {/* <h1 className="hc-dash__title">
             {getGreeting()}, Dr. {doctor.name?.split(" ")[0] || "Doctor"} 👋
           </h1> */}

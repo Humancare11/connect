@@ -162,7 +162,7 @@ export default function PrivacyPolicy() {
           <SectionCard icon={ShieldCheck} title="1. Introduction">
             <p style={{ color: "#64748b", lineHeight: 1.8 }}>
               Humancare Connect, Inc. ("Humancare Connect," "we," "us," or
-              "our") operates the telehealth platform at humancareconeect.co
+              "our") operates the telehealth platform at humancareconnect.co
               and its associated mobile and web applications (collectively, the
               "Platform").
             </p>
@@ -443,14 +443,14 @@ export default function PrivacyPolicy() {
                     Email
                   </p>
                   <a
-                    href="mailto:support@humancareconnect.com"
+                    href="mailto:support@humancareconnect.co"
                     style={{
                       fontSize: "13px",
                       color: "#2563eb",
                       textDecoration: "none",
                     }}
                   >
-                    support@humancareconnect.com
+                    support@humancareconnect.co
                   </a>
                 </div>
               </div>

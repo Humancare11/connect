@@ -12,6 +12,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard",
         label: "Dashboard",
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -26,6 +27,11 @@ const NAV_ITEMS = [
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
             <rect x="14" y="14" width="7" height="7" rx="1" />
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
           </svg>
         ),
       },
@@ -38,6 +44,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/our-doctors",
         label: "Our Doctors",
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -48,6 +55,9 @@ const NAV_ITEMS = [
             strokeLinecap="round"
             strokeLinejoin="round"
           >
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
             <path d="M12 11v4M10 13h4" />
@@ -58,6 +68,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/manage-doctors",
         label: "Manage Doctors",
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -72,6 +83,12 @@ const NAV_ITEMS = [
             <circle cx="9" cy="7" r="4" />
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
           </svg>
         ),
       },
@@ -95,6 +112,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/manage-users",
         label: "Manage Users",
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -109,6 +127,12 @@ const NAV_ITEMS = [
             <circle cx="9" cy="7" r="4" />
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
           </svg>
         ),
       },
@@ -116,6 +140,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/appointments",
         label: "Appointments",
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -150,6 +175,11 @@ const NAV_ITEMS = [
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
         ),
@@ -158,8 +188,9 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/payment-links",
         paymentAdminPath: "/payment-admin/payment-links",
         label: "Payment Links",
-        roles: ["superadmin", "paymentadmin"],
+        roles: ["paymentadmin"],
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -170,6 +201,9 @@ const NAV_ITEMS = [
             strokeLinecap="round"
             strokeLinejoin="round"
           >
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             <path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L11 4.93" />
             <path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L13 19.07" />
           </svg>
@@ -179,8 +213,9 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/payment-link-history",
         paymentAdminPath: "/payment-admin/payment-history",
         label: "Payment History",
-        roles: ["superadmin", "paymentadmin"],
+        roles: ["paymentadmin"],
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -191,6 +226,9 @@ const NAV_ITEMS = [
             strokeLinecap="round"
             strokeLinejoin="round"
           >
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             <path d="M3 3v18h18" />
             <path d="M7 14l3-3 3 2 5-6" />
           </svg>
@@ -205,6 +243,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/qna",
         label: "Medical Q&A",
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -215,6 +254,9 @@ const NAV_ITEMS = [
             strokeLinecap="round"
             strokeLinejoin="round"
           >
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             <path d="M20 2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6l4 4 4-4h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
             <path d="M9 9h6M9 12h4" />
           </svg>
@@ -224,6 +266,7 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/tickets",
         label: "Support Tickets",
         icon: (
+<<<<<<< HEAD
           <svg
             width="17"
             height="17"
@@ -237,6 +280,10 @@ const NAV_ITEMS = [
             <path d="M15 5v2" />
             <path d="M15 11v2" />
             <path d="M15 17v2" />
+=======
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 5v2" /><path d="M15 11v2" /><path d="M15 17v2" />
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2z" />
           </svg>
         ),
@@ -279,10 +326,12 @@ export default function AdminLayout({ children }) {
     : "AD";
 
   const EXTRA_TITLES = {
+<<<<<<< HEAD
     "/superadmin-dashboard": "Manage Admins",
     "/admin-dashboard/audit-logs": "Audit Logs",
+=======
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
     "/payment-admin/payment-links": "Payment Links",
-    "/superadmin-dashboard/healthcare-management": "Healthcare Management",
   };
   const pageTitle =
     NAV_ITEMS.flatMap((s) => s.items).find(
@@ -293,6 +342,7 @@ export default function AdminLayout({ children }) {
     EXTRA_TITLES[location.pathname] ||
     "Admin";
 
+<<<<<<< HEAD
   const visibleNavSections = (
     user.role === "paymentadmin"
       ? NAV_ITEMS.map((section) => ({
@@ -302,6 +352,14 @@ export default function AdminLayout({ children }) {
           ),
         })).filter((section) => section.items.length > 0)
       : NAV_ITEMS
+=======
+  const visibleNavSections = (user.role === "paymentadmin"
+    ? NAV_ITEMS.map(section => ({
+      section: "Payment Links",
+      items: section.items.filter(item => item.roles?.includes("paymentadmin")),
+    })).filter(section => section.items.length > 0)
+    : NAV_ITEMS
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
   )
     .map((section) => ({
       ...section,
@@ -330,7 +388,7 @@ export default function AdminLayout({ children }) {
       <aside className={`ad-sidebar${sideOpen ? " open" : ""}`}>
         {/* <div className="ad-brand">
           <div className="ad-brand-mark">H</div>
-          <span className="ad-brand-name">HumaniCare</span>
+          <span className="ad-brand-name">Humancare</span>
         </div> */}
 
         <div className="ad-profile">
@@ -351,11 +409,16 @@ export default function AdminLayout({ children }) {
           {visibleNavSections.map((section) => (
             <div key={section.section}>
               <div className="ad-nav-section-label">{section.section}</div>
+<<<<<<< HEAD
               {section.items.map((item) => {
                 const target =
                   user.role === "paymentadmin" && item.paymentAdminPath
                     ? item.paymentAdminPath
                     : item.path;
+=======
+              {section.items.map(item => {
+                const target = user.role === "paymentadmin" && item.paymentAdminPath ? item.paymentAdminPath : item.path;
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
                 const active = location.pathname === target;
                 return (
                   <Link
@@ -371,6 +434,7 @@ export default function AdminLayout({ children }) {
               })}
             </div>
           ))}
+<<<<<<< HEAD
 
           {user.role === "superadmin" && (
             <>
@@ -469,10 +533,13 @@ export default function AdminLayout({ children }) {
               </Link>
             </>
           )}
+=======
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
         </nav>
 
         <div className="ad-sidebar-footer">
           <button className="ad-logout-btn" onClick={logout}>
+<<<<<<< HEAD
             <svg
               width="16"
               height="16"
@@ -483,6 +550,9 @@ export default function AdminLayout({ children }) {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
+=======
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
@@ -507,6 +577,7 @@ export default function AdminLayout({ children }) {
                 padding: 4,
               }}
             >
+<<<<<<< HEAD
               <svg
                 width="20"
                 height="20"
@@ -515,6 +586,9 @@ export default function AdminLayout({ children }) {
                 stroke="currentColor"
                 strokeWidth="2"
               >
+=======
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="12" x2="21" y2="12" />
                 <line x1="3" y1="18" x2="21" y2="18" />

@@ -31,7 +31,6 @@ export default ({ mode }) => {
             if (id.includes('gsap') || id.includes('framer-motion') || id.includes('swiper') || id.includes('lenis')) {
               return 'vendor-animation'
             }
-            if (id.includes('jspdf') || id.includes('html2canvas')) return 'vendor-pdf'
             if (id.includes('@stripe') || id.includes('@paypal')) return 'vendor-payments'
             return undefined
           },

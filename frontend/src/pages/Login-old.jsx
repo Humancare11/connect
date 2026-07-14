@@ -303,7 +303,7 @@ export default function AuthPage() {
     setFormError("");
     setFormSuccess("");
   };
-  const saveUserToken = () => {};
+  const saveUserToken = () => { };
 
   const startTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -1067,7 +1067,7 @@ export default function AuthPage() {
           <form onSubmit={handleRegisterSubmit} className="register-form">
             <h1>Create Account</h1>
             <p className="form-subtitle">
-              Join Humanicare and take charge of your health
+              Join Humancare and take charge of your health
             </p>
 
             <div className="social-links">

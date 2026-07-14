@@ -1,11 +1,21 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./MyRecords.css";
 import api from "../../api";
 import socket from "../../socket";
 import { useAuth } from "../../context/AuthContext";
-import { PrescriptionSlip, downloadPrescriptionPDF } from "../../components/PrescriptionSlip";
-import { MedicalCertificateSlip, downloadCertificatePDF } from "../../components/MedicalCertificateSlip";
+
+const PrescriptionSlip = lazy(() =>
+  import("../../components/PrescriptionSlip").then((module) => ({
+    default: module.PrescriptionSlip,
+  })),
+);
+
+const MedicalCertificateSlip = lazy(() =>
+  import("../../components/MedicalCertificateSlip").then((module) => ({
+    default: module.MedicalCertificateSlip,
+  })),
+);
 
 function formatDate(d) {
   if (!d) return "—";
@@ -26,6 +36,7 @@ function PrescriptionCard({ rx, patient }) {
     if (!slipRef.current) return;
     setDownloading(true);
     try {
+      const { downloadPrescriptionPDF } = await import("../../components/PrescriptionSlip");
       const name = patient?.name?.replace(/\s+/g, "_") || "patient";
       const date = rx.createdAt ? new Date(rx.createdAt).toISOString().split("T")[0] : "rx";
       await downloadPrescriptionPDF(slipRef.current, `prescription_${name}_${date}.pdf`);
@@ -59,7 +70,9 @@ function PrescriptionCard({ rx, patient }) {
 
       {/* Slip — always in DOM so ref is valid for PDF download */}
       <div className={open ? "mr-slip-wrap" : "mr-slip-offscreen"}>
-        <PrescriptionSlip rx={rx} patient={patient} slipRef={slipRef} />
+        <Suspense fallback={null}>
+          <PrescriptionSlip rx={rx} patient={patient} slipRef={slipRef} />
+        </Suspense>
       </div>
     </div>
   );
@@ -77,6 +90,7 @@ function CertificateCard({ cert, patient }) {
     if (!slipRef.current) return;
     setDownloading(true);
     try {
+      const { downloadCertificatePDF } = await import("../../components/MedicalCertificateSlip");
       const name = patient?.name?.replace(/\s+/g, "_") || "patient";
       const date = cert.issuedDate || (cert.createdAt ? new Date(cert.createdAt).toISOString().split("T")[0] : "cert");
       await downloadCertificatePDF(slipRef.current, `certificate_${name}_${date}.pdf`);
@@ -109,7 +123,9 @@ function CertificateCard({ cert, patient }) {
 
       {/* Slip — always in DOM so ref is valid for PDF download */}
       <div className={open ? "mr-slip-wrap" : "mr-slip-offscreen"}>
-        <MedicalCertificateSlip cert={cert} patient={patient} slipRef={slipRef} />
+        <Suspense fallback={null}>
+          <MedicalCertificateSlip cert={cert} patient={patient} slipRef={slipRef} />
+        </Suspense>
       </div>
     </div>
   );
