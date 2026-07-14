@@ -37,15 +37,7 @@ function normalizeAppointmentTree(tree) {
       id: specialty._id,
       name: specialty.name || "Untitled Specialty",
       icon: specialty.icon || "stethoscope",
-<<<<<<< HEAD
-      description: specialty.description || "",
-      conditions: (Array.isArray(specialty.conditions)
-        ? specialty.conditions
-        : []
-      ).map((condition) => [
-=======
       conditions: (Array.isArray(specialty.conditions) ? specialty.conditions : []).map((condition) => [
->>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
         condition.name || "Untitled Condition",
         condition.icon || "stethoscope",
         condition._id,
@@ -478,17 +470,10 @@ export default function Ab() {
                             </div>
                             <h3>{c.label}</h3>
                             <div className="meta">
-<<<<<<< HEAD
-                              {specialtyCount} specialties - {conditionCount}{" "}
-                              conditions
-                            </div>
-                            <div className="samp">{description}</div>
-=======
-  {specialtyCount} {specialtyCount === 1 ? "specialty" : "specialties"} - {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
-</div>                           <div className="samp">{description}</div>
->>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
+                              {specialtyCount} {specialtyCount === 1 ? "specialty" : "specialties"} - {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
+                            </div>                           <div className="samp">{description}</div>
                             <div className="go">Explore → </div>
-                          </div>
+                          </div >
                         );
                       })
                     ) : (
@@ -499,204 +484,191 @@ export default function Ab() {
                           : treeError || "No categories match."}
                       </div>
                     )}
-                  </div>
-                </div>
+                  </div >
+                </div >
               )}
 
               {/* -- Specialty list -- */}
-              {drillLevel === "spec" && activeCat && (
-                <div className="panel">
-                  <div className="hcc-level-label">
-                    {catNumLabel && <>{catNumLabel} -</>}
-                    <span style={{ fontSize: 20 }}>
-                      <HealthcareIcon name={activeCat.icon} size={20} />
-                    </span>
-                    {activeCat.label}
-                  </div>
-                  <div className="grid">
-                    {activeCat.specialties
-                      .filter((s) => !q || s.name.toLowerCase().includes(q))
-                      .map((s) => {
-                        const specialtyWithCat = {
-                          ...s,
-                          catId: activeCat.id,
-                          catLabel: activeCat.label,
-                        };
-                        return (
-                          <div
-                            key={s.id || s.name}
-                            className="spec"
-                            onClick={(e) =>
-                              handleCardClick(e, () =>
-                                handleOpenSpec(specialtyWithCat),
-                              )
-                            }
-                          >
-                            <div className="ic">
-                              <HealthcareIcon name={s.icon} size={30} />
-                            </div>
-                            <h3>{s.name}</h3>
-<<<<<<< HEAD
-                            <div className="spec-desc">
-                              {s.description || "No description added yet."}
-                            </div>
-                            <div className="spec-footer">
-                              <div className="count">
-                                {s.conditions.length} conditions
-=======
-                            <div className="spec-footer">
-                              <div className="count">
-                                {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
->>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
+              {
+                drillLevel === "spec" && activeCat && (
+                  <div className="panel">
+                    <div className="hcc-level-label">
+                      {catNumLabel && <>{catNumLabel} -</>}
+                      <span style={{ fontSize: 20 }}>
+                        <HealthcareIcon name={activeCat.icon} size={20} />
+                      </span>
+                      {activeCat.label}
+                    </div>
+                    <div className="grid">
+                      {activeCat.specialties
+                        .filter((s) => !q || s.name.toLowerCase().includes(q))
+                        .map((s) => {
+                          const specialtyWithCat = {
+                            ...s,
+                            catId: activeCat.id,
+                            catLabel: activeCat.label,
+                          };
+                          return (
+                            <div
+                              key={s.id || s.name}
+                              className="spec"
+                              onClick={(e) =>
+                                handleCardClick(e, () =>
+                                  handleOpenSpec(specialtyWithCat),
+                                )
+                              }
+                            >
+                              <div className="ic">
+                                <HealthcareIcon name={s.icon} size={30} />
                               </div>
-                              <div className="book-link">Book →</div>
+                              <h3>{s.name}</h3>
+                              <div className="spec-footer">
+                                <div className="count">
+                                  {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+                                </div>
+                                <div className="book-link">Book →</div>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              )}
+                          );
+                        })}
+                    </div>
+                  </div >
+                )
+              }
 
               {/* -- Condition list -- (unchanged) -- */}
-              {drillLevel === "cond" && activeSpec && (
-                <div className="panel">
-                  <div className="hcc-level-label">
-                    <span style={{ fontSize: 20 }}>
-                      <HealthcareIcon name={activeSpec.icon} size={20} />
-                    </span>
-                    {activeSpec.name} - select your condition
-                  </div>
-                  {/* {!activeSpec.priceAvailable && (
+              {
+                drillLevel === "cond" && activeSpec && (
+                  <div className="panel">
+                    <div className="hcc-level-label">
+                      <span style={{ fontSize: 20 }}>
+                        <HealthcareIcon name={activeSpec.icon} size={20} />
+                      </span>
+                      {activeSpec.name} - select your condition
+                    </div>
+                    {/* {!activeSpec.priceAvailable && (
                     <div className="hcc-price-alert">
                       {activeSpec.priceMessage}
                     </div>
                   )} */}
-                  <div className="condgrid">
-                    {drillConditions
-                      .filter(([name]) => !q || name.toLowerCase().includes(q))
-                      .map(([name, icon]) => (
-                        <div
-                          key={name}
-                          className="condcard"
-                          onClick={(e) =>
-                            handleCardClick(e, () =>
-                              handleSelectCond(name, icon, activeSpec),
-                            )
-                          }
-                        >
-                          <div className="condcard-ico">
-                            <HealthcareIcon name={icon} size={23} />
+                    <div className="condgrid">
+                      {drillConditions
+                        .filter(([name]) => !q || name.toLowerCase().includes(q))
+                        .map(([name, icon]) => (
+                          <div
+                            key={name}
+                            className="condcard"
+                            onClick={(e) =>
+                              handleCardClick(e, () =>
+                                handleSelectCond(name, icon, activeSpec),
+                              )
+                            }
+                          >
+                            <div className="condcard-ico">
+                              <HealthcareIcon name={icon} size={23} />
+                            </div>
+                            <div className="condcard-name">{name}</div>
+                            <div className="book-link">Book →</div>
                           </div>
-                          <div className="condcard-name">{name}</div>
-                          <div className="book-link">Book →</div>
+                        ))}
+                      <div
+                        className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
+                        onClick={(e) =>
+                          handleCardClick(e, () =>
+                            handleSelectCond(
+                              "General Consultation",
+                              "stethoscope",
+                              activeSpec,
+                            ),
+                          )
+                        }
+                      >
+                        <div className="condcard-ico">
+                          <HealthcareIcon name="stethoscope" size={23} />
                         </div>
-                      ))}
-                    <div
-                      className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
-                      onClick={(e) =>
-                        handleCardClick(e, () =>
-                          handleSelectCond(
-                            "General Consultation",
-                            "stethoscope",
-                            activeSpec,
-                          ),
-                        )
-                      }
-                    >
-                      <div className="condcard-ico">
-                        <HealthcareIcon name="stethoscope" size={23} />
-                      </div>
-                      <div className="condcard-body">
-                        <div className="condcard-name">Other / not listed</div>
-                        <div className="condcard-desc">{activeSpec.name}</div>
+                        <div className="condcard-body">
+                          <div className="condcard-name">Other / not listed</div>
+                          <div className="condcard-desc">{activeSpec.name}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )
+              }
             </>
           )}
 
           {/* -- FLAT BROWSE: Specialties -- */}
-          {browseTab === "spec" && (
-            <div className="panel">
-              <div className="grid">
-                {visibleFlatSpecialties.length ? (
-                  visibleFlatSpecialties.map((s) => (
-                    <div
-                      key={(s.id || s.name) + s.catId}
-                      className="spec"
-                      onClick={(e) =>
-                        handleCardClick(e, () => handleFlatSpecClick(s))
-                      }
-                    >
-                      <div className="ic">
-                        <HealthcareIcon name={s.icon} size={30} />
-                      </div>
-                      <h3>{s.name}</h3>
-<<<<<<< HEAD
-                      <div className="spec-desc">
-                        {s.description || "No description added yet."}
-                      </div>
-                      <div className="spec-footer">
-                        <div className="count">
-                          {s.conditions.length} conditions
+          {
+            browseTab === "spec" && (
+              <div className="panel">
+                <div className="grid">
+                  {visibleFlatSpecialties.length ? (
+                    visibleFlatSpecialties.map((s) => (
+                      <div
+                        key={(s.id || s.name) + s.catId}
+                        className="spec"
+                        onClick={(e) =>
+                          handleCardClick(e, () => handleFlatSpecClick(s))
+                        }
+                      >
+                        <div className="ic">
+                          <HealthcareIcon name={s.icon} size={30} />
                         </div>
-                        <div className="book-link">Book →</div>
-                      </div>
-=======
-                      <div className="spec-footer">
-                        <div className="count">
-                          {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+                        <h3>{s.name}</h3>
+                        <div className="spec-footer">
+                          <div className="count">
+                            {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+                          </div>
+                          <div className="book-link">Book →</div>
                         </div>
-                        <div className="book-link">Book →</div>
-                      </div>
 
->>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
+                      </div >
+                    ))
+                  ) : (
+                    <div className="empty">
+                      <div className="big">Search</div>No specialties found.
                     </div>
-                  ))
-                ) : (
-                  <div className="empty">
-                    <div className="big">Search</div>No specialties found.
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+                  )
+                  }
+                </div >
+              </div >
+            )}
 
           {/* -- FLAT BROWSE: Conditions -- (unchanged) -- */}
-          {browseTab === "cond" && (
-            <div className="panel">
-              <div className="condgrid">
-                {visibleFlatConditions.length ? (
-                  visibleFlatConditions.map((c, i) => (
-                    <div
-                      key={i}
-                      className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
-                      onClick={(e) =>
-                        handleCardClick(e, () => handleFlatCondClick(c))
-                      }
-                    >
-                      <div className="condcard-ico">
-                        <HealthcareIcon name={c.icon} size={23} />
+          {
+            browseTab === "cond" && (
+              <div className="panel">
+                <div className="condgrid">
+                  {visibleFlatConditions.length ? (
+                    visibleFlatConditions.map((c, i) => (
+                      <div
+                        key={i}
+                        className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
+                        onClick={(e) =>
+                          handleCardClick(e, () => handleFlatCondClick(c))
+                        }
+                      >
+                        <div className="condcard-ico">
+                          <HealthcareIcon name={c.icon} size={23} />
+                        </div>
+                        <div className="condcard-name">{c.name}</div>
+                        {/* <div className="condcard-spec">{c.to}</div> */}
+                        <div className="book-link">Book →</div>
                       </div>
-                      <div className="condcard-name">{c.name}</div>
-                      {/* <div className="condcard-spec">{c.to}</div> */}
-                      <div className="book-link">Book →</div>
+                    ))
+                  ) : (
+                    <div className="empty">
+                      <div className="big">Search</div>No conditions match.
                     </div>
-                  ))
-                ) : (
-                  <div className="empty">
-                    <div className="big">Search</div>No conditions match.
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )
+          }
+        </div >
         {/* /content-card */}
-      </div>
-    </section>
+      </div >
+    </section >
   );
 }

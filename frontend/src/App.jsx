@@ -50,87 +50,171 @@ const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
 // privacy concerns
-const PrivacyConcerns = lazy(() => import("./pages/PrivacyPolicies/PrivacyConcerns"));
-const PatientPrivacyNotice = lazy(() => import("./pages/PrivacyPolicies/PatientPrivacyNotice"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicies/PrivacyPolicy"));
-const ProviderTermsofService = lazy(() => import("./pages/PrivacyPolicies/ProviderTermsofService"));
-const RefundCancellation = lazy(() => import("./pages/PrivacyPolicies/RefundCancellation"));
-const TeleHealthConsent = lazy(() => import("./pages/PrivacyPolicies/TeleHealthConsent"));
+const PrivacyConcerns = lazy(
+  () => import("./pages/PrivacyPolicies/PrivacyConcerns"),
+);
+const PatientPrivacyNotice = lazy(
+  () => import("./pages/PrivacyPolicies/PatientPrivacyNotice"),
+);
+const PrivacyPolicy = lazy(
+  () => import("./pages/PrivacyPolicies/PrivacyPolicy"),
+);
+const ProviderTermsofService = lazy(
+  () => import("./pages/PrivacyPolicies/ProviderTermsofService"),
+);
+const RefundCancellation = lazy(
+  () => import("./pages/PrivacyPolicies/RefundCancellation"),
+);
+const TeleHealthConsent = lazy(
+  () => import("./pages/PrivacyPolicies/TeleHealthConsent"),
+);
 const TermsService = lazy(() => import("./pages/PrivacyPolicies/TermsService"));
-const AccessibilityStatement = lazy(() => import("./pages/PrivacyPolicies/AccessibilityStatement"));
+const AccessibilityStatement = lazy(
+  () => import("./pages/PrivacyPolicies/AccessibilityStatement"),
+);
 const CCPA = lazy(() => import("./pages/PrivacyPolicies/CCPA"));
 const CookiePolicy = lazy(() => import("./pages/PrivacyPolicies/CookiePolicy"));
-const PatientInformedConsentForm = lazy(() => import("./pages/PrivacyPolicies/PatientInformedConsentForm"));
-const PhysicianCredentialingPolicy = lazy(() => import("./pages/PrivacyPolicies/PhysicianCredentialingPolicy"));
-const TeleconsultationWorkflowPolicy = lazy(() => import("./pages/PrivacyPolicies/TeleconsultationWorkflowPolicy"));
-const PrescriptionHandlingPolicy = lazy(() => import("./pages/PrivacyPolicies/PrescriptionHandlingPolicy"));
-const TelehealthProviderAgreement = lazy(() => import("./pages/PrivacyPolicies/TelehealthProviderAgreement"));
+const PatientInformedConsentForm = lazy(
+  () => import("./pages/PrivacyPolicies/PatientInformedConsentForm"),
+);
+const PhysicianCredentialingPolicy = lazy(
+  () => import("./pages/PrivacyPolicies/PhysicianCredentialingPolicy"),
+);
+const TeleconsultationWorkflowPolicy = lazy(
+  () => import("./pages/PrivacyPolicies/TeleconsultationWorkflowPolicy"),
+);
+const PrescriptionHandlingPolicy = lazy(
+  () => import("./pages/PrivacyPolicies/PrescriptionHandlingPolicy"),
+);
+const TelehealthProviderAgreement = lazy(
+  () => import("./pages/PrivacyPolicies/TelehealthProviderAgreement"),
+);
 const Images = lazy(() => import("./components/Images"));
 // category pages
 // import ChildCare from "./pages/Categories/ChildMain";
-const ChildFamilyCare = lazy(() => import("./pages/Categories/ChildFamilyCare"));
-const ChronicCareExpertOpinion = lazy(() => import("./pages/Categories/ChronicCareExpertOpinion"));
+const ChildFamilyCare = lazy(
+  () => import("./pages/Categories/ChildFamilyCare"),
+);
+const ChronicCareExpertOpinion = lazy(
+  () => import("./pages/Categories/ChronicCareExpertOpinion"),
+);
 const EyeEarBone = lazy(() => import("./pages/Categories/EyeEarBone"));
-const GeneralEverydayCare = lazy(() => import("./pages/Categories/GeneralEverydayCare"));
+const GeneralEverydayCare = lazy(
+  () => import("./pages/Categories/GeneralEverydayCare"),
+);
 const MenHealth = lazy(() => import("./pages/Categories/MenHealth"));
 const MentalHealth = lazy(() => import("./pages/Categories/MentalHealth"));
 // import Sexualhealth from "./pages/Categories/SexualHealth";
 const Sexual_Health = lazy(() => import("./pages/Categories/Sexual-Health"));
 const SkinHair = lazy(() => import("./pages/Categories/SkinHair"));
-const TravelGlobalCare = lazy(() => import("./pages/Categories/TravelGlobalCare"));
-const WeightNurtrition = lazy(() => import("./pages/Categories/WeightNutrition"));
+const TravelGlobalCare = lazy(
+  () => import("./pages/Categories/TravelGlobalCare"),
+);
+const WeightNurtrition = lazy(
+  () => import("./pages/Categories/WeightNutrition"),
+);
 const WomenHealth = lazy(() => import("./pages/Categories/WomenHealth"));
 // Specialty pages
 // import SD from "./pages/Specialty/SD";
 
 // condition pages
 const Arthritis = lazy(() => import("./pages/Conditions/Arthritis"));
-const CancerSecond = lazy(() => import("./pages/Conditions/CancerSecondOpinion"));
+const CancerSecond = lazy(
+  () => import("./pages/Conditions/CancerSecondOpinion"),
+);
 const ChestPain = lazy(() => import("./pages/Conditions/ChestPain"));
-const ChronicKidney = lazy(() => import("./pages/Conditions/ChronicKidneyDisease"));
-const ChronicMigraine = lazy(() => import("./pages/Conditions/ChronicMigraine"));
-const ComplexDiagnosis = lazy(() => import("./pages/Conditions/ComplexDiagnosisReview"));
+const ChronicKidney = lazy(
+  () => import("./pages/Conditions/ChronicKidneyDisease"),
+);
+const ChronicMigraine = lazy(
+  () => import("./pages/Conditions/ChronicMigraine"),
+);
+const ComplexDiagnosis = lazy(
+  () => import("./pages/Conditions/ComplexDiagnosisReview"),
+);
 const FattyLiver = lazy(() => import("./pages/Conditions/FattyLiver"));
 const HeartDisease = lazy(() => import("./pages/Conditions/HeartDisease"));
-const HighBloodPressure = lazy(() => import("./pages/Conditions/HighBloodPressure"));
-const HighCholesterol = lazy(() => import("./pages/Conditions/HighCholesterol"));
-const HormoneImblance = lazy(() => import("./pages/Conditions/HormoneImbalance"));
+const HighBloodPressure = lazy(
+  () => import("./pages/Conditions/HighBloodPressure"),
+);
+const HighCholesterol = lazy(
+  () => import("./pages/Conditions/HighCholesterol"),
+);
+const HormoneImblance = lazy(
+  () => import("./pages/Conditions/HormoneImbalance"),
+);
 const MemoryConcerns = lazy(() => import("./pages/Conditions/MemoryConcerns"));
 const Obesity = lazy(() => import("./pages/Conditions/Obesity"));
 const Osteoarthritis = lazy(() => import("./pages/Conditions/Osteoarthritis"));
 const Osteoporosis = lazy(() => import("./pages/Conditions/Osteoporosis"));
 const Palpitations = lazy(() => import("./pages/Conditions/Palpitations"));
-const PostCovidConcerns = lazy(() => import("./pages/Conditions/PostCovidConcerns"));
-const PreOpCardiacClearance = lazy(() => import("./pages/Conditions/PreOpCardiacClearance"));
-const RheumatoidArthritis = lazy(() => import("./pages/Conditions/RheumatoidArthritis"));
-const SeizuresEpilepsyFollowUp = lazy(() => import("./pages/Conditions/SeizuresEpilepsyFollowUp"));
+const PostCovidConcerns = lazy(
+  () => import("./pages/Conditions/PostCovidConcerns"),
+);
+const PreOpCardiacClearance = lazy(
+  () => import("./pages/Conditions/PreOpCardiacClearance"),
+);
+const RheumatoidArthritis = lazy(
+  () => import("./pages/Conditions/RheumatoidArthritis"),
+);
+const SeizuresEpilepsyFollowUp = lazy(
+  () => import("./pages/Conditions/SeizuresEpilepsyFollowUp"),
+);
 const SleepApnea = lazy(() => import("./pages/Conditions/SleepApnea"));
-const SurgerySecondOpinion = lazy(() => import("./pages/Conditions/SurgerySecondOpinion"));
-const ThyroidDisorders = lazy(() => import("./pages/Conditions/ThyroidDisorders"));
-const TreatmentPlanReview = lazy(() => import("./pages/Conditions/TreatmentPlanReview"));
+const SurgerySecondOpinion = lazy(
+  () => import("./pages/Conditions/SurgerySecondOpinion"),
+);
+const ThyroidDisorders = lazy(
+  () => import("./pages/Conditions/ThyroidDisorders"),
+);
+const TreatmentPlanReview = lazy(
+  () => import("./pages/Conditions/TreatmentPlanReview"),
+);
 const Tremor = lazy(() => import("./pages/Conditions/Tremor"));
-const TypeTwoDiabetes = lazy(() => import("./pages/Conditions/TypeTwoDiabetes"));
+const TypeTwoDiabetes = lazy(
+  () => import("./pages/Conditions/TypeTwoDiabetes"),
+);
 const AbdominalPain = lazy(() => import("./pages/Conditions/AbdominalPain"));
 const BingeEating = lazy(() => import("./pages/Conditions/BingeEating"));
 const Bloating = lazy(() => import("./pages/Conditions/Bloating"));
-const CholesterolLoweringDiet = lazy(() => import("./pages/Conditions/CholesterolLoweringDiet"));
+const CholesterolLoweringDiet = lazy(
+  () => import("./pages/Conditions/CholesterolLoweringDiet"),
+);
 const Dehydration = lazy(() => import("./pages/Conditions/Dehydration"));
 const DiabeticDiet = lazy(() => import("./pages/Conditions/DiabeticDiet"));
-const DietExercisePlanning = lazy(() => import("./pages/Conditions/DietExercisePlanning"));
-const FoodIntolerancePlanning = lazy(() => import("./pages/Conditions/FoodIntolerancePlanning"));
+const DietExercisePlanning = lazy(
+  () => import("./pages/Conditions/DietExercisePlanning"),
+);
+const FoodIntolerancePlanning = lazy(
+  () => import("./pages/Conditions/FoodIntolerancePlanning"),
+);
 const Gastritis = lazy(() => import("./pages/Conditions/Gastritis"));
-const GlpProgramEligibility = lazy(() => import("./pages/Conditions/GlpProgramEligibility"));
-const HealthyHabitCoaching = lazy(() => import("./pages/Conditions/HealthyHabitCoaching"));
+const GlpProgramEligibility = lazy(
+  () => import("./pages/Conditions/GlpProgramEligibility"),
+);
+const HealthyHabitCoaching = lazy(
+  () => import("./pages/Conditions/HealthyHabitCoaching"),
+);
 const Hemorrhoids = lazy(() => import("./pages/Conditions/Hemorrhoids"));
 const Indigestion = lazy(() => import("./pages/Conditions/Indigestion"));
-const IrritableBowelSyndrome = lazy(() => import("./pages/Conditions/IrritableBowelSyndrome"));
-const PregnancyNutrition = lazy(() => import("./pages/Conditions/PregnancyNutrition"));
+const IrritableBowelSyndrome = lazy(
+  () => import("./pages/Conditions/IrritableBowelSyndrome"),
+);
+const PregnancyNutrition = lazy(
+  () => import("./pages/Conditions/PregnancyNutrition"),
+);
 const SleepHygiene = lazy(() => import("./pages/Conditions/SleepHygiene"));
 const SportNutrition = lazy(() => import("./pages/Conditions/SportsNutrition"));
-const TravelersDiarrhea = lazy(() => import("./pages/Conditions/TravelersDiarrhea"));
-const MetabolicSyndrome = lazy(() => import("./pages/Conditions/MetabolicSyndrome"));
+const TravelersDiarrhea = lazy(
+  () => import("./pages/Conditions/TravelersDiarrhea"),
+);
+const MetabolicSyndrome = lazy(
+  () => import("./pages/Conditions/MetabolicSyndrome"),
+);
 const Vomiting = lazy(() => import("./pages/Conditions/Vomiting"));
-const WeightLossPlanning = lazy(() => import("./pages/Conditions/WeightLossPlanning"));
+const WeightLossPlanning = lazy(
+  () => import("./pages/Conditions/WeightLossPlanning"),
+);
 const BackPain = lazy(() => import("./pages/Conditions/BackPain"));
 const DryEyes = lazy(() => import("./pages/Conditions/DryEyes"));
 const EarInfection = lazy(() => import("./pages/Conditions/EarInfection"));
@@ -140,226 +224,539 @@ const EyeStrain = lazy(() => import("./pages/Conditions/EyeStrain"));
 const Hoarseness = lazy(() => import("./pages/Conditions/Hoarseness"));
 const KneePain = lazy(() => import("./pages/Conditions/KneePain"));
 const MuscleStrain = lazy(() => import("./pages/Conditions/MuscleStrain"));
-const NasalCongestion = lazy(() => import("./pages/Conditions/NasalCongestion"));
+const NasalCongestion = lazy(
+  () => import("./pages/Conditions/NasalCongestion"),
+);
 const NeckPain = lazy(() => import("./pages/Conditions/NeckPain"));
-const NumbnessAndTingling = lazy(() => import("./pages/Conditions/NumbnessAndTingling"));
+const NumbnessAndTingling = lazy(
+  () => import("./pages/Conditions/NumbnessAndTingling"),
+);
 const Stye = lazy(() => import("./pages/Conditions/Stye"));
-const SwollenFeetAnkles = lazy(() => import("./pages/Conditions/SwollenFeetAnkles"));
+const SwollenFeetAnkles = lazy(
+  () => import("./pages/Conditions/SwollenFeetAnkles"),
+);
 const Tonsillitis = lazy(() => import("./pages/Conditions/Tonsillitis"));
 const JointPain = lazy(() => import("./pages/Conditions/JointPain"));
 const VisionChanges = lazy(() => import("./pages/Conditions/VisionChanges"));
-const ChildhoodAllergies = lazy(() => import("./pages/Conditions/ChildhoodAllergies"));
-const EarPainChildren = lazy(() => import("./pages/Conditions/EarPainChildren"));
-const FeedingConcerns = lazy(() => import("./pages/Conditions/FeedingConcerns"));
-const MildAsthmaSymptoms = lazy(() => import("./pages/Conditions/MildAsthmaSymptoms"));
-const MoodAnxietyTeens = lazy(() => import("./pages/Conditions/MoodAnxietyTeens"));
-const PediatricColdFlu = lazy(() => import("./pages/Conditions/PediatricColdFlu"));
+const ChildhoodAllergies = lazy(
+  () => import("./pages/Conditions/ChildhoodAllergies"),
+);
+const EarPainChildren = lazy(
+  () => import("./pages/Conditions/EarPainChildren"),
+);
+const FeedingConcerns = lazy(
+  () => import("./pages/Conditions/FeedingConcerns"),
+);
+const MildAsthmaSymptoms = lazy(
+  () => import("./pages/Conditions/MildAsthmaSymptoms"),
+);
+const MoodAnxietyTeens = lazy(
+  () => import("./pages/Conditions/MoodAnxietyTeens"),
+);
+const PediatricColdFlu = lazy(
+  () => import("./pages/Conditions/PediatricColdFlu"),
+);
 const PediatricFever = lazy(() => import("./pages/Conditions/PediatricFever"));
-const PinkEyeChildren = lazy(() => import("./pages/Conditions/PinkEyeChildren"));
-const PubertyConcerns = lazy(() => import("./pages/Conditions/PubertyConcerns"));
-const SkinRashChildren = lazy(() => import("./pages/Conditions/SkinRashChildren"));
-const SoreThroatChildren = lazy(() => import("./pages/Conditions/SoreThroatChildren"));
+const PinkEyeChildren = lazy(
+  () => import("./pages/Conditions/PinkEyeChildren"),
+);
+const PubertyConcerns = lazy(
+  () => import("./pages/Conditions/PubertyConcerns"),
+);
+const SkinRashChildren = lazy(
+  () => import("./pages/Conditions/SkinRashChildren"),
+);
+const SoreThroatChildren = lazy(
+  () => import("./pages/Conditions/SoreThroatChildren"),
+);
 const SportsInjuries = lazy(() => import("./pages/Conditions/SportsInjuries"));
-const StomachPainChildren = lazy(() => import("./pages/Conditions/StomachPainChildren"));
-const GrowthDevelopment = lazy(() => import("./pages/Conditions/GrowthDevelopment"));
-const VomitingDiarrheaChildren = lazy(() => import("./pages/Conditions/VomitingDiarrheaChildren"));
+const StomachPainChildren = lazy(
+  () => import("./pages/Conditions/StomachPainChildren"),
+);
+const GrowthDevelopment = lazy(
+  () => import("./pages/Conditions/GrowthDevelopment"),
+);
+const VomitingDiarrheaChildren = lazy(
+  () => import("./pages/Conditions/VomitingDiarrheaChildren"),
+);
 const DoctorsNote = lazy(() => import("./pages/Conditions/DoctorsNote"));
-const FollowUpConsultation = lazy(() => import("./pages/Conditions/FollowUpConsultation"));
-const LabResultsReview = lazy(() => import("./pages/Conditions/LabResultReview"));
-const MedicalCertificate = lazy(() => import("./pages/Conditions/MedicalCertificate"));
-const MedicationReview = lazy(() => import("./pages/Conditions/MedicationReview"));
-const PrescriptionRefill = lazy(() => import("./pages/Conditions/PrescriptionRefill"));
-const ReturnWorkClearance = lazy(() => import("./pages/Conditions/ReturnWorkClearance"));
-const SecondMedicalOpinion = lazy(() => import("./pages/Conditions/SecondMedicalOpinion"));
-const SpecialistReferral = lazy(() => import("./pages/Conditions/SpecialistReferral"));
-const AllergicRhinitis = lazy(() => import("./pages/Conditions/AllergicRhinitis"));
+const FollowUpConsultation = lazy(
+  () => import("./pages/Conditions/FollowUpConsultation"),
+);
+const LabResultsReview = lazy(
+  () => import("./pages/Conditions/LabResultReview"),
+);
+const MedicalCertificate = lazy(
+  () => import("./pages/Conditions/MedicalCertificate"),
+);
+const MedicationReview = lazy(
+  () => import("./pages/Conditions/MedicationReview"),
+);
+const PrescriptionRefill = lazy(
+  () => import("./pages/Conditions/PrescriptionRefill"),
+);
+const ReturnWorkClearance = lazy(
+  () => import("./pages/Conditions/ReturnWorkClearance"),
+);
+const SecondMedicalOpinion = lazy(
+  () => import("./pages/Conditions/SecondMedicalOpinion"),
+);
+const SpecialistReferral = lazy(
+  () => import("./pages/Conditions/SpecialistReferral"),
+);
+const AllergicRhinitis = lazy(
+  () => import("./pages/Conditions/AllergicRhinitis"),
+);
 const Asthma = lazy(() => import("./pages/Conditions/Asthma"));
 const AsthmaFlareUp = lazy(() => import("./pages/Conditions/AsthmaFlareUp"));
 const Copd = lazy(() => import("./pages/Conditions/Copd"));
-const PersistentCough = lazy(() => import("./pages/Conditions/PersistentCough"));
-const PneumoniaFollowUp = lazy(() => import("./pages/Conditions/PneumoniaFollowUp"));
-const ShortnessOfBreath = lazy(() => import("./pages/Conditions/ShortnessBreath"));
-const UpperRespiratoryInfection = lazy(() => import("./pages/Conditions/UpperRespiratoryInfection"));
+const PersistentCough = lazy(
+  () => import("./pages/Conditions/PersistentCough"),
+);
+const PneumoniaFollowUp = lazy(
+  () => import("./pages/Conditions/PneumoniaFollowUp"),
+);
+const ShortnessOfBreath = lazy(
+  () => import("./pages/Conditions/ShortnessBreath"),
+);
+const UpperRespiratoryInfection = lazy(
+  () => import("./pages/Conditions/UpperRespiratoryInfection"),
+);
 const Wheezing = lazy(() => import("./pages/Conditions/Wheezing"));
 const Chlamydia = lazy(() => import("./pages/Conditions/Chlamydia"));
 const GenitalItching = lazy(() => import("./pages/Conditions/GenitalItching"));
 const GenitalRash = lazy(() => import("./pages/Conditions/GenitalRash"));
 const Gonorrhea = lazy(() => import("./pages/Conditions/Gonorrhea"));
 const Herpes = lazy(() => import("./pages/Conditions/Herpes"));
-const HivPreventionGuidance = lazy(() => import("./pages/Conditions/HivPreventionGuidance"));
-const PartnerExposureConcerns = lazy(() => import("./pages/Conditions/PartnerExposureConcerns"));
-const SafeSexCounseling = lazy(() => import("./pages/Conditions/SafeSexCounseling"));
-const StiConsultation = lazy(() => import("./pages/Conditions/StiConsultation"));
+const HivPreventionGuidance = lazy(
+  () => import("./pages/Conditions/HivPreventionGuidance"),
+);
+const PartnerExposureConcerns = lazy(
+  () => import("./pages/Conditions/PartnerExposureConcerns"),
+);
+const SafeSexCounseling = lazy(
+  () => import("./pages/Conditions/SafeSexCounseling"),
+);
+const StiConsultation = lazy(
+  () => import("./pages/Conditions/StiConsultation"),
+);
 const Acne = lazy(() => import("./pages/Conditions/Acne"));
 const AthletesFoot = lazy(() => import("./pages/Conditions/AthletesFoot"));
 const Cellulitis = lazy(() => import("./pages/Conditions/Cellulitis"));
 const ColdSores = lazy(() => import("./pages/Conditions/ColdSores"));
-const ContactDermatitis = lazy(() => import("./pages/Conditions/ContactDermatitis"));
+const ContactDermatitis = lazy(
+  () => import("./pages/Conditions/ContactDermatitis"),
+);
 const Eczema = lazy(() => import("./pages/Conditions/Conditions/Eczema"));
-const FungalSkinInfection = lazy(() => import("./pages/Conditions/Conditions/FungalSkinInfection"));
+const FungalSkinInfection = lazy(
+  () => import("./pages/Conditions/Conditions/FungalSkinInfection"),
+);
 const HairLoss1 = lazy(() => import("./pages/Conditions/Conditions/HairLoss"));
 const Hives = lazy(() => import("./pages/Conditions/Conditions/Hives"));
 const ItchySkin = lazy(() => import("./pages/Conditions/Conditions/ItchySkin"));
-const MoleSkinChecks = lazy(() => import("./pages/Conditions/Conditions/MoleSkinChecks"));
-const NailProblems = lazy(() => import("./pages/Conditions/Conditions/NailProblems"));
+const MoleSkinChecks = lazy(
+  () => import("./pages/Conditions/Conditions/MoleSkinChecks"),
+);
+const NailProblems = lazy(
+  () => import("./pages/Conditions/Conditions/NailProblems"),
+);
 const Psoriasis = lazy(() => import("./pages/Conditions/Conditions/Psoriasis"));
 const Ringworm = lazy(() => import("./pages/Conditions/Conditions/Ringworm"));
 const Shingles = lazy(() => import("./pages/Conditions/Conditions/Shingles"));
 const Rosacea = lazy(() => import("./pages/Conditions/Conditions/Rosacea"));
 const SkinRash = lazy(() => import("./pages/Conditions/Conditions/SkinRash"));
 const Warts = lazy(() => import("./pages/Conditions/Conditions/Warts"));
-const AltitudeSickness = lazy(() => import("./pages/Conditions/Conditions/AltitudeSickness"));
-const CrossBorderConsultation = lazy(() => import("./pages/Conditions/Conditions/CrossBorderConsultation"));
-const EmergencyTeleconsultationAbroad = lazy(() => import("./pages/Conditions/Conditions/EmergencyTeleconsultationAbroad"));
-const FitnessTravelEvaluation = lazy(() => import("./pages/Conditions/Conditions/FitnessTravelEvaluation"));
-const FoodPoisoningWhileTraveling = lazy(() => import("./pages/Conditions/Conditions/FoodPoisoningWhileTraveling"));
-const InternationalMedicalAssistance = lazy(() => import("./pages/Conditions/Conditions/InternationalMedicalAssistance"));
+const AltitudeSickness = lazy(
+  () => import("./pages/Conditions/Conditions/AltitudeSickness"),
+);
+const CrossBorderConsultation = lazy(
+  () => import("./pages/Conditions/Conditions/CrossBorderConsultation"),
+);
+const EmergencyTeleconsultationAbroad = lazy(
+  () => import("./pages/Conditions/Conditions/EmergencyTeleconsultationAbroad"),
+);
+const FitnessTravelEvaluation = lazy(
+  () => import("./pages/Conditions/Conditions/FitnessTravelEvaluation"),
+);
+const FoodPoisoningWhileTraveling = lazy(
+  () => import("./pages/Conditions/Conditions/FoodPoisoningWhileTraveling"),
+);
+const InternationalMedicalAssistance = lazy(
+  () => import("./pages/Conditions/Conditions/InternationalMedicalAssistance"),
+);
 const JetLag = lazy(() => import("./pages/Conditions/Conditions/JetLag"));
-const MalariaPrevention = lazy(() => import("./pages/Conditions/Conditions/MalariaPrevention"));
-const MedicationRefillTraveling = lazy(() => import("./pages/Conditions/Conditions/MedicationRefillTraveling"));
-const MotionSickness = lazy(() => import("./pages/Conditions/Conditions/MotionSickness"));
-const PostTravelSymptoms = lazy(() => import("./pages/Conditions/Conditions/PostTravelSymptoms"));
-const PreTravelVaccinations = lazy(() => import("./pages/Conditions/Conditions/PreTravelVaccination"));
-const ReferralCoordinationOverseas = lazy(() => import("./pages/Conditions/Conditions/ReferralCoordinationOverseas"));
-const TravelMedicalCertificate = lazy(() => import("./pages/Conditions/Conditions/TravelMedicalCertificate"));
-const TravelRelatedFever = lazy(() => import("./pages/Conditions/Conditions/TravelRelatedFever"));
-const TravelersDiarrhea1 = lazy(() => import("./pages/Conditions/Conditions/TravelersDiarrhea"));
-const AcidRefluxGerd = lazy(() => import("./pages/Conditions/Conditions/AcidRefluxGerd"));
+const MalariaPrevention = lazy(
+  () => import("./pages/Conditions/Conditions/MalariaPrevention"),
+);
+const MedicationRefillTraveling = lazy(
+  () => import("./pages/Conditions/Conditions/MedicationRefillTraveling"),
+);
+const MotionSickness = lazy(
+  () => import("./pages/Conditions/Conditions/MotionSickness"),
+);
+const PostTravelSymptoms = lazy(
+  () => import("./pages/Conditions/Conditions/PostTravelSymptoms"),
+);
+const PreTravelVaccinations = lazy(
+  () => import("./pages/Conditions/Conditions/PreTravelVaccination"),
+);
+const ReferralCoordinationOverseas = lazy(
+  () => import("./pages/Conditions/Conditions/ReferralCoordinationOverseas"),
+);
+const TravelMedicalCertificate = lazy(
+  () => import("./pages/Conditions/Conditions/TravelMedicalCertificate"),
+);
+const TravelRelatedFever = lazy(
+  () => import("./pages/Conditions/Conditions/TravelRelatedFever"),
+);
+const TravelersDiarrhea1 = lazy(
+  () => import("./pages/Conditions/Conditions/TravelersDiarrhea"),
+);
+const AcidRefluxGerd = lazy(
+  () => import("./pages/Conditions/Conditions/AcidRefluxGerd"),
+);
 const BodyAches = lazy(() => import("./pages/Conditions/Conditions/BodyAches"));
-const Bronchitis = lazy(() => import("./pages/Conditions/Conditions/Bronchitis"));
-const ColdAndFlu = lazy(() => import("./pages/Conditions/Conditions/ColdAndFlu"));
-const Constipation = lazy(() => import("./pages/Conditions/Conditions/Constipation"));
+const Bronchitis = lazy(
+  () => import("./pages/Conditions/Conditions/Bronchitis"),
+);
+const ColdAndFlu = lazy(
+  () => import("./pages/Conditions/Conditions/ColdAndFlu"),
+);
+const Constipation = lazy(
+  () => import("./pages/Conditions/Conditions/Constipation"),
+);
 const Cough = lazy(() => import("./pages/Conditions/Conditions/Cough"));
 const Covid19 = lazy(() => import("./pages/Conditions/Conditions/Covid19"));
 const Diarrhea = lazy(() => import("./pages/Conditions/Conditions/Diarrhea"));
 const Dizziness = lazy(() => import("./pages/Conditions/Conditions/Dizziness"));
-const EarInfection1 = lazy(() => import("./pages/Conditions/Conditions/EarInfection"));
+const EarInfection1 = lazy(
+  () => import("./pages/Conditions/Conditions/EarInfection"),
+);
 const Fatigue = lazy(() => import("./pages/Conditions/Conditions/Fatigue"));
 const Fever = lazy(() => import("./pages/Conditions/Conditions/Fever"));
-const FoodPoisoning = lazy(() => import("./pages/Conditions/Conditions/FoodPoisoning"));
+const FoodPoisoning = lazy(
+  () => import("./pages/Conditions/Conditions/FoodPoisoning"),
+);
 const Headache = lazy(() => import("./pages/Conditions/Conditions/Headache"));
-const InsectBites = lazy(() => import("./pages/Conditions/Conditions/InsectBites"));
+const InsectBites = lazy(
+  () => import("./pages/Conditions/Conditions/InsectBites"),
+);
 const Migraine = lazy(() => import("./pages/Conditions/Conditions/Migraine"));
-const MinorBurns = lazy(() => import("./pages/Conditions/Conditions/MinorBurns"));
-const MinorInfections = lazy(() => import("./pages/Conditions/Conditions/MinorInfections"));
-const MultiSystemComplaints = lazy(() => import("./pages/Conditions/Conditions/MultiSystemComplaints"));
-const NauseaAndVomiting = lazy(() => import("./pages/Conditions/Conditions/NauseaAndVomiting"));
+const MinorBurns = lazy(
+  () => import("./pages/Conditions/Conditions/MinorBurns"),
+);
+const MinorInfections = lazy(
+  () => import("./pages/Conditions/Conditions/MinorInfections"),
+);
+const MultiSystemComplaints = lazy(
+  () => import("./pages/Conditions/Conditions/MultiSystemComplaints"),
+);
+const NauseaAndVomiting = lazy(
+  () => import("./pages/Conditions/Conditions/NauseaAndVomiting"),
+);
 const PinkEye = lazy(() => import("./pages/Conditions/Conditions/PinkEye"));
-const PreventiveScreening = lazy(() => import("./pages/Conditions/Conditions/PreventiveScreening"));
-const RoutineCheckUps = lazy(() => import("./pages/Conditions/Conditions/RoutineCheckUps"));
-const SeasonalAllergies = lazy(() => import("./pages/Conditions/Conditions/SeasonalAllergies"));
-const SinusInfection = lazy(() => import("./pages/Conditions/Conditions/SinusInfection"));
-const SoreThroat = lazy(() => import("./pages/Conditions/Conditions/SoreThroat"));
-const StrepThroat = lazy(() => import("./pages/Conditions/Conditions/StrepThroat"));
-const UndiagnosedSymptoms = lazy(() => import("./pages/Conditions/Conditions/UndiagnosedSymptoms"));
-const VaccinationAdvice = lazy(() => import("./pages/Conditions/Conditions/VaccinationAdvice"));
-const WholeFamilyIllnesses = lazy(() => import("./pages/Conditions/Conditions/WholeFamilyIllnesses"));
-const BladderInfection = lazy(() => import("./pages/Conditions/Conditions/BladderInfection"));
-const BloodInUrine = lazy(() => import("./pages/Conditions/Conditions/BloodInUrine"));
-const BurningUrination = lazy(() => import("./pages/Conditions/Conditions/BurningUrination"));
-const FrequentUrination = lazy(() => import("./pages/Conditions/Conditions/FrequentUrination"));
-const KidneyStones = lazy(() => import("./pages/Conditions/Conditions/KidneyStones"));
-const UrinaryIncontinence = lazy(() => import("./pages/Conditions/Conditions/UrinaryIncontinence"));
-const UrinaryTractInfection = lazy(() => import("./pages/Conditions/Conditions/UrinaryTractInfection"));
-const BacterialVaginosis = lazy(() => import("./pages/Conditions/Conditions/BacterialVaginosis"));
-const BirthControlConsultation = lazy(() => import("./pages/Conditions/Conditions/BirthControlConsultation"));
-const EmergencyContraceptionGuidance = lazy(() => import("./pages/Conditions/Conditions/EmergencyContraceptionGuidance"));
-const HeavyPeriods = lazy(() => import("./pages/Conditions/Conditions/HeavyPeriods"));
-const IrregularPeriods = lazy(() => import("./pages/Conditions/Conditions/IrregularPeriods"));
-const LatchProblems = lazy(() => import("./pages/Conditions/Conditions/LatchProblems"));
-const LowMilkSupply = lazy(() => import("./pages/Conditions/Conditions/LowMilkSupply"));
-const MenopauseSymptoms = lazy(() => import("./pages/Conditions/Conditions/MenopauseSymptoms"));
-const MenstrualCramps = lazy(() => import("./pages/Conditions/Conditions/MenstrualCramps"));
-const NipplePain = lazy(() => import("./pages/Conditions/Conditions/NipplePain"));
+const PreventiveScreening = lazy(
+  () => import("./pages/Conditions/Conditions/PreventiveScreening"),
+);
+const RoutineCheckUps = lazy(
+  () => import("./pages/Conditions/Conditions/RoutineCheckUps"),
+);
+const SeasonalAllergies = lazy(
+  () => import("./pages/Conditions/Conditions/SeasonalAllergies"),
+);
+const SinusInfection = lazy(
+  () => import("./pages/Conditions/Conditions/SinusInfection"),
+);
+const SoreThroat = lazy(
+  () => import("./pages/Conditions/Conditions/SoreThroat"),
+);
+const StrepThroat = lazy(
+  () => import("./pages/Conditions/Conditions/StrepThroat"),
+);
+const UndiagnosedSymptoms = lazy(
+  () => import("./pages/Conditions/Conditions/UndiagnosedSymptoms"),
+);
+const VaccinationAdvice = lazy(
+  () => import("./pages/Conditions/Conditions/VaccinationAdvice"),
+);
+const WholeFamilyIllnesses = lazy(
+  () => import("./pages/Conditions/Conditions/WholeFamilyIllnesses"),
+);
+const BladderInfection = lazy(
+  () => import("./pages/Conditions/Conditions/BladderInfection"),
+);
+const BloodInUrine = lazy(
+  () => import("./pages/Conditions/Conditions/BloodInUrine"),
+);
+const BurningUrination = lazy(
+  () => import("./pages/Conditions/Conditions/BurningUrination"),
+);
+const FrequentUrination = lazy(
+  () => import("./pages/Conditions/Conditions/FrequentUrination"),
+);
+const KidneyStones = lazy(
+  () => import("./pages/Conditions/Conditions/KidneyStones"),
+);
+const UrinaryIncontinence = lazy(
+  () => import("./pages/Conditions/Conditions/UrinaryIncontinence"),
+);
+const UrinaryTractInfection = lazy(
+  () => import("./pages/Conditions/Conditions/UrinaryTractInfection"),
+);
+const BacterialVaginosis = lazy(
+  () => import("./pages/Conditions/Conditions/BacterialVaginosis"),
+);
+const BirthControlConsultation = lazy(
+  () => import("./pages/Conditions/Conditions/BirthControlConsultation"),
+);
+const EmergencyContraceptionGuidance = lazy(
+  () => import("./pages/Conditions/Conditions/EmergencyContraceptionGuidance"),
+);
+const HeavyPeriods = lazy(
+  () => import("./pages/Conditions/Conditions/HeavyPeriods"),
+);
+const IrregularPeriods = lazy(
+  () => import("./pages/Conditions/Conditions/IrregularPeriods"),
+);
+const LatchProblems = lazy(
+  () => import("./pages/Conditions/Conditions/LatchProblems"),
+);
+const LowMilkSupply = lazy(
+  () => import("./pages/Conditions/Conditions/LowMilkSupply"),
+);
+const MenopauseSymptoms = lazy(
+  () => import("./pages/Conditions/Conditions/MenopauseSymptoms"),
+);
+const MenstrualCramps = lazy(
+  () => import("./pages/Conditions/Conditions/MenstrualCramps"),
+);
+const NipplePain = lazy(
+  () => import("./pages/Conditions/Conditions/NipplePain"),
+);
 const Pcos = lazy(() => import("./pages/Conditions/Conditions/Pcos"));
-const PelvicPain = lazy(() => import("./pages/Conditions/Conditions/PelvicPain"));
-const PerinatalAnxiety = lazy(() => import("./pages/Conditions/Conditions/PerinatalAnxiety"));
+const PelvicPain = lazy(
+  () => import("./pages/Conditions/Conditions/PelvicPain"),
+);
+const PerinatalAnxiety = lazy(
+  () => import("./pages/Conditions/Conditions/PerinatalAnxiety"),
+);
 const Pmdd = lazy(() => import("./pages/Conditions/Conditions/Pmdd"));
-const PostnatalDepression = lazy(() => import("./pages/Conditions/Conditions/PostnatalDepression"));
-const PostpartumConcerns = lazy(() => import("./pages/Conditions/Conditions/PostpartumConcerns"));
-const PregnancyRelatedQuestions = lazy(() => import("./pages/Conditions/Conditions/PregnancyRelatedQuestions"));
-const PrenatalConsultation = lazy(() => import("./pages/Conditions/Conditions/PrenatalConsultation"));
-const VaginalYeastInfection = lazy(() => import("./pages/Conditions/Conditions/VaginalYeastInfection"));
-const WeaningGuidance = lazy(() => import("./pages/Conditions/Conditions/WeaningGuidance"));
-const BladderProblems1 = lazy(() => import("./pages/Conditions/Conditions/BladderProblems"));
-const ErectileDysfunction1 = lazy(() => import("./pages/Conditions/Conditions/ErectileDysfunction"));
-const HairLossMensHealth = lazy(() => import("./pages/Conditions/Conditions/HairLossMensHealth"));
-const LowLibido1 = lazy(() => import("./pages/Conditions/Conditions/LowLibido"));
-const LowTestosteroneSymptoms1 = lazy(() => import("./pages/Conditions/Conditions/LowTestosteroneSymptoms"));
-const MensWellnessConsultation1 = lazy(() => import("./pages/Conditions/Conditions/MensWellnessConsultation"));
-const PrematureEjaculation1 = lazy(() => import("./pages/Conditions/Conditions/PrematureEjaculation"));
-const ProstateHealth1 = lazy(() => import("./pages/Conditions/Conditions/ProstateHealth"));
-const UrinarySymptomsMen1 = lazy(() => import("./pages/Conditions/Conditions/UrinarySymptomsMen"));
+const PostnatalDepression = lazy(
+  () => import("./pages/Conditions/Conditions/PostnatalDepression"),
+);
+const PostpartumConcerns = lazy(
+  () => import("./pages/Conditions/Conditions/PostpartumConcerns"),
+);
+const PregnancyRelatedQuestions = lazy(
+  () => import("./pages/Conditions/Conditions/PregnancyRelatedQuestions"),
+);
+const PrenatalConsultation = lazy(
+  () => import("./pages/Conditions/Conditions/PrenatalConsultation"),
+);
+const VaginalYeastInfection = lazy(
+  () => import("./pages/Conditions/Conditions/VaginalYeastInfection"),
+);
+const WeaningGuidance = lazy(
+  () => import("./pages/Conditions/Conditions/WeaningGuidance"),
+);
+const BladderProblems1 = lazy(
+  () => import("./pages/Conditions/Conditions/BladderProblems"),
+);
+const ErectileDysfunction1 = lazy(
+  () => import("./pages/Conditions/Conditions/ErectileDysfunction"),
+);
+const HairLossMensHealth = lazy(
+  () => import("./pages/Conditions/Conditions/HairLossMensHealth"),
+);
+const LowLibido1 = lazy(
+  () => import("./pages/Conditions/Conditions/LowLibido"),
+);
+const LowTestosteroneSymptoms1 = lazy(
+  () => import("./pages/Conditions/Conditions/LowTestosteroneSymptoms"),
+);
+const MensWellnessConsultation1 = lazy(
+  () => import("./pages/Conditions/Conditions/MensWellnessConsultation"),
+);
+const PrematureEjaculation1 = lazy(
+  () => import("./pages/Conditions/Conditions/PrematureEjaculation"),
+);
+const ProstateHealth1 = lazy(
+  () => import("./pages/Conditions/Conditions/ProstateHealth"),
+);
+const UrinarySymptomsMen1 = lazy(
+  () => import("./pages/Conditions/Conditions/UrinarySymptomsMen"),
+);
 const Vertigo = lazy(() => import("./pages/Conditions/Conditions/Vertigo"));
 const Stress = lazy(() => import("./pages/Conditions/Conditions/Stress"));
-const AngerManagement = lazy(() => import("./pages/Conditions/Conditions/AngerManagement"));
-const AdjustmentDifficulties = lazy(() => import("./pages/Conditions/Conditions/AdjustmentDifficulties"));
-const SubstanceUseSupport = lazy(() => import("./pages/Conditions/Conditions/SubstanceUseSupport"));
-const SleepRelatedAnxiety = lazy(() => import("./pages/Conditions/Conditions/SleepRelatedAnxiety"));
-const Depression = lazy(() => import("./pages/Conditions/Conditions/Depression"));
+const AngerManagement = lazy(
+  () => import("./pages/Conditions/Conditions/AngerManagement"),
+);
+const AdjustmentDifficulties = lazy(
+  () => import("./pages/Conditions/Conditions/AdjustmentDifficulties"),
+);
+const SubstanceUseSupport = lazy(
+  () => import("./pages/Conditions/Conditions/SubstanceUseSupport"),
+);
+const SleepRelatedAnxiety = lazy(
+  () => import("./pages/Conditions/Conditions/SleepRelatedAnxiety"),
+);
+const Depression = lazy(
+  () => import("./pages/Conditions/Conditions/Depression"),
+);
 const Anxiety = lazy(() => import("./pages/Conditions/Conditions/Anxiety"));
-const BipolarDisorderFollowUp = lazy(() => import("./pages/Conditions/Conditions/BipolarDisorderFollowUp"));
+const BipolarDisorderFollowUp = lazy(
+  () => import("./pages/Conditions/Conditions/BipolarDisorderFollowUp"),
+);
 const PTSD = lazy(() => import("./pages/Conditions/Conditions/Ptsd"));
-const PanicAttacks = lazy(() => import("./pages/Conditions/Conditions/PanicAttacks"));
+const PanicAttacks = lazy(
+  () => import("./pages/Conditions/Conditions/PanicAttacks"),
+);
 const Insomnia = lazy(() => import("./pages/Conditions/Conditions/Insomnia"));
-const AdhdEvaluation = lazy(() => import("./pages/Conditions/Conditions/AdhdEvaluation"));
-const GriefAndLoss = lazy(() => import("./pages/Conditions/Conditions/GriefAndLoss"));
-const RelationshipStress = lazy(() => import("./pages/Conditions/Conditions/RelationshipStress"));
-const LowSelfEsteem = lazy(() => import("./pages/Conditions/Conditions/LowSelfEsteem"));
-const TraumaSupport = lazy(() => import("./pages/Conditions/Conditions/TraumaSupport"));
-const HotFlashes = lazy(() => import("./pages/Conditions/Conditions/HotFlashes"));
-const HrtGuidance = lazy(() => import("./pages/Conditions/Conditions/HrtGuidance"));
-const FertilityConcerns = lazy(() => import("./pages/Conditions/Conditions/FertilityConcerns"));
+const AdhdEvaluation = lazy(
+  () => import("./pages/Conditions/Conditions/AdhdEvaluation"),
+);
+const GriefAndLoss = lazy(
+  () => import("./pages/Conditions/Conditions/GriefAndLoss"),
+);
+const RelationshipStress = lazy(
+  () => import("./pages/Conditions/Conditions/RelationshipStress"),
+);
+const LowSelfEsteem = lazy(
+  () => import("./pages/Conditions/Conditions/LowSelfEsteem"),
+);
+const TraumaSupport = lazy(
+  () => import("./pages/Conditions/Conditions/TraumaSupport"),
+);
+const HotFlashes = lazy(
+  () => import("./pages/Conditions/Conditions/HotFlashes"),
+);
+const HrtGuidance = lazy(
+  () => import("./pages/Conditions/Conditions/HrtGuidance"),
+);
+const FertilityConcerns = lazy(
+  () => import("./pages/Conditions/Conditions/FertilityConcerns"),
+);
 // import OCD from "./pages/Conditions/Conditions/OCD";
 const EyeIrritation = lazy(() => import("./pages/Conditions/EyeIrritation"));
 // ----------Speciality Pages-------------------
-const AdolescentMedicine = lazy(() => import("./pages/Specialty/Children&FamilyCare/AdolescentMedicine"));
-const Pediatrics = lazy(() => import("./pages/Specialty/Children&FamilyCare/Pediatrics"));
-const Cardiology = lazy(() => import("./pages/Specialty/ChronicCare&ExpertOpinion/Cardiology"));
-const ExpertMedicalOpinion = lazy(() => import("./pages/Specialty/ChronicCare&ExpertOpinion/ExpertMedicalOpinion"));
-const Gastroenterology = lazy(() => import("./pages/Specialty/ChronicCare&ExpertOpinion/Gastroenterology"));
-const Neurology = lazy(() => import("./pages/Specialty/ChronicCare&ExpertOpinion/Neurology"));
-const Pulmonology = lazy(() => import("./pages/Specialty/ChronicCare&ExpertOpinion/Pulmonology"));
+const AdolescentMedicine = lazy(
+  () => import("./pages/Specialty/Children&FamilyCare/AdolescentMedicine"),
+);
+const Pediatrics = lazy(
+  () => import("./pages/Specialty/Children&FamilyCare/Pediatrics"),
+);
+const Cardiology = lazy(
+  () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Cardiology"),
+);
+const ExpertMedicalOpinion = lazy(
+  () =>
+    import("./pages/Specialty/ChronicCare&ExpertOpinion/ExpertMedicalOpinion"),
+);
+const Gastroenterology = lazy(
+  () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Gastroenterology"),
+);
+const Neurology = lazy(
+  () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Neurology"),
+);
+const Pulmonology = lazy(
+  () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Pulmonology"),
+);
 const Ent = lazy(() => import("./pages/Specialty/EyeEarAndBone/Ent"));
-const Ophthalmology = lazy(() => import("./pages/Specialty/EyeEarAndBone/Ophthalmology"));
-const Orthopedics = lazy(() => import("./pages/Specialty/EyeEarAndBone/Orthopedics"));
-const MensHealth = lazy(() => import("./pages/Specialty/MensHealth/MensHealth"));
+const Ophthalmology = lazy(
+  () => import("./pages/Specialty/EyeEarAndBone/Ophthalmology"),
+);
+const Orthopedics = lazy(
+  () => import("./pages/Specialty/EyeEarAndBone/Orthopedics"),
+);
+const MensHealth = lazy(
+  () => import("./pages/Specialty/MensHealth/MensHealth"),
+);
 const Urology = lazy(() => import("./pages/Specialty/MensHealth/Urology"));
-const BehavioralHealth = lazy(() => import("./pages/Specialty/MentalHealth/BehavioralHealth"));
-const Psychiatry = lazy(() => import("./pages/Specialty/MentalHealth/Psychiatry"));
-const PsychologyCounseling = lazy(() => import("./pages/Specialty/MentalHealth/PsychologyCounseling"));
-const SexualHealthSpeciality = lazy(() => import("./pages/Specialty/SexualHealth/SexualHealthSpeciality"));
-const Dermatology = lazy(() => import("./pages/Specialty/SkinAndHair/Dermatology"));
-const GlobalCrossBorderCare = lazy(() => import("./pages/Specialty/TravelAndGlobalCare/GlobalCrossBorderCare"));
-const TravelMedicine = lazy(() => import("./pages/Specialty/TravelAndGlobalCare/TravelMedicine"));
-const WeightManagement = lazy(() => import("./pages/Specialty/WeightAndNutrition/WeightManagement"));
-const LifestyleMedicine = lazy(() => import("./pages/Specialty/WeightAndNutrition/LifestyleMedicine"));
-const NutritionAndDietetics = lazy(() => import("./pages/Specialty/WeightAndNutrition/NutritionAndDietetics"));
-const EndocrinologySpeciality = lazy(() => import("./pages/Specialty/ChronicCare&ExpertOpinion/Endocrinology"));
+const BehavioralHealth = lazy(
+  () => import("./pages/Specialty/MentalHealth/BehavioralHealth"),
+);
+const Psychiatry = lazy(
+  () => import("./pages/Specialty/MentalHealth/Psychiatry"),
+);
+const PsychologyCounseling = lazy(
+  () => import("./pages/Specialty/MentalHealth/PsychologyCounseling"),
+);
+const SexualHealthSpeciality = lazy(
+  () => import("./pages/Specialty/SexualHealth/SexualHealthSpeciality"),
+);
+const Dermatology = lazy(
+  () => import("./pages/Specialty/SkinAndHair/Dermatology"),
+);
+const GlobalCrossBorderCare = lazy(
+  () => import("./pages/Specialty/TravelAndGlobalCare/GlobalCrossBorderCare"),
+);
+const TravelMedicine = lazy(
+  () => import("./pages/Specialty/TravelAndGlobalCare/TravelMedicine"),
+);
+const WeightManagement = lazy(
+  () => import("./pages/Specialty/WeightAndNutrition/WeightManagement"),
+);
+const LifestyleMedicine = lazy(
+  () => import("./pages/Specialty/WeightAndNutrition/LifestyleMedicine"),
+);
+const NutritionAndDietetics = lazy(
+  () => import("./pages/Specialty/WeightAndNutrition/NutritionAndDietetics"),
+);
+const EndocrinologySpeciality = lazy(
+  () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Endocrinology"),
+);
 
 // General & Everyday Care
-const FamilyMedicine = lazy(() => import("./pages/Specialty/General&EverydayCare/FamilyMedicine"));
-const GeneralPhysician = lazy(() => import("./pages/Specialty/General&EverydayCare/GeneralPhysician"));
-const InternalMedicine = lazy(() => import("./pages/Specialty/General&EverydayCare/InternalMedicine"));
-const MenopauseCare = lazy(() => import("./pages/Specialty/Women'sHealth/MenopauseCare"));
-const WomenMentalHealth = lazy(() => import("./pages/Specialty/Women'sHealth/WomenMentalHealth"));
-const LactationConsulting = lazy(() => import("./pages/Specialty/Women'sHealth/LactationConsulting"));
-const ObstetricsGynaecology = lazy(() => import("./pages/Specialty/Women'sHealth/ObstetricsGynaecology"));
+const FamilyMedicine = lazy(
+  () => import("./pages/Specialty/General&EverydayCare/FamilyMedicine"),
+);
+const GeneralPhysician = lazy(
+  () => import("./pages/Specialty/General&EverydayCare/GeneralPhysician"),
+);
+const InternalMedicine = lazy(
+  () => import("./pages/Specialty/General&EverydayCare/InternalMedicine"),
+);
+const MenopauseCare = lazy(
+  () => import("./pages/Specialty/Women'sHealth/MenopauseCare"),
+);
+const WomenMentalHealth = lazy(
+  () => import("./pages/Specialty/Women'sHealth/WomenMentalHealth"),
+);
+const LactationConsulting = lazy(
+  () => import("./pages/Specialty/Women'sHealth/LactationConsulting"),
+);
+const ObstetricsGynaecology = lazy(
+  () => import("./pages/Specialty/Women'sHealth/ObstetricsGynaecology"),
+);
 
 // -------------------------Services Pages-------------------------
 // import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
 // import OnlinePrescriptionRefills from "./pages/NewServices/OnlinePrescriptionRefills";
 
 // -------------------------Services Pages-------------------------
-const OnlinePrescriptionRefills = lazy(() => import("./pages/NewServices/OnlinePrescriptionRefills"));
-const ChronicCareManagement = lazy(() => import("./pages/NewServices/ChronicCareManagment"));
-const GeneralConsultation = lazy(() => import("./pages/NewServices/GeneralConsultation"));
-const MentalHealthSupport = lazy(() => import("./pages/NewServices/MentalHealthSupport"));
+const OnlinePrescriptionRefills = lazy(
+  () => import("./pages/NewServices/OnlinePrescriptionRefills"),
+);
+const ChronicCareManagement = lazy(
+  () => import("./pages/NewServices/ChronicCareManagment"),
+);
+const GeneralConsultation = lazy(
+  () => import("./pages/NewServices/GeneralConsultation"),
+);
+const MentalHealthSupport = lazy(
+  () => import("./pages/NewServices/MentalHealthSupport"),
+);
 const SexualHealth = lazy(() => import("./pages/NewServices/SexualHealth"));
-const WeightLossPrograms = lazy(() => import("./pages/NewServices/WeightLossPrograms"));
-const DoctorNoteSickNote = lazy(() => import("./pages/NewServices/DoctorNoteSickNote"));
+const WeightLossPrograms = lazy(
+  () => import("./pages/NewServices/WeightLossPrograms"),
+);
+const DoctorNoteSickNote = lazy(
+  () => import("./pages/NewServices/DoctorNoteSickNote"),
+);
 const FittoFly = lazy(() => import("./pages/NewServices/FittoFly"));
-const LABREQUISITIONS = lazy(() => import("./pages/NewServices/LABREQUISITIONS"));
+const LABREQUISITIONS = lazy(
+  () => import("./pages/NewServices/LABREQUISITIONS"),
+);
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
 const ServiceDemo = lazy(() => import("./pages/NewServices/ServiceDemo"));
@@ -368,7 +765,7 @@ import AdminAssignCategoryDoctor from "./pages/admin/AdminAssignCategoryDoctor";
 
 import CategoryConsultant from "./pages/CategoryConsultant";
 import CategoryAppointmentConfirm from "./pages/CategoryAppointmentConfirm";
-import AdminCategoryConsultationDetails from "./pages/admin/AdminCategoryConsultationDetails"
+import AdminCategoryConsultationDetails from "./pages/admin/AdminCategoryConsultationDetails";
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -378,7 +775,9 @@ const DoctorEnrollments = lazy(
   () => import("./pages/doctors/DoctorEnrollments"),
 );
 import { useDoctorAuth } from "./context/DoctorAuthContext";
-const NoticePrivacy = lazy(() => import("./pages/PrivacyPolicies/NoticePrivacy"));
+const NoticePrivacy = lazy(
+  () => import("./pages/PrivacyPolicies/NoticePrivacy"),
+);
 const DoctorProfile = lazy(() => import("./pages/doctors/DoctorProfile"));
 // import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
 const DoctorAppointments = lazy(
@@ -397,7 +796,6 @@ const DoctorProfileForUser = lazy(
 
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
-const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 const HealthcareManagement = lazy(
   () => import("./pages/admin/HealthcareManagement"),
 );
@@ -562,7 +960,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => { });
+        api.post("/api/auth/refresh").catch(() => {});
       },
       10 * 60 * 1000,
     );
@@ -636,7 +1034,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -877,7 +1275,6 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/admin-dashboard/category-consultations/assign-doctor/:id"

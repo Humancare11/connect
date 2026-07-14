@@ -180,6 +180,7 @@ export default function CategoryAppointmentConfirm() {
           slot: pending.formData.slot,
           date: pending.formData.date,
           medicalReports: reports,
+          consultationPrice: Number(livePrice),
         };
         await api.post("/api/category-consultation", body);
       } else {

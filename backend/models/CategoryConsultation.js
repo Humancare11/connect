@@ -78,6 +78,10 @@ const consultationSchema = new mongoose.Schema(
         size: { type: Number },
       },
     ],
+    consultationPrice: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
