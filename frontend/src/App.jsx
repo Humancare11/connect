@@ -44,10 +44,6 @@ import {
 
 // import AboutUs from "./pages/AboutPage";
 const AboutPage = lazy(() => import("./pages/AboutPage")); // about us page
-const BlogDetails = lazy(() => import("./pages/Blogs/IndividualBlog")); // blog details page
-import AboutPage from "./pages/AboutPage"; // about us page
-
-// blog details pages
 import Telemedicine from "./pages/Blogs/Telemedicine";
 import TelemedicineServices from "./pages/Blogs/TelemedicineServices";
 import HowTelemedicineAppointmentWork from "./pages/Blogs/HowTelemedicineAppointmentWork";
@@ -2066,7 +2062,6 @@ function AppLayout() {
             element={<AppointmentBookingForm />}
           />
           <Route path="/primary-care-provider" element={<PCP />} /> {/* PCP */}
-          {/*BlogDetails */}
           <Route path="/what-is-telemedicine" element={<Telemedicine />} />
           <Route
             path="/telemedicine-services"
