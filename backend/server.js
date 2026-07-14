@@ -450,6 +450,10 @@ app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));
+app.use(
+  "/api/category-consultation",
+  require("./routes/categoryConsultation")
+);
 
 // app.post("/api/search", async (req, res) => {
 //   const { query, routes } = req.body;

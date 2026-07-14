@@ -150,7 +150,7 @@ for (let hour = 0; hour < 24; hour++) {
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
-      })
+      }),
     );
   }
 }
@@ -299,7 +299,7 @@ function StripeForm({
 }
 
 // ─── Payment stage ────────────────────────────────────────────────────────────
-function PaymentStage({
+export function PaymentStage({
   amount,
   selection,
   formData,
@@ -399,7 +399,8 @@ function PaymentStage({
           <div className="ap-pay-summary-row">
             <span>Condition</span>
             <strong>
-              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} />{" "}
+              {selection.condName}
             </strong>
           </div>
           <div className="ap-pay-summary-row">
@@ -412,9 +413,7 @@ function PaymentStage({
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">
-              {formatPrice(amount)}
-            </strong>
+            <strong className="ap-pay-fee-amount">{formatPrice(amount)}</strong>
           </div>
         </div>
 
@@ -572,7 +571,9 @@ export default function AppointmentBookingForm() {
     setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const today = new Date().toISOString().split("T")[0];
-  const pricingRecord = selection?.catId ? categoryPrices?.[selection.catId] : null;
+  const pricingRecord = selection?.catId
+    ? categoryPrices?.[selection.catId]
+    : null;
   const pricingAmount = Number(pricingRecord?.price);
   const selectionAmount = Number(selection?.cost);
   const hasDbPrice =
@@ -581,11 +582,12 @@ export default function AppointmentBookingForm() {
     Number.isFinite(pricingAmount) &&
     pricingAmount > 0;
   const hasSelectionPrice =
-    Number.isFinite(selectionAmount) &&
-    selectionAmount > 0;
+    Number.isFinite(selectionAmount) && selectionAmount > 0;
   const hasAppointmentPrice = hasDbPrice || hasSelectionPrice;
   const effectivePrice = hasDbPrice ? pricingAmount : selectionAmount;
-  const effectiveCurrency = hasDbPrice ? pricingRecord.currency || "USD" : selection?.currency || "USD";
+  const effectiveCurrency = hasDbPrice
+    ? pricingRecord.currency || "USD"
+    : selection?.currency || "USD";
   const pricingIssue = !selection?.catId
     ? "Please reselect your appointment category so the current database price can be loaded."
     : pricingMeta.loading && !hasSelectionPrice
@@ -600,8 +602,7 @@ export default function AppointmentBookingForm() {
     setSelection((prev) => {
       if (
         !prev ||
-        prev.cost === effectivePrice &&
-        prev.currency === effectiveCurrency
+        (prev.cost === effectivePrice && prev.currency === effectiveCurrency)
       ) {
         return prev;
       }
@@ -882,7 +883,8 @@ export default function AppointmentBookingForm() {
             <span className="ap-hero-eyebrow">{selection.catLabel}</span>
             <h2 className="ap-hero-name">{selection.specName}</h2>
             <span className="ap-hero-spec">
-              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} />{" "}
+              {selection.condName}
             </span>
           </div>
           {hasAppointmentPrice && stage === "form" && (
@@ -1044,7 +1046,6 @@ export default function AppointmentBookingForm() {
                 {/* <div className="ap-step-title">Describe Your Problem</div> */}
 
                 {/* <span style={{ color: "#e11d48" }}>*</span> */}
-
               </div>
 
               <textarea
@@ -1233,7 +1234,8 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
                 <span className="ap-success-val">
-                  <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
+                  <HealthcareIcon name={selection.condIco} size={16} />{" "}
+                  {selection.condName}
                 </span>
               </div>
               <div className="ap-success-row">

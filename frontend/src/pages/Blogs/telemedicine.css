@@ -27,7 +27,7 @@
   --shadow-card:0 6px 20px -8px rgba(11,28,61,0.12);
   --font-display:'Manrope', sans-serif;
   --font-serif:'Source Serif 4', serif;
-  --font-body:'Inter', sans-serif;
+  --font-body:'Satoshi', sans-serif;
   --content-w:780px;
 
   font-family:var(--font-body);
@@ -52,7 +52,7 @@
 .skip-link:focus{left:0;}
 
 /* ---------- Utility ---------- */
-.wrap{max-width:1180px; margin:0 auto; padding:0 24px;}
+.wrap{max-width:1180px; margin:0 auto; padding:0 40px;}
 .eyebrow{
   font-family:var(--font-display); font-weight:700; font-size:12.5px;
   letter-spacing:0.09em; text-transform:uppercase; color:var(--blue-600);
@@ -60,46 +60,12 @@
 .reveal{opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s ease;}
 .reveal.is-visible{opacity:1; transform:translateY(0);}
 
-/* ============================================================
-   HEADER
-   ============================================================ */
-.site-header{
-  position:sticky; top:0; z-index:60;
-  background:rgba(255,255,255,0.78);
-  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--line);
-}
-.site-header .wrap{
-  display:flex; align-items:center; justify-content:space-between;
-  height:72px;
-}
-.logo{
-  display:flex; align-items:center; gap:10px;
-  font-family:var(--font-display); font-weight:800; font-size:19px; color:var(--navy-900);
-  text-decoration:none; letter-spacing:-0.01em;
-}
-.logo-mark{
-  width:36px; height:36px; border-radius:10px;
-  background:linear-gradient(145deg,var(--blue-500),var(--blue-600));
-  display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;
-}
-.main-nav{display:flex; align-items:center; gap:32px;}
-.main-nav ul{list-style:none; display:flex; gap:28px; margin:0; padding:0;}
-.main-nav a{text-decoration:none; font-weight:600; font-size:14.5px; color:var(--navy-700);}
-.main-nav a:hover{color:var(--blue-600);}
-.header-cta{
-  background:var(--navy-900); color:#fff; border:none; padding:11px 20px;
-  border-radius:100px; font-weight:700; font-size:14px; cursor:pointer;
-  transition:transform .2s ease, background .2s ease;
-}
-.header-cta:hover{background:var(--blue-600); transform:translateY(-1px);}
-.nav-toggle{display:none; background:none; border:none; cursor:pointer;}
 
 /* ============================================================
    READING PROGRESS BAR
    ============================================================ */
 .progress-rail{
-  position:sticky; top:72px; z-index:59; height:4px; width:100%;
+  position:sticky; top:82px; z-index:59; height:4px; width:100%;
   background:var(--line); overflow:visible;
 }
 .progress-fill{
@@ -107,7 +73,7 @@
   position:relative; transition:width .08s linear;
 }
 .progress-meta{
-  position:sticky; top:76px; z-index:58; background:var(--blue-50);
+  position:sticky; top:86px; z-index:58; background:var(--blue-50);
   border-bottom:1px solid var(--line); font-size:12.5px; color:var(--navy-500);
   font-weight:600;
 }
@@ -132,11 +98,11 @@
 .breadcrumb li:not(:last-child)::after{content:"/"; color:var(--navy-300);}
 
 /* ============================================================
-   HERO
-   ============================================================ */
-.hero{padding:20px 0 36px;}
-.hero-top{max-width:900px;}
-.badge-row{display:flex; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
+  HERO
+  ============================================================ */
+.hero{padding:44px 0 36px;}
+.hero-top{max-width:1200px; margin:0 auto;}
+.badge-row{display:flex; align-items:center; gap:10px; margin:8px 0 22px; flex-wrap:wrap;}
 .badge{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--blue-100); color:var(--blue-600); font-weight:700; font-size:12.5px;
@@ -146,8 +112,9 @@
 h1.article-title{
   font-family:var(--font-display); font-weight:800; letter-spacing:-0.02em;
   color:var(--navy-900); font-size:44px; line-height:1.14; margin:0 0 20px;
+  max-width:920px;
 }
-.hero-dek{font-family:var(--font-serif); font-size:19px; line-height:1.6; color:var(--navy-500); max-width:680px; margin:0 0 28px;}
+.hero-dek{font-family:var(--font-serif); font-size:19px; line-height:1.6; color:var(--navy-500); max-width:680px; margin:0 0 32px;}
 
 .meta-bar{
   display:flex; flex-wrap:wrap; align-items:center; gap:22px; padding:20px 0;
@@ -242,18 +209,6 @@ h1.article-title{
   opacity:0; text-decoration:none; color:var(--blue-500); font-size:16px; transition:opacity .15s ease;
 }
 .content-col h2:hover .heading-link, .content-col h3:hover .heading-link{opacity:1;}
-
-/* ---------- Definition card ---------- */
-.definition-card{
-  background:linear-gradient(160deg,var(--blue-50),#fff); border:1px solid var(--line);
-  border-radius:var(--radius-lg); padding:28px 30px; display:flex; gap:18px; box-shadow:var(--shadow-card);
-}
-.definition-card .icon{
-  width:48px; height:48px; border-radius:14px; background:var(--blue-100); color:var(--blue-600);
-  display:flex; align-items:center; justify-content:center; flex-shrink:0;
-}
-.definition-card .term{font-family:var(--font-display); font-weight:800; font-size:14px; color:var(--blue-600); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;}
-.definition-card p{margin:0; font-size:17px; color:var(--navy-900); font-weight:500; line-height:1.75;}
 
 /* ---------- Key takeaways ---------- */
 .takeaway-box{
@@ -354,7 +309,7 @@ table.compare td.good::before{content:"✓ ";}
 }
 .cta-section::before{content:""; position:absolute; inset:0; background:radial-gradient(500px 220px at 15% 0%, rgba(76,134,255,.4), transparent);}
 .cta-section h2{position:relative; font-family:var(--font-display); font-weight:800; font-size:30px; margin:0 0 12px; color:#fff;}
-.cta-section p{position:relative; font-size:16.5px; color:#C6D3EE; max-width:520px; margin:0 auto 28px;}
+.cta-section p{position:relative; font-size:16.5px; color:#C6D3EE; max-width:650px; margin:0 auto 28px;}
 .cta-buttons{position:relative; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;}
 .btn{
   border:none; border-radius:100px; padding:14px 26px; font-weight:700; font-size:15px; cursor:pointer;

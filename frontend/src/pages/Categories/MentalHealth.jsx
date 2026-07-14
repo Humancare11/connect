@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -306,7 +306,7 @@ const cat = {
 
 // ─── Booking Form ─────────────────────────────────────────────────────────────
 
-function BookingForm({ specialtyPlaceholder }) {
+function BookingForm({ specialtyPlaceholder, categoryCode }) {
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -324,10 +324,31 @@ function BookingForm({ specialtyPlaceholder }) {
   useEffect(() => {
     const fetchPrice = async () => {
       try {
-        const response = await api.get("/api/pricing");
-        const familyPricing = response.data?.family;
-        if (familyPricing) {
-          setPrice(familyPricing.price);
+        const response = await api.get("/api/appointment-tree");
+
+        const DB_CATEGORY_NAMES = {
+          general: "General & Everyday Care",
+          mental: "Mental Health",
+          skin: "Skin & Hair",
+          women: "Women's Health",
+          men: "Men's Health",
+          family: "Children & Family",
+          weight: "Weight & Nutrition",
+          chronic: "Chronic Care & Expert Opinion",
+          eeb: "Eye, Ear & Bone",
+          sexual: "Sexual Health",
+          travel: "Travel & Global Care",
+        };
+
+        const categoryName = DB_CATEGORY_NAMES[categoryCode] || categoryCode;
+        const category = response.data.find(
+          (item) => item.name === categoryName,
+        );
+
+        if (category && category.price !== undefined) {
+          setPrice(category.price);
+        } else {
+          setPrice(49);
         }
       } catch (error) {
         console.error("Failed to fetch pricing:", error);
@@ -336,8 +357,9 @@ function BookingForm({ specialtyPlaceholder }) {
         setPriceLoading(false);
       }
     };
+
     fetchPrice();
-  }, []);
+  }, [categoryCode]);
 
   const handleSubmit = () => {
     if (!form.name || !form.phone || !form.date) return;
@@ -376,7 +398,7 @@ function BookingForm({ specialtyPlaceholder }) {
           {priceLoading ? (
             <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
           ) : (
-            `$${price || 49}`
+            `$${price ?? 49}`
           )}
         </div>
         <p className="hcc-booking-price-sub">
@@ -413,7 +435,9 @@ function BookingForm({ specialtyPlaceholder }) {
         ))}
       </div>
 
-      <button className="hcc-booking-cta">Start Consultation →</button>
+      <Link to="/category-consultant?category=mental">
+        <button className="hcc-booking-cta">Start Consultation →</button>
+      </Link>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="hcc-booking-link">
@@ -708,6 +732,7 @@ export default function MentalHealth() {
           >
             <BookingForm
               specialtyPlaceholder={cat.bookingSpecialtyPlaceholder}
+              categoryCode="mental"
             />
           </motion.div>
         </div>
