@@ -129,7 +129,7 @@ const TESTIMONIALS = [
     specialty: "Family Medicine",
     photo: "/images/careers/provider-1.jpg",
     quote:
-      "Joining Human Care Connect let me build a schedule around my family without stepping away from clinical work I love.",
+      "Joining Humancare Connect let me build a schedule around my family without stepping away from clinical work I love.",
   },
   {
     name: "Dr. Marcus Chen",
@@ -543,7 +543,7 @@ export default function DoctorCareers() {
               </a> */}
             </motion.div>
             <motion.p className="dc-hero-trust" variants={fadeUp}>
-              Trusted by licensed physicians across 20+ specialties nationwide.
+              Trusted by licensed physicians across 30+ specialties nationwide.
             </motion.p>
           </motion.div>
 
@@ -583,7 +583,7 @@ export default function DoctorCareers() {
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeUp}
           >
-            <span className="dc-eyebrow">Why Join Human Care Connect</span>
+            <span className="dc-eyebrow">Why Join Humancare Connect</span>
             <h2>Everything you need to practice, minus the overhead</h2>
             <p>
               We built our network around what physicians actually need to

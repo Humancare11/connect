@@ -47,7 +47,7 @@ export default function EmployeeAdminLogin() {
       <div className="eal-login-card">
         <div className="eal-login-brand">
           <div className="eal-login-brand-mark">H</div>
-          <span className="eal-login-brand-name">HumaniCare</span>
+          <span className="eal-login-brand-name">Humancare</span>
         </div>
 
         <h1 className="eal-login-title">Employee Admin Portal</h1>

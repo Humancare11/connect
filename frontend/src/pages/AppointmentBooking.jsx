@@ -440,8 +440,9 @@ export default function Ab() {
                               <HealthcareIcon name={c.icon} size={30} />
                             </div>
                             <h3>{c.label}</h3>
-                            <div className="meta">{specialtyCount} specialties - {conditionCount} conditions</div>
-                            <div className="samp">{description}</div>
+                            <div className="meta">
+  {specialtyCount} {specialtyCount === 1 ? "specialty" : "specialties"} - {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
+</div>                           <div className="samp">{description}</div>
                             <div className="go">Explore → </div>
                           </div>
                         );
@@ -484,9 +485,11 @@ export default function Ab() {
                             </div>
                             <h3>{s.name}</h3>
                             <div className="spec-footer">
-  <div className="count">{s.conditions.length} conditions</div>
-  <div className="book-link">Book →</div>
-</div>
+                              <div className="count">
+                                {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+                              </div>
+                              <div className="book-link">Book →</div>
+                            </div>
                           </div>
                         );
                       })}
@@ -521,7 +524,7 @@ export default function Ab() {
                             <HealthcareIcon name={icon} size={23} />
                           </div>
                           <div className="condcard-name">{name}</div>
-  <div className="book-link">Book →</div>
+                          <div className="book-link">Book →</div>
                         </div>
                       ))}
                     <div
@@ -566,9 +569,11 @@ export default function Ab() {
                       </div>
                       <h3>{s.name}</h3>
                       <div className="spec-footer">
-  <div className="count">{s.conditions.length} conditions</div>
-  <div className="book-link">Book →</div>
-</div>
+                        <div className="count">
+                          {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+                        </div>
+                        <div className="book-link">Book →</div>
+                      </div>
 
                     </div>
                   ))
@@ -599,7 +604,7 @@ export default function Ab() {
                       </div>
                       <div className="condcard-name">{c.name}</div>
                       {/* <div className="condcard-spec">{c.to}</div> */}
-  <div className="book-link">Book →</div>
+                      <div className="book-link">Book →</div>
                     </div>
                   ))
                 ) : (

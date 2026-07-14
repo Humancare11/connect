@@ -6,7 +6,7 @@ const SECTIONS = [
     title: "1. Acceptance of Terms",
     body: [
       "By accessing or using the Humancare platform, website, or any associated services (collectively, the \"Services\"), you confirm that you are at least 18 years of age, have read and understood these Terms and Conditions, and agree to be bound by them in their entirety.",
-      "If you are accessing the Services on behalf of an organisation, you represent and warrant that you have the authority to bind that organisation to these Terms, and references to \"you\" shall include both you individually and that organisation.",
+      "If you are accessing the Services on behalf of an organisation, you represent and warrant that you have the authority to bind that organizationto these Terms, and references to \"you\" shall include both you individually and that organisation.",
       "Humancare reserves the right to modify these Terms at any time. Continued use of the Services following the posting of changes constitutes your acceptance of such changes. We will endeavour to notify registered users of material changes via email.",
     ],
   },
@@ -51,7 +51,7 @@ const SECTIONS = [
     title: "6. Limitation of Liability",
     body: [
       "To the fullest extent permitted by applicable law, Humancare and its officers, directors, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of, or inability to use, the Services.",
-      "Humancare's total aggregate liability to you for any claims arising from or related to the Services shall not exceed the total fees paid by your organisation in the twelve (12) months immediately preceding the claim.",
+      "Humancare's total aggregate liability to you for any claims arising from or related to the Services shall not exceed the total fees paid by your organizationin the twelve (12) months immediately preceding the claim.",
       "Some jurisdictions do not allow the exclusion of certain warranties or limitation of liability, so some of the above limitations may not apply to you. In such cases, Humancare's liability will be limited to the greatest extent permitted by applicable law.",
     ],
   },

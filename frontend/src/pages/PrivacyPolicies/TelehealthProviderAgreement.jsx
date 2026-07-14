@@ -651,14 +651,14 @@ export default function TelehealthProviderAgreement() {
                     Email
                   </p>
                   <a
-                    href="mailto:support@humancareconnect.com"
+                    href="mailto:support@humancareconnect.co"
                     style={{
                       fontSize: "13px",
                       color: "#2563eb",
                       textDecoration: "none",
                     }}
                   >
-                    support@humancareconnect.com
+                    support@humancareconnect.co
                   </a>
                 </div>
               </div>

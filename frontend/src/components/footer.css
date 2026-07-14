@@ -328,7 +328,6 @@
     font-size: clamp(38px, 12vw, 56px);
     letter-spacing: -2px;
     text-align: center;
-    /* re-anchor: left:50% + translateX(-50%) still centres the block */
   }
 
   .footer-bottom {

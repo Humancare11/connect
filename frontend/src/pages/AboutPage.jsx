@@ -677,7 +677,7 @@ export default function AboutPage() {
               <p className="contact__lead">
                 Whether you're looking for trusted online healthcare, a
                 healthcare professional interested in joining our network, or an
-                organisation exploring virtual healthcare solutions, our team is
+                organization exploring virtual healthcare solutions, our team is
                 here to help.
                 <br />
                 <br />

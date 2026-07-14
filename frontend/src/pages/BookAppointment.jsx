@@ -74,9 +74,9 @@ function formatSlot(time) {
 
 function formatDisplayDate(dateStr) {
   if (!dateStr) return "";
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-IN", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  });
+  const [year, month, day] = dateStr.split("-");
+  if (!year || !month || !day) return dateStr;
+  return `${month}/${day}/${year}`;
 }
 
 const FILE_ICONS = { pdf: "📄", image: "🖼️", doc: "📝", default: "📎" };
@@ -570,7 +570,16 @@ export default function BookAppointment() {
                   {form.date && <div className="ap-step-meta">{formatDisplayDate(form.date)}</div>}
                 </div>
               </div>
-              <input className="ap-date-input" type="date" value={form.date} min={todayStr} onChange={handleDateChange} required />
+              <input
+                className="ap-date-input"
+                type="date"
+                lang="en-US"
+                value={form.date}
+                min={todayStr}
+                onChange={handleDateChange}
+                placeholder="MM/DD/YYYY"
+                required
+              />
             </div>
 
             {/* Step 2 – Slots */}
