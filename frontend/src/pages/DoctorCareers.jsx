@@ -166,17 +166,11 @@ const PROCESS_STEPS = [
 
 const BENEFITS_FEATURES = [
   {
-<<<<<<< HEAD
-    icon: <FaClock />,
-    title: "Flexible Scheduling",
-    desc: "Set your own availability and provide virtual consultations at times that fit your professional and personal commitments.",
-=======
     name: "Dr. Anjali Rao",
     specialty: "Family Medicine",
     photo: "/images/careers/provider-1.jpg",
     quote:
       "Joining Humancare Connect let me build a schedule around my family without stepping away from clinical work I love.",
->>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
   },
   {
     icon: <FaGlobe />,
@@ -672,12 +666,7 @@ export default function DoctorCareers() {
               </a> */}
             {/* </motion.div> */}
             <motion.p className="dc-hero-trust" variants={fadeUp}>
-<<<<<<< HEAD
-              Join a growing community of licensed healthcare professionals
-              delivering trusted virtual care worldwide.
-=======
               Trusted by licensed physicians across 30+ specialties nationwide.
->>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             </motion.p>
           </motion.div>
 
@@ -717,15 +706,12 @@ export default function DoctorCareers() {
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeUp}
           >
-<<<<<<< HEAD
             <span className="dc-eyebrow">
               WHY DOCTORS CHOOSE HUMANCARE CONNECT
             </span>
             <h2>WHY DOCTORS CHOOSE HUMANCARE CONNECT</h2>
-=======
             <span className="dc-eyebrow">Why Join Humancare Connect</span>
             <h2>Everything you need to practice, minus the overhead</h2>
->>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             <p>
               Healthcare is evolving, and so is the way doctors connect with
               patients. Humancare Connect combines flexible virtual care, secure
