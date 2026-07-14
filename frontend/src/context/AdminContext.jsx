@@ -22,7 +22,7 @@ export function AdminProvider({ children }) {
       return;
     }
 
-    api.get("/api/auth/admin-me", { skipAuthRefresh: true })
+    api.get("/api/auth/admin-me", { authRole: "admin", skipAuthRefresh: true })
       .then((res) => setAdmin(res.data.user))
       .catch(() => setAdmin(null))
       .finally(() => setLoading(false));
@@ -31,7 +31,7 @@ export function AdminProvider({ children }) {
   const login = useCallback((adminData) => setAdmin(adminData), []);
 
   const logout = useCallback(async () => {
-    try { await api.post("/api/auth/admin-logout"); } catch { /* ignore */ }
+    try { await api.post("/api/auth/admin-logout", null, { authRole: "admin" }); } catch { /* ignore */ }
     clearUserAuthToken();
     clearClientSession();
     setAdmin(null);

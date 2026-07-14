@@ -312,6 +312,7 @@ export default function Appointments() {
                     {activeTab === "confirmed" && (
                       <Link
                         to={`/video-call/${appt._id}`}
+                        state={{ role: "user" }}
                         className="appt-btn appt-btn--primary"
                       >
                         Join Consultation

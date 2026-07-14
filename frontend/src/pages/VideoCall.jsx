@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import socket from "../socket";
 import "./videocall.css";
 import api from "../api";
@@ -61,6 +61,8 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
         medicines: medicines.filter((m) => m.name.trim()),
         instructions,
         followUpDate,
+      }, {
+        authRole: "doctor",
       });
       onSaved();
     } catch (err) {
@@ -511,6 +513,7 @@ const fmtDuration = (secs) => {
 export default function VideoCall() {
   const { appointmentId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { doctor, loading: doctorLoading } = useDoctorAuth();
   const { user, loading: userLoading } = useAuth();
@@ -525,6 +528,12 @@ export default function VideoCall() {
 
   const apptDoctorId = appt?.doctorId?._id || appt?.doctorId || "";
   const apptPatientId = appt?.patientId?._id || appt?.patientId || "";
+  const requestedRole = useMemo(() => {
+    const stateRole = location.state?.role;
+    const queryRole = new URLSearchParams(location.search).get("role");
+    const role = String(stateRole || queryRole || "").toLowerCase();
+    return role === "doctor" || role === "user" ? role : "";
+  }, [location.search, location.state]);
 
   const isDoctor = useMemo(() => {
     if (activeRole) return activeRole === "doctor";
@@ -679,7 +688,7 @@ export default function VideoCall() {
     setNotesLoaded(false);
 
     api
-      .get(`/api/notes/appointment/${appointmentId}`)
+      .get(`/api/notes/appointment/${appointmentId}`, { authRole: "doctor" })
       .then((res) => {
         if (cancelled) return;
         const note = res.data?.note;
@@ -730,27 +739,30 @@ export default function VideoCall() {
     (async () => {
       let lastError = null;
 
-      // Prefer patient ownership when user session exists.
-      if (user) {
-        try {
-          const res = await api.get(`/api/appointments/patient/${appointmentId}`);
-          if (cancelled) return;
-          setAppt(res.data);
-          setActiveRole("user");
-          setApptLoading(false);
-          return;
-        } catch (err) {
-          lastError = err;
-        }
-      }
+      const roleAttempts =
+        requestedRole === "doctor"
+          ? ["doctor", "user"]
+          : requestedRole === "user"
+            ? ["user", "doctor"]
+            : doctor && !user
+              ? ["doctor"]
+              : user && !doctor
+                ? ["user"]
+                : ["doctor", "user"];
 
-      // Fallback to doctor ownership.
-      if (doctor) {
+      for (const role of roleAttempts) {
+        if (role === "doctor" && !doctor) continue;
+        if (role === "user" && !user) continue;
+
         try {
-          const res = await api.get(`/api/appointments/doctor/${appointmentId}`);
+          const endpoint =
+            role === "doctor"
+              ? `/api/appointments/doctor/${appointmentId}`
+              : `/api/appointments/patient/${appointmentId}`;
+          const res = await api.get(endpoint, { authRole: role });
           if (cancelled) return;
           setAppt(res.data);
-          setActiveRole("doctor");
+          setActiveRole(role);
           setApptLoading(false);
           return;
         } catch (err) {
@@ -770,7 +782,7 @@ export default function VideoCall() {
     return () => {
       cancelled = true;
     };
-  }, [appointmentId, doctor, user, doctorLoading, userLoading]);
+  }, [appointmentId, doctor, user, doctorLoading, userLoading, requestedRole]);
 
   // ── Reliable cleanup: stop tracks + notify peers ───
   const performCleanup = useCallback(() => {
@@ -1614,10 +1626,10 @@ export default function VideoCall() {
   useEffect(() => {
     if (!inCall) return;
     const heartbeat = setInterval(() => {
-      api.post("/api/auth/refresh").catch(() => { });
+      api.post("/api/auth/refresh", null, { authRole: isDoctor ? "doctor" : "user" }).catch(() => { });
     }, 4 * 60 * 1000);
     return () => clearInterval(heartbeat);
-  }, [inCall]);
+  }, [inCall, isDoctor]);
 
   // ── Controls ──────────────────────────────────────────────────────
   const toggleMute = useCallback(() => {
@@ -1827,7 +1839,7 @@ export default function VideoCall() {
     setCompleting(true);
     try {
       if (["assigned", "confirmed"].includes(appt?.status)) {
-        await api.put(`/api/appointments/${appointmentId}/complete`);
+        await api.put(`/api/appointments/${appointmentId}/complete`, null, { authRole: "doctor" });
       }
       performCleanup();
       navigate("/doctor-dashboard/patients", { replace: true });
@@ -1944,7 +1956,7 @@ export default function VideoCall() {
     setNotesSaving(true);
     setNotesError("");
     try {
-      const res = await api.put(`/api/notes/appointment/${appointmentId}`, next);
+      const res = await api.put(`/api/notes/appointment/${appointmentId}`, next, { authRole: "doctor" });
       const saved = res.data?.note;
       setNotesSavedAt(saved?.updatedAt || new Date().toISOString());
       lastSavedNoteRef.current = next;

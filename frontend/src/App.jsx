@@ -552,7 +552,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => { });
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
       },
       10 * 60 * 1000,
     );
