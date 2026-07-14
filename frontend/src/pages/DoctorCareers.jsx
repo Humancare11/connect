@@ -666,7 +666,8 @@ export default function DoctorCareers() {
               </a> */}
             {/* </motion.div> */}
             <motion.p className="dc-hero-trust" variants={fadeUp}>
-              Trusted by licensed physicians across 30+ specialties nationwide.
+              Join a growing community of licensed healthcare professionals
+              delivering trusted virtual care worldwide.
             </motion.p>
           </motion.div>
 
@@ -706,10 +707,6 @@ export default function DoctorCareers() {
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeUp}
           >
-            <span className="dc-eyebrow">
-              WHY DOCTORS CHOOSE HUMANCARE CONNECT
-            </span>
-            <h2>WHY DOCTORS CHOOSE HUMANCARE CONNECT</h2>
             <span className="dc-eyebrow">Why Join Humancare Connect</span>
             <h2>Everything you need to practice, minus the overhead</h2>
             <p>
