@@ -2,6 +2,7 @@ const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
+const CategoryConsultation = require("../models/CategoryConsultation");
 const mongoose = require("mongoose");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { paypalFetch } = require("../utils/paypal");
@@ -346,14 +347,68 @@ const createAppointment = async (req, res) => {
     res.status(500).json({ msg: "Failed to book appointment." });
   }
 };
+const mapCategoryConsultationToAppointment = (cc) => {
+  let doctor = null;
+  if (cc.assignedDoctorId) {
+    doctor = {
+      _id: cc.assignedDoctorId.doctorId || null,
+      name: `${cc.assignedDoctorId.firstName || ""} ${cc.assignedDoctorId.surname || ""}`.trim() || cc.assignedDoctorName || "Doctor",
+      email: cc.assignedDoctorId.email || "",
+    };
+  } else if (cc.assignedDoctorName) {
+    doctor = {
+      _id: null,
+      name: cc.assignedDoctorName,
+      email: "",
+    };
+  }
+
+  let mappedStatus = "pending";
+  const status = (cc.status || "pending").toLowerCase();
+  if (status === "pending") mappedStatus = "pending";
+  else if (status === "assigned") mappedStatus = "assigned";
+  else if (status === "confirmed") mappedStatus = "confirmed";
+  else if (status === "completed" || status === "complete") mappedStatus = "complete";
+  else if (status === "cancelled") mappedStatus = "cancelled";
+
+  return {
+    _id: cc._id,
+    patientId: cc.patientId,
+    doctorId: doctor,
+    category: "Category Consultation",
+    specialty: cc.supportType || "",
+    condition: cc.urgency || "",
+    consultationPrice: 49,
+    date: cc.date,
+    time: cc.slot,
+    problem: cc.concern,
+    status: mappedStatus,
+    medicalReports: [],
+    createdAt: cc.createdAt,
+    updatedAt: cc.updatedAt,
+    isCategoryConsultation: true,
+  };
+};
+
 const getPatientAppointments = async (req, res) => {
   try {
-    const appointments = await Appointment.find({ patientId: req.user.id })
-      .populate("doctorId", "name email")
-      .sort({ createdAt: -1 })
-      .lean();
+    const [appointments, categoryConsultations] = await Promise.all([
+      Appointment.find({ patientId: req.user.id })
+        .populate("doctorId", "name email")
+        .sort({ createdAt: -1 })
+        .lean(),
+      CategoryConsultation.find({ patientId: req.user.id })
+        .populate("assignedDoctorId")
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
 
-    res.status(200).json(await withPresignedMedicalReports(appointments));
+    const mappedCategory = categoryConsultations.map(mapCategoryConsultationToAppointment);
+    const combined = [...appointments, ...mappedCategory].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.status(200).json(await withPresignedMedicalReports(combined));
   } catch (error) {
     console.error("getPatientAppointments error:", error);
     res.status(500).json({ msg: "Failed to fetch patient appointments." });
@@ -366,12 +421,56 @@ const getDoctorAppointments = async (req, res) => {
       return res.status(403).json({ msg: "Access denied. Doctors only." });
     }
 
+    const enrollment = await Enrollment.findOne({ doctorId: req.user.id }).select("_id");
+
+    let categoryConsultations = [];
+    if (enrollment) {
+      categoryConsultations = await CategoryConsultation.find({
+        assignedDoctorId: enrollment._id,
+      })
+        .populate("patientId", "patientId name email mobile gender country dob")
+        .sort({ createdAt: -1 })
+        .lean();
+    }
+
     const appointments = await Appointment.find({ doctorId: req.user.id })
       .populate("patientId", "patientId name email mobile")
       .sort({ createdAt: -1 })
       .lean();
 
-    res.status(200).json(await withPresignedMedicalReports(appointments));
+    const mappedCategory = categoryConsultations.map((cc) => {
+      let mappedStatus = "pending";
+      const status = (cc.status || "pending").toLowerCase();
+      if (status === "pending") mappedStatus = "pending";
+      else if (status === "assigned") mappedStatus = "assigned";
+      else if (status === "confirmed") mappedStatus = "confirmed";
+      else if (status === "completed" || status === "complete") mappedStatus = "complete";
+      else if (status === "cancelled") mappedStatus = "cancelled";
+
+      return {
+        _id: cc._id,
+        patientId: cc.patientId,
+        doctorId: req.user.id,
+        category: "Category Consultation",
+        specialty: cc.supportType || "",
+        condition: cc.urgency || "",
+        consultationPrice: 49,
+        date: cc.date,
+        time: cc.slot,
+        problem: cc.concern,
+        status: mappedStatus,
+        medicalReports: [],
+        createdAt: cc.createdAt,
+        updatedAt: cc.updatedAt,
+        isCategoryConsultation: true,
+      };
+    });
+
+    const combined = [...appointments, ...mappedCategory].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.status(200).json(await withPresignedMedicalReports(combined));
   } catch (error) {
     console.error("getDoctorAppointments error:", error);
     res.status(500).json({ msg: "Failed to fetch doctor appointments." });
@@ -380,36 +479,56 @@ const getDoctorAppointments = async (req, res) => {
 
 const confirmAppointment = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id);
+    let appointment = await Appointment.findById(req.params.id);
+    let isCategory = false;
+
+    if (!appointment) {
+      appointment = await CategoryConsultation.findById(req.params.id).populate("assignedDoctorId");
+      if (appointment) {
+        isCategory = true;
+      }
+    }
+
     if (!appointment) {
       return res.status(404).json({ msg: "Appointment not found." });
     }
 
-    if (appointment.doctorId.toString() !== req.user.id) {
-      return res.status(403).json({ msg: "You can only confirm your own appointments." });
+    if (isCategory) {
+      if (!appointment.assignedDoctorId || appointment.assignedDoctorId.doctorId.toString() !== req.user.id) {
+        return res.status(403).json({ msg: "You can only confirm your own appointments." });
+      }
+    } else {
+      if (appointment.doctorId.toString() !== req.user.id) {
+        return res.status(403).json({ msg: "You can only confirm your own appointments." });
+      }
     }
 
-    if (!["assigned", "pending"].includes(appointment.status)) {
+    if (!["assigned", "pending"].includes(appointment.status.toLowerCase())) {
       return res.status(400).json({ msg: "Only assigned or pending appointments can be confirmed." });
     }
 
-    appointment.status = "confirmed";
-    appointment.sessionStarted = true;
+    if (isCategory) {
+      appointment.status = "Confirmed";
+    } else {
+      appointment.status = "confirmed";
+      appointment.sessionStarted = true;
+    }
     await appointment.save();
 
     const io = req.app.get("io");
     if (io) {
+      const patientId = appointment.patientId;
       io.to(`appointment_${appointment._id}`).emit("appointment-updated", {
         appointmentId: appointment._id,
-        status: appointment.status,
+        status: isCategory ? "confirmed" : appointment.status,
       });
-      io.to(`patient_${appointment.patientId}`).emit("appointment-updated", {
+      io.to(`patient_${patientId}`).emit("appointment-updated", {
         appointmentId: appointment._id,
-        status: appointment.status,
+        status: isCategory ? "confirmed" : appointment.status,
       });
       io.to("admin_room").emit("appointment-updated", {
         appointmentId: appointment._id,
-        status: appointment.status,
+        status: isCategory ? "confirmed" : appointment.status,
       });
     }
 
@@ -422,26 +541,49 @@ const confirmAppointment = async (req, res) => {
 
 const completeAppointment = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id);
+    let appointment = await Appointment.findById(req.params.id);
+    let isCategory = false;
+
+    if (!appointment) {
+      appointment = await CategoryConsultation.findById(req.params.id).populate("assignedDoctorId");
+      if (appointment) {
+        isCategory = true;
+      }
+    }
+
     if (!appointment) {
       return res.status(404).json({ msg: "Appointment not found." });
     }
 
-    if (appointment.doctorId.toString() !== req.user.id) {
-      return res.status(403).json({ msg: "You can only complete your own appointments." });
+    if (isCategory) {
+      if (!appointment.assignedDoctorId || appointment.assignedDoctorId.doctorId.toString() !== req.user.id) {
+        return res.status(403).json({ msg: "You can only complete your own appointments." });
+      }
+    } else {
+      if (appointment.doctorId.toString() !== req.user.id) {
+        return res.status(403).json({ msg: "You can only complete your own appointments." });
+      }
     }
 
-    if (!["assigned", "confirmed"].includes(appointment.status)) {
+    if (!["assigned", "confirmed"].includes(appointment.status.toLowerCase())) {
       return res.status(400).json({ msg: "Only assigned or confirmed appointments can be marked complete." });
     }
 
-    appointment.status = "complete";
+    if (isCategory) {
+      appointment.status = "Completed";
+    } else {
+      appointment.status = "complete";
+    }
     await appointment.save();
 
     const io = req.app.get("io");
     if (io) {
-      const payload = { appointmentId: appointment._id, status: appointment.status };
-      io.to(`patient_${appointment.patientId}`).emit("appointment-updated", payload);
+      const patientId = appointment.patientId;
+      const payload = {
+        appointmentId: appointment._id,
+        status: isCategory ? "complete" : appointment.status
+      };
+      io.to(`patient_${patientId}`).emit("appointment-updated", payload);
       io.to(`appointment_${appointment._id}`).emit("appointment-updated", payload);
       io.to("admin_room").emit("appointment-updated", payload);
     }
@@ -455,31 +597,51 @@ const completeAppointment = async (req, res) => {
 
 const cancelAppointment = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id);
+    let appointment = await Appointment.findById(req.params.id);
+    let isCategory = false;
+
+    if (!appointment) {
+      appointment = await CategoryConsultation.findById(req.params.id).populate("assignedDoctorId");
+      if (appointment) {
+        isCategory = true;
+      }
+    }
+
     if (!appointment) {
       return res.status(404).json({ msg: "Appointment not found." });
     }
 
-    if (appointment.doctorId.toString() !== req.user.id) {
-      return res.status(403).json({ msg: "You can only cancel your own appointments." });
+    if (isCategory) {
+      if (!appointment.assignedDoctorId || appointment.assignedDoctorId.doctorId.toString() !== req.user.id) {
+        return res.status(403).json({ msg: "You can only cancel your own appointments." });
+      }
+    } else {
+      if (appointment.doctorId.toString() !== req.user.id) {
+        return res.status(403).json({ msg: "You can only cancel your own appointments." });
+      }
     }
 
-    if (appointment.status === "cancelled") {
+    if (appointment.status.toLowerCase() === "cancelled") {
       return res.status(400).json({ msg: "Appointment is already cancelled." });
     }
 
-    appointment.status = "cancelled";
+    if (isCategory) {
+      appointment.status = "Cancelled";
+    } else {
+      appointment.status = "cancelled";
+    }
     await appointment.save();
 
     const io = req.app.get("io");
     if (io) {
-      io.to(`patient_${appointment.patientId}`).emit("appointment-updated", {
+      const patientId = appointment.patientId;
+      io.to(`patient_${patientId}`).emit("appointment-updated", {
         appointmentId: appointment._id,
-        status: appointment.status,
+        status: isCategory ? "cancelled" : appointment.status,
       });
       io.to("admin_room").emit("appointment-updated", {
         appointmentId: appointment._id,
-        status: appointment.status,
+        status: isCategory ? "cancelled" : appointment.status,
       });
     }
 
@@ -707,17 +869,27 @@ const getAllAppointments = async (req, res) => {
 
 const getAppointmentById = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id)
+    let appointment = await Appointment.findById(req.params.id)
       .populate("patientId", "patientId name email mobile gender dob city country")
       .populate("doctorId", "name email doctorId")
       .lean();
+
+    let isCategory = false;
+    if (!appointment) {
+      const cc = await CategoryConsultation.findById(req.params.id)
+        .populate("patientId", "patientId name email mobile gender dob city country")
+        .populate("assignedDoctorId")
+        .lean();
+      if (cc) {
+        appointment = mapCategoryConsultationToAppointment(cc);
+        isCategory = true;
+      }
+    }
 
     if (!appointment) {
       return res.status(404).json({ msg: "Appointment not found." });
     }
 
-    // Check by participant ID, not by role — works regardless of which
-    // cookie/token the shared verifyToken middleware happened to decode first.
     const userId = req.user.id;
     const patientId = appointment.patientId?._id?.toString() ?? appointment.patientId?.toString();
     const doctorId = appointment.doctorId?._id?.toString() ?? appointment.doctorId?.toString();
@@ -759,20 +931,39 @@ const getAppointmentById = async (req, res) => {
 const getDoctorOwnAppointment = async (req, res) => {
   try {
     console.log("[getDoctorOwnAppointment] doctorJwtId:", req.user.id, "appointmentId:", req.params.id);
-    const owns = await Appointment.exists({ _id: req.params.id, doctorId: req.user.id });
-    console.log("[getDoctorOwnAppointment] owns:", owns);
-    if (!owns) {
+    let owns = await Appointment.exists({ _id: req.params.id, doctorId: req.user.id });
+    console.log("[getDoctorOwnAppointment] owns (Appointment):", owns);
+
+    let appointment;
+    if (owns) {
+      appointment = await Appointment.findById(req.params.id)
+        .populate("patientId", "patientId name email mobile gender dob")
+        .populate("doctorId", "name email")
+        .lean();
+    } else {
+      const enrollment = await Enrollment.findOne({ doctorId: req.user.id }).select("_id");
+      const ccOwns = enrollment ? await CategoryConsultation.exists({ _id: req.params.id, assignedDoctorId: enrollment._id }) : false;
+      console.log("[getDoctorOwnAppointment] owns (CategoryConsultation):", ccOwns);
+      if (ccOwns) {
+        const cc = await CategoryConsultation.findById(req.params.id)
+          .populate("patientId", "patientId name email mobile gender dob")
+          .populate("assignedDoctorId")
+          .lean();
+        if (cc) {
+          appointment = mapCategoryConsultationToAppointment(cc);
+        }
+      }
+    }
+
+    if (!appointment) {
       const apptRaw = await Appointment.findById(req.params.id).select("doctorId").lean();
-      console.log("[getDoctorOwnAppointment] appointment.doctorId in DB:", apptRaw?.doctorId?.toString());
-      const exists = !!apptRaw;
+      const enrollment = await Enrollment.findOne({ doctorId: req.user.id }).select("_id");
+      const ccRaw = enrollment ? await CategoryConsultation.findOne({ _id: req.params.id }).select("assignedDoctorId").lean() : null;
+
+      const exists = !!apptRaw || !!ccRaw;
       if (!exists) return res.status(404).json({ msg: "Appointment not found." });
       return res.status(403).json({ msg: "Access denied." });
     }
-
-    const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "patientId name email mobile gender dob")
-      .populate("doctorId", "name email")
-      .lean();
 
     res.status(200).json(await withPresignedMedicalReportUrls(appointment));
   } catch (error) {
@@ -785,18 +976,34 @@ const getDoctorOwnAppointment = async (req, res) => {
 // session ambiguity when multiple auth cookies/tokens exist in one browser.
 const getPatientOwnAppointment = async (req, res) => {
   try {
-    const owns = await Appointment.exists({ _id: req.params.id, patientId: req.user.id });
-    if (!owns) {
-      const apptRaw = await Appointment.findById(req.params.id).select("patientId").lean();
-      const exists = !!apptRaw;
-      if (!exists) return res.status(404).json({ msg: "Appointment not found." });
-      return res.status(403).json({ msg: "Access denied." });
+    let owns = await Appointment.exists({ _id: req.params.id, patientId: req.user.id });
+    let appointment;
+    if (owns) {
+      appointment = await Appointment.findById(req.params.id)
+        .populate("patientId", "patientId name email mobile gender dob")
+        .populate("doctorId", "name email")
+        .lean();
+    } else {
+      const ccOwns = await CategoryConsultation.exists({ _id: req.params.id, patientId: req.user.id });
+      if (ccOwns) {
+        const cc = await CategoryConsultation.findById(req.params.id)
+          .populate("patientId", "patientId name email mobile gender dob")
+          .populate("assignedDoctorId")
+          .lean();
+        if (cc) {
+          appointment = mapCategoryConsultationToAppointment(cc);
+        }
+      }
     }
 
-    const appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "patientId name email mobile gender dob")
-      .populate("doctorId", "name email")
-      .lean();
+    if (!appointment) {
+      const apptRaw = await Appointment.findById(req.params.id).select("patientId").lean();
+      const ccRaw = await CategoryConsultation.findById(req.params.id).select("patientId").lean();
+      if (!apptRaw && !ccRaw) {
+        return res.status(404).json({ msg: "Appointment not found." });
+      }
+      return res.status(403).json({ msg: "Access denied." });
+    }
 
     res.status(200).json(await withPresignedMedicalReportUrls(appointment));
   } catch (error) {

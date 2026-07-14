@@ -1,7 +1,12 @@
 import { useLocation, Link, Navigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import "./Appointment.css";
 import api from "../api";
@@ -19,7 +24,9 @@ function getClientTimezone() {
 
 function toAppointmentUtc(date, time) {
   if (!date || !time) return "";
-  const match = String(time).trim().match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
+  const match = String(time)
+    .trim()
+    .match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
   if (!match) return "";
   let hours = Number(match[1]);
   const minutes = Number(match[2]);
@@ -45,12 +52,23 @@ const ELEMENTS_APPEARANCE = {
     spacingUnit: "4px",
   },
   rules: {
-    ".Input": { border: "1.5px solid #e2e8f0", boxShadow: "none", backgroundColor: "#f8fafc" },
-    ".Input:focus": { border: "1.5px solid #223a5e", boxShadow: "0 0 0 3px rgba(34,58,94,.12)", backgroundColor: "#fff" },
+    ".Input": {
+      border: "1.5px solid #e2e8f0",
+      boxShadow: "none",
+      backgroundColor: "#f8fafc",
+    },
+    ".Input:focus": {
+      border: "1.5px solid #223a5e",
+      boxShadow: "0 0 0 3px rgba(34,58,94,.12)",
+      backgroundColor: "#fff",
+    },
     ".Label": { color: "#334155", fontWeight: "600", fontSize: "13px" },
     ".Tab": { border: "1.5px solid #e2e8f0", borderRadius: "10px" },
     ".Tab:hover": { border: "1.5px solid #223a5e" },
-    ".Tab--selected": { border: "1.5px solid #223a5e", backgroundColor: "#eef4fb" },
+    ".Tab--selected": {
+      border: "1.5px solid #223a5e",
+      backgroundColor: "#eef4fb",
+    },
   },
 };
 
@@ -63,7 +81,13 @@ for (let h = 8; h < 20; h++) {
 }
 
 function getBookingDoctorId(doctor) {
-  return doctor?.mongoId || doctor?.doctorMongoId || doctor?.doctorIdMongo || doctor?.doctorId || doctor?.id;
+  return (
+    doctor?.mongoId ||
+    doctor?.doctorMongoId ||
+    doctor?.doctorIdMongo ||
+    doctor?.doctorId ||
+    doctor?.id
+  );
 }
 
 function formatSlot(time) {
@@ -75,7 +99,10 @@ function formatSlot(time) {
 function formatDisplayDate(dateStr) {
   if (!dateStr) return "";
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-IN", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 }
 
@@ -94,7 +121,15 @@ function formatBytes(b) {
 }
 
 /* ─── Stripe payment form (must be inside <Elements>) ─────── */
-function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess, formatFee }) {
+function StripeForm({
+  clientSecret,
+  amount,
+  doctor,
+  form,
+  reports,
+  onSuccess,
+  formatFee,
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [paying, setPaying] = useState(false);
@@ -108,11 +143,16 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess, fo
     setPayError("");
 
     /* Save booking data so we can recover it after 3DS redirect */
-    sessionStorage.setItem("ap_booking_pending", JSON.stringify({ doctor, form, reports, amount }));
+    sessionStorage.setItem(
+      "ap_booking_pending",
+      JSON.stringify({ doctor, form, reports, amount }),
+    );
 
     const { error } = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: `${window.location.origin}/book-appointment` },
+      confirmParams: {
+        return_url: `${window.location.origin}/book-appointment`,
+      },
       redirect: "if_required",
     });
 
@@ -129,10 +169,34 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess, fo
   return (
     <form onSubmit={handlePay} className="ap-pay-form">
       <div className="ap-pay-element-wrap">
-        <PaymentElement onReady={() => setReady(true)} options={{ layout: "tabs", paymentMethodOrder: ["card"] }} />
+        <PaymentElement
+          onReady={() => setReady(true)}
+          options={{ layout: "tabs", paymentMethodOrder: ["card"] }}
+        />
       </div>
-      <div className="ap-pay-notice" style={{ fontSize: "12px", padding: "12px", background: "#eef4fb", border: "1px solid #cbd9ea", borderRadius: "8px", color: "#223a5e", marginTop: "12px" }}>
-        <strong>Test Mode:</strong> Use card number <code style={{ background: "#fff", padding: "2px 4px", borderRadius: "4px" }}>4242 4242 4242 4242</code> with any future date and any CVC.
+      <div
+        className="ap-pay-notice"
+        style={{
+          fontSize: "12px",
+          padding: "12px",
+          background: "#eef4fb",
+          border: "1px solid #cbd9ea",
+          borderRadius: "8px",
+          color: "#223a5e",
+          marginTop: "12px",
+        }}
+      >
+        <strong>Test Mode:</strong> Use card number{" "}
+        <code
+          style={{
+            background: "#fff",
+            padding: "2px 4px",
+            borderRadius: "4px",
+          }}
+        >
+          4242 4242 4242 4242
+        </code>{" "}
+        with any future date and any CVC.
       </div>
 
       {!ready && (
@@ -144,23 +208,50 @@ function StripeForm({ clientSecret, amount, doctor, form, reports, onSuccess, fo
       {payError && <p className="ap-error">{payError}</p>}
 
       <div className="ap-pay-security">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
         Payments are secured and encrypted by Stripe
       </div>
 
-      <button className="ap-submit" type="submit" disabled={!stripe || !ready || paying}>
-        {paying
-          ? <><span className="ap-spinner ap-spinner--white" /> Processing payment…</>
-          : `Pay ${formatFee(amount)} →`}
+      <button
+        className="ap-submit"
+        type="submit"
+        disabled={!stripe || !ready || paying}
+      >
+        {paying ? (
+          <>
+            <span className="ap-spinner ap-spinner--white" /> Processing
+            payment…
+          </>
+        ) : (
+          `Pay ${formatFee(amount)} →`
+        )}
       </button>
     </form>
   );
 }
 
 /* ─── Payment stage ───────────────────────────────────────── */
-function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, formatFee }) {
+export function PaymentStage({
+  amount,
+  doctor,
+  form,
+  reports,
+  onBack,
+  onComplete,
+  formatFee,
+}) {
   const [method, setMethod] = useState(null); // null | "stripe" | "paypal"
   const [clientSecret, setClientSecret] = useState("");
   const [stripeCreating, setStripeCreating] = useState(false);
@@ -170,7 +261,10 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
 
   const selectStripe = async () => {
     setStripeError("");
-    if (clientSecret) { setMethod("stripe"); return; }
+    if (clientSecret) {
+      setMethod("stripe");
+      return;
+    }
     setStripeCreating(true);
     try {
       const doctorId = getBookingDoctorId(doctor);
@@ -178,7 +272,10 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
     } catch (err) {
-      setStripeError(err.response?.data?.msg || "Failed to initialize payment. Please try again.");
+      setStripeError(
+        err.response?.data?.msg ||
+        "Failed to initialize payment. Please try again.",
+      );
     } finally {
       setStripeCreating(false);
     }
@@ -194,22 +291,40 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
     setPaypalLoading(true);
     setPaypalError("");
     try {
-      const res = await api.post("/api/paypal/capture-order", { orderId: data.orderID });
+      const res = await api.post("/api/paypal/capture-order", {
+        orderId: data.orderID,
+      });
       if (res.data.status === "COMPLETED") {
         onComplete(res.data.orderId, "paypal", res.data.amountCents);
       }
     } catch (err) {
-      setPaypalError(err.response?.data?.msg || "PayPal payment failed. Please try again.");
+      setPaypalError(
+        err.response?.data?.msg || "PayPal payment failed. Please try again.",
+      );
     } finally {
       setPaypalLoading(false);
     }
   };
 
   return (
-    <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "USD", intent: "capture" }}>
+    <PayPalScriptProvider
+      options={{
+        "client-id": PAYPAL_CLIENT_ID,
+        currency: "USD",
+        intent: "capture",
+      }}
+    >
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          >
             <polyline points="15 18 9 12 15 6" />
           </svg>
           Back to details
@@ -218,10 +333,22 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
         {/* Appointment summary */}
         <div className="ap-pay-summary">
           <div className="ap-pay-summary-title">Appointment Summary</div>
-          <div className="ap-pay-summary-row"><span>Doctor</span><strong>{doctor.name}</strong></div>
-          <div className="ap-pay-summary-row"><span>Speciality</span><strong>{doctor.specialty || "General"}</strong></div>
-          <div className="ap-pay-summary-row"><span>Date</span><strong>{formatDisplayDate(form.date)}</strong></div>
-          <div className="ap-pay-summary-row"><span>Time</span><strong>{formatSlot(form.time)}</strong></div>
+          <div className="ap-pay-summary-row">
+            <span>Doctor</span>
+            <strong>{doctor.name}</strong>
+          </div>
+          <div className="ap-pay-summary-row">
+            <span>Speciality</span>
+            <strong>{doctor.specialty || "General"}</strong>
+          </div>
+          <div className="ap-pay-summary-row">
+            <span>Date</span>
+            <strong>{formatDisplayDate(form.date)}</strong>
+          </div>
+          <div className="ap-pay-summary-row">
+            <span>Time</span>
+            <strong>{formatSlot(form.time)}</strong>
+          </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
             <strong className="ap-pay-fee-amount">{formatFee(amount)}</strong>
@@ -238,9 +365,11 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
               onClick={selectStripe}
               disabled={stripeCreating}
             >
-              {stripeCreating
-                ? <span className="ap-spinner" />
-                : <span className="ap-pay-method-icon">💳</span>}
+              {stripeCreating ? (
+                <span className="ap-spinner" />
+              ) : (
+                <span className="ap-pay-method-icon">💳</span>
+              )}
               <span>Credit / Debit Card</span>
               <span className="ap-pay-method-sub">Stripe · Secure</span>
             </button>
@@ -248,20 +377,34 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
             <button
               type="button"
               className={`ap-pay-method-btn${method === "paypal" ? " ap-pay-method-btn--active" : ""}`}
-              onClick={() => { setMethod("paypal"); setPaypalError(""); }}
+              onClick={() => {
+                setMethod("paypal");
+                setPaypalError("");
+              }}
               disabled={!PAYPAL_CLIENT_ID}
             >
               <span className="ap-pay-method-icon">
                 <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
-                  <path d="M19.5 7.5c.28 1.63-.1 3.14-1.1 4.3C17.4 13 15.88 13.75 14 13.75H12.3l-.9 5.25H8.5L10.5 7.5h9z" fill="#009cde" />
-                  <path d="M21.5 5.5c.28 1.63-.1 3.14-1.1 4.3C19.4 11 17.88 11.75 16 11.75H14.3l-.9 5.25H10.5L12.5 5.5h9z" fill="#012169" opacity=".6" />
+                  <path
+                    d="M19.5 7.5c.28 1.63-.1 3.14-1.1 4.3C17.4 13 15.88 13.75 14 13.75H12.3l-.9 5.25H8.5L10.5 7.5h9z"
+                    fill="#009cde"
+                  />
+                  <path
+                    d="M21.5 5.5c.28 1.63-.1 3.14-1.1 4.3C19.4 11 17.88 11.75 16 11.75H14.3l-.9 5.25H10.5L12.5 5.5h9z"
+                    fill="#012169"
+                    opacity=".6"
+                  />
                 </svg>
               </span>
               <span>PayPal</span>
               <span className="ap-pay-method-sub">Fast & Secure</span>
             </button>
           </div>
-          {stripeError && <p className="ap-error" style={{ marginTop: 10 }}>{stripeError}</p>}
+          {stripeError && (
+            <p className="ap-error" style={{ marginTop: 10 }}>
+              {stripeError}
+            </p>
+          )}
           {!PAYPAL_CLIENT_ID && (
             <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
               PayPal not configured (VITE_PAYPAL_CLIENT_ID missing)
@@ -271,7 +414,10 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
 
         {/* Stripe form */}
         {method === "stripe" && clientSecret && (
-          <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
+          <Elements
+            stripe={stripePromise}
+            options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
+          >
             <StripeForm
               clientSecret={clientSecret}
               amount={amount}
@@ -294,13 +440,28 @@ function PaymentStage({ amount, doctor, form, reports, onBack, onComplete, forma
               </div>
             ) : (
               <PayPalButtons
-                style={{ layout: "vertical", color: "blue", shape: "rect", label: "pay", height: 48 }}
+                style={{
+                  layout: "vertical",
+                  color: "blue",
+                  shape: "rect",
+                  label: "pay",
+                  height: 48,
+                }}
                 createOrder={createPaypalOrder}
                 onApprove={onPaypalApprove}
-                onError={(err) => setPaypalError(err.message || "PayPal encountered an error. Please try again.")}
+                onError={(err) =>
+                  setPaypalError(
+                    err.message ||
+                    "PayPal encountered an error. Please try again.",
+                  )
+                }
               />
             )}
-            {paypalError && <p className="ap-error" style={{ marginTop: 10 }}>{paypalError}</p>}
+            {paypalError && (
+              <p className="ap-error" style={{ marginTop: 10 }}>
+                {paypalError}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -315,7 +476,8 @@ export default function BookAppointment() {
   const { formatPrice } = useCurrency();
 
   const getDoctorFee = (doc = doctor) => {
-    const amount = typeof doc?.price === "number" ? doc.price : Number(doc?.price) || 0;
+    const amount =
+      typeof doc?.price === "number" ? doc.price : Number(doc?.price) || 0;
     return {
       amount,
       currency: doc?.feeCurrency || "USD",
@@ -362,9 +524,20 @@ export default function BookAppointment() {
       setReports(pending.reports);
       setPaymentAmount(pending.amount);
       setStage("confirming");
-      bookAppointment(piId, "stripe", pending.doctor, pending.form, pending.reports, pending.amount);
+      bookAppointment(
+        piId,
+        "stripe",
+        pending.doctor,
+        pending.form,
+        pending.reports,
+        pending.amount,
+      );
     } else {
-      if (pending) { setDoctor(pending.doctor); setForm(pending.form); setReports(pending.reports); }
+      if (pending) {
+        setDoctor(pending.doctor);
+        setForm(pending.form);
+        setReports(pending.reports);
+      }
       setError("Payment was not completed. Please try again.");
       setStage("form");
     }
@@ -375,7 +548,10 @@ export default function BookAppointment() {
     if (!form.date || !doctor || !user) return;
     setLoadingSlots(true);
     const doctorId = getBookingDoctorId(doctor);
-    api.get(`/api/appointments/booked-slots?doctorId=${doctorId}&date=${form.date}`)
+    api
+      .get(
+        `/api/appointments/booked-slots?doctorId=${doctorId}&date=${form.date}`,
+      )
       .then((res) => setBookedSlots(res.data.slots || []))
       .catch(() => setBookedSlots([]))
       .finally(() => setLoadingSlots(false));
@@ -384,7 +560,8 @@ export default function BookAppointment() {
   /* ── Slot helpers ── */
   const getEarliestAllowed = () => {
     if (form.date !== todayStr) return null;
-    const d = new Date(); d.setMinutes(d.getMinutes() + 30);
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 30);
     return d.toTimeString().slice(0, 5);
   };
   const slotStatus = (slot) => {
@@ -399,7 +576,10 @@ export default function BookAppointment() {
     setForm({ date: e.target.value, time: "", problem: form.problem });
     setBookedSlots([]);
   };
-  const selectSlot = (slot) => { if (slotStatus(slot) === "available") setForm(f => ({ ...f, time: slot })); };
+  const selectSlot = (slot) => {
+    if (slotStatus(slot) === "available")
+      setForm((f) => ({ ...f, time: slot }));
+  };
 
   const uploadFiles = async (fileList) => {
     setUploading(true);
@@ -407,17 +587,30 @@ export default function BookAppointment() {
     for (const file of Array.from(fileList)) {
       try {
         const uploaded = await uploadFileDirectToS3(file);
-        results.push({ url: uploaded.url, name: uploaded.name, type: uploaded.type, size: uploaded.size });
+        results.push({
+          url: uploaded.url,
+          name: uploaded.name,
+          type: uploaded.type,
+          size: uploaded.size,
+        });
       } catch {
         setError(`Failed to upload "${file.name}". Max 10 MB.`);
       }
     }
-    setReports(prev => [...prev, ...results]);
+    setReports((prev) => [...prev, ...results]);
     setUploading(false);
   };
-  const handleFileChange = (e) => { if (e.target.files?.length) uploadFiles(e.target.files); e.target.value = ""; };
-  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files); };
-  const removeReport = (idx) => setReports(prev => prev.filter((_, i) => i !== idx));
+  const handleFileChange = (e) => {
+    if (e.target.files?.length) uploadFiles(e.target.files);
+    e.target.value = "";
+  };
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
+  };
+  const removeReport = (idx) =>
+    setReports((prev) => prev.filter((_, i) => i !== idx));
 
   /* Fetch fee and move to payment stage */
   const handleProceedToPayment = async () => {
@@ -431,16 +624,22 @@ export default function BookAppointment() {
       const doctorId = getBookingDoctorId(doctor);
       const res = await api.get(`/api/payments/fee?doctorId=${doctorId}`);
       if (res.data.feeAmount && res.data.feeCurrency) {
-        setDoctor((prev) => prev ? {
-          ...prev,
-          price: res.data.feeAmount,
-          feeCurrency: res.data.feeCurrency,
-        } : prev);
+        setDoctor((prev) =>
+          prev
+            ? {
+              ...prev,
+              price: res.data.feeAmount,
+              feeCurrency: res.data.feeCurrency,
+            }
+            : prev,
+        );
       }
       setPaymentAmount(res.data.feeCents);
       setStage("payment");
     } catch (err) {
-      setError(err.response?.data?.msg || "Failed to load fee. Please try again.");
+      setError(
+        err.response?.data?.msg || "Failed to load fee. Please try again.",
+      );
     } finally {
       setFetchingFee(false);
     }
@@ -463,10 +662,13 @@ export default function BookAppointment() {
       const doctorId = getBookingDoctorId(d);
 
       const body = {
-        doctorId, date: f.date, time: f.time,
+        doctorId,
+        date: f.date,
+        time: f.time,
         appointmentDateTimeUtc: toAppointmentUtc(f.date, f.time),
         patientTimezone: getClientTimezone(),
-        problem: f.problem, medicalReports: r,
+        problem: f.problem,
+        medicalReports: r,
       };
       if (gateway === "paypal") body.paypalOrderId = paymentRef;
       else body.paymentIntentId = paymentRef;
@@ -475,17 +677,26 @@ export default function BookAppointment() {
       setAppointment(res.data.appointment);
       if (amt) setPaymentAmount(amt);
       setStage("success");
-      notifyUserActivityUpdated({ source: "appointment", id: res.data?.appointment?._id });
+      notifyUserActivityUpdated({
+        source: "appointment",
+        id: res.data?.appointment?._id,
+      });
     } catch (err) {
-      setError(err.response?.data?.msg || "Appointment booking failed after payment. Please contact support.");
+      setError(
+        err.response?.data?.msg ||
+        "Appointment booking failed after payment. Please contact support.",
+      );
       setStage("form");
     }
   };
 
   /* ── Render helpers ── */
-  const availableCount = form.date ? ALL_SLOTS.filter(s => slotStatus(s) === "available").length : 0;
+  const availableCount = form.date
+    ? ALL_SLOTS.filter((s) => slotStatus(s) === "available").length
+    : 0;
   const stepBase = form.date ? 0 : -1;
-  const canProceed = form.date && form.time && form.problem.trim() && !uploading;
+  const canProceed =
+    form.date && form.time && form.problem.trim() && !uploading;
 
   /* Auth guard — redirect to login (with return state) if not authenticated */
   if (authLoading) {
@@ -501,7 +712,13 @@ export default function BookAppointment() {
     );
   }
   if (!user) {
-    return <Navigate to="/login" state={{ from: "/book-appointment", doctor: state?.doctor }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: "/book-appointment", doctor: state?.doctor }}
+        replace
+      />
+    );
   }
 
   /* Confirming — spinner while booking is being created */
@@ -518,21 +735,30 @@ export default function BookAppointment() {
     );
   }
 
-  if (!doctor) return <h2 style={{ padding: 40, textAlign: "center" }}>No Doctor Selected</h2>;
+  if (!doctor)
+    return (
+      <h2 style={{ padding: 40, textAlign: "center" }}>No Doctor Selected</h2>
+    );
 
   const stageIndex = stage === "form" ? 0 : stage === "payment" ? 1 : 2;
 
   return (
     <div className="ap-page">
       <div className="ap-card">
-
         {/* ── Hero ── */}
         <div className="ap-hero">
-          <div className="ap-hero-avatar" style={{ background: doctor.color || "#223a5e" }}>{doctor.initials}</div>
+          <div
+            className="ap-hero-avatar"
+            style={{ background: doctor.color || "#223a5e" }}
+          >
+            {doctor.initials}
+          </div>
           <div className="ap-hero-body">
             <span className="ap-hero-eyebrow">Book Appointment</span>
             <h2 className="ap-hero-name">{doctor.name}</h2>
-            <span className="ap-hero-spec">{doctor.specialty || "General"}</span>
+            <span className="ap-hero-spec">
+              {doctor.specialty || "General"}
+            </span>
           </div>
           {doctor.price > 0 && stage === "form" && (
             <div className="ap-hero-fee">
@@ -548,10 +774,19 @@ export default function BookAppointment() {
         {stage !== "success" && (
           <div className="ap-progress">
             {["Details", "Payment", "Confirmed"].map((label, i) => (
-              <div key={label} className={`ap-progress-step ${i <= stageIndex ? "ap-progress-step--done" : ""} ${i === stageIndex ? "ap-progress-step--active" : ""}`}>
-                <div className="ap-progress-dot">{i < stageIndex ? "✓" : i + 1}</div>
+              <div
+                key={label}
+                className={`ap-progress-step ${i <= stageIndex ? "ap-progress-step--done" : ""} ${i === stageIndex ? "ap-progress-step--active" : ""}`}
+              >
+                <div className="ap-progress-dot">
+                  {i < stageIndex ? "✓" : i + 1}
+                </div>
                 <span>{label}</span>
-                {i < 2 && <div className={`ap-progress-line ${i < stageIndex ? "ap-progress-line--done" : ""}`} />}
+                {i < 2 && (
+                  <div
+                    className={`ap-progress-line ${i < stageIndex ? "ap-progress-line--done" : ""}`}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -560,17 +795,27 @@ export default function BookAppointment() {
         {/* ── Stage: Form ── */}
         {stage === "form" && (
           <div className="ap-form">
-
             {/* Step 1 – Date */}
             <div className="ap-step">
               <div className="ap-step-header">
                 <span className="ap-step-num">1</span>
                 <div>
                   <div className="ap-step-title">Select a Date</div>
-                  {form.date && <div className="ap-step-meta">{formatDisplayDate(form.date)}</div>}
+                  {form.date && (
+                    <div className="ap-step-meta">
+                      {formatDisplayDate(form.date)}
+                    </div>
+                  )}
                 </div>
               </div>
-              <input className="ap-date-input" type="date" value={form.date} min={todayStr} onChange={handleDateChange} required />
+              <input
+                className="ap-date-input"
+                type="date"
+                value={form.date}
+                min={todayStr}
+                onChange={handleDateChange}
+                required
+              />
             </div>
 
             {/* Step 2 – Slots */}
@@ -580,31 +825,51 @@ export default function BookAppointment() {
                   <span className="ap-step-num">2</span>
                   <div>
                     <div className="ap-step-title">Choose a Time Slot</div>
-                    <div className="ap-step-meta">{loadingSlots ? "Checking availability…" : `${availableCount} of ${ALL_SLOTS.length} slots available`}</div>
+                    <div className="ap-step-meta">
+                      {loadingSlots
+                        ? "Checking availability…"
+                        : `${availableCount} of ${ALL_SLOTS.length} slots available`}
+                    </div>
                   </div>
                 </div>
                 {loadingSlots ? (
-                  <div className="ap-slots-loading"><span className="ap-spinner" /> Checking availability…</div>
+                  <div className="ap-slots-loading">
+                    <span className="ap-spinner" /> Checking availability…
+                  </div>
                 ) : (
                   <>
                     <div className="ap-slots-grid">
-                      {ALL_SLOTS.map(slot => {
+                      {ALL_SLOTS.map((slot) => {
                         const status = slotStatus(slot);
                         return (
-                          <button key={slot} type="button"
+                          <button
+                            key={slot}
+                            type="button"
                             className={`ap-slot ap-slot--${status} ${form.time === slot ? "ap-slot--selected" : ""}`}
-                            onClick={() => selectSlot(slot)} disabled={status !== "available"}>
+                            onClick={() => selectSlot(slot)}
+                            disabled={status !== "available"}
+                          >
                             {formatSlot(slot)}
-                            {status === "booked" && <span className="ap-slot-tag">Booked</span>}
-                            {status === "past" && <span className="ap-slot-tag">Passed</span>}
+                            {status === "booked" && (
+                              <span className="ap-slot-tag">Booked</span>
+                            )}
+                            {status === "past" && (
+                              <span className="ap-slot-tag">Passed</span>
+                            )}
                           </button>
                         );
                       })}
                     </div>
                     <div className="ap-slots-legend">
-                      <span className="ap-legend-item ap-legend--avail">Available</span>
-                      <span className="ap-legend-item ap-legend--sel">Selected</span>
-                      <span className="ap-legend-item ap-legend--na">Unavailable</span>
+                      <span className="ap-legend-item ap-legend--avail">
+                        Available
+                      </span>
+                      <span className="ap-legend-item ap-legend--sel">
+                        Selected
+                      </span>
+                      <span className="ap-legend-item ap-legend--na">
+                        Unavailable
+                      </span>
                     </div>
                   </>
                 )}
@@ -617,9 +882,16 @@ export default function BookAppointment() {
                 <span className="ap-step-num">{stepBase + 3}</span>
                 <div className="ap-step-title">Describe Your Problem</div>
               </div>
-              <textarea className="ap-textarea" rows={4}
+              <textarea
+                className="ap-textarea"
+                rows={4}
                 placeholder="Briefly describe your symptoms or reason for visit…"
-                value={form.problem} onChange={e => setForm(f => ({ ...f, problem: e.target.value }))} required />
+                value={form.problem}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, problem: e.target.value }))
+                }
+                required
+              />
             </div>
 
             {/* Step 4 – Reports */}
@@ -628,22 +900,42 @@ export default function BookAppointment() {
                 <span className="ap-step-num">{stepBase + 4}</span>
                 <div>
                   <div className="ap-step-title">Medical Reports</div>
-                  <div className="ap-step-meta">Optional — PDF, Images, Word, Excel · max 10 MB each</div>
+                  <div className="ap-step-meta">
+                    Optional — PDF, Images, Word, Excel · max 10 MB each
+                  </div>
                 </div>
               </div>
-              <div className={`ap-upload-zone ${dragOver ? "ap-upload-zone--over" : ""} ${uploading ? "ap-upload-zone--busy" : ""}`}
+              <div
+                className={`ap-upload-zone ${dragOver ? "ap-upload-zone--over" : ""} ${uploading ? "ap-upload-zone--busy" : ""}`}
                 onClick={() => !uploading && fileInputRef.current?.click()}
-                onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)} onDrop={handleDrop}>
-                <input ref={fileInputRef} type="file" multiple
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt"
-                  style={{ display: "none" }} onChange={handleFileChange} />
+                  style={{ display: "none" }}
+                  onChange={handleFileChange}
+                />
                 {uploading ? (
-                  <div className="ap-upload-busy"><span className="ap-spinner" /> Uploading…</div>
+                  <div className="ap-upload-busy">
+                    <span className="ap-spinner" /> Uploading…
+                  </div>
                 ) : (
-                  <><span className="ap-upload-icon">📂</span>
-                    <p className="ap-upload-text">Drag & drop or <span className="ap-upload-link">browse files</span></p>
-                    <p className="ap-upload-sub">Max 10 MB per file</p></>
+                  <>
+                    <span className="ap-upload-icon">📂</span>
+                    <p className="ap-upload-text">
+                      Drag & drop or{" "}
+                      <span className="ap-upload-link">browse files</span>
+                    </p>
+                    <p className="ap-upload-sub">Max 10 MB per file</p>
+                  </>
                 )}
               </div>
               {reports.length > 0 && (
@@ -653,9 +945,17 @@ export default function BookAppointment() {
                       <span className="ap-report-icon">{fileIcon(r.type)}</span>
                       <div className="ap-report-meta">
                         <span className="ap-report-name">{r.name}</span>
-                        <span className="ap-report-size">{formatBytes(r.size)}</span>
+                        <span className="ap-report-size">
+                          {formatBytes(r.size)}
+                        </span>
                       </div>
-                      <button type="button" className="ap-report-remove" onClick={() => removeReport(i)}>×</button>
+                      <button
+                        type="button"
+                        className="ap-report-remove"
+                        onClick={() => removeReport(i)}
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -664,10 +964,22 @@ export default function BookAppointment() {
 
             {error && <p className="ap-error">{error}</p>}
 
-            <button className="ap-submit" type="button" disabled={!canProceed || fetchingFee} onClick={handleProceedToPayment}>
-              {fetchingFee
-                ? <><span className="ap-spinner ap-spinner--white" /> Loading…</>
-                : <>Proceed to Payment{doctor.price > 0 ? ` — ${formatDoctorPrice(doctor)}` : ""} →</>}
+            <button
+              className="ap-submit"
+              type="button"
+              disabled={!canProceed || fetchingFee}
+              onClick={handleProceedToPayment}
+            >
+              {fetchingFee ? (
+                <>
+                  <span className="ap-spinner ap-spinner--white" /> Loading…
+                </>
+              ) : (
+                <>
+                  Proceed to Payment
+                  {doctor.price > 0 ? ` — ${formatDoctorPrice(doctor)}` : ""} →
+                </>
+              )}
             </button>
           </div>
         )}
@@ -689,25 +1001,58 @@ export default function BookAppointment() {
         {stage === "success" && (
           <div className="ap-success">
             <div className="ap-success-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
             <h3 className="ap-success-title">Appointment Booked!</h3>
-            <p className="ap-success-sub">Payment confirmed. Your doctor will review and confirm shortly.</p>
+            <p className="ap-success-sub">
+              Payment confirmed. Your doctor will review and confirm shortly.
+            </p>
             {appointment && (
               <div className="ap-success-details">
-                <div className="ap-success-row"><span className="ap-success-key">Doctor</span><span className="ap-success-val">{doctor.name}</span></div>
-                <div className="ap-success-row"><span className="ap-success-key">Date</span><span className="ap-success-val">{formatDisplayDate(appointment.date)}</span></div>
-                <div className="ap-success-row"><span className="ap-success-key">Time</span><span className="ap-success-val">{formatSlot(appointment.time)}</span></div>
-                <div className="ap-success-row"><span className="ap-success-key">Amount Paid</span><span className="ap-success-val ap-success-val--green">{formatFee(paymentAmount)}</span></div>
-                <div className="ap-success-row"><span className="ap-success-key">Status</span><span className="ap-badge ap-badge--pending">Pending Confirmation</span></div>
+                <div className="ap-success-row">
+                  <span className="ap-success-key">Doctor</span>
+                  <span className="ap-success-val">{doctor.name}</span>
+                </div>
+                <div className="ap-success-row">
+                  <span className="ap-success-key">Date</span>
+                  <span className="ap-success-val">
+                    {formatDisplayDate(appointment.date)}
+                  </span>
+                </div>
+                <div className="ap-success-row">
+                  <span className="ap-success-key">Time</span>
+                  <span className="ap-success-val">
+                    {formatSlot(appointment.time)}
+                  </span>
+                </div>
+                <div className="ap-success-row">
+                  <span className="ap-success-key">Amount Paid</span>
+                  <span className="ap-success-val ap-success-val--green">
+                    {formatFee(paymentAmount)}
+                  </span>
+                </div>
+                <div className="ap-success-row">
+                  <span className="ap-success-key">Status</span>
+                  <span className="ap-badge ap-badge--pending">
+                    Pending Confirmation
+                  </span>
+                </div>
               </div>
             )}
-            <Link to="/user/dashboard" className="ap-btn-outline">Back to Dashboard</Link>
+            <Link to="/user/dashboard" className="ap-btn-outline">
+              Back to Dashboard
+            </Link>
           </div>
         )}
-
       </div>
     </div>
   );

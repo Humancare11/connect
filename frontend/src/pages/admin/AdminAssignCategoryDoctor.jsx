@@ -119,7 +119,7 @@ function DoctorRow({
             ? "Assigned"
             : assigning
               ? "Assigning…"
-              : appointment.doctorId
+              : appointment.assignedDoctorId
                 ? "Reassign"
                 : "Assign"}
         </button>
@@ -128,7 +128,7 @@ function DoctorRow({
   );
 }
 
-export default function AdminAssignDoctor() {
+export default function AdminAssignCategoryDoctor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState(null);
@@ -146,12 +146,12 @@ export default function AdminAssignDoctor() {
       setLoading(true);
       setError("");
       try {
-        const [appointmentRes, doctorsRes] = await Promise.all([
-          api.get(`/api/appointments/${id}`),
+        const [consultationRes, doctorsRes] = await Promise.all([
+          api.get(`/api/category-consultation/${id}`),
           api.get("/api/doctor/approved"),
         ]);
         if (!alive) return;
-        setAppointment(appointmentRes.data);
+        setAppointment(consultationRes.data.data);
         setDoctors(Array.isArray(doctorsRes.data) ? doctorsRes.data : []);
       } catch (err) {
         if (alive) setError(err.response?.data?.msg || "Failed to load data.");
@@ -215,19 +215,22 @@ export default function AdminAssignDoctor() {
       });
   }, [appointment, doctors, query]);
 
-  const currentDoctorMongoId = appointment?.doctorId?._id?.toString() || "";
+  const currentDoctorMongoId = appointment?.assignedDoctorId?.toString() || "";
 
   const assignDoctor = async (doctor) => {
-    if (!doctor?.doctorId || assigningDoctorId) return;
-    setAssigningDoctorId(String(doctor.doctorId));
+    if (!doctor?.id || assigningDoctorId) return;
+    setAssigningDoctorId(String(doctor.id));
     setError("");
     setNotice("");
     try {
-      const res = await api.put(`/api/appointments/${id}/change-doctor`, {
-        doctorId: doctor.doctorId,
-      });
-      setNotice(res.data?.msg || "Doctor assigned successfully.");
-      setTimeout(() => navigate(`/admin-dashboard/appointments/${id}`), 900);
+      const res = await api.patch(
+        `/api/category-consultation/${id}/assign-doctor`,
+        {
+          doctorId: doctor.id,
+        },
+      );
+      setNotice(res.data?.message || res.data?.msg || "Doctor assigned successfully.");
+      setTimeout(() => navigate(`/admin-dashboard/category-consultations`), 900);
     } catch (err) {
       setError(err.response?.data?.msg || "Could not assign doctor.");
     } finally {
@@ -251,9 +254,10 @@ export default function AdminAssignDoctor() {
       <div className="aad-page">
         <div className="aad-empty">
           <p>{error}</p>
-          <Link to="/admin-dashboard/appointments">
-            Back to appointments
-        </Link>
+
+          <Link to="/admin-dashboard/category-consultations">
+            Back to Category Consultations
+          </Link>
         </div>
       </div>
     );
@@ -263,7 +267,7 @@ export default function AdminAssignDoctor() {
     <div className="aad-page">
       {/* ── Top nav ── */}
       <div className="aad-nav">
-        <Link className="aad-back" to={`/admin-dashboard/appointments/${id}`}>
+        <Link className="aad-back" to="/admin-dashboard/category-consultations">
           ← Back
         </Link>
         <span className="aad-nav-dot">·</span>
@@ -273,48 +277,41 @@ export default function AdminAssignDoctor() {
       {/* ── Appointment bar – single horizontal strip ── */}
       <div className="aad-appt-bar">
         <div className="aad-appt-field">
-          <span className="aad-appt-label">Patient</span>
+          <span className="aad-appt-label">Concern</span>
           <span className="aad-appt-val">
-            {appointment.patientId?.name || "—"}
+            {appointment.concern || "—"}
           </span>
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
-          <span className="aad-appt-label">Country</span>
-          <span className="aad-appt-val">
-            {getAppointmentCountry(appointment) || "—"}
-          </span>
+          <span className="aad-appt-label">Severity</span>
+          <span className="aad-appt-val">{appointment.severity || "—"}</span>
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
-          <span className="aad-appt-label">Category</span>
-          <span className="aad-appt-val">{appointment.category || "—"}</span>
+          <span className="aad-appt-label">Support Type</span>
+          <span className="aad-appt-val">{appointment.supportType || "—"}</span>
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
-          <span className="aad-appt-label">Specialty</span>
-          <span className="aad-appt-val">{appointment.specialty || "—"}</span>
+          <span className="aad-appt-label">Urgency</span>
+          <span className="aad-appt-val">{appointment.urgency || "—"}</span>
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
-          <span className="aad-appt-label">Condition</span>
-          <span className="aad-appt-val">{appointment.condition || "—"}</span>
+          <span className="aad-appt-label">Time Window</span>
+          <span className="aad-appt-val">{appointment.timeWindow || "—"}</span>
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
-          <span className="aad-appt-label">Date</span>
-          <span className="aad-appt-val">{appointment.date || "—"}</span>
-        </div>
-        <div className="aad-appt-sep" />
-        <div className="aad-appt-field">
-          <span className="aad-appt-label">Time</span>
-          <span className="aad-appt-val">{appointment.time || "—"}</span>
+          <span className="aad-appt-label">Slot</span>
+          <span className="aad-appt-val">{appointment.slot || "—"}</span>
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
           <span className="aad-appt-label">Current Doctor</span>
           <span className="aad-appt-val aad-appt-doctor">
-            {appointment.doctorId?.name || "Unassigned"}
+            {appointment.assignedDoctorName || "Unassigned"}
           </span>
         </div>
       </div>
@@ -379,8 +376,8 @@ export default function AdminAssignDoctor() {
                 key={doctor.id || doctor.doctorId}
                 doctor={doctor}
                 appointment={appointment}
-                assigning={assigningDoctorId === String(doctor.doctorId)}
-                selected={doctor.mongoId?.toString() === currentDoctorMongoId}
+                assigning={assigningDoctorId === String(doctor.id)}
+                selected={doctor.id === currentDoctorMongoId}
                 index={index}
                 onAssign={assignDoctor}
               />

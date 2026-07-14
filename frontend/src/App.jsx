@@ -364,6 +364,12 @@ import LABREQUISITIONS from "./pages/NewServices/LABREQUISITIONS";
 // Services
 import ServiceDemo from "./pages/NewServices/ServiceDemo";
 
+import AdminAssignCategoryDoctor from "./pages/admin/AdminAssignCategoryDoctor";
+
+import CategoryConsultant from "./pages/CategoryConsultant";
+import CategoryAppointmentConfirm from "./pages/CategoryAppointmentConfirm";
+import AdminCategoryConsultationDetails from "./pages/admin/AdminCategoryConsultationDetails"
+
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
 const DoctorLayout = lazy(() => import("./pages/doctors/DoctorLayout"));
@@ -392,7 +398,9 @@ const DoctorProfileForUser = lazy(
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
 const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
-const HealthcareManagement = lazy(() => import("./pages/admin/HealthcareManagement"));
+const HealthcareManagement = lazy(
+  () => import("./pages/admin/HealthcareManagement"),
+);
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
@@ -405,6 +413,10 @@ const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminAppointmentDetails = lazy(
   () => import("./pages/admin/AdminAppointmentDetails"),
 );
+const AdminCategoryConsultations = lazy(
+  () => import("./pages/admin/AdminCategoryConsultations"),
+);
+
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
 const PaymentLinkHistory = lazy(
@@ -551,7 +563,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -625,7 +637,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -889,6 +901,16 @@ function AppLayout() {
           />
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
+            path="/admin-dashboard/category-consultations/assign-doctor/:id"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminAssignCategoryDoctor />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/employee-dashboard"
             element={
               <EmployeeAdminPrivateRoute>
@@ -1052,6 +1074,26 @@ function AppLayout() {
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
                   <AdminAppointments />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/category-consultations"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminCategoryConsultations />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/category-consultations/:id"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminCategoryConsultationDetails />
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1629,8 +1671,7 @@ function AppLayout() {
             path="/urinary-symptoms-in-men"
             element={<UrinarySymptomsMen1 />}
           />
-
-           <Route path="/fertility-concerns" element={<FertilityConcerns />} />
+          <Route path="/fertility-concerns" element={<FertilityConcerns />} />
           {/* <Route path="/OCD" element={<OCD />} /> */}
           <Route path="/eye-irritation" element={<EyeIrritation />} />
           {/* <Route
@@ -1762,6 +1803,11 @@ function AppLayout() {
             element={<DoctorNoteSickNote />}
           />
           <Route path="/vertigo" element={<Vertigo />} />
+          <Route path="/category-consultant" element={<CategoryConsultant />} />
+          <Route
+            path="/appointment-booking/category-confirm"
+            element={<CategoryAppointmentConfirm />}
+          />
         </Routes>
 
         {!hideLayout && <Footer />}
