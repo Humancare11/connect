@@ -45,6 +45,15 @@ import {
 // import AboutUs from "./pages/AboutPage";
 const AboutPage = lazy(() => import("./pages/AboutPage")); // about us page
 const BlogDetails = lazy(() => import("./pages/Blogs/IndividualBlog")); // blog details page
+import AboutPage from "./pages/AboutPage"; // about us page
+
+// blog details pages
+import Telemedicine from "./pages/Blogs/Telemedicine";
+import TelemedicineServices from "./pages/Blogs/TelemedicineServices";
+import HowTelemedicineAppointmentWork from "./pages/Blogs/HowTelemedicineAppointmentWork";
+import OnlineDoctorConsultation from "./pages/Blogs/OnlineDoctorConsultation";
+import MedicalConditions from "./pages/Blogs/MedicalConditions";
+import TopTelemedicinePlatforms from "./pages/Blogs/TopTelemedicinePlatforms";
 
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
@@ -796,6 +805,8 @@ const DoctorProfileForUser = lazy(
 
 const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
+// const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
+// const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 const HealthcareManagement = lazy(
   () => import("./pages/admin/HealthcareManagement"),
 );
@@ -960,7 +971,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh").catch(() => {});
+        api.post("/api/auth/refresh").catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -1034,7 +1045,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -1275,6 +1286,10 @@ function AppLayout() {
           />
           <Route path="/adminauth" element={<AdminAuthPage />} />
           <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
+          {/* <Route
+            path="/superadmin-dashboard/pricing-management"
+            element={<PricingManagement />}
+          /> */}
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
             path="/admin-dashboard/category-consultations/assign-doctor/:id"
@@ -2051,8 +2066,28 @@ function AppLayout() {
             element={<AppointmentBookingForm />}
           />
           <Route path="/primary-care-provider" element={<PCP />} /> {/* PCP */}
-          <Route path="/blog-details" element={<BlogDetails />} />{" "}
           {/*BlogDetails */}
+          <Route path="/what-is-telemedicine" element={<Telemedicine />} />
+          <Route
+            path="/telemedicine-services"
+            element={<TelemedicineServices />}
+          />
+          <Route
+            path="/how-does-a-telemedicine-appointment-work"
+            element={<HowTelemedicineAppointmentWork />}
+          />
+          <Route
+            path="/online-doctor-consultation"
+            element={<OnlineDoctorConsultation />}
+          />
+          <Route
+            path="/conditions-treated-through-telemedicine"
+            element={<MedicalConditions />}
+          />
+          <Route
+            path="/top-telemedicine-platforms-providers"
+            element={<TopTelemedicinePlatforms />}
+          />
           {/* PRIVACY  */}
           <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
           {/* demo */}
@@ -2106,7 +2141,7 @@ function AppLayout() {
           />
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/career" element={<DoctorCareers />} />
-          <Route path="/faq" element={<FAQ />} />
+          <Route path="/support-center" element={<FAQ />} />
           {/* ---------------------Service Pages---------------------------- */}
           <Route path="/ServiceDemo" element={<ServiceDemo />} />
           <Route

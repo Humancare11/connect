@@ -214,7 +214,7 @@ export default function Footer() {
           <h5>Support</h5>
           <a href="/doctor-login">Doctor Login</a>
           {/* <a href="#">Help Center</a> */}
-          <a href="/faq">FAQs</a>
+          <a href="/support-center">Support Center</a>
           <a href="/career">Careers</a>
           <a href="/contact-us">Contact Us</a>
         </div>

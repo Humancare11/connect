@@ -7,7 +7,8 @@ const blogs = [
     title: "Understanding Preventive Healthcare in 2025",
     description:
       "Discover how routine screenings and lifestyle adjustments can dramatically reduce the risk of chronic illnesses before they develop.",
-    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80",
     category: "Preventive Care",
     readTime: 5,
     date: "Jun 12, 2025",
@@ -17,17 +18,20 @@ const blogs = [
     title: "The Science Behind a Heart-Healthy Diet",
     description:
       "Cardiologists break down the foods, habits, and nutrients that keep your cardiovascular system performing at its best for decades.",
-    image: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80",
     category: "Nutrition",
     readTime: 7,
     date: "Jun 8, 2025",
   },
   {
     id: 3,
-    title: "Mental Health at Work: Breaking the Stigma",
+    title:
+      "Online Doctor Consultation: Benefits, Process & When to Choose Virtual Care",
     description:
-      "Workplace stress and burnout are at record highs. Learn evidence-based strategies to protect your mental wellbeing on the job.",
-    image: "https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=600&q=80",
+      "An online doctor consultation is a virtual healthcare appointment where patients connect with doctors or specialists through video calls, phone calls, or secure digital platforms. It allows patients to discuss symptoms, share medical reports, receive professional medical guidance, and understand the next steps in their care without visiting a clinic or hospital in person.",
+    image:
+      "https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=600&q=80",
     category: "Mental Health",
     readTime: 6,
     date: "Jun 5, 2025",
@@ -37,7 +41,8 @@ const blogs = [
     title: "Children's Vaccinations: What Every Parent Should Know",
     description:
       "A comprehensive guide to the immunisation schedule, addressing common concerns and helping parents make informed decisions.",
-    image: "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80",
     category: "Paediatrics",
     readTime: 8,
     date: "May 30, 2025",
@@ -47,7 +52,8 @@ const blogs = [
     title: "Diabetes Management: New Approaches for 2025",
     description:
       "From continuous glucose monitors to personalised nutrition plans, explore the latest tools helping diabetics live fuller lives.",
-    image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&q=80",
     category: "Chronic Care",
     readTime: 9,
     date: "May 25, 2025",
@@ -57,7 +63,8 @@ const blogs = [
     title: "Sleep Hygiene: The Forgotten Pillar of Good Health",
     description:
       "Quality sleep is as crucial as diet and exercise. Experts share practical steps to fix your sleep cycle and wake up restored.",
-    image: "https://images.unsplash.com/photo-1541480601022-2308c0f02487?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1541480601022-2308c0f02487?w=600&q=80",
     category: "Wellness",
     readTime: 5,
     date: "May 20, 2025",
@@ -67,7 +74,8 @@ const blogs = [
     title: "Gut Health and Immunity: What Research Reveals",
     description:
       "The gut-brain axis is reshaping how doctors treat everything from anxiety to autoimmune conditions. Here is what you need to know.",
-    image: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80",
     category: "Nutrition",
     readTime: 6,
     date: "May 15, 2025",
@@ -77,7 +85,8 @@ const blogs = [
     title: "Telehealth in India: A New Era of Patient Care",
     description:
       "How digital consultations are closing the healthcare access gap across tier-2 and tier-3 cities, saving time and improving outcomes.",
-    image: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&q=80",
     category: "Digital Health",
     readTime: 7,
     date: "May 10, 2025",
@@ -87,7 +96,8 @@ const blogs = [
     title: "Managing Hypertension Naturally",
     description:
       "Beyond medication — lifestyle, mindfulness, and dietary changes that can help bring blood pressure under control sustainably.",
-    image: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80",
     category: "Chronic Care",
     readTime: 5,
     date: "May 5, 2025",
@@ -98,12 +108,12 @@ const CARDS_PER_PAGE = 9;
 
 const categoryColors = {
   "Preventive Care": { bg: "#E6F5F3", text: "#0C8B7A" },
-  Nutrition:         { bg: "#FEF3E2", text: "#C97B1A" },
-  "Mental Health":   { bg: "#EEF2FF", text: "#4F46E5" },
-  Paediatrics:       { bg: "#FFF0F6", text: "#C2185B" },
-  "Chronic Care":    { bg: "#F0FDF4", text: "#16A34A" },
-  Wellness:          { bg: "#F0F9FF", text: "#0284C7" },
-  "Digital Health":  { bg: "#F5F3FF", text: "#7C3AED" },
+  Nutrition: { bg: "#FEF3E2", text: "#C97B1A" },
+  "Mental Health": { bg: "#EEF2FF", text: "#4F46E5" },
+  Paediatrics: { bg: "#FFF0F6", text: "#C2185B" },
+  "Chronic Care": { bg: "#F0FDF4", text: "#16A34A" },
+  Wellness: { bg: "#F0F9FF", text: "#0284C7" },
+  "Digital Health": { bg: "#F5F3FF", text: "#7C3AED" },
 };
 
 const ALL_CATEGORIES = ["All", ...Object.keys(categoryColors)];
@@ -115,13 +125,14 @@ const ALL_CATEGORIES = ["All", ...Object.keys(categoryColors)];
 // ];
 
 export default function BlogPage() {
-  const [currentPage, setCurrentPage]     = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [activeCategory, setActiveCategory] = useState("All");
-  const [searchQuery, setSearchQuery]     = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filtered = useMemo(() => {
     return blogs.filter((b) => {
-      const matchCat   = activeCategory === "All" || b.category === activeCategory;
+      const matchCat =
+        activeCategory === "All" || b.category === activeCategory;
       const matchSearch =
         b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         b.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -129,8 +140,8 @@ export default function BlogPage() {
     });
   }, [activeCategory, searchQuery]);
 
-  const totalPages  = Math.ceil(filtered.length / CARDS_PER_PAGE);
-  const start       = (currentPage - 1) * CARDS_PER_PAGE;
+  const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE);
+  const start = (currentPage - 1) * CARDS_PER_PAGE;
   const visibleBlogs = filtered.slice(start, start + CARDS_PER_PAGE);
 
   const handleCategoryChange = (cat) => {
@@ -146,7 +157,9 @@ export default function BlogPage() {
   const goTo = (page) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
-    document.getElementById("blog-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document
+      .getElementById("blog-grid")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -163,8 +176,17 @@ export default function BlogPage() {
 
           {/* Search bar */}
           <div className="hero-search">
-            <svg className="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+            <svg
+              className="search-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
             </svg>
             <input
               type="text"
@@ -178,10 +200,20 @@ export default function BlogPage() {
               <button
                 type="button"
                 className="search-clear"
-                onClick={() => { setSearchQuery(""); setCurrentPage(1); }}
+                onClick={() => {
+                  setSearchQuery("");
+                  setCurrentPage(1);
+                }}
                 aria-label="Clear search"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
                   <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
                 </svg>
               </button>
@@ -215,7 +247,11 @@ export default function BlogPage() {
               onClick={() => handleCategoryChange(cat)}
               style={
                 activeCategory === cat && cat !== "All" && categoryColors[cat]
-                  ? { background: categoryColors[cat].bg, color: categoryColors[cat].text, borderColor: categoryColors[cat].text + "44" }
+                  ? {
+                      background: categoryColors[cat].bg,
+                      color: categoryColors[cat].text,
+                      borderColor: categoryColors[cat].text + "44",
+                    }
                   : {}
               }
             >
@@ -239,11 +275,19 @@ export default function BlogPage() {
         {visibleBlogs.length > 0 ? (
           <div className="blog-grid">
             {visibleBlogs.map((blog) => {
-              const color = categoryColors[blog.category] || { bg: "#F4F7FB", text: "#223A5E" };
+              const color = categoryColors[blog.category] || {
+                bg: "#F4F7FB",
+                text: "#223A5E",
+              };
               return (
                 <article className="blog-card" key={blog.id}>
                   <div className="card-img-wrap">
-                    <img src={blog.image} alt={blog.title} className="card-img" loading="lazy" />
+                    <img
+                      src={blog.image}
+                      alt={blog.title}
+                      className="card-img"
+                      loading="lazy"
+                    />
                     <span
                       className="card-category"
                       style={{ background: color.bg, color: color.text }}
@@ -254,9 +298,19 @@ export default function BlogPage() {
                   <div className="card-body">
                     <div className="card-meta">
                       <span className="meta-date">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                        >
                           <rect x="3" y="4" width="18" height="18" rx="2" />
-                          <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+                          <path
+                            d="M16 2v4M8 2v4M3 10h18"
+                            strokeLinecap="round"
+                          />
                         </svg>
                         {blog.date}
                       </span>
@@ -284,8 +338,16 @@ export default function BlogPage() {
         ) : (
           <div className="empty-state">
             <div className="empty-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
               </svg>
             </div>
             <h3>No articles found</h3>
@@ -293,7 +355,10 @@ export default function BlogPage() {
             <button
               type="button"
               className="card-btn"
-              onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
+              onClick={() => {
+                setSearchQuery("");
+                setActiveCategory("All");
+              }}
             >
               Clear filters
             </button>
@@ -302,7 +367,11 @@ export default function BlogPage() {
 
         {/* Pagination — only shown when results span multiple pages */}
         {totalPages > 1 && (
-          <div className="pagination" role="navigation" aria-label="Article pagination">
+          <div
+            className="pagination"
+            role="navigation"
+            aria-label="Article pagination"
+          >
             <button
               type="button"
               className="page-btn nav-btn"
@@ -310,8 +379,19 @@ export default function BlogPage() {
               disabled={currentPage === 1}
               aria-label="Previous page"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path
+                  d="M15 18l-6-6 6-6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               Prev
             </button>
@@ -337,8 +417,19 @@ export default function BlogPage() {
               aria-label="Next page"
             >
               Next
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path
+                  d="M9 18l6-6-6-6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
