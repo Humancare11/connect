@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
-import socket from "../socket";
 import "./Login.css";
 
 function EyeIcon({ open }) {
@@ -39,6 +38,17 @@ function EyeIcon({ open }) {
 
 const PASSWORD_REQUIREMENTS =
   "8+ chars, uppercase, lowercase, number & symbol.";
+const VISUALLY_HIDDEN = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
 const COMMON_PASSWORDS = new Set([
   "password",
   "password1",
@@ -149,7 +159,13 @@ function GoogleIcon() {
 }
 
 /* ─── 6-digit OTP input ──────────────────────────────────────── */
-function OTPInput({ value, onChange, boxClass = "hc-otp-box" }) {
+function OTPInput({
+  value,
+  onChange,
+  boxClass = "hc-otp-box",
+  idPrefix = "patient-otp",
+  namePrefix = "patientOtp",
+}) {
   const inputs = useRef([]);
   const digits = (value + "      ").slice(0, 6).split("");
 
@@ -188,6 +204,9 @@ function OTPInput({ value, onChange, boxClass = "hc-otp-box" }) {
     <div className="hc-otp-boxes">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <input
+          id={`${idPrefix}-${i + 1}`}
+          name={`${namePrefix}${i + 1}`}
+          aria-label={`OTP digit ${i + 1}`}
           key={i}
           ref={(el) => {
             inputs.current[i] = el;
@@ -265,6 +284,7 @@ export default function AuthPage() {
     dob: "",
     gender: "",
     country: "",
+    terms: false,
     privacyConsent: false,
     hipaaConsent: false,
   });
@@ -490,8 +510,10 @@ export default function AuthPage() {
 
   function afterLogin(user) {
     login(user);
-    if (!socket.connected) socket.connect();
-    socket.emit("user-online", { userId: user._id, role: user.role });
+    void import("../socket").then(({ default: socket }) => {
+      if (!socket.connected) socket.connect();
+      socket.emit("user-online", { userId: user._id, role: user.role });
+    });
     const from = location.state?.from;
     const doctor = location.state?.doctor;
     if (from) {
@@ -534,7 +556,11 @@ export default function AuthPage() {
     if (googleDobError) return setFormError(googleDobError);
     if (!googleProfile.gender) return setFormError("Select Gender");
     if (!googleProfile.country) return setFormError("Select your country");
-    if (!googleProfile.privacyConsent || !googleProfile.hipaaConsent) {
+    if (
+      !googleProfile.terms ||
+      !googleProfile.privacyConsent ||
+      !googleProfile.hipaaConsent
+    ) {
       return setFormError(
         "Accept Terms, Privacy Policy, and HIPAA consent requirements",
       );
@@ -778,14 +804,24 @@ export default function AuthPage() {
               ! Just a few more details.
             </p>
             {formError && <p className="hc-form-error">{formError}</p>}
+            <label htmlFor="google-profile-name" style={VISUALLY_HIDDEN}>
+              Full Name
+            </label>
             <input
+              id="google-profile-name"
+              name="googleProfileName"
               className="hc-input"
               type="text"
               value={googlePending.name}
               disabled
               style={{ opacity: 0.55, cursor: "not-allowed" }}
             />
+            <label htmlFor="google-profile-email" style={VISUALLY_HIDDEN}>
+              Email Address
+            </label>
             <input
+              id="google-profile-email"
+              name="googleProfileEmail"
               className="hc-input"
               type="email"
               value={googlePending.email}
@@ -794,8 +830,12 @@ export default function AuthPage() {
             />
             <div className="hc-row hc-reg-row">
               <div className="hc-field-wrap">
-                <label className="hc-reg-label">Date of Birth</label>
+                <label htmlFor="google-profile-dob" className="hc-reg-label">
+                  Date of Birth
+                </label>
                 <DatePickerField
+                  id="google-profile-dob"
+                  name="googleProfileDob"
                   value={googleProfile.dob}
                   onChange={(v) => setGoogleProfile((p) => ({ ...p, dob: v }))}
                   min={DOB_MIN}
@@ -805,9 +845,13 @@ export default function AuthPage() {
                 />
               </div>
               <div className="hc-field-wrap">
-                <label className="hc-reg-label">Gender</label>
+                <label htmlFor="google-profile-gender" className="hc-reg-label">
+                  Gender
+                </label>
                 <div className="hc-gender-wrap">
                   <select
+                    id="google-profile-gender"
+                    name="googleProfileGender"
                     className="hc-select hc-gender-select"
                     value={googleProfile.gender}
                     onChange={(e) =>
@@ -843,8 +887,12 @@ export default function AuthPage() {
             </div>
             <div className="hc-row hc-reg-row hc-country-mobile-row">
               <div className="hc-field-wrap">
-                <label className="hc-reg-label">Country</label>
+                <label htmlFor="google-profile-country" className="hc-reg-label">
+                  Country
+                </label>
                 <select
+                  id="google-profile-country"
+                  name="googleProfileCountry"
                   className="hc-select hc-country-select"
                   value={googleProfile.country}
                   onChange={(e) => {
@@ -890,8 +938,14 @@ export default function AuthPage() {
                 )}
               </div>
               <div className="hc-field-wrap">
-                <label className="hc-reg-label">Mobile Number</label>
+                <label htmlFor="google-profile-mobile" className="hc-reg-label">
+                  Mobile Number
+                </label>
                 <PhoneInputField
+                  inputId="google-profile-mobile"
+                  inputName="googleProfileMobile"
+                  searchInputId="google-profile-mobile-country-search"
+                  searchInputName="googleProfileMobileCountrySearch"
                   value={googleProfile.mobile}
                   onChange={(ph, meta) => {
                     googleCountryManuallySelectedRef.current = true;
@@ -911,38 +965,75 @@ export default function AuthPage() {
                 />
               </div>
             </div>
-            <label className="hc-terms hc-consent-terms">
-              <input
-                type="checkbox"
-                checked={
-                  googleProfile.privacyConsent && googleProfile.hipaaConsent
-                }
-                onChange={(e) =>
-                  setGoogleProfile((p) => ({
-                    ...p,
-                    privacyConsent: e.target.checked,
-                    hipaaConsent: e.target.checked,
-                  }))
-                }
-                required
-              />
-              I agree to the{" "}
-              <a href="/terms-of-service" target="_blank" rel="noreferrer">
-                Terms
-              </a>
-              ,{" "}
-              <a href="/privacy-policy" target="_blank" rel="noreferrer">
-                Privacy Policy
-              </a>
-              , and
-              <a
-                href="/patient-informed-consent-form"
-                target="_blank"
-                rel="noreferrer"
+            <div className="hc-consent-row">
+              <label
+                htmlFor="google-profile-terms"
+                className="hc-terms hc-consent-terms"
               >
-                HIPAA consent requirements.
-              </a>
-            </label>
+                <input
+                  id="google-profile-terms"
+                  name="googleProfileTerms"
+                  type="checkbox"
+                  checked={googleProfile.terms}
+                  onChange={(e) =>
+                    setGoogleProfile((p) => ({
+                      ...p,
+                      terms: e.target.checked,
+                    }))
+                  }
+                  required
+                />
+                <a href="/terms-of-service" target="_blank" rel="noreferrer">
+                  Terms & Conditions
+                </a>
+              </label>
+              <label
+                htmlFor="google-profile-privacy-consent"
+                className="hc-terms hc-consent-terms"
+              >
+                <input
+                  id="google-profile-privacy-consent"
+                  name="googleProfilePrivacyConsent"
+                  type="checkbox"
+                  checked={googleProfile.privacyConsent}
+                  onChange={(e) =>
+                    setGoogleProfile((p) => ({
+                      ...p,
+                      privacyConsent: e.target.checked,
+                    }))
+                  }
+                  required
+                />
+                <a href="/privacy-policy" target="_blank" rel="noreferrer">
+                  Privacy Policy
+                </a>
+              </label>
+              <label
+                htmlFor="google-profile-hipaa-consent"
+                className="hc-terms hc-consent-terms"
+              >
+                <input
+                  id="google-profile-hipaa-consent"
+                  name="googleProfileHipaaConsent"
+                  type="checkbox"
+                  checked={googleProfile.hipaaConsent}
+                  onChange={(e) =>
+                    setGoogleProfile((p) => ({
+                      ...p,
+                      hipaaConsent: e.target.checked,
+                    }))
+                  }
+                  required
+                />
+                <a
+                  href="/patient-informed-consent-form"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  HIPAA Consent
+                </a>
+              </label>
+            </div>
             <button
               type="submit"
               className="hc-btn hc-btn--primary"
@@ -988,6 +1079,8 @@ export default function AuthPage() {
       >
         <form onSubmit={handleOTPSubmit} style={{ width: "100%" }}>
           <OTPInput
+            idPrefix="patient-register-otp"
+            namePrefix="patientRegisterOtp"
             value={otpValue}
             onChange={(v) => {
               setOtpValue(v);
@@ -1035,7 +1128,12 @@ export default function AuthPage() {
         onBack={() => goTo("auth")}
       >
         <form onSubmit={handleForgotSend} style={{ width: "100%" }}>
+          <label htmlFor="patient-forgot-email" style={VISUALLY_HIDDEN}>
+            Registered Email
+          </label>
           <input
+            id="patient-forgot-email"
+            name="patientForgotEmail"
             className="hc-input"
             type="email"
             placeholder="Your registered email"
@@ -1076,6 +1174,8 @@ export default function AuthPage() {
       >
         <form onSubmit={handleForgotVerify} style={{ width: "100%" }}>
           <OTPInput
+            idPrefix="patient-forgot-otp"
+            namePrefix="patientForgotOtp"
             value={otpValue}
             onChange={(v) => {
               setOtpValue(v);
@@ -1124,7 +1224,12 @@ export default function AuthPage() {
       >
         <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
           <div className="hc-pw-wrapper">
+            <label htmlFor="patient-new-password" style={VISUALLY_HIDDEN}>
+              New Password
+            </label>
             <input
+              id="patient-new-password"
+              name="patientNewPassword"
               className="hc-input"
               type={showPasswords.newPass ? "text" : "password"}
               placeholder="Example: MySecurePass@123!"
@@ -1147,7 +1252,12 @@ export default function AuthPage() {
             </button>
           </div>
           <div className="hc-pw-wrapper">
+            <label htmlFor="patient-confirm-new-password" style={VISUALLY_HIDDEN}>
+              Confirm New Password
+            </label>
             <input
+              id="patient-confirm-new-password"
+              name="patientConfirmNewPassword"
               className="hc-input"
               type={showPasswords.confirmPass ? "text" : "password"}
               placeholder="Confirm new password"
@@ -1195,7 +1305,7 @@ export default function AuthPage() {
           >
             <h1 className="hc-heading">Create Account</h1>
             <p className="hc-form-subtitle">
-              Join Humancare connect and take charge of your health
+              Join Humancare Connect and take charge of your health
             </p>
 
             <div className="hc-social-links">
@@ -1221,7 +1331,12 @@ export default function AuthPage() {
               required
             /> */}
 
+            <label htmlFor="patient-register-name" style={VISUALLY_HIDDEN}>
+              Full Name
+            </label>
             <input
+              id="patient-register-name"
+              name="patientRegisterName"
               className="hc-input"
               type="text"
               placeholder="Full Name"
@@ -1233,7 +1348,12 @@ export default function AuthPage() {
               required
             />
 
+            <label htmlFor="patient-register-email" style={VISUALLY_HIDDEN}>
+              Email Address
+            </label>
             <input
+              id="patient-register-email"
+              name="patientRegisterEmail"
               className="hc-input"
               type="email"
               placeholder="Email Address"
@@ -1247,7 +1367,12 @@ export default function AuthPage() {
 
             <div className="hc-row hc-reg-row">
               <div className="hc-field-wrap">
+                <label htmlFor="patient-register-dob" style={VISUALLY_HIDDEN}>
+                  Date of Birth
+                </label>
                 <DatePickerField
+                  id="patient-register-dob"
+                  name="patientRegisterDob"
                   value={registerForm.dob}
                   onChange={(v) => setRegisterForm((p) => ({ ...p, dob: v }))}
                   min={DOB_MIN}
@@ -1257,8 +1382,13 @@ export default function AuthPage() {
                 />
               </div>
               <div className="hc-field-wrap">
+                <label htmlFor="patient-register-gender" style={VISUALLY_HIDDEN}>
+                  Gender
+                </label>
                 <div className="hc-gender-wrap">
                   <select
+                    id="patient-register-gender"
+                    name="patientRegisterGender"
                     className="hc-select hc-gender-select"
                     value={registerForm.gender}
                     onChange={(e) =>
@@ -1336,7 +1466,15 @@ export default function AuthPage() {
                             <circle cx="11" cy="11" r="8" />
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                           </svg>
+                          <label
+                            htmlFor="patient-register-country-search"
+                            style={VISUALLY_HIDDEN}
+                          >
+                            Search Country
+                          </label>
                           <input
+                            id="patient-register-country-search"
+                            name="patientRegisterCountrySearch"
                             className="hc-country-search-input"
                             type="text"
                             placeholder="Search country"
@@ -1426,7 +1564,14 @@ export default function AuthPage() {
                 </div>
               </div>
               <div className="hc-field-wrap">
+                <label htmlFor="patient-register-mobile" style={VISUALLY_HIDDEN}>
+                  Mobile Number
+                </label>
                 <PhoneInputField
+                  inputId="patient-register-mobile"
+                  inputName="patientRegisterMobile"
+                  searchInputId="patient-register-mobile-country-search"
+                  searchInputName="patientRegisterMobileCountrySearch"
                   value={registerForm.mobile}
                   onChange={(ph, meta) => {
                     countryManuallySelectedRef.current = true;
@@ -1449,7 +1594,12 @@ export default function AuthPage() {
 
             <div className="hc-row hc-reg-row">
               <div className="hc-field-wrap">
+                <label htmlFor="patient-register-state" style={VISUALLY_HIDDEN}>
+                  State or Province
+                </label>
                 <select
+                  id="patient-register-state"
+                  name="patientRegisterState"
                   className="hc-select hc-state-select"
                   value={registerForm.state}
                   onChange={(e) =>
@@ -1477,7 +1627,12 @@ export default function AuthPage() {
                 </select>
               </div>
               <div className="hc-field-wrap">
+                <label htmlFor="patient-register-city" style={VISUALLY_HIDDEN}>
+                  City
+                </label>
                 <select
+                  id="patient-register-city"
+                  name="patientRegisterCity"
                   className="hc-select hc-city-select"
                   value={registerForm.city}
                   onChange={(e) =>
@@ -1502,7 +1657,12 @@ export default function AuthPage() {
             </div>
 
             <div className="hc-pw-wrapper">
+              <label htmlFor="patient-register-password" style={VISUALLY_HIDDEN}>
+                Password
+              </label>
               <input
+                id="patient-register-password"
+                name="patientRegisterPassword"
                 className="hc-input"
                 type={showPasswords.register ? "text" : "password"}
                 placeholder="Example: MySecurePass@123!"
@@ -1529,34 +1689,66 @@ export default function AuthPage() {
               {registerPasswordError || PASSWORD_REQUIREMENTS}
             </p>
 
-            <label className="hc-terms hc-consent-terms">
-              <input
-                type="checkbox"
-                checked={
-                  registerForm.terms &&
-                  registerForm.privacyConsent &&
-                  registerForm.hipaaConsent
-                }
-                onChange={(e) =>
-                  setRegisterForm((p) => ({
-                    ...p,
-                    terms: e.target.checked,
-                    privacyConsent: e.target.checked,
-                    hipaaConsent: e.target.checked,
-                  }))
-                }
-                required
-              />
-              <span>
-                I agree to{" "}
+            <div className="hc-consent-row">
+              <label
+                htmlFor="patient-register-terms"
+                className="hc-terms hc-consent-terms"
+              >
+                <input
+                  id="patient-register-terms"
+                  name="patientRegisterTerms"
+                  type="checkbox"
+                  checked={registerForm.terms}
+                  onChange={(e) =>
+                    setRegisterForm((p) => ({
+                      ...p,
+                      terms: e.target.checked,
+                    }))
+                  }
+                  required
+                />
                 <a href="/terms-of-service" target="_blank" rel="noreferrer">
-                  Terms
+                  Terms & Conditions
                 </a>
-                ,{" "}
+              </label>
+              <label
+                htmlFor="patient-register-privacy-consent"
+                className="hc-terms hc-consent-terms"
+              >
+                <input
+                  id="patient-register-privacy-consent"
+                  name="patientRegisterPrivacyConsent"
+                  type="checkbox"
+                  checked={registerForm.privacyConsent}
+                  onChange={(e) =>
+                    setRegisterForm((p) => ({
+                      ...p,
+                      privacyConsent: e.target.checked,
+                    }))
+                  }
+                  required
+                />
                 <a href="/privacy-policy" target="_blank" rel="noreferrer">
                   Privacy Policy
-                </a>{" "}
-                &{" "}
+                </a>
+              </label>
+              <label
+                htmlFor="patient-register-hipaa-consent"
+                className="hc-terms hc-consent-terms"
+              >
+                <input
+                  id="patient-register-hipaa-consent"
+                  name="patientRegisterHipaaConsent"
+                  type="checkbox"
+                  checked={registerForm.hipaaConsent}
+                  onChange={(e) =>
+                    setRegisterForm((p) => ({
+                      ...p,
+                      hipaaConsent: e.target.checked,
+                    }))
+                  }
+                  required
+                />
                 <a
                   href="/notice-of-privacy-practices"
                   target="_blank"
@@ -1564,9 +1756,8 @@ export default function AuthPage() {
                 >
                   HIPAA Consent
                 </a>
-                .
-              </span>
-            </label>
+              </label>
+            </div>
 
             <button
               type="submit"
@@ -1618,7 +1809,12 @@ export default function AuthPage() {
             {formError && <p className="hc-form-error">{formError}</p>}
             <span className="hc-divider-text">or use your email</span>
 
+            <label htmlFor="patient-login-email" style={VISUALLY_HIDDEN}>
+              Email Address
+            </label>
             <input
+              id="patient-login-email"
+              name="patientLoginEmail"
               className="hc-input"
               type="email"
               placeholder="Email Address"
@@ -1629,7 +1825,12 @@ export default function AuthPage() {
               required
             />
             <div className="hc-pw-wrapper">
+              <label htmlFor="patient-login-password" style={VISUALLY_HIDDEN}>
+                Password
+              </label>
               <input
+                id="patient-login-password"
+                name="patientLoginPassword"
                 className="hc-input"
                 type={showPasswords.login ? "text" : "password"}
                 placeholder="Password"

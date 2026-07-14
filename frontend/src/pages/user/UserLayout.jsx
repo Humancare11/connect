@@ -102,6 +102,12 @@ export default function UserLayout({ children }) {
     if (!loading && !user) navigate("/login");
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    if (!user?._id) return;
+    if (!socket.connected) socket.connect();
+    socket.emit("user-online", { userId: user._id, role: user.role });
+  }, [user]);
+
   /* Close drawer on route change */
   useEffect(() => { setSideOpen(false); }, [location.pathname]);
 

@@ -9,7 +9,17 @@ export function EmployeeAdminProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/api/auth/employee-admin-me")
+    const path = window.location.pathname;
+    const shouldCheckEmployeeAdmin =
+      path === "/employee-admin-login" ||
+      path.startsWith("/employee");
+
+    if (!shouldCheckEmployeeAdmin) {
+      setLoading(false);
+      return;
+    }
+
+    api.get("/api/auth/employee-admin-me", { skipAuthRefresh: true })
       .then((res) => setEmployeeAdmin(res.data.user))
       .catch(() => setEmployeeAdmin(null))
       .finally(() => setLoading(false));

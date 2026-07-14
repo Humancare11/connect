@@ -1682,7 +1682,6 @@ const FinalCTA = ({ s }) => (
             marginBottom: 14,
           }}
         >
-          START TODAY
           <br />
           <span style={{ color: s.accentColor }}>
             Take the Next Step Toward Better Health

@@ -9,7 +9,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/api/auth/me")
+    const path = window.location.pathname;
+    const shouldCheckUser =
+      path.startsWith("/user") ||
+      path.startsWith("/appointment") ||
+      path.startsWith("/medical") ||
+      path.startsWith("/patient");
+
+    if (!shouldCheckUser) {
+      setLoading(false);
+      return;
+    }
+
+    api.get("/api/auth/me", { skipAuthRefresh: true })
       .then((res) => setUser(res.data.user))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));

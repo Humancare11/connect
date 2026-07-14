@@ -51,8 +51,8 @@ export default function Footer() {
           <h5>Navigation </h5>
           <a href="/about-us">About Us</a>
           <a href="/appointment-booking">Book Appointment</a>
-          <a href="/corporates">Corporate</a>
-          <a href="/blogs">Blog</a>
+          <a href="/corporates">Corporates</a>
+          <a href="/blogs">Blogs</a>
         </div>
 
         {/* Services Quick Links */}
@@ -61,7 +61,7 @@ export default function Footer() {
           <a href="/online-prescription-refills">Online Prescription Refill</a>
           <a href="/appointment-booking">Online Doctor Consultation</a>
           <a href="/doctor-note-or-sick-notes">Sick Notes</a>
-          <a href="/lab-requisitions">Lab Requestion</a>
+          <a href="/lab-requisitions">  Lab Requisition </a>
           <a href="/fit-to-fly-certificate">Fit to Fly Certifications</a>
           {/* <a href="/sexual-health">Sexual Health</a>
           <a href="/weight-loss-programs">Weight Loss Programs</a> */}

@@ -51,7 +51,13 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const url = original?.url || "";
 
-    if (status === 401 && original && !original._retry && !url.includes("/api/auth/refresh")) {
+    if (
+      status === 401 &&
+      original &&
+      !original._retry &&
+      !original.skipAuthRefresh &&
+      !url.includes("/api/auth/refresh")
+    ) {
       original._retry = true;
       refreshPromise ||= api.post("/api/auth/refresh").finally(() => {
         refreshPromise = null;

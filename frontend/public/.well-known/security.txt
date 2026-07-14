@@ -1,0 +1,4 @@
+Contact: mailto:support@humancareconnect.co
+Expires: 2027-07-13T00:00:00Z
+Preferred-Languages: en
+Policy: https://humancareconnect.co/privacy-policy

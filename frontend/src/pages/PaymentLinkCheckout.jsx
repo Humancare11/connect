@@ -168,7 +168,7 @@ export default function PaymentLinkCheckout() {
       note: link?.note,
     };
     const lines = [
-      "HumaniCare Payment Receipt",
+      "Humancare Payment Receipt",
       `Transaction ID: ${data.paymentIntentId || "-"}`,
       `Amount Paid: ${formatMoney(data.amountPaise || 0, data.currency)}`,
       `Currency: ${String(data.currency || "").toUpperCase()}`,

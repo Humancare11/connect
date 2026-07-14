@@ -482,7 +482,8 @@ const adminLogin = async (req, res) => {
       return res.status(401).json({ msg: "Invalid email or password." });
     }
 
-    await issueAuthCookies(res, user);
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
 
     await recordActivity(req, {
       action: "LOGIN_SUCCESS",
@@ -493,7 +494,7 @@ const adminLogin = async (req, res) => {
       userRole: user.role,
     });
 
-    return res.json({ msg: "Login successful.", user: safeUser(user) });
+    return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("adminLogin error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });

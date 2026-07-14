@@ -611,11 +611,50 @@ async function validateSocketAccessToken(token) {
   }
 }
 
+async function validateSocketRefreshToken(token) {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type !== "refresh" || !decoded.sid || !decoded.id || !decoded.role) return null;
+
+    const session = await Session.findById(decoded.sid).select("userId role revokedAt").lean();
+    if (!session || session.revokedAt) return null;
+    if (session.userId !== String(decoded.id) || session.role !== decoded.role) return null;
+
+    return {
+      id: String(decoded.id),
+      role: decoded.role,
+      email: decoded.email || "",
+      sid: String(decoded.sid),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function appointmentRoomName(appointmentId) {
   return `appointment_${appointmentId}`;
 }
 
-function getSocketIdentity(socket) {
+function getRequestedSocketIdentity(socket, requested = {}) {
+  const requestedUserId = requested.userId;
+  const requestedRole = requested.role;
+  if (!requestedUserId && !requestedRole) return null;
+
+  return Array.isArray(socket.authIdentities)
+    ? socket.authIdentities.find((identity) =>
+      (!requestedUserId || String(identity.id) === String(requestedUserId)) &&
+      (!requestedRole || identity.role === requestedRole)
+    ) || null
+    : null;
+}
+
+function getSocketIdentity(socket, requested = {}) {
+  const requestedIdentity = getRequestedSocketIdentity(socket, requested);
+  if (requestedIdentity) {
+    return { userId: String(requestedIdentity.id), role: requestedIdentity.role };
+  }
+
   const liveIdentity = socketUsers.get(socket.id);
   const userId = liveIdentity?.userId || socket.userId;
   const role = liveIdentity?.role || socket.userRole;
@@ -629,10 +668,10 @@ function isSocketInAppointmentRoom(socket, appointmentId) {
   return String(socketRooms.get(socket.id) || "") === String(appointmentId) && socket.rooms.has(room);
 }
 
-async function canSocketAccessAppointment(socket, appointmentId) {
+async function canSocketAccessAppointment(socket, appointmentId, requestedIdentity = {}) {
   if (!appointmentId) return { allowed: false, reason: "missing_appointment" };
 
-  const identity = getSocketIdentity(socket);
+  const identity = getSocketIdentity(socket, requestedIdentity);
   if (!identity) return { allowed: false, reason: "unauthenticated" };
 
   let appointment = null;
@@ -662,15 +701,33 @@ async function canSocketAccessAppointment(socket, appointmentId) {
 // Authenticate socket connections via HttpOnly cookies.
 io.use(async (socket, next) => {
   const cookies = parseCookieHeader(socket.handshake.headers.cookie || "");
-  const tokens = [cookies.userToken, cookies.doctorToken, cookies.adminToken].filter(Boolean);
-  for (const token of tokens) {
+  const accessTokens = [cookies.userToken, cookies.doctorToken, cookies.adminToken].filter(Boolean);
+  const refreshTokens = [cookies.userRefreshToken, cookies.doctorRefreshToken, cookies.adminRefreshToken].filter(Boolean);
+  socket.authIdentities = [];
+  for (const token of accessTokens) {
     const identity = await validateSocketAccessToken(token);
     if (identity) {
+      socket.authIdentities.push(identity);
+      if (!socket.userId) {
+        socket.userId = identity.id;
+        socket.userRole = identity.role;
+        socket.userEmail = identity.email;
+        socket.sessionId = identity.sid;
+      }
+    }
+  }
+  for (const token of refreshTokens) {
+    const identity = await validateSocketRefreshToken(token);
+    if (!identity) continue;
+    const alreadyAdded = socket.authIdentities.some((existing) =>
+      existing.id === identity.id && existing.role === identity.role
+    );
+    if (!alreadyAdded) socket.authIdentities.push(identity);
+    if (!socket.userId) {
       socket.userId = identity.id;
       socket.userRole = identity.role;
       socket.userEmail = identity.email;
       socket.sessionId = identity.sid;
-      break;
     }
   }
   next();
@@ -693,11 +750,42 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("user-online", () => {
-    if (!socket.userId || !socket.userRole) return;
+  socket.on("user-online", ({ userId: requestedUserId, role: requestedRole } = {}) => {
+    const matchingIdentity = Array.isArray(socket.authIdentities)
+      ? socket.authIdentities.find((identity) =>
+        (!requestedUserId || String(identity.id) === String(requestedUserId)) &&
+        (!requestedRole || identity.role === requestedRole)
+      )
+      : null;
 
-    const userId = String(socket.userId);
-    const role = socket.userRole;
+    const identity = matchingIdentity || (
+      socket.userId && socket.userRole
+        ? { id: socket.userId, role: socket.userRole, email: socket.userEmail, sid: socket.sessionId }
+        : null
+    );
+
+    if (!identity?.id || !identity?.role) return;
+
+    const previousIdentity = socketUsers.get(socket.id);
+    if (
+      previousIdentity?.userId &&
+      (previousIdentity.userId !== String(identity.id) || previousIdentity.role !== identity.role)
+    ) {
+      const previousSockets = onlineUsers.get(previousIdentity.userId);
+      previousSockets?.delete(socket.id);
+      if (previousSockets?.size === 0) onlineUsers.delete(previousIdentity.userId);
+      if (previousIdentity.role === "doctor") socket.leave(`doctor_${previousIdentity.userId}`);
+      if (previousIdentity.role === "user") socket.leave(`patient_${previousIdentity.userId}`);
+      if (previousIdentity.role === "admin" || previousIdentity.role === "superadmin") socket.leave("admin_room");
+    }
+
+    socket.userId = String(identity.id);
+    socket.userRole = identity.role;
+    socket.userEmail = identity.email || socket.userEmail || "";
+    socket.sessionId = identity.sid || socket.sessionId || "";
+
+    const userId = String(identity.id);
+    const role = identity.role;
 
     if (!onlineUsers.has(userId)) {
       onlineUsers.set(userId, new Set());
@@ -725,11 +813,11 @@ io.on("connection", (socket) => {
     console.log("Socket joined rooms:", userId, role);
   });
 
-  socket.on("join-appointment-room", async ({ appointmentId }) => {
+  socket.on("join-appointment-room", async ({ appointmentId, userId, role } = {}) => {
     if (!appointmentId) return;
 
     const room = appointmentRoomName(appointmentId);
-    const access = await canSocketAccessAppointment(socket, appointmentId);
+    const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role });
 
     if (!access.allowed) {
       socket.emit("room-access-denied", { msg: "Access to this call room was denied." });
@@ -773,6 +861,32 @@ io.on("connection", (socket) => {
     }
 
     const alreadyInRoom = uniqueUsersInRoom.has(String(socketUserId));
+
+    // If this user already has a socket in the room, evict the old one.
+    // This prevents SDP corruption from duplicate sessions (same user,
+    // multiple tabs / refresh race) while still allowing reconnection.
+    // Evict the old socket for this user so the peer re-establishes
+    // signaling with the new socket. Without this, the peer's PC stays
+    // connected to the stale socket and the new session cannot negotiate.
+    // We deliberately do NOT emit participant-left here — the peer's
+    // connection stays up until the evicted tab closes its PC (triggered
+    // by duplicate-session), at which point natural ICE disconnection
+    // detection fires ice-restart to the new socket.
+    if (alreadyInRoom && currentSize > 0) {
+      for (const sid of existingSocketIds) {
+        if (sid === socket.id) continue;
+        const peerSocket = io.sockets.sockets.get(sid);
+        if (!peerSocket) continue;
+        const peerIdentity = getSocketIdentity(peerSocket);
+        if (peerIdentity?.userId === String(socketUserId)) {
+          peerSocket.leave(room);
+          socketRooms.delete(sid);
+          peerSocket.emit("duplicate-session", { msg: "Another consultation session was started elsewhere." });
+          break;
+        }
+      }
+    }
+
     if (uniqueUsersInRoom.size >= 2 && !alreadyInRoom) {
       socket.emit("room-access-denied", { msg: "This call room is full." });
       return;
@@ -1001,4 +1115,3 @@ startServer()
     console.error("Startup error:", err);
     process.exit(1);
   });
-

@@ -168,12 +168,9 @@ function isSlotPassed(dateStr, slot) {
 
 function formatDisplayDate(dateStr) {
   if (!dateStr) return "";
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const [year, month, day] = dateStr.split("-");
+  if (!year || !month || !day) return dateStr;
+  return `${month}/${day}/${year}`;
 }
 
 function formatPrice(amount) {
@@ -943,10 +940,11 @@ export default function AppointmentBookingForm() {
               <input
                 className={`ap-date-input${errors.date ? " ap-date-input--err" : ""}`}
                 type="date"
+                lang="en-US"
                 value={form.date}
                 min={today}
                 onChange={(e) => handleDateChange(e.target.value)}
-                placeholder="dd-mm-yyyy"
+                placeholder="MM/DD/YYYY"
               />
               {errors.date && <p className="ap-error">{errors.date}</p>}
             </div>
@@ -1039,10 +1037,10 @@ export default function AppointmentBookingForm() {
               <div className="ap-step-header">
                 <span className="ap-step-num">3</span>
 
-                 <div className="ap-step-title">
-                      Describe Your Problem{" "}
-                      <span style={{ color: "#e11d48" }}>*</span>
-                    </div>
+                <div className="ap-step-title">
+                  Describe Your Problem{" "}
+                  <span style={{ color: "#e11d48" }}>*</span>
+                </div>
                 {/* <div className="ap-step-title">Describe Your Problem</div> */}
 
                 {/* <span style={{ color: "#e11d48" }}>*</span> */}
@@ -1353,40 +1351,47 @@ export default function AppointmentBookingForm() {
                       linkText2,
                       href2,
                     }) => (
-                      <label key={key} className="ap-consent-row">
-                        <input
-                          type="checkbox"
-                          className="ap-consent-checkbox"
-                          checked={consents[key]}
-                          onChange={() => toggleConsent(key)}
-                        />
-                        <span className="ap-consent-label">
-                          {label}
-                          {linkText && href && (
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ap-consent-link"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {linkText}
-                            </a>
-                          )}
-                          {extra}
-                          {linkText2 && href2 && (
-                            <a
-                              href={href2}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ap-consent-link"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {linkText2}
-                            </a>
-                          )}
-                        </span>
-                      </label>
+                      <label
+  key={key}
+  htmlFor={`consent-${key}`}
+  className="ap-consent-row"
+>
+  <input
+    type="checkbox"
+    id={`consent-${key}`}
+    name={`consent-${key}`}
+    className="ap-consent-checkbox"
+    checked={consents[key]}
+    onChange={() => toggleConsent(key)}
+  />
+
+  <span className="ap-consent-label">
+    {label}
+    {linkText && href && (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ap-consent-link"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {linkText}
+      </a>
+    )}
+    {extra}
+    {linkText2 && href2 && (
+      <a
+        href={href2}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ap-consent-link"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {linkText2}
+      </a>
+    )}
+  </span>
+</label>
                     ),
                   )}
                 </div>

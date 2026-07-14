@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   HumaniCare — Doctor Layout  |  Glassmorphism Edition
+   Humancare — Doctor Layout  |  Glassmorphism Edition
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Reset & base ─────────────────────────────────────────────── */
@@ -31,25 +31,23 @@
   pointer-events: none;
   z-index: 0;
 }
+
 .dl-page::before {
   width: 600px;
   height: 600px;
-  background: radial-gradient(
-    circle,
-    rgba(99, 102, 241, 0.1) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle,
+      rgba(99, 102, 241, 0.1) 0%,
+      transparent 70%);
   top: -150px;
   left: -100px;
 }
+
 .dl-page::after {
   width: 500px;
   height: 500px;
-  background: radial-gradient(
-    circle,
-    rgba(20, 184, 166, 0.08) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle,
+      rgba(20, 184, 166, 0.08) 0%,
+      transparent 70%);
   bottom: -100px;
   right: 60px;
 }
@@ -98,6 +96,7 @@
   gap: 10px;
   padding: 22px 20px 16px;
 }
+
 .dl-brand-name {
   font-size: 15px;
   font-weight: 600;
@@ -117,6 +116,7 @@
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 16px;
 }
+
 .dl-avatar {
   width: 52px;
   height: 52px;
@@ -131,12 +131,14 @@
   box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
   margin-bottom: 6px;
 }
+
 .dl-profile-name {
   font-size: 13.5px;
   font-weight: 600;
   color: #ffffff;
   text-align: center;
 }
+
 .dl-profile-email {
   font-size: 11px;
   color: #ffffff !important;
@@ -146,6 +148,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .dl-profile-badge {
   margin-top: 6px;
   display: flex;
@@ -161,6 +164,7 @@
   border-radius: 20px;
   padding: 3px 10px;
 }
+
 .dl-online-dot {
   width: 7px;
   height: 7px;
@@ -168,6 +172,7 @@
   background: #ef4444;
   flex-shrink: 0;
 }
+
 .dl-online-dot--active {
   background: #22c55e;
   box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
@@ -184,6 +189,7 @@
   scrollbar-width: none;
   padding: 15px !important;
 }
+
 .dl-nav::-webkit-scrollbar {
   display: none;
 }
@@ -204,20 +210,21 @@
     color 0.18s ease,
     transform 0.15s ease;
 }
+
 .dl-nav-item:hover {
   background: #ffffff80 !important;
   color: #ffffff !important;
   transform: translateX(2px);
 }
+
 .dl-nav-item--active {
-  background: linear-gradient(
-    90deg,
-    rgba(99, 102, 241, 0.12) 0%,
-    rgba(20, 184, 166, 0.08) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(99, 102, 241, 0.12) 0%,
+      rgba(20, 184, 166, 0.08) 100%);
   color: #ffffff;
   border: 1px solid rgba(99, 102, 241, 0.2);
 }
+
 .dl-nav-item--active:hover {
   transform: none;
 }
@@ -228,13 +235,16 @@
   align-items: center;
   opacity: 0.85;
 }
+
 .dl-nav-item--active .dl-nav-icon {
   opacity: 1;
   color: #ffffff !important;
 }
+
 .dl-nav-label {
   flex: 1;
 }
+
 .dl-nav-active-dot {
   width: 6px;
   height: 6px;
@@ -263,6 +273,7 @@
     color 0.18s ease;
   width: calc(100% - 24px);
 }
+
 .dl-logout:hover {
   background: rgba(239, 68, 68, 0.1);
   color: #b91c1c;
@@ -321,9 +332,11 @@
   transition: background 0.15s;
   flex-shrink: 0;
 }
+
 .dl-burger:hover {
   background: rgba(99, 102, 241, 0.08);
 }
+
 .dl-burger span {
   display: block;
   width: 20px;
@@ -340,6 +353,7 @@
   flex: 1;
   min-width: 0;
 }
+
 .dl-topbar-eyebrow {
   font-size: 12px;
   font-weight: 700;
@@ -348,6 +362,7 @@
   color: #ffffff !important;
   margin-bottom: 1px;
 }
+
 .dl-topbar-title {
   display: flex;
   align-items: center;
@@ -359,6 +374,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .dl-topbar-title svg {
   color: #ffffff !important;
   flex-shrink: 0;
@@ -371,6 +387,7 @@
   gap: 10px;
   flex-shrink: 0;
 }
+
 .dl-topbar-book {
   display: flex;
   align-items: center;
@@ -387,10 +404,12 @@
     transform 0.15s;
   white-space: nowrap;
 }
+
 .dl-topbar-book:hover {
   opacity: 0.9;
   transform: translateY(-1px);
 }
+
 .dl-topbar-book:active {
   transform: translateY(0);
 }
@@ -413,6 +432,7 @@
     transform: translateX(calc(-100% - 20px));
     border-radius: 20px;
   }
+
   .dl-sidebar--open {
     transform: translateX(0);
   }
@@ -448,6 +468,7 @@
   .dl-topbar-book span {
     display: none;
   }
+
   .dl-topbar-book {
     padding: 8px;
   }
@@ -455,10 +476,12 @@
 
 /* ── Pulse animation for online status indicator ────────────── */
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
