@@ -720,6 +720,47 @@ io.use(async (socket, next) => {
       }
     }
   }
+  // Also accept auth tokens sent in the websocket handshake. Some clients
+  // (mobile apps or SPA token-based flows) cannot rely on HttpOnly cookies
+  // being present, so they may pass a Bearer token via `socket.auth.token`
+  // or the `Authorization` header. Validate and merge those identities.
+  try {
+    const bearer = socket.handshake.headers.authorization?.startsWith("Bearer ")
+      ? socket.handshake.headers.authorization.split(" ")[1]
+      : null;
+    const handshakeAccess = socket.handshake?.auth?.token || bearer;
+    const handshakeRefresh = socket.handshake?.auth?.refreshToken || socket.handshake?.auth?.refresh;
+
+    if (handshakeAccess) {
+      const identity = await validateSocketAccessToken(handshakeAccess);
+      if (identity) {
+        const already = socket.authIdentities.some((i) => i.id === identity.id && i.role === identity.role);
+        if (!already) socket.authIdentities.push(identity);
+        if (!socket.userId) {
+          socket.userId = identity.id;
+          socket.userRole = identity.role;
+          socket.userEmail = identity.email;
+          socket.sessionId = identity.sid;
+        }
+      }
+    }
+
+    if (handshakeRefresh) {
+      const identity = await validateSocketRefreshToken(handshakeRefresh);
+      if (identity) {
+        const already = socket.authIdentities.some((i) => i.id === identity.id && i.role === identity.role);
+        if (!already) socket.authIdentities.push(identity);
+        if (!socket.userId) {
+          socket.userId = identity.id;
+          socket.userRole = identity.role;
+          socket.userEmail = identity.email;
+          socket.sessionId = identity.sid;
+        }
+      }
+    }
+  } catch (err) {
+    // Non-fatal — continue with any identities we already parsed from cookies.
+  }
   for (const token of refreshTokens) {
     const identity = await validateSocketRefreshToken(token);
     if (!identity) continue;

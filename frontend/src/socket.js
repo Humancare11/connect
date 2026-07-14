@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { getUserAuthToken } from "./api";
 
 const parseTransports = (value) => {
   const transports = String(value || "")
@@ -21,6 +22,11 @@ const socket = io(socketUrl, {
   reconnectionAttempts: Infinity,
   randomizationFactor: 0.5,
   withCredentials: true,
+  // Send the current access token (if stored) in the handshake auth payload so
+  // the server can authenticate sockets when cookies are not available.
+  auth: {
+    token: getUserAuthToken(),
+  },
 });
 
 if (!socket.__hcDiagnosticsInstalled) {
