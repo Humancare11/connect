@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const HealthcareCategory = require("../models/HealthcareCategory");
 const HealthcareSpecialty = require("../models/HealthcareSpecialty");
 const HealthcareCondition = require("../models/HealthcareCondition");
+const { CategoryPricing } = require("../models/CategoryPricing");
 
 function cleanString(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -133,6 +134,34 @@ async function updateCategory(req, res) {
   try {
     const category = await HealthcareCategory.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true });
     if (!category) return res.status(404).json({ msg: "Category not found." });
+
+    // Synchronize price update to CategoryPricing if price is being updated
+    if (payload.price !== undefined) {
+      const CATEGORY_NAME_TO_ID = {
+        "General & Everyday Care": "general",
+        "Mental Health": "mental",
+        "Skin & Hair": "skin",
+        "Skin & Hair Care": "skin",
+        "Women's Health": "women",
+        "Men's Health": "men",
+        "Children & Family": "family",
+        "Children & Family Care": "family",
+        "Weight & Nutrition": "weight",
+        "Chronic Care & Expert Opinion": "chronic",
+        "Eye, Ear & Bone": "eeb",
+        "Sexual Health": "sexual",
+        "Travel & Global Care": "travel"
+      };
+
+      const pricingId = CATEGORY_NAME_TO_ID[category.name];
+      if (pricingId) {
+        await CategoryPricing.updateOne(
+          { categoryId: pricingId },
+          { $set: { price: payload.price, updatedBy: req.user?.id } }
+        );
+      }
+    }
+
     res.json({ msg: "Category updated.", category });
   } catch (err) {
     res.status(err?.code === 11000 ? 409 : 500).json({ msg: duplicateMessage(err, "Category") || "Failed to update category." });

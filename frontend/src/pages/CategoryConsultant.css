@@ -1,0 +1,824 @@
+/* =====================================================================
+   Design tokens — HumanCareConnect palette
+   ===================================================================== */
+
+:root {
+  /* Brand */
+  --bg: #f4f7fb;
+  --section: #dce6f2;
+  --primary: #223a5e;
+  --primary-hover: #1b2f4b;
+  --text: #0b1f3a;
+  --text-light: #6b7280;
+  --teal-lt: #e6f5f3;
+  --gold-lt: #fef3e2;
+  --muted: #6b7280;
+  --border: rgba(34, 58, 94, 0.1);
+  --card: #ffffff;
+
+  /* Glass */
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.35);
+
+  /* Neumorphism */
+  --neu-up: 6px 6px 12px rgba(0, 0, 0, 0.05), -6px -6px 12px rgba(255, 255, 255, 0.9);
+  --neu-down: inset 3px 3px 6px rgba(0, 0, 0, 0.08), inset -3px -3px 6px rgba(255, 255, 255, 0.8);
+
+  /* Shape / motion */
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 26px;
+  --radius-pill: 999px;
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --fast: 160ms;
+  --slow: 520ms;
+
+  /* Type */
+  --font-heading: "Satoshi", Inter, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* A light blue tint for icon chips / selected states — keeps every
+     "selected" moment reading as brand-blue rather than teal or gold */
+  --blue-lt: #e7edf6;
+  --rose: #c94a56;
+
+  /* Shadows */
+  --shadow-lg: 0 24px 48px -18px rgba(11, 31, 58, 0.16), 0 4px 14px rgba(11, 31, 58, 0.05);
+  --shadow-pop: 0 10px 22px rgba(11, 31, 58, 0.08), 0 2px 6px rgba(11, 31, 58, 0.05);
+  --shadow-glow-primary: 0 10px 26px rgba(34, 58, 94, 0.28);
+}
+
+/* =====================================================================
+   Shell — page wrapper both steps live inside
+   ===================================================================== */
+
+.hc-form-shell {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 115px 24px 80px;
+  background: radial-gradient(120% 140% at 50% -10%,
+      #ffffff 0%,
+      var(--bg) 45%,
+      var(--section) 100%);
+  font-family: var(--font-body);
+  box-sizing: border-box;
+}
+
+.hc-form-shell *,
+.hc-form-shell *::before,
+.hc-form-shell *::after {
+  box-sizing: border-box;
+}
+
+/* =====================================================================
+   Top bar — "← Back" link + numbered step progress, sits above the
+   header on every step (shared treatment for both steps)
+   ===================================================================== */
+
+.hc-topbar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 30px;
+}
+
+.hc-back-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: color var(--fast) var(--ease), opacity var(--fast) var(--ease);
+}
+
+.hc-back-link:not(:disabled):hover {
+  color: var(--primary-hover);
+}
+
+.hc-back-link:disabled {
+  color: var(--text-light);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hc-stepper {
+  display: flex;
+  align-items: center;
+  width: auto;
+}
+
+.hc-stepper__circle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--text-light);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition:
+    background var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
+}
+
+.hc-stepper__circle.is-done {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.hc-stepper__circle.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(34, 58, 94, 0.16);
+}
+
+.hc-stepper__line {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 2px;
+  margin: 0 6px;
+  background: var(--border);
+  transition: background var(--fast) var(--ease);
+}
+
+.hc-stepper__line.is-filled {
+  background: var(--primary);
+}
+
+/* =====================================================================
+   Option card (shared by Severity / Support / Urgency) — solid white
+   "pop" cards that float above the glass step container
+   ===================================================================== */
+
+.hc-option-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-body);
+  border: 1.5px solid transparent;
+  background: var(--card);
+  box-shadow: var(--shadow-pop);
+  transition:
+    border-color var(--fast) var(--ease),
+    background var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
+
+.hc-option-card:active {
+  transform: scale(0.98);
+}
+
+.hc-option-card__icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  line-height: 1;
+  background: var(--blue-lt);
+}
+
+.hc-option-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hc-option-card__title {
+  font-weight: 600;
+  font-size: 0.94rem;
+  line-height: 1.3;
+  font-family: var(--font-heading);
+  color: var(--text);
+}
+
+.hc-option-card__subtitle {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-light);
+}
+
+.hc-option-card__check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.hc-option-card:hover {
+  border-color: var(--border);
+}
+
+.hc-option-card.is-selected {
+  border-color: var(--primary);
+  background: var(--blue-lt);
+  box-shadow: 0 0 0 4px rgba(34, 58, 94, 0.1);
+}
+
+.hc-option-card.is-selected .hc-option-card__icon {
+  background: var(--card);
+}
+
+/* Both tones now render identically (light, white-pop, blue-selected).
+   The `--light` / `--dark` modifiers are kept only so no markup needs
+   to change; they no longer diverge visually. */
+.hc-option-card--light,
+.hc-option-card--dark {
+  border: 1.5px solid transparent;
+  background: var(--card);
+  box-shadow: var(--shadow-pop);
+}
+
+/* =====================================================================
+   Step 1 — Concern (glass card)
+   ===================================================================== */
+
+.hc-concern-step {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 40px 44px 32px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  animation: hc-fade-slide-up var(--slow) var(--ease) both;
+}
+
+@keyframes hc-fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hc-concern-step__header {
+  margin-bottom: 28px;
+}
+
+.hc-concern-step__title {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+.hc-concern-step__subtitle {
+  margin-top: 8px;
+  color: var(--text-light);
+  font-size: 0.96rem;
+  line-height: 1.55;
+  max-width: 46ch;
+}
+
+.hc-field {
+  margin-bottom: 26px;
+}
+
+.hc-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.hc-field__label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text);
+  margin-bottom: 10px;
+  font-family: var(--font-heading);
+}
+
+/* ---- Textarea — pops in solid white against the glass card ---- */
+.hc-textarea-wrap {
+  position: relative;
+}
+
+.hc-textarea {
+  width: 100%;
+  resize: none;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius);
+  padding: 16px 16px 30px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--card);
+  box-shadow: var(--shadow-pop);
+  min-height: 108px;
+  transition:
+    border-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease),
+    background var(--fast) var(--ease);
+}
+
+.hc-textarea::placeholder {
+  color: #9aa7b8;
+}
+
+.hc-textarea:hover {
+  border-color: var(--border);
+}
+
+.hc-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--card);
+  box-shadow: var(--shadow-pop), 0 0 0 4px rgba(34, 58, 94, 0.1);
+}
+
+.hc-char-counter {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  font-size: 0.76rem;
+  color: var(--text-light);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  transition: color var(--fast) var(--ease);
+}
+
+.hc-char-counter.is-limit {
+  color: var(--rose);
+  font-weight: 600;
+}
+
+/* ---- Select — pops in solid white too ---- */
+.hc-select-wrap {
+  position: relative;
+}
+
+.hc-select {
+  width: 100%;
+  appearance: none;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius);
+  padding: 14px 40px 14px 16px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--card);
+  box-shadow: var(--shadow-pop);
+  cursor: pointer;
+  transition:
+    border-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
+}
+
+.hc-select:invalid {
+  color: var(--text-light);
+}
+
+.hc-select:hover {
+  border-color: var(--border);
+}
+
+.hc-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-pop), 0 0 0 4px rgba(34, 58, 94, 0.1);
+}
+
+.hc-select-chevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+/* ---- Card grid ---- */
+.hc-card-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.hc-card-grid--1 {
+  grid-template-columns: 1fr;
+}
+
+.hc-card-grid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ---- Bottom nav (shared — one light treatment for both steps) ---- */
+.hc-step-nav,
+.hc-step-nav--dark {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.hc-btn {
+  border: none;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 12px 22px;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  transition:
+    transform var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease),
+    opacity var(--fast) var(--ease),
+    background var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.hc-btn--ghost,
+.hc-btn--ghost-dark {
+  background: transparent;
+  color: var(--text-light);
+}
+
+.hc-btn--ghost:not(:disabled):hover,
+.hc-btn--ghost-dark:not(:disabled):hover {
+  color: var(--text);
+  background: var(--section);
+}
+
+.hc-btn--ghost:disabled,
+.hc-btn--ghost-dark:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hc-btn--primary,
+.hc-btn--primary-dark {
+  background: linear-gradient(120deg, var(--primary), var(--primary-hover));
+  color: #ffffff;
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.hc-btn--primary:not(:disabled):hover,
+.hc-btn--primary-dark:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(27, 47, 75, 0.32);
+}
+
+.hc-btn--primary:not(:disabled):active,
+.hc-btn--primary-dark:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+
+.hc-btn--primary:disabled,
+.hc-btn--primary-dark:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* =====================================================================
+   Step 2 — Timing (same glass card treatment as Step 1, blue accents)
+   ===================================================================== */
+
+.hc-timing-step {
+  position: relative;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 44px 48px 32px;
+  border-radius: var(--radius-lg);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+  animation: hc-fade-slide-up var(--slow) var(--ease) both;
+}
+
+.hc-timing-step__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--blue-lt);
+  border: 1px solid rgba(34, 58, 94, 0.22);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 18px;
+}
+
+.hc-timing-step__title {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+}
+
+.hc-timing-step__subtitle {
+  margin-top: 8px;
+  margin-bottom: 32px;
+  color: var(--text-light);
+  font-size: 0.96rem;
+  line-height: 1.55;
+  max-width: 56ch;
+}
+
+.hc-timing-step__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 36px;
+}
+
+.hc-timing-col__heading {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 14px;
+}
+
+/* ---- Accordion (time windows) — white pop cards ---- */
+.hc-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hc-accordion-item {
+  border: 1.5px solid transparent;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+  transition:
+    border-color var(--fast) var(--ease),
+    background var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
+}
+
+.hc-accordion-item.is-open {
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.hc-accordion-item.has-selection {
+  border-color: var(--primary);
+}
+
+.hc-accordion-item__header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 13px 16px;
+  font-family: var(--font-body);
+  text-align: left;
+}
+
+.hc-accordion-item__icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--blue-lt);
+  font-size: 1rem;
+}
+
+.hc-accordion-item__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.hc-accordion-item__label {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text);
+  font-family: var(--font-heading);
+}
+
+.hc-accordion-item__range {
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+
+.hc-accordion-item__chip {
+  flex: 0 0 auto;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--primary);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.hc-accordion-item__chevron {
+  flex: 0 0 auto;
+  color: var(--text-light);
+  transition: transform var(--fast) var(--ease);
+}
+
+.hc-accordion-item.is-open .hc-accordion-item__chevron {
+  transform: rotate(180deg);
+}
+
+.hc-accordion-item__panel {
+  display: grid;
+  transition: grid-template-rows var(--fast) var(--ease);
+}
+
+.hc-accordion-item__panel-inner {
+  overflow: hidden;
+}
+
+.hc-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.hc-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 9px 6px;
+  cursor: pointer;
+  transition:
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    background var(--fast) var(--ease);
+}
+
+.hc-slot:hover {
+  border-color: rgba(34, 58, 94, 0.35);
+  color: var(--text);
+}
+
+.hc-slot.is-active {
+  border-color: var(--primary);
+  background: var(--blue-lt);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* =====================================================================
+   Responsive
+   ===================================================================== */
+
+@media (max-width: 640px) {
+  .hc-form-shell {
+    padding: 0;
+  }
+
+  .hc-concern-step {
+    padding: 28px 20px 100px;
+    border-radius: var(--radius);
+    box-shadow: none;
+  }
+
+  .hc-concern-step__title {
+    font-size: 1.4rem;
+  }
+
+  .hc-card-grid--2 {
+    grid-template-columns: 1fr;
+  }
+
+  .hc-step-nav,
+  .hc-step-nav--dark {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--glass-strong);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 16px rgba(11, 31, 58, 0.1);
+    border-top: 1px solid var(--border);
+    margin-top: 0;
+    z-index: 20;
+  }
+
+  .hc-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .hc-timing-step {
+    padding: 24px 18px 100px;
+    border-radius: 0;
+  }
+
+  .hc-timing-step__grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .hc-slot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.hc-option-card.is-disabled,
+.hc-accordion-item.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.hc-date-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #d8dde3;
+  font-size: 15px;
+}
+
+.hc-date-input--err {
+  border-color: #e11d48;
+}
+
+.hc-error {
+  color: #e11d48;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.hc-slot.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}

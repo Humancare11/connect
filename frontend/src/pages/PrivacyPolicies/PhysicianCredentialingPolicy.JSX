@@ -89,10 +89,10 @@ const managementItems = [
       <>
         Submit a formal erasure request by emailing{" "}
         <a
-          href="mailto:privacy@humancareconnect.com"
+          href="mailto:support@humancareconnect.co"
           className="text-blue-600 hover:underline"
         >
-          privacy@humancareconnect.com
+          support@humancareconnect.co
         </a>
         .
       </>
@@ -107,9 +107,8 @@ function ControlBadge({ value }) {
   };
   return (
     <span
-      className={`inline-flex items-center text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${
-        styles[value] ?? "bg-slate-50 text-slate-600 border-slate-200"
-      }`}
+      className={`inline-flex items-center text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${styles[value] ?? "bg-slate-50 text-slate-600 border-slate-200"
+        }`}
     >
       {value}
     </span>
@@ -981,14 +980,14 @@ export default function PhysicianCredentialingPolicy() {
                     Email
                   </p>
                   <a
-                    href="mailto:support@humancareconnect.com"
+                    href="mailto:support@humancareconnect.co"
                     style={{
                       fontSize: "13px",
                       color: "#2563eb",
                       textDecoration: "none",
                     }}
                   >
-                    support@humancareconnect.com
+                    support@humancareconnect.co
                   </a>
                 </div>
               </div>

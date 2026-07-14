@@ -357,6 +357,7 @@ export default function DoctorAppointments() {
                               <Link
                                 className="da-btn da-btn--join"
                                 to={`/video-call/${appt._id}`}
+                                state={{ role: "doctor" }}
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 Join

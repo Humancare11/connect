@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import socket from "../socket";
 import api from "../api";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
 // import "./test.css";
@@ -184,11 +183,13 @@ export default function DoctorLayout({ children }) {
   }, [doctor, loading, navigate]);
 
   useEffect(() => {
-    if (!socket.connected) socket.connect();
     if (doctor?.id || doctor?._id) {
-      socket.emit("user-online", {
-        userId: doctor._id || doctor.id,
-        role: "doctor",
+      void import("../socket").then(({ default: socket }) => {
+        if (!socket.connected) socket.connect();
+        socket.emit("user-online", {
+          userId: doctor._id || doctor.id,
+          role: "doctor",
+        });
       });
     }
   }, [doctor]);

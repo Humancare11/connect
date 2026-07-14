@@ -26,7 +26,9 @@ function getLocalTimezone() {
 
 function legacyAppointmentInstant(appointment) {
   if (!appointment?.date || !appointment?.time) return null;
-  const match = String(appointment.time).trim().match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
+  const match = String(appointment.time)
+    .trim()
+    .match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
   if (!match) return null;
   let hours = Number(match[1]);
   const minutes = Number(match[2]);
@@ -40,7 +42,9 @@ function legacyAppointmentInstant(appointment) {
 }
 
 function appointmentInstant(appointment) {
-  const utc = appointment?.appointmentDateTimeUtc ? new Date(appointment.appointmentDateTimeUtc) : null;
+  const utc = appointment?.appointmentDateTimeUtc
+    ? new Date(appointment.appointmentDateTimeUtc)
+    : null;
   if (utc && !Number.isNaN(utc.getTime())) return utc;
   return legacyAppointmentInstant(appointment);
 }
@@ -131,7 +135,8 @@ export default function AdminAppointmentDetails() {
         if (alive) setAppointment(res.data);
       } catch (err) {
         console.error("Failed to load appointment", err);
-        if (alive) setError(err.response?.data?.msg || "Failed to load appointment.");
+        if (alive)
+          setError(err.response?.data?.msg || "Failed to load appointment.");
       } finally {
         if (alive) setLoading(false);
       }
@@ -160,32 +165,58 @@ export default function AdminAppointmentDetails() {
         <div className="adp-empty">
           <h3>Appointment unavailable</h3>
           <p>{error || "The appointment could not be found."}</p>
-          <Link className="adp-view-btn" to="/admin-dashboard/appointments">Back to appointments</Link>
+          <Link className="adp-view-btn" to="/admin-dashboard/appointments">
+            Back to appointments
+          </Link>
         </div>
       </div>
     );
   }
 
   const patientDetails = appointment.patientDetails || {};
-  const reports = Array.isArray(appointment.medicalReports) ? appointment.medicalReports : [];
+  const reports = Array.isArray(appointment.medicalReports)
+    ? appointment.medicalReports
+    : [];
   const currentStatus = canonicalStatus(appointment.status);
   const currentStepIndex = FLOW.findIndex((step) => step.key === currentStatus);
-  const assignmentLabel = ["upcoming", "requested"].includes(appointment.status) || !appointment.doctorId ? "Assign Doctor" : "Alternate Doctor";
+  const assignmentLabel =
+    ["upcoming", "requested"].includes(appointment.status) ||
+      !appointment.doctorId
+      ? "Assign Doctor"
+      : "Alternate Doctor";
   const instant = appointmentInstant(appointment);
   const patientTimezone = appointment.patientTimezone || "UTC";
-  const doctorTimezone = appointment.doctorTimezone || appointment.doctorMeta?.timezone || "UTC";
+  const doctorTimezone =
+    appointment.doctorTimezone || appointment.doctorMeta?.timezone || "UTC";
   const adminTimezone = getLocalTimezone();
-  const userId = formatPatientId(appointment.patientId?.patientId) || appointment.patientId?._id || appointment.patientId || "-";
-  const doctorId = appointment.doctorId?.doctorId || appointment.doctorId?._id || appointment.doctorId || "-";
+  const userId =
+    formatPatientId(appointment.patientId?.patientId) ||
+    appointment.patientId?._id ||
+    appointment.patientId ||
+    "-";
+  const doctorId =
+    appointment.doctorId?.doctorId ||
+    appointment.doctorId?._id ||
+    appointment.doctorId ||
+    "-";
   const userLocation = [
     appointment.patientDetails?.city || appointment.patientId?.city,
     appointment.patientDetails?.country || appointment.patientId?.country,
-  ].filter(Boolean).join(", ");
+  ]
+    .filter(Boolean)
+    .join(", ");
   const doctorLocation = [
     appointment.doctorMeta?.city,
     appointment.doctorMeta?.country,
-  ].filter(Boolean).join(", ");
-  const doctorPhone = [appointment.doctorMeta?.countryCode, appointment.doctorMeta?.phoneNumber].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const doctorPhone = [
+    appointment.doctorMeta?.countryCode,
+    appointment.doctorMeta?.phoneNumber,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="adp-page">
@@ -196,8 +227,13 @@ export default function AdminAppointmentDetails() {
           <p className="adp-sub">{appointment.patientId?.name || "Patient"} - {appointment.category || "General care"} - {appointment.specialty || "Specialty pending"}</p>
         </div> */}
         <div className="adp-detail-actions">
-          <Link className="adp-back-button" to="/admin-dashboard/appointments">Back to Appointments</Link>
-          <Link className="adp-alt-btn" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
+          <Link className="adp-back-button" to="/admin-dashboard/appointments">
+            Back to Appointments
+          </Link>
+          <Link
+            className="adp-alt-btn"
+            to={`/admin-dashboard/appointments/${appointment._id}/assign`}
+          >
             {assignmentLabel}
           </Link>
         </div>
@@ -217,14 +253,38 @@ export default function AdminAppointmentDetails() {
             <InfoTile label="User Name" value={appointment.patientId?.name} />
             <InfoTile label="Doctor ID" value={doctorId} />
             <InfoTile label="Appointment ID" value={appointment._id} />
-            <InfoTile label="Doctor Name" value={appointment.doctorId?.name || "Unassigned"} />
-            <InfoTile label="Doctor Specialty" value={appointment.doctorMeta?.specialty || appointment.specialty} />
-            <InfoTile label="Patient Problem / Condition" value={appointment.problem || appointment.condition} />
-            <InfoTile label="User Consultation Date & Time" value={formatInTimezone(instant, patientTimezone)} />
-            <InfoTile label="Doctor Consultation Date & Time" value={formatInTimezone(instant, doctorTimezone)} />
-            <InfoTile label="Admin Consultation Date & Time" value={formatInTimezone(instant, adminTimezone)} />
+            <InfoTile
+              label="Doctor Name"
+              value={appointment.doctorId?.name || "Unassigned"}
+            />
+            <InfoTile
+              label="Doctor Specialty"
+              value={appointment.doctorMeta?.specialty || appointment.specialty}
+            />
+            <InfoTile
+              label="Patient Problem / Condition"
+              value={appointment.problem || appointment.condition}
+            />
+            <InfoTile
+              label="User Consultation Date & Time"
+              value={formatInTimezone(instant, patientTimezone)}
+            />
+            <InfoTile
+              label="Doctor Consultation Date & Time"
+              value={formatInTimezone(instant, doctorTimezone)}
+            />
+            <InfoTile
+              label="Admin Consultation Date & Time"
+              value={formatInTimezone(instant, adminTimezone)}
+            />
             <InfoTile label="Status" value={statusLabel(appointment.status)} />
-            <InfoTile label="Consultation Fee" value={formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)} />
+            <InfoTile
+              label="Consultation Fee"
+              value={formatMoney(
+                appointment.consultationPrice ||
+                appointment.paymentAmount / 100,
+              )}
+            />
           </div>
           {/* <div className="adp-detail-note">
             <span>Timezone Handling</span>
@@ -234,21 +294,42 @@ export default function AdminAppointmentDetails() {
 
         <Section title="User Details">
           <div className="adp-info-grid">
-            <InfoTile label="Gender" value={patientDetails.gender || appointment.patientId?.gender} />
-            <InfoTile label="Date of Birth" value={patientDetails.dob || appointment.patientId?.dob} />
+            <InfoTile
+              label="Gender"
+              value={patientDetails.gender || appointment.patientId?.gender}
+            />
+            <InfoTile
+              label="Date of Birth"
+              value={patientDetails.dob || appointment.patientId?.dob}
+            />
             <InfoTile label="Location" value={userLocation} />
-            <InfoTile label="Phone Number" value={appointment.patientId?.mobile || patientDetails.phone} />
-            <InfoTile label="Email ID" value={appointment.patientId?.email || patientDetails.email} />
+            <InfoTile
+              label="Phone Number"
+              value={appointment.patientId?.mobile || patientDetails.phone}
+            />
+            <InfoTile
+              label="Email ID"
+              value={appointment.patientId?.email || patientDetails.email}
+            />
             <InfoTile label="Timezone" value={patientTimezone} />
           </div>
         </Section>
 
         <Section title="Doctor Details">
           <div className="adp-info-grid">
-            <InfoTile label="Doctor Name" value={appointment.doctorId?.name || "Unassigned"} />
-            <InfoTile label="Specialization" value={appointment.doctorMeta?.specialty || appointment.specialty} />
+            <InfoTile
+              label="Doctor Name"
+              value={appointment.doctorId?.name || "Unassigned"}
+            />
+            <InfoTile
+              label="Specialization"
+              value={appointment.doctorMeta?.specialty || appointment.specialty}
+            />
             <InfoTile label="Location" value={doctorLocation} />
-            <InfoTile label="Doctor Email ID" value={appointment.doctorId?.email} />
+            <InfoTile
+              label="Doctor Email ID"
+              value={appointment.doctorId?.email}
+            />
             <InfoTile label="Doctor Phone Number" value={doctorPhone} />
             <InfoTile label="Timezone" value={doctorTimezone} />
           </div>
@@ -280,9 +361,17 @@ export default function AdminAppointmentDetails() {
           ) : (
             <div className="adp-report-grid">
               {reports.map((report, index) => (
-                <a key={`${report.url}-${index}`} href={report.url} target="_blank" rel="noopener noreferrer" className="adp-report-card">
+                <a
+                  key={`${report.url}-${index}`}
+                  href={report.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="adp-report-card"
+                >
                   <strong>{report.name || `Report ${index + 1}`}</strong>
-                  <span>{report.type || "File"} {formatBytes(report.size)}</span>
+                  <span>
+                    {report.type || "File"} {formatBytes(report.size)}
+                  </span>
                 </a>
               ))}
             </div>

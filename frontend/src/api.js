@@ -1,33 +1,113 @@
 import axios from "axios";
 import { dispatchSessionActivity } from "./utils/session";
 
-let accessToken = "";
-let refreshToken = "";
+const AUTH_ROLES = new Set(["user", "doctor", "admin", "superadmin", "paymentadmin", "employeeadmin"]);
+const TOKEN_ROLE_ALIASES = {
+  superadmin: "admin",
+  paymentadmin: "admin",
+};
+const authTokens = {
+  user: { accessToken: "", refreshToken: "" },
+  doctor: { accessToken: "", refreshToken: "" },
+  admin: { accessToken: "", refreshToken: "" },
+  employeeadmin: { accessToken: "", refreshToken: "" },
+};
+let activeAuthRole = "";
+
+const normalizeAuthRole = (role = "") => {
+  const value = String(role || "").toLowerCase();
+  return TOKEN_ROLE_ALIASES[value] || value;
+};
+
+const inferAuthRoleFromUrl = (url = "") => {
+  const value = String(url || "");
+
+  if (value.startsWith("/api/doctor")) return "doctor";
+  if (value.startsWith("/api/notes")) return "doctor";
+  if (value.startsWith("/api/appointments/doctor")) return "doctor";
+  if (/^\/api\/appointments\/[^/]+\/(confirm|complete|cancel)\b/.test(value)) return "doctor";
+  if (value.startsWith("/api/auth/google-doctor")) return "doctor";
+
+  if (value.startsWith("/api/appointments/patient")) return "user";
+  if (value.startsWith("/api/auth/me")) return "user";
+  if (value.startsWith("/api/auth/logout")) return "user";
+  if (value.startsWith("/api/auth/login") || value.startsWith("/api/auth/google")) return "user";
+
+  if (value.startsWith("/api/auth/employee-admin")) return "employeeadmin";
+  if (value.startsWith("/api/employee-admin")) return "employeeadmin";
+
+  if (
+    value.startsWith("/api/admin") ||
+    value.startsWith("/api/superadmin") ||
+    value.startsWith("/api/auth/admin") ||
+    value.startsWith("/api/auth/payment-admin") ||
+    value.startsWith("/api/payments/admin") ||
+    value.startsWith("/api/pricing")
+  ) {
+    return "admin";
+  }
+
+  if (value.startsWith("/api/auth/refresh")) return activeAuthRole;
+  return activeAuthRole;
+};
+
+const getRoleTokens = (role = "") => authTokens[normalizeAuthRole(role)] || null;
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "",
   withCredentials: true,
 });
 
-export function setUserAuthToken(nextAccessToken = "", nextRefreshToken = "") {
-  accessToken = nextAccessToken || "";
-  refreshToken = nextRefreshToken || "";
+export function setAuthTokenForRole(role = "user", nextAccessToken = "", nextRefreshToken = "") {
+  const normalizedRole = normalizeAuthRole(role);
+  const tokens = getRoleTokens(normalizedRole);
+  if (!tokens) return;
+
+  tokens.accessToken = nextAccessToken || "";
+  tokens.refreshToken = nextRefreshToken || "";
+  activeAuthRole = normalizedRole;
 }
 
-export function clearUserAuthToken() {
-  accessToken = "";
-  refreshToken = "";
+export function setUserAuthToken(nextAccessToken = "", nextRefreshToken = "", role = "user") {
+  setAuthTokenForRole(role, nextAccessToken, nextRefreshToken);
 }
 
-export function getUserAuthToken() {
-  return accessToken;
+export function clearAuthTokenForRole(role = "") {
+  const normalizedRole = normalizeAuthRole(role);
+  if (!normalizedRole) {
+    Object.values(authTokens).forEach((tokens) => {
+      tokens.accessToken = "";
+      tokens.refreshToken = "";
+    });
+    activeAuthRole = "";
+    return;
+  }
+
+  const tokens = getRoleTokens(normalizedRole);
+  if (!tokens) return;
+  tokens.accessToken = "";
+  tokens.refreshToken = "";
+  if (activeAuthRole === normalizedRole) activeAuthRole = "";
+}
+
+export function clearUserAuthToken(role = "") {
+  clearAuthTokenForRole(role);
+}
+
+export function getUserAuthToken(role = activeAuthRole || "user") {
+  return getRoleTokens(role)?.accessToken || "";
 }
 
 api.interceptors.request.use((config) => {
   dispatchSessionActivity();
   const url = config.url || "";
-  const token = url.includes("/api/auth/refresh") ? refreshToken : accessToken;
+  const role = normalizeAuthRole(config.authRole || inferAuthRoleFromUrl(url));
+  const tokens = getRoleTokens(role);
+  const token = url.includes("/api/auth/refresh") ? tokens?.refreshToken : tokens?.accessToken;
   config.headers = config.headers || {};
+  if (role && AUTH_ROLES.has(role)) {
+    config.headers["X-Auth-Role"] = role;
+  }
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   } else {
@@ -36,12 +116,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-let refreshPromise = null;
+const refreshPromisesByRole = new Map();
 
 api.interceptors.response.use(
   (response) => {
     if (response.data?.accessToken) {
-      setUserAuthToken(response.data.accessToken, response.data.refreshToken || refreshToken);
+      const role =
+        normalizeAuthRole(response.data.role || response.data.user?.role || response.data.doctor && "doctor") ||
+        normalizeAuthRole(response.config?.authRole || inferAuthRoleFromUrl(response.config?.url || ""));
+      const currentRefreshToken = getRoleTokens(role)?.refreshToken || "";
+      setAuthTokenForRole(role, response.data.accessToken, response.data.refreshToken || currentRefreshToken);
     }
     if (response.data) response.data = _deepNormalizeUrls(response.data);
     return response;
@@ -51,16 +135,29 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const url = original?.url || "";
 
-    if (status === 401 && original && !original._retry && !url.includes("/api/auth/refresh")) {
+    if (
+      status === 401 &&
+      original &&
+      !original._retry &&
+      !original.skipAuthRefresh &&
+      !url.includes("/api/auth/refresh")
+    ) {
       original._retry = true;
-      refreshPromise ||= api.post("/api/auth/refresh").finally(() => {
-        refreshPromise = null;
-      });
+      const role = normalizeAuthRole(original.authRole || inferAuthRoleFromUrl(url));
+      const refreshKey = role || "default";
+      if (!refreshPromisesByRole.has(refreshKey)) {
+        refreshPromisesByRole.set(
+          refreshKey,
+          api.post("/api/auth/refresh", null, { authRole: role }).finally(() => {
+            refreshPromisesByRole.delete(refreshKey);
+          })
+        );
+      }
       try {
-        await refreshPromise;
+        await refreshPromisesByRole.get(refreshKey);
         return api(original);
       } catch {
-        clearUserAuthToken();
+        clearAuthTokenForRole(role);
         window.dispatchEvent(new CustomEvent("hc:session-expired"));
       }
     }

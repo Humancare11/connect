@@ -32,18 +32,18 @@ export default function WhySection() {
     offset: ["start end", "start 0.52"],
   });
   const smooth = useSpring(scrollYProgress, { stiffness: 75, damping: 18, restDelta: 0.001 });
-  const scale   = useTransform(smooth, [0, 1], [0.87, 1]);
+  const scale = useTransform(smooth, [0, 1], [0.87, 1]);
   const opacity = useTransform(smooth, [0, 0.3, 1], [0, 0.5, 1]);
-  const y       = useTransform(smooth, [0, 1], [56, 0]);
+  const y = useTransform(smooth, [0, 1], [56, 0]);
 
   /* ── inner reveal triggers ── */
-  const leftRef  = useRef(null);
+  const leftRef = useRef(null);
   const leftInView = useInView(leftRef, { once: true, margin: "-80px" });
 
-  const whyRef  = useRef(null);
+  const whyRef = useRef(null);
   const whyInView = useInView(whyRef, { once: true, margin: "-60px" });
 
-  const visualRef  = useRef(null);
+  const visualRef = useRef(null);
   const visualInView = useInView(visualRef, { once: true, margin: "-60px" });
 
   return (
@@ -109,7 +109,7 @@ export default function WhySection() {
                 <div>
                   <div className="why-item-title">Transparent, Flat-Fee Pricing</div>
                   <div className="why-item-desc">
-                   No surprise medical bills or hidden costs. Get affordable telemedicine services, upfront pricing, and flexible online healthcare access with or without insurance coverage.
+                    No surprise medical bills or hidden costs. Get affordable telemedicine services, upfront pricing, and flexible online healthcare access with or without insurance coverage.
 
                   </div>
                 </div>
@@ -118,7 +118,7 @@ export default function WhySection() {
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
                   <div className="why-item-title">24/7 Human Support
-</div>
+                  </div>
                   <div className="why-item-desc">
                     Talk to real people whenever you need help. Our support team is available around the clock to assist with online doctor appointments, prescriptions, virtual care coordination, and patient questions.
 
@@ -138,27 +138,27 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sc-label">Patient outcome improvement</div>
+              <div className="sc-label">Healthcare That Puts You First</div>
               <div className="sc-big">94<span className="sc-percent">%</span></div>
-              <div className="sc-sub">After 3 months on Humancare</div>
+              <div className="sc-sub">Simple. Secure. Accessible.</div>
               <div className="sc-divider" />
               <div className="sc-row">
-                <span>Visit completion rate</span>
-                <strong>98.2%</strong>
+                <span>Better Care Experiences</span>
+                {/* <strong>98.2%</strong> */}
               </div>
               <div className="sc-prog">
                 <div className="sc-fill" style={{ width: "98.2%" }} />
               </div>
               <div className="sc-row">
-                <span>Prescription accuracy</span>
-                <strong>99.7%</strong>
+                <span> Seamless Consultations </span>
+                {/* <strong>99.7%</strong> */}
               </div>
               <div className="sc-prog">
                 <div className="sc-fill" style={{ width: "99.7%" }} />
               </div>
               <div className="sc-row">
-                <span>Same-day appointments</span>
-                <strong>91.4%</strong>
+                <span>Continuous Healthcare Support</span>
+                {/* <strong>91.4%</strong> */}
               </div>
               <div className="sc-prog">
                 <div className="sc-fill" style={{ width: "91.4%" }} />
@@ -172,8 +172,8 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label">Patients served</div>
-              <div className="sf-val" style={{ color: "#223a5e" }}>2.4M+</div>
+              <div className="sf-label">ONLINE CARE 24/7</div>
+              {/* <div className="sf-val" style={{ color: "#223a5e" }}>2.4M+</div> */}
             </Motion.div>
 
             {/* ── float 2 — bottom-left ── */}
@@ -183,8 +183,8 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label">Avg. response</div>
-              <div className="sf-val" style={{ color: "#0c8b7a" }}>&lt;4 min</div>
+              <div className="sf-label">Multiple Specialities</div>
+              {/* <div className="sf-val" style={{ color: "#0c8b7a" }}>&lt;4 min</div> */}
             </Motion.div>
 
             {/* ── float 3 — mid-left ── */}
@@ -194,8 +194,8 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label">Rating</div>
-              <div className="sf-val" style={{ color: "#d97706" }}>4.9 ★</div>
+              <div className="sf-label">Same Day Appointments</div>
+              {/* <div className="sf-val" style={{ color: "#d97706" }}>4.9 ★</div> */}
             </Motion.div>
 
             {/* ── float 4 — top-left ── */}
@@ -205,8 +205,8 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label">Doctors online</div>
-              <div className="sf-val" style={{ color: "#436dba" }}>1,200+</div>
+              <div className="sf-label" >LICENSED PROVIDERS VERIFIED</div>
+              {/* <div className="sf-val" style={{ color: "#436dba" }}>1,200+</div> */}
             </Motion.div>
 
             {/* ── float 5 — bottom-right ── */}
@@ -216,8 +216,8 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label">Satisfaction</div>
-              <div className="sf-val" style={{ color: "#0c8b7a" }}>97%</div>
+              <div className="sf-label">Digital Prescriptions</div>
+              {/* <div className="sf-val" style={{ color: "#0c8b7a" }}>97%</div> */}
             </Motion.div>
 
             {/* ── float 6 — mid-right ── */}
@@ -227,9 +227,9 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label">Visit Completion Rate
-</div>
-              <div className="sf-val" style={{ color: "#d97706" }}>98% +  </div>
+              <div className="sf-label"> Secure & Private Consultations
+              </div>
+              {/* <div className="sf-val" style={{ color: "#d97706" }}>98% +  </div> */}
             </Motion.div>
 
           </div>

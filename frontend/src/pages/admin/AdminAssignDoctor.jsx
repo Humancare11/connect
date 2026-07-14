@@ -4,7 +4,9 @@ import api from "../../api";
 import "./AdminAssignDoctor.css";
 
 function normalize(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
 function includesToken(source, target) {
@@ -14,13 +16,19 @@ function includesToken(source, target) {
 }
 
 function uniqueValues(values) {
-  return [...new Set(values.map((value) => String(value || "").trim()).filter(Boolean))];
+  return [
+    ...new Set(
+      values.map((value) => String(value || "").trim()).filter(Boolean),
+    ),
+  ];
 }
 
 function doctorDisplayName(name) {
   const cleanName = String(name || "").trim();
   if (!cleanName) return "Doctor";
-  return cleanName.toLowerCase().startsWith("dr.") ? cleanName : `Dr. ${cleanName}`;
+  return cleanName.toLowerCase().startsWith("dr.")
+    ? cleanName
+    : `Dr. ${cleanName}`;
 }
 
 function getAppointmentCountry(appointment) {
@@ -33,7 +41,9 @@ function getLicenseCountries(doctor) {
     doctor.medicalLicenseCountry,
     doctor.registrationCountry,
     doctor.country,
-    ...(Array.isArray(doctor.internationalLicenses) ? doctor.internationalLicenses : []),
+    ...(Array.isArray(doctor.internationalLicenses)
+      ? doctor.internationalLicenses
+      : []),
   ]);
 }
 
@@ -43,7 +53,9 @@ function scoreDoctor(doctor, appointment) {
   const priority = {
     specialty: includesToken(doctor.specialty, appointment.specialty),
     country: includesToken(doctor.country, appointmentCountry),
-    licenseCountry: licenseCountries.some((country) => includesToken(country, appointmentCountry)),
+    licenseCountry: licenseCountries.some((country) =>
+      includesToken(country, appointmentCountry),
+    ),
   };
   let secondaryScore = 0;
 
@@ -75,13 +87,26 @@ function scoreDoctor(doctor, appointment) {
   return { score, priority, secondaryScore };
 }
 
-function DoctorRow({ doctor, appointment, assigning, selected, index, onAssign }) {
+function DoctorRow({
+  doctor,
+  appointment,
+  assigning,
+  selected,
+  index,
+  onAssign,
+}) {
   return (
-    <div className={`aad-doctor-row ${selected ? "aad-doctor-row--selected" : ""}`}>
+    <div
+      className={`aad-doctor-row ${selected ? "aad-doctor-row--selected" : ""}`}
+    >
       <div className="aad-cell aad-cell-sr">{index + 1}</div>
       <div className="aad-cell aad-cell-id">{doctor.doctorId || "-"}</div>
-      <div className="aad-cell aad-cell-name">{doctorDisplayName(doctor.name)}</div>
-      <div className="aad-cell aad-cell-specialty">{doctor.specialty || "-"}</div>
+      <div className="aad-cell aad-cell-name">
+        {doctorDisplayName(doctor.name)}
+      </div>
+      <div className="aad-cell aad-cell-specialty">
+        {doctor.specialty || "-"}
+      </div>
       <div className="aad-cell aad-cell-country">{doctor.country || "-"}</div>
       <div className="aad-doctor-action">
         <button
@@ -90,7 +115,13 @@ function DoctorRow({ doctor, appointment, assigning, selected, index, onAssign }
           disabled={assigning || selected || !doctor.doctorId}
           onClick={() => onAssign(doctor)}
         >
-          {selected ? "Assigned" : assigning ? "Assigning…" : appointment.doctorId ? "Reassign" : "Assign"}
+          {selected
+            ? "Assigned"
+            : assigning
+              ? "Assigning…"
+              : appointment.doctorId
+                ? "Reassign"
+                : "Assign"}
         </button>
       </div>
     </div>
@@ -130,7 +161,9 @@ export default function AdminAssignDoctor() {
     }
 
     loadData();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
   const rankedDoctors = useMemo(() => {
@@ -157,15 +190,22 @@ export default function AdminAssignDoctor() {
           doctor.city,
           doctor.state,
           doctor.country,
-          ...(Array.isArray(doctor.internationalLicenses) ? doctor.internationalLicenses : []),
+          ...(Array.isArray(doctor.internationalLicenses)
+            ? doctor.internationalLicenses
+            : []),
         ]
-          .filter(Boolean).join(" ").toLowerCase().includes(q);
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q);
       })
       .sort((a, b) => {
         const priorityCompare =
-          Number(b.matchPriority?.specialty) - Number(a.matchPriority?.specialty) ||
+          Number(b.matchPriority?.specialty) -
+            Number(a.matchPriority?.specialty) ||
           Number(b.matchPriority?.country) - Number(a.matchPriority?.country) ||
-          Number(b.matchPriority?.licenseCountry) - Number(a.matchPriority?.licenseCountry);
+          Number(b.matchPriority?.licenseCountry) -
+            Number(a.matchPriority?.licenseCountry);
 
         return (
           priorityCompare ||
@@ -183,7 +223,9 @@ export default function AdminAssignDoctor() {
     setError("");
     setNotice("");
     try {
-      const res = await api.put(`/api/appointments/${id}/change-doctor`, { doctorId: doctor.doctorId });
+      const res = await api.put(`/api/appointments/${id}/change-doctor`, {
+        doctorId: doctor.doctorId,
+      });
       setNotice(res.data?.msg || "Doctor assigned successfully.");
       setTimeout(() => navigate(`/admin-dashboard/appointments/${id}`), 900);
     } catch (err) {
@@ -209,7 +251,9 @@ export default function AdminAssignDoctor() {
       <div className="aad-page">
         <div className="aad-empty">
           <p>{error}</p>
-          <Link to="/admin-dashboard/appointments">Back to appointments</Link>
+          <Link to="/admin-dashboard/appointments">
+            Back to appointments
+        </Link>
         </div>
       </div>
     );
@@ -217,7 +261,6 @@ export default function AdminAssignDoctor() {
 
   return (
     <div className="aad-page">
-
       {/* ── Top nav ── */}
       <div className="aad-nav">
         <Link className="aad-back" to={`/admin-dashboard/appointments/${id}`}>
@@ -231,12 +274,16 @@ export default function AdminAssignDoctor() {
       <div className="aad-appt-bar">
         <div className="aad-appt-field">
           <span className="aad-appt-label">Patient</span>
-          <span className="aad-appt-val">{appointment.patientId?.name || "—"}</span>
+          <span className="aad-appt-val">
+            {appointment.patientId?.name || "—"}
+          </span>
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
           <span className="aad-appt-label">Country</span>
-          <span className="aad-appt-val">{getAppointmentCountry(appointment) || "—"}</span>
+          <span className="aad-appt-val">
+            {getAppointmentCountry(appointment) || "—"}
+          </span>
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
@@ -274,23 +321,35 @@ export default function AdminAssignDoctor() {
 
       {/* ── Banner ── */}
       {(error || notice) && (
-        <div className={`aad-banner ${error ? "aad-banner--error" : "aad-banner--ok"}`}>
+        <div
+          className={`aad-banner ${error ? "aad-banner--error" : "aad-banner--ok"}`}
+        >
           {error || notice}
         </div>
       )}
 
       {/* ── Doctor list ── */}
       <div className="aad-list-section">
-
         {/* Column header + search */}
         <div className="aad-list-header">
           <div className="aad-list-title">
             <h2>Recommended doctors</h2>
-            <p>Ranking uses specialty, country, license country, and clinical fit.</p>
+            <p>
+              Ranking uses specialty, country, license country, and clinical
+              fit.
+            </p>
           </div>
           <label className="aad-search">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               placeholder="Search by name, ID, specialty, country…"
@@ -311,7 +370,9 @@ export default function AdminAssignDoctor() {
             <div className="aad-col aad-cell-assign">Assign</div>
           </div>
           {rankedDoctors.length === 0 ? (
-            <div className="aad-empty-row">No doctors match. Adjust search or approve more doctors.</div>
+            <div className="aad-empty-row">
+              No doctors match. Adjust search or approve more doctors.
+            </div>
           ) : (
             rankedDoctors.map((doctor, index) => (
               <DoctorRow
@@ -327,7 +388,9 @@ export default function AdminAssignDoctor() {
           )}
         </div>
 
-        <p className="aad-count">{rankedDoctors.length} of {doctors.length} approved doctors shown</p>
+        <p className="aad-count">
+          {rankedDoctors.length} of {doctors.length} approved doctors shown
+        </p>
       </div>
     </div>
   );

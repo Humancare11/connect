@@ -103,8 +103,8 @@ export default function Header() {
     ...(location.pathname !== "/" ? [{ label: "Home", link: "/" }] : []),
     { label: "About Us", link: "/about-us" },
     { label: "Book Appointment", link: "/appointment-booking" },
-    { label: "Corporate", link: "/corporates" },
-    { label: "Blog", link: "/blogs" },
+    { label: "Corporates", link: "/corporates" },
+    { label: "Blogs", link: "/blogs" },
   ];
 
   /* ==================== SCROLL ==================== */

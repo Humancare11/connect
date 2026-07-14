@@ -766,6 +766,22 @@
   line-height: 1.4;
 }
 
+.hc-consent-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  width: 100%;
+  margin: 4px 0 8px;
+}
+
+.hc-consent-row .hc-terms {
+  width: auto;
+  margin: 0;
+  align-items: center;
+  white-space: nowrap;
+}
+
 /* reset checkbox from global button styles */
 .hc-terms input[type="checkbox"] {
   all: unset;

@@ -55,7 +55,7 @@ export default function PatientInformedConsentForm() {
                         <ShieldCheck size={11} />
                         HUMANCARE CONNECT, INC
                     </div>
-                    <h1 style={{ fontSize: "26px", fontWeight: 700, color: "#0f172a", margin: "15px 0 4px", letterSpacing: "-0.02em" }}>Patient Informed Consent Form</h1>
+                      <h1 style={{ fontSize: "26px", fontWeight: 700, color: "#0f172a", margin: "15px 0 4px", letterSpacing: "-0.02em" }}>Patient Informed Consent Form</h1>
                     <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>   Effective Date: 2026-06-04 | Version 1.0</p>
                 </div>
             </div>

@@ -16,6 +16,7 @@ import {
   FaPlaneDeparture,
   FaTruckMedical,
   FaHeartPulse,
+  FaHeart,
   FaFileShield,
   FaUsers,
   FaGlobe,
@@ -33,6 +34,7 @@ import {
   FaRocket,
   FaWifi,
   FaVideo,
+  FaClipboardList,
   FaCloudArrowUp,
 } from "react-icons/fa6";
 import "./DoctorCareers.css";
@@ -40,152 +42,262 @@ import "./DoctorCareers.css";
 /* -------------------------------------------------------------------- */
 /*  Static content                                                      */
 /* -------------------------------------------------------------------- */
-
 const WHY_JOIN = [
   {
     icon: <FaClock />,
     title: "Flexible Schedule",
-    desc: "Set your own hours and consult when it works for you — mornings, evenings, or weekends.",
+    desc: "Choose when you're available and manage your consultation hours around your existing practice or personal commitments. You're always in control of your schedule.",
   },
   {
     icon: <FaHouseLaptop />,
-    title: "Remote Practice",
-    desc: "Deliver care from anywhere with a secure connection. No commute, no clinic overhead.",
+    title: "Practice From Anywhere",
+    desc: "Provide secure virtual consultations from your clinic, home, or wherever your professional responsibilities take you. All you need is a reliable internet connection.",
   },
   {
-    icon: <FaSackDollar />,
-    title: "Competitive Earnings",
-    desc: "Transparent, competitive compensation with consistent patient volume and timely payouts.",
+    icon: <FaGlobe />,
+    title: "Expand Your Professional Reach",
+    desc: "Connect with patients beyond geographical boundaries and make quality healthcare more accessible through a trusted global telemedicine platform.",
   },
   {
     icon: <FaShieldHalved />,
-    title: "Secure Technology",
-    desc: "HIPAA-compliant platform built for reliable, encrypted virtual consultations.",
+    title: "Secure & Reliable Platform",
+    desc: "Deliver virtual consultations with confidence using a platform designed with patient privacy, security, and reliability at its core.",
   },
   {
-    icon: <FaUserDoctor />,
-    title: "Clinical Independence",
-    desc: "Practice medicine your way. Your clinical judgment always comes first.",
+    icon: <FaClipboardList />,
+    title: "Simple & Efficient Workflow",
+    desc: "Manage appointments, consultation records, and patient interactions through an intuitive platform designed to support your daily practice.",
   },
   {
     icon: <FaHeadset />,
-    title: "Dedicated Support",
-    desc: "A responsive support team handles scheduling, tech, and admin so you can focus on patients.",
+    title: "Dedicated Doctor Support",
+    desc: "From onboarding to ongoing assistance, our Doctor Success Team is here to help you every step of the way so you can focus on delivering exceptional care.",
   },
 ];
 
 const BENEFITS_CHECKLIST = [
-  "Build your own consultation schedule",
-  "Access a growing, nationwide patient base",
-  "Practice with full clinical autonomy",
-  "Get onboarded with dedicated 1:1 support",
-  "Use a modern, HIPAA-compliant platform",
-  "Join a network built on quality patient care",
+  "Reach more patients through one trusted telemedicine platform.",
+  "Practice securely with HIPAA-compliant virtual consultations.",
+  "Maintain complete clinical autonomy in every consultation.",
+  "Choose consultation hours that fit your professional lifestyle.",
+  "Receive dedicated onboarding and ongoing physician support.",
+  "Be part of a growing community shaping the future of digital healthcare.",
 ];
 
 const SPECIALTIES = [
-  { icon: <FaStethoscope />, name: "Family Medicine", desc: "Comprehensive care for patients of all ages." },
-  { icon: <FaHeartPulse />, name: "Internal Medicine", desc: "Manage chronic and complex adult conditions." },
-  { icon: <FaBaby />, name: "Pediatrics", desc: "Virtual care for infants, children, and teens." },
-  { icon: <FaVenus />, name: "Women's Health", desc: "Reproductive and general wellness care for women." },
-  { icon: <FaBrain />, name: "Mental Health", desc: "Therapy and psychiatric support delivered virtually." },
-  { icon: <FaPlaneDeparture />, name: "Travel Medicine", desc: "Pre-travel consults, vaccines, and guidance." },
-  { icon: <FaTruckMedical />, name: "Urgent Care", desc: "Timely triage and treatment for acute concerns." },
-  { icon: <FaFileShield />, name: "Preventive Care", desc: "Screenings, wellness visits, and health coaching." },
+  {
+    icon: <FaStethoscope />,
+    name: "Family Medicine",
+    desc: "Comprehensive care for patients of all ages.",
+  },
+  {
+    icon: <FaHeartPulse />,
+    name: "Internal Medicine",
+    desc: "Manage chronic and complex adult conditions.",
+  },
+  {
+    icon: <FaBaby />,
+    name: "Pediatrics",
+    desc: "Virtual care for infants, children, and teens.",
+  },
+  {
+    icon: <FaVenus />,
+    name: "Women's Health",
+    desc: "Reproductive and general wellness care for women.",
+  },
+  {
+    icon: <FaBrain />,
+    name: "Mental Health",
+    desc: "Therapy and psychiatric support delivered virtually.",
+  },
+  {
+    icon: <FaPlaneDeparture />,
+    name: "Travel Medicine",
+    desc: "Pre-travel consults, vaccines, and guidance.",
+  },
+  {
+    icon: <FaTruckMedical />,
+    name: "Urgent Care",
+    desc: "Timely triage and treatment for acute concerns.",
+  },
+  {
+    icon: <FaFileShield />,
+    name: "Preventive Care",
+    desc: "Screenings, wellness visits, and health coaching.",
+  },
 ];
 
 const REQUIREMENTS = [
-  "Active, unrestricted medical license",
-  "Good standing with your state medical board",
-  "Strong verbal and written communication skills",
-  "Comfortable using telemedicine technology",
-  "Reliable, high-speed internet connection",
-  "Computer with a functioning webcam and microphone",
-  "Genuine commitment to patient-centered care",
+  "Passionate about improving patient access to quality healthcare.",
+  "Committed to delivering exceptional virtual care.",
+  "Ready to expand your professional reach.",
+  "Comfortable using secure digital healthcare solutions.",
+  "Dedicated to patient-first, ethical medical practice.",
+  "Looking for flexibility without compromising quality.",
+  "Excited to be part of a trusted global healthcare network.",
 ];
-
 const PROCESS_STEPS = [
-  { icon: <FaFileSignature />, title: "Submit Application", desc: "Tell us about your background, license, and specialty in a short online form." },
-  { icon: <FaClipboardCheck />, title: "Credential Review", desc: "Our team verifies your license, certifications, and professional standing." },
-  { icon: <FaComments />, title: "Interview", desc: "A short conversation to align on expectations, availability, and fit." },
-  { icon: <FaLaptopMedical />, title: "Platform Onboarding", desc: "Get hands-on training with our telemedicine platform and workflows." },
-  { icon: <FaRocket />, title: "Begin Consulting", desc: "Set your schedule and start seeing patients on your terms." },
+  {
+    icon: <FaFileSignature />,
+    title: "Submit Your Application",
+    desc: "Complete a short application with your professional details, medical specialty, and contact information.",
+  },
+  {
+    icon: <FaClipboardCheck />,
+    title: "Verify Your Credentials",
+    desc: "Our team reviews your medical license, qualifications, and professional credentials to ensure a trusted healthcare network.",
+  },
+  {
+    icon: <FaComments />,
+    title: "Complete Your Onboarding",
+    desc: "Meet with our Doctor Success Team and get familiar with the platform, consultation workflow, and best practices.",
+  },
+  {
+    icon: <FaLaptopMedical />,
+    title: "Activate Your Profile",
+    desc: "Once approved, your professional profile goes live, making it easy for eligible patients to connect with you through Humancare Connect.",
+  },
+  {
+    icon: <FaRocket />,
+    title: "Start Delivering Virtual Care",
+    desc: "Set your availability, manage your schedule, and begin providing secure, HIPAA-compliant virtual consultations while making a meaningful impact on patients' lives.",
+  },
 ];
 
 const BENEFITS_FEATURES = [
-  { icon: <FaClock />, title: "Flexible Hours", desc: "Design a schedule around your life, not the other way around." },
-  { icon: <FaGlobe />, title: "Work From Anywhere", desc: "All you need is a secure internet connection and a quiet space." },
-  { icon: <FaHeadset />, title: "Administrative Support", desc: "We handle scheduling, billing, and patient intake logistics." },
-  { icon: <FaShieldHalved />, title: "Secure Platform", desc: "End-to-end encrypted consultations that keep patient data safe." },
-  { icon: <FaLaptopMedical />, title: "Modern Technology", desc: "A fast, intuitive interface designed specifically for virtual care." },
-  { icon: <FaGraduationCap />, title: "Professional Development", desc: "Ongoing training and resources to help your practice grow." },
-  { icon: <FaUsers />, title: "Expanded Patient Reach", desc: "Connect with patients across regions, beyond your local practice." },
-  { icon: <FaChartLine />, title: "Efficient Workflow", desc: "Purpose-built tools that reduce admin time and streamline visits." },
-];
-
-const TESTIMONIALS = [
   {
+<<<<<<< HEAD
+    icon: <FaClock />,
+    title: "Flexible Scheduling",
+    desc: "Set your own availability and provide virtual consultations at times that fit your professional and personal commitments.",
+=======
     name: "Dr. Anjali Rao",
     specialty: "Family Medicine",
     photo: "/images/careers/provider-1.jpg",
     quote:
-      "Joining Human Care Connect let me build a schedule around my family without stepping away from clinical work I love.",
+      "Joining Humancare Connect let me build a schedule around my family without stepping away from clinical work I love.",
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
   },
   {
-    name: "Dr. Marcus Chen",
-    specialty: "Internal Medicine",
-    photo: "/images/careers/provider-2.jpg",
-    quote:
-      "The platform is smooth and the support team is fast. I spend my time with patients, not fighting technology.",
+    icon: <FaGlobe />,
+    title: "Global Patient Reach",
+    desc: "Expand your practice by connecting with patients across regions through one trusted telemedicine platform.",
   },
   {
-    name: "Dr. Priya Nair",
-    specialty: "Mental Health",
-    photo: "/images/careers/provider-3.jpg",
-    quote:
-      "I've reached patients in areas with almost no mental health access nearby. This work feels genuinely meaningful.",
+    icon: <FaShieldHalved />,
+    title: "HIPAA-Compliant Platform",
+    desc: "Conduct secure virtual consultations using encrypted technology built to protect patient privacy and sensitive health information.",
   },
   {
-    name: "Dr. Daniel Okafor",
-    specialty: "Pediatrics",
-    photo: "/images/careers/provider-4.jpg",
-    quote:
-      "Onboarding was quick and clear. Within two weeks I was seeing patients with full confidence in the platform.",
+    icon: <FaHeadset />,
+    title: "Dedicated Doctor Support",
+    desc: "Our Doctor Success Team is here to assist you with onboarding, technical guidance, and ongoing platform support.",
+  },
+  {
+    icon: <FaLaptopMedical />,
+    title: "Modern Telemedicine Technology",
+    desc: "Experience an intuitive platform designed to simplify virtual consultations and create a seamless experience for both doctors and patients.",
+  },
+  {
+    icon: <FaUserDoctor />,
+    title: "Clinical Independence",
+    desc: "Maintain complete control over your medical decisions while delivering personalized, patient-centered care.",
+  },
+  {
+    icon: <FaUsers />,
+    title: "Grow Your Professional Presence",
+    desc: "Strengthen your digital practice and connect with more patients through a trusted healthcare network.",
+  },
+  {
+    icon: <FaHeart />,
+    title: "Meaningful Patient Impact",
+    desc: "Help make quality healthcare more accessible by providing timely, compassionate care to patients wherever they are.",
   },
 ];
-
 const FAQS = [
   {
-    q: "How long does the application process take?",
-    a: "Most applicants hear back within 5–7 business days after submitting a complete application. Credential review and interviews typically follow within two weeks.",
+    q: "Who can apply to become a partner doctor with Humancare Connect?",
+    a: "Licensed physicians and qualified healthcare professionals who meet the applicable licensing and credential requirements can apply to join our telemedicine network.",
   },
   {
-    q: "What licenses do I need to join?",
-    a: "You'll need an active, unrestricted medical license in good standing in at least one state. We'll work with you on multi-state licensing as your patient base grows.",
+    q: "How do I apply?",
+    a: "Simply complete the online application form with your professional details. Our Doctor Success Team will review your application and guide you through the next steps.",
   },
   {
-    q: "Can I set my own schedule?",
-    a: "Yes. You choose your available hours and can adjust them anytime through your provider dashboard — there are no mandatory shifts.",
+    q: "What documents will I need?",
+    a: "You'll typically need a valid medical license, professional identification, relevant certifications, and any supporting documents required for credential verification.",
   },
   {
-    q: "How and when am I compensated?",
-    a: "Compensation is based on consultation volume and is paid out on a regular, predictable schedule. Full details are shared during onboarding.",
+    q: "How does the credential verification process work?",
+    a: "Our team carefully reviews your medical credentials and professional standing to help maintain a trusted network of healthcare professionals.",
   },
   {
-    q: "What equipment do I need?",
-    a: "A computer with a webcam and microphone, and a stable high-speed internet connection. No specialized hardware is required.",
+    q: "Can I continue working at my clinic or hospital?",
+    a: "Yes. Humancare Connect is designed to complement your existing practice, allowing you to offer virtual consultations alongside your regular professional commitments.",
   },
   {
-    q: "What does onboarding involve?",
-    a: "A guided walkthrough of the platform, documentation workflows, and support tools — most providers are fully onboarded within a few days.",
+    q: "Can I choose my own consultation schedule?",
+    a: "Absolutely. You decide when you're available and can update your schedule based on your professional and personal commitments.",
   },
   {
-    q: "Is training provided?",
-    a: "Yes. We provide platform training at onboarding plus ongoing resources and refreshers as our tools evolve.",
+    q: "Do I need previous telemedicine experience?",
+    a: "No. Whether you're new to virtual care or already experienced, our onboarding process helps you become familiar with the platform.",
   },
   {
-    q: "What support is available after I join?",
-    a: "A dedicated provider support team is available to help with scheduling, technical issues, and administrative questions on an ongoing basis.",
+    q: "What medical specialties are welcome?",
+    a: "Humancare Connect welcomes healthcare professionals from a wide range of medical specialties, depending on licensing and platform requirements.",
+  },
+  {
+    q: "Is the platform HIPAA compliant?",
+    a: "Yes. Humancare Connect uses HIPAA-compliant technology with secure encryption and privacy-focused features to help protect patient health information.",
+  },
+  {
+    q: "How do virtual consultations take place?",
+    a: "Consultations are conducted through our secure telemedicine platform using video, audio, or other supported communication methods.",
+  },
+  {
+    q: "Can I provide consultations from home?",
+    a: "Yes. As long as you have a secure internet connection and a private environment suitable for patient consultations, you can practice from virtually anywhere.",
+  },
+  {
+    q: "What technology do I need?",
+    a: "A computer or laptop with a webcam and microphone, along with a stable high-speed internet connection, is recommended for the best consultation experience.",
+  },
+  {
+    q: "Will I receive onboarding support?",
+    a: "Yes. Our Doctor Success Team guides onboarding and is available to assist you with platform-related questions.",
+  },
+  {
+    q: "Can I update my availability later?",
+    a: "Yes. You can modify your consultation availability whenever needed to fit your changing schedule.",
+  },
+  {
+    q: "Will I have access to technical support?",
+    a: "Yes. Our support team is available to help with technical issues and platform-related assistance whenever you need it.",
+  },
+  {
+    q: "Is there a long-term commitment?",
+    a: "No. You have the flexibility to manage your participation according to your professional availability and preferences.",
+  },
+  {
+    q: "How is patient privacy protected?",
+    a: "Patient information is safeguarded through secure technologies, encrypted communication, and privacy-focused platform practices.",
+  },
+  {
+    q: "Can I grow my professional presence on Humancare Connect?",
+    a: "Yes. By maintaining a complete professional profile and consistently delivering high-quality patient care, you can strengthen your visibility within the platform.",
+  },
+  {
+    q: "What makes Humancare Connect different?",
+    a: "Humancare Connect combines secure technology, flexible scheduling, dedicated physician support, and a patient-first approach to help healthcare professionals deliver exceptional virtual care.",
+  },
+  {
+    q: "How soon can I start consulting?",
+    a: "Once your application, credential verification, and onboarding are successfully completed, you'll be ready to begin offering virtual consultations.",
+  },
+  {
+    q: "Who can I contact if I have additional questions?",
+    a: "Our Doctor Success Team is always available to answer your questions and guide you through every stage of your journey with Humancare Connect.",
   },
 ];
 
@@ -252,7 +364,9 @@ function TimelineStep({ step, index, total }) {
     <motion.div className="dc-timeline-step" variants={fadeUp}>
       <div className="dc-timeline-marker">
         <div className="dc-timeline-icon">{step.icon}</div>
-        {index < total - 1 && <div className="dc-timeline-line" aria-hidden="true" />}
+        {index < total - 1 && (
+          <div className="dc-timeline-line" aria-hidden="true" />
+        )}
       </div>
       <div className="dc-timeline-content">
         <span className="dc-timeline-step-number">Step {index + 1}</span>
@@ -335,9 +449,10 @@ function ApplicationForm() {
         <FaCircleCheck aria-hidden="true" />
         <h3>Application received</h3>
         <p>
-          Thank you{formData.fullName ? `, ${formData.fullName.split(" ")[0]}` : ""}
-          . Our recruitment team will review your application and follow up
-          within 5–7 business days.
+          Thank you
+          {formData.fullName ? `, ${formData.fullName.split(" ")[0]}` : ""}. Our
+          recruitment team will review your application and follow up within 5–7
+          business days.
         </p>
       </motion.div>
     );
@@ -468,7 +583,9 @@ function ApplicationForm() {
         </div>
 
         <div className="dc-form-group dc-form-group--full">
-          <label htmlFor="message">Tell us about your practice (optional)</label>
+          <label htmlFor="message">
+            Tell us about your practice (optional)
+          </label>
           <textarea
             id="message"
             name="message"
@@ -480,7 +597,10 @@ function ApplicationForm() {
         </div>
       </div>
 
-      <button type="submit" className="dc-btn dc-btn--primary dc-btn--lg dc-form-submit">
+      <button
+        type="submit"
+        className="dc-btn dc-btn--primary dc-btn--lg dc-form-submit"
+      >
         Submit Application <FaArrowRight aria-hidden="true" />
       </button>
       <p className="dc-form-note">
@@ -501,9 +621,12 @@ export default function DoctorCareers() {
 
   const toggleFAQ = (idx) => setOpenFAQ(openFAQ === idx ? -1 : idx);
 
-  const nextSlide = () => setActiveSlide((prev) => (prev + 1) % TESTIMONIALS.length);
+  const nextSlide = () =>
+    setActiveSlide((prev) => (prev + 1) % TESTIMONIALS.length);
   const prevSlide = () =>
-    setActiveSlide((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
+    setActiveSlide(
+      (prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length,
+    );
 
   return (
     <main className="doctor-careers-page">
@@ -527,23 +650,34 @@ export default function DoctorCareers() {
               Careers for Physicians
             </motion.span>
             <motion.h1 variants={fadeUp}>
-              Practice medicine on <span className="dc-text-accent">your terms</span>
+              The Future of Healthcare{" "}
+              <span className="dc-text-accent">Needs Doctors Like You. </span>
             </motion.h1>
             <motion.p className="dc-hero-sub" variants={fadeUp}>
-              Join Human Care Connect's telemedicine network and deliver quality
-              virtual care to patients nationwide — with the flexibility, support,
-              and clinical independence you deserve.
+              Join a trusted global telemedicine platform built for licensed
+              healthcare professionals who want to make a greater impact.
+              Humancare Connect helps doctors connect with patients through
+              secure virtual consultations, giving you the flexibility to
+              practice from anywhere while delivering timely, high-quality care.
+              Whether you're growing your practice, supporting underserved
+              communities, or embracing the future of healthcare, you'll have
+              the technology, support, and professional network to succeed
             </motion.p>
-            <motion.div className="dc-hero-actions" variants={fadeUp}>
-              <a href="#apply" className="dc-btn dc-btn--primary">
+            {/* <motion.div className="dc-hero-actions" variants={fadeUp}> */}
+            {/* <a href="#apply" className="dc-btn dc-btn--primary">
                 Apply Now <FaArrowRight aria-hidden="true" />
-              </a>
-              {/* <a href="#why-join" className="dc-btn dc-btn--secondary">
+              </a> */}
+            {/* <a href="#why-join" className="dc-btn dc-btn--secondary">
                 Learn More
               </a> */}
-            </motion.div>
+            {/* </motion.div> */}
             <motion.p className="dc-hero-trust" variants={fadeUp}>
-              Trusted by licensed physicians across 20+ specialties nationwide.
+<<<<<<< HEAD
+              Join a growing community of licensed healthcare professionals
+              delivering trusted virtual care worldwide.
+=======
+              Trusted by licensed physicians across 30+ specialties nationwide.
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             </motion.p>
           </motion.div>
 
@@ -583,12 +717,20 @@ export default function DoctorCareers() {
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeUp}
           >
-            <span className="dc-eyebrow">Why Join Human Care Connect</span>
+<<<<<<< HEAD
+            <span className="dc-eyebrow">
+              WHY DOCTORS CHOOSE HUMANCARE CONNECT
+            </span>
+            <h2>WHY DOCTORS CHOOSE HUMANCARE CONNECT</h2>
+=======
+            <span className="dc-eyebrow">Why Join Humancare Connect</span>
             <h2>Everything you need to practice, minus the overhead</h2>
+>>>>>>> bedf268684c04f8db54b27ed3a53dbb343adcd6c
             <p>
-              We built our network around what physicians actually need to
-              deliver great care remotely — flexibility, support, and the
-              right technology.
+              Healthcare is evolving, and so is the way doctors connect with
+              patients. Humancare Connect combines flexible virtual care, secure
+              technology, and dedicated support to help you deliver exceptional
+              healthcare wherever your expertise is needed.
             </p>
           </motion.div>
 
@@ -633,18 +775,24 @@ export default function DoctorCareers() {
             variants={staggerContainer}
           >
             <motion.span className="dc-eyebrow" variants={fadeUp}>
-              About Working With Us
+              ABOUT WORKING WITH HUMANCARE CONNECT
             </motion.span>
             <motion.h2 variants={fadeUp}>
-              Built for physicians who want more reach, not more burnout
+              Join the Network Trusted by Doctors Who Want to Make a Bigger
+              Impact.
             </motion.h2>
             <motion.p variants={fadeUp}>
-              Our mission is to make quality healthcare accessible to every
-              patient, wherever they are. We believe the future of medicine is
-              virtual-first — and physicians are at the center of that shift.
-              Joining our network means extending your practice beyond the
-              walls of a clinic while keeping full clinical independence and
-              our unwavering commitment to patient-centered care.
+              Your expertise deserves a platform that respects your profession.
+              Humancare Connect combines secure HIPAA-compliant technology, a
+              patient-first approach, and dedicated physician support to help
+              you deliver exceptional virtual care with confidence. Whether
+              you're expanding your practice or embracing the future of
+              healthcare, you'll be joining a community committed to clinical
+              excellence, professional independence, and better patient
+              outcomes.
+              <br />
+              <br />
+              What You'll Experience
             </motion.p>
             <motion.ul className="dc-checklist" variants={fadeUp}>
               {BENEFITS_CHECKLIST.map((text) => (
@@ -667,11 +815,13 @@ export default function DoctorCareers() {
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeUp}
           >
-            <span className="dc-eyebrow">Apply Now</span>
-            <h2>Start your application</h2>
+            <span className="dc-eyebrow">JOIN OUR DOCTOR NETWORK</span>
+            <h2>Start Your Application</h2>
             <p>
-              Fill out the form below and a member of our recruitment team
-              will follow up within 5–7 business days.
+              Take the first step toward joining Humancare Connect's global
+              network of licensed healthcare professionals. Submit your
+              application below, and our team will be in touch to guide you
+              through the next steps.
             </p>
           </motion.div>
 
@@ -730,12 +880,17 @@ export default function DoctorCareers() {
             variants={staggerContainer}
           >
             <motion.span className="dc-eyebrow" variants={fadeUp}>
-              What We're Looking For
+              JOIN OUR DOCTOR COMMUNITY
             </motion.span>
-            <motion.h2 variants={fadeUp}>Eligibility at a glance</motion.h2>
+            <motion.h2 variants={fadeUp}>
+              If This Sounds Like You, Let's Build the Future of Healthcare
+              Together.
+            </motion.h2>
             <motion.p variants={fadeUp}>
-              We keep requirements clear and straightforward so you know
-              exactly what's needed to get started.
+              We're looking for healthcare professionals who believe great care
+              shouldn't be limited by location. If you're committed to clinical
+              excellence, compassionate care, and embracing the future of
+              medicine, Humancare Connect is the right place for you.
             </motion.p>
           </motion.div>
 
@@ -765,8 +920,13 @@ export default function DoctorCareers() {
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeUp}
           >
-            <span className="dc-eyebrow">Recruitment Process</span>
-            <h2>Five steps from application to your first consult</h2>
+            <span className="dc-eyebrow">HOW IT WORKS</span>
+            <h2>Your Journey to Becoming a Partner Doctor</h2>
+            <p>
+              Joining Humancare Connect is straightforward. From the onboarding
+              application, our team supports you every step of the way so you
+              can start delivering exceptional virtual care with confidence.
+            </p>
           </motion.div>
 
           <motion.div
@@ -777,7 +937,12 @@ export default function DoctorCareers() {
             variants={staggerContainer}
           >
             {PROCESS_STEPS.map((step, idx) => (
-              <TimelineStep key={step.title} step={step} index={idx} total={PROCESS_STEPS.length} />
+              <TimelineStep
+                key={step.title}
+                step={step}
+                index={idx}
+                total={PROCESS_STEPS.length}
+              />
             ))}
           </motion.div>
         </div>
@@ -795,8 +960,13 @@ export default function DoctorCareers() {
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeUp}
           >
-            <span className="dc-eyebrow">Benefits of Joining</span>
-            <h2>Support that lets you focus on medicine</h2>
+            <span className="dc-eyebrow">BENEFITS OF JOINING</span>
+            <h2>Everything You Need to Deliver Exceptional Virtual Care</h2>
+            <p>
+              Join a platform designed to help you focus on what matters most:
+              your patients. From secure technology to dedicated support,
+              Humancare Connect empowers you to practice with confidence.{" "}
+            </p>
           </motion.div>
 
           <motion.div
@@ -812,82 +982,6 @@ export default function DoctorCareers() {
           </motion.div>
         </div>
       </section>
-
-      {/* ---------------------------------------------------------- */}
-      {/* 9. Meet Our Providers                                       */}
-      {/* ---------------------------------------------------------- */}
-      {/* <section className="dc-section">
-        <div className="dc-container">
-          <motion.div
-            className="dc-section-header"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-          >
-            <span className="dc-eyebrow">Meet Our Providers</span>
-            <h2>Physicians share their experience</h2>
-          </motion.div>
-
-          <div className="dc-testimonial-carousel">
-            <button
-              className="dc-carousel-nav dc-carousel-nav--prev"
-              onClick={prevSlide}
-              aria-label="Previous testimonial"
-            >
-              <FaChevronLeft aria-hidden="true" />
-            </button>
-
-            <div className="dc-testimonial-track">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeSlide}
-                  className="dc-testimonial-card"
-                  initial={{ opacity: 0, x: 24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -24 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                >
-                  <FaQuoteLeft className="dc-quote-icon" aria-hidden="true" />
-                  <p className="dc-testimonial-quote">
-                    "{TESTIMONIALS[activeSlide].quote}"
-                  </p>
-                  <div className="dc-testimonial-author">
-                    <img
-                      src={TESTIMONIALS[activeSlide].photo}
-                      alt={TESTIMONIALS[activeSlide].name}
-                      loading="lazy"
-                    />
-                    <div>
-                      <strong>{TESTIMONIALS[activeSlide].name}</strong>
-                      <span>{TESTIMONIALS[activeSlide].specialty}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <button
-              className="dc-carousel-nav dc-carousel-nav--next"
-              onClick={nextSlide}
-              aria-label="Next testimonial"
-            >
-              <FaChevronRight aria-hidden="true" />
-            </button>
-          </div>
-
-          <div className="dc-carousel-dots">
-            {TESTIMONIALS.map((_, idx) => (
-              <button
-                key={idx}
-                className={`dc-carousel-dot ${idx === activeSlide ? "dc-carousel-dot--active" : ""}`}
-                onClick={() => setActiveSlide(idx)}
-                aria-label={`Go to testimonial ${idx + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-      </section> */}
 
       {/* ---------------------------------------------------------- */}
       {/* 10. FAQ                                                      */}

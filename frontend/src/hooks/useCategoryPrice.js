@@ -1,26 +1,16 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { usePrices } from "../context/PricingContext";
+import api from "../api";
 
 /**
  * Maps each public condition/specialty URL path to its parent category ID.
- * Category IDs match the keys in CategoryPricing (backend model).
  */
 const URL_CATEGORY_MAP = {
-  // ── General & Everyday Care ──────────────────────────────────
   "/dehydration": "general",
   "/vomiting": "general",
-
-  // ── Mental Health ─────────────────────────────────────────────
   "/sleep-hygiene": "mental",
-  "/mood-anxiety-teens": "mental",
-
-  // ── Skin & Hair ───────────────────────────────────────────────
-  // (no dedicated condition pages currently)
-
-  // ── Women's Health ────────────────────────────────────────────
+  "/mood-anxiety-teens": "family",
   "/pregnancy-nutrition": "women",
-
-  // ── Children & Family ─────────────────────────────────────────
   "/childhood-allergies": "family",
   "/ear-pain-children": "family",
   "/feeding-concerns": "family",
@@ -35,8 +25,6 @@ const URL_CATEGORY_MAP = {
   "/stomach-pain-children": "family",
   "/vomiting-diarrhea-children": "family",
   "/child-family-care": "family",
-
-  // ── Weight & Nutrition ────────────────────────────────────────
   "/obesity": "weight",
   "/binge-eating": "weight",
   "/cholesterol-lowering-diet": "weight",
@@ -48,8 +36,6 @@ const URL_CATEGORY_MAP = {
   "/metabolic-syndrome": "weight",
   "/sports-nutrition": "weight",
   "/weight-loss-planning": "weight",
-
-  // ── Chronic Care & Expert Opinion ─────────────────────────────
   "/cancer-second-opinion": "chronic",
   "/chest-pain": "chronic",
   "/chronic-kidney-disease": "chronic",
@@ -79,8 +65,6 @@ const URL_CATEGORY_MAP = {
   "/hemorrhoids": "chronic",
   "/indigestion": "chronic",
   "/irritable-bowel-syndrome": "chronic",
-
-  // ── Eye, Ear & Bone ───────────────────────────────────────────
   "/arthritis": "eeb",
   "/back-pain": "eeb",
   "/dry-eyes": "eeb",
@@ -101,25 +85,62 @@ const URL_CATEGORY_MAP = {
   "/swollen-feet-ankles": "eeb",
   "/tonsillitis": "eeb",
   "/vision-changes": "eeb",
-
-  // ── Travel & Global Care ──────────────────────────────────────
   "/travelers-diarrhea": "travel",
-
-  // ── Specialty demos ───────────────────────────────────────────
   "/sp-demo": "general",
 };
 
+/** categoryId → exact HealthcareCategory.name in the DB (must match appointment-tree's `name` field) */
+const CATEGORY_ID_TO_NAME = {
+  general: "General & Everyday Care",
+  mental: "Mental Health",
+  skin: "Skin & Hair",
+  women: "Women's Health",
+  men: "Men's Health",
+  family: "Children & Family",
+  weight: "Weight & Nutrition",
+  chronic: "Chronic Care & Expert Opinion",
+  eeb: "Eye, Ear & Bone",
+  sexual: "Sexual Health",
+  travel: "Travel & Global Care",
+};
+
 /**
- * Returns the price (number) for the current page's category,
- * or null while prices are still loading.
- *
- * For the AppointmentBooking tree, pass an explicit categoryId instead.
+ * Returns the live price (number) for the current page's category,
+ * fetched directly from /api/appointment-tree — the same source
+ * the category pages already use. Self-contained: no provider needed.
  */
 export function useCategoryPrice(categoryId) {
   const location = useLocation();
-  const prices = usePrices();
+  const [price, setPrice] = useState(null);
 
   const resolvedId = categoryId ?? URL_CATEGORY_MAP[location.pathname];
-  if (!resolvedId || !prices) return null;
-  return prices[resolvedId]?.price ?? null;
+
+  useEffect(() => {
+    if (!resolvedId) return;
+    let cancelled = false;
+
+    const fetchPrice = async () => {
+      try {
+        const res = await api.get("/api/appointment-tree");
+        const categoryName = CATEGORY_ID_TO_NAME[resolvedId];
+        const category = res.data.find((item) => item.name === categoryName);
+        if (!cancelled && category && category.price !== undefined) {
+          setPrice(category.price);
+        }
+      } catch (err) {
+        console.error("Failed to fetch pricing:", err);
+      }
+    };
+
+    fetchPrice();
+    const intervalId = window.setInterval(fetchPrice, 30000);
+    window.addEventListener("focus", fetchPrice);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", fetchPrice);
+    };
+  }, [resolvedId]);
+
+  return price;
 }

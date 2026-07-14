@@ -9,7 +9,20 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/api/auth/me")
+    const path = window.location.pathname;
+    const shouldCheckUser =
+      path.startsWith("/user") ||
+      path.startsWith("/appointment") ||
+      path.startsWith("/medical") ||
+      path.startsWith("/patient") ||
+      path.startsWith("/video-call");
+
+    if (!shouldCheckUser) {
+      setLoading(false);
+      return;
+    }
+
+    api.get("/api/auth/me", { authRole: "user", skipAuthRefresh: true })
       .then((res) => setUser(res.data.user))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
@@ -18,7 +31,7 @@ export function AuthProvider({ children }) {
   const login = useCallback((userData) => setUser(userData), []);
 
   const logout = useCallback(async () => {
-    try { await api.post("/api/auth/logout"); } catch { /* ignore */ }
+    try { await api.post("/api/auth/logout", null, { authRole: "user" }); } catch { /* ignore */ }
     clearUserAuthToken();
     clearClientSession();
     setUser(null);

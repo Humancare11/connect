@@ -150,7 +150,7 @@ for (let hour = 0; hour < 24; hour++) {
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
-      })
+      }),
     );
   }
 }
@@ -168,12 +168,9 @@ function isSlotPassed(dateStr, slot) {
 
 function formatDisplayDate(dateStr) {
   if (!dateStr) return "";
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const [year, month, day] = dateStr.split("-");
+  if (!year || !month || !day) return dateStr;
+  return `${month}/${day}/${year}`;
 }
 
 function formatPrice(amount) {
@@ -302,7 +299,7 @@ function StripeForm({
 }
 
 // ─── Payment stage ────────────────────────────────────────────────────────────
-function PaymentStage({
+export function PaymentStage({
   amount,
   selection,
   formData,
@@ -402,7 +399,8 @@ function PaymentStage({
           <div className="ap-pay-summary-row">
             <span>Condition</span>
             <strong>
-              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} />{" "}
+              {selection.condName}
             </strong>
           </div>
           <div className="ap-pay-summary-row">
@@ -415,9 +413,7 @@ function PaymentStage({
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">
-              {formatPrice(amount)}
-            </strong>
+            <strong className="ap-pay-fee-amount">{formatPrice(amount)}</strong>
           </div>
         </div>
 
@@ -575,7 +571,9 @@ export default function AppointmentBookingForm() {
     setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const today = new Date().toISOString().split("T")[0];
-  const pricingRecord = selection?.catId ? categoryPrices?.[selection.catId] : null;
+  const pricingRecord = selection?.catId
+    ? categoryPrices?.[selection.catId]
+    : null;
   const pricingAmount = Number(pricingRecord?.price);
   const selectionAmount = Number(selection?.cost);
   const hasDbPrice =
@@ -584,11 +582,12 @@ export default function AppointmentBookingForm() {
     Number.isFinite(pricingAmount) &&
     pricingAmount > 0;
   const hasSelectionPrice =
-    Number.isFinite(selectionAmount) &&
-    selectionAmount > 0;
+    Number.isFinite(selectionAmount) && selectionAmount > 0;
   const hasAppointmentPrice = hasDbPrice || hasSelectionPrice;
   const effectivePrice = hasDbPrice ? pricingAmount : selectionAmount;
-  const effectiveCurrency = hasDbPrice ? pricingRecord.currency || "USD" : selection?.currency || "USD";
+  const effectiveCurrency = hasDbPrice
+    ? pricingRecord.currency || "USD"
+    : selection?.currency || "USD";
   const pricingIssue = !selection?.catId
     ? "Please reselect your appointment category so the current database price can be loaded."
     : pricingMeta.loading && !hasSelectionPrice
@@ -603,8 +602,7 @@ export default function AppointmentBookingForm() {
     setSelection((prev) => {
       if (
         !prev ||
-        prev.cost === effectivePrice &&
-        prev.currency === effectiveCurrency
+        (prev.cost === effectivePrice && prev.currency === effectiveCurrency)
       ) {
         return prev;
       }
@@ -885,7 +883,8 @@ export default function AppointmentBookingForm() {
             <span className="ap-hero-eyebrow">{selection.catLabel}</span>
             <h2 className="ap-hero-name">{selection.specName}</h2>
             <span className="ap-hero-spec">
-              <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
+              <HealthcareIcon name={selection.condIco} size={16} />{" "}
+              {selection.condName}
             </span>
           </div>
           {hasAppointmentPrice && stage === "form" && (
@@ -943,10 +942,11 @@ export default function AppointmentBookingForm() {
               <input
                 className={`ap-date-input${errors.date ? " ap-date-input--err" : ""}`}
                 type="date"
+                lang="en-US"
                 value={form.date}
                 min={today}
                 onChange={(e) => handleDateChange(e.target.value)}
-                placeholder="dd-mm-yyyy"
+                placeholder="MM/DD/YYYY"
               />
               {errors.date && <p className="ap-error">{errors.date}</p>}
             </div>
@@ -1039,14 +1039,13 @@ export default function AppointmentBookingForm() {
               <div className="ap-step-header">
                 <span className="ap-step-num">3</span>
 
-                 <div className="ap-step-title">
-                      Describe Your Problem{" "}
-                      <span style={{ color: "#e11d48" }}>*</span>
-                    </div>
+                <div className="ap-step-title">
+                  Describe Your Problem{" "}
+                  <span style={{ color: "#e11d48" }}>*</span>
+                </div>
                 {/* <div className="ap-step-title">Describe Your Problem</div> */}
 
                 {/* <span style={{ color: "#e11d48" }}>*</span> */}
-
               </div>
 
               <textarea
@@ -1235,7 +1234,8 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
                 <span className="ap-success-val">
-                  <HealthcareIcon name={selection.condIco} size={16} /> {selection.condName}
+                  <HealthcareIcon name={selection.condIco} size={16} />{" "}
+                  {selection.condName}
                 </span>
               </div>
               <div className="ap-success-row">
@@ -1353,40 +1353,47 @@ export default function AppointmentBookingForm() {
                       linkText2,
                       href2,
                     }) => (
-                      <label key={key} className="ap-consent-row">
-                        <input
-                          type="checkbox"
-                          className="ap-consent-checkbox"
-                          checked={consents[key]}
-                          onChange={() => toggleConsent(key)}
-                        />
-                        <span className="ap-consent-label">
-                          {label}
-                          {linkText && href && (
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ap-consent-link"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {linkText}
-                            </a>
-                          )}
-                          {extra}
-                          {linkText2 && href2 && (
-                            <a
-                              href={href2}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ap-consent-link"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {linkText2}
-                            </a>
-                          )}
-                        </span>
-                      </label>
+                      <label
+  key={key}
+  htmlFor={`consent-${key}`}
+  className="ap-consent-row"
+>
+  <input
+    type="checkbox"
+    id={`consent-${key}`}
+    name={`consent-${key}`}
+    className="ap-consent-checkbox"
+    checked={consents[key]}
+    onChange={() => toggleConsent(key)}
+  />
+
+  <span className="ap-consent-label">
+    {label}
+    {linkText && href && (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ap-consent-link"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {linkText}
+      </a>
+    )}
+    {extra}
+    {linkText2 && href2 && (
+      <a
+        href={href2}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ap-consent-link"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {linkText2}
+      </a>
+    )}
+  </span>
+</label>
                     ),
                   )}
                 </div>

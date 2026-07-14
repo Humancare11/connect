@@ -14,31 +14,57 @@ export default function Contact() {
     subject: "",
     message: "",
   });
+
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState({});
 
   const validate = () => {
-    const e = {};
-    if (!form.name.trim()) e.name = "Name is required.";
-    if (!form.email.trim()) e.email = "Email is required.";
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter a valid email.";
-    if (!form.message.trim()) e.message = "Message is required.";
-    return e;
+    const validationErrors = {};
+
+    if (!form.name.trim()) {
+      validationErrors.name = "Full Name is required.";
+    }
+
+    if (!form.email.trim()) {
+      validationErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      validationErrors.email = "Please enter a valid email address.";
+    }
+
+    if (!form.message.trim()) {
+      validationErrors.message = "Message is required.";
+    }
+
+    return validationErrors;
   };
 
   const handleChange = (e) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-    if (errors[e.target.name])
-      setErrors((er) => ({ ...er, [e.target.name]: undefined }));
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const e2 = validate();
-    if (Object.keys(e2).length) {
-      setErrors(e2);
+
+    const validationErrors = validate();
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
+
+    // Existing submit logic here
     setSent(true);
   };
 
@@ -66,59 +92,16 @@ export default function Contact() {
                 </p>
               </div>
             </div>
-
-            <div className="contact-badge hc-card">
-              <div className="contact-badge__row">
-                <span className="contact-badge__dot" />
-                <span className="contact-badge__text">
-                  Average response time: <strong>under 2 hours</strong>
-                </span>
-              </div>
-              <p className="contact-badge__note">
-                Our team is available 24/7. For medical emergencies, please
-                contact local emergency services immediately.
-              </p>
-            </div>
           </div>
 
           <div className="contact-right">
             {sent ? (
               <div className="contact-success hc-card">
-                <div className="contact-success__icon">
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
-                  </svg>
-                </div>
-                <h3 className="contact-success__heading">Message received!</h3>
-                <p className="contact-success__body">
+                <h3>Message received!</h3>
+                <p>
                   Thank you for reaching out. Our team will get back to you
-                  within 2 business hours.
+                  shortly.
                 </p>
-                <button
-                  className="btn-outline"
-                  onClick={() => {
-                    setSent(false);
-                    setForm({
-                      name: "",
-                      email: "",
-                      phone: "",
-                      subject: "",
-                      message: "",
-                    });
-                  }}
-                >
-                  Send another message
-                </button>
               </div>
             ) : (
               <form
@@ -126,65 +109,50 @@ export default function Contact() {
                 onSubmit={handleSubmit}
                 noValidate
               >
-                <h2 className="contact-form__heading">Send us a message</h2>
-                <p className="contact-form__sub">
-                  Fill in the form and we'll be in touch shortly.
-                </p>
+                <h2 className="contact-form__heading">
+                  Send us a message
+                </h2>
 
                 <div className="contact-form__row">
                   <div className="contact-field">
-                    <label className="contact-field__label" htmlFor="name">
-                      Full Name <span className="contact-field__req">*</span>
+                    <label htmlFor="name">
+                      Full Name <span>*</span>
                     </label>
+
                     <input
-                      className={`contact-field__input${errors.name ? " contact-field__input--error" : ""}`}
                       id="name"
                       name="name"
                       type="text"
-                      placeholder="Jane Smith"
                       value={form.name}
                       onChange={handleChange}
+                      placeholder="Jane Smith"
                       required
-                      aria-required="true"
-                      aria-invalid={!!errors.name}
-                      aria-describedby={errors.name ? "name-error" : undefined}
                     />
+
                     {errors.name && (
-                      <span
-                        className="contact-field__error"
-                        id="name-error"
-                        role="alert"
-                      >
+                      <span className="contact-field__error">
                         {errors.name}
                       </span>
                     )}
                   </div>
+
                   <div className="contact-field">
-                    <label className="contact-field__label" htmlFor="email">
-                      Email Address{" "}
-                      <span className="contact-field__req">*</span>
+                    <label htmlFor="email">
+                      Email Address <span>*</span>
                     </label>
+
                     <input
-                      className={`contact-field__input${errors.email ? " contact-field__input--error" : ""}`}
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="jane@company.com"
                       value={form.email}
                       onChange={handleChange}
+                      placeholder="jane@company.com"
                       required
-                      aria-required="true"
-                      aria-invalid={!!errors.email}
-                      aria-describedby={
-                        errors.email ? "email-error" : undefined
-                      }
                     />
+
                     {errors.email && (
-                      <span
-                        className="contact-field__error"
-                        id="email-error"
-                        role="alert"
-                      >
+                      <span className="contact-field__error">
                         {errors.email}
                       </span>
                     )}
@@ -193,61 +161,52 @@ export default function Contact() {
 
                 <div className="contact-form__row">
                   <div className="contact-field">
-                    <label className="contact-field__label" htmlFor="phone">
+                    <label htmlFor="phone">
                       Phone Number
                     </label>
+
                     <input
-                      className="contact-field__input"
                       id="phone"
                       name="phone"
                       type="tel"
-                      placeholder="+1 (555) 000-0000"
                       value={form.phone}
                       onChange={handleChange}
+                      placeholder="+1 (555) 000-0000"
                     />
                   </div>
+
                   <div className="contact-field">
-                    <label className="contact-field__label" htmlFor="subject">
+                    <label htmlFor="subject">
                       Subject
                     </label>
+
                     <input
-                      className="contact-field__input"
                       id="subject"
                       name="subject"
                       type="text"
-                      placeholder="How can we help?"
                       value={form.subject}
                       onChange={handleChange}
+                      placeholder="How can we help?"
                     />
                   </div>
                 </div>
 
                 <div className="contact-field">
-                  <label className="contact-field__label" htmlFor="message">
-                    Message <span className="contact-field__req">*</span>
+                  <label htmlFor="message">
+                    Message <span>*</span>
                   </label>
+
                   <textarea
-                    className={`contact-field__input contact-field__textarea${
-                      errors.message ? " contact-field__input--error" : ""
-                    }`}
                     id="message"
                     name="message"
-                    placeholder="Tell us about your organisation and what you're looking for…"
                     value={form.message}
                     onChange={handleChange}
+                    placeholder="Tell us about your organisation..."
                     required
-                    aria-required="true"
-                    aria-invalid={!!errors.message}
-                    aria-describedby={
-                      errors.message ? "message-error" : undefined
-                    }
                   />
+
                   {errors.message && (
-                    <span
-                      className="contact-field__error"
-                      id="message-error"
-                      role="alert"
-                    >
+                    <span className="contact-field__error">
                       {errors.message}
                     </span>
                   )}
@@ -258,19 +217,6 @@ export default function Contact() {
                   className="btn-primary contact-form__submit"
                 >
                   Send Message
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                    <polyline points="12 5 19 12 12 19" />
-                  </svg>
                 </button>
               </form>
             )}

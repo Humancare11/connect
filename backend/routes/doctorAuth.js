@@ -5,7 +5,13 @@ const bcrypt = require("bcryptjs");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const Session = require("../models/Session");
-const { issueAuthCookies, clearAuthCookies, verifyDoctorToken } = require("../middleware/verifyToken");
+const {
+    issueAuthCookies,
+    clearAuthCookies,
+    verifyDoctorToken,
+    signAccessToken,
+    signRefreshToken,
+} = require("../middleware/verifyToken");
 const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
 const { assertPasswordAllowed, rememberPassword } = require("../utils/passwordPolicy");
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
@@ -14,6 +20,13 @@ const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 
 const withDoctorRole = (doctor) => ({ ...doctor.toObject(), role: "doctor" });
+const buildTokenPayload = (doctor, session) => {
+    const authDoctor = withDoctorRole(doctor);
+    return {
+        accessToken: signAccessToken(authDoctor, session._id),
+        refreshToken: signRefreshToken(authDoctor, session._id),
+    };
+};
 
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -205,10 +218,12 @@ router.post("/register", async (req, res) => {
             profileDeleteRequestStatus: "none",
         });
 
-        await issueAuthCookies(res, withDoctorRole(doctor));
+        const session = await issueAuthCookies(res, withDoctorRole(doctor));
+        const tokens = buildTokenPayload(doctor, session);
         return res.status(201).json({
             message: "Doctor registered successfully.",
             doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
+            ...tokens,
         });
     } catch (err) {
         if (err.code === 11000)
@@ -240,7 +255,8 @@ router.post("/login", async (req, res) => {
             return res.status(401).json({ message: "Login credentials are incorrect." });
         }
 
-        await issueAuthCookies(res, withDoctorRole(doctor));
+        const session = await issueAuthCookies(res, withDoctorRole(doctor));
+        const tokens = buildTokenPayload(doctor, session);
 
         // Ensure every doctor appears in Manage Doctors even if enrollment is missing.
         const existingEnrollment = await Enrollment.findOne({ doctorId: doctor._id });
@@ -265,6 +281,7 @@ router.post("/login", async (req, res) => {
         return res.status(200).json({
             message: "Login successful.",
             doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
+            ...tokens,
         });
     } catch (err) {
         return res.status(500).json({ message: err.message || "Server error. Please try again." });

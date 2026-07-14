@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import "./IndividualBlog.css";
+import { Helmet } from "react-helmet-async";
+import "./telemedicine.css";
+
+const PAGE_TITLE =
+  "What Is Telemedicine? Meaning, Benefits, Types & How It Works";
+const PAGE_DESCRIPTION =
+  "Discover what telemedicine is, how it works, its benefits, different types, limitations, costs, and how online healthcare is changing the future of medicine.";
+const PAGE_URL = "https://humancareconnect.co/blog/what-is-telemedicine";
+const PAGE_IMAGE =
+  "https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop";
 
 const TOC_ITEMS = [
   { id: "definition", label: "What is telemedicine?" },
@@ -79,7 +88,7 @@ function HeadingLink({ id }) {
   );
 }
 
-export default function IndividualBlog() {
+export default function TelemedicineServices() {
   const articleRef = useRef(null);
   const [scrollPct, setScrollPct] = useState(0);
   const [wordCount, setWordCount] = useState(0);
@@ -162,6 +171,26 @@ export default function IndividualBlog() {
 
   return (
     <>
+      <Helmet>
+        <title>{PAGE_TITLE}</title>
+        <meta name="description" content={PAGE_DESCRIPTION} />
+        <link rel="canonical" href={PAGE_URL} />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={PAGE_TITLE} />
+        <meta property="og:description" content={PAGE_DESCRIPTION} />
+        <meta property="og:url" content={PAGE_URL} />
+        <meta property="og:image" content={PAGE_IMAGE} />
+        <meta property="og:site_name" content="Humancare Connect" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={PAGE_TITLE} />
+        <meta name="twitter:description" content={PAGE_DESCRIPTION} />
+        <meta name="twitter:image" content={PAGE_IMAGE} />
+      </Helmet>
+
       <div className="blog-page">
         <a className="skip-link" href="#main-content">
           Skip to article content
@@ -229,97 +258,13 @@ export default function IndividualBlog() {
                 </div>
                 <h1 className="article-title">
                   What Is Telemedicine? Complete Guide to Meaning, Benefits,
-                  Types &amp; How It Works
+                  Types & How It Works
                 </h1>
-                <p className="hero-dek">
+                {/* <p className="hero-dek">
                   Everything you need to know about virtual healthcare —
                   explained clearly, reviewed by a licensed physician, and
                   grounded in how care actually works at Humancare Connect.
-                </p>
-              </div>
-
-              <div className="meta-bar">
-                <div className="meta-person">
-                  <div className="avatar reviewer">RM</div>
-                  <div>
-                    <span className="label">Medically reviewed by</span>
-                    <br />
-                    <span className="name">Dr. Rohan Mehta, MD</span>
-                  </div>
-                </div>
-                <div className="meta-facts">
-                  <div className="meta-fact">
-                    Published<span className="val">Jun 2, 2026</span>
-                  </div>
-                  <div className="meta-fact">
-                    Updated<span className="val">Jul 8, 2026</span>
-                  </div>
-                </div>
-                <div
-                  className="share-row"
-                  role="group"
-                  aria-label="Share this article"
-                >
-                  <button className="share-btn" aria-label="Share on Twitter">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M22 5.9c-.7.3-1.5.6-2.3.7.8-.5 1.4-1.3 1.7-2.3-.8.5-1.7.8-2.6 1a4.1 4.1 0 0 0-7 3.7A11.6 11.6 0 0 1 3.4 4.8a4.1 4.1 0 0 0 1.3 5.5c-.6 0-1.3-.2-1.8-.5v.1c0 2 1.4 3.6 3.3 4a4.2 4.2 0 0 1-1.8.1 4.1 4.1 0 0 0 3.9 2.9A8.3 8.3 0 0 1 2 18.6a11.6 11.6 0 0 0 6.3 1.8c7.5 0 11.7-6.3 11.7-11.7v-.5c.8-.6 1.5-1.3 2-2.3z" />
-                    </svg>
-                  </button>
-                  <button className="share-btn" aria-label="Share on Facebook">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.2-1.5 1.6-1.5H17V3.7C16.6 3.6 15.6 3.5 14.4 3.5c-2.5 0-4.2 1.5-4.2 4.3v2.1H7.5V13h2.7v8h3.3z" />
-                    </svg>
-                  </button>
-                  <button className="share-btn" aria-label="Share on LinkedIn">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M6.9 8.4H3.6V20H6.9V8.4zM5.3 4a1.9 1.9 0 1 0 0 3.9 1.9 1.9 0 0 0 0-3.9zM20.4 20h-3.3v-5.9c0-1.4 0-3.2-2-3.2s-2.3 1.5-2.3 3.1V20H9.5V8.4h3.2v1.6h.1a3.5 3.5 0 0 1 3.1-1.7c3.3 0 3.9 2.2 3.9 5V20z" />
-                    </svg>
-                  </button>
-                  <button
-                    className="share-btn"
-                    aria-label={copied ? "Link copied" : "Copy link to article"}
-                    onClick={handleCopyLink}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M10 14a4 4 0 0 0 5.7 0l2-2a4 4 0 1 0-5.6-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-2 2a4 4 0 1 0 5.6 5.7l1-1"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    className="share-btn"
-                    aria-label="Print article"
-                    onClick={() => window.print()}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M6 9V4h12v5M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2M6 14h12v6H6v-6z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                </p> */}
               </div>
 
               <figure className="hero-media">
@@ -386,56 +331,24 @@ export default function IndividualBlog() {
               >
                 <section id="definition">
                   <h2>
-                    What is telemedicine? <HeadingLink id="definition" />
+                    What Is Telemedicine?
+                    <HeadingLink id="definition" />
                   </h2>
-                  <div className="definition-card reveal">
-                    <div className="icon" aria-hidden="true">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <path
-                          d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="4"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="term">Definition</div>
-                      <p>
-                        <strong>Telemedicine</strong> is the delivery of
-                        clinical healthcare — consultations, diagnosis,
-                        follow-ups and prescriptions — remotely, using video
-                        calls, phone, or secure messaging instead of an
-                        in-person clinic visit.
-                      </p>
-                    </div>
-                  </div>
                   <p>
-                    In practice, this means you can describe your symptoms to a
-                    licensed doctor over a live video call, share reports or
-                    photos digitally, and receive a diagnosis and prescription
-                    without stepping into a waiting room. Humancare Connect uses
-                    this model to make credible medical advice reachable from a
-                    phone or laptop, anywhere in the country.
+                    Telemedicine refers to the delivery of healthcare services
+                    remotely through digital technologies, including video
+                    consultations, phone calls, mobile applications, and secure
+                    online platforms. It enables the patients to get the
+                    consultation of doctors and healthcare professionals without
+                    visiting the hospital or a clinic physically.
                   </p>
                   <p>
-                    The term is often used alongside "telehealth," though
-                    telehealth is broader — it includes remote monitoring,
-                    health education and administrative services, while
-                    telemedicine specifically refers to clinical care delivered
-                    at a distance.
+                    General health issues, specialist consults, follow-up
+                    visits, chronic disease management, mental health care,
+                    preventive care and medical second opinions can all be
+                    managed with telemedicine. It makes healthcare more
+                    accessible by overcoming geographical boundaries and making
+                    medical services more convenient for patients.
                   </p>
 
                   <div className="takeaway-box reveal">
@@ -1100,7 +1013,7 @@ export default function IndividualBlog() {
             </div>
 
             {/* ============ RELATED ARTICLES ============ */}
-            <section className="related-section" aria-label="Related articles">
+            {/* <section className="related-section" aria-label="Related articles">
               <div className="eyebrow" style={{ marginBottom: "8px" }}>
                 Keep reading
               </div>
@@ -1134,7 +1047,7 @@ export default function IndividualBlog() {
                   </a>
                 ))}
               </div>
-            </section>
+            </section> */}
           </div>
         </main>
       </div>

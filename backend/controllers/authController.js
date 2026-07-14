@@ -482,7 +482,8 @@ const adminLogin = async (req, res) => {
       return res.status(401).json({ msg: "Invalid email or password." });
     }
 
-    await issueAuthCookies(res, user);
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
 
     await recordActivity(req, {
       action: "LOGIN_SUCCESS",
@@ -493,7 +494,7 @@ const adminLogin = async (req, res) => {
       userRole: user.role,
     });
 
-    return res.json({ msg: "Login successful.", user: safeUser(user) });
+    return res.json({ msg: "Login successful.", user: safeUser(user), ...tokens });
   } catch (err) {
     console.error("adminLogin error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
@@ -960,13 +961,28 @@ const recordConsent = async (req, user) => {
 };
 
 const refresh = async (req, res) => {
-  const candidates = Object.entries(REFRESH_COOKIE_BY_ROLE)
+  const requestedRole = String(req.get("X-Auth-Role") || req.body?.role || req.query?.role || "").toLowerCase();
+  const requestedRoles =
+    requestedRole === "admin"
+      ? new Set(["admin", "superadmin", "paymentadmin"])
+      : requestedRole
+        ? new Set([requestedRole])
+        : null;
+  let candidates = Object.entries(REFRESH_COOKIE_BY_ROLE)
     .map(([role, name]) => ({ role, token: req.cookies?.[name] }))
     .filter((item) => item.token);
   const bearerToken = req.headers.authorization?.startsWith("Bearer ")
     ? req.headers.authorization.split(" ")[1]
     : null;
   if (bearerToken) candidates.push({ role: null, token: bearerToken });
+
+  if (requestedRoles) {
+    candidates = candidates.sort((left, right) => {
+      const leftMatches = requestedRoles.has(left.role) ? 0 : 1;
+      const rightMatches = requestedRoles.has(right.role) ? 0 : 1;
+      return leftMatches - rightMatches;
+    });
+  }
 
   for (const candidate of candidates) {
     const { role, token } = candidate;
@@ -975,6 +991,7 @@ const refresh = async (req, res) => {
       if (decoded.type !== "refresh") continue;
       const refreshRole = role || decoded.role;
       if (decoded.role !== refreshRole) continue;
+      if (requestedRoles && !requestedRoles.has(refreshRole)) continue;
 
       const session = await Session.findById(decoded.sid);
       if (!session || session.revokedAt) continue;
