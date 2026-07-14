@@ -1,107 +1,121 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import "./Blogs.css";
 
 const blogs = [
   {
     id: 1,
-    title: "Understanding Preventive Healthcare in 2025",
+    title:
+      "What Is Telemedicine? Complete Guide to Meaning, Benefits, Types & How It Works",
     description:
-      "Discover how routine screenings and lifestyle adjustments can dramatically reduce the risk of chronic illnesses before they develop.",
+      "Telemedicine refers to the delivery of healthcare services remotely through digital technologies, including video consultations, phone calls, mobile applications, and secure online platforms. It enables the patients to get the consultation of doctors and healthcare professionals without visiting the hospital or a clinic physically.",
     image:
       "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80",
-    category: "Preventive Care",
-    readTime: 5,
-    date: "Jun 12, 2025",
+    // NOTE: no matching route was provided for this article — update the path
+    // once a route/page for it exists.
+    path: "/what-is-telemedicine",
+    // category: "Preventive Care",
+    // readTime: 5,
+    // date: "Jun 12, 2025",
   },
   {
     id: 2,
-    title: "The Science Behind a Heart-Healthy Diet",
+    title:
+      "Telemedicine Services: Everything You Need to Know About Virtual Healthcare",
     description:
-      "Cardiologists break down the foods, habits, and nutrients that keep your cardiovascular system performing at its best for decades.",
+      "Telemedicine services are healthcare services provided remotely using digital technologies such as video consultations, phone calls, secure messaging, and online healthcare platforms. They allow patients to connect with doctors and specialists without visiting a hospital or clinic physically.",
     image:
       "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80",
-    category: "Nutrition",
-    readTime: 7,
-    date: "Jun 8, 2025",
+    path: "/telemedicine-services",
+    // category: "Nutrition",
+    // readTime: 7,
+    // date: "Jun 8, 2025",
   },
   {
     id: 3,
+    title:
+      "How Does a Telemedicine Appointment Work? A Complete Step-by-Step Guide",
+    description:
+      "A telemedicine appointment is a virtual healthcare visit where patients communicate with doctors through video calls, phone calls, or secure digital platforms. ",
+    image:
+      "https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=600&q=80",
+    path: "/how-does-a-telemedicine-appointment-work",
+    // category: "Mental Health",
+    // readTime: 6,
+    // date: "Jun 5, 2025",
+  },
+  {
+    id: 4,
     title:
       "Online Doctor Consultation: Benefits, Process & When to Choose Virtual Care",
     description:
       "An online doctor consultation is a virtual healthcare appointment where patients connect with doctors or specialists through video calls, phone calls, or secure digital platforms. It allows patients to discuss symptoms, share medical reports, receive professional medical guidance, and understand the next steps in their care without visiting a clinic or hospital in person.",
     image:
-      "https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=600&q=80",
-    category: "Mental Health",
-    readTime: 6,
-    date: "Jun 5, 2025",
-  },
-  {
-    id: 4,
-    title: "Children's Vaccinations: What Every Parent Should Know",
-    description:
-      "A comprehensive guide to the immunisation schedule, addressing common concerns and helping parents make informed decisions.",
-    image:
       "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80",
-    category: "Paediatrics",
-    readTime: 8,
-    date: "May 30, 2025",
+    path: "/online-doctor-consultation",
+    // category: "Paediatrics",
+    // readTime: 8,
+    // date: "May 30, 2025",
   },
   {
     id: 5,
-    title: "Diabetes Management: New Approaches for 2025",
+    title:
+      "What Medical Conditions Can Be Treated Through Telemedicine? Complete List",
     description:
-      "From continuous glucose monitors to personalised nutrition plans, explore the latest tools helping diabetics live fuller lives.",
+      "Telemedicine can help manage many non-emergency health concerns, including common illnesses, chronic disease follow-ups, skin conditions, mental health concerns, medication reviews, specialist consultations, and medical second opinions.",
     image:
       "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&q=80",
-    category: "Chronic Care",
-    readTime: 9,
-    date: "May 25, 2025",
+    path: "/conditions-treated-through-telemedicine",
+    // category: "Chronic Care",
+    // readTime: 9,
+    // date: "May 25, 2025",
   },
   {
     id: 6,
-    title: "Sleep Hygiene: The Forgotten Pillar of Good Health",
+    title:
+      "How to Choose the Best Telemedicine Provider: 10 Important Factors to Consider",
     description:
-      "Quality sleep is as crucial as diet and exercise. Experts share practical steps to fix your sleep cycle and wake up restored.",
+      "The best telemedicine provider should offer qualified healthcare professionals, multiple medical specialties, secure technology, transparent pricing, convenient appointment scheduling, and reliable patient support. Patients should also consider privacy standards, ease of use, availability of second opinions, and the provider’s overall healthcare approach before making a decision.",
     image:
       "https://images.unsplash.com/photo-1541480601022-2308c0f02487?w=600&q=80",
-    category: "Wellness",
-    readTime: 5,
-    date: "May 20, 2025",
+    path: "/top-telemedicine-platforms-providers",
+    // category: "Wellness",
+    // readTime: 5,
+    // date: "May 20, 2025",
   },
-  {
-    id: 7,
-    title: "Gut Health and Immunity: What Research Reveals",
-    description:
-      "The gut-brain axis is reshaping how doctors treat everything from anxiety to autoimmune conditions. Here is what you need to know.",
-    image:
-      "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80",
-    category: "Nutrition",
-    readTime: 6,
-    date: "May 15, 2025",
-  },
-  {
-    id: 8,
-    title: "Telehealth in India: A New Era of Patient Care",
-    description:
-      "How digital consultations are closing the healthcare access gap across tier-2 and tier-3 cities, saving time and improving outcomes.",
-    image:
-      "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&q=80",
-    category: "Digital Health",
-    readTime: 7,
-    date: "May 10, 2025",
-  },
-  {
-    id: 9,
-    title: "Managing Hypertension Naturally",
-    description:
-      "Beyond medication — lifestyle, mindfulness, and dietary changes that can help bring blood pressure under control sustainably.",
-    image:
-      "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80",
-    category: "Chronic Care",
-    readTime: 5,
-    date: "May 5, 2025",
-  },
+  // {
+  //   id: 7,
+  //   title: "Gut Health and Immunity: What Research Reveals",
+  //   description:
+  //     "The gut-brain axis is reshaping how doctors treat everything from anxiety to autoimmune conditions. Here is what you need to know.",
+  //   image:
+  //     "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80",
+  //   category: "Nutrition",
+  //   readTime: 6,
+  //   date: "May 15, 2025",
+  // },
+  // {
+  //   id: 8,
+  //   title: "Telehealth in India: A New Era of Patient Care",
+  //   description:
+  //     "How digital consultations are closing the healthcare access gap across tier-2 and tier-3 cities, saving time and improving outcomes.",
+  //   image:
+  //     "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&q=80",
+  //   category: "Digital Health",
+  //   readTime: 7,
+  //   date: "May 10, 2025",
+  // },
+  // {
+  //   id: 9,
+  //   title: "Managing Hypertension Naturally",
+  //   description:
+  //     "Beyond medication — lifestyle, mindfulness, and dietary changes that can help bring blood pressure under control sustainably.",
+  //   image:
+  //     "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80",
+  //   category: "Chronic Care",
+  //   readTime: 5,
+  //   date: "May 5, 2025",
+  // },
 ];
 
 const CARDS_PER_PAGE = 9;
@@ -116,7 +130,9 @@ const categoryColors = {
   "Digital Health": { bg: "#F5F3FF", text: "#7C3AED" },
 };
 
-const ALL_CATEGORIES = ["All", ...Object.keys(categoryColors)];
+const ALL_CATEGORIES = ["All"];
+// Full category list kept for later — uncomment to restore all filters:
+// const ALL_CATEGORIES = ["All", ...Object.keys(categoryColors)];
 
 // const stats = [
 //   { value: "50+", label: "Expert Authors" },
@@ -236,7 +252,7 @@ export default function BlogPage() {
         <div className="hero-blob hero-blob--2" aria-hidden="true" />
       </section>
 
-      {/* ── CATEGORY FILTER ── */}
+      {/* ── CATEGORY FILTER (only "All" shown for now — ALL_CATEGORIES limits this) ── */}
       <div className="filter-bar">
         <div className="filter-bar-inner">
           {ALL_CATEGORIES.map((cat) => (
@@ -280,58 +296,69 @@ export default function BlogPage() {
                 text: "#223A5E",
               };
               return (
-                <article className="blog-card" key={blog.id}>
-                  <div className="card-img-wrap">
-                    <img
-                      src={blog.image}
-                      alt={blog.title}
-                      className="card-img"
-                      loading="lazy"
-                    />
-                    <span
-                      className="card-category"
-                      style={{ background: color.bg, color: color.text }}
-                    >
-                      {blog.category}
-                    </span>
-                  </div>
-                  <div className="card-body">
-                    <div className="card-meta">
-                      <span className="meta-date">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
+                <Link
+                  to={blog.path}
+                  className="blog-card"
+                  key={blog.id}
+                  aria-label={blog.title}
+                >
+                  <article>
+                    <div className="card-img-wrap">
+                      <img
+                        src={blog.image}
+                        alt={blog.title}
+                        className="card-img"
+                        loading="lazy"
+                      />
+                      {blog.category && (
+                        <span
+                          className="card-category"
+                          style={{ background: color.bg, color: color.text }}
                         >
-                          <rect x="3" y="4" width="18" height="18" rx="2" />
-                          <path
-                            d="M16 2v4M8 2v4M3 10h18"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        {blog.date}
-                      </span>
-                      {/* <span className="meta-read">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                          <circle cx="12" cy="12" r="10" />
-                          <path d="M12 6v6l4 2" strokeLinecap="round" />
-                        </svg>
-                        {blog.readTime} min read
-                      </span> */}
+                          {blog.category}
+                        </span>
+                      )}
                     </div>
-                    <h3 className="card-title">{blog.title}</h3>
-                    <p className="card-desc">{blog.description}</p>
-                    {/* <button type="button" className="card-btn">
-                      Read More
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button> */}
-                  </div>
-                </article>
+                    <div className="card-body">
+                      <div className="card-meta">
+                        {blog.date && (
+                          <span className="meta-date">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                            >
+                              <rect x="3" y="4" width="18" height="18" rx="2" />
+                              <path
+                                d="M16 2v4M8 2v4M3 10h18"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            {blog.date}
+                          </span>
+                        )}
+                        {/* <span className="meta-read">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 6v6l4 2" strokeLinecap="round" />
+                          </svg>
+                          {blog.readTime} min read
+                        </span> */}
+                      </div>
+                      <h3 className="card-title">{blog.title}</h3>
+                      <p className="card-desc">{blog.description}</p>
+                      {/* <button type="button" className="card-btn">
+                        Read More
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button> */}
+                    </div>
+                  </article>
+                </Link>
               );
             })}
           </div>
@@ -357,7 +384,6 @@ export default function BlogPage() {
               className="card-btn"
               onClick={() => {
                 setSearchQuery("");
-                setActiveCategory("All");
               }}
             >
               Clear filters
