@@ -44,8 +44,6 @@ import {
 
 // import AboutUs from "./pages/AboutPage";
 const AboutPage = lazy(() => import("./pages/AboutPage")); // about us page
-
-// blog details pages
 import Telemedicine from "./pages/Blogs/Telemedicine";
 import TelemedicineServices from "./pages/Blogs/TelemedicineServices";
 import HowTelemedicineAppointmentWork from "./pages/Blogs/HowTelemedicineAppointmentWork";
@@ -768,6 +766,12 @@ const LABREQUISITIONS = lazy(
 // Services
 const ServiceDemo = lazy(() => import("./pages/NewServices/ServiceDemo"));
 
+import AdminAssignCategoryDoctor from "./pages/admin/AdminAssignCategoryDoctor";
+
+import CategoryConsultant from "./pages/CategoryConsultant";
+import CategoryAppointmentConfirm from "./pages/CategoryAppointmentConfirm";
+import AdminCategoryConsultationDetails from "./pages/admin/AdminCategoryConsultationDetails";
+
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
 const DoctorLayout = lazy(() => import("./pages/doctors/DoctorLayout"));
@@ -814,6 +818,10 @@ const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminAppointmentDetails = lazy(
   () => import("./pages/admin/AdminAppointmentDetails"),
 );
+const AdminCategoryConsultations = lazy(
+  () => import("./pages/admin/AdminCategoryConsultations"),
+);
+
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
 const PaymentLinkHistory = lazy(
@@ -1280,6 +1288,16 @@ function AppLayout() {
           /> */}
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
           <Route
+            path="/admin-dashboard/category-consultations/assign-doctor/:id"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminAssignCategoryDoctor />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/employee-dashboard"
             element={
               <EmployeeAdminPrivateRoute>
@@ -1443,6 +1461,26 @@ function AppLayout() {
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
                   <AdminAppointments />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/category-consultations"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminCategoryConsultations />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/category-consultations/:id"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminCategoryConsultationDetails />
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -2163,7 +2201,11 @@ function AppLayout() {
             element={<DoctorNoteSickNote />}
           />
           <Route path="/vertigo" element={<Vertigo />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/category-consultant" element={<CategoryConsultant />} />
+          <Route
+            path="/appointment-booking/category-confirm"
+            element={<CategoryAppointmentConfirm />}
+          />
         </Routes>
 
         {!hideLayout && <Footer />}
