@@ -21,12 +21,12 @@ const blogs = [
   {
     id: 2,
     title:
-      "Telemedicine Services: Everything You Need to Know About Virtual Healthcare",
+      "Top Telemedicine Platforms & Providers: Features, Benefits & How to Choose",
     description:
-      "Telemedicine services are healthcare services provided remotely using digital technologies such as video consultations, phone calls, secure messaging, and online healthcare platforms. They allow patients to connect with doctors and specialists without visiting a hospital or clinic physically.",
+      "The best telemedicine platforms provide access to qualified healthcare professionals, multiple medical specialties, secure technology, easy appointment scheduling, transparent communication, and reliable patient support.",
     image:
       "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80",
-    path: "/telemedicine-services",
+    path: "/top-telemedicine-platforms-providers",
     // category: "Nutrition",
     // readTime: 7,
     // date: "Jun 8, 2025",
@@ -34,12 +34,12 @@ const blogs = [
   {
     id: 3,
     title:
-      "How Does a Telemedicine Appointment Work? A Complete Step-by-Step Guide",
+      "The Future of Telemedicine: AI, Remote Monitoring & Digital Healthcare Trends",
     description:
-      "A telemedicine appointment is a virtual healthcare visit where patients communicate with doctors through video calls, phone calls, or secure digital platforms. ",
+      "The future of telemedicine involves a combination of artificial intelligence, remote patient monitoring, wearable health technology, improved digital platforms, and more personalized virtual healthcare experiences. ",
     image:
       "https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=600&q=80",
-    path: "/how-does-a-telemedicine-appointment-work",
+    path: "/future-of-telemedicine",
     // category: "Mental Health",
     // readTime: 6,
     // date: "Jun 5, 2025",

@@ -428,8 +428,25 @@ h4 {
   isolation: isolate;
 }
 
+/* BUGFIX (scene-content-container invisible on some screens):
+   backdrop-filter previously lived on `.scene-content-container`, the SAME
+   element that also carries the 3D `rotateX()/translateZ()` transform used
+   for the flip-in animation. An element that is both 3D-transformed AND has
+   its own backdrop-filter is a known WebKit/Safari compositing failure —
+   the layer gets dropped from the render tree instead of drawn, and it does
+   so inconsistently across devices/screen sizes. Fix: move the blur onto a
+   separate, non-transformed layer (this ::before) so the animated element
+   itself carries no filter. */
 .scene-card::before {
-  display: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .scene-video-bg {
@@ -446,15 +463,17 @@ h4 {
   gap: 20px;
   align-items: center;
   width: 100%;
+  /* FIX: sits above the static blur layer (.scene-card::before, z-index:1) */
   z-index: 2;
   backface-visibility: hidden;
   opacity: 0;
   transform: rotateX(90deg) translateZ(140px);
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* FIX: backdrop-filter removed from this element — it now lives on the
+     static .scene-card::before layer instead, since combining it here with
+     the 3D transform below is what made the content disappear on some
+     devices/screen sizes. */
   border-radius: 22px;
 }
 
@@ -468,6 +487,29 @@ h4 {
   opacity: 0;
   transform: rotateX(-90deg) translateZ(140px);
   pointer-events: none;
+}
+
+/* FIX: on small screens, drop the 3D flip entirely and use a plain
+   opacity/translateY transition instead. The 3D-transform + backdrop-filter
+   compositing bug above is most pronounced on mobile WebKit/GPUs, so rather
+   than rely solely on separating the layers, we sidestep 3D transforms
+   altogether here for a rock-solid result on phones. */
+@media (max-width: 767px) {
+  .scene-viewport {
+    perspective: none;
+  }
+  .scene-content-container {
+    transform: translateY(18px);
+    transition:
+      opacity 0.5s var(--ease),
+      transform 0.5s var(--ease);
+  }
+  .scene-content-container.active {
+    transform: translateY(0);
+  }
+  .scene-content-container.exit-up {
+    transform: translateY(-18px);
+  }
 }
 
 /* ── Scene Content ── */
@@ -1242,8 +1284,14 @@ h4 {
     font-size: 6.5px;
     max-width: 38px;
   }
+  /* FIX: `height: auto` collapsed this to 0px — .scene-card and
+     .scene-content-container are all absolutely positioned, so they don't
+     contribute any intrinsic height to an auto-sized parent. Combined with
+     `overflow: hidden` on .scene-viewport, that clipped the scene content
+     out of existence on screens under ~400px. Give it an explicit height
+     like every other breakpoint does. */
   .scene-viewport {
-    height: auto;
+    height: 210px;
   }
   .scene-title {
     font-size: 13px;
@@ -1888,7 +1936,7 @@ h4 {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(10px);
   }
 }
 
