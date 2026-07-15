@@ -40,6 +40,8 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Stress.webp";
+
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -49,8 +51,7 @@ const pageData = {
   heading: "Stress",
   description: "Mental and physical tension overload",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-  bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 const faqData = [
@@ -119,7 +120,7 @@ const faqData = [
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
-export default function  Stress() {
+export default function Stress() {
   const price = useCategoryPrice();
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
@@ -242,13 +243,13 @@ export default function  Stress() {
                   <div>
                     <h3 className="condition-block-title">How?</h3>
                     <p className="condition-block-body">
-                     Get support for stress management with Humancare Connect. Our telemedicine services make it easy to schedule an online doctor appointment and connect with a licensed provider from home. Through our secure virtual healthcare services, you can receive mental health support, stress management guidance, treatment recommendations, and personalized care without the pressure of an in-person visit.
+                      Get support for stress management with Humancare Connect. Our telemedicine services make it easy to schedule an online doctor appointment and connect with a licensed provider from home. Through our secure virtual healthcare services, you can receive mental health support, stress management guidance, treatment recommendations, and personalized care without the pressure of an in-person visit.
                     </p>
                   </div>
 
                   <div>
                     <h3 className="condition-block-title">
-                    Manage stress in 4 simple steps.
+                      Manage stress in 4 simple steps.
                     </h3>
                     <div className="condition-benefits-grid">
                       {[

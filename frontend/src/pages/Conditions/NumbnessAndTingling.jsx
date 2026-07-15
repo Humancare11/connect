@@ -39,6 +39,8 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Numbness-and-Tingling.webp";
+
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -406,8 +408,7 @@ const pageData = {
   heading: "Numbness and Tingling",
   description: "Pins, needles, or loss of sensation",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-  bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 const relatedSpecialties = [

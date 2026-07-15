@@ -240,6 +240,7 @@ const NasalCongestion = lazy(
   () => import("./pages/Conditions/NasalCongestion"),
 );
 const NeckPain = lazy(() => import("./pages/Conditions/NeckPain"));
+const Burnout = lazy(() => import("./pages/Conditions/Conditions/Burnout"));
 const NumbnessAndTingling = lazy(
   () => import("./pages/Conditions/NumbnessAndTingling"),
 );
@@ -769,6 +770,9 @@ const FittoFly = lazy(() => import("./pages/NewServices/FittoFly"));
 const LABREQUISITIONS = lazy(
   () => import("./pages/NewServices/LABREQUISITIONS"),
 );
+const ChronicMedicationManagement = lazy(
+  () => import("./pages/Conditions/ChronicMedicationManagement")
+);
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
 const ServiceDemo = lazy(() => import("./pages/NewServices/ServiceDemo"));
@@ -974,7 +978,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -1048,7 +1052,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -1987,6 +1991,7 @@ function AppLayout() {
           />
           <Route path="/depression" element={<Depression />} />
           <Route path="/anxiety" element={<Anxiety />} />
+          <Route path="/burnout" element={<Burnout />} />
           <Route
             path="/bipolar-disorder-follow-up"
             element={<BipolarDisorderFollowUp />}
@@ -2001,6 +2006,7 @@ function AppLayout() {
           <Route path="/trauma-support" element={<TraumaSupport />} />
           <Route path="/hot-flashes" element={<HotFlashes />} />
           <Route path="/hrt-guidance" element={<HrtGuidance />} />
+          <Route path="/chronic-medication-management" element={<ChronicMedicationManagement />} />
           {/* <Route path="/bladder-problems" element={<BladderProblems />} /> */}
           {/* <Route
             path="/erectile-dysfunction"
