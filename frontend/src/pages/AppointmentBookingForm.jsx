@@ -392,17 +392,21 @@ export function PaymentStage({
             <span>Category</span>
             <strong>{selection.catLabel}</strong>
           </div>
-          <div className="ap-pay-summary-row">
-            <span>Specialty</span>
-            <strong>{selection.specName}</strong>
-          </div>
-          <div className="ap-pay-summary-row">
-            <span>Condition</span>
-            <strong>
-              <HealthcareIcon name={selection.condIco} size={16} />{" "}
-              {selection.condName}
-            </strong>
-          </div>
+          {selection.specName && (
+            <div className="ap-pay-summary-row">
+              <span>Specialty</span>
+              <strong>{selection.specName}</strong>
+            </div>
+          )}
+          {selection.condName && (
+            <div className="ap-pay-summary-row">
+              <span>Condition</span>
+              <strong>
+                <HealthcareIcon name={selection.condIco} size={16} />{" "}
+                {selection.condName}
+              </strong>
+            </div>
+          )}
           <div className="ap-pay-summary-row">
             <span>Date</span>
             <strong>{formatDisplayDate(formData.date)}</strong>
@@ -1234,7 +1238,6 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
                 <span className="ap-success-val">
-                  <HealthcareIcon name={selection.condIco} size={16} />{" "}
                   {selection.condName}
                 </span>
               </div>
@@ -1354,46 +1357,46 @@ export default function AppointmentBookingForm() {
                       href2,
                     }) => (
                       <label
-  key={key}
-  htmlFor={`consent-${key}`}
-  className="ap-consent-row"
->
-  <input
-    type="checkbox"
-    id={`consent-${key}`}
-    name={`consent-${key}`}
-    className="ap-consent-checkbox"
-    checked={consents[key]}
-    onChange={() => toggleConsent(key)}
-  />
+                        key={key}
+                        htmlFor={`consent-${key}`}
+                        className="ap-consent-row"
+                      >
+                        <input
+                          type="checkbox"
+                          id={`consent-${key}`}
+                          name={`consent-${key}`}
+                          className="ap-consent-checkbox"
+                          checked={consents[key]}
+                          onChange={() => toggleConsent(key)}
+                        />
 
-  <span className="ap-consent-label">
-    {label}
-    {linkText && href && (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="ap-consent-link"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {linkText}
-      </a>
-    )}
-    {extra}
-    {linkText2 && href2 && (
-      <a
-        href={href2}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="ap-consent-link"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {linkText2}
-      </a>
-    )}
-  </span>
-</label>
+                        <span className="ap-consent-label">
+                          {label}
+                          {linkText && href && (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ap-consent-link"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {linkText}
+                            </a>
+                          )}
+                          {extra}
+                          {linkText2 && href2 && (
+                            <a
+                              href={href2}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ap-consent-link"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {linkText2}
+                            </a>
+                          )}
+                        </span>
+                      </label>
                     ),
                   )}
                 </div>
