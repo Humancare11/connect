@@ -44,12 +44,19 @@ import {
 
 // import AboutUs from "./pages/AboutPage";
 const AboutPage = lazy(() => import("./pages/AboutPage")); // about us page
+
+// iNDIVIDUAL bLOG PAGES
 import Telemedicine from "./pages/Blogs/Telemedicine";
 import TelemedicineServices from "./pages/Blogs/TelemedicineServices";
 import HowTelemedicineAppointmentWork from "./pages/Blogs/HowTelemedicineAppointmentWork";
 import OnlineDoctorConsultation from "./pages/Blogs/OnlineDoctorConsultation";
 import MedicalConditions from "./pages/Blogs/MedicalConditions";
 import TopTelemedicinePlatforms from "./pages/Blogs/TopTelemedicinePlatforms";
+import TelemedicineSafe from "./pages/Blogs/TelemedicineSafe";
+import TelemedicineInPerson from "./pages/Blogs/TelemedicineInPerson";
+import TelemedicineCost from "./pages/Blogs/TelemedicineCost";
+import OnlineDoctorRealDoctor from "./pages/Blogs/OnlineDoctorsRealDoctors";
+import FutureofTelemedicine from "./pages/Blogs/FutureofTelemedicine";
 
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
@@ -967,7 +974,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
       },
       10 * 60 * 1000,
     );
@@ -2062,6 +2069,7 @@ function AppLayout() {
             element={<AppointmentBookingForm />}
           />
           <Route path="/primary-care-provider" element={<PCP />} /> {/* PCP */}
+          {/* Blog individual Pages */}
           <Route path="/what-is-telemedicine" element={<Telemedicine />} />
           <Route
             path="/telemedicine-services"
@@ -2082,6 +2090,20 @@ function AppLayout() {
           <Route
             path="/top-telemedicine-platforms-providers"
             element={<TopTelemedicinePlatforms />}
+          />
+          <Route path="/is-telemedicine-safe" element={<TelemedicineSafe />} />
+          <Route
+            path="/telemedicine-vs-in-person-doctor-visits"
+            element={<TelemedicineInPerson />}
+          />
+          <Route path="/telemedicine-cost-usa" element={<TelemedicineCost />} />
+          <Route
+            path="/are-online-doctors-real-doctors"
+            element={<OnlineDoctorRealDoctor />}
+          />
+          <Route
+            path="/future-of-telemedicine"
+            element={<FutureofTelemedicine />}
           />
           {/* PRIVACY  */}
           <Route path="/privacy-concerns" element={<PrivacyConcerns />} />

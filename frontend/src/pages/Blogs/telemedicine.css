@@ -102,7 +102,7 @@
   ============================================================ */
 .hero{padding:44px 0 36px;}
 .hero-top{max-width:1200px; margin:0 auto;}
-.badge-row{display:flex; align-items:center; gap:10px; margin:8px 0 22px; flex-wrap:wrap;}
+.badge-row{display:flex; align-items:center; gap:10px; margin:50px 0 22px; flex-wrap:wrap;}
 .badge{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--blue-100); color:var(--blue-600); font-weight:700; font-size:12.5px;
