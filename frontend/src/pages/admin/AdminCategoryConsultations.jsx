@@ -178,6 +178,7 @@ export default function AdminCategoryConsultations() {
                   <th>Urgency</th>
                   <th>Time Window</th>
                   <th>Slot</th>
+                  <th>Source Page</th>
                   <th>Status</th>
                   <th>View</th>
                   <th>Actions</th>
@@ -193,6 +194,20 @@ export default function AdminCategoryConsultations() {
                     <td>{item.urgency || "-"}</td>
                     <td>{item.timeWindow || "-"}</td>
                     <td>{item.slot || "-"}</td>
+                    <td>
+                      {item.conditionName ? (
+                        <div style={{ fontSize: "0.85rem" }}>
+                          <div><strong>Cond:</strong> {item.conditionName}</div>
+                          {item.specialtyName && <div style={{ fontSize: "0.75rem", color: "#666" }}>Spec: {item.specialtyName}</div>}
+                        </div>
+                      ) : item.specialtyName ? (
+                        <div style={{ fontSize: "0.85rem" }}>
+                          <div><strong>Spec:</strong> {item.specialtyName}</div>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: "0.85rem", color: "#666" }}>{item.categoryName || "Category"}</span>
+                      )}
+                    </td>
                     <td>
                       <StatusPill status={item.status} />
                     </td>

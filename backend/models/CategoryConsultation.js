@@ -82,6 +82,18 @@ const consultationSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    categoryName: {
+      type: String,
+      default: "",
+    },
+    specialtyName: {
+      type: String,
+      default: "",
+    },
+    conditionName: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

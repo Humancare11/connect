@@ -142,6 +142,10 @@ export default function CategoryConsultant({ onComplete }) {
   const categoryId =
     queryParams.get("category") || location.state?.categoryId || "general";
   const categoryLabel = CATEGORY_MAP[categoryId] || "General & Everyday Care";
+  const specialtyName =
+    queryParams.get("specialty") || location.state?.specialtyName || "";
+  const conditionName =
+    queryParams.get("condition") || location.state?.conditionName || "";
 
   useEffect(() => {
     const fetchPrice = async () => {
@@ -263,6 +267,9 @@ export default function CategoryConsultant({ onComplete }) {
         cost: price,
         currency: "USD",
         isCategoryBooking: true,
+        categoryName: categoryLabel,
+        specialtyName: specialtyName || "",
+        conditionName: conditionName || "",
       };
 
       // Save raw data directly

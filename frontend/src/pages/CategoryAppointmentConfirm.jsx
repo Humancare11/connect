@@ -181,6 +181,9 @@ export default function CategoryAppointmentConfirm() {
           date: pending.formData.date,
           medicalReports: reports,
           consultationPrice: Number(livePrice),
+          categoryName: selection.categoryName || "",
+          specialtyName: selection.specialtyName || "",
+          conditionName: selection.conditionName || "",
         };
         await api.post("/api/category-consultation", body);
       } else {

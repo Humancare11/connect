@@ -171,6 +171,9 @@ export default function AdminCategoryConsultationDetails() {
             <InfoTile label="Time Window" value={consultation.timeWindow} />
             <InfoTile label="Slot" value={consultation.slot} />
             <InfoTile label="Status" value={statusLabel(consultation.status)} />
+            <InfoTile label="Source Category" value={consultation.categoryName} />
+            <InfoTile label="Source Specialty" value={consultation.specialtyName} />
+            <InfoTile label="Source Condition" value={consultation.conditionName} />
           </div>
         </Section>
 
