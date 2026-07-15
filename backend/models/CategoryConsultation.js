@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+
 const consultationSchema = new mongoose.Schema(
   {
     concern: {
@@ -81,6 +82,18 @@ const consultationSchema = new mongoose.Schema(
     consultationPrice: {
       type: Number,
       default: 0,
+    },
+    categoryName: {
+      type: String,
+      default: "",
+    },
+    specialtyName: {
+      type: String,
+      default: "",
+    },
+    conditionName: {
+      type: String,
+      default: "",
     },
   },
   {

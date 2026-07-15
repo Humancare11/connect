@@ -18,6 +18,9 @@ const createCategoryConsultation = async (req, res) => {
       patientId: req.user.id,
       medicalReports: req.body.medicalReports,
       consultationPrice: req.body.consultationPrice,
+      categoryName: req.body.categoryName,
+      specialtyName: req.body.specialtyName,
+      conditionName: req.body.conditionName,
     });
 
     console.log("✅ Saved Document:", consultation);
