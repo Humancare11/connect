@@ -542,14 +542,17 @@ export default function OnlineDoctorConsultation() {
                 {/* Benefits */}
                 <section id="benefits">
                   <h2>
-                    Benefits of Online Doctor Consultation{" "}
+                    Benefits of Using Telemedicine Platforms{" "}
                     <HeadingLink id="benefits" />
                   </h2>
+
                   <p>
-                    Virtual care removes many of the practical barriers that
-                    keep people from seeing a doctor early. Here's what patients
-                    consistently report:
+                    Telemedicine platforms make healthcare more accessible by
+                    reducing travel, improving convenience, and connecting
+                    patients with qualified healthcare professionals from
+                    virtually anywhere.
                   </p>
+
                   <div className="card-grid">
                     <div className="info-card reveal">
                       <div className="icon">
@@ -566,11 +569,11 @@ export default function OnlineDoctorConsultation() {
                           />
                         </svg>
                       </div>
-                      <h4>Convenience and Time Savings</h4>
+                      <h4>Convenient Healthcare Access</h4>
                       <p>
-                        One of the biggest advantages of virtual healthcare is
-                        convenience. Patients can receive medical advice without
-                        traveling to a hospital or waiting in crowded clinics.
+                        Patients can receive medical guidance from the comfort
+                        of their home without unnecessary travel or long waiting
+                        times, making healthcare more convenient and accessible.
                       </p>
                     </div>
 
@@ -591,12 +594,11 @@ export default function OnlineDoctorConsultation() {
                           />
                         </svg>
                       </div>
-                      <h4>Access to Specialists</h4>
+                      <h4>Faster Access to Specialists</h4>
                       <p>
-                        Online consultations allow patients to connect with
-                        specialists who may not be available nearby. This is
-                        especially helpful for patients seeking expert opinions
-                        for complex conditions.
+                        Telemedicine can make it easier to connect with
+                        specialists who may not be available locally, helping
+                        patients receive expert medical guidance more quickly.
                       </p>
                     </div>
 
@@ -623,11 +625,12 @@ export default function OnlineDoctorConsultation() {
                           />
                         </svg>
                       </div>
-                      <h4>Easier Follow-Up Care</h4>
+                      <h4>Better Follow-Up Care</h4>
                       <p>
-                        Patients managing chronic conditions or recovering after
-                        treatment can discuss progress, medications, and test
-                        results through online follow-up appointments.
+                        Patients with ongoing health concerns can maintain
+                        regular communication with healthcare professionals
+                        through virtual follow-up appointments, supporting
+                        continuity of care.
                       </p>
                     </div>
 
@@ -652,12 +655,12 @@ export default function OnlineDoctorConsultation() {
                           />
                         </svg>
                       </div>
-                      <h4>Better Access for International Patients</h4>
+                      <h4>Improved Access for International Patients</h4>
                       <p>
-                        Virtual consultations allow international patients to
-                        discuss their medical records, understand treatment
-                        options, and seek specialist opinions before considering
-                        medical travel.
+                        Online healthcare platforms reduce geographical
+                        barriers, allowing international patients to seek
+                        specialist opinions, review medical records, and discuss
+                        treatment options remotely.
                       </p>
                     </div>
 
@@ -686,16 +689,16 @@ export default function OnlineDoctorConsultation() {
                           />
                         </svg>
                       </div>
-                      <h4>Medical Second Opinions</h4>
+                      <h4>Cost and Time Savings</h4>
                       <p>
-                        Online consultations make it easier to obtain a second
-                        opinion from experienced specialists, especially for
-                        serious diagnoses or major treatment decisions.
+                        By reducing travel requirements and improving
+                        convenience, telemedicine can help patients save
+                        valuable time and reduce additional expenses associated
+                        with clinic visits.
                       </p>
                     </div>
                   </div>
                 </section>
-
                 <section id="when">
                   <h2>
                     When Should You Choose an Online Doctor Consultation?{" "}

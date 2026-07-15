@@ -226,7 +226,7 @@ const corsOptions = {
 
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Auth-Role"],
 };
 
 app.use(cors(corsOptions));
@@ -454,6 +454,9 @@ app.use(
   "/api/category-consultation",
   require("./routes/categoryConsultation")
 );
+const CategoryConsultation = require("./models/CategoryConsultation");
+const Enrollment = require("./models/Enrollment");
+
 
 // app.post("/api/search", async (req, res) => {
 //   const { query, routes } = req.body;
@@ -678,21 +681,40 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
   const identity = getSocketIdentity(socket, requestedIdentity);
   if (!identity) return { allowed: false, reason: "unauthenticated" };
 
+  const userId = String(identity.userId);
   let appointment = null;
+  let allowed = false;
+
   try {
     appointment = await Appointment.findById(appointmentId)
       .select("patientId doctorId")
       .lean();
+
+    if (appointment) {
+      allowed =
+        (identity.role === "user" && String(appointment.patientId) === userId) ||
+        (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
+    } else {
+      const cc = await CategoryConsultation.findById(appointmentId)
+        .select("patientId assignedDoctorId")
+        .lean();
+
+      if (cc) {
+        appointment = cc;
+
+        if (identity.role === "user") {
+          allowed = String(cc.patientId) === userId;
+        } else if (identity.role === "doctor" && cc.assignedDoctorId) {
+          const enrollment = await Enrollment.findOne({ doctorId: identity.userId }).select("_id").lean();
+          allowed = !!enrollment && String(cc.assignedDoctorId) === String(enrollment._id);
+        }
+      }
+    }
   } catch {
     return { allowed: false, reason: "invalid_appointment" };
   }
 
   if (!appointment) return { allowed: false, reason: "appointment_not_found" };
-
-  const userId = String(identity.userId);
-  const allowed =
-    (identity.role === "user" && String(appointment.patientId) === userId) ||
-    (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
 
   return {
     allowed,
@@ -705,6 +727,11 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
 // Authenticate socket connections via HttpOnly cookies.
 io.use(async (socket, next) => {
   const cookies = parseCookieHeader(socket.handshake.headers.cookie || "");
+
+  // ── TEMP DEBUG LOG ──
+  console.log("[socket-auth] raw cookie header:", socket.handshake.headers.cookie);
+  console.log("[socket-auth] parsed cookies:", cookies);
+
   const accessTokens = [cookies.userToken, cookies.doctorToken, cookies.adminToken].filter(Boolean);
   const refreshTokens = [cookies.userRefreshToken, cookies.doctorRefreshToken, cookies.adminRefreshToken].filter(Boolean);
   socket.authIdentities = [];
@@ -719,6 +746,47 @@ io.use(async (socket, next) => {
         socket.sessionId = identity.sid;
       }
     }
+  }
+  // Also accept auth tokens sent in the websocket handshake. Some clients
+  // (mobile apps or SPA token-based flows) cannot rely on HttpOnly cookies
+  // being present, so they may pass a Bearer token via `socket.auth.token`
+  // or the `Authorization` header. Validate and merge those identities.
+  try {
+    const bearer = socket.handshake.headers.authorization?.startsWith("Bearer ")
+      ? socket.handshake.headers.authorization.split(" ")[1]
+      : null;
+    const handshakeAccess = socket.handshake?.auth?.token || bearer;
+    const handshakeRefresh = socket.handshake?.auth?.refreshToken || socket.handshake?.auth?.refresh;
+
+    if (handshakeAccess) {
+      const identity = await validateSocketAccessToken(handshakeAccess);
+      if (identity) {
+        const already = socket.authIdentities.some((i) => i.id === identity.id && i.role === identity.role);
+        if (!already) socket.authIdentities.push(identity);
+        if (!socket.userId) {
+          socket.userId = identity.id;
+          socket.userRole = identity.role;
+          socket.userEmail = identity.email;
+          socket.sessionId = identity.sid;
+        }
+      }
+    }
+
+    if (handshakeRefresh) {
+      const identity = await validateSocketRefreshToken(handshakeRefresh);
+      if (identity) {
+        const already = socket.authIdentities.some((i) => i.id === identity.id && i.role === identity.role);
+        if (!already) socket.authIdentities.push(identity);
+        if (!socket.userId) {
+          socket.userId = identity.id;
+          socket.userRole = identity.role;
+          socket.userEmail = identity.email;
+          socket.sessionId = identity.sid;
+        }
+      }
+    }
+  } catch (err) {
+    // Non-fatal — continue with any identities we already parsed from cookies.
   }
   for (const token of refreshTokens) {
     const identity = await validateSocketRefreshToken(token);

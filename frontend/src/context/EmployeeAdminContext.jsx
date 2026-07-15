@@ -19,7 +19,7 @@ export function EmployeeAdminProvider({ children }) {
       return;
     }
 
-    api.get("/api/auth/employee-admin-me", { skipAuthRefresh: true })
+    api.get("/api/auth/employee-admin-me", { authRole: "employeeadmin", skipAuthRefresh: true })
       .then((res) => setEmployeeAdmin(res.data.user))
       .catch(() => setEmployeeAdmin(null))
       .finally(() => setLoading(false));
@@ -28,7 +28,7 @@ export function EmployeeAdminProvider({ children }) {
   const login = useCallback((userData) => setEmployeeAdmin(userData), []);
 
   const logout = useCallback(async () => {
-    try { await api.post("/api/auth/employee-admin-logout"); } catch { /* ignore */ }
+    try { await api.post("/api/auth/employee-admin-logout", null, { authRole: "employeeadmin" }); } catch { /* ignore */ }
     clearUserAuthToken();
     clearClientSession();
     setEmployeeAdmin(null);

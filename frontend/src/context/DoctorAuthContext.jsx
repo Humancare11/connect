@@ -12,14 +12,15 @@ export function DoctorAuthProvider({ children }) {
     const path = window.location.pathname;
     const shouldCheckDoctor =
       path === "/doctor-login" ||
-      path.startsWith("/doctor-dashboard");
+      path.startsWith("/doctor-dashboard") ||
+      path.startsWith("/video-call");
 
     if (!shouldCheckDoctor) {
       setLoading(false);
       return;
     }
 
-    api.get("/api/doctor/me", { skipAuthRefresh: true })
+    api.get("/api/doctor/me", { authRole: "doctor", skipAuthRefresh: true })
       .then((res) => setDoctor(res.data.doctor))
       .catch(() => setDoctor(null))
       .finally(() => setLoading(false));
@@ -28,7 +29,7 @@ export function DoctorAuthProvider({ children }) {
   const login = useCallback((doctorData) => setDoctor(doctorData), []);
 
   const logout = useCallback(async () => {
-    try { await api.post("/api/doctor/logout"); } catch { /* ignore */ }
+    try { await api.post("/api/doctor/logout", null, { authRole: "doctor" }); } catch { /* ignore */ }
     clearUserAuthToken();
     clearClientSession();
     setDoctor(null);

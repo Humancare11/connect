@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import socket from "../socket";
 import "./videocall.css";
 import api from "../api";
@@ -51,17 +51,27 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!diagnosis.trim()) { setError("Diagnosis is required."); return; }
-    setSaving(true); setError("");
+    if (!diagnosis.trim()) {
+      setError("Diagnosis is required.");
+      return;
+    }
+    setSaving(true);
+    setError("");
     try {
-      await api.post("/api/medical/prescriptions", {
-        appointmentId: appt._id,
-        patientId: appt.patientId?._id || appt.patientId,
-        diagnosis,
-        medicines: medicines.filter((m) => m.name.trim()),
-        instructions,
-        followUpDate,
-      });
+      await api.post(
+        "/api/medical/prescriptions",
+        {
+          appointmentId: appt._id,
+          patientId: appt.patientId?._id || appt.patientId,
+          diagnosis,
+          medicines: medicines.filter((m) => m.name.trim()),
+          instructions,
+          followUpDate,
+        },
+        {
+          authRole: "doctor",
+        },
+      );
       onSaved();
     } catch (err) {
       setError(err.response?.data?.msg || "Failed to save prescription.");
@@ -75,7 +85,9 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
         <div className="hc-vc__rx-modal-head">
           <span className="hc-vc__rx-modal-icon">💊</span>
           <h3>Issue Prescription</h3>
-          <button className="hc-vc__rx-modal-close" onClick={onClose}>✕</button>
+          <button className="hc-vc__rx-modal-close" onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <form className="hc-vc__rx-modal-body" onSubmit={submit}>
@@ -93,28 +105,81 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
           <label className="hc-vc__rx-label">Medicines</label>
           {medicines.map((med, i) => (
             <div key={i} className="hc-vc__rx-med-row">
-              <input className="hc-vc__rx-input hc-vc__rx-med-name" value={med.name} onChange={(e) => setMed(i, "name", e.target.value)} placeholder="Medicine" />
-              <input className="hc-vc__rx-input hc-vc__rx-med-sm" value={med.dosage} onChange={(e) => setMed(i, "dosage", e.target.value)} placeholder="Dosage" />
-              <input className="hc-vc__rx-input hc-vc__rx-med-sm" value={med.frequency} onChange={(e) => setMed(i, "frequency", e.target.value)} placeholder="Frequency" />
-              <input className="hc-vc__rx-input hc-vc__rx-med-sm" value={med.duration} onChange={(e) => setMed(i, "duration", e.target.value)} placeholder="Duration" />
+              <input
+                className="hc-vc__rx-input hc-vc__rx-med-name"
+                value={med.name}
+                onChange={(e) => setMed(i, "name", e.target.value)}
+                placeholder="Medicine"
+              />
+              <input
+                className="hc-vc__rx-input hc-vc__rx-med-sm"
+                value={med.dosage}
+                onChange={(e) => setMed(i, "dosage", e.target.value)}
+                placeholder="Dosage"
+              />
+              <input
+                className="hc-vc__rx-input hc-vc__rx-med-sm"
+                value={med.frequency}
+                onChange={(e) => setMed(i, "frequency", e.target.value)}
+                placeholder="Frequency"
+              />
+              <input
+                className="hc-vc__rx-input hc-vc__rx-med-sm"
+                value={med.duration}
+                onChange={(e) => setMed(i, "duration", e.target.value)}
+                placeholder="Duration"
+              />
               {medicines.length > 1 && (
-                <button type="button" className="hc-vc__rx-med-remove" onClick={() => setMedicines((p) => p.filter((_, idx) => idx !== i))}>✕</button>
+                <button
+                  type="button"
+                  className="hc-vc__rx-med-remove"
+                  onClick={() =>
+                    setMedicines((p) => p.filter((_, idx) => idx !== i))
+                  }
+                >
+                  ✕
+                </button>
               )}
             </div>
           ))}
-          <button type="button" className="hc-vc__rx-add-med" onClick={() => setMedicines((p) => [...p, { ...EMPTY_MED }])}>
+          <button
+            type="button"
+            className="hc-vc__rx-add-med"
+            onClick={() => setMedicines((p) => [...p, { ...EMPTY_MED }])}
+          >
             + Add Medicine
           </button>
 
           <label className="hc-vc__rx-label">Instructions</label>
-          <textarea className="hc-vc__rx-input hc-vc__rx-textarea" value={instructions} onChange={(e) => setInstructions(e.target.value)} placeholder="Diet, rest, special instructions..." rows={2} />
+          <textarea
+            className="hc-vc__rx-input hc-vc__rx-textarea"
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            placeholder="Diet, rest, special instructions..."
+            rows={2}
+          />
 
           <label className="hc-vc__rx-label">Follow-up Date</label>
-          <input className="hc-vc__rx-input" type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} />
+          <input
+            className="hc-vc__rx-input"
+            type="date"
+            value={followUpDate}
+            onChange={(e) => setFollowUpDate(e.target.value)}
+          />
 
           <div className="hc-vc__rx-modal-foot">
-            <button type="button" className="hc-vc__rx-btn-ghost" onClick={onClose}>Cancel</button>
-            <button type="submit" className="hc-vc__rx-btn-primary" disabled={saving}>
+            <button
+              type="button"
+              className="hc-vc__rx-btn-ghost"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="hc-vc__rx-btn-primary"
+              disabled={saving}
+            >
               {saving ? "Saving..." : "Issue Prescription"}
             </button>
           </div>
@@ -140,9 +205,11 @@ const parseCsv = (value) =>
 
 const isTurnUrl = (url) => /^turns?:/i.test(String(url || ""));
 
-const normalizeIceUrls = (urls) => Array.isArray(urls) ? urls : parseCsv(urls);
+const normalizeIceUrls = (urls) =>
+  Array.isArray(urls) ? urls : parseCsv(urls);
 
-const isSupportedIceUrl = (url) => /^(stun|stuns|turn|turns):/i.test(String(url || ""));
+const isSupportedIceUrl = (url) =>
+  /^(stun|stuns|turn|turns):/i.test(String(url || ""));
 
 const sanitizeIceCredential = (value) =>
   typeof value === "string" ? value.trim() : value;
@@ -164,7 +231,10 @@ const sanitizeIceServers = (iceServers) => {
 
     if (username) sanitized.username = username;
     if (credential) sanitized.credential = credential;
-    if (server.credentialType === "password" || server.credentialType === "oauth") {
+    if (
+      server.credentialType === "password" ||
+      server.credentialType === "oauth"
+    ) {
       sanitized.credentialType = server.credentialType;
     }
 
@@ -203,18 +273,22 @@ const buildIceServerConfig = () => {
   if (jsonConfig) {
     try {
       const parsed = JSON.parse(jsonConfig);
-      const iceServers = sanitizeIceServers(Array.isArray(parsed) ? parsed : parsed?.iceServers);
+      const iceServers = sanitizeIceServers(
+        Array.isArray(parsed) ? parsed : parsed?.iceServers,
+      );
       if (Array.isArray(iceServers) && iceServers.length) {
         const error = validateIceServers(iceServers);
         if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
           console.warn(
-            "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail."
+            "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail.",
           );
         }
         return {
           config: {
             iceServers,
-            iceCandidatePoolSize: Number(import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10),
+            iceCandidatePoolSize: Number(
+              import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10,
+            ),
             bundlePolicy: "max-bundle",
             rtcpMuxPolicy: "require",
           },
@@ -236,7 +310,9 @@ const buildIceServerConfig = () => {
   const turnCredential = import.meta.env.VITE_RTC_TURN_CREDENTIAL || "";
 
   const iceServers = [
-    ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({ urls })),
+    ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({
+      urls,
+    })),
   ];
 
   if (turnUrls.length && turnUsername && turnCredential) {
@@ -246,20 +322,24 @@ const buildIceServerConfig = () => {
       credential: turnCredential,
     });
   } else if (turnUrls.length) {
-    console.warn("VITE_RTC_TURN_URLS is set, but TURN username/credential is missing. Continuing with STUN-only ICE.");
+    console.warn(
+      "VITE_RTC_TURN_URLS is set, but TURN username/credential is missing. Continuing with STUN-only ICE.",
+    );
   }
 
   const error = validateIceServers(iceServers);
   if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
     console.warn(
-      "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail."
+      "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail.",
     );
   }
 
   return {
     config: {
       iceServers,
-      iceCandidatePoolSize: Number(import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10),
+      iceCandidatePoolSize: Number(
+        import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10,
+      ),
       bundlePolicy: "max-bundle",
       rtcpMuxPolicy: "require",
     },
@@ -281,7 +361,9 @@ const getIceCandidateType = (candidate = "") => {
 
 const describeIceCandidate = (candidate = "") => {
   const value = String(candidate || "");
-  const addressMatch = value.match(/(?:^| )(?:raddr )?([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-z0-9-]+\.local)(?: |$)/i);
+  const addressMatch = value.match(
+    /(?:^| )(?:raddr )?([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-z0-9-]+\.local)(?: |$)/i,
+  );
   const protocolMatch = value.match(/ (udp|tcp) /i);
   return {
     type: getIceCandidateType(value),
@@ -309,15 +391,27 @@ const MEDIA_CONSTRAINTS = {
 
 const BITRATE_PROFILE = {
   cameraVideo: Number(import.meta.env.VITE_RTC_CAMERA_BITRATE || 1_200_000),
-  screenShareVideo: Number(import.meta.env.VITE_RTC_SCREEN_BITRATE || 2_000_000),
+  screenShareVideo: Number(
+    import.meta.env.VITE_RTC_SCREEN_BITRATE || 2_000_000,
+  ),
   voiceAudio: Number(import.meta.env.VITE_RTC_AUDIO_BITRATE || 64_000),
 };
 
-const ICE_RESTART_DELAY_MS = Number(import.meta.env.VITE_RTC_ICE_RESTART_DELAY_MS || 2500);
-const CONNECTION_FAIL_TIMEOUT_MS = Number(import.meta.env.VITE_RTC_CONNECT_TIMEOUT_MS || 25000);
-const ICE_MAX_RECOVERY_ATTEMPTS = Number(import.meta.env.VITE_RTC_ICE_MAX_RECOVERY_ATTEMPTS || 4);
-const ICE_RECOVERY_COOLDOWN_MS = Number(import.meta.env.VITE_RTC_ICE_RECOVERY_COOLDOWN_MS || 30000);
-const STATS_INTERVAL_MS = Number(import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000);
+const ICE_RESTART_DELAY_MS = Number(
+  import.meta.env.VITE_RTC_ICE_RESTART_DELAY_MS || 2500,
+);
+const CONNECTION_FAIL_TIMEOUT_MS = Number(
+  import.meta.env.VITE_RTC_CONNECT_TIMEOUT_MS || 25000,
+);
+const ICE_MAX_RECOVERY_ATTEMPTS = Number(
+  import.meta.env.VITE_RTC_ICE_MAX_RECOVERY_ATTEMPTS || 4,
+);
+const ICE_RECOVERY_COOLDOWN_MS = Number(
+  import.meta.env.VITE_RTC_ICE_RECOVERY_COOLDOWN_MS || 30000,
+);
+const STATS_INTERVAL_MS = Number(
+  import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000,
+);
 
 const mediaErrorMessage = (err) => {
   if (!navigator.mediaDevices?.getUserMedia) {
@@ -342,11 +436,20 @@ const getConsultationMediaStream = async () => {
   try {
     return await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
   } catch (firstErr) {
-    console.warn("High-quality media failed, trying basic constraints:", firstErr.name);
+    console.warn(
+      "High-quality media failed, trying basic constraints:",
+      firstErr.name,
+    );
     try {
-      return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+      return await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
     } catch (secondErr) {
-      console.warn("Basic video+audio failed, trying separate devices:", secondErr.name);
+      console.warn(
+        "Basic video+audio failed, trying separate devices:",
+        secondErr.name,
+      );
       const partialStream = new MediaStream();
       let lastErr = secondErr;
 
@@ -394,9 +497,15 @@ const getDeviceCheckSummary = async () => {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
     return {
-      camera: devices.some((device) => device.kind === "videoinput") ? "available" : "missing",
-      microphone: devices.some((device) => device.kind === "audioinput") ? "available" : "missing",
-      speaker: devices.some((device) => device.kind === "audiooutput") ? "available" : "unknown",
+      camera: devices.some((device) => device.kind === "videoinput")
+        ? "available"
+        : "missing",
+      microphone: devices.some((device) => device.kind === "audioinput")
+        ? "available"
+        : "missing",
+      speaker: devices.some((device) => device.kind === "audiooutput")
+        ? "available"
+        : "unknown",
       labelsAvailable: devices.some((device) => Boolean(device.label)),
     };
   } catch {
@@ -437,24 +546,30 @@ const setTrackHint = (track, hint) => {
   if (!track || !("contentHint" in track)) return;
   try {
     track.contentHint = hint;
-  } catch (_) { }
+  } catch (_) {}
 };
 
 const getSenderForKind = (pc, kind) => {
   if (!pc) return null;
   return (
     pc.getSenders?.().find((sender) => sender.track?.kind === kind) ||
-    pc.getTransceivers?.().find((transceiver) => transceiver.receiver?.track?.kind === kind)?.sender ||
+    pc
+      .getTransceivers?.()
+      .find((transceiver) => transceiver.receiver?.track?.kind === kind)
+      ?.sender ||
     null
   );
 };
 
 const hasTransceiverForKind = (pc, kind) =>
   Boolean(
-    pc?.getTransceivers?.().some((transceiver) =>
-      transceiver.sender?.track?.kind === kind ||
-      transceiver.receiver?.track?.kind === kind
-    )
+    pc
+      ?.getTransceivers?.()
+      .some(
+        (transceiver) =>
+          transceiver.sender?.track?.kind === kind ||
+          transceiver.receiver?.track?.kind === kind,
+      ),
   );
 
 const ensureMediaTransceivers = (pc, { audio = true, video = true } = {}) => {
@@ -469,7 +584,7 @@ const ensureMediaTransceivers = (pc, { audio = true, video = true } = {}) => {
 
 const tuneSenderQuality = async (
   sender,
-  { maxBitrate, maxFramerate, maintainResolution = false } = {}
+  { maxBitrate, maxFramerate, maintainResolution = false } = {},
 ) => {
   if (!sender?.track || !sender.getParameters || !sender.setParameters) return;
   try {
@@ -490,16 +605,23 @@ const tuneSenderQuality = async (
     }
 
     await sender.setParameters(params);
-  } catch (_) { }
+  } catch (_) {}
 };
 
 const fmtDate = (d) => {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 };
 const fmtTime = (iso) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 const fmtDuration = (secs) => {
   const h = Math.floor(secs / 3600);
@@ -511,6 +633,7 @@ const fmtDuration = (secs) => {
 export default function VideoCall() {
   const { appointmentId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { doctor, loading: doctorLoading } = useDoctorAuth();
   const { user, loading: userLoading } = useAuth();
@@ -525,11 +648,19 @@ export default function VideoCall() {
 
   const apptDoctorId = appt?.doctorId?._id || appt?.doctorId || "";
   const apptPatientId = appt?.patientId?._id || appt?.patientId || "";
+  const requestedRole = useMemo(() => {
+    const stateRole = location.state?.role;
+    const queryRole = new URLSearchParams(location.search).get("role");
+    const role = String(stateRole || queryRole || "").toLowerCase();
+    return role === "doctor" || role === "user" ? role : "";
+  }, [location.search, location.state]);
 
   const isDoctor = useMemo(() => {
     if (activeRole) return activeRole === "doctor";
-    if (doctorId && apptDoctorId && String(doctorId) === String(apptDoctorId)) return true;
-    if (userId && apptPatientId && String(userId) === String(apptPatientId)) return false;
+    if (doctorId && apptDoctorId && String(doctorId) === String(apptDoctorId))
+      return true;
+    if (userId && apptPatientId && String(userId) === String(apptPatientId))
+      return false;
     return !!doctor && !user;
   }, [activeRole, doctorId, apptDoctorId, userId, apptPatientId, doctor, user]);
 
@@ -549,6 +680,7 @@ export default function VideoCall() {
   // ── Video elements: mainVideoRef = full stage, pipVideoRef = thumbnail ─
   const mainVideoRef = useRef(null);
   const pipVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
   const pageRef = useRef(null);
 
   // ── Stream refs ───────────────────────────────────────────────────
@@ -647,21 +779,38 @@ export default function VideoCall() {
   const [rxSavedToast, setRxSavedToast] = useState(false);
 
   // ── Sync refs ─────────────────────────────────────────────────────
-  useEffect(() => { inCallRef.current = inCall; }, [inCall]);
-  useEffect(() => { isReadyRef.current = isReady; }, [isReady]);
-  useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
-  useEffect(() => { isCamOffRef.current = isCamOff; }, [isCamOff]);
-  useEffect(() => { peerJoinedRef.current = peerJoined; }, [peerJoined]);
-  useEffect(() => { chatOpenRef.current = chatOpen; }, [chatOpen]);
-  useEffect(() => { isSwappedRef.current = isSwapped; }, [isSwapped]);
-  useEffect(() => { screenSharingRef.current = isScreenSharing; }, [isScreenSharing]);
+  useEffect(() => {
+    inCallRef.current = inCall;
+  }, [inCall]);
+  useEffect(() => {
+    isReadyRef.current = isReady;
+  }, [isReady]);
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+  useEffect(() => {
+    isCamOffRef.current = isCamOff;
+  }, [isCamOff]);
+  useEffect(() => {
+    peerJoinedRef.current = peerJoined;
+  }, [peerJoined]);
+  useEffect(() => {
+    chatOpenRef.current = chatOpen;
+  }, [chatOpen]);
+  useEffect(() => {
+    isSwappedRef.current = isSwapped;
+  }, [isSwapped]);
+  useEffect(() => {
+    screenSharingRef.current = isScreenSharing;
+  }, [isScreenSharing]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(Boolean(document.fullscreenElement));
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   // Auto-scroll chat — runs on new messages AND when panel opens
@@ -679,7 +828,7 @@ export default function VideoCall() {
     setNotesLoaded(false);
 
     api
-      .get(`/api/notes/appointment/${appointmentId}`)
+      .get(`/api/notes/appointment/${appointmentId}`, { authRole: "doctor" })
       .then((res) => {
         if (cancelled) return;
         const note = res.data?.note;
@@ -691,7 +840,9 @@ export default function VideoCall() {
       })
       .catch((err) => {
         if (cancelled) return;
-        setNotesError(err.response?.data?.msg || "Could not load consultation notes.");
+        setNotesError(
+          err.response?.data?.msg || "Could not load consultation notes.",
+        );
         setNotesLoaded(true);
       })
       .finally(() => {
@@ -730,27 +881,30 @@ export default function VideoCall() {
     (async () => {
       let lastError = null;
 
-      // Prefer patient ownership when user session exists.
-      if (user) {
-        try {
-          const res = await api.get(`/api/appointments/patient/${appointmentId}`);
-          if (cancelled) return;
-          setAppt(res.data);
-          setActiveRole("user");
-          setApptLoading(false);
-          return;
-        } catch (err) {
-          lastError = err;
-        }
-      }
+      const roleAttempts =
+        requestedRole === "doctor"
+          ? ["doctor", "user"]
+          : requestedRole === "user"
+            ? ["user", "doctor"]
+            : doctor && !user
+              ? ["doctor"]
+              : user && !doctor
+                ? ["user"]
+                : ["doctor", "user"];
 
-      // Fallback to doctor ownership.
-      if (doctor) {
+      for (const role of roleAttempts) {
+        if (role === "doctor" && !doctor) continue;
+        if (role === "user" && !user) continue;
+
         try {
-          const res = await api.get(`/api/appointments/doctor/${appointmentId}`);
+          const endpoint =
+            role === "doctor"
+              ? `/api/appointments/doctor/${appointmentId}`
+              : `/api/appointments/patient/${appointmentId}`;
+          const res = await api.get(endpoint, { authRole: role });
           if (cancelled) return;
           setAppt(res.data);
-          setActiveRole("doctor");
+          setActiveRole(role);
           setApptLoading(false);
           return;
         } catch (err) {
@@ -770,7 +924,7 @@ export default function VideoCall() {
     return () => {
       cancelled = true;
     };
-  }, [appointmentId, doctor, user, doctorLoading, userLoading]);
+  }, [appointmentId, doctor, user, doctorLoading, userLoading, requestedRole]);
 
   // ── Reliable cleanup: stop tracks + notify peers ───
   const performCleanup = useCallback(() => {
@@ -811,82 +965,102 @@ export default function VideoCall() {
     window.setTimeout(() => setInlineError(""), duration);
   }, []);
 
-  const logVideoEvent = useCallback((event, details = {}) => {
-    const payload = {
-      appointmentId,
-      event,
-      role: isDoctor ? "doctor" : "user",
-      timestamp: new Date().toISOString(),
-      details,
-    };
+  const logVideoEvent = useCallback(
+    (event, details = {}) => {
+      const payload = {
+        appointmentId,
+        event,
+        role: isDoctor ? "doctor" : "user",
+        timestamp: new Date().toISOString(),
+        details,
+      };
 
-    if (import.meta.env.DEV) {
-      console.info("[video-call]", payload);
-    } else {
-      console.info("[video-call]", event, details);
-    }
+      if (import.meta.env.DEV) {
+        console.info("[video-call]", payload);
+      } else {
+        console.info("[video-call]", event, details);
+      }
 
-    if (socket.connected && appointmentId) {
-      socket.emit("video-telemetry", payload);
-    }
-  }, [appointmentId, isDoctor]);
+      if (socket.connected && appointmentId) {
+        socket.emit("video-telemetry", payload);
+      }
+    },
+    [appointmentId, isDoctor],
+  );
 
   const stopStatsCollection = useCallback(() => {
     clearInterval(statsTimerRef.current);
     statsTimerRef.current = null;
   }, []);
 
-  const startStatsCollection = useCallback((pc) => {
-    stopStatsCollection();
-    statsTimerRef.current = setInterval(async () => {
-      if (!pc || pc.signalingState === "closed") {
-        stopStatsCollection();
-        return;
-      }
-      try {
-        const stats = await pc.getStats();
-        const diagnostics = {
-          rtt: null,
-          packetsSent: 0,
-          packetsLost: 0,
-          bytesSent: 0,
-          bytesReceived: 0,
-          localCandidateType: "unknown",
-          remoteCandidateType: "unknown",
-          selectedPairState: "unknown",
-        };
+  const startStatsCollection = useCallback(
+    (pc) => {
+      stopStatsCollection();
+      statsTimerRef.current = setInterval(async () => {
+        if (!pc || pc.signalingState === "closed") {
+          stopStatsCollection();
+          return;
+        }
+        try {
+          const stats = await pc.getStats();
+          const diagnostics = {
+            rtt: null,
+            packetsSent: 0,
+            packetsLost: 0,
+            bytesSent: 0,
+            bytesReceived: 0,
+            localCandidateType: "unknown",
+            remoteCandidateType: "unknown",
+            selectedPairState: "unknown",
+          };
 
-        for (const report of stats.values()) {
-          if (report.type === "candidate-pair" && report.state === "succeeded") {
-            diagnostics.selectedPairState = report.state;
-            if (typeof report.currentRoundTripTime === "number") {
-              diagnostics.rtt = Math.round(report.currentRoundTripTime * 1000);
-            }
-            if (typeof report.bytesSent === "number") diagnostics.bytesSent = report.bytesSent;
-            if (typeof report.bytesReceived === "number") diagnostics.bytesReceived = report.bytesReceived;
-            if (typeof report.packetsSent === "number") diagnostics.packetsSent = report.packetsSent;
-            if (typeof report.packetsLost === "number") diagnostics.packetsLost = report.packetsLost;
-
-            const localId = report.localCandidateId;
-            const remoteId = report.remoteCandidateId;
-            for (const inner of stats.values()) {
-              if (inner.type === "local-candidate" && inner.id === localId) {
-                diagnostics.localCandidateType = inner.candidateType || inner.type;
+          for (const report of stats.values()) {
+            if (
+              report.type === "candidate-pair" &&
+              report.state === "succeeded"
+            ) {
+              diagnostics.selectedPairState = report.state;
+              if (typeof report.currentRoundTripTime === "number") {
+                diagnostics.rtt = Math.round(
+                  report.currentRoundTripTime * 1000,
+                );
               }
-              if (inner.type === "remote-candidate" && inner.id === remoteId) {
-                diagnostics.remoteCandidateType = inner.candidateType || inner.type;
+              if (typeof report.bytesSent === "number")
+                diagnostics.bytesSent = report.bytesSent;
+              if (typeof report.bytesReceived === "number")
+                diagnostics.bytesReceived = report.bytesReceived;
+              if (typeof report.packetsSent === "number")
+                diagnostics.packetsSent = report.packetsSent;
+              if (typeof report.packetsLost === "number")
+                diagnostics.packetsLost = report.packetsLost;
+
+              const localId = report.localCandidateId;
+              const remoteId = report.remoteCandidateId;
+              for (const inner of stats.values()) {
+                if (inner.type === "local-candidate" && inner.id === localId) {
+                  diagnostics.localCandidateType =
+                    inner.candidateType || inner.type;
+                }
+                if (
+                  inner.type === "remote-candidate" &&
+                  inner.id === remoteId
+                ) {
+                  diagnostics.remoteCandidateType =
+                    inner.candidateType || inner.type;
+                }
               }
             }
           }
-        }
 
-        console.info("[webrtc-stats]", diagnostics);
-        logVideoEvent("webrtc_stats", diagnostics);
-      } catch (err) {
-        console.warn("[webrtc-stats] getStats failed:", err.message);
-      }
-    }, STATS_INTERVAL_MS);
-  }, [logVideoEvent, stopStatsCollection]);
+          console.info("[webrtc-stats]", diagnostics);
+          logVideoEvent("webrtc_stats", diagnostics);
+        } catch (err) {
+          console.warn("[webrtc-stats] getStats failed:", err.message);
+        }
+      }, STATS_INTERVAL_MS);
+    },
+    [logVideoEvent, stopStatsCollection],
+  );
 
   const emitOnlineAndJoinRoom = useCallback(() => {
     if (!socket.connected || !isReadyRef.current) return false;
@@ -920,7 +1094,9 @@ export default function VideoCall() {
 
     const handlePopstate = () => {
       window.history.pushState(null, "", window.location.href);
-      pendingLeaveRef.current = isDoctor ? "/doctor-dashboard" : "/user/dashboard";
+      pendingLeaveRef.current = isDoctor
+        ? "/doctor-dashboard"
+        : "/user/dashboard";
       setLeaveConfirm(true);
     };
 
@@ -952,69 +1128,87 @@ export default function VideoCall() {
 
   // ── Assign stream to a video element ──────────────────────────────
   const playAssignedVideos = useCallback(async () => {
-    const remoteVideo = isSwappedRef.current ? pipVideoRef.current : mainVideoRef.current;
+    const remoteVideo = isSwappedRef.current
+      ? pipVideoRef.current
+      : mainVideoRef.current;
     const mainOk = await playVideoElement(mainVideoRef.current);
     const pipOk = await playVideoElement(pipVideoRef.current);
+    await playVideoElement(remoteAudioRef.current);
     const remoteOk = remoteVideo === pipVideoRef.current ? pipOk : mainOk;
-    setPlaybackBlocked(Boolean(remoteVideo?.srcObject) && !remoteVideo.muted && !remoteOk);
+    setPlaybackBlocked(Boolean(remoteVideo?.srcObject) && !remoteOk);
   }, []);
 
-  const assignStreams = useCallback((swapped) => {
-    if (mainVideoRef.current) {
-      mainVideoRef.current.srcObject = swapped
-        ? localStreamRef.current
-        : remoteStreamRef.current;
-    }
-    if (pipVideoRef.current) {
-      pipVideoRef.current.srcObject = swapped
-        ? remoteStreamRef.current
-        : localStreamRef.current;
-    }
-    void playAssignedVideos();
-  }, [playAssignedVideos]);
+  const assignStreams = useCallback(
+    (swapped) => {
+      if (mainVideoRef.current) {
+        mainVideoRef.current.srcObject = swapped
+          ? localStreamRef.current
+          : remoteStreamRef.current;
+      }
+      if (pipVideoRef.current) {
+        pipVideoRef.current.srcObject = swapped
+          ? remoteStreamRef.current
+          : localStreamRef.current;
+      }
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = remoteStreamRef.current;
+      }
+      void playAssignedVideos();
+    },
+    [playAssignedVideos],
+  );
 
-  const attachLocalMediaStream = useCallback(async (stream, pc) => {
-    if (!stream || !pc || pc.signalingState === "closed") return false;
+  const attachLocalMediaStream = useCallback(
+    async (stream, pc) => {
+      if (!stream || !pc || pc.signalingState === "closed") return false;
 
-    const previousStream = localStreamRef.current;
-    stream.getVideoTracks().forEach((track) => {
-      track.enabled = !isCamOffRef.current;
-      setTrackHint(track, "detail");
-    });
-    stream.getAudioTracks().forEach((track) => {
-      track.enabled = !isMutedRef.current;
-      setTrackHint(track, "speech");
-    });
+      const previousStream = localStreamRef.current;
+      stream.getVideoTracks().forEach((track) => {
+        track.enabled = !isCamOffRef.current;
+        setTrackHint(track, "detail");
+      });
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = !isMutedRef.current;
+        setTrackHint(track, "speech");
+      });
 
-    localStreamRef.current = stream;
-    if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
+      localStreamRef.current = stream;
+      if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
 
-    ensureMediaTransceivers(pc, {
-      audio: stream.getAudioTracks().length === 0,
-      video: stream.getVideoTracks().length === 0,
-    });
+      ensureMediaTransceivers(pc, {
+        audio: stream.getAudioTracks().length === 0,
+        video: stream.getVideoTracks().length === 0,
+      });
 
-    const senderTuning = stream.getTracks().map((track) => {
-      const sender = getSenderForKind(pc, track.kind);
-      const activeSender = sender || pc.addTrack(track, stream);
-      const replace = sender ? sender.replaceTrack(track) : Promise.resolve();
-      return replace.then(() => tuneSenderQuality(
-        activeSender,
-        track.kind === "video"
-          ? { maxBitrate: BITRATE_PROFILE.cameraVideo, maxFramerate: 30, maintainResolution: true }
-          : { maxBitrate: BITRATE_PROFILE.voiceAudio }
-      ));
-    });
+      const senderTuning = stream.getTracks().map((track) => {
+        const sender = getSenderForKind(pc, track.kind);
+        const activeSender = sender || pc.addTrack(track, stream);
+        const replace = sender ? sender.replaceTrack(track) : Promise.resolve();
+        return replace.then(() =>
+          tuneSenderQuality(
+            activeSender,
+            track.kind === "video"
+              ? {
+                  maxBitrate: BITRATE_PROFILE.cameraVideo,
+                  maxFramerate: 30,
+                  maintainResolution: true,
+                }
+              : { maxBitrate: BITRATE_PROFILE.voiceAudio },
+          ),
+        );
+      });
 
-    await Promise.allSettled(senderTuning);
+      await Promise.allSettled(senderTuning);
 
-    if (previousStream && previousStream !== stream) {
-      previousStream.getTracks().forEach((track) => track.stop());
-    }
+      if (previousStream && previousStream !== stream) {
+        previousStream.getTracks().forEach((track) => track.stop());
+      }
 
-    assignStreams(isSwappedRef.current);
-    return true;
-  }, [assignStreams]);
+      assignStreams(isSwappedRef.current);
+      return true;
+    },
+    [assignStreams],
+  );
 
   // ── Main WebRTC + Socket setup ────────────────────────────────────
   useEffect(() => {
@@ -1031,7 +1225,7 @@ export default function VideoCall() {
     settingRemoteAnswerPendingRef.current = false;
     clearTimeout(iceRestartTimerRef.current);
     clearTimeout(ignoreOfferResetTimerRef.current);
-    let resolveLocalReady = () => { };
+    let resolveLocalReady = () => {};
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
@@ -1082,10 +1276,14 @@ export default function VideoCall() {
     };
 
     const createAndSendOffer = async ({ iceRestart = false } = {}) => {
-      if (!mounted || pc.signalingState === "closed" || makingOfferRef.current) return false;
+      if (!mounted || pc.signalingState === "closed" || makingOfferRef.current)
+        return false;
       if (!isReadyRef.current) return false;
       if (pc.signalingState !== "stable") {
-        console.info("Skipping offer because signaling state is", pc.signalingState);
+        console.info(
+          "Skipping offer because signaling state is",
+          pc.signalingState,
+        );
         return false;
       }
       try {
@@ -1098,12 +1296,22 @@ export default function VideoCall() {
         });
         if (!mounted || pc.signalingState === "closed") return false;
         await pc.setLocalDescription(offer);
-        socket.emit("video-offer", { appointmentId, offer: pc.localDescription });
-        if (iceRestart) logVideoEvent("ice_restart_offer_sent", { signalingState: pc.signalingState });
+        socket.emit("video-offer", {
+          appointmentId,
+          offer: pc.localDescription,
+        });
+        if (iceRestart)
+          logVideoEvent("ice_restart_offer_sent", {
+            signalingState: pc.signalingState,
+          });
         return true;
       } catch (err) {
-        console.error(iceRestart ? "ICE restart offer failed:" : "Offer failed:", err);
-        if (iceRestart) logVideoEvent("ice_restart_offer_failed", { message: err.message });
+        console.error(
+          iceRestart ? "ICE restart offer failed:" : "Offer failed:",
+          err,
+        );
+        if (iceRestart)
+          logVideoEvent("ice_restart_offer_failed", { message: err.message });
         return false;
       } finally {
         makingOfferRef.current = false;
@@ -1114,8 +1322,15 @@ export default function VideoCall() {
       clearTimeout(connectionFailTimerRef.current);
       connectionFailTimerRef.current = setTimeout(() => {
         if (!mounted || pc.signalingState === "closed") return;
-        if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
-        console.warn("Connection establishment timed out; requesting ICE recovery.");
+        if (
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed"
+        )
+          return;
+        console.warn(
+          "Connection establishment timed out; requesting ICE recovery.",
+        );
         scheduleIceRestart();
       }, CONNECTION_FAIL_TIMEOUT_MS);
     };
@@ -1138,7 +1353,12 @@ export default function VideoCall() {
       iceRestartTimerRef.current = setTimeout(async () => {
         iceRestartTimerRef.current = null;
         if (!mounted || pc.signalingState === "closed") return;
-        if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+        if (
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed"
+        )
+          return;
 
         const now = Date.now();
         if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
@@ -1182,7 +1402,10 @@ export default function VideoCall() {
         logVideoEvent("device_check", summary);
 
         const stream = await getConsultationMediaStream();
-        if (!mounted) { stream.getTracks().forEach((t) => t.stop()); return; }
+        if (!mounted) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
 
         await attachLocalMediaStream(stream, pc);
 
@@ -1200,16 +1423,23 @@ export default function VideoCall() {
           if (!isDoctor && peerJoinedRef.current) {
             window.setTimeout(() => {
               if (!mounted || pc.signalingState === "closed") return;
-              if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+              if (
+                pc.connectionState === "connected" ||
+                pc.iceConnectionState === "connected" ||
+                pc.iceConnectionState === "completed"
+              )
+                return;
               void createAndSendOffer({ iceRestart: inCallRef.current });
             }, 300);
           }
         }
         resolveLocalReady(true);
-
       } catch (err) {
         console.error("All media attempts failed:", err.name, err.message);
-        logVideoEvent("media_permission_failed", { name: err.name, message: err.message });
+        logVideoEvent("media_permission_failed", {
+          name: err.name,
+          message: err.message,
+        });
         if (mounted) {
           setCamError(true);
           setCamErrorReason(mediaErrorMessage(err));
@@ -1269,13 +1499,19 @@ export default function VideoCall() {
         iceRecoveryAttemptsRef.current = 0;
         setConnectionState("connected");
         setIsRemoteConnected(true);
-        if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
+        if (!inCallRef.current) {
+          setInCall(true);
+          inCallRef.current = true;
+        }
         startStatsCollection(pc);
       } else if (s === "connecting") {
         setConnectionState("connecting");
         startConnectionWatchdog();
       } else if (s === "disconnected" || s === "failed") {
-        logVideoEvent("peer_connection_unhealthy", { state: s, iceConnectionState: pc.iceConnectionState });
+        logVideoEvent("peer_connection_unhealthy", {
+          state: s,
+          iceConnectionState: pc.iceConnectionState,
+        });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
         scheduleIceRestart();
@@ -1295,21 +1531,32 @@ export default function VideoCall() {
         iceRecoveryAttemptsRef.current = 0;
         setConnectionState("connected");
         setIsRemoteConnected(true);
-        if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
+        if (!inCallRef.current) {
+          setInCall(true);
+          inCallRef.current = true;
+        }
         startStatsCollection(pc);
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
         startConnectionWatchdog();
       } else if (s === "failed") {
-        console.warn("ICE connection failed - connection may not work properly");
-        logVideoEvent("ice_connection_failed", { state: s, connectionState: pc.connectionState });
+        console.warn(
+          "ICE connection failed - connection may not work properly",
+        );
+        logVideoEvent("ice_connection_failed", {
+          state: s,
+          connectionState: pc.connectionState,
+        });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
         console.log("Attempting ICE recovery...");
         scheduleIceRestart();
       } else if (s === "disconnected") {
         console.warn("ICE connection disconnected");
-        logVideoEvent("ice_connection_disconnected", { state: s, connectionState: pc.connectionState });
+        logVideoEvent("ice_connection_disconnected", {
+          state: s,
+          connectionState: pc.connectionState,
+        });
         setConnectionState("connecting");
         scheduleIceRestart();
       }
@@ -1322,7 +1569,8 @@ export default function VideoCall() {
         setConnectionState("connecting");
         const readyForOffer =
           !makingOfferRef.current &&
-          (pc.signalingState === "stable" || settingRemoteAnswerPendingRef.current);
+          (pc.signalingState === "stable" ||
+            settingRemoteAnswerPendingRef.current);
         const offerCollision = !readyForOffer;
 
         const shouldIgnoreOffer = !isPolitePeer && offerCollision;
@@ -1340,7 +1588,9 @@ export default function VideoCall() {
           console.info("Rolling back local offer to accept peer offer.");
           await pc.setLocalDescription({ type: "rollback" });
         } else if (offerCollision) {
-          console.info("Ignoring offer while negotiation is already in progress.");
+          console.info(
+            "Ignoring offer while negotiation is already in progress.",
+          );
           return;
         }
 
@@ -1352,30 +1602,49 @@ export default function VideoCall() {
         if (!mounted) return;
         if (!localReady) {
           setCamError(true);
-          setCamErrorReason("Allow camera or microphone access, then retry to join the consultation.");
+          setCamErrorReason(
+            "Allow camera or microphone access, then retry to join the consultation.",
+          );
           return;
         }
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        socket.emit("video-answer", { appointmentId, answer: pc.localDescription });
-        if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
-      } catch (err) { console.error("Offer error:", err); }
+        socket.emit("video-answer", {
+          appointmentId,
+          answer: pc.localDescription,
+        });
+        if (!inCallRef.current) {
+          setInCall(true);
+          inCallRef.current = true;
+        }
+      } catch (err) {
+        console.error("Offer error:", err);
+      }
     };
 
     const handleAnswer = async ({ answer }) => {
       if (!answer || !mounted) return;
       try {
         if (pc.signalingState !== "have-local-offer") {
-          console.info("Ignoring stale answer while signaling state is", pc.signalingState);
+          console.info(
+            "Ignoring stale answer while signaling state is",
+            pc.signalingState,
+          );
           return;
         }
         settingRemoteAnswerPendingRef.current = true;
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         resetIgnoredOffer();
         await flushPendingIceCandidates();
-        if (!inCallRef.current) { setInCall(true); inCallRef.current = true; }
-      } catch (err) { console.error("Answer error:", err); }
-      finally { settingRemoteAnswerPendingRef.current = false; }
+        if (!inCallRef.current) {
+          setInCall(true);
+          inCallRef.current = true;
+        }
+      } catch (err) {
+        console.error("Answer error:", err);
+      } finally {
+        settingRemoteAnswerPendingRef.current = false;
+      }
     };
 
     const handleIce = async ({ candidate }) => {
@@ -1394,7 +1663,10 @@ export default function VideoCall() {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
         if (ignoreOfferRef.current) {
-          console.info("Ignoring ICE candidate rejected after offer collision:", err.message);
+          console.info(
+            "Ignoring ICE candidate rejected after offer collision:",
+            err.message,
+          );
           return;
         }
         console.warn("ICE candidate rejected:", err.message);
@@ -1420,7 +1692,12 @@ export default function VideoCall() {
         if (!isDoctor && isReadyRef.current) {
           window.setTimeout(() => {
             if (!mounted || pc.signalingState === "closed") return;
-            if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+            if (
+              pc.connectionState === "connected" ||
+              pc.iceConnectionState === "connected" ||
+              pc.iceConnectionState === "completed"
+            )
+              return;
             void createAndSendOffer({ iceRestart: inCallRef.current });
           }, 300);
         }
@@ -1478,7 +1755,9 @@ export default function VideoCall() {
       }
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       localStreamRef.current = null;
-      setApptError(msg || "Another consultation session was started elsewhere.");
+      setApptError(
+        msg || "Another consultation session was started elsewhere.",
+      );
     };
 
     socket.on("video-offer", handleOffer);
@@ -1501,7 +1780,9 @@ export default function VideoCall() {
     const handleSocketDisconnect = () => {
       joinedSocketIdRef.current = "";
       if (!mounted) return;
-      logVideoEvent("socket_disconnected_during_call", { inCall: inCallRef.current });
+      logVideoEvent("socket_disconnected_during_call", {
+        inCall: inCallRef.current,
+      });
       setConnectionState("disconnected");
       setIsRemoteConnected(false);
     };
@@ -1516,16 +1797,28 @@ export default function VideoCall() {
       });
       if (isDoctor) {
         window.setTimeout(() => {
-          if (!mounted || !socket.connected || pc.signalingState === "closed") return;
-          if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+          if (!mounted || !socket.connected || pc.signalingState === "closed")
+            return;
+          if (
+            pc.connectionState === "connected" ||
+            pc.iceConnectionState === "connected" ||
+            pc.iceConnectionState === "completed"
+          )
+            return;
           requestPeerIceRestart();
         }, 500);
         return;
       }
       if (!isDoctor && isReadyRef.current) {
         window.setTimeout(() => {
-          if (!mounted || !socket.connected || pc.signalingState === "closed") return;
-          if (pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") return;
+          if (!mounted || !socket.connected || pc.signalingState === "closed")
+            return;
+          if (
+            pc.connectionState === "connected" ||
+            pc.iceConnectionState === "connected" ||
+            pc.iceConnectionState === "completed"
+          )
+            return;
           void createAndSendOffer({ iceRestart: inCallRef.current });
         }, 500);
       }
@@ -1554,7 +1847,11 @@ export default function VideoCall() {
       iceRestartTimerRef.current = null;
       ignoreOfferResetTimerRef.current = null;
       restartRequestInFlightRef.current = false;
-      if (joinedSocketIdRef.current && socket.connected && !pageUnloadingRef.current) {
+      if (
+        joinedSocketIdRef.current &&
+        socket.connected &&
+        !pageUnloadingRef.current
+      ) {
         socket.emit("leave-appointment-room", { appointmentId });
       }
       socket.off("connect", joinRoom);
@@ -1593,12 +1890,26 @@ export default function VideoCall() {
       clearInterval(callTimerRef.current);
       stopStatsCollection();
     };
-  }, [appt, canJoinConsultation, appointmentId, assignStreams, playAssignedVideos, isDoctor, attachLocalMediaStream, emitOnlineAndJoinRoom, logVideoEvent, stopStatsCollection]);
+  }, [
+    appt,
+    canJoinConsultation,
+    appointmentId,
+    assignStreams,
+    playAssignedVideos,
+    isDoctor,
+    attachLocalMediaStream,
+    emitOnlineAndJoinRoom,
+    logVideoEvent,
+    stopStatsCollection,
+  ]);
 
   // ── Call timer ────────────────────────────────────────────────────
   useEffect(() => {
     if (inCall) {
-      callTimerRef.current = setInterval(() => setCallDuration((d) => d + 1), 1000);
+      callTimerRef.current = setInterval(
+        () => setCallDuration((d) => d + 1),
+        1000,
+      );
     } else {
       clearInterval(callTimerRef.current);
     }
@@ -1613,24 +1924,35 @@ export default function VideoCall() {
   // for as long as the call is actually in progress.
   useEffect(() => {
     if (!inCall) return;
-    const heartbeat = setInterval(() => {
-      api.post("/api/auth/refresh").catch(() => { });
-    }, 4 * 60 * 1000);
+    const heartbeat = setInterval(
+      () => {
+        api
+          .post("/api/auth/refresh", null, {
+            authRole: isDoctor ? "doctor" : "user",
+          })
+          .catch(() => {});
+      },
+      4 * 60 * 1000,
+    );
     return () => clearInterval(heartbeat);
-  }, [inCall]);
+  }, [inCall, isDoctor]);
 
   // ── Controls ──────────────────────────────────────────────────────
   const toggleMute = useCallback(() => {
     const next = !isMutedRef.current;
     isMutedRef.current = next;
-    localStreamRef.current?.getAudioTracks().forEach((t) => { t.enabled = !next; });
+    localStreamRef.current?.getAudioTracks().forEach((t) => {
+      t.enabled = !next;
+    });
     setIsMuted(next);
   }, []);
 
   const toggleCamera = useCallback(() => {
     const next = !isCamOffRef.current;
     isCamOffRef.current = next;
-    localStreamRef.current?.getVideoTracks().forEach((t) => { t.enabled = !next; });
+    localStreamRef.current?.getVideoTracks().forEach((t) => {
+      t.enabled = !next;
+    });
     setIsCamOff(next);
   }, []);
 
@@ -1663,53 +1985,71 @@ export default function VideoCall() {
     assignStreams(isSwappedRef.current);
   }, [assignStreams, getVideoSender]);
 
-  const stopScreenShare = useCallback(async ({ stopTracks = true } = {}) => {
-    if (screenShareStopInProgressRef.current) return;
-    screenShareStopInProgressRef.current = true;
+  const stopScreenShare = useCallback(
+    async ({ stopTracks = true } = {}) => {
+      if (screenShareStopInProgressRef.current) return;
+      screenShareStopInProgressRef.current = true;
 
-    const screenStream = screenStreamRef.current;
-    screenStreamRef.current = null;
+      const screenStream = screenStreamRef.current;
+      screenStreamRef.current = null;
 
-    try {
-      if (screenStream) {
-        screenStream.getTracks().forEach((track) => {
-          track.onended = null;
-          if (stopTracks && track.readyState !== "ended") track.stop();
-        });
+      try {
+        if (screenStream) {
+          screenStream.getTracks().forEach((track) => {
+            track.onended = null;
+            if (stopTracks && track.readyState !== "ended") track.stop();
+          });
+        }
+        await restoreCameraAfterScreenShare();
+        logVideoEvent("screen_share_stopped", { stopTracks });
+      } catch (err) {
+        console.error("Camera restore after screen share failed:", err);
+        logVideoEvent("screen_share_restore_failed", { message: err.message });
+        showInlineMessage(
+          "Screen sharing stopped, but camera could not be restored. Toggle the camera or rejoin the call.",
+        );
+      } finally {
+        screenSharingRef.current = false;
+        setIsScreenSharing(false);
+        screenShareStartInProgressRef.current = false;
+        screenShareStopInProgressRef.current = false;
       }
-      await restoreCameraAfterScreenShare();
-      logVideoEvent("screen_share_stopped", { stopTracks });
-    } catch (err) {
-      console.error("Camera restore after screen share failed:", err);
-      logVideoEvent("screen_share_restore_failed", { message: err.message });
-      showInlineMessage("Screen sharing stopped, but camera could not be restored. Toggle the camera or rejoin the call.");
-    } finally {
-      screenSharingRef.current = false;
-      setIsScreenSharing(false);
-      screenShareStartInProgressRef.current = false;
-      screenShareStopInProgressRef.current = false;
-    }
-  }, [logVideoEvent, restoreCameraAfterScreenShare, showInlineMessage]);
+    },
+    [logVideoEvent, restoreCameraAfterScreenShare, showInlineMessage],
+  );
 
   const startScreenShare = useCallback(async () => {
     const pc = pcRef.current;
-    if (!pc || screenSharingRef.current || screenShareStartInProgressRef.current || screenShareStopInProgressRef.current) return;
+    if (
+      !pc ||
+      screenSharingRef.current ||
+      screenShareStartInProgressRef.current ||
+      screenShareStopInProgressRef.current
+    )
+      return;
 
     if (!canUseScreenShare()) {
-      showInlineMessage("Screen sharing is not supported on this browser or device.");
+      showInlineMessage(
+        "Screen sharing is not supported on this browser or device.",
+      );
       return;
     }
 
     const sender = getVideoSender(pc);
     if (!sender) {
-      showInlineMessage("Screen sharing requires an active video sender. Enable camera first, then try again.");
+      showInlineMessage(
+        "Screen sharing requires an active video sender. Enable camera first, then try again.",
+      );
       return;
     }
 
     let screen = null;
     screenShareStartInProgressRef.current = true;
     try {
-      screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      screen = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
       const screenTrack = screen.getVideoTracks()[0];
       if (!screenTrack) {
         screen.getTracks().forEach((track) => track.stop());
@@ -1743,17 +2083,31 @@ export default function VideoCall() {
       try {
         await restoreCameraAfterScreenShare();
       } catch (restoreErr) {
-        console.error("Camera restore after failed screen share start failed:", restoreErr);
+        console.error(
+          "Camera restore after failed screen share start failed:",
+          restoreErr,
+        );
       }
       if (err.name !== "NotAllowedError") {
         console.error("Screen share error:", err);
-        logVideoEvent("screen_share_failed", { name: err.name, message: err.message });
-        showInlineMessage("Screen sharing could not be started on this device.");
+        logVideoEvent("screen_share_failed", {
+          name: err.name,
+          message: err.message,
+        });
+        showInlineMessage(
+          "Screen sharing could not be started on this device.",
+        );
       }
     } finally {
       screenShareStartInProgressRef.current = false;
     }
-  }, [getVideoSender, logVideoEvent, restoreCameraAfterScreenShare, showInlineMessage, stopScreenShare]);
+  }, [
+    getVideoSender,
+    logVideoEvent,
+    restoreCameraAfterScreenShare,
+    showInlineMessage,
+    stopScreenShare,
+  ]);
 
   const toggleScreenShare = useCallback(() => {
     if (screenSharingRef.current) {
@@ -1787,7 +2141,7 @@ export default function VideoCall() {
         assignStreams(isSwapped);
       }
 
-      pipVideoRef.current.play?.().catch(() => { });
+      pipVideoRef.current.play?.().catch(() => {});
     });
 
     return () => cancelAnimationFrame(frameId);
@@ -1803,7 +2157,9 @@ export default function VideoCall() {
       } else if (pageEl.requestFullscreen) {
         await pageEl.requestFullscreen();
       } else if (isIPhoneSafari()) {
-        showInlineMessage("Full screen is not available for this call layout on iPhone Safari.");
+        showInlineMessage(
+          "Full screen is not available for this call layout on iPhone Safari.",
+        );
       } else {
         showInlineMessage("Full screen is not supported by this browser.");
       }
@@ -1818,7 +2174,9 @@ export default function VideoCall() {
     if (completing) return;
     setEndCallConfirm(false);
     performCleanup();
-    navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", { replace: true });
+    navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", {
+      replace: true,
+    });
   }, [completing, isDoctor, performCleanup, navigate]);
 
   const completeAppointment = useCallback(async () => {
@@ -1827,23 +2185,37 @@ export default function VideoCall() {
     setCompleting(true);
     try {
       if (["assigned", "confirmed"].includes(appt?.status)) {
-        await api.put(`/api/appointments/${appointmentId}/complete`);
+        await api.put(`/api/appointments/${appointmentId}/complete`, null, {
+          authRole: "doctor",
+        });
       }
       performCleanup();
       navigate("/doctor-dashboard/patients", { replace: true });
     } catch (err) {
       setCompleting(false);
-      setInlineError(err.response?.data?.msg || "Failed to complete appointment. Please try again.");
+      setInlineError(
+        err.response?.data?.msg ||
+          "Failed to complete appointment. Please try again.",
+      );
       setTimeout(() => setInlineError(""), 5000);
     }
-  }, [completing, isDoctor, appt?.status, appointmentId, performCleanup, navigate]);
+  }, [
+    completing,
+    isDoctor,
+    appt?.status,
+    appointmentId,
+    performCleanup,
+    navigate,
+  ]);
 
   const retryMediaPermissions = useCallback(async () => {
     if (retryingMedia) return;
     const pc = pcRef.current;
     if (!pc || pc.signalingState === "closed") {
       setCamError(true);
-      setCamErrorReason("The call connection is no longer active. Rejoin the consultation and try again.");
+      setCamErrorReason(
+        "The call connection is no longer active. Rejoin the consultation and try again.",
+      );
       return;
     }
 
@@ -1874,17 +2246,29 @@ export default function VideoCall() {
       if (pc.signalingState === "have-remote-offer") {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        socket.emit("video-answer", { appointmentId, answer: pc.localDescription });
+        socket.emit("video-answer", {
+          appointmentId,
+          answer: pc.localDescription,
+        });
       }
     } catch (err) {
       setCamError(true);
       setCamErrorReason(mediaErrorMessage(err));
       setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
-      logVideoEvent("media_retry_failed", { name: err.name, message: err.message });
+      logVideoEvent("media_retry_failed", {
+        name: err.name,
+        message: err.message,
+      });
     } finally {
       setRetryingMedia(false);
     }
-  }, [appointmentId, attachLocalMediaStream, emitOnlineAndJoinRoom, logVideoEvent, retryingMedia]);
+  }, [
+    appointmentId,
+    attachLocalMediaStream,
+    emitOnlineAndJoinRoom,
+    logVideoEvent,
+    retryingMedia,
+  ]);
 
   const handleRxSaved = useCallback(() => {
     setShowRxModal(false);
@@ -1932,28 +2316,35 @@ export default function VideoCall() {
     });
   }, []);
 
-  const saveNotes = useCallback(async ({ manual = false } = {}) => {
-    if (!isDoctor || !appointmentId || !notesLoaded) return;
+  const saveNotes = useCallback(
+    async ({ manual = false } = {}) => {
+      if (!isDoctor || !appointmentId || !notesLoaded) return;
 
-    const next = {
-      content: noteContent,
-    };
-    const previous = lastSavedNoteRef.current;
-    if (!manual && previous.content === next.content) return;
+      const next = {
+        content: noteContent,
+      };
+      const previous = lastSavedNoteRef.current;
+      if (!manual && previous.content === next.content) return;
 
-    setNotesSaving(true);
-    setNotesError("");
-    try {
-      const res = await api.put(`/api/notes/appointment/${appointmentId}`, next);
-      const saved = res.data?.note;
-      setNotesSavedAt(saved?.updatedAt || new Date().toISOString());
-      lastSavedNoteRef.current = next;
-    } catch (err) {
-      setNotesError(err.response?.data?.msg || "Could not save notes.");
-    } finally {
-      setNotesSaving(false);
-    }
-  }, [isDoctor, appointmentId, notesLoaded, noteContent]);
+      setNotesSaving(true);
+      setNotesError("");
+      try {
+        const res = await api.put(
+          `/api/notes/appointment/${appointmentId}`,
+          next,
+          { authRole: "doctor" },
+        );
+        const saved = res.data?.note;
+        setNotesSavedAt(saved?.updatedAt || new Date().toISOString());
+        lastSavedNoteRef.current = next;
+      } catch (err) {
+        setNotesError(err.response?.data?.msg || "Could not save notes.");
+      } finally {
+        setNotesSaving(false);
+      }
+    },
+    [isDoctor, appointmentId, notesLoaded, noteContent],
+  );
 
   useEffect(() => {
     if (!isDoctor || !notesLoaded) return;
@@ -1988,49 +2379,61 @@ export default function VideoCall() {
     setChatInput("");
   }, [chatInput, appointmentId, currentUser]);
 
-  const handleChatKey = useCallback((e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  }, [sendMessage]);
+  const handleChatKey = useCallback(
+    (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    },
+    [sendMessage],
+  );
 
-  const handleFileChange = useCallback(async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    if (file.size > 10 * 1024 * 1024) {
-      setInlineError("File too large. Max 10 MB.");
-      setTimeout(() => setInlineError(""), 4000);
-      return;
-    }
-    setUploadingFile(true);
-    try {
-      const uploaded = await uploadFileDirectToS3(file);
-      socket.emit("appointment-message", {
-        appointmentId,
-        senderId: currentUser.id,
-        senderName: currentUser.name,
-        text: "",
-        fileUrl: uploaded.key,
-        fileName: uploaded.name ?? file.name,
-        fileType: uploaded.type ?? file.type,
-      });
-    } catch (err) {
-      setInlineError(err.response?.data?.msg || err.message || "File upload failed.");
-      setTimeout(() => setInlineError(""), 4000);
-    } finally {
-      setUploadingFile(false);
-    }
-  }, [appointmentId, currentUser]);
+  const handleFileChange = useCallback(
+    async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      e.target.value = "";
+      if (file.size > 10 * 1024 * 1024) {
+        setInlineError("File too large. Max 10 MB.");
+        setTimeout(() => setInlineError(""), 4000);
+        return;
+      }
+      setUploadingFile(true);
+      try {
+        const uploaded = await uploadFileDirectToS3(file);
+        socket.emit("appointment-message", {
+          appointmentId,
+          senderId: currentUser.id,
+          senderName: currentUser.name,
+          text: "",
+          fileUrl: uploaded.key,
+          fileName: uploaded.name ?? file.name,
+          fileType: uploaded.type ?? file.type,
+        });
+      } catch (err) {
+        setInlineError(
+          err.response?.data?.msg || err.message || "File upload failed.",
+        );
+        setTimeout(() => setInlineError(""), 4000);
+      } finally {
+        setUploadingFile(false);
+      }
+    },
+    [appointmentId, currentUser],
+  );
 
   // ── Other party info ──────────────────────────────────────────────
   const otherParty = useMemo(() => {
     if (!appt) return null;
-    if (isDoctor) return {
-      label: "Patient",
-      name: appt.patientId?.name || "Unknown Patient",
-      sub: appt.problem || "",
-      initial: appt.patientId?.name?.[0]?.toUpperCase() || "P",
-      color: "#3b82f6",
-    };
+    if (isDoctor)
+      return {
+        label: "Patient",
+        name: appt.patientId?.name || "Unknown Patient",
+        sub: appt.problem || "",
+        initial: appt.patientId?.name?.[0]?.toUpperCase() || "P",
+        color: "#3b82f6",
+      };
     return {
       label: "Doctor",
       name: `Dr. ${appt.doctorId?.name || "Unknown"}`,
@@ -2053,52 +2456,83 @@ export default function VideoCall() {
   if (apptError) {
     return (
       <div className="hc-vc__gate">
-        <div className="hc-vc__gate-icon"><FiAlertTriangle /></div>
+        <div className="hc-vc__gate-icon">
+          <FiAlertTriangle />
+        </div>
         <h2>Access Denied</h2>
         <p>{apptError}</p>
-        <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>Go Back</button>
+        <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>
+          Go Back
+        </button>
       </div>
     );
   }
 
-  if (!canJoinConsultation && ["pending", "requested", "upcoming", "assigned"].includes(appt?.status)) {
+  if (
+    !canJoinConsultation &&
+    ["pending", "requested", "upcoming", "assigned"].includes(appt?.status)
+  ) {
     return (
       <div className="hc-vc__gate">
-        <div className="hc-vc__gate-icon"><FiClock /></div>
+        <div className="hc-vc__gate-icon">
+          <FiClock />
+        </div>
         <h2>Appointment Pending</h2>
         <p>
           {isDoctor
             ? "Confirm this appointment from your dashboard before starting the video call."
             : "Your appointment is awaiting the doctor's confirmation."}
         </p>
-        <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>Go Back</button>
+        <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>
+          Go Back
+        </button>
       </div>
     );
   }
 
-  if (["complete", "completed"].includes(appt?.status) || appt?.status === "cancelled") {
+  if (
+    ["complete", "completed"].includes(appt?.status) ||
+    appt?.status === "cancelled"
+  ) {
     return (
       <div className="hc-vc__gate">
         <div className="hc-vc__gate-icon">
-          {["complete", "completed"].includes(appt.status) ? <FiCheckCircle /> : <FiX />}
+          {["complete", "completed"].includes(appt.status) ? (
+            <FiCheckCircle />
+          ) : (
+            <FiX />
+          )}
         </div>
-        <h2>Appointment {["complete", "completed"].includes(appt.status) ? "Complete" : "Cancelled"}</h2>
+        <h2>
+          Appointment{" "}
+          {["complete", "completed"].includes(appt.status)
+            ? "Complete"
+            : "Cancelled"}
+        </h2>
         <p>This appointment is no longer active.</p>
-        <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>Go Back</button>
+        <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>
+          Go Back
+        </button>
       </div>
     );
   }
 
   // ── PiP position style ────────────────────────────────────────────
-  const pipStyle = pipPos.x !== null
-    ? { position: "fixed", left: `${pipPos.x}px`, top: `${pipPos.y}px`, right: "auto", bottom: "auto" }
-    : {};
+  const pipStyle =
+    pipPos.x !== null
+      ? {
+          position: "fixed",
+          left: `${pipPos.x}px`,
+          top: `${pipPos.y}px`,
+          right: "auto",
+          bottom: "auto",
+        }
+      : {};
   const screenShareSupported = canUseScreenShare();
 
   // ── Main call UI ──────────────────────────────────────────────────
   return (
     <div className="hc-vc__page" ref={pageRef}>
-
       <div className="hc-vc__ctrlbar-meta">
         <div className="hc-vc__meta-left">
           <div className="hc-vc__logo-mark">
@@ -2138,30 +2572,59 @@ export default function VideoCall() {
 
       {/* ── Inline error toast ──────────────────────────────────── */}
       {inlineError && (
-        <div style={{
-          position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
-          zIndex: 10000, background: "#fef2f2", border: "1px solid #fca5a5",
-          color: "#dc2626", borderRadius: 10, padding: "12px 20px",
-          fontSize: 13, fontWeight: 600, boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-          display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 20,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 10000,
+            background: "#fef2f2",
+            border: "1px solid #fca5a5",
+            color: "#dc2626",
+            borderRadius: 10,
+            padding: "12px 20px",
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            whiteSpace: "nowrap",
+          }}
+        >
           <FiAlertTriangle /> {inlineError}
         </div>
       )}
 
       {/* ── End Call confirm modal ───────────────────────────────── */}
       {endCallConfirm && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 9998,
-          background: "rgba(0,0,0,0.6)", display: "flex",
-          alignItems: "center", justifyContent: "center", padding: 16,
-        }} onClick={() => setEndCallConfirm(false)}>
-          <div style={{
-            background: "#0d1f35", borderRadius: 16, padding: "28px 32px",
-            maxWidth: 380, width: "100%", textAlign: "center",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-          }} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9998,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+          onClick={() => setEndCallConfirm(false)}
+        >
+          <div
+            style={{
+              background: "#0d1f35",
+              borderRadius: 16,
+              padding: "28px 32px",
+              maxWidth: 380,
+              width: "100%",
+              textAlign: "center",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div style={{ fontSize: 36, marginBottom: 12 }}>
               <FiPhoneOff style={{ color: "#ef4444" }} />
             </div>
@@ -2173,21 +2636,62 @@ export default function VideoCall() {
                 ? "Leave only exits the video call. Complete Appointment will mark the consultation complete."
                 : "You will leave the video call. The doctor will be notified."}
             </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                justifyContent: "center",
+                flexWrap: "wrap",
+              }}
+            >
               <button
                 onClick={() => setEndCallConfirm(false)}
-                style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.07)", color: "#e2e8f0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >Stay</button>
+                style={{
+                  padding: "9px 20px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  background: "rgba(255,255,255,0.07)",
+                  color: "#e2e8f0",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Stay
+              </button>
               <button
                 onClick={leaveCall}
-                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >Leave Call</button>
+                style={{
+                  padding: "9px 22px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#ef4444",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Leave Call
+              </button>
               {isDoctor && (
                 <button
                   onClick={completeAppointment}
                   disabled={completing}
-                  style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#16a34a", color: "#fff", fontSize: 13, fontWeight: 700, cursor: completing ? "not-allowed" : "pointer", opacity: completing ? 0.7 : 1 }}
-                >{completing ? "Completing..." : "Complete Appointment"}</button>
+                  style={{
+                    padding: "9px 22px",
+                    borderRadius: 8,
+                    border: "none",
+                    background: "#16a34a",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: completing ? "not-allowed" : "pointer",
+                    opacity: completing ? 0.7 : 1,
+                  }}
+                >
+                  {completing ? "Completing..." : "Complete Appointment"}
+                </button>
               )}
             </div>
           </div>
@@ -2195,15 +2699,30 @@ export default function VideoCall() {
       )}
 
       {deviceCheck.status !== "idle" && deviceCheck.status !== "ready" && (
-        <div style={{
-          position: "fixed", top: inlineError ? 72 : 20, left: "50%", transform: "translateX(-50%)",
-          zIndex: 9999, background: deviceCheck.status === "failed" ? "#fef2f2" : "#eff6ff",
-          border: `1px solid ${deviceCheck.status === "failed" ? "#fca5a5" : "#93c5fd"}`,
-          color: deviceCheck.status === "failed" ? "#dc2626" : "#1d4ed8",
-          borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 600,
-          display: "flex", alignItems: "center", gap: 8,
-        }}>
-          {deviceCheck.status === "checking" ? <FiRefreshCw /> : <FiAlertTriangle />}
+        <div
+          style={{
+            position: "fixed",
+            top: inlineError ? 72 : 20,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 9999,
+            background: deviceCheck.status === "failed" ? "#fef2f2" : "#eff6ff",
+            border: `1px solid ${deviceCheck.status === "failed" ? "#fca5a5" : "#93c5fd"}`,
+            color: deviceCheck.status === "failed" ? "#dc2626" : "#1d4ed8",
+            borderRadius: 10,
+            padding: "10px 16px",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          {deviceCheck.status === "checking" ? (
+            <FiRefreshCw />
+          ) : (
+            <FiAlertTriangle />
+          )}
           {deviceCheck.status === "checking"
             ? "Checking camera and microphone..."
             : "Device check failed. Review browser permissions and retry."}
@@ -2212,35 +2731,76 @@ export default function VideoCall() {
 
       {/* ── Leave (back button) confirm modal ───────────────────── */}
       {leaveConfirm && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 9998,
-          background: "rgba(0,0,0,0.6)", display: "flex",
-          alignItems: "center", justifyContent: "center", padding: 16,
-        }} onClick={() => setLeaveConfirm(false)}>
-          <div style={{
-            background: "#0d1f35", borderRadius: 16, padding: "28px 32px",
-            maxWidth: 380, width: "100%", textAlign: "center",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-          }} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9998,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+          onClick={() => setLeaveConfirm(false)}
+        >
+          <div
+            style={{
+              background: "#0d1f35",
+              borderRadius: 16,
+              padding: "28px 32px",
+              maxWidth: 380,
+              width: "100%",
+              textAlign: "center",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div style={{ fontSize: 36, marginBottom: 12 }}>⚠</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#f1f5f9" }}>Leave Consultation?</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#f1f5f9" }}>
+              Leave Consultation?
+            </h3>
             <p style={{ margin: "0 0 24px", fontSize: 13, color: "#94a3b8" }}>
               Leaving will end your consultation session. Are you sure?
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
               <button
                 onClick={() => setLeaveConfirm(false)}
-                style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.07)", color: "#e2e8f0", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >Stay</button>
+                style={{
+                  padding: "9px 20px",
+                  borderRadius: 8,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  background: "rgba(255,255,255,0.07)",
+                  color: "#e2e8f0",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Stay
+              </button>
               <button
                 onClick={() => {
                   setLeaveConfirm(false);
                   performCleanup();
-                  navigate(pendingLeaveRef.current || "/user/dashboard", { replace: true });
+                  navigate(pendingLeaveRef.current || "/user/dashboard", {
+                    replace: true,
+                  });
                 }}
-                style={{ padding: "9px 22px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-              >Leave</button>
+                style={{
+                  padding: "9px 22px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#ef4444",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Leave
+              </button>
             </div>
           </div>
         </div>
@@ -2250,10 +2810,14 @@ export default function VideoCall() {
       {showCompletedOverlay && !isDoctor && (
         <div className="hc-vc__completed-overlay">
           <div className="hc-vc__completed-card">
-            <div className="hc-vc__completed-icon"><FiCheckCircle /></div>
+            <div className="hc-vc__completed-icon">
+              <FiCheckCircle />
+            </div>
             <h2>Consultation Completed</h2>
             <p>Your doctor has marked this session as complete.</p>
-            <p className="hc-vc__completed-sub">Redirecting to your dashboard...</p>
+            <p className="hc-vc__completed-sub">
+              Redirecting to your dashboard...
+            </p>
             <div className="hc-vc__completed-spinner" />
           </div>
         </div>
@@ -2284,18 +2848,18 @@ export default function VideoCall() {
       )} */}
 
       {/* Main stage + chat */}
-      <div className={`hc-vc__body ${chatOpen || notesOpen ? "hc-vc__body--chat" : ""}`}>
-
+      <div
+        className={`hc-vc__body ${chatOpen || notesOpen ? "hc-vc__body--chat" : ""}`}
+      >
         {/* Stage */}
         <div className="hc-vc__stage">
-
           {/* Main video */}
           <div className="hc-vc__main-wrap">
             <video
               ref={mainVideoRef}
               autoPlay
               playsInline
-              muted={isSwapped}
+              muted
               className={`hc-vc__main-video${isSwapped ? " hc-vc__video--local" : ""}`}
             />
 
@@ -2304,11 +2868,15 @@ export default function VideoCall() {
               <div className="hc-vc__waiting">
                 <div className="hc-vc__waiting-ring">
                   <div className="hc-vc__waiting-avatar-wrap">
-                    <span className="hc-vc__waiting-icon"><FiUser /></span>
+                    <span className="hc-vc__waiting-icon">
+                      <FiUser />
+                    </span>
                   </div>
                 </div>
                 <p className="hc-vc__waiting-title">
-                  {peerJoined ? "Establishing secure connection..." : `Waiting for ${isDoctor ? "patient" : "doctor"}...`}
+                  {peerJoined
+                    ? "Establishing secure connection..."
+                    : `Waiting for ${isDoctor ? "patient" : "doctor"}...`}
                 </p>
                 <p className="hc-vc__waiting-sub">
                   {peerJoined
@@ -2331,8 +2899,12 @@ export default function VideoCall() {
             {/* Peer left notice */}
             {peerLeft && (
               <div className="hc-vc__peer-left-notice">
-                <span><FiPhoneOff /></span>
-                <span>{isDoctor ? "Patient" : "Doctor"} has left the call.</span>
+                <span>
+                  <FiPhoneOff />
+                </span>
+                <span>
+                  {isDoctor ? "Patient" : "Doctor"} has left the call.
+                </span>
               </div>
             )}
           </div>
@@ -2351,31 +2923,48 @@ export default function VideoCall() {
                 ref={pipVideoRef}
                 autoPlay
                 playsInline
-                muted={!isSwapped}
+                muted
                 className={`hc-vc__pip-video${!isSwapped ? " hc-vc__video--local" : ""}`}
               />
 
               {isCamOff && !isSwapped && (
                 <div className="hc-vc__pip-cam-off">
-                  <span><FiVideoOff /></span>
+                  <span>
+                    <FiVideoOff />
+                  </span>
                 </div>
               )}
-
-              <div className="hc-vc__pip-label">
-                {isSwapped ? otherParty?.label ?? "Remote" : `You${isDoctor ? " (Doctor)" : ""}`}
-              </div>
-
-              <button className="hc-vc__pip-min-btn" onClick={toggleSelfView} title="Minimize self view">
+              <audio
+                ref={remoteAudioRef}
+                autoPlay
+                playsInline
+                style={{ display: "none" }}
+              />
+              <button
+                className="hc-vc__pip-min-btn"
+                onClick={toggleSelfView}
+                title="Minimize self view"
+              >
                 <FiMinimize2 />
               </button>
 
               {/* Expand / swap button */}
-              <button className="hc-vc__pip-swap-btn" onClick={toggleSwap} title="Swap view"><FiRefreshCw /></button>
+              <button
+                className="hc-vc__pip-swap-btn"
+                onClick={toggleSwap}
+                title="Swap view"
+              >
+                <FiRefreshCw />
+              </button>
             </div>
           )}
 
           {isSelfViewMinimized && (
-            <button className="hc-vc__pip-restore-btn" onClick={toggleSelfView} title="Show self view">
+            <button
+              className="hc-vc__pip-restore-btn"
+              onClick={toggleSelfView}
+              title="Show self view"
+            >
               <FiMaximize2 />
               <span>Self View</span>
             </button>
@@ -2395,16 +2984,22 @@ export default function VideoCall() {
           <div className="hc-vc__chat">
             <div className="hc-vc__chat-head">
               <div className="hc-vc__chat-head-left">
-                <span className="hc-vc__chat-icon"><FiMessageSquare /></span>
+                <span className="hc-vc__chat-icon">
+                  <FiMessageSquare />
+                </span>
                 <span className="hc-vc__chat-title">In-call Chat</span>
               </div>
-              <button className="hc-vc__chat-close-btn" onClick={toggleChat}><FiX /></button>
+              <button className="hc-vc__chat-close-btn" onClick={toggleChat}>
+                <FiX />
+              </button>
             </div>
 
             <div className="hc-vc__chat-body">
               {messages.length === 0 && (
                 <div className="hc-vc__chat-empty">
-                  <span><FiMessageSquare /></span>
+                  <span>
+                    <FiMessageSquare />
+                  </span>
                   <p>No messages yet.</p>
                   <p>Share notes or files here during the call.</p>
                 </div>
@@ -2413,25 +3008,54 @@ export default function VideoCall() {
               {messages.map((msg, i) => {
                 const mine = msg.senderId === currentUser.id;
                 return (
-                  <div key={i} className={`hc-vc__msg ${mine ? "hc-vc__msg--mine" : "hc-vc__msg--theirs"}`}>
-                    {!mine && <div className="hc-vc__msg-name">{msg.senderName}</div>}
+                  <div
+                    key={i}
+                    className={`hc-vc__msg ${mine ? "hc-vc__msg--mine" : "hc-vc__msg--theirs"}`}
+                  >
+                    {!mine && (
+                      <div className="hc-vc__msg-name">{msg.senderName}</div>
+                    )}
 
                     {msg.fileUrl ? (
                       <div className="hc-vc__msg-bubble hc-vc__msg-file">
                         {msg.fileType?.startsWith("image/") ? (
-                          <a href={msg.fileUrl} target="_blank" rel="noreferrer" className="hc-vc__msg-img-link">
-                            <img src={msg.fileUrl} alt={msg.fileName} className="hc-vc__msg-img" />
-                            <span className="hc-vc__msg-img-name">{msg.fileName}</span>
+                          <a
+                            href={msg.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hc-vc__msg-img-link"
+                          >
+                            <img
+                              src={msg.fileUrl}
+                              alt={msg.fileName}
+                              className="hc-vc__msg-img"
+                            />
+                            <span className="hc-vc__msg-img-name">
+                              {msg.fileName}
+                            </span>
                           </a>
                         ) : (
-                          <a href={msg.fileUrl} target="_blank" rel="noreferrer" download={msg.fileName} className="hc-vc__msg-file-row">
+                          <a
+                            href={msg.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            download={msg.fileName}
+                            className="hc-vc__msg-file-row"
+                          >
                             <span className="hc-vc__msg-file-icon">
-                              {msg.fileType?.includes("pdf") ? "📄"
-                                : msg.fileType?.includes("word") || msg.fileType?.includes("doc") ? "📝"
-                                  : msg.fileType?.includes("sheet") || msg.fileType?.includes("excel") ? "📊"
+                              {msg.fileType?.includes("pdf")
+                                ? "📄"
+                                : msg.fileType?.includes("word") ||
+                                    msg.fileType?.includes("doc")
+                                  ? "📝"
+                                  : msg.fileType?.includes("sheet") ||
+                                      msg.fileType?.includes("excel")
+                                    ? "📊"
                                     : "📎"}
                             </span>
-                            <span className="hc-vc__msg-file-name">{msg.fileName}</span>
+                            <span className="hc-vc__msg-file-name">
+                              {msg.fileName}
+                            </span>
                             <span className="hc-vc__msg-file-dl">↓</span>
                           </a>
                         )}
@@ -2440,7 +3064,9 @@ export default function VideoCall() {
                       <div className="hc-vc__msg-bubble">{msg.text}</div>
                     )}
 
-                    <div className="hc-vc__msg-time">{fmtTime(msg.createdAt)}</div>
+                    <div className="hc-vc__msg-time">
+                      {fmtTime(msg.createdAt)}
+                    </div>
                   </div>
                 );
               })}
@@ -2461,7 +3087,11 @@ export default function VideoCall() {
                 disabled={uploadingFile}
                 title="Attach file"
               >
-                {uploadingFile ? <span className="hc-vc__attach-spin" /> : <FiPaperclip />}
+                {uploadingFile ? (
+                  <span className="hc-vc__attach-spin" />
+                ) : (
+                  <FiPaperclip />
+                )}
               </button>
               <input
                 className="hc-vc__chat-input"
@@ -2478,7 +3108,9 @@ export default function VideoCall() {
                 onClick={sendMessage}
                 disabled={!chatInput.trim()}
                 title="Send"
-              ><FiSend /></button>
+              >
+                <FiSend />
+              </button>
             </div>
           </div>
         )}
@@ -2488,15 +3120,25 @@ export default function VideoCall() {
           <div className="hc-vc__notes">
             <div className="hc-vc__notes-head">
               <div className="hc-vc__notes-head-left">
-                <span className="hc-vc__notes-icon"><FiFileText /></span>
+                <span className="hc-vc__notes-icon">
+                  <FiFileText />
+                </span>
                 <span className="hc-vc__notes-title">Consultation Notes</span>
               </div>
-              <button className="hc-vc__notes-close-btn" onClick={toggleNotes}><FiX /></button>
+              <button className="hc-vc__notes-close-btn" onClick={toggleNotes}>
+                <FiX />
+              </button>
             </div>
 
             <div className="hc-vc__notes-meta">
               <span>{otherParty?.name || "Patient"}</span>
-              <span>{notesSaving ? "Saving..." : notesSavedAt ? `Saved ${fmtTime(notesSavedAt)}` : "Not saved yet"}</span>
+              <span>
+                {notesSaving
+                  ? "Saving..."
+                  : notesSavedAt
+                    ? `Saved ${fmtTime(notesSavedAt)}`
+                    : "Not saved yet"}
+              </span>
             </div>
 
             {notesError && (
@@ -2509,7 +3151,11 @@ export default function VideoCall() {
               className="hc-vc__notes-textarea"
               value={noteContent}
               onChange={(e) => setNoteContent(e.target.value)}
-              placeholder={notesLoading ? "Loading notes..." : "Write consultation observations, assessment, plan, and follow-up notes..."}
+              placeholder={
+                notesLoading
+                  ? "Loading notes..."
+                  : "Write consultation observations, assessment, plan, and follow-up notes..."
+              }
               disabled={notesLoading}
               maxLength={20000}
             />
@@ -2531,8 +3177,6 @@ export default function VideoCall() {
 
       {/* ── Controls bar ─────────────────────────────────────────── */}
       <div className="hc-vc__ctrlbar">
-
-
         <div className="hc-vc__ctrlbar-inner">
           <button
             className={`hc-vc__btn ${isMuted ? "hc-vc__btn--danger" : ""}`}
@@ -2540,8 +3184,12 @@ export default function VideoCall() {
             disabled={!isReady}
             title={isMuted ? "Unmute" : "Mute microphone"}
           >
-            <span className="hc-vc__btn-icon">{isMuted ? <FiMicOff /> : <FiMic />}</span>
-            <span className="hc-vc__btn-label">{isMuted ? "Unmute" : "Mute"}</span>
+            <span className="hc-vc__btn-icon">
+              {isMuted ? <FiMicOff /> : <FiMic />}
+            </span>
+            <span className="hc-vc__btn-label">
+              {isMuted ? "Unmute" : "Mute"}
+            </span>
           </button>
 
           <button
@@ -2550,8 +3198,12 @@ export default function VideoCall() {
             disabled={!isReady}
             title={isCamOff ? "Turn camera on" : "Turn camera off"}
           >
-            <span className="hc-vc__btn-icon">{isCamOff ? <FiVideoOff /> : <FiVideo />}</span>
-            <span className="hc-vc__btn-label">{isCamOff ? "Cam On" : "Cam Off"}</span>
+            <span className="hc-vc__btn-icon">
+              {isCamOff ? <FiVideoOff /> : <FiVideo />}
+            </span>
+            <span className="hc-vc__btn-label">
+              {isCamOff ? "Cam On" : "Cam Off"}
+            </span>
           </button>
 
           <button
@@ -2566,8 +3218,12 @@ export default function VideoCall() {
                   : "Share screen"
             }
           >
-            <span className="hc-vc__btn-icon"><FiMonitor /></span>
-            <span className="hc-vc__btn-label">{isScreenSharing ? "Stop" : "Share"}</span>
+            <span className="hc-vc__btn-icon">
+              <FiMonitor />
+            </span>
+            <span className="hc-vc__btn-label">
+              {isScreenSharing ? "Stop" : "Share"}
+            </span>
           </button>
           {inCall && (
             <div className="hc-vc__live-pill">
@@ -2580,17 +3236,27 @@ export default function VideoCall() {
             onClick={toggleFullscreen}
             title={isFullscreen ? "Exit full screen" : "Full screen"}
           >
-            <span className="hc-vc__btn-icon">{isFullscreen ? <FiMinimize /> : <FiMaximize />}</span>
-            <span className="hc-vc__btn-label">{isFullscreen ? "Exit" : "Full"}</span>
+            <span className="hc-vc__btn-icon">
+              {isFullscreen ? <FiMinimize /> : <FiMaximize />}
+            </span>
+            <span className="hc-vc__btn-label">
+              {isFullscreen ? "Exit" : "Full"}
+            </span>
           </button>
 
           <button
             className={`hc-vc__btn ${isSelfViewMinimized ? "hc-vc__btn--active" : ""}`}
             onClick={toggleSelfView}
-            title={isSelfViewMinimized ? "Show self view" : "Minimize self view"}
+            title={
+              isSelfViewMinimized ? "Show self view" : "Minimize self view"
+            }
           >
-            <span className="hc-vc__btn-icon">{isSelfViewMinimized ? <FiMaximize2 /> : <FiMinimize2 />}</span>
-            <span className="hc-vc__btn-label">{isSelfViewMinimized ? "Show Me" : "Hide Me"}</span>
+            <span className="hc-vc__btn-icon">
+              {isSelfViewMinimized ? <FiMaximize2 /> : <FiMinimize2 />}
+            </span>
+            <span className="hc-vc__btn-label">
+              {isSelfViewMinimized ? "Show Me" : "Hide Me"}
+            </span>
           </button>
 
           <button
@@ -2598,10 +3264,14 @@ export default function VideoCall() {
             onClick={toggleChat}
             title="Chat"
           >
-            <span className="hc-vc__btn-icon"><FiMessageSquare /></span>
+            <span className="hc-vc__btn-icon">
+              <FiMessageSquare />
+            </span>
             <span className="hc-vc__btn-label">Chat</span>
             {unreadCount > 0 && !chatOpen && (
-              <span className="hc-vc__badge">{unreadCount > 9 ? "9+" : unreadCount}</span>
+              <span className="hc-vc__badge">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
             )}
           </button>
 
@@ -2611,12 +3281,12 @@ export default function VideoCall() {
               onClick={toggleNotes}
               title="Consultation notes"
             >
-              <span className="hc-vc__btn-icon"><FiFileText /></span>
+              <span className="hc-vc__btn-icon">
+                <FiFileText />
+              </span>
               <span className="hc-vc__btn-label">Notes</span>
             </button>
           )}
-
-
 
           {/* {isDoctor && (
             <button
@@ -2635,22 +3305,33 @@ export default function VideoCall() {
             disabled={completing}
             title={isDoctor ? "Leave or complete appointment" : "Leave call"}
           >
-            <span className="hc-vc__btn-icon">{completing ? <FiRefreshCw /> : <FiPhoneOff />}</span>
-            <span className="hc-vc__btn-label">{completing ? "Completing..." : "Leave Call"}</span>
+            <span className="hc-vc__btn-icon">
+              {completing ? <FiRefreshCw /> : <FiPhoneOff />}
+            </span>
+            <span className="hc-vc__btn-label">
+              {completing ? "Completing..." : "Leave Call"}
+            </span>
           </button>
         </div>
       </div>
       {/* Cam error banner */}
       {camError && (
         <div className="hc-vc__error-bar">
-          <FiAlertTriangle /> {camErrorReason || "Camera or microphone access denied. Check browser permissions and retry."}
+          <FiAlertTriangle />{" "}
+          {camErrorReason ||
+            "Camera or microphone access denied. Check browser permissions and retry."}
           <button
             onClick={retryMediaPermissions}
             disabled={retryingMedia}
             style={{
-              marginLeft: 12, padding: "4px 12px", borderRadius: 6,
-              background: "#fff", color: "#dc2626", border: "none",
-              fontWeight: 700, cursor: retryingMedia ? "not-allowed" : "pointer",
+              marginLeft: 12,
+              padding: "4px 12px",
+              borderRadius: 6,
+              background: "#fff",
+              color: "#dc2626",
+              border: "none",
+              fontWeight: 700,
+              cursor: retryingMedia ? "not-allowed" : "pointer",
               opacity: retryingMedia ? 0.7 : 1,
             }}
           >
