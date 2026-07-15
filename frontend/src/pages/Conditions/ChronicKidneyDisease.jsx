@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
   Calendar, Star, Shield, ShieldCheck, Clock, Video, Pill, Heart, Activity,
@@ -8,6 +9,8 @@ import {
   HeartPulse, Syringe, Eye, Bone, CircleDot, Smile, TrendingUp,
   MessageCircle, X
 } from "lucide-react";
+import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Chronic-Kidney-Disease.webp";
+
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -376,86 +379,106 @@ const pageData = {
   description:
     "Personalized healthcare focused on prevention, diagnosis, treatment and long-term wellness. Connect with experienced physicians dedicated to keeping you and your family healthy.",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-  bgImage: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 const relatedSpecialties = [
-  { icon: Brain,  name: "Mental Health",  color: "#F4F0FF", accent: "#7C3AED" },
-  { icon: Zap,    name: "Urgent Care",    color: "#FFF0EE", accent: "#DC2626" },
-  { icon: Heart,  name: "Women's Health", color: "#FFF0F3", accent: "#DB2777" },
-  { icon: Smile,  name: "Pediatrics",     color: "#EDFCF2", accent: "#059669" },
-  { icon: Brain,  name: "Mental Health",  color: "#F4F0FF", accent: "#7C3AED" },
-  { icon: Zap,    name: "Urgent Care",    color: "#FFF0EE", accent: "#DC2626" },
-  { icon: Heart,  name: "Women's Health", color: "#FFF0F3", accent: "#DB2777" },
-  { icon: Smile,  name: "Pediatrics",     color: "#EDFCF2", accent: "#059669" },
+  { icon: Brain, name: "Mental Health", color: "#F4F0FF", accent: "#7C3AED" },
+  { icon: Zap, name: "Urgent Care", color: "#FFF0EE", accent: "#DC2626" },
+  { icon: Heart, name: "Women's Health", color: "#FFF0F3", accent: "#DB2777" },
+  { icon: Smile, name: "Pediatrics", color: "#EDFCF2", accent: "#059669" },
+  { icon: Brain, name: "Mental Health", color: "#F4F0FF", accent: "#7C3AED" },
+  { icon: Zap, name: "Urgent Care", color: "#FFF0EE", accent: "#DC2626" },
+  { icon: Heart, name: "Women's Health", color: "#FFF0F3", accent: "#DB2777" },
+  { icon: Smile, name: "Pediatrics", color: "#EDFCF2", accent: "#059669" },
 ];
 
 const symptomData = [
-  { title: "Fever",               desc: "Elevated body temperature often signals infection. See a doctor if it exceeds 103°F or lasts more than 3 days." },
-  { title: "Headache",            desc: "Can range from tension headaches to migraines. Sudden, severe headaches need immediate evaluation." },
-  { title: "Fatigue",             desc: "Persistent tiredness may indicate anaemia, thyroid issues, or other conditions. Don't dismiss chronic fatigue." },
-  { title: "Nausea",              desc: "Often tied to GI issues, medications, or infections. Prolonged nausea warrants a medical review." },
-  { title: "Dizziness",           desc: "Vertigo or lightheadedness can stem from inner ear, blood pressure, or neurological causes." },
-  { title: "Cough",               desc: "A cough lasting more than 3 weeks, or producing blood or thick mucus, should be evaluated promptly." },
-  { title: "Anxiety",             desc: "Persistent worry, racing thoughts, or panic attacks benefit from professional mental health support." },
-  { title: "Back Pain",           desc: "Acute or chronic back pain can affect posture and mobility. Early treatment prevents long-term damage." },
+  { title: "Fever", desc: "Elevated body temperature often signals infection. See a doctor if it exceeds 103°F or lasts more than 3 days." },
+  { title: "Headache", desc: "Can range from tension headaches to migraines. Sudden, severe headaches need immediate evaluation." },
+  { title: "Fatigue", desc: "Persistent tiredness may indicate anaemia, thyroid issues, or other conditions. Don't dismiss chronic fatigue." },
+  { title: "Nausea", desc: "Often tied to GI issues, medications, or infections. Prolonged nausea warrants a medical review." },
+  { title: "Dizziness", desc: "Vertigo or lightheadedness can stem from inner ear, blood pressure, or neurological causes." },
+  { title: "Cough", desc: "A cough lasting more than 3 weeks, or producing blood or thick mucus, should be evaluated promptly." },
+  { title: "Anxiety", desc: "Persistent worry, racing thoughts, or panic attacks benefit from professional mental health support." },
+  { title: "Back Pain", desc: "Acute or chronic back pain can affect posture and mobility. Early treatment prevents long-term damage." },
   { title: "Shortness of Breath", desc: "Difficulty breathing can signal respiratory or cardiac conditions. Seek urgent care if sudden or severe." },
-  { title: "Sore Throat",         desc: "Often viral, but strep throat requires antibiotics. Difficulty swallowing needs prompt attention." },
-  { title: "Chest Pain",          desc: "Always take chest pain seriously. It may indicate cardiac, muscular, or gastrointestinal causes." },
-  { title: "Joint Pain",          desc: "Swollen or stiff joints may indicate arthritis or injury. Early diagnosis preserves joint function." },
-  { title: "Loss of Appetite",    desc: "Unexplained appetite loss can be linked to digestive, mental, or systemic health conditions." },
-  { title: "Insomnia",            desc: "Chronic sleep difficulty affects mood, cognition, and immunity. CBT and medical review can help." },
-  { title: "Skin Rash",           desc: "Rashes can signal allergies, infections, or autoimmune conditions. Sudden rashes need evaluation." },
+  { title: "Sore Throat", desc: "Often viral, but strep throat requires antibiotics. Difficulty swallowing needs prompt attention." },
+  { title: "Chest Pain", desc: "Always take chest pain seriously. It may indicate cardiac, muscular, or gastrointestinal causes." },
+  { title: "Joint Pain", desc: "Swollen or stiff joints may indicate arthritis or injury. Early diagnosis preserves joint function." },
+  { title: "Loss of Appetite", desc: "Unexplained appetite loss can be linked to digestive, mental, or systemic health conditions." },
+  { title: "Insomnia", desc: "Chronic sleep difficulty affects mood, cognition, and immunity. CBT and medical review can help." },
+  { title: "Skin Rash", desc: "Rashes can signal allergies, infections, or autoimmune conditions. Sudden rashes need evaluation." },
 ];
 
 const whyUs = [
-  { icon: Award,    title: "Board Certified Doctors", desc: "Every physician is credentialed and continuously trained." },
-  { icon: Clock,    title: "Fast Scheduling",         desc: "Book an appointment in under 60 seconds." },
-  { icon: Video,    title: "Online Consultations",    desc: "See a doctor from anywhere, anytime." },
-  { icon: Shield,   title: "Insurance Support",       desc: "Dedicated team to help navigate your coverage." },
-  { icon: FileText, title: "Personalised Plans",      desc: "Care designed around your unique health profile." },
-  { icon: Pill,     title: "Digital Prescriptions",   desc: "Sent directly to your pharmacy — no paper needed." },
+  { icon: Award, title: "Board Certified Doctors", desc: "Every physician is credentialed and continuously trained." },
+  { icon: Clock, title: "Fast Scheduling", desc: "Book an appointment in under 60 seconds." },
+  { icon: Video, title: "Online Consultations", desc: "See a doctor from anywhere, anytime." },
+  { icon: Shield, title: "Insurance Support", desc: "Dedicated team to help navigate your coverage." },
+  { icon: FileText, title: "Personalised Plans", desc: "Care designed around your unique health profile." },
+  { icon: Pill, title: "Digital Prescriptions", desc: "Sent directly to your pharmacy — no paper needed." },
 ];
 
 const faqData = [
   {
     category: "Appointments",
     items: [
-      { q: "How do I book a primary care appointment?",
-        a: "You can book online in under 60 seconds — just click \"Book Appointment\" at the top of the page, choose a date and time that works for you, and confirm. Same-day slots are often available." },
-      { q: "Can I see a doctor the same day?",
-        a: "Yes. We reserve same-day slots every morning for acute concerns. If you log in before 10 AM, you'll typically find availability for that day." },
-      { q: "What should I bring to my first visit?",
-        a: "Bring a valid photo ID, your insurance card, a list of any current medications, and any recent lab results or specialist notes if you have them." },
+      {
+        q: "How do I book a primary care appointment?",
+        a: "You can book online in under 60 seconds — just click \"Book Appointment\" at the top of the page, choose a date and time that works for you, and confirm. Same-day slots are often available."
+      },
+      {
+        q: "Can I see a doctor the same day?",
+        a: "Yes. We reserve same-day slots every morning for acute concerns. If you log in before 10 AM, you'll typically find availability for that day."
+      },
+      {
+        q: "What should I bring to my first visit?",
+        a: "Bring a valid photo ID, your insurance card, a list of any current medications, and any recent lab results or specialist notes if you have them."
+      },
     ],
   },
   {
     category: "Virtual Care",
     items: [
-      { q: "How does an online consultation work?",
-        a: "After booking, you'll receive a secure video link by email and SMS. At your appointment time, click the link — no app download required." },
-      { q: "What conditions can be treated virtually?",
-        a: "Most common illnesses and follow-ups are well-suited to video care — colds, infections, skin concerns, mental health check-ins, and prescription renewals." },
+      {
+        q: "How does an online consultation work?",
+        a: "After booking, you'll receive a secure video link by email and SMS. At your appointment time, click the link — no app download required."
+      },
+      {
+        q: "What conditions can be treated virtually?",
+        a: "Most common illnesses and follow-ups are well-suited to video care — colds, infections, skin concerns, mental health check-ins, and prescription renewals."
+      },
     ],
   },
   {
     category: "Costs & Insurance",
     items: [
-      { q: "Do you accept my insurance?",
-        a: "We work with most major insurance plans including Aetna, Cigna, UnitedHealth, BlueCross BlueShield, Humana, and Medicare." },
-      { q: "What is the consultation fee if I'm uninsured?",
-        a: "Our self-pay consultation fee is $49 for a standard visit — this covers the appointment, any prescriptions written, a doctor's note if needed, and 24-hour follow-up support." },
-      { q: "Are referrals and lab orders included in the fee?",
-        a: "Yes. Specialist referrals and lab test orders issued during your visit are included at no extra charge." },
+      {
+        q: "Do you accept my insurance?",
+        a: "We work with most major insurance plans including Aetna, Cigna, UnitedHealth, BlueCross BlueShield, Humana, and Medicare."
+      },
+      {
+        q: "What is the consultation fee if I'm uninsured?",
+        a: "Our self-pay consultation fee is $49 for a standard visit — this covers the appointment, any prescriptions written, a doctor's note if needed, and 24-hour follow-up support."
+      },
+      {
+        q: "Are referrals and lab orders included in the fee?",
+        a: "Yes. Specialist referrals and lab test orders issued during your visit are included at no extra charge."
+      },
     ],
   },
   {
     category: "Your Health & Records",
     items: [
-      { q: "How do I access my medical records?",
-        a: "All visit notes, lab results, and prescription history are available in your secure patient portal within 24 hours of your appointment." },
-      { q: "Can my primary care doctor manage chronic conditions?",
-        a: "Absolutely. Chronic disease management is one of our core services. Your physician will create a personalised care plan and coordinate with any specialists you see." },
+      {
+        q: "How do I access my medical records?",
+        a: "All visit notes, lab results, and prescription history are available in your secure patient portal within 24 hours of your appointment."
+      },
+      {
+        q: "Can my primary care doctor manage chronic conditions?",
+        a: "Absolutely. Chronic disease management is one of our core services. Your physician will create a personalised care plan and coordinate with any specialists you see."
+      },
     ],
   },
 ];
@@ -468,9 +491,9 @@ function SectionLabel({ children, variant = "light" }) {
     <span style={{
       display: "inline-block", fontSize: 12, fontWeight: 700,
       letterSpacing: "0.1em", textTransform: "uppercase",
-      color:      variant === "dark" ? "#7CB7FF" : "#0B57E8",
+      color: variant === "dark" ? "#7CB7FF" : "#0B57E8",
       background: variant === "dark" ? "rgba(124,183,255,.12)" : "#EEF4FF",
-      border:     variant === "dark" ? "1px solid rgba(124,183,255,.22)" : "1px solid transparent",
+      border: variant === "dark" ? "1px solid rgba(124,183,255,.22)" : "1px solid transparent",
       padding: "4px 12px", borderRadius: 20, marginBottom: 12,
     }}>
       {children}
@@ -503,7 +526,7 @@ function HeroSection({ data }) {
       <div className="sp-glow sp-glow--tr" />
       <div className="sp-glow sp-glow--bl" />
 
-      <div className="sp-fi sp-fi--1"><HeartPulse  size={44} color="#ffffff" /></div>
+      <div className="sp-fi sp-fi--1"><HeartPulse size={44} color="#ffffff" /></div>
       <div className="sp-fi sp-fi--2"><ShieldCheck size={52} color="#ffffff" /></div>
       <div className="sp-fi sp-fi--3"><Stethoscope size={40} color="#ffffff" /></div>
 
@@ -523,11 +546,11 @@ function HeroSection({ data }) {
 
           <div className="sp-btns" style={{ animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both" }}>
             <a href="/appointment-booking" className="sp-btn sp-btn--primary">
-                            <Calendar size={15} /> Book Appointment
-                        </a>
-                        <a href="#" className="sp-btn sp-btn--ghost">
-                            <Users size={15} /> Know More
-                        </a>
+              <Calendar size={15} /> Book Appointment
+            </a>
+            <a href="#" className="sp-btn sp-btn--ghost">
+              <Users size={15} /> Know More
+            </a>
           </div>
 
           <div className="sp-trust" style={{ animation: "sp-fadeUp .85s .34s cubic-bezier(.22,.68,0,1.2) both" }}>
@@ -571,7 +594,7 @@ function AboutSpecialty() {
           </div>
 
           <div className="sp-stat-row">
-            <div className="sp-stat-pill"><HeartPulse  size={13} /><span>15 K+ Patients</span></div>
+            <div className="sp-stat-pill"><HeartPulse size={13} /><span>15 K+ Patients</span></div>
             <div className="sp-stat-pill"><ShieldCheck size={13} /><span>98% Satisfaction</span></div>
           </div>
         </div>
@@ -599,7 +622,7 @@ function AboutSpecialty() {
               {[
                 "Choose Chronic Kidney Disease care", "Share your symptoms and health history",
                 "Connect with an online provider", "Receive treatment guidance and ongoing care support",
-                
+
               ].map(b => (
                 <div key={b} className="sp-benefit-item">
                   <CheckCircle size={14} className="sp-benefit-check" />
@@ -619,6 +642,7 @@ function AboutSpecialty() {
 // STICKY BOOKING CARD
 // ─────────────────────────────────────────────────────────────────
 function StickyBookingCard() {
+  const navigate = useNavigate();
   const price = useCategoryPrice();
   return (
     <div className="sp-sbc">
@@ -641,16 +665,16 @@ function StickyBookingCard() {
       </div>
 
       <div className="sp-sbc-features">
-        {["Board-certified physician","Rx to your pharmacy","Doctor's note included","24hr follow-up support","HIPAA secure session"]
+        {["Board-certified physician", "Rx to your pharmacy", "Doctor's note included", "24hr follow-up support", "HIPAA secure session"]
           .map((item, i) => (
-          <div key={item} className="sp-sbc-row" style={{ animationDelay: `${0.35 + i * 0.07}s` }}>
-            <CheckCircle size={15} className="sp-sbc-check" />
-            <span className="sp-sbc-feat-text">{item}</span>
-          </div>
-        ))}
+            <div key={item} className="sp-sbc-row" style={{ animationDelay: `${0.35 + i * 0.07}s` }}>
+              <CheckCircle size={15} className="sp-sbc-check" />
+              <span className="sp-sbc-feat-text">{item}</span>
+            </div>
+          ))}
       </div>
 
-      <button className="sp-sbc-cta">Start Consultation →</button>
+      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=chronic&condition=Chronic%20Kidney%20Disease")}>Start Consultation →</button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">Terms of Service</a> and{" "}
@@ -664,9 +688,9 @@ function StickyBookingCard() {
 // SYMPTOMS CHIPS — direction-aware, JS-driven active state
 // ─────────────────────────────────────────────────────────────────
 function SymptomsChips() {
-  const [activeIdx, setActiveIdx]   = useState(null);
-  const [goLeft, setGoLeft]         = useState({});   // { [i]: bool }
-  const wrapRefs                    = {};              // populated by ref callbacks
+  const [activeIdx, setActiveIdx] = useState(null);
+  const [goLeft, setGoLeft] = useState({});   // { [i]: bool }
+  const wrapRefs = {};              // populated by ref callbacks
 
   const EXPANDED_W = 300;
 
@@ -674,7 +698,7 @@ function SymptomsChips() {
     // Measure available space to the right before committing direction
     const node = wrapRefs[i];
     if (node) {
-      const rect       = node.getBoundingClientRect();
+      const rect = node.getBoundingClientRect();
       const spaceRight = window.innerWidth - rect.right;
       setGoLeft(prev => ({ ...prev, [i]: spaceRight < EXPANDED_W + 16 }));
     }
@@ -744,17 +768,19 @@ function RelatedSpecialties() {
           {relatedSpecialties.map((s, idx) => (
             <div
               key={idx}
-              style={{ background: s.color, borderRadius: 16, padding: "24px 20px", cursor: "pointer",
-                transition: "all .25s", display: "flex", flexDirection: "column", gap: 14 }}
+              style={{
+                background: s.color, borderRadius: 16, padding: "24px 20px", cursor: "pointer",
+                transition: "all .25s", display: "flex", flexDirection: "column", gap: 14
+              }}
               onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 40px -10px rgba(11,40,100,.15)"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
             >
-              <div style={{ width:44, height:44, borderRadius:10, background:"rgba(255,255,255,0.7)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <s.icon size={20} style={{ color: s.accent }} />
               </div>
               <div>
-                <p style={{ fontSize:14, fontWeight:700, color:"#0A1F44", marginBottom:4 }}>{s.name}</p>
-                <span style={{ display:"flex", alignItems:"center", gap:4, fontSize:12, color:"#5C7099", fontWeight:500 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#0A1F44", marginBottom: 4 }}>{s.name}</p>
+                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#5C7099", fontWeight: 500 }}>
                   Learn More <ArrowRight size={12} />
                 </span>
               </div>
@@ -773,29 +799,33 @@ function WhyChooseUs() {
   return (
     <section style={{ background: "#0A1F44", padding: "80px 0" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
-        <div style={{ textAlign:"center", marginBottom:52 }}>
+        <div style={{ textAlign: "center", marginBottom: 52 }}>
           <SectionLabel variant="dark">Why HumanCare Connect</SectionLabel>
-          <h2 style={{ fontSize:36, fontWeight:800, color:"#fff", fontFamily:"'Georgia',serif", marginTop:8 }}>
+          <h2 style={{ fontSize: 36, fontWeight: 800, color: "#fff", fontFamily: "'Georgia',serif", marginTop: 8 }}>
             The Standard of Modern Healthcare
           </h2>
-          <p style={{ color:"#7CB7FF", fontSize:16, marginTop:12 }}>Built for patients who deserve better.</p>
+          <p style={{ color: "#7CB7FF", fontSize: 16, marginTop: 12 }}>Built for patients who deserve better.</p>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(min(100%,300px),1fr))", gap:20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,300px),1fr))", gap: 20 }}>
           {whyUs.map(w => (
             <div
               key={w.title}
-              style={{ background:"rgba(255,255,255,.06)", backdropFilter:"blur(12px)",
-                border:"1px solid rgba(255,255,255,.12)", borderRadius:16, padding:"28px 24px",
-                transition:"all .25s", cursor:"default" }}
-              onMouseEnter={e => { e.currentTarget.style.background="rgba(255,255,255,.12)"; e.currentTarget.style.transform="translateY(-4px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background="rgba(255,255,255,.06)"; e.currentTarget.style.transform="translateY(0)"; }}
+              style={{
+                background: "rgba(255,255,255,.06)", backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,.12)", borderRadius: 16, padding: "28px 24px",
+                transition: "all .25s", cursor: "default"
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.12)"; e.currentTarget.style.transform = "translateY(-4px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.06)"; e.currentTarget.style.transform = "translateY(0)"; }}
             >
-              <div style={{ width:44, height:44, borderRadius:10, background:"rgba(11,87,232,.3)",
-                display:"flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}>
-                <w.icon size={20} style={{ color:"#7CB7FF" }} />
+              <div style={{
+                width: 44, height: 44, borderRadius: 10, background: "rgba(11,87,232,.3)",
+                display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16
+              }}>
+                <w.icon size={20} style={{ color: "#7CB7FF" }} />
               </div>
-              <p style={{ fontSize:15, fontWeight:700, color:"#fff", marginBottom:8 }}>{w.title}</p>
-              <p style={{ fontSize:13, color:"#7CB7FF", lineHeight:1.65 }}>{w.desc}</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 8 }}>{w.title}</p>
+              <p style={{ fontSize: 13, color: "#7CB7FF", lineHeight: 1.65 }}>{w.desc}</p>
             </div>
           ))}
         </div>
@@ -812,8 +842,8 @@ function FaqSection() {
   const toggle = id => setOpenId(prev => prev === id ? null : id);
 
   return (
-    <section style={{ background:"#F7FAFF", padding:"90px 0" }}>
-      <div style={{ maxWidth:1240, margin:"0 auto", padding:"0 24px" }}>
+    <section style={{ background: "#F7FAFF", padding: "90px 0" }}>
+      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
         <div className="sp-faq-layout">
 
           {/* Sidebar */}

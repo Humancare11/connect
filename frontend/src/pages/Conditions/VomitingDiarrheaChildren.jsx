@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
   Calendar,
@@ -805,6 +806,7 @@ function AboutSpecialty() {
 // STICKY BOOKING CARD
 // ─────────────────────────────────────────────────────────────────
 function StickyBookingCard() {
+  const navigate = useNavigate();
   const price = useCategoryPrice();
   return (
     <div className="sp-sbc">
@@ -854,7 +856,7 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta">Start Consultation →</button>
+      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=family&condition=Vomiting%20and%20Diarrhea%20in%20Children")}>Start Consultation →</button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">

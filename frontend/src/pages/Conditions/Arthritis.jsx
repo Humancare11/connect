@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
   Calendar,
@@ -40,6 +41,8 @@ import {
 } from "lucide-react";
 
 import arthritisImage from "./arthritis.jpeg";
+import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Arthritis.webp";
+
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -407,7 +410,7 @@ const pageData = {
   heading: "Arthritis",
   description: "Joint pain, swelling, and stiffness",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-  bgImage: arthritisImage,
+  bgImage: ConditionBannerImage,
 };
 
 const relatedSpecialties = [
@@ -803,6 +806,7 @@ function AboutSpecialty() {
 // STICKY BOOKING CARD
 // ─────────────────────────────────────────────────────────────────
 function StickyBookingCard() {
+  const navigate = useNavigate();
   const price = useCategoryPrice();
   return (
     <div className="sp-sbc">
@@ -852,7 +856,7 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta">Start Consultation →</button>
+      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=chronic&condition=Arthritis")}>Start Consultation →</button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">

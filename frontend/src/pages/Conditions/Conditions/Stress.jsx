@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import {
@@ -316,7 +317,7 @@ export default function  Stress() {
                 ))}
               </div>
 
-              <button className="condition-sbc-cta">
+              <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Stress")}>
                 Start Consultation →
               </button>
               <p className="condition-sbc-terms">

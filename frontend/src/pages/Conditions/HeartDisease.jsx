@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
     Calendar, Star, Shield, ShieldCheck, Clock, Video, Pill, Heart, Activity,
@@ -8,6 +9,7 @@ import {
     HeartPulse, Syringe, Eye, Bone, CircleDot, Smile, TrendingUp,
     MessageCircle, X
 } from "lucide-react";
+import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Heart-Disease-Follow-Up.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -376,7 +378,7 @@ const pageData = {
     description:
         "Ongoing care after heart treatment",
     trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-    bgImage: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+    bgImage: ConditionBannerImage,
 };
 
 const relatedSpecialties = [
@@ -610,7 +612,7 @@ function AboutSpecialty() {
                         <h3 className="sp-block-title">How?</h3>
                         <p className="sp-block-body">
                             Stay on top of your heart health with Humancare Connect. Our telemedicine services make it easy to schedule an online doctor appointment and connect with a licensed provider from home. Through our secure virtual healthcare services, you can receive follow-up evaluations, heart health guidance, treatment recommendations, and prescriptions when appropriate without frequent in-person visits.
-                            </p>
+                        </p>
                     </div>
 
                     <div>
@@ -639,6 +641,7 @@ function AboutSpecialty() {
 // STICKY BOOKING CARD
 // ─────────────────────────────────────────────────────────────────
 function StickyBookingCard() {
+    const navigate = useNavigate();
     const price = useCategoryPrice();
     return (
         <div className="sp-sbc">
@@ -670,7 +673,7 @@ function StickyBookingCard() {
                     ))}
             </div>
 
-            <button className="sp-sbc-cta">Start Consultation →</button>
+            <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=chronic&condition=Heart%20Disease%20Follow-Up")}>Start Consultation →</button>
             <p className="sp-sbc-terms">
                 By continuing, you agree to our{" "}
                 <a href="#" className="sp-sbc-link">Terms of Service</a> and{" "}

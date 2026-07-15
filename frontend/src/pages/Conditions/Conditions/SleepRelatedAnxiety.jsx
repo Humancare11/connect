@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import {
@@ -119,6 +120,7 @@ const faqData = [
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
 export default function SleepRelatedAnxiety() {
+  const navigate = useNavigate();
   const price = useCategoryPrice();
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
@@ -329,7 +331,7 @@ export default function SleepRelatedAnxiety() {
                 ))}
               </div>
 
-              <button className="condition-sbc-cta">
+              <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Sleep-Related%20Anxiety")}>
                 Start Consultation →
               </button>
               <p className="condition-sbc-terms">

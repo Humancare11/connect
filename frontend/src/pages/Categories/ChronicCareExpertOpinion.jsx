@@ -77,7 +77,7 @@ const cat = {
     {
       name: "Heart Disease Follow-Up",
       desc: "Ongoing care after heart treatment",
-      path: "/heart-disease",
+      path: "/heart-disease-follow-up",
     },
     {
       name: "High Blood Pressure",
