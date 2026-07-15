@@ -260,9 +260,9 @@ export default function CategoryConsultant({ onComplete }) {
       const selection = {
         catId: categoryId,
         catLabel: categoryLabel,
-        specName: "Category Consultation",
+        specName: specialtyName || "",
         specIco: "stethoscope",
-        condName: "General Consultation Request",
+        condName: conditionName || "",
         condIco: "activity",
         cost: price,
         currency: "USD",

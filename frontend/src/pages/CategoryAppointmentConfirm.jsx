@@ -232,11 +232,13 @@ export default function CategoryAppointmentConfirm() {
           </div>
           <div className="ap-hero-body">
             <span className="ap-hero-eyebrow">{selection.catLabel}</span>
-            <h2 className="ap-hero-name">{selection.specName}</h2>
-            <span className="ap-hero-spec">
-              <HealthcareIcon name={selection.condIco} size={16} />{" "}
-              {selection.condName}
-            </span>
+            <h2 className="ap-hero-name">{selection.specName || selection.catLabel}</h2>
+            {selection.condName && (
+              <span className="ap-hero-spec">
+                <HealthcareIcon name={selection.condIco} size={16} />{" "}
+                {selection.condName}
+              </span>
+            )}
           </div>
           {stage === "form" && (
             <div className="ap-hero-fee">

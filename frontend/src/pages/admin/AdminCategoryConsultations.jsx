@@ -197,12 +197,11 @@ export default function AdminCategoryConsultations() {
                     <td>
                       {item.conditionName ? (
                         <div style={{ fontSize: "0.85rem" }}>
-                          <div><strong>Cond:</strong> {item.conditionName}</div>
-                          {item.specialtyName && <div style={{ fontSize: "0.75rem", color: "#666" }}>Spec: {item.specialtyName}</div>}
+                          <div><strong>Condition:</strong> <br /> {item.conditionName}</div>
                         </div>
                       ) : item.specialtyName ? (
                         <div style={{ fontSize: "0.85rem" }}>
-                          <div><strong>Spec:</strong> {item.specialtyName}</div>
+                          <div><strong>Speciality:</strong> <br /> {item.specialtyName}</div>
                         </div>
                       ) : (
                         <span style={{ fontSize: "0.85rem", color: "#666" }}>{item.categoryName || "Category"}</span>

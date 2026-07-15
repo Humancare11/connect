@@ -857,7 +857,7 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&specialty=Mental%20Health%20Support&condition=Mood%20%26%20Anxiety%20in%20Teens")}>Start Consultation →</button>
+      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=family&condition=Mood%20%26%20Anxiety%20in%20Teens")}>Start Consultation →</button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
