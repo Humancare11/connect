@@ -446,6 +446,7 @@ app.use("/api/notes", require("./routes/consultationNotes"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));
+app.use("/api/services", require("./routes/services"));
 app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
 app.use("/api/retention-policies", require("./routes/retention"));

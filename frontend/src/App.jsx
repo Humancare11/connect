@@ -50,6 +50,7 @@ import HowTelemedicineAppointmentWork from "./pages/Blogs/HowTelemedicineAppoint
 import OnlineDoctorConsultation from "./pages/Blogs/OnlineDoctorConsultation";
 import MedicalConditions from "./pages/Blogs/MedicalConditions";
 import TopTelemedicinePlatforms from "./pages/Blogs/TopTelemedicinePlatforms";
+import ServicesPrices from "./pages/admin/ServicesPrices"; // Services Prices Page
 
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
@@ -1370,6 +1371,10 @@ function AppLayout() {
                 </AdminLayout>
               </PrivateRoute>
             }
+          />
+          <Route
+            path="/services-prices"
+            element={<ServicesPrices />}
           />
           <Route
             path="/admin-auth"

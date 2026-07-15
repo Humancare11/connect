@@ -312,7 +312,8 @@
 }
 
 .sa-field input,
-.sa-field select {
+.sa-field select,
+.sa-field textarea {
   width: 100%;
   padding: 10px 13px;
   border: 1.5px solid #e5e7eb;
@@ -324,9 +325,11 @@
 }
 
 .sa-field input:focus,
-.sa-field select:focus { border-color: #6d28d9; }
+.sa-field select:focus,
+.sa-field textarea:focus { border-color: #6d28d9; }
 .sa-field input:disabled,
-.sa-field select:disabled { opacity: 0.6; }
+.sa-field select:disabled,
+.sa-field textarea:disabled { opacity: 0.6; }
 
 .sa-create-btn {
   align-self: flex-start;
@@ -359,4 +362,47 @@
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 13px;
+}
+
+.sp-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sp-cancel-btn {
+  padding: 10px 20px;
+  background: #fff;
+  color: #374151;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sp-icon-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+
+.sp-icon-text {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #f3f4f6;
+  font-size: 18px;
+}
+
+.sp-textarea {
+  min-height: 92px;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
 }

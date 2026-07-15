@@ -42,7 +42,8 @@ const inferAuthRoleFromUrl = (url = "") => {
     value.startsWith("/api/auth/admin") ||
     value.startsWith("/api/auth/payment-admin") ||
     value.startsWith("/api/payments/admin") ||
-    value.startsWith("/api/pricing")
+    value.startsWith("/api/pricing") ||
+    value.startsWith("/api/services")
   ) {
     return "admin";
   }
