@@ -28,6 +28,7 @@ const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
+const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
 
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
@@ -822,6 +823,9 @@ const AdminAppointmentDetails = lazy(
 const AdminCategoryConsultations = lazy(
   () => import("./pages/admin/AdminCategoryConsultations"),
 );
+const AdminDirectVideoConsultation = lazy(
+  () => import("./pages/admin/AdminDirectVideoConsultation"),
+);
 
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
@@ -1076,7 +1080,8 @@ function AppLayout() {
     location.pathname.startsWith("/employee") ||
     location.pathname.startsWith("/user") ||
     location.pathname.startsWith("/pay/") ||
-    location.pathname.startsWith("/video-call");
+    location.pathname.startsWith("/video-call") ||
+    location.pathname.startsWith("/direct-video-call");
 
   return (
     <>
@@ -1481,6 +1486,16 @@ function AppLayout() {
             }
           />
           <Route
+            path="/admin-dashboard/direct-video-consultation"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDirectVideoConsultation />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/admin-dashboard/category-consultations/:id"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
@@ -1549,6 +1564,7 @@ function AppLayout() {
             }
           />
           <Route path="/video-call/:appointmentId" element={<VideoCall />} />
+          <Route path="/direct-video-call/:roomId" element={<DirectVideoCall />} />
           {/* ALL*/}
           <Route path="/categories" element={<Categories />} />
           <Route path="/specialties" element={<Specialties />} />

@@ -484,6 +484,29 @@
   animation: vc-slide-up .3s ease;
 }
 
+/* Reconnect stalled notice — like peer-left-notice, offset higher so it
+   never overlaps that banner if both happen to show at once */
+.hc-vc__reconnect-stalled-notice {
+  position: absolute;
+  bottom: 136px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(239, 68, 68, .12);
+  border: 1px solid rgba(239, 68, 68, .3);
+  color: #fca5a5;
+  padding: 10px 22px;
+  border-radius: 50px;
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+  z-index: 10;
+  animation: vc-slide-up .3s ease;
+}
+
 .hc-vc__playback-unblock {
   position: absolute;
   left: 50%;

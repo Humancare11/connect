@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
 import {
   Globe2, ArrowRight, Plane, Stethoscope, Brain, Activity,
   ClipboardPlus, HeartPulse, Venus, Mars, Baby, ShieldCheck,
@@ -84,221 +83,190 @@ const carouselSlides = [
 ];
 
 // ── Full specialties list (30) ───────────────────────────────────────────────
-export const specialties = [
+const specialties = [
   {
     name: "General Physician (GP)",
-    path: "/general-physician",
     icon: Stethoscope,
-    description: "Trusted primary healthcare for common illnesses, preventive care, chronic condition management, routine checkups, and everyday medical concerns for adults and families.",
-    tags: ["Body Aches","Cold & Flu", "Cough", "Fatigue", "Fever","Headache","Minor Infections","Nausea & Vomiting","Pink Eye","Sinus Infection"],
+    description: "Everyday care, preventive guidance, medication support, and follow-up consultations.",
+    tags: ["Cold & Flu", "Fever", "Fatigue", "Headache"],
   },
   {
     name: "Internal Medicine",
-    path: "/internal-medicine",
     icon: ClipboardPlus,
-    description: "Expert adult healthcare for chronic conditions, preventive screenings, medication reviews, complex symptoms, and personalized care focused on long-term health and wellness.",
-    tags: ["Medication Review", "Multi-System Complaints", "Preventive Screening","Undiagnosed Symptoms"],
+    description: "Diagnosis and management of complex or overlapping adult health conditions.",
+    tags: ["Diagnosis", "Lab Review", "Check-ups"],
   },
   {
     name: "Family Medicine",
-    path: "/family-medicine",
     icon: HeartHandshake,
-    description: "Comprehensive healthcare for individuals and families of all ages, including preventive care, routine checkups, chronic condition management, vaccinations, and everyday medical needs.",
-    tags: ["Whole-Family Illnesses", "Vaccination Advice", "Routine Check-Ups"],
+    description: "Continuing care for every age and stage, from infants to grandparents.",
+    tags: ["All Ages", "Preventive", "Check-ups"],
   },
   {
     name: "Psychiatry",
-    path: "/psychiatry",
     icon: Brain,
-    description: "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support",
-    tags: ["Anxiety", "Depression","ADHD Evaluation","Bipolar Disorder Follow-Up","Insomnia","OCD","Panic Attacks","PTSD"]
+    description: "Clinical assessment and medication management for mental health conditions.",
+    tags: ["Anxiety", "Depression", "Medication"],
   },
   {
-    name: "Psychology Counseling",
-    path: "/psychology-counseling",
+    name: "Psychology / Counselling",
     icon: MessageCircle,
-    description: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
-    tags: ["Trauma Support", "Stress", "Relationship Stress","Low Self-Esteem","Grief and Loss"],
+    description: "Talk therapy and coping strategies for stress, mood, and life transitions.",
+    tags: ["Therapy", "Stress", "Coping Skills"],
   },
   {
     name: "Behavioral Health",
-    path: "/behavioral-health",
     icon: Activity,
-    description: "Professional support for stress, anxiety-related concerns, life transitions, emotional wellness, anger management, sleep challenges, and healthier coping strategies.",
-    tags: ["Adjustment Difficulties", "Anger Management", "Sleep-Related Anxiety","Substance Use Support"],
+    description: "Support for habits, routines, and behavior patterns affecting wellbeing.",
+    tags: ["Habits", "Burnout", "Routine"],
   },
   {
     name: "Dermatology",
-    path: "/dermatology",
     icon: HeartPulse,
-    description: "Expert care for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail disorders, skin rashes, and long-term skin, hair, and nail health.",
-    tags: ["Acne", "Cold Sores", "Eczema","Fungal Skin Infection","Hair Loss","Hives","Mole & Skin Checks","Nail Problems","Psoriasis","Rosacea","Skin Rash","Warts"],
+    description: "Skin, hair, and nail concerns reviewed and treated by a specialist.",
+    tags: ["Acne", "Rash", "Hair Loss"],
   },
   {
     name: "Obstetrics & Gynaecology (OB-GYN)",
-    path: "/obstetrics-and-gynaecology",
     icon: Venus,
-    description: "Comprehensive women's healthcare for PCOS, fertility concerns, pregnancy support, birth control consultations, menstrual health, pelvic pain, vaginal infections, hormonal balance, and reproductive wellness.",
-    tags: ["Bacterial Vaginosis", "Birth Control Consultation", "Fertility Concerns","Irregular Periods","Menstrual Cramps","PCOS",
-"Pelvic Pain","Prenatal Consultation","Vaginal Yeast Infection"],
+    description: "Reproductive health, pregnancy guidance, and gynaecological care.",
+    tags: ["Pregnancy", "Cycle Health", "PCOS"],
   },
   {
     name: "Menopause Care",
-    path: "/menopause-care",
     icon: Venus,
     description: "Hormonal symptom management and guidance through perimenopause and beyond.",
     tags: ["Hot Flashes", "Hormones", "Sleep"],
   },
   {
     name: "Women's Mental Health",
-    path: "/women-mental-health",
     icon: Brain,
-    description: "Compassionate support for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, parenting stress, emotional wellness, anxiety management, and women's mental health care.",
-    tags: ["Postnatal Depression", "Perinatal Anxiety", "PMDD"],
+    description: "Mental health support tailored to hormonal and life-stage changes.",
+    tags: ["Postpartum", "Mood", "Anxiety"],
   },
   {
     name: "Lactation Consulting",
-    path: "/lactation-consulting",
     icon: BabyIcon,
-    description: "Expert breastfeeding support for latch difficulties, low milk supply, nipple pain, pumping guidance, infant feeding concerns, weaning transitions, and postpartum feeding success.",
-    tags: ["Latch Problems", "Latch Problems", "Nipple Pain","Weaning Guidance"],
+    description: "Breastfeeding guidance and support for new and expecting parents.",
+    tags: ["Breastfeeding", "Latching", "Newborn"],
   },
   {
     name: "Men's Health",
-    path: "/mens-health",
     icon: Mars,
-    description: "Expert care for testosterone imbalance, erectile dysfunction, prostate health, fertility concerns, hair loss, sexual wellness, and healthy aging with personalized treatment plans.",
-    tags: ["Prostate Health", "Low Testosterone Symptoms", "Low Libido","Hair Loss","Erectile Dysfunction"],
+    description: "Preventive and condition-specific care focused on men's wellbeing.",
+    tags: ["Hormones", "Fitness", "Screening"],
   },
   {
     name: "Urology",
-    path: "/urology",
     icon: Activity,
     description: "Diagnosis and treatment of urinary tract and reproductive system issues.",
     tags: ["UTI", "Kidney Stones", "Prostate"],
   },
   {
     name: "Pediatrics",
-    path: "/pediatrics",
     icon: Baby,
-    description: "Kids’ Care Comprehensive care for infants, children and teens, from routine wellness exams and vaccinations to illness treatment, developmental support and preventive care that promotes healthy growth.",
-    tags: ["Ear Pain in Children", "Feeding Concerns", "Pediatric Cold & Flu","Pediatric Fever","Skin Rash in Children"],
+    description: "Growth, development, and illness care for infants, children, and teens.",
+    tags: ["Growth", "Vaccines", "Fever"],
   },
   {
     name: "Adolescent Medicine",
-    path: "/adolescent-medicine",
     icon: Users,
-    description: "Adolescent Medicine Comprehensive health care for teenagers and young adults with support for puberty, mental health, growth, nutrition, sports injuries and overall adolescent wellness",
-    tags: ["Mood & Anxiety in Teens", "Puberty Concerns", "Sports Injuries"],
+    description: "Health guidance focused on the unique needs of teenage patients.",
+    tags: ["Teen Health", "Puberty", "Mental Health"],
   },
   {
     name: "Weight Management",
-    path: "/weight-management",
     icon: Scale,
-    description: "Personalized support for weight loss, obesity management, binge eating concerns, GLP-1 eligibility assessments, nutrition planning, appetite control, and sustainable long-term weight management.",
-    tags: ["Weight Management", "Weight-Loss Planning", "Obesity","GLP-1 Program Eligibility"],
+    description: "Personalized plans and medical guidance for sustainable weight goals.",
+    tags: ["Nutrition", "Metabolism", "Coaching"],
   },
   {
     name: "Nutrition & Dietetics",
-    path: "/nutrition-and-dietetics",
     icon: Soup,
     description: "Dietary guidance from licensed professionals for health and recovery goals.",
-    tags: ["Nutrition & Dietetics ", "Sports Nutrition", "Pregnancy Nutrition","Food Intolerance Planning","Diabetic Diet","Cholesterol-Lowering Diet"],
+    tags: ["Meal Plans", "Allergies", "Wellness"],
   },
   {
     name: "Lifestyle Medicine",
-    path: "/lifestyle-medicine",
     icon: Sparkles,
-    description: "Personalized support for healthy habit coaching, nutrition planning, exercise guidance, sleep improvement, stress management, weight management, preventive wellness, and long-term health optimization.",
-    tags: ["Healthy Habit Coaching", "Diet & Exercise Planning", "Sleep Hygiene"],
+    description: "Evidence-based habit changes to prevent and manage chronic disease.",
+    tags: ["Sleep", "Stress", "Exercise"],
   },
   {
     name: "Cardiology",
-    path: "/cardiology",
     icon: HeartPulse,
-    description: "Expert heart and cardiovascular care for high blood pressure, cholesterol management, heart disease, palpitations, preventive screenings, and long-term heart health support.",
-    tags: ["Chest Pain (Non-Emergency)", "High Cholesterol", "Heart Disease Follow-Up","High Blood Pressure","Palpitations","Pre-Op Cardiac Clearance"],
+    description: "Heart health evaluation, monitoring, and chronic condition management.",
+    tags: ["Hypertension", "Cholesterol", "Heart Rate"],
   },
   {
     name: "Endocrinology",
-    path: "/endocrinology",
     icon: Activity,
-    description: "Specialized care for hormone imbalances, diabetes, thyroid disorders, metabolic conditions, bone health concerns, and long-term endocrine wellness through personalized treatment plans.",
-    tags: ["Type 2 Diabetes", "Thyroid", "Hormone Imbalance","Osteoporosis"],
+    description: "Hormone-related conditions including thyroid and metabolic disorders.",
+    tags: ["Diabetes", "Thyroid", "Hormones"],
   },
   {
     name: "Gastroenterology",
-    path: "/gastroenterology",
     icon: Soup,
     description: "Digestive system care, from everyday symptoms to chronic GI conditions.",
     tags: ["IBS", "Acid Reflux", "Bloating"],
   },
   {
     name: "Neurology",
-    path: "/neurology",
     icon: Brain,
-    description: "Specialized care for migraines, dizziness, memory concerns, seizures, tremors, nerve disorders, and neurological conditions affecting brain and nerve health.",
-    tags: ["Migraine", "Dizziness", "Numbness and Tingling","Chronic Migraine", "Seizures / Epilepsy Follow-Up", "Tremor"],
+    description: "Evaluation and care for conditions affecting the brain and nervous system.",
+    tags: ["Migraine", "Dizziness", "Numbness"],
   },
   {
     name: "Pulmonology",
-    path: "/pulmonology",
     icon: Wind,
-    description: "Expert respiratory care for asthma, COPD, chronic cough, sleep apnea, breathing difficulties, lung conditions, and long-term respiratory health management.",
-    tags: ["Asthma", "Chronic lung disease affecting breathing", "Persistent Cough","Post-COVID Concerns", "Shortness of Breath", "Sleep Apnea"],
+    description: "Respiratory and lung condition diagnosis, treatment, and monitoring.",
+    tags: ["Asthma", "Cough", "Breathing"],
   },
   {
     name: "Expert Medical Opinion",
-    path: "/export-medical-opinion",
     icon: FileSearch,
-    description: "Gain clarity and confidence with specialist reviews of diagnoses, treatment plans, surgery recommendations, cancer care options, and complex medical conditions.",
-    tags: ["Cancer Second Opinion", "Complex Diagnosis Review","Second Medical Opinion","Surgery Second Opinion","Treatment Plan Review"],
+    description: "A second specialist review of your diagnosis, records, or treatment plan.",
+    tags: ["Second Opinion", "Records Review"],
   },
   {
     name: "Ophthalmology",
-    path: "/ophthalmology",
     icon: Eye,
-    description: "Expert eye care for dry eyes, vision changes, eye infections, redness, eye strain, and long-term vision health with personalized treatment and support.",
-    tags: ["Vision Changes", "Stye", "Eye Strain","Eye Redness","Eye Irritation","Dry Eyes"],
+    description: "Eye health consultations covering vision changes and common conditions.",
+    tags: ["Vision", "Eye Strain", "Irritation"],
   },
   {
     name: "ENT (Ear, Nose & Throat)",
-    path: "/ent",
     icon: Ear,
-    description: "Specialized care for ear infections, sinus problems, sore throats, hearing concerns, vertigo, voice disorders, and conditions affecting the ear, nose, and throat.",
-    tags: ["Ear Infection", "Ear Pain", "Hoarseness","Nasal Congestion","Sore Throat","Tonsillitis","Vertigo"],
+    description: "Care for ear, nose, sinus, and throat symptoms and conditions.",
+    tags: ["Sinusitis", "Sore Throat", "Hearing"],
   },
   {
     name: "Orthopedics",
-    path: "/orthopedics",
     icon: Bone,
-    description: "Specialized care for joint pain, arthritis, back and neck pain, sports injuries, muscle strains, and musculoskeletal conditions to improve mobility and quality of life.",
-    tags: ["Osteoarthritis", "Neck Pain", "Muscle Strain","Knee Pain","Back Pain","Back Pain","Arthritis"],
+    description: "Bone, joint, and muscle care for pain, injury, and mobility issues.",
+    tags: ["Joint Pain", "Sports Injury", "Mobility"],
   },
   {
     name: "Sexual Health",
-    path: "/speciality-sexual-health",
     icon: ShieldCheck,
-    description: "Confidential care for STI concerns, HIV prevention, PrEP guidance, herpes, chlamydia, gonorrhea, partner exposure risks, and overall sexual wellness.",
-    tags: ["STI Consultation", "Safe Sex Counseling","Partner Exposure Concerns","HIV Prevention / PrEP Guidance","Herpes","Gonorrhea","Chlamydia"],
+    description: "Confidential consultations for sexual health concerns and screening.",
+    tags: ["STI Screening", "Confidential"],
   },
   {
     name: "Travel Medicine",
-    path: "/travel-medicine",
     icon: Plane,
-    description: " Expert travel health support for pre-travel consultations, vaccination guidance, malaria prevention, traveler's diarrhea, altitude sickness, post-travel illness evaluations, and destination-specific health risks.",
-    tags: ["Food Poisoning While Traveling", "Altitude Sickness","Malaria Prevention","Post-Travel Symptoms","Pre-Travel Vaccination","Travel-Related Fever","Traveler’s Diarrhea",],
+    description: "Pre-trip vaccinations and care for illness while traveling abroad.",
+    tags: ["Vaccinations", "Travel Illness"],
   },
   {
-    name: "Global Cross-Border Care",
-    path: "/global-cross-border-care",
+    name: "Global / Cross-Border Care",
     icon: Globe2,
-    description: "International healthcare support for travelers, expatriates, medical tourists, medication refill assistance, specialist referrals, chronic care follow-ups, and secure telemedicine consultations across borders.",
-    tags: ["Cross-Border Consultation", "International Medical Assistance","Medication Refill While Traveling","Referral Coordination Overseas"],
+    description: "Coordinated medical access and continuity of care across countries.",
+    tags: ["Cross-Border", "Continuity of Care"],
   },
 ];
 
-// ── Stats ─────────────────────────────────────────────────────────────────────
+// ── Stats (derived from real data so copy can't drift out of sync) ──────────
 const stats = [
   [String(specialties.length), "Specialties"],
   ["11", "Categories"],
@@ -332,7 +300,7 @@ const audiences = [
   },
 ];
 
-// ── Browse-by-condition list ─────────────────────────────────────────────────
+// ── Browse-by-condition list ────────────────────────────────────────────────
 const conditions = [
   { name: "Arthritis", icon: Bone },
   { name: "Cancer Second Opinion", icon: ShieldCheck },
@@ -344,7 +312,7 @@ const conditions = [
   { name: "Heart Disease", icon: Heart },
 ];
 
-// ── FAQ data ─────────────────────────────────────────────────────────────────
+// ── FAQ data ──────────────────────────────────────────────────────────────
 const faqGroups = [
   {
     label: "About Specialist Doctors",
@@ -376,6 +344,7 @@ const faqGroups = [
       },
     ],
   },
+
   {
     label: "Consultations & Treatment",
     icon: Globe2,
@@ -406,6 +375,7 @@ const faqGroups = [
       },
     ],
   },
+
   {
     label: "Privacy, Support & Benefits",
     icon: CheckCircle2,
@@ -442,6 +412,8 @@ const faqGroups = [
   },
 ];
 
+// JSON-LD FAQPage structured data, built from the same FAQ content above so
+// the rich-result markup can never drift out of sync with what's on screen.
 const faqJsonLd = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -457,17 +429,19 @@ const faqJsonLd = {
   ),
 };
 
-// ── HeroCarousel ─────────────────────────────────────────────────────────────
+// ── HeroCarousel component ────────────────────────────────────────────────────
 function HeroCarousel() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const [direction, setDirection] = useState("next");
+  const [direction, setDirection] = useState("next"); // "next" | "prev"
   const [isPaused, setIsPaused] = useState(false);
 
   const total = carouselSlides.length;
   const slide = carouselSlides[slideIndex];
 
+  // Refs keep goTo/goToOffset stable across renders so the autoplay effect
+  // below doesn't tear down and restart its timer on every animation tick.
   const slideIndexRef = useRef(slideIndex);
   const animatingRef = useRef(false);
 
@@ -488,13 +462,10 @@ function HeroCarousel() {
     }, 320);
   }, []);
 
-  const goToOffset = useCallback(
-    (offset, dir) => {
-      const current = slideIndexRef.current;
-      goTo((current + offset + total) % total, dir);
-    },
-    [goTo, total]
-  );
+  const goToOffset = useCallback((offset, dir) => {
+    const current = slideIndexRef.current;
+    goTo((current + offset + total) % total, dir);
+  }, [goTo, total]);
 
   const prev = () => goToOffset(-1, "prev");
   const next = () => goToOffset(1, "next");
@@ -504,6 +475,8 @@ function HeroCarousel() {
     goTo(i, i > slideIndex ? "next" : "prev");
   };
 
+  // Auto-advance every 5s. Pauses on hover/focus (keyboard users included)
+  // and while the tab isn't visible, per WCAG 2.2.2 (pausable auto content).
   useEffect(() => {
     if (isPaused) return;
     const id = setInterval(() => {
@@ -527,12 +500,10 @@ function HeroCarousel() {
         onFocus={() => setIsPaused(true)}
         onBlur={() => setIsPaused(false)}
       >
+
+        {/* ── Dark inner card (animated) ── */}
         <div
-          className={`sp-hero__card-dark sp-carousel__slide ${
-            animating
-              ? `sp-carousel__slide--exit-${direction}`
-              : "sp-carousel__slide--enter"
-          }`}
+          className={`sp-hero__card-dark sp-carousel__slide ${animating ? `sp-carousel__slide--exit-${direction}` : "sp-carousel__slide--enter"}`}
         >
           <div className="sp-hero__card-top">
             <div>
@@ -554,56 +525,37 @@ function HeroCarousel() {
           </div>
         </div>
 
+        {/* ── Tab mini-grid ── */}
         <div className="sp-hero__mini-grid">
           {slide.tabs.map(({ name, icon: Icon, tags }, i) => (
             <button
               key={name}
               type="button"
-              className={`sp-hero__mini-card sp-hero__mini-card--btn${
-                activeTab === i ? " sp-hero__mini-card--active" : ""
-              }`}
+              className={`sp-hero__mini-card sp-hero__mini-card--btn${activeTab === i ? " sp-hero__mini-card--active" : ""}`}
               onClick={() => setActiveTab(i)}
               aria-pressed={activeTab === i}
             >
-              <Icon
-                size={20}
-                style={{
-                  color: activeTab === i ? "var(--white)" : "var(--teal)",
-                }}
-              />
+              <Icon size={20} style={{ color: activeTab === i ? "var(--white)" : "var(--teal)" }} />
               <div className="sp-hero__mini-name">{name}</div>
               <div className="sp-hero__mini-tags">{tags.join(" · ")}</div>
             </button>
           ))}
         </div>
 
-        <div
-          className="sp-hero__tab-preview"
-          key={`${slideIndex}-${activeTab}`}
-        >
-          <ActiveTabIcon
-            size={16}
-            style={{ color: "var(--teal)", flexShrink: 0 }}
-          />
-          <span className="sp-hero__tab-preview-name">
-            {activeTabData.name}
-          </span>
+        {/* ── Active tab expanded preview ── */}
+        <div className="sp-hero__tab-preview" key={`${slideIndex}-${activeTab}`}>
+          <ActiveTabIcon size={16} style={{ color: "var(--teal)", flexShrink: 0 }} />
+          <span className="sp-hero__tab-preview-name">{activeTabData.name}</span>
           <div className="sp-hero__tab-preview-tags">
-            {activeTabData.tags.map((t) => (
-              <span key={t} className="sp-hero__tab-preview-tag">
-                {t}
-              </span>
+            {activeTabData.tags.map(t => (
+              <span key={t} className="sp-hero__tab-preview-tag">{t}</span>
             ))}
           </div>
         </div>
 
+        {/* ── Carousel controls ── */}
         <div className="sp-carousel__controls">
-          <button
-            type="button"
-            className="sp-carousel__btn"
-            onClick={prev}
-            aria-label="Previous slide"
-          >
+          <button type="button" className="sp-carousel__btn" onClick={prev} aria-label="Previous slide">
             <ChevronLeft size={16} />
           </button>
 
@@ -614,39 +566,28 @@ function HeroCarousel() {
                 type="button"
                 role="tab"
                 aria-selected={slideIndex === i}
-                className={`sp-carousel__dot${
-                  slideIndex === i ? " sp-carousel__dot--active" : ""
-                }`}
+                className={`sp-carousel__dot${slideIndex === i ? " sp-carousel__dot--active" : ""}`}
                 onClick={() => handleDotClick(i)}
                 aria-label={`Go to slide ${i + 1}`}
               />
             ))}
           </div>
 
-          <button
-            type="button"
-            className="sp-carousel__btn"
-            onClick={next}
-            aria-label="Next slide"
-          >
+          <button type="button" className="sp-carousel__btn" onClick={next} aria-label="Next slide">
             <ChevronRight size={16} />
           </button>
         </div>
+
       </div>
     </div>
   );
 }
 
-// ── FAQ Accordion item ────────────────────────────────────────────────────────
+// ── FAQ Accordion item ───────────────────────────────────────────────────────
 function FaqItem({ q, a, isOpen, onToggle }) {
   return (
     <div className={`sp-faq__item${isOpen ? " sp-faq__item--open" : ""}`}>
-      <button
-        type="button"
-        className="sp-faq__item-head"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-      >
+      <button type="button" className="sp-faq__item-head" onClick={onToggle} aria-expanded={isOpen}>
         <span className="sp-faq__item-q">{q}</span>
         <span className="sp-faq__item-icon">
           {isOpen ? <Minus size={13} /> : <Plus size={13} />}
@@ -675,53 +616,43 @@ export default function Specialties() {
   return (
     <>
       <Helmet>
-        <title>
-          Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect
-        </title>
+        <title>Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect</title>
         <meta
           name="description"
           content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          rel="canonical"
-          href="https://www.humancareconnect.com/specialists"
-        />
+        <link rel="canonical" href="https://www.humancareconnect.com/specialists" />
+
+        {/* Open Graph */}
         <meta property="og:type" content="website" />
-        <meta
-          property="og:title"
-          content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
-        />
+        <meta property="og:title" content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect" />
         <meta
           property="og:description"
           content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
         />
-        <meta
-          property="og:url"
-          content="https://www.humancareconnect.com/specialists"
-        />
+        <meta property="og:url" content="https://www.humancareconnect.com/specialists" />
         <meta property="og:site_name" content="Humancare Connect" />
-        <meta
-          property="og:image"
-          content="https://www.humancareconnect.com/og/specialists.jpg"
-        />
+        {/* TODO: replace with a real, hosted OG image (1200x630) before launch */}
+        <meta property="og:image" content="https://www.humancareconnect.com/og/specialists.jpg" />
+
+        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta
-          name="twitter:title"
-          content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
-        />
+        <meta name="twitter:title" content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect" />
         <meta
           name="twitter:description"
           content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
         />
-        <script type="application/ld+json">
-          {JSON.stringify(faqJsonLd)}
-        </script>
+
+        {/* FAQPage structured data for rich results */}
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
 
-      {/* ── Hero ── */}
+      {/* hero */}
       <section id="top" className="sp-hero">
         <div className="sp-hero__inner">
+
+          {/* Left column */}
           <div>
             <div className="sp-hero__badge">
               <Globe2 size={14} />
@@ -733,11 +664,7 @@ export default function Specialties() {
             </h1>
 
             <p className="sp-hero__copy">
-              Connect with an online specialist doctor through Humancare Connect
-              and receive expert medical guidance, personalized treatment
-              support, and secure virtual consultations designed around your
-              specific health concerns. Our platform makes it easier to access
-              experienced specialists from the comfort of your home.
+              Connect with an online specialist doctor through Humancare Connect and receive expert medical guidance, personalized treatment support, and secure virtual consultations designed around your specific health concerns. Our platform makes it easier to access experienced specialists from the comfort of your home.
             </p>
 
             <div className="sp-hero__stats">
@@ -750,13 +677,16 @@ export default function Specialties() {
             </div>
           </div>
 
+          {/* Right panel — carousel */}
           <HeroCarousel />
+
         </div>
       </section>
 
-      {/* ── Specialties grid ── */}
+      {/* Specialties */}
       <section id="specialties" className="specialties">
         <div className="specialties__container">
+
           <div className="specialties__title-block">
             <div className="specialties__title-text">
               <span className="specialties__eyebrow">All specialties</span>
@@ -767,9 +697,10 @@ export default function Specialties() {
 
             <div className="specialties__search">
               <p className="specialties__copy">
-                Browse all {specialties.length} specialties below, or search to
-                quickly find the right doctor for your specific health concern.
+                Browse all {specialties.length} specialties below, or search to quickly
+                find the right doctor for your specific health concern.
               </p>
+
               <Search size={16} className="specialties__search-icon" />
               <input
                 type="text"
@@ -783,51 +714,42 @@ export default function Specialties() {
 
           <div className="specialties__grid">
             {filteredSpecialties.length === 0 && (
-              <div className="specialties__empty">
-                No specialties match "{query}".
-              </div>
+              <div className="specialties__empty">No specialties match "{query}".</div>
             )}
-
             {filteredSpecialties.map((s, i) => {
               const Icon = s.icon;
               return (
-                <Link
+                <article
                   key={s.name}
-                  to={s.path}
                   className="specialties__card"
                   style={{ "--delay": `${(i % 10) * 30}ms` }}
                 >
-                  {/* Row 1: Icon + Title */}
                   <div className="specialties__card-head">
-                    <div className="specialties__card-icon">
-                      <Icon size={18} />
-                    </div>
-                    <h3 className="specialties__card-name">{s.name}</h3>
+                    <div className="specialties__card-icon"><Icon size={18} /></div>
+                    <span className="specialties__card-num">{String(i + 1).padStart(2, "0")}</span>
                   </div>
-
-                  {/* Row 2: Conditions count */}
-                  <div className="specialties__card-conditions">
-                    <span className="specialties__card-conditions-dot" />
-                    {s.tags.length} condition{s.tags.length !== 1 ? "s" : ""}
+                  <h3 className="specialties__card-name">{s.name}</h3>
+                  <p className="specialties__card-desc">{s.description}</p>
+                  <div className="specialties__card-tags">
+                    {s.tags.map((t) => (
+                      <span key={t} className="specialties__card-tag">{t}</span>
+                    ))}
                   </div>
-                </Link>
+                </article>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* ── Browse by condition ── */}
+      {/* Browse by condition */}
       <section id="conditions" className="sp-conditions">
         <div className="sp-conditions__inner">
           <div className="sp-conditions__head">
             <span className="sp-conditions__eyebrow">Browse by condition</span>
-            <h2 className="sp-conditions__title">
-              Find care for your condition
-            </h2>
+            <h2 className="sp-conditions__title">Find care for your condition</h2>
             <p className="sp-conditions__copy">
-              Search by condition and get matched to the right specialist for
-              your concern.
+              Search by condition and get matched to the right specialist for your concern.
             </p>
           </div>
 
@@ -841,14 +763,9 @@ export default function Specialties() {
                   className="sp-conditions__card"
                   style={{ "--delay": `${i * 40}ms` }}
                 >
-                  <span className="sp-conditions__card-icon">
-                    <Icon size={17} />
-                  </span>
+                  <span className="sp-conditions__card-icon"><Icon size={17} /></span>
                   <span className="sp-conditions__card-name">{c.name}</span>
-                  <ChevronRight
-                    size={16}
-                    className="sp-conditions__card-arrow"
-                  />
+                  <ChevronRight size={16} className="sp-conditions__card-arrow" />
                 </a>
               );
             })}
@@ -860,7 +777,7 @@ export default function Specialties() {
         </div>
       </section>
 
-      {/* ── B2B ── */}
+      {/* B2B */}
       <section id="businesses" className="sp-b2b">
         <div className="sp-b2b__inner">
           <div>
@@ -869,11 +786,7 @@ export default function Specialties() {
               Expert Care from an Online Specialist Doctor
             </h2>
             <p className="sp-b2b__copy">
-              Humancare Connect provides convenient access to an online
-              specialist doctor who understands your unique healthcare needs.
-              Whether you need expert advice for a specific condition, ongoing
-              care, or a second opinion, our virtual specialist consultations
-              connect you with trusted healthcare professionals.
+              Humancare Connect provides convenient access to an online specialist doctor who understands your unique healthcare needs. Whether you need expert advice for a specific condition, ongoing care, or a second opinion, our virtual specialist consultations connect you with trusted healthcare professionals.
             </p>
           </div>
 
@@ -884,41 +797,43 @@ export default function Specialties() {
                 className="sp-b2b__card"
                 style={{ "--delay": `${i * 50}ms` }}
               >
-                <div className="sp-b2b__card-name">{item.title}</div>
-                <p className="sp-b2b__card-desc">{item.desc}</p>
+                <div className="sp-b2b__card-name">
+                  {item.title}
+                </div>
+
+                <p className="sp-b2b__card-desc">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FAQ ── */}
+      {/* FAQ */}
       <section id="faq" className="sp-faq">
         <div className="sp-faq__inner">
+
+          {/* Left column */}
           <div className="sp-faq__left">
             <span className="sp-faq__tag">FAQ</span>
             <h2 className="sp-faq__heading">Frequently Asked Questions</h2>
             <p className="sp-faq__copy">
-              Everything you need to know about primary care at Humancare
-              Connect. Can't find an answer?
+              Everything you need to know about primary care at Humancare Connect. Can't find an
+              answer?
             </p>
-            {/* <button type="button" className="sp-faq__chat-btn">
+            <button type="button" className="sp-faq__chat-btn">
               <MessageCircle size={16} /> Chat with our team
-            </button> */}
+            </button>
 
             <div className="sp-faq__trust">
-              <div className="sp-faq__trust-item">
-                <Clock size={14} /> Avg. response in 2 min
-              </div>
-              <div className="sp-faq__trust-item">
-                <Lock size={14} /> HIPAA secure &amp; private
-              </div>
-              <div className="sp-faq__trust-item">
-                <MapPin size={14} /> Available in all 50 states
-              </div>
+              <div className="sp-faq__trust-item"><Clock size={14} /> Avg. response in 2 min</div>
+              <div className="sp-faq__trust-item"><Lock size={14} /> HIPAA secure &amp; private</div>
+              <div className="sp-faq__trust-item"><MapPin size={14} /> Available in all 50 states</div>
             </div>
           </div>
 
+          {/* Right column — accordion groups */}
           <div className="sp-faq__right">
             {faqGroups.map((group, gi) => (
               <div className="sp-faq__group" key={group.label}>
@@ -935,9 +850,7 @@ export default function Specialties() {
                         q={item.q}
                         a={item.a}
                         isOpen={openFaq === id}
-                        onToggle={() =>
-                          setOpenFaq(openFaq === id ? null : id)
-                        }
+                        onToggle={() => setOpenFaq(openFaq === id ? null : id)}
                       />
                     );
                   })}
@@ -945,37 +858,32 @@ export default function Specialties() {
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
-      {/* ── Bottom CTA ── */}
+      {/* Bottom CTA card */}
       <section id="cta" className="sp-cta">
         <div className="sp-cta__card">
           <span className="sp-cta__eyebrow">
-            <span className="sp-cta__eyebrow-dot" /> Ready when you are
-          </span>
-          <h2 className="sp-cta__title">
-            Find your specialist
-            <br />
-            <em>in under 2 minutes.</em>
-          </h2>
+            <span className="sp-cta__eyebrow-dot" /> Ready when you are</span>
+          <h2 className="sp-cta__title">Find your specialist<br />
+            <em>in under 2 minutes.</em></h2>
           <p className="sp-cta__copy">
-            Search, book, and consult with a verified physician from anywhere —
-            serve any eligibility across all categories.
+            Search, book, and consult with a verified physician from anywhere — serve any
+            eligibility across all categories.
           </p>
           <div className="sp-cta__actions">
-            <a
-              href="/appointment-booking"
-              className="sp-cta__btn sp-cta__btn--primary"
-            >
+            <a href="/appointment-booking" className="sp-cta__btn sp-cta__btn--primary">
               Book a consultation <ArrowRight size={15} />
             </a>
-            <a href="/conditions" className="sp-cta__btn sp-cta__btn--secondary">
-              Browse Conditions
+            <a href="#specialties" className="sp-cta__btn sp-cta__btn--secondary">
+              Browse specialties
             </a>
           </div>
         </div>
       </section>
+
     </>
   );
 }
