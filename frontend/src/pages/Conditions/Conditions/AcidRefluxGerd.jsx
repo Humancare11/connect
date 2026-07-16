@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import {
@@ -119,6 +120,7 @@ const faqData = [
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
 export default function AcidRefluxGerd() {
+  const navigate = useNavigate();
   const price = useCategoryPrice();
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
@@ -326,7 +328,7 @@ export default function AcidRefluxGerd() {
                 ))}
               </div>
 
-              <button className="condition-sbc-cta">
+              <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Acid%20Reflux%20%2F%20GERD")}>
                 Start Consultation →
               </button>
               <p className="condition-sbc-terms">

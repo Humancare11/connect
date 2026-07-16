@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import {
@@ -40,6 +41,9 @@ import {
   X,
 } from "lucide-react";
 
+import ConditionBannerImage from "../../../assets/ConditionImages/MensHealth/Bladder-Problems.webp";
+
+
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
@@ -48,8 +52,7 @@ const pageData = {
   heading: "Bladder Problems",
   description: "Relief for urinary health concerns",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-  bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 const faqData = [
@@ -119,6 +122,7 @@ const faqData = [
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
 export default function BladderProblems() {
+  const navigate = useNavigate();
   const price = useCategoryPrice();
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
@@ -330,7 +334,7 @@ export default function BladderProblems() {
                 ))}
               </div>
 
-              <button className="condition-sbc-cta">
+              <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=men&condition=Bladder%20Problems")}>
                 Start Consultation →
               </button>
               <p className="condition-sbc-terms">

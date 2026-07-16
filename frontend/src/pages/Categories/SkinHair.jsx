@@ -102,7 +102,7 @@ const cat = {
     {
       name: "Mole & Skin Checks",
       desc: "Early evaluation of skin changes",
-      path: "/mole-skin-check",
+      path: "/mole-skin-checks",
     },
 
     {
