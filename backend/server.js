@@ -29,6 +29,7 @@ const Session = require("./models/Session");
 const RevokedToken = require("./models/RevokedToken");
 const ChatMessage = require("./models/ChatMessage");
 const Question = require("./models/Question");
+const DirectVideoRoom = require("./models/DirectVideoRoom");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
 const { recordActivity } = require("./utils/activityLogger");
 const { findUploadInS3, streamUploadFromS3, keyFromStoredValue } = require("./utils/uploadStorage");
@@ -455,6 +456,7 @@ app.use(
   "/api/category-consultation",
   require("./routes/categoryConsultation")
 );
+app.use("/api/direct-video-room", require("./routes/directVideoRoom"));
 const CategoryConsultation = require("./models/CategoryConsultation");
 const Enrollment = require("./models/Enrollment");
 
@@ -547,6 +549,12 @@ const socketRooms = new Map(); // socketId -> appointmentId
 
 // Track authenticated identity per socket
 const socketUsers = new Map(); // socketId -> { userId, role }
+
+// Track appointment rooms that have already had both participants present at
+// once, so a later rejoin can be told "this is a resume of an active call"
+// (peer should renegotiate quickly) vs. an ordinary first-time join (peer
+// should not be perturbed while a normal handshake is already in progress).
+const roomActivated = new Map(); // appointmentId -> true
 
 app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
   res.json({ activeUsers: onlineUsers.size });
@@ -723,6 +731,33 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
     identity,
     appointment,
   };
+}
+
+// ── Direct Video Room (ad-hoc, link-based, guest access — no login required) ──
+// Fully independent of the appointment-based flow above and of the platform's
+// user/doctor/admin auth system: no ownership check, no identity requirement —
+// just "does this room exist, is it still active, and does it already have 2
+// participants," same trust model as a Google Meet link. Participants are
+// tracked by a client-generated guestId (not an authenticated identity) purely
+// so a page refresh in the same tab is treated as a rejoin, not a 3rd seat.
+const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
+const DIRECT_ROOM_ID_PATTERN = /^[a-f0-9]{16,128}$/i;
+const DIRECT_GUEST_ID_PATTERN = /^[a-zA-Z0-9-]{8,64}$/;
+
+function directRoomName(roomId) {
+  return `direct_room_${roomId}`;
+}
+
+function sanitizeGuestName(name) {
+  const trimmed = String(name || "").trim().slice(0, 60);
+  return trimmed || "Guest";
+}
+
+function isSocketInDirectRoom(socket, roomId) {
+  if (!roomId) return false;
+  const meta = directRoomSockets.get(socket.id);
+  const room = directRoomName(roomId);
+  return !!meta && String(meta.roomId) === String(roomId) && socket.rooms.has(room);
 }
 
 // Authenticate socket connections via HttpOnly cookies.
@@ -988,8 +1023,14 @@ io.on("connection", (socket) => {
       })
       .catch((err) => console.error("chat history load error:", err));
 
-    socket.to(room).emit("peer-joined");
-    if (currentSize > 0) socket.emit("peer-joined");
+    // Distinguish "resuming an already-active call" (peer should renegotiate
+    // quickly) from "first time these two are meeting in this room" (a normal
+    // handshake may still be in progress and must not be perturbed).
+    const wasActivated = roomActivated.get(appointmentId) === true;
+    if (currentSize > 0) roomActivated.set(appointmentId, true);
+
+    socket.to(room).emit("peer-joined", { resumedCall: wasActivated });
+    if (currentSize > 0) socket.emit("peer-joined", { resumedCall: wasActivated });
   });
 
   socket.on("leave-appointment-room", ({ appointmentId }) => {
@@ -1000,6 +1041,11 @@ io.on("connection", (socket) => {
     socket.to(room).emit("participant-left");
     socket.leave(room);
     socketRooms.delete(socket.id);
+
+    const remaining = io.sockets.adapter.rooms.get(room);
+    if (!remaining || remaining.size === 0) {
+      roomActivated.delete(appointmentId);
+    }
   });
 
   socket.on(
@@ -1149,6 +1195,10 @@ io.on("connection", (socket) => {
 
         if (!sameUserStillInRoom) {
           io.to(appointmentRoom).emit("participant-left");
+          const remaining = io.sockets.adapter.rooms.get(appointmentRoom);
+          if (!remaining || remaining.size === 0) {
+            roomActivated.delete(appointmentId);
+          }
         }
       }, Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000));
 
@@ -1171,6 +1221,170 @@ io.on("connection", (socket) => {
       reason,
       activeUsers: onlineUsers.size,
     });
+  });
+
+  // ── Direct Video Room events (ad-hoc, link-based, guest access) ────────────
+  // Kept fully separate from the appointment-room events above and from the
+  // platform auth system: independent event names, independent in-memory
+  // tracking, independent DB model, no identity/login requirement at all.
+  socket.on("join-direct-room", async ({ roomId, guestId, name } = {}) => {
+    if (!roomId || typeof roomId !== "string" || !DIRECT_ROOM_ID_PATTERN.test(roomId)) {
+      socket.emit("direct-room-error", { code: "invalid", msg: "This meeting link is invalid." });
+      return;
+    }
+    if (!guestId || typeof guestId !== "string" || !DIRECT_GUEST_ID_PATTERN.test(guestId)) {
+      socket.emit("direct-room-error", { code: "invalid", msg: "Could not join — please reload and try again." });
+      return;
+    }
+
+    let roomDoc;
+    try {
+      roomDoc = await DirectVideoRoom.findOne({ roomId });
+    } catch (err) {
+      console.error("[direct-room] lookup error:", err.message);
+      socket.emit("direct-room-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
+      return;
+    }
+
+    if (!roomDoc) {
+      socket.emit("direct-room-error", { code: "not_found", msg: "This meeting link is invalid." });
+      return;
+    }
+
+    if (roomDoc.status === "active" && roomDoc.expiresAt && roomDoc.expiresAt.getTime() <= Date.now()) {
+      roomDoc.status = "expired";
+      await roomDoc.save().catch(() => {});
+    }
+
+    if (roomDoc.status !== "active") {
+      socket.emit("direct-room-error", {
+        code: roomDoc.status === "expired" ? "expired" : "closed",
+        msg: roomDoc.status === "expired"
+          ? "This meeting link has expired."
+          : "This meeting has ended.",
+      });
+      return;
+    }
+
+    const guestName = sanitizeGuestName(name);
+    const room = directRoomName(roomId);
+
+    if (socket.rooms.has(room)) {
+      // Duplicate emit from a re-run effect — just re-signal, don't re-count seats.
+      socket.to(room).emit("direct-peer-joined", { name: guestName });
+      return;
+    }
+
+    const existing = io.sockets.adapter.rooms.get(room);
+    const existingSocketIds = existing ? Array.from(existing) : [];
+    const uniqueGuestIds = new Map(); // guestId -> socketId
+
+    for (const sid of existingSocketIds) {
+      const meta = directRoomSockets.get(sid);
+      if (meta?.guestId) uniqueGuestIds.set(meta.guestId, sid);
+    }
+
+    const alreadyInRoom = uniqueGuestIds.has(guestId);
+
+    // Evict a stale socket for the same guest (refresh / duplicate tab)
+    // rather than counting it as a second seat.
+    if (alreadyInRoom) {
+      const staleSid = uniqueGuestIds.get(guestId);
+      if (staleSid && staleSid !== socket.id) {
+        const staleSocket = io.sockets.sockets.get(staleSid);
+        if (staleSocket) {
+          staleSocket.leave(room);
+          directRoomSockets.delete(staleSid);
+          staleSocket.emit("direct-duplicate-session", { msg: "This meeting was opened in another tab or window." });
+        }
+      }
+    }
+
+    if (uniqueGuestIds.size >= (roomDoc.maxParticipants || 2) && !alreadyInRoom) {
+      socket.emit("direct-room-error", { code: "full", msg: "This meeting already has two participants." });
+      return;
+    }
+
+    const isInitiator = existingSocketIds.length > 0;
+
+    socket.join(room);
+    directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+
+    const now = new Date();
+    DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => {});
+    DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => {});
+
+    socket.emit("direct-room-joined", { roomId, isInitiator });
+    socket.to(room).emit("direct-peer-joined", { name: guestName });
+  });
+
+  socket.on("leave-direct-room", ({ roomId } = {}) => {
+    if (!roomId) return;
+    if (!isSocketInDirectRoom(socket, roomId)) return;
+
+    const room = directRoomName(roomId);
+    socket.to(room).emit("direct-participant-left");
+    socket.leave(room);
+    directRoomSockets.delete(socket.id);
+  });
+
+  socket.on("direct-video-offer", ({ roomId, offer } = {}) => {
+    if (!roomId || !offer) return;
+    if (!isSocketInDirectRoom(socket, roomId)) return;
+    socket.to(directRoomName(roomId)).emit("direct-video-offer", { offer });
+  });
+
+  socket.on("direct-video-answer", ({ roomId, answer } = {}) => {
+    if (!roomId || !answer) return;
+    if (!isSocketInDirectRoom(socket, roomId)) return;
+    socket.to(directRoomName(roomId)).emit("direct-video-answer", { answer });
+  });
+
+  socket.on("direct-ice-candidate", ({ roomId, candidate } = {}) => {
+    if (!roomId || !candidate) return;
+    if (!isSocketInDirectRoom(socket, roomId)) return;
+    socket.to(directRoomName(roomId)).emit("direct-ice-candidate", { candidate });
+  });
+
+  socket.on("direct-ice-restart-request", ({ roomId } = {}) => {
+    if (!roomId) return;
+    if (!isSocketInDirectRoom(socket, roomId)) return;
+    socket.to(directRoomName(roomId)).emit("direct-ice-restart-request");
+  });
+
+  // Ephemeral, relay-only chat — intentionally not persisted, since this
+  // room has no association with any Appointment/ChatMessage record and no
+  // authenticated identity to attribute a stored message to.
+  socket.on("direct-room-message", ({ roomId, text } = {}) => {
+    if (!roomId || !text) return;
+    if (!isSocketInDirectRoom(socket, roomId)) return;
+
+    const meta = directRoomSockets.get(socket.id);
+    socket.to(directRoomName(roomId)).emit("direct-room-message", {
+      senderName: meta?.name || "Guest",
+      text: String(text).slice(0, 2000),
+      createdAt: new Date().toISOString(),
+    });
+  });
+
+  socket.on("disconnect", () => {
+    const meta = directRoomSockets.get(socket.id);
+    if (!meta) return;
+
+    const { roomId, guestId } = meta;
+    const room = directRoomName(roomId);
+
+    directRoomSockets.delete(socket.id);
+
+    setTimeout(() => {
+      const sameGuestStillInRoom = Array.from(directRoomSockets.values()).some(
+        (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
+      );
+
+      if (!sameGuestStillInRoom) {
+        io.to(room).emit("direct-participant-left");
+      }
+    }, Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000));
   });
 });
 
