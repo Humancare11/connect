@@ -39,12 +39,12 @@ const cat = {
     {
       name: "Adolescent Medicine",
       desc: "Adolescent medicine specialists provide personalized healthcare for teenagers and young adults, addressing their unique physical, emotional, and developmental needs.",
-      path: "/adolescent-medicine",
+      path: "/child-and-family-care/adolescent-medicine",
     },
     {
       name: "Pediatrics",
       desc: "Pediatric specialists provide comprehensive healthcare for infants, children, and teenagers, focusing on growth, development, illness prevention, and treatment of common childhood conditions.",
-      path: "/pediatrics",
+      path: "/child-and-family-care/pediatrics",
     },
   ],
 

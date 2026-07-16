@@ -39,12 +39,12 @@ const cat = {
     {
       name: "Adolescent Medicine",
       desc: "Adolescent Medicine Comprehensive health care for teenagers and young adults with support for puberty, mental health, growth, nutrition, sports injuries and overall adolescent wellness",
-      path: "/adolescent-medicine",
+      path: "/child-and-family-care/adolescent-medicine",
     },
     {
       name: "Pediatrics",
       desc: "Kids’ Care Comprehensive care for infants, children and teens, from routine wellness exams and vaccinations to illness treatment, developmental support and preventive care that promotes healthy growth.",
-      path: "/pediatrics",
+      path: "/child-and-family-care/pediatrics",
     },
   ],
 

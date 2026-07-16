@@ -32,9 +32,9 @@ export const categories = [
 
 export const specialties = [
   // Children & Family Care
-  { id: "adolescent-medicine", title: "Adolescent Medicine", type: "specialty", category: "child-and-family-care", route: "/adolescent-medicine",
+  { id: "adolescent-medicine", title: "Adolescent Medicine", type: "specialty", category: "child-and-family-care", route: "/child-and-family-care/adolescent-medicine",
     keywords: ["adolescent", "teen", "teenager"] },
-  { id: "pediatrics", title: "Pediatrics", type: "specialty", category: "child-and-family-care", route: "/pediatrics",
+  { id: "pediatrics", title: "Pediatrics", type: "specialty", category: "child-and-family-care", route: "/child-and-family-care/pediatrics",
     keywords: ["pediatrics", "pediatrician", "child health", "baby"] },
 
   // Chronic Care & Expert Opinion

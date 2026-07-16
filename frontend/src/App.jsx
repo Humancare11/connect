@@ -30,6 +30,8 @@ const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
 const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
 
+
+
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
@@ -779,6 +781,7 @@ const ChronicMedicationManagement = lazy(
 const ServiceDemo = lazy(() => import("./pages/NewServices/ServiceDemo"));
 
 import AdminAssignCategoryDoctor from "./pages/admin/AdminAssignCategoryDoctor";
+import ServicesPrices from "./pages/admin/ServicesPrices";
 
 import CategoryConsultant from "./pages/CategoryConsultant";
 import CategoryAppointmentConfirm from "./pages/CategoryAppointmentConfirm";
@@ -1601,8 +1604,8 @@ function AppLayout() {
           <Route path="/women-health" element={<WomenHealth />} />
           {/* specialties */}
           {/* <Route path="/sd" element={<SD />} /> */}
-          <Route path="/adolescent-medicine" element={<AdolescentMedicine />} />
-          <Route path="/pediatrics" element={<Pediatrics />} />
+          <Route path="/child-and-family-care/adolescent-medicine" element={<AdolescentMedicine />} />
+          <Route path="/child-and-family-care/pediatrics" element={<Pediatrics />} />
           <Route path="/cardiology" element={<Cardiology />} />
           <Route
             path="/export-medical-opinion"
