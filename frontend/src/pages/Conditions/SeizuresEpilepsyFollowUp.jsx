@@ -39,11 +39,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-<<<<<<< HEAD
-import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Seizures -Epilepsy-Follow-Up.webp";
-=======
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Seizures-Epilepsy-Follow-Up.webp";
->>>>>>> 8c0363897c1995506a930504978d95507388135c
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDES  (scoped with "sp-" prefix so nothing clashes)
