@@ -65,12 +65,15 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/lactation-consulting-breastfeeding-support.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/lactation-consant-breastfeeding-consultation.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
   slug: "lactation-consulting",
   name: "Lactation Consulting",
+  categoryId: "women",
   tagline: "Expert Breastfeeding Support for Parents and Babies.",
   heroDescription:
     "Lactation Consulting provides professional support for breastfeeding, infant feeding, milk supply concerns, and feeding challenges experienced during the postpartum period. Whether you're a first-time parent or have previous breastfeeding experience, lactation specialists help you navigate feeding concerns with confidence and personalized care. From improving latch techniques to addressing milk supply concerns and planning weaning transitions, lactation consultants provide evidence-based guidance designed to support both parent and baby.",
@@ -557,6 +560,28 @@ export default function LactationConsulting({ data = SPECIALTY_DATA }) {
     return () => clearTimeout(t);
   }, []);
 
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
+
   return (
     <>
       <HelmetProvider>
@@ -583,24 +608,33 @@ export default function LactationConsulting({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div
-              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-            >
-              <span className="sp-hero__badge">HumanCare Connect</span>
-              <h1 className="sp-hero__title">{data.name}</h1>
-              <p className="sp-hero__tagline">{data.tagline}</p>
-              <p className="sp-hero__description">{data.heroDescription}</p>
+            <div className="sp-hero__layout">
+              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
-                <a href="/Specialties" className="sp-btn sp-btn--primary">
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
               </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
             </div>
           </div>
         </section>

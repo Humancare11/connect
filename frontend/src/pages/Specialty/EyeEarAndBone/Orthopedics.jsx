@@ -70,6 +70,8 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/orthopedics-bone-joint-muscle-care-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/orthopedic-doctor-bone-joint-examination.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -77,6 +79,7 @@ import overviewImage from "../../../assets/SpecialitiesImage/orthopedic-doctor-b
 const SPECIALTY_DATA = {
   slug: "orthopedics",
   name: "Orthopedics",
+  categoryId: "eeb",
   tagline: "Expert Care for Bones, Joints, Muscles, and Mobility.",
   heroDescription:
     "Orthopedic specialists diagnose and treat conditions affecting the bones, joints, muscles, ligaments, tendons, and spine. From arthritis and back pain to knee injuries and muscle strains, orthopedic care focuses on reducing pain, restoring mobility, improving function, and helping patients maintain an active lifestyle.",
@@ -564,6 +567,27 @@ export default function Orthopedics({ data = SPECIALTY_DATA }) {
     const t = setTimeout(() => setHeroLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
 
   return (
     <>
@@ -590,24 +614,33 @@ export default function Orthopedics({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div
-              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-            >
-              <span className="sp-hero__badge">HumanCare Connect</span>
-              <h1 className="sp-hero__title">{data.name}</h1>
-              <p className="sp-hero__tagline">{data.tagline}</p>
-              <p className="sp-hero__description">{data.heroDescription}</p>
+            <div className="sp-hero__layout">
+              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
-                <a href="/Specialties" className="sp-btn sp-btn--primary">
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
               </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
             </div>
           </div>
         </section>

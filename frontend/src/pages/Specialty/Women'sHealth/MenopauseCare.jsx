@@ -66,12 +66,15 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/menopause-care-specialist-womens-health-consultation.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/menopause-specialist-hormonal-health-patient-consultation.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
   slug: "menopause-care",
   name: "Menopause Care",
+  categoryId: "women",
   tagline: "Personalized Support Through Every Stage of Menopause.",
   heroDescription:
     "Menopause is a natural phase of life that brings hormonal changes affecting physical, emotional, and overall well-being. Menopause Care focuses on helping women understand, manage, and navigate these changes with confidence through personalized treatment plans and evidence-based healthcare support.Whether you're experiencing hot flashes, sleep disturbances, mood changes, or exploring hormone replacement therapy options, menopause specialists provide compassionate care designed to improve comfort, health, and quality of life.",
@@ -553,6 +556,27 @@ export default function MenopauseCare({ data = SPECIALTY_DATA }) {
     const t = setTimeout(() => setHeroLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
 
   return (
     <>
@@ -580,24 +604,33 @@ export default function MenopauseCare({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div
-              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-            >
-              <span className="sp-hero__badge">HumanCare Connect</span>
-              <h1 className="sp-hero__title">{data.name}</h1>
-              <p className="sp-hero__tagline">{data.tagline}</p>
-              <p className="sp-hero__description">{data.heroDescription}</p>
+            <div className="sp-hero__layout">
+              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
-                <a href="/Specialties" className="sp-btn sp-btn--primary">
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
               </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
             </div>
           </div>
         </section>
