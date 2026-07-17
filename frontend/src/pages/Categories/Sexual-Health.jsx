@@ -39,76 +39,51 @@ const cat = {
     {
       name: " Sexual Health",
       desc: " Confidential care for STI concerns, HIV prevention, PrEP guidance, herpes, chlamydia, gonorrhea, partner exposure risks, and overall sexual wellness. ",
-      path: "/sexual-health",
+      path: "/sexual-health/sexual-health-and-wellness",
     },
-    // {
-    //   name: "Psychiatry",
-    //   desc: "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support. ",
-    //   path: "/psychiatry",
-    // },
-    // {
-    //   name: "Psychology Counseling",
-    //   desc: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
-    //   path: "/psychology-counseling",
-    // },
-    // {
-    //   name: "Gastroenterology",
-    //   desc: "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. ",
-    //   path: "/gastroenterology",
-    // },
-    // {
-    //   name: "Neurology",
-    //   desc: "Neurology specialists diagnose and treat conditions affecting the brain, spinal cord, nerves, and nervous system. ",
-    //   path: "/neurology",
-    // },
-    // {
-    //   name: "Pulmonology",
-    //   desc: "Pulmonology specialists diagnose and treat lung and respiratory conditions such as asthma, chronic cough, COPD, sleep apnea, and post-COVID breathing issues, helping improve breathing, lung function, and overall health.",
-    //   path: "/pulmonology",
-    // },
   ],
 
   conditions: [
     {
       name: "Chlamydia",
-      desc: "Common sexually transmitted bacterial infection",
-      path: "/chlamydia",
+      // desc: "Common sexually transmitted bacterial infection",
+      path: "/sexual-health/sexual-health-and-wellness/chlamydia",
     },
     {
       name: "Gonorrhea",
-      desc: "Common bacterial sexually transmitted infection",
-      path: "/gonorrhea",
+      // desc: "Common bacterial sexually transmitted infection",
+      path: "/sexual-health/sexual-health-and-wellness/gonorrhea",
     },
     {
       name: "Herpes",
-      desc: "Viral infection causing painful sores",
-      path: "/herpes",
+      // desc: "Viral infection causing painful sores",
+      path: "/sexual-health/sexual-health-and-wellness/herpes",
     },
     {
       name: "HIV Prevention / PrEP Guidance",
-      desc: "Preventive care for HIV protection",
-      path: "/HIV-prevention",
+      // desc: "Preventive care for HIV protection",
+      path: "/sexual-health/sexual-health-and-wellness/hiv-prevention",
     },
     {
       name: "Partner Exposure Concerns",
-      desc: "Concerns after sexual exposure",
-      path: "/partner-exposure-concerns",
+      // desc: "Concerns after sexual exposure",
+      path: "/sexual-health/sexual-health-and-wellness/partner-exposure-concerns",
     },
     {
       name: "Safe Sex Counseling",
-      desc: "Guidance for healthier intimate relationships",
-      path: "/safe-sex-counseling",
+      // desc: "Guidance for healthier intimate relationships",
+      path: "/sexual-health/sexual-health-and-wellness/safe-sex-counseling",
     },
     {
       name: "STI Consultation",
-      desc: "Testing, treatment, and sexual health support",
-      path: "/STI-consultation",
+      // desc: "Testing, treatment, and sexual health support",
+      path: "/sexual-health/sexual-health-and-wellness/sti-consultation",
     },
 
     // {
     //   name: "Pediatric Fever",
     //   desc: "Fever and illness in children",
-    //   path: "/pediatric-fever",
+    //   path: "/child-and-family-care/pediatrics/pediatric-fever",
     // },
     // {
     //   name: "Skin Rash in Children",
@@ -387,25 +362,13 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
 function SpecialtyCard({ sp, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-specialty-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => sp.path && navigate(sp.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && sp.path) {
-          e.preventDefault();
-          navigate(sp.path);
-        }
-      }}
-      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
       <div className="hcc-specialty-name">{sp.name}</div>
       <p className="hcc-specialty-desc">{sp.desc}</p>
@@ -416,30 +379,26 @@ function SpecialtyCard({ sp, index }) {
       )}
     </motion.div>
   );
+
+  return sp.path ? (
+    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 }
 
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-condition-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => cond.path && navigate(cond.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && cond.path) {
-          e.preventDefault();
-          navigate(cond.path);
-        }
-      }}
-      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
       <div className="hcc-condition-name">{cond.name}</div>
       <p className="hcc-condition-desc">{cond.desc}</p>
@@ -449,6 +408,14 @@ function ConditionCard({ cond, index }) {
         </div>
       )}
     </motion.div>
+  );
+
+  return cond.path ? (
+    <Link to={cond.path} className="hcc-condition-link" aria-label={cond.name}>
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 
@@ -468,7 +435,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -478,7 +445,7 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
@@ -636,14 +603,14 @@ export default function SexualHealth() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
-              <button className="hcc-btn-primary" onClick={goToBooking}>
+            {/* <div className="hcc-cta-row"> */}
+            {/* <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
-              </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              </button> */}
+            {/* <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
               </button> */}
-            </div>
+            {/* </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

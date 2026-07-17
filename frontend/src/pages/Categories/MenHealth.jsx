@@ -29,8 +29,8 @@ import "./categoriesGlobal.css";
 const cat = {
   label: "Men's Health",
   tagline: "Men's Health",
-  headline: "Comprehensive Men's Health Care,",
-  headlineAccent: " Designed Around Your Well-Being ",
+  headline: "Comprehensive Men's Health Care, Designed Around",
+  headlineAccent: " Your Well-Being ",
   subheadline:
     "Connect with experienced healthcare professionals for personalized men's health services, preventive care, sexual wellness, hormonal health concerns, and everyday medical guidance through secure online doctor consultations.",
   bookingSpecialtyPlaceholder: "e.g.Men's Health",
@@ -38,83 +38,67 @@ const cat = {
   specialties: [
     {
       name: "Men's Health",
-      desc: "Family Medicine specialists provide continuous, personalized healthcare for individuals and families of all ages.   ",
-      path: "/men-health",
+      desc: " Expert care for testosterone imbalance, erectile dysfunction, prostate health, fertility concerns, hair loss, sexual wellness, and healthy aging with personalized treatment plans.  ",
+      path: "/mens-health/men-health",
     },
     {
       name: "Urology",
-      desc: "Urology specialists diagnose and treat conditions affecting the urinary tract, kidneys, bladder, and male reproductive system. ",
-      path: "/urology",
+      desc: "Specialized care for urinary tract conditions, kidney stones, bladder problems, UTIs, urinary incontinence, and male urological health with personalized treatment and support.",
+      path: "/mens-health/urology",
     },
-    // {
-    //   name: "Internal Medicine",
-    //   desc: "Internal Medicine specialists focus on the prevention, diagnosis, and treatment of adult health conditions, ranging from routine wellness care to complex medical concerns involving multiple body systems.",
-    //   path: "/internal-medicine",
-    // },
-    // {
-    //   name: "Gastroenterology",
-    //   desc: "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. ",
-    //   path: "/gastroenterology",
-    // },
-    // {
-    //   name: "Neurology",
-    //   desc: "Neurology specialists diagnose and treat conditions affecting the brain, spinal cord, nerves, and nervous system. ",
-    //   path: "/neurology",
-    // },
-    // {
-    //   name: "Pulmonology",
-    //   desc: "Pulmonology specialists diagnose and treat lung and respiratory conditions such as asthma, chronic cough, COPD, sleep apnea, and post-COVID breathing issues, helping improve breathing, lung function, and overall health.",
-    //   path: "/pulmonology",
-    // },
   ],
 
   conditions: [
     {
       name: "Erectile Dysfunction",
-      desc: "Difficulty getting or maintaining erections",
-      path: "/erectile-dysfunction",
-    },
-    {
-      name: "Hair Loss",
-      desc: "Thinning hair and excessive shedding",
-      path: "/hair-loss",
-    },
-    {
-      name: "Low Libido",
-      desc: "Support for changes in sexual desire",
-      path: "/low-libido",
+      // desc: "Difficulty getting or maintaining erections",
+      path: "/mens-health/men-health/erectile-dysfunction",
     },
     {
       name: "Low Testosterone Symptoms",
-      desc: "Low hormone levels affecting energy",
-      path: "/low-testosterone-symptoms",
+      // desc: "Low hormone levels affecting energy",
+      path: "/mens-health/men-health/low-testosterone-symptoms",
+    },
+    {
+      name: "Hair Loss",
+      // desc: "Thinning hair and excessive shedding",
+      path: "/mens-health/men-health/hair-loss",
+    },
+    {
+      name: "Low Libido",
+      // desc: "Support for changes in sexual desire",
+      path: "/mens-health/men-health/low-libido",
     },
     {
       name: "Prostate Health",
-      desc: "Common concerns affecting prostate function",
-      path: "/prostate-health",
+      // desc: "Common concerns affecting prostate function",
+      path: "/mens-health/men-health/prostate-health",
     },
-    // {
-    //   name: "Tonsillitis",
-    //   desc: "Relief for sore throat and swollen tonsils",
-    //   path: "/tonsillitis",
-    // },
-    // {
-    //   name: "Vertigo",
-    //   desc: "Spinning sensation and balance issues",
-    //   path: "/vertigo",
-    // },
-
-    // {
-    //   name: "Pediatric Fever",
-    //   desc: "Fever and illness in children",
-    //   path: "/pediatric-fever",
-    // },
-    // {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-children",
-    // },
+    {
+      name: "Blood in urine",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/mens-health/urology/blood-in-urine",
+    },
+    {
+      name: "Bladder problems",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/mens-health/urology/bladder-problems",
+    },
+    {
+      name: "Kidney Stones",
+      // desc: "Fever and illness in children",
+      path: "/mens-health/urology/kidney-stones",
+    },
+    {
+      name: "Urinary Tract Infections (UTI)",
+      // desc: "Relief for sore throat and swollen tonsils",
+      path: "/mens-health/urology/urinary-tract-infection",
+    },
+    {
+      name: "Urinary Incontinence",
+      // desc: "Spinning sensation and balance issues",
+      path: "/mens-health/urology/urinary-incontinence",
+    },
   ],
 
   treatments: [
@@ -407,25 +391,13 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
 function SpecialtyCard({ sp, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-specialty-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => sp.path && navigate(sp.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && sp.path) {
-          e.preventDefault();
-          navigate(sp.path);
-        }
-      }}
-      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
       <div className="hcc-specialty-name">{sp.name}</div>
       <p className="hcc-specialty-desc">{sp.desc}</p>
@@ -436,30 +408,26 @@ function SpecialtyCard({ sp, index }) {
       )}
     </motion.div>
   );
+
+  return sp.path ? (
+    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 }
 
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-condition-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => cond.path && navigate(cond.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && cond.path) {
-          e.preventDefault();
-          navigate(cond.path);
-        }
-      }}
-      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
       <div className="hcc-condition-name">{cond.name}</div>
       <p className="hcc-condition-desc">{cond.desc}</p>
@@ -469,6 +437,14 @@ function ConditionCard({ cond, index }) {
         </div>
       )}
     </motion.div>
+  );
+
+  return cond.path ? (
+    <Link to={cond.path} className="hcc-condition-link" aria-label={cond.name}>
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 
@@ -488,7 +464,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -498,7 +474,7 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
@@ -594,7 +570,7 @@ export default function MenHealth() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "men" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div
@@ -659,14 +635,14 @@ export default function MenHealth() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
-              <button className="hcc-btn-primary" onClick={goToBooking}>
+            {/* <div className="hcc-cta-row"> */}
+            {/* <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
-              </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              </button> */}
+            {/* <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
               </button> */}
-            </div>
+            {/* </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

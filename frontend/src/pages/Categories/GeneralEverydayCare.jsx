@@ -30,7 +30,7 @@ const cat = {
   label: "General & Everyday Care",
   tagline: "General & Everyday Care",
   headline: "Reliable General & Everyday Care,",
-  headlineAccent: " When You Need It ",
+  headlineAccent: "When You Need It ",
   subheadline:
     "Connect with experienced healthcare professionals for common illnesses, routine health concerns, preventive care, and everyday medical guidance. Our convenient online doctor consultations make it easier to receive personalized, patient-centered care that fits your lifestyle.",
   bookingSpecialtyPlaceholder: "e.g. General Physician",
@@ -38,83 +38,104 @@ const cat = {
   specialties: [
     {
       name: "Family Medicine",
-      desc: "Family Medicine specialists provide continuous, personalized healthcare for individuals and families of all ages.   ",
-      path: "/family-medicine",
+      desc: "Comprehensive healthcare for individuals and families of all ages, including preventive care, routine checkups, chronic condition management, vaccinations, and everyday medical needs. ",
+      path: "/general-and-everyday-care/family-medicine",
     },
     {
       name: "General Physician (GP)",
-      desc: "General Physicians (GPs) provide comprehensive primary healthcare for common illnesses, preventive care, and ongoing health management. ",
-      path: "/general-physician",
+      desc: " Trusted primary healthcare for common illnesses, preventive care, chronic condition management, routine checkups, and everyday medical concerns for adults and families. ",
+      path: "/general-and-everyday-care/general-physician",
     },
     {
       name: "Internal Medicine",
-      desc: "Internal Medicine specialists focus on the prevention, diagnosis, and treatment of adult health conditions, ranging from routine wellness care to complex medical concerns involving multiple body systems.",
-      path: "/internal-medicine",
+      desc: "Expert adult healthcare for chronic conditions, preventive screenings, medication reviews, complex symptoms, and personalized care focused on long-term health and wellness.",
+      path: "/general-and-everyday-care/internal-medicine",
     },
-    // {
-    //   name: "Gastroenterology",
-    //   desc: "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. ",
-    //   path: "/gastroenterology",
-    // },
-    // {
-    //   name: "Neurology",
-    //   desc: "Neurology specialists diagnose and treat conditions affecting the brain, spinal cord, nerves, and nervous system. ",
-    //   path: "/neurology",
-    // },
-    // {
-    //   name: "Pulmonology",
-    //   desc: "Pulmonology specialists diagnose and treat lung and respiratory conditions such as asthma, chronic cough, COPD, sleep apnea, and post-COVID breathing issues, helping improve breathing, lung function, and overall health.",
-    //   path: "/pulmonology",
-    // },
   ],
 
   conditions: [
     {
       name: "Routine Check-Ups",
-      desc: "Ongoing care for everyday health",
-      path: "/routine-check-ups",
+      // desc: "Ongoing care for everyday health",
+      path: "/general-and-everyday-care/family-medicine/routine-check-ups",
     },
     {
       name: "Vaccination Advice",
-      desc: "Guidance for recommended immunizations",
-      path: "/vaccination-advice",
+      // desc: "Guidance for recommended immunizations",
+      path: "/general-and-everyday-care/family-medicine/vaccination-advice",
     },
     {
       name: "Whole-Family Illnesses",
-      desc: "Care for illnesses affecting families",
-      path: "/whole-family-illnesses",
+      // desc: "Care for illnesses affecting families",
+      path: "/general-and-everyday-care/family-medicine/whole-family-illnesses",
     },
-    // {
-    //   name: "Nasal Congestion",
-    //   desc: "Relief for a blocked nose",
-    //   path: "/nasal-congestion",
-    // },
-    // {
-    //   name: "Sore Throat",
-    //   desc: "Pain, irritation, or a scratchy throat",
-    //   path: "/sore-throat",
-    // },
-    // {
-    //   name: "Tonsillitis",
-    //   desc: "Relief for sore throat and swollen tonsils",
-    //   path: "/tonsillitis",
-    // },
-    // {
-    //   name: "Vertigo",
-    //   desc: "Spinning sensation and balance issues",
-    //   path: "/vertigo",
-    // },
+    {
+      name: "Fever",
+      // desc: "Relief for a blocked nose",
+      path: "/general-and-everyday-care/general-physician/fever",
+    },
+    {
+      name: "Cold & flu",
+      // desc: "Pain, irritation, or a scratchy throat",
+      path: "/general-and-everyday-care/general-physician/cold-and-flu",
+    },
+    {
+      name: "Cough",
+      // desc: "Relief for sore throat and swollen tonsils",
+      path: "/general-and-everyday-care/general-physician/cough",
+    },
+    {
+      name: "Body aches",
+      // desc: "Spinning sensation and balance issues",
+      path: "/general-and-everyday-care/general-physician/body-aches",
+    },
 
-    // {
-    //   name: "Pediatric Fever",
-    //   desc: "Fever and illness in children",
-    //   path: "/pediatric-fever",
-    // },
-    // {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-children",
-    // },
+    {
+      name: "Headache",
+      // desc: "Fever and illness in children",
+      path: "/general-and-everyday-care/general-physician/headache",
+    },
+    {
+      name: "Sinus Infection",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/general-and-everyday-care/general-physician/sinus-infection",
+    },
+    {
+      name: "Minor Infections",
+      // desc: "Pain, irritation, or a scratchy throat",
+      path: "/general-and-everyday-care/general-physician/minor-infections",
+    },
+    {
+      name: "Fatigue",
+      // desc: "Relief for sore throat and swollen tonsils",
+      path: "/general-and-everyday-care/general-physician/fatigue",
+    },
+    {
+      name: "Nausea & Vomiting",
+      // desc: "Spinning sensation and balance issues",
+      path: "/general-and-everyday-care/general-physician/nausea-and-vomiting",
+    },
+
+    {
+      name: "Pink eye",
+      // desc: "Fever and illness in children",
+      path: "/general-and-everyday-care/general-physician/pink-eye",
+    },
+    {
+      name: "Undiagnosed symptoms",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/general-and-everyday-care/internal-medicine/undiagnosed-symptoms",
+    },
+    {
+      name: "Multi-system complaints",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/general-and-everyday-care/internal-medicine/multi-system-complaints",
+    },
+    {
+      name: "Preventive Screening",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/general-and-everyday-care/internal-medicine/preventive-screening",
+    },
   ],
 
   treatments: [
@@ -415,25 +436,13 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
 function SpecialtyCard({ sp, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-specialty-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => sp.path && navigate(sp.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && sp.path) {
-          e.preventDefault();
-          navigate(sp.path);
-        }
-      }}
-      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
       <div className="hcc-specialty-name">{sp.name}</div>
       <p className="hcc-specialty-desc">{sp.desc}</p>
@@ -444,30 +453,26 @@ function SpecialtyCard({ sp, index }) {
       )}
     </motion.div>
   );
+
+  return sp.path ? (
+    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 }
 
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-condition-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => cond.path && navigate(cond.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && cond.path) {
-          e.preventDefault();
-          navigate(cond.path);
-        }
-      }}
-      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
       <div className="hcc-condition-name">{cond.name}</div>
       <p className="hcc-condition-desc">{cond.desc}</p>
@@ -477,6 +482,14 @@ function ConditionCard({ cond, index }) {
         </div>
       )}
     </motion.div>
+  );
+
+  return cond.path ? (
+    <Link to={cond.path} className="hcc-condition-link" aria-label={cond.name}>
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 
@@ -602,7 +615,7 @@ export default function GeneralEverydayCare() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "general" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div
@@ -665,14 +678,14 @@ export default function GeneralEverydayCare() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
+            {/* <div className="hcc-cta-row">
               <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
-              </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              </button> */}
+            {/* <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
               </button> */}
-            </div>
+            {/* </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

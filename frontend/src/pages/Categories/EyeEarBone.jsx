@@ -27,8 +27,8 @@ import "./categoriesGlobal.css";
 // but clicking does nothing).
 
 const cat = {
-  label: "ENT (Ear, Nose & Throat)",
-  tagline: "ENT ",
+  label: "Eye, Ear & Bone Care",
+  tagline: "EEB",
   headline: "Expert Eye, Ear & Bone Care ",
   headlineAccent: " Designed Around Your Health",
   subheadline:
@@ -38,83 +38,118 @@ const cat = {
   specialties: [
     {
       name: "ENT (Ear, Nose & Throat)",
-      desc: "ENT specialists diagnose and treat conditions affecting the ears, nose, throat, sinuses, voice, and balance system.  ",
-      path: "/eye-ear-bone",
+      desc: "Specialized care for ear infections, sinus problems, sore throats, hearing concerns, vertigo, voice disorders, and conditions affecting the ear, nose, and throat. ",
+      path: "/eye-ear-bone/ear-nose-throat",
     },
     {
       name: "Ophthalmology",
-      desc: "Ophthalmology specialists diagnose, treat, and manage conditions affecting the eyes, vision, and overall eye health.",
-      path: "/ophthalmology",
+      desc: "Expert eye care for dry eyes, vision changes, eye infections, redness, eye strain, and long-term vision health with personalized treatment and support.",
+      path: "/eye-ear-bone/ophthalmology",
     },
     {
       name: "Orthopedics",
-      desc: "Orthopedic specialists diagnose and treat conditions affecting the bones, joints, muscles, ligaments, tendons, and spine.",
-      path: "/orthopedics",
+      desc: "Specialized care for joint pain, arthritis, back and neck pain, sports injuries, muscle strains, and musculoskeletal conditions to improve mobility and quality of life.",
+      path: "/eye-ear-bone/orthopedics",
     },
-    // {
-    //   name: "Gastroenterology",
-    //   desc: "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. ",
-    //   path: "/gastroenterology",
-    // },
-    // {
-    //   name: "Neurology",
-    //   desc: "Neurology specialists diagnose and treat conditions affecting the brain, spinal cord, nerves, and nervous system. ",
-    //   path: "/neurology",
-    // },
-    // {
-    //   name: "Pulmonology",
-    //   desc: "Pulmonology specialists diagnose and treat lung and respiratory conditions such as asthma, chronic cough, COPD, sleep apnea, and post-COVID breathing issues, helping improve breathing, lung function, and overall health.",
-    //   path: "/pulmonology",
-    // },
   ],
 
   conditions: [
     {
       name: "Ear Infection",
-      desc: "Pain, pressure, and ear discomfort",
-      path: "/ear-infection",
+      // desc: "Pain, pressure, and ear discomfort",
+      path: "/eye-ear-bone/ear-nose-throat/ear-infection",
     },
     {
       name: "Ear Pain",
-      desc: "Pain, pressure, and ear discomfort",
-      path: "/ear-pain",
+      // desc: "Pain, pressure, and ear discomfort",
+      path: "/eye-ear-bone/ear-nose-throat/ear-pain",
     },
     {
       name: "Hoarseness",
-      desc: "Relief for voice and throat changes",
-      path: "/hoarseness",
+      // desc: "Relief for voice and throat changes",
+      path: "/eye-ear-bone/ear-nose-throat/hoarseness",
     },
     {
       name: "Nasal Congestion",
-      desc: "Relief for a blocked nose",
-      path: "/nasal-congestion",
+      // desc: "Relief for a blocked nose",
+      path: "/eye-ear-bone/ear-nose-throat/nasal-congestion",
     },
     {
       name: "Sore Throat",
-      desc: "Pain, irritation, or a scratchy throat",
-      path: "/sore-throat",
+      // desc: "Pain, irritation, or a scratchy throat",
+      path: "/eye-ear-bone/ear-nose-throat/sore-throat",
     },
     {
       name: "Tonsillitis",
-      desc: "Relief for sore throat and swollen tonsils",
-      path: "/tonsillitis",
+      // desc: "Relief for sore throat and swollen tonsils",
+      path: "/eye-ear-bone/ear-nose-throat/tonsillitis",
     },
     {
       name: "Vertigo",
-      desc: "Spinning sensation and balance issues",
-      path: "/vertigo",
+      // desc: "Spinning sensation and balance issues",
+      path: "/eye-ear-bone/ear-nose-throat/vertigo",
     },
 
-    // {
-    //   name: "Pediatric Fever",
-    //   desc: "Fever and illness in children",
-    //   path: "/pediatric-fever",
-    // },
-    // {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-children",
-    // },
+    {
+      name: "Eye Redness",
+      // desc: "Relief for voice and throat changes",
+      path: "/eye-ear-bone/ophthalmology/eye-redness",
+    },
+    {
+      name: "Dry eyes",
+      // desc: "Relief for a blocked nose",
+      path: "/eye-ear-bone/ophthalmology/dry-eyes",
+    },
+    {
+      name: "Vision changes",
+      // desc: "Pain, irritation, or a scratchy throat",
+      path: "/eye-ear-bone/ophthalmology/vision-changes",
+    },
+    {
+      name: "Eye irritation",
+      // desc: "Relief for sore throat and swollen tonsils",
+      path: "/eye-ear-bone/ophthalmology/eye-irritation",
+    },
+    {
+      name: "Stye",
+      // desc: "Spinning sensation and balance issues",
+      path: "/eye-ear-bone/ophthalmology/stye",
+    },
+    {
+      name: "Eye-strain",
+      // desc: "Pain, pressure, and ear discomfort",
+      path: "/eye-ear-bone/ophthalmology/eye-strain",
+    },
+    {
+      name: "Back pain",
+      // desc: "Pain, pressure, and ear discomfort",
+      path: "/eye-ear-bone/orthopedics/back-pain",
+    },
+    {
+      name: "Neck pain",
+      // desc: "Relief for voice and throat changes",
+      path: "/eye-ear-bone/orthopedics/neck-pain",
+    },
+    {
+      name: "Knee pain",
+      // desc: "Relief for a blocked nose",
+      path: "/eye-ear-bone/orthopedics/knee-pain",
+    },
+    {
+      name: "Muscle Strains",
+      // desc: "Pain, irritation, or a scratchy throat",
+      path: "/eye-ear-bone/orthopedics/muscle-strain",
+    },
+    {
+      name: "Osteoarthritis",
+      // desc: "Relief for sore throat and swollen tonsils",
+      path: "/eye-ear-bone/orthopedics/osteoarthritis",
+    },
+    {
+      name: "Arthritis Advice",
+      // desc: "Spinning sensation and balance issues",
+      path: "/eye-ear-bone/orthopedics/arthritis",
+    },
   ],
 
   treatments: [
@@ -414,18 +449,16 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 function SpecialtyCard({ sp, index }) {
   const navigate = useNavigate();
 
-  return (
+  const content = (
     <motion.div
       className="hcc-specialty-card"
-      role="button"
-      tabIndex={0}
+      tabIndex={sp.path ? 0 : -1}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => sp.path && navigate(sp.path)}
       onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && sp.path) {
+        if (!sp.path && (e.key === "Enter" || e.key === " ") && sp.path) {
           e.preventDefault();
           navigate(sp.path);
         }
@@ -435,11 +468,19 @@ function SpecialtyCard({ sp, index }) {
       <div className="hcc-specialty-name">{sp.name}</div>
       <p className="hcc-specialty-desc">{sp.desc}</p>
       {sp.path && (
-        <div className="hcc-specialty-arrow">
+        <div className="hcc-specialty-footer">
           Learn more <FiArrowRight size={13} />
         </div>
       )}
     </motion.div>
+  );
+
+  return sp.path ? (
+    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 
@@ -448,18 +489,16 @@ function SpecialtyCard({ sp, index }) {
 function ConditionCard({ cond, index }) {
   const navigate = useNavigate();
 
-  return (
+  const content = (
     <motion.div
       className="hcc-condition-card"
-      role="button"
-      tabIndex={0}
+      tabIndex={cond.path ? 0 : -1}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => cond.path && navigate(cond.path)}
       onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && cond.path) {
+        if (!cond.path && (e.key === "Enter" || e.key === " ") && cond.path) {
           e.preventDefault();
           navigate(cond.path);
         }
@@ -474,6 +513,14 @@ function ConditionCard({ cond, index }) {
         </div>
       )}
     </motion.div>
+  );
+
+  return cond.path ? (
+    <Link to={cond.path} className="hcc-condition-link" aria-label={cond.name}>
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 
@@ -493,7 +540,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -503,7 +550,7 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
@@ -599,7 +646,7 @@ export default function EyeEarBone() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "eeb" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div
@@ -661,14 +708,14 @@ export default function EyeEarBone() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
-              <button className="hcc-btn-primary" onClick={goToBooking}>
+            {/* <div className="hcc-cta-row"> */}
+            {/* <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
-              </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              </button> */}
+            {/* <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
               </button> */}
-            </div>
+            {/* </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

@@ -37,7 +37,7 @@ const HelpIcons = {
 /* ── Route mapping for each category ── */
 const helpRoutes = {
   "Child & Family Care": "/child-and-family-care",
-  "Chronic Care & Expert Opinion": "/chronic-care-and-expert-opinion",
+  "Chronic Care & Expert Opinion": "/chronic-care",
   "Eye, Ear & Bone": "/eye-ear-bone",
   "General & Everyday Care": "/general-and-everyday-care",
   "Men's Health": "/men-health",

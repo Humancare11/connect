@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -549,283 +550,300 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
   }, []);
 
   return (
-    <main className="sp-page">
-      {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
-      <section className="sp-hero">
-        <div className="sp-hero__bg">
-          <img
-            src={data.heroImage}
-            alt={data.heroAlt}
-            className="sp-hero__img"
-            loading="eager"
-          />
-          <div className="sp-hero__overlay" />
-        </div>
+    <>
+      <HelmetProvider>
+        <title>
+          Cardiology Specialists | Heart Care & Cardiovascular Health
+        </title>
+        <meta
+          name="description"
+          content="Receive expert cardiology care for heart disease, high blood pressure, high cholesterol, chest pain, palpitations, and preventive cardiovascular wellness."
+        />
+      </HelmetProvider>
+      <main className="sp-page">
+        {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
+        <section className="sp-hero">
+          <div className="sp-hero__bg">
+            <img
+              src={data.heroImage}
+              alt={data.heroAlt}
+              className="sp-hero__img"
+              loading="eager"
+            />
+            <div className="sp-hero__overlay" />
+          </div>
 
-        <div className="sp-hero__content">
-          <div
-            className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-          >
-            <span className="sp-hero__badge">HumanCare Connect</span>
-            <h1 className="sp-hero__title">{data.name}</h1>
-            <p className="sp-hero__tagline">{data.tagline}</p>
-            <p className="sp-hero__description">{data.heroDescription}</p>
+          <div className="sp-hero__content">
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Chronic Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-            <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
-      <section className="sp-overview">
-        <div className="sp-container">
-          <div className="sp-overview__grid">
-            {/* Image column */}
-            <Reveal>
-              <div className="sp-overview__img-wrap">
-                <img
-                  src={data.overviewImage}
-                  alt={data.overviewAlt}
-                  className="sp-overview__img"
-                  loading="lazy"
-                />
-                <div className="sp-overview__badge">
-                  <div className="sp-overview__badge-icon">
-                    <FiCheckCircle size={20} />
-                  </div>
-                  <div>
-                    <p className="sp-overview__badge-title">Board-Certified</p>
-                    <p className="sp-overview__badge-sub">
-                      {data.name} Specialists
-                    </p>
+        {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
+        <section className="sp-overview">
+          <div className="sp-container">
+            <div className="sp-overview__grid">
+              {/* Image column */}
+              <Reveal>
+                <div className="sp-overview__img-wrap">
+                  <img
+                    src={data.overviewImage}
+                    alt={data.overviewAlt}
+                    className="sp-overview__img"
+                    loading="lazy"
+                  />
+                  <div className="sp-overview__badge">
+                    <div className="sp-overview__badge-icon">
+                      <FiCheckCircle size={20} />
+                    </div>
+                    <div>
+                      <p className="sp-overview__badge-title">
+                        Board-Certified
+                      </p>
+                      <p className="sp-overview__badge-sub">
+                        {data.name} Specialists
+                      </p>
+                    </div>
                   </div>
                 </div>
+              </Reveal>
+
+              {/* Text column */}
+              <div className="sp-overview__text">
+                <Reveal>
+                  <SectionLabel>About the Specialty</SectionLabel>
+                  <h2 className="sp-overview__heading">What Is {data.name}?</h2>
+                  <p className="sp-overview__para">
+                    {data.overviewDescription}
+                  </p>
+                  <p className="sp-overview__para">{data.overviewImportance}</p>
+                </Reveal>
+
+                <Reveal delay={80}>
+                  <div className="sp-info-box sp-info-box--blue">
+                    <h3 className="sp-info-box__heading">
+                      <FiActivity size={15} color="#083EBD" />
+                      Conditions Treated
+                    </h3>
+                    <p className="sp-info-box__text">
+                      {data.conditionsTreated}
+                    </p>
+                  </div>
+                </Reveal>
+
+                <Reveal delay={140}>
+                  <div className="sp-info-box sp-info-box--gray">
+                    <h3 className="sp-info-box__heading">
+                      <FiAlertCircle size={15} color="#64748b" />
+                      When to Consult
+                    </h3>
+                    <p className="sp-info-box__text">{data.whenToConsult}</p>
+                  </div>
+                </Reveal>
+              </div>
+            </div>
+
+            {/* Key Services */}
+            <Reveal>
+              <div className="sp-section-head">
+                <SectionLabel>What We Offer</SectionLabel>
+                <h3>Key Services</h3>
+              </div>
+            </Reveal>
+            <div className="sp-services-grid">
+              {data.keyServices.map((s, i) => (
+                <ServiceCard key={i} {...s} delay={i * 55} />
+              ))}
+            </div>
+
+            {/* Benefits */}
+            <Reveal>
+              <div className="sp-section-head">
+                <SectionLabel>Why It Matters</SectionLabel>
+                <h3>Benefits of {data.name}</h3>
+              </div>
+            </Reveal>
+            <div className="sp-benefits-grid">
+              {data.benefits.map((b, i) => (
+                <BenefitCard key={i} {...b} delay={i * 65} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 3. CONDITIONS ──────────────────────────────────────────────────── */}
+        <section className="sp-conditions">
+          <div className="sp-container">
+            <Reveal>
+              <div className="sp-conditions__head">
+                <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
+                <h2>What We Treat</h2>
+                <p>
+                  Our {data.name.toLowerCase()} specialists are experienced in
+                  diagnosing and treating a wide range of conditions across all
+                  age groups.
+                </p>
               </div>
             </Reveal>
 
-            {/* Text column */}
-            <div className="sp-overview__text">
-              <Reveal>
-                <SectionLabel>About the Specialty</SectionLabel>
-                <h2 className="sp-overview__heading">What Is {data.name}?</h2>
-                <p className="sp-overview__para">{data.overviewDescription}</p>
-                <p className="sp-overview__para">{data.overviewImportance}</p>
-              </Reveal>
-
-              <Reveal delay={80}>
-                <div className="sp-info-box sp-info-box--blue">
-                  <h3 className="sp-info-box__heading">
-                    <FiActivity size={15} color="#083EBD" />
-                    Conditions Treated
-                  </h3>
-                  <p className="sp-info-box__text">{data.conditionsTreated}</p>
-                </div>
-              </Reveal>
-
-              <Reveal delay={140}>
-                <div className="sp-info-box sp-info-box--gray">
-                  <h3 className="sp-info-box__heading">
-                    <FiAlertCircle size={15} color="#64748b" />
-                    When to Consult
-                  </h3>
-                  <p className="sp-info-box__text">{data.whenToConsult}</p>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-
-          {/* Key Services */}
-          <Reveal>
-            <div className="sp-section-head">
-              <SectionLabel>What We Offer</SectionLabel>
-              <h3>Key Services</h3>
-            </div>
-          </Reveal>
-          <div className="sp-services-grid">
-            {data.keyServices.map((s, i) => (
-              <ServiceCard key={i} {...s} delay={i * 55} />
-            ))}
-          </div>
-
-          {/* Benefits */}
-          <Reveal>
-            <div className="sp-section-head">
-              <SectionLabel>Why It Matters</SectionLabel>
-              <h3>Benefits of {data.name}</h3>
-            </div>
-          </Reveal>
-          <div className="sp-benefits-grid">
-            {data.benefits.map((b, i) => (
-              <BenefitCard key={i} {...b} delay={i * 65} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 3. CONDITIONS ──────────────────────────────────────────────────── */}
-      <section className="sp-conditions">
-        <div className="sp-container">
-          <Reveal>
-            <div className="sp-conditions__head">
-              <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
-              <h2>What We Treat</h2>
-              <p>
-                Our {data.name.toLowerCase()} specialists are experienced in
-                diagnosing and treating a wide range of conditions across all
-                age groups.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-conditions__grid">
-            {data.conditions.map((c, i) => (
-              <ConditionCard key={i} {...c} delay={Math.min(i, 7) * 45} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. WHY HUMANCARE ───────────────────────────────────────────────── */}
-      <section className="sp-trust">
-        <div className="sp-container">
-          <div className="sp-stats-grid">
-            {TRUST_STATS.map((s, i) => (
-              <AnimatedStat key={i} {...s} />
-            ))}
-          </div>
-
-          <Reveal>
-            <div className="sp-trust__head">
-              <SectionLabel>Why HumanCare Connect</SectionLabel>
-              <h2>Care You Can Trust</h2>
-              <p>
-                We combine experienced medical professionals with advanced
-                technology to make accessing quality healthcare simpler, faster,
-                and more personalized.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-trust-grid">
-            {TRUST_CARDS.map((c, i) => (
-              <TrustCard key={i} {...c} delay={i * 55} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
-      <section className="sp-faq">
-        <div className="sp-container--narrow">
-          <Reveal>
-            <div className="sp-faq__head">
-              <SectionLabel>FAQ</SectionLabel>
-              <h2>Frequently Asked Questions</h2>
-              <p>
-                Everything you need to know about {data.name.toLowerCase()} at
-                HumanCare Connect.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="sp-faq__list">
-            {data.faqs.map((faq, i) => (
-              <Reveal key={i} delay={i * 45}>
-                <FAQItem question={faq.question} answer={faq.answer} />
-              </Reveal>
-            ))}
-          </div>
-
-          <Reveal delay={80}>
-            <p className="sp-faq__footer">
-              Still have questions?{" "}
-              <a href="/contact">Chat with our care team →</a>
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── 6. CTA ─────────────────────────────────────────────────────────── */}
-      <section className="sp-cta">
-        <div className="sp-cta__glow-top" aria-hidden="true" />
-        <div className="sp-cta__glow-bottom" aria-hidden="true" />
-
-        <div className="sp-cta__inner">
-          <Reveal>
-            <span className="sp-cta__eyebrow">Get Started Today</span>
-            <h2 className="sp-cta__heading">
-              Ready to Connect with a <span>{data.name}</span> Specialist?
-            </h2>
-            <p className="sp-cta__sub">
-              Take the next step toward better heart health with expert
-              cardiology care, convenient appointments, and personalized
-              treatment plans to prevent, diagnose, and manage cardiovascular
-              conditions.
-            </p>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <div className="sp-cta__actions">
-              <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
-              </a>
-              <a
-                href="/appointment-booking"
-                className="sp-btn sp-btn--ghost-lg"
-              >
-                <FiCalendar size={18} />
-                Book Appointment
-              </a>
-            </div>
-          </Reveal>
-
-          <Reveal delay={130}>
-            <div className="sp-cta__badges">
-              {[
-                { Icon: FiLock, label: "HIPAA Compliant" },
-                { Icon: FiStar, label: "4.9/5 Patient Rating" },
-                { Icon: FiCheckCircle, label: "Verified Providers" },
-                { Icon: FiShield, label: "100% Secure Platform" },
-              ].map((badge, i) => (
-                <div key={i} className="sp-cta__badge">
-                  <badge.Icon size={15} className="sp-cta__badge-icon" />
-                  <span>{badge.label}</span>
-                </div>
+            <div className="sp-conditions__grid">
+              {data.conditions.map((c, i) => (
+                <ConditionCard key={i} {...c} delay={Math.min(i, 7) * 45} />
               ))}
             </div>
-          </Reveal>
+          </div>
+        </section>
 
-          <Reveal delay={170}>
-            <div className="sp-cta__contact">
-              <a href="tel:+918008001234" className="sp-cta__contact-link">
-                <FiPhone size={14} />
-                +91 800 800 1234
-              </a>
-              <a
-                href="mailto:care@humancareconnect.co"
-                className="sp-cta__contact-link"
-              >
-                <FiMail size={14} />
-                care@humancareconnect.co
-              </a>
-              <span className="sp-cta__contact-item">
-                <FiClock size={14} />
-                Mon – Sun, 8 AM – 10 PM IST
-              </span>
+        {/* ── 4. WHY HUMANCARE ───────────────────────────────────────────────── */}
+        <section className="sp-trust">
+          <div className="sp-container">
+            <div className="sp-stats-grid">
+              {TRUST_STATS.map((s, i) => (
+                <AnimatedStat key={i} {...s} />
+              ))}
             </div>
-          </Reveal>
-        </div>
-      </section>
-    </main>
+
+            <Reveal>
+              <div className="sp-trust__head">
+                <SectionLabel>Why HumanCare Connect</SectionLabel>
+                <h2>Care You Can Trust</h2>
+                <p>
+                  We combine experienced medical professionals with advanced
+                  technology to make accessing quality healthcare simpler,
+                  faster, and more personalized.
+                </p>
+              </div>
+            </Reveal>
+
+            <div className="sp-trust-grid">
+              {TRUST_CARDS.map((c, i) => (
+                <TrustCard key={i} {...c} delay={i * 55} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
+        <section className="sp-faq">
+          <div className="sp-container--narrow">
+            <Reveal>
+              <div className="sp-faq__head">
+                <SectionLabel>FAQ</SectionLabel>
+                <h2>Frequently Asked Questions</h2>
+                <p>
+                  Everything you need to know about {data.name.toLowerCase()} at
+                  HumanCare Connect.
+                </p>
+              </div>
+            </Reveal>
+
+            <div className="sp-faq__list">
+              {data.faqs.map((faq, i) => (
+                <Reveal key={i} delay={i * 45}>
+                  <FAQItem question={faq.question} answer={faq.answer} />
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal delay={80}>
+              <p className="sp-faq__footer">
+                Still have questions?{" "}
+                <a href="/contact-us">Chat with our care team →</a>
+              </p>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ── 6. CTA ─────────────────────────────────────────────────────────── */}
+        <section className="sp-cta">
+          <div className="sp-cta__glow-top" aria-hidden="true" />
+          <div className="sp-cta__glow-bottom" aria-hidden="true" />
+
+          <div className="sp-cta__inner">
+            <Reveal>
+              <span className="sp-cta__eyebrow">Get Started Today</span>
+              <h2 className="sp-cta__heading">
+                Ready to Connect with a <span>{data.name}</span> Specialist?
+              </h2>
+              <p className="sp-cta__sub">
+                Take the next step toward better heart health with expert
+                cardiology care, convenient appointments, and personalized
+                treatment plans to prevent, diagnose, and manage cardiovascular
+                conditions.
+              </p>
+            </Reveal>
+
+            <Reveal delay={80}>
+              <div className="sp-cta__actions">
+                <a href="/login" className="sp-btn sp-btn--primary-lg">
+                  <FiSearch size={18} />
+                  Find a Doctor
+                </a>
+                <a
+                  href="/appointment-booking"
+                  className="sp-btn sp-btn--ghost-lg"
+                >
+                  <FiCalendar size={18} />
+                  Book Appointment
+                </a>
+              </div>
+            </Reveal>
+
+            <Reveal delay={130}>
+              <div className="sp-cta__badges">
+                {[
+                  { Icon: FiLock, label: "HIPAA Compliant" },
+                  { Icon: FiStar, label: "4.9/5 Patient Rating" },
+                  { Icon: FiCheckCircle, label: "Verified Providers" },
+                  { Icon: FiShield, label: "100% Secure Platform" },
+                ].map((badge, i) => (
+                  <div key={i} className="sp-cta__badge">
+                    <badge.Icon size={15} className="sp-cta__badge-icon" />
+                    <span>{badge.label}</span>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
+            {/* <Reveal delay={170}>
+              <div className="sp-cta__contact">
+                <a href="tel:+918008001234" className="sp-cta__contact-link">
+                  <FiPhone size={14} />
+                  +91 800 800 1234
+                </a>
+                <a
+                  href="mailto:care@humancareconnect.co"
+                  className="sp-cta__contact-link"
+                >
+                  <FiMail size={14} />
+                  care@humancareconnect.co
+                </a>
+                <span className="sp-cta__contact-item">
+                  <FiClock size={14} />
+                  Mon – Sun, 8 AM – 10 PM IST
+                </span>
+              </div>
+            </Reveal> */}
+          </div>
+        </section>
+      </main>
+    </>
   );
 }

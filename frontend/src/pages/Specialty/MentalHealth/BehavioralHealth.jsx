@@ -598,12 +598,12 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
-              <span className="sp-hero__badge">HumanCare Connect</span>
+              <span className="sp-hero__badge">Mental Health</span>
               <h1 className="sp-hero__title">{data.name}</h1>
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
+              {/* <div className="sp-hero__actions">
                 <a href="/Specialties" className="sp-btn sp-btn--primary">
                   <FiSearch size={17} />
                   Find Specialists
@@ -612,7 +612,7 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
                   <FiCalendar size={17} />
                   Book Appointment
                 </a>
-              </div>
+              </div> */}
             </div>
           </div>
         </section>
@@ -786,7 +786,7 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
             <Reveal delay={80}>
               <p className="sp-faq__footer">
                 Still have questions?{" "}
-                <a href="/contact">Chat with our care team →</a>
+                <a href="/contact-us">Chat with our care team →</a>
               </p>
             </Reveal>
           </div>

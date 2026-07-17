@@ -1,13 +1,48 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import {
-  Globe2, ArrowRight, Plane, Stethoscope, Brain, Activity,
-  ClipboardPlus, HeartPulse, Venus, Mars, Baby, ShieldCheck,
-  Pill, Users, CheckCircle2, ChevronLeft, ChevronRight,
-  Search, MessageCircle, Clock, Lock, MapPin, Plus, Minus,
-  Soup, Sparkles, HeartHandshake, Wind, Eye, Ear,
-  Bone, Baby as BabyIcon, Scale, FileSearch, Heart
+  Globe2,
+  ArrowRight,
+  Plane,
+  Stethoscope,
+  Brain,
+  Activity,
+  ClipboardPlus,
+  HeartPulse,
+  Venus,
+  Mars,
+  Baby,
+  ShieldCheck,
+  Pill,
+  Users,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  MessageCircle,
+  Clock,
+  Lock,
+  MapPin,
+  Plus,
+  Minus,
+  Soup,
+  Sparkles,
+  HeartHandshake,
+  Wind,
+  Eye,
+  Ear,
+  Bone,
+  Baby as BabyIcon,
+  Scale,
+  FileSearch,
+  Heart,
 } from "lucide-react";
 import "./Specialties.css";
 
@@ -24,10 +59,22 @@ const carouselSlides = [
       ["Status", "Non-emergency triage"],
     ],
     tabs: [
-      { name: "Primary Care", icon: Stethoscope, tags: ["Cold & Flu", "Fever"] },
-      { name: "Urgent Care", icon: ClipboardPlus, tags: ["UTI", "Sore Throat"] },
+      {
+        name: "Primary Care",
+        icon: Stethoscope,
+        tags: ["Cold & Flu", "Fever"],
+      },
+      {
+        name: "Urgent Care",
+        icon: ClipboardPlus,
+        tags: ["UTI", "Sore Throat"],
+      },
       { name: "Mental Health", icon: Brain, tags: ["Anxiety", "Depression"] },
-      { name: "Chronic Care", icon: Activity, tags: ["Diabetes", "Hypertension"] },
+      {
+        name: "Chronic Care",
+        icon: Activity,
+        tags: ["Diabetes", "Hypertension"],
+      },
     ],
   },
   {
@@ -41,10 +88,22 @@ const carouselSlides = [
       ["Status", "Scheduled follow-up"],
     ],
     tabs: [
-      { name: "Chronic Care", icon: Activity, tags: ["Diabetes", "Hypertension"] },
-      { name: "Primary Care", icon: Stethoscope, tags: ["Preventive", "Check-ups"] },
+      {
+        name: "Chronic Care",
+        icon: Activity,
+        tags: ["Diabetes", "Hypertension"],
+      },
+      {
+        name: "Primary Care",
+        icon: Stethoscope,
+        tags: ["Preventive", "Check-ups"],
+      },
       { name: "Medication Mgmt", icon: Pill, tags: ["Refill", "Side Effects"] },
-      { name: "Second Opinion", icon: Users, tags: ["Lab Review", "Diagnosis"] },
+      {
+        name: "Second Opinion",
+        icon: Users,
+        tags: ["Lab Review", "Diagnosis"],
+      },
     ],
   },
   {
@@ -59,7 +118,11 @@ const carouselSlides = [
     ],
     tabs: [
       { name: "Mental Health", icon: Brain, tags: ["Anxiety", "Depression"] },
-      { name: "Primary Care", icon: Stethoscope, tags: ["Insomnia", "Fatigue"] },
+      {
+        name: "Primary Care",
+        icon: Stethoscope,
+        tags: ["Insomnia", "Fatigue"],
+      },
       { name: "Chronic Care", icon: Activity, tags: ["Stress", "Burnout"] },
       { name: "Second Opinion", icon: Users, tags: ["Referral", "Clarity"] },
     ],
@@ -87,214 +150,406 @@ const carouselSlides = [
 export const specialties = [
   {
     name: "General Physician (GP)",
-    path: "/general-physician",
+    path: "/general-and-everyday-care/general-physician",
     icon: Stethoscope,
-    description: "Trusted primary healthcare for common illnesses, preventive care, chronic condition management, routine checkups, and everyday medical concerns for adults and families.",
-    tags: ["Body Aches","Cold & Flu", "Cough", "Fatigue", "Fever","Headache","Minor Infections","Nausea & Vomiting","Pink Eye","Sinus Infection"],
+    description:
+      "Trusted primary healthcare for common illnesses, preventive care, chronic condition management, routine checkups, and everyday medical concerns for adults and families.",
+    tags: [
+      "Body Aches",
+      "Cold & Flu",
+      "Cough",
+      "Fatigue",
+      "Fever",
+      "Headache",
+      "Minor Infections",
+      "Nausea & Vomiting",
+      "Pink Eye",
+      "Sinus Infection",
+    ],
   },
   {
     name: "Internal Medicine",
-    path: "/internal-medicine",
+    path: "/general-and-everyday-care/internal-medicine",
     icon: ClipboardPlus,
-    description: "Expert adult healthcare for chronic conditions, preventive screenings, medication reviews, complex symptoms, and personalized care focused on long-term health and wellness.",
-    tags: ["Medication Review", "Multi-System Complaints", "Preventive Screening","Undiagnosed Symptoms"],
+    description:
+      "Expert adult healthcare for chronic conditions, preventive screenings, medication reviews, complex symptoms, and personalized care focused on long-term health and wellness.",
+    tags: [
+      "Medication Review",
+      "Multi-System Complaints",
+      "Preventive Screening",
+      "Undiagnosed Symptoms",
+    ],
   },
   {
     name: "Family Medicine",
-    path: "/family-medicine",
+    path: "/general-and-everyday-care/family-medicine",
     icon: HeartHandshake,
-    description: "Comprehensive healthcare for individuals and families of all ages, including preventive care, routine checkups, chronic condition management, vaccinations, and everyday medical needs.",
+    description:
+      "Comprehensive healthcare for individuals and families of all ages, including preventive care, routine checkups, chronic condition management, vaccinations, and everyday medical needs.",
     tags: ["Whole-Family Illnesses", "Vaccination Advice", "Routine Check-Ups"],
   },
   {
     name: "Psychiatry",
     path: "/psychiatry",
     icon: Brain,
-    description: "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support",
-    tags: ["Anxiety", "Depression","ADHD Evaluation","Bipolar Disorder Follow-Up","Insomnia","OCD","Panic Attacks","PTSD"]
+    description:
+      "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support",
+    tags: [
+      "Anxiety",
+      "Depression",
+      "ADHD Evaluation",
+      "Bipolar Disorder Follow-Up",
+      "Insomnia",
+      "OCD",
+      "Panic Attacks",
+      "PTSD",
+    ],
   },
   {
     name: "Psychology Counseling",
     path: "/psychology-counseling",
     icon: MessageCircle,
-    description: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
-    tags: ["Trauma Support", "Stress", "Relationship Stress","Low Self-Esteem","Grief and Loss"],
+    description:
+      "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
+    tags: [
+      "Trauma Support",
+      "Stress",
+      "Relationship Stress",
+      "Low Self-Esteem",
+      "Grief and Loss",
+    ],
   },
   {
     name: "Behavioral Health",
-    path: "/behavioral-health",
+    path: "/mental-health/behavioral-health",
     icon: Activity,
-    description: "Professional support for stress, anxiety-related concerns, life transitions, emotional wellness, anger management, sleep challenges, and healthier coping strategies.",
-    tags: ["Adjustment Difficulties", "Anger Management", "Sleep-Related Anxiety","Substance Use Support"],
+    description:
+      "Professional support for stress, anxiety-related concerns, life transitions, emotional wellness, anger management, sleep challenges, and healthier coping strategies.",
+    tags: [
+      "Adjustment Difficulties",
+      "Anger Management",
+      "Sleep-Related Anxiety",
+      "Substance Use Support",
+    ],
   },
   {
     name: "Dermatology",
     path: "/dermatology",
     icon: HeartPulse,
-    description: "Expert care for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail disorders, skin rashes, and long-term skin, hair, and nail health.",
-    tags: ["Acne", "Cold Sores", "Eczema","Fungal Skin Infection","Hair Loss","Hives","Mole & Skin Checks","Nail Problems","Psoriasis","Rosacea","Skin Rash","Warts"],
+    description:
+      "Expert care for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail disorders, skin rashes, and long-term skin, hair, and nail health.",
+    tags: [
+      "Acne",
+      "Cold Sores",
+      "Eczema",
+      "Fungal Skin Infection",
+      "Hair Loss",
+      "Hives",
+      "Mole & Skin Checks",
+      "Nail Problems",
+      "Psoriasis",
+      "Rosacea",
+      "Skin Rash",
+      "Warts",
+    ],
   },
   {
     name: "Obstetrics & Gynaecology (OB-GYN)",
     path: "/obstetrics-and-gynaecology",
     icon: Venus,
-    description: "Comprehensive women's healthcare for PCOS, fertility concerns, pregnancy support, birth control consultations, menstrual health, pelvic pain, vaginal infections, hormonal balance, and reproductive wellness.",
-    tags: ["Bacterial Vaginosis", "Birth Control Consultation", "Fertility Concerns","Irregular Periods","Menstrual Cramps","PCOS",
-"Pelvic Pain","Prenatal Consultation","Vaginal Yeast Infection"],
+    description:
+      "Comprehensive women's healthcare for PCOS, fertility concerns, pregnancy support, birth control consultations, menstrual health, pelvic pain, vaginal infections, hormonal balance, and reproductive wellness.",
+    tags: [
+      "Bacterial Vaginosis",
+      "Birth Control Consultation",
+      "Fertility Concerns",
+      "Irregular Periods",
+      "Menstrual Cramps",
+      "PCOS",
+      "Pelvic Pain",
+      "Prenatal Consultation",
+      "Vaginal Yeast Infection",
+    ],
   },
   {
     name: "Menopause Care",
     path: "/menopause-care",
     icon: Venus,
-    description: "Hormonal symptom management and guidance through perimenopause and beyond.",
+    description:
+      "Hormonal symptom management and guidance through perimenopause and beyond.",
     tags: ["Hot Flashes", "Hormones", "Sleep"],
   },
   {
     name: "Women's Mental Health",
     path: "/women-mental-health",
     icon: Brain,
-    description: "Compassionate support for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, parenting stress, emotional wellness, anxiety management, and women's mental health care.",
+    description:
+      "Compassionate support for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, parenting stress, emotional wellness, anxiety management, and women's mental health care.",
     tags: ["Postnatal Depression", "Perinatal Anxiety", "PMDD"],
   },
   {
     name: "Lactation Consulting",
     path: "/lactation-consulting",
     icon: BabyIcon,
-    description: "Expert breastfeeding support for latch difficulties, low milk supply, nipple pain, pumping guidance, infant feeding concerns, weaning transitions, and postpartum feeding success.",
-    tags: ["Latch Problems", "Latch Problems", "Nipple Pain","Weaning Guidance"],
+    description:
+      "Expert breastfeeding support for latch difficulties, low milk supply, nipple pain, pumping guidance, infant feeding concerns, weaning transitions, and postpartum feeding success.",
+    tags: [
+      "Latch Problems",
+      "Latch Problems",
+      "Nipple Pain",
+      "Weaning Guidance",
+    ],
   },
   {
     name: "Men's Health",
-    path: "/mens-health",
+    path: "/mens-health-men-health",
     icon: Mars,
-    description: "Expert care for testosterone imbalance, erectile dysfunction, prostate health, fertility concerns, hair loss, sexual wellness, and healthy aging with personalized treatment plans.",
-    tags: ["Prostate Health", "Low Testosterone Symptoms", "Low Libido","Hair Loss","Erectile Dysfunction"],
+    description:
+      "Expert care for testosterone imbalance, erectile dysfunction, prostate health, fertility concerns, hair loss, sexual wellness, and healthy aging with personalized treatment plans.",
+    tags: [
+      "Prostate Health",
+      "Low Testosterone Symptoms",
+      "Low Libido",
+      "Hair Loss",
+      "Erectile Dysfunction",
+    ],
   },
   {
     name: "Urology",
-    path: "/urology",
+    path: "/mens-health/urology",
     icon: Activity,
-    description: "Diagnosis and treatment of urinary tract and reproductive system issues.",
+    description:
+      "Diagnosis and treatment of urinary tract and reproductive system issues.",
     tags: ["UTI", "Kidney Stones", "Prostate"],
   },
   {
     name: "Pediatrics",
     path: "/pediatrics",
     icon: Baby,
-    description: "Kids’ Care Comprehensive care for infants, children and teens, from routine wellness exams and vaccinations to illness treatment, developmental support and preventive care that promotes healthy growth.",
-    tags: ["Ear Pain in Children", "Feeding Concerns", "Pediatric Cold & Flu","Pediatric Fever","Skin Rash in Children"],
+    description:
+      "Kids’ Care Comprehensive care for infants, children and teens, from routine wellness exams and vaccinations to illness treatment, developmental support and preventive care that promotes healthy growth.",
+    tags: [
+      "Ear Pain in Children",
+      "Feeding Concerns",
+      "Pediatric Cold & Flu",
+      "Pediatric Fever",
+      "Skin Rash in Children",
+    ],
   },
   {
     name: "Adolescent Medicine",
     path: "/adolescent-medicine",
     icon: Users,
-    description: "Adolescent Medicine Comprehensive health care for teenagers and young adults with support for puberty, mental health, growth, nutrition, sports injuries and overall adolescent wellness",
+    description:
+      "Adolescent Medicine Comprehensive health care for teenagers and young adults with support for puberty, mental health, growth, nutrition, sports injuries and overall adolescent wellness",
     tags: ["Mood & Anxiety in Teens", "Puberty Concerns", "Sports Injuries"],
   },
   {
     name: "Weight Management",
     path: "/weight-management",
     icon: Scale,
-    description: "Personalized support for weight loss, obesity management, binge eating concerns, GLP-1 eligibility assessments, nutrition planning, appetite control, and sustainable long-term weight management.",
-    tags: ["Weight Management", "Weight-Loss Planning", "Obesity","GLP-1 Program Eligibility"],
+    description:
+      "Personalized support for weight loss, obesity management, binge eating concerns, GLP-1 eligibility assessments, nutrition planning, appetite control, and sustainable long-term weight management.",
+    tags: [
+      "Weight Management",
+      "Weight-Loss Planning",
+      "Obesity",
+      "GLP-1 Program Eligibility",
+    ],
   },
   {
     name: "Nutrition & Dietetics",
     path: "/nutrition-and-dietetics",
     icon: Soup,
-    description: "Dietary guidance from licensed professionals for health and recovery goals.",
-    tags: ["Nutrition & Dietetics ", "Sports Nutrition", "Pregnancy Nutrition","Food Intolerance Planning","Diabetic Diet","Cholesterol-Lowering Diet"],
+    description:
+      "Dietary guidance from licensed professionals for health and recovery goals.",
+    tags: [
+      "Nutrition & Dietetics ",
+      "Sports Nutrition",
+      "Pregnancy Nutrition",
+      "Food Intolerance Planning",
+      "Diabetic Diet",
+      "Cholesterol-Lowering Diet",
+    ],
   },
   {
     name: "Lifestyle Medicine",
     path: "/lifestyle-medicine",
     icon: Sparkles,
-    description: "Personalized support for healthy habit coaching, nutrition planning, exercise guidance, sleep improvement, stress management, weight management, preventive wellness, and long-term health optimization.",
-    tags: ["Healthy Habit Coaching", "Diet & Exercise Planning", "Sleep Hygiene"],
+    description:
+      "Personalized support for healthy habit coaching, nutrition planning, exercise guidance, sleep improvement, stress management, weight management, preventive wellness, and long-term health optimization.",
+    tags: [
+      "Healthy Habit Coaching",
+      "Diet & Exercise Planning",
+      "Sleep Hygiene",
+    ],
   },
   {
     name: "Cardiology",
-    path: "/cardiology",
+    path: "/chronic-care/cardiology",
     icon: HeartPulse,
-    description: "Expert heart and cardiovascular care for high blood pressure, cholesterol management, heart disease, palpitations, preventive screenings, and long-term heart health support.",
-    tags: ["Chest Pain (Non-Emergency)", "High Cholesterol", "Heart Disease Follow-Up","High Blood Pressure","Palpitations","Pre-Op Cardiac Clearance"],
+    description:
+      "Expert heart and cardiovascular care for high blood pressure, cholesterol management, heart disease, palpitations, preventive screenings, and long-term heart health support.",
+    tags: [
+      "Chest Pain (Non-Emergency)",
+      "High Cholesterol",
+      "Heart Disease Follow-Up",
+      "High Blood Pressure",
+      "Palpitations",
+      "Pre-Op Cardiac Clearance",
+    ],
   },
   {
     name: "Endocrinology",
-    path: "/endocrinology",
+    path: "/chronic-care/endocrinology",
     icon: Activity,
-    description: "Specialized care for hormone imbalances, diabetes, thyroid disorders, metabolic conditions, bone health concerns, and long-term endocrine wellness through personalized treatment plans.",
-    tags: ["Type 2 Diabetes", "Thyroid", "Hormone Imbalance","Osteoporosis"],
+    description:
+      "Specialized care for hormone imbalances, diabetes, thyroid disorders, metabolic conditions, bone health concerns, and long-term endocrine wellness through personalized treatment plans.",
+    tags: ["Type 2 Diabetes", "Thyroid", "Hormone Imbalance", "Osteoporosis"],
   },
   {
     name: "Gastroenterology",
-    path: "/gastroenterology",
+    path: "/chronic-care/gastroenterology",
     icon: Soup,
-    description: "Digestive system care, from everyday symptoms to chronic GI conditions.",
+    description:
+      "Digestive system care, from everyday symptoms to chronic GI conditions.",
     tags: ["IBS", "Acid Reflux", "Bloating"],
   },
   {
     name: "Neurology",
-    path: "/neurology",
+    path: "/chronic-care/neurology",
     icon: Brain,
-    description: "Specialized care for migraines, dizziness, memory concerns, seizures, tremors, nerve disorders, and neurological conditions affecting brain and nerve health.",
-    tags: ["Migraine", "Dizziness", "Numbness and Tingling","Chronic Migraine", "Seizures / Epilepsy Follow-Up", "Tremor"],
+    description:
+      "Specialized care for migraines, dizziness, memory concerns, seizures, tremors, nerve disorders, and neurological conditions affecting brain and nerve health.",
+    tags: [
+      "Migraine",
+      "Dizziness",
+      "Numbness and Tingling",
+      "Chronic Migraine",
+      "Seizures / Epilepsy Follow-Up",
+      "Tremor",
+    ],
   },
   {
     name: "Pulmonology",
-    path: "/pulmonology",
+    path: "/chronic-care/pulmonology",
     icon: Wind,
-    description: "Expert respiratory care for asthma, COPD, chronic cough, sleep apnea, breathing difficulties, lung conditions, and long-term respiratory health management.",
-    tags: ["Asthma", "Chronic lung disease affecting breathing", "Persistent Cough","Post-COVID Concerns", "Shortness of Breath", "Sleep Apnea"],
+    description:
+      "Expert respiratory care for asthma, COPD, chronic cough, sleep apnea, breathing difficulties, lung conditions, and long-term respiratory health management.",
+    tags: [
+      "Asthma",
+      "Chronic lung disease affecting breathing",
+      "Persistent Cough",
+      "Post-COVID Concerns",
+      "Shortness of Breath",
+      "Sleep Apnea",
+    ],
   },
   {
     name: "Expert Medical Opinion",
     path: "/export-medical-opinion",
     icon: FileSearch,
-    description: "Gain clarity and confidence with specialist reviews of diagnoses, treatment plans, surgery recommendations, cancer care options, and complex medical conditions.",
-    tags: ["Cancer Second Opinion", "Complex Diagnosis Review","Second Medical Opinion","Surgery Second Opinion","Treatment Plan Review"],
+    description:
+      "Gain clarity and confidence with specialist reviews of diagnoses, treatment plans, surgery recommendations, cancer care options, and complex medical conditions.",
+    tags: [
+      "Cancer Second Opinion",
+      "Complex Diagnosis Review",
+      "Second Medical Opinion",
+      "Surgery Second Opinion",
+      "Treatment Plan Review",
+    ],
   },
   {
     name: "Ophthalmology",
-    path: "/ophthalmology",
+    path: "/eye-ear-bone/ophthalmology",
     icon: Eye,
-    description: "Expert eye care for dry eyes, vision changes, eye infections, redness, eye strain, and long-term vision health with personalized treatment and support.",
-    tags: ["Vision Changes", "Stye", "Eye Strain","Eye Redness","Eye Irritation","Dry Eyes"],
+    description:
+      "Expert eye care for dry eyes, vision changes, eye infections, redness, eye strain, and long-term vision health with personalized treatment and support.",
+    tags: [
+      "Vision Changes",
+      "Stye",
+      "Eye Strain",
+      "Eye Redness",
+      "Eye Irritation",
+      "Dry Eyes",
+    ],
   },
   {
     name: "ENT (Ear, Nose & Throat)",
     path: "/ent",
     icon: Ear,
-    description: "Specialized care for ear infections, sinus problems, sore throats, hearing concerns, vertigo, voice disorders, and conditions affecting the ear, nose, and throat.",
-    tags: ["Ear Infection", "Ear Pain", "Hoarseness","Nasal Congestion","Sore Throat","Tonsillitis","Vertigo"],
+    description:
+      "Specialized care for ear infections, sinus problems, sore throats, hearing concerns, vertigo, voice disorders, and conditions affecting the ear, nose, and throat.",
+    tags: [
+      "Ear Infection",
+      "Ear Pain",
+      "Hoarseness",
+      "Nasal Congestion",
+      "Sore Throat",
+      "Tonsillitis",
+      "Vertigo",
+    ],
   },
   {
     name: "Orthopedics",
-    path: "/orthopedics",
+    path: "/eye-ear-bone/orthopedics",
     icon: Bone,
-    description: "Specialized care for joint pain, arthritis, back and neck pain, sports injuries, muscle strains, and musculoskeletal conditions to improve mobility and quality of life.",
-    tags: ["Osteoarthritis", "Neck Pain", "Muscle Strain","Knee Pain","Back Pain","Back Pain","Arthritis"],
+    description:
+      "Specialized care for joint pain, arthritis, back and neck pain, sports injuries, muscle strains, and musculoskeletal conditions to improve mobility and quality of life.",
+    tags: [
+      "Osteoarthritis",
+      "Neck Pain",
+      "Muscle Strain",
+      "Knee Pain",
+      "Back Pain",
+      "Back Pain",
+      "Arthritis",
+    ],
   },
   {
     name: "Sexual Health",
     path: "/speciality-sexual-health",
     icon: ShieldCheck,
-    description: "Confidential care for STI concerns, HIV prevention, PrEP guidance, herpes, chlamydia, gonorrhea, partner exposure risks, and overall sexual wellness.",
-    tags: ["STI Consultation", "Safe Sex Counseling","Partner Exposure Concerns","HIV Prevention / PrEP Guidance","Herpes","Gonorrhea","Chlamydia"],
+    description:
+      "Confidential care for STI concerns, HIV prevention, PrEP guidance, herpes, chlamydia, gonorrhea, partner exposure risks, and overall sexual wellness.",
+    tags: [
+      "STI Consultation",
+      "Safe Sex Counseling",
+      "Partner Exposure Concerns",
+      "HIV Prevention / PrEP Guidance",
+      "Herpes",
+      "Gonorrhea",
+      "Chlamydia",
+    ],
   },
   {
     name: "Travel Medicine",
     path: "/travel-medicine",
     icon: Plane,
-    description: " Expert travel health support for pre-travel consultations, vaccination guidance, malaria prevention, traveler's diarrhea, altitude sickness, post-travel illness evaluations, and destination-specific health risks.",
-    tags: ["Food Poisoning While Traveling", "Altitude Sickness","Malaria Prevention","Post-Travel Symptoms","Pre-Travel Vaccination","Travel-Related Fever","Traveler’s Diarrhea",],
+    description:
+      " Expert travel health support for pre-travel consultations, vaccination guidance, malaria prevention, traveler's diarrhea, altitude sickness, post-travel illness evaluations, and destination-specific health risks.",
+    tags: [
+      "Food Poisoning While Traveling",
+      "Altitude Sickness",
+      "Malaria Prevention",
+      "Post-Travel Symptoms",
+      "Pre-Travel Vaccination",
+      "Travel-Related Fever",
+      "Traveler’s Diarrhea",
+    ],
   },
   {
     name: "Global Cross-Border Care",
     path: "/global-cross-border-care",
     icon: Globe2,
-    description: "International healthcare support for travelers, expatriates, medical tourists, medication refill assistance, specialist referrals, chronic care follow-ups, and secure telemedicine consultations across borders.",
-    tags: ["Cross-Border Consultation", "International Medical Assistance","Medication Refill While Traveling","Referral Coordination Overseas"],
+    description:
+      "International healthcare support for travelers, expatriates, medical tourists, medication refill assistance, specialist referrals, chronic care follow-ups, and secure telemedicine consultations across borders.",
+    tags: [
+      "Cross-Border Consultation",
+      "International Medical Assistance",
+      "Medication Refill While Traveling",
+      "Referral Coordination Overseas",
+    ],
   },
 ];
 
@@ -453,7 +708,7 @@ const faqJsonLd = {
         "@type": "Answer",
         text: item.a,
       },
-    }))
+    })),
   ),
 };
 
@@ -493,7 +748,7 @@ function HeroCarousel() {
       const current = slideIndexRef.current;
       goTo((current + offset + total) % total, dir);
     },
-    [goTo, total]
+    [goTo, total],
   );
 
   const prev = () => goToOffset(-1, "prev");
@@ -607,7 +862,11 @@ function HeroCarousel() {
             <ChevronLeft size={16} />
           </button>
 
-          <div className="sp-carousel__dots" role="tablist" aria-label="Carousel slides">
+          <div
+            className="sp-carousel__dots"
+            role="tablist"
+            aria-label="Carousel slides"
+          >
             {carouselSlides.map((_, i) => (
               <button
                 key={i}
@@ -668,7 +927,7 @@ export default function Specialties() {
     return specialties.filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||
-        s.tags.some((t) => t.toLowerCase().includes(q))
+        s.tags.some((t) => t.toLowerCase().includes(q)),
     );
   }, [query]);
 
@@ -676,7 +935,8 @@ export default function Specialties() {
     <>
       <Helmet>
         <title>
-          Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect
+          Online Specialist Doctor Consultation | Expert Virtual Care |
+          Humancare Connect
         </title>
         <meta
           name="description"
@@ -714,9 +974,7 @@ export default function Specialties() {
           name="twitter:description"
           content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
         />
-        <script type="application/ld+json">
-          {JSON.stringify(faqJsonLd)}
-        </script>
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
 
       {/* ── Hero ── */}
@@ -935,9 +1193,7 @@ export default function Specialties() {
                         q={item.q}
                         a={item.a}
                         isOpen={openFaq === id}
-                        onToggle={() =>
-                          setOpenFaq(openFaq === id ? null : id)
-                        }
+                        onToggle={() => setOpenFaq(openFaq === id ? null : id)}
                       />
                     );
                   })}
@@ -970,7 +1226,10 @@ export default function Specialties() {
             >
               Book a consultation <ArrowRight size={15} />
             </a>
-            <a href="/conditions" className="sp-cta__btn sp-cta__btn--secondary">
+            <a
+              href="/conditions"
+              className="sp-cta__btn sp-cta__btn--secondary"
+            >
               Browse Conditions
             </a>
           </div>

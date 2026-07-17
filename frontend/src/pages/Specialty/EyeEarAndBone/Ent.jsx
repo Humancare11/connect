@@ -371,6 +371,16 @@ const TRUST_CARDS = [
   },
 ];
 
+// small helper to create fragment links for cards
+function slugify(text = "") {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 // ── Scroll reveal hook ────────────────────────────────────────────────────────
 function useScrollReveal(threshold = 0.1) {
   const ref = useRef(null);
@@ -478,39 +488,65 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
-  return (
-    <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
+function ConditionCard({ Icon, name, description, delay, href }) {
+  const inner = (
+    <div className="sp-condition-card">
+      <div className="sp-condition-card__icon">
+        <Icon size={22} />
+      </div>
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      {href ? (
+        <span className="sp-condition-card__link" aria-hidden="true">
+          Learn more <FiArrowRight size={13} />
+        </span>
+      ) : (
         <button
           className="sp-condition-card__link"
           aria-label={`Learn more about ${name}`}
         >
           Learn more <FiArrowRight size={13} />
         </button>
-      </div>
+      )}
+    </div>
+  );
+
+  return (
+    <Reveal delay={delay}>
+      {href ? (
+        <a href={href} className="sp-card-link" aria-label={name}>
+          {inner}
+        </a>
+      ) : (
+        inner
+      )}
     </Reveal>
   );
 }
 
 // ── Key Service Card ──────────────────────────────────────────────────────────
-function ServiceCard({ Icon, title, description, delay }) {
+function ServiceCard({ Icon, title, description, delay, href }) {
+  const inner = (
+    <div className="sp-service-card">
+      <div className="sp-service-card__icon">
+        <Icon size={22} />
+      </div>
+      <div>
+        <h4 className="sp-service-card__title">{title}</h4>
+        <p className="sp-service-card__desc">{description}</p>
+      </div>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-service-card">
-        <div className="sp-service-card__icon">
-          <Icon size={22} />
-        </div>
-        <div>
-          <h4 className="sp-service-card__title">{title}</h4>
-          <p className="sp-service-card__desc">{description}</p>
-        </div>
-      </div>
+      {href ? (
+        <a href={href} className="sp-card-link" aria-label={title}>
+          {inner}
+        </a>
+      ) : (
+        inner
+      )}
     </Reveal>
   );
 }
@@ -585,12 +621,12 @@ export default function Ent({ data = SPECIALTY_DATA }) {
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
-              <span className="sp-hero__badge">HumanCare Connect</span>
+              <span className="sp-hero__badge">Eye Ear & Bone</span>
               <h1 className="sp-hero__title">{data.name}</h1>
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
+              {/* <div className="sp-hero__actions">
                 <a href="/Specialties" className="sp-btn sp-btn--primary">
                   <FiSearch size={17} />
                   Find Specialists
@@ -599,7 +635,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
                   <FiCalendar size={17} />
                   Book Appointment
                 </a>
-              </div>
+              </div> */}
             </div>
           </div>
         </section>
@@ -677,7 +713,12 @@ export default function Ent({ data = SPECIALTY_DATA }) {
             </Reveal>
             <div className="sp-services-grid">
               {data.keyServices.map((s, i) => (
-                <ServiceCard key={i} {...s} delay={i * 55} />
+                <ServiceCard
+                  key={i}
+                  {...s}
+                  delay={i * 55}
+                  href={`/Specialties/${data.slug}#service-${i}`}
+                />
               ))}
             </div>
 
@@ -713,7 +754,12 @@ export default function Ent({ data = SPECIALTY_DATA }) {
 
             <div className="sp-conditions__grid">
               {data.conditions.map((c, i) => (
-                <ConditionCard key={i} {...c} delay={Math.min(i, 7) * 45} />
+                <ConditionCard
+                  key={i}
+                  {...c}
+                  delay={Math.min(i, 7) * 45}
+                  href={`/Specialties/${data.slug}#condition-${slugify(c.name)}`}
+                />
               ))}
             </div>
           </div>
@@ -773,7 +819,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
             <Reveal delay={80}>
               <p className="sp-faq__footer">
                 Still have questions?{" "}
-                <a href="/contact">Chat with our care team →</a>
+                <a href="/contact-us">Chat with our care team →</a>
               </p>
             </Reveal>
           </div>
