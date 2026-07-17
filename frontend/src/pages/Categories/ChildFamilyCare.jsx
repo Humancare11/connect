@@ -30,7 +30,7 @@ const cat = {
   label: "Children & Family Care",
   tagline: "Caring for your little ones",
   headline: "Compassionate Children & Family Care,",
-  headlineAccent: " Whenever You Need It",
+  headlineAccent: "Whenever You Need It",
   subheadline:
     "Connect with experienced healthcare professionals for personalized family healthcare, pediatric support, and everyday medical guidance, delivering convenient, compassionate care for every stage of life.",
   bookingSpecialtyPlaceholder: "e.g. Adolescent Medicine",
@@ -51,48 +51,43 @@ const cat = {
   conditions: [
     {
       name: "Mood & Anxiety in Teens",
-      desc: "Support for teen emotional wellness",
-      path: "/mood-anxiety-teens",
+      // desc: "Support for teen emotional wellness",
+      path: "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
     },
     {
       name: "Puberty Concerns",
-      desc: "Guidance through developmental changes",
-      path: "/puberty-concerns",
+      // desc: "Guidance through developmental changes",
+      path: "/child-and-family-care/adolescent-medicine/puberty-concerns",
     },
     {
       name: "Sports Injuries",
-      desc: "Care for active lifestyles",
-      path: "/sports-injuries",
+      // desc: "Care for active lifestyles",
+      path: "/child-and-family-care/adolescent-medicine/sports-injuries",
     },
     {
       name: "Ear Pain in Children",
-      desc: "Ear discomfort and irritation in kids",
-      path: "/ear-pain-children",
-    },
-    {
-      name: "Ear Infections",
-      desc: "Bacterial or viral infections of the middle ear common in young children.",
-      path: "/ear-infections",
+      // desc: "Ear discomfort and irritation in kids",
+      path: "/child-and-family-care/pediatrics/ear-pain-children",
     },
     {
       name: "Feeding Concerns",
-      desc: "Support for healthy infant feeding",
-      path: "/feeding-concerns",
+      // desc: "Support for healthy infant feeding",
+      path: "/child-and-family-care/pediatrics/feeding-concerns",
     },
     {
       name: "Pediatric Cold & Flu",
-      desc: "Cold and flu symptoms in children",
-      path: "/pediatric-cold-flu",
+      // desc: "Cold and flu symptoms in children",
+      path: "/child-and-family-care/pediatrics/pediatric-cold-flu",
     },
     {
       name: "Pediatric Fever",
-      desc: "Fever and illness in children",
-      path: "/pediatric-fever",
+      // desc: "Fever and illness in children",
+      path: "/child-and-family-care/pediatrics/pediatric-fever",
     },
     {
       name: "Skin Rash in Children",
-      desc: "Red, itchy, irritated skin in kids",
-      path: "/skin-rash-in-children",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/child-and-family-care/pediatrics/skin-rash-in-children",
     },
   ],
 
@@ -410,27 +405,29 @@ function SpecialtyCard({ sp, index }) {
   return (
     <motion.div
       className="hcc-specialty-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => sp.path && navigate(sp.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && sp.path) {
-          e.preventDefault();
-          navigate(sp.path);
-        }
-      }}
-      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
-      <div className="hcc-specialty-name">{sp.name}</div>
-      <p className="hcc-specialty-desc">{sp.desc}</p>
-      {sp.path && (
-        <div className="hcc-specialty-arrow">
-          Learn more <FiArrowRight size={13} />
-        </div>
+      {sp.path ? (
+        <Link
+          to={sp.path}
+          className="hcc-specialty-link"
+          aria-label={`View ${sp.name}`}
+          style={{ display: "block", color: "inherit", textDecoration: "none" }}
+        >
+          <div className="hcc-specialty-name">{sp.name}</div>
+          <p className="hcc-specialty-desc">{sp.desc}</p>
+          <div className="hcc-specialty-arrow">
+            Learn more <FiArrowRight size={13} />
+          </div>
+        </Link>
+      ) : (
+        <>
+          <div className="hcc-specialty-name">{sp.name}</div>
+          <p className="hcc-specialty-desc">{sp.desc}</p>
+        </>
       )}
     </motion.div>
   );
@@ -444,27 +441,29 @@ function ConditionCard({ cond, index }) {
   return (
     <motion.div
       className="hcc-condition-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => cond.path && navigate(cond.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && cond.path) {
-          e.preventDefault();
-          navigate(cond.path);
-        }
-      }}
-      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
-      <div className="hcc-condition-name">{cond.name}</div>
-      <p className="hcc-condition-desc">{cond.desc}</p>
-      {cond.path && (
-        <div className="hcc-condition-expand">
-          Learn more <FiArrowRight size={13} />
-        </div>
+      {cond.path ? (
+        <Link
+          to={cond.path}
+          className="hcc-condition-link"
+          aria-label={`View ${cond.name}`}
+          style={{ display: "block", color: "inherit", textDecoration: "none" }}
+        >
+          <div className="hcc-condition-name">{cond.name}</div>
+          <p className="hcc-condition-desc">{cond.desc}</p>
+          <div className="hcc-condition-expand">
+            Learn more <FiArrowRight size={13} />
+          </div>
+        </Link>
+      ) : (
+        <>
+          <div className="hcc-condition-name">{cond.name}</div>
+          <p className="hcc-condition-desc">{cond.desc}</p>
+        </>
       )}
     </motion.div>
   );
@@ -487,7 +486,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Connect. Can't find an answer?
           </p>
 
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -497,7 +496,7 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
@@ -593,7 +592,7 @@ export default function ChildFamilyCare() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "family" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div
@@ -655,14 +654,14 @@ export default function ChildFamilyCare() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
-              <button className="hcc-btn-primary" onClick={goToBooking}>
+            {/* <div className="hcc-cta-row"> */}
+            {/* <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
-              </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              </button> */}
+            {/* <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
               </button> */}
-            </div>
+            {/* </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

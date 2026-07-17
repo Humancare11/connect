@@ -38,8 +38,8 @@ const cat = {
   specialties: [
     {
       name: "Behavioral Health",
-      desc: "Professional support for stress, anxiety-related concerns, life transitions, emotional wellness, anger management, sleep challenges, and healthier coping strategies. ",
-      path: "/behavioral-health",
+      desc: "Professional support for stress, anxiety-related concerns, life transitions, emotional wellness, anger management, sleep challenges, and healthier coping strategies.",
+      path: "/mental-health/behavioral-health",
     },
     {
       name: "Psychiatry",
@@ -51,70 +51,101 @@ const cat = {
       desc: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
       path: "/psychology-counseling",
     },
-    // {
-    //   name: "Gastroenterology",
-    //   desc: "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. ",
-    //   path: "/gastroenterology",
-    // },
-    // {
-    //   name: "Neurology",
-    //   desc: "Neurology specialists diagnose and treat conditions affecting the brain, spinal cord, nerves, and nervous system. ",
-    //   path: "/neurology",
-    // },
-    // {
-    //   name: "Pulmonology",
-    //   desc: "Pulmonology specialists diagnose and treat lung and respiratory conditions such as asthma, chronic cough, COPD, sleep apnea, and post-COVID breathing issues, helping improve breathing, lung function, and overall health.",
-    //   path: "/pulmonology",
-    // },
   ],
 
   conditions: [
     {
       name: "Adjustment Difficulties",
-      desc: "Support through life changes",
-      path: "/adjustment-difficulties",
+      // desc: "Support through life changes",
+      path: "/mental-health/behavioral-health/adjustment-difficulties",
     },
     {
       name: "Anger Management",
-      desc: "Healthy strategies for emotional control",
-      path: "/anger-management",
+      // desc: "Healthy strategies for emotional control",
+      path: "/mental-health/behavioral-health/anger-management",
     },
     {
-      name: "ADHD Evaluation",
-      desc: "Attention, focus, and hyperactivity concerns",
-      path: "/ADHD-evaluation",
+      name: "Sleep-Related Anxiety",
+      // desc: "Spinning sensation and balance issues",
+      path: "/mental-health/behavioral-health/sleep-related-anxiety",
+    },
+
+    {
+      name: "Substance-use Support",
+      // desc: "Fever and illness in children",
+      path: "/mental-health/behavioral-health/substance-use-support",
     },
     {
       name: "Anxiety",
-      desc: "Excessive worry, stress, and nervousness",
+      // desc: "Excessive worry, stress, and nervousness",
       path: "/anxiety",
+    },
+
+    {
+      name: "Bipolar disorder follow-up",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/bipolar-disorder-follow-up",
+    },
+    {
+      name: "Depression",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/depression",
+    },
+    {
+      name: "OCD",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/ocd",
+    },
+    {
+      name: "ADHD Evaluation",
+      // desc: "Attention, focus, and hyperactivity concerns",
+      path: "/ADHD-evaluation",
+    },
+    {
+      name: "PTSD",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "ptsd",
+    },
+    {
+      name: "Panic attacks",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/panic-attacks",
+    },
+    {
+      name: "Insomnia",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/insomnia",
+    },
+    {
+      name: "Anxiety",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "",
+    },
+    {
+      name: "Low self-esteem",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/low-self-esteem",
+    },
+    {
+      name: "Relationship Stress",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/relationship-stress",
+    },
+    {
+      name: "Trauma support",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/trauma-support",
     },
     {
       name: "Grief and Loss",
-      desc: "Emotional pain after a loss",
+      // desc: "Emotional pain after a loss",
       path: "/grief-and-loss",
     },
     {
       name: "Low Self-Esteem",
-      desc: "Building confidence and self worth",
+      // desc: "Building confidence and self worth",
       path: "/low-self-esteem",
     },
-    // {
-    //   name: "Vertigo",
-    //   desc: "Spinning sensation and balance issues",
-    //   path: "/vertigo",
-    // },
-
-    // {
-    //   name: "Pediatric Fever",
-    //   desc: "Fever and illness in children",
-    //   path: "/pediatric-fever",
-    // },
-    // {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-children",
-    // },
   ],
 
   treatments: [
@@ -455,25 +486,13 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
 function SpecialtyCard({ sp, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-specialty-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => sp.path && navigate(sp.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && sp.path) {
-          e.preventDefault();
-          navigate(sp.path);
-        }
-      }}
-      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
       <div className="hcc-specialty-name">{sp.name}</div>
       <p className="hcc-specialty-desc">{sp.desc}</p>
@@ -484,30 +503,26 @@ function SpecialtyCard({ sp, index }) {
       )}
     </motion.div>
   );
+
+  return sp.path ? (
+    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 }
 
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-condition-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => cond.path && navigate(cond.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && cond.path) {
-          e.preventDefault();
-          navigate(cond.path);
-        }
-      }}
-      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
       <div className="hcc-condition-name">{cond.name}</div>
       <p className="hcc-condition-desc">{cond.desc}</p>
@@ -517,6 +532,14 @@ function ConditionCard({ cond, index }) {
         </div>
       )}
     </motion.div>
+  );
+
+  return cond.path ? (
+    <Link to={cond.path} className="hcc-condition-link" aria-label={cond.name}>
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 
@@ -536,7 +559,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -546,7 +569,7 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
@@ -704,14 +727,14 @@ export default function MentalHealth() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
+            {/* <div className="hcc-cta-row">
               <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
               </button>
               <button className="hcc-btn-secondary" onClick={goToBooking}>
                 <FiUser size={15} /> Know More
               </button>
-            </div>
+            </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

@@ -30,8 +30,6 @@ const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
 const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
 
-
-
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
@@ -106,7 +104,6 @@ const TelehealthProviderAgreement = lazy(
 );
 const Images = lazy(() => import("./components/Images"));
 // category pages
-// import ChildCare from "./pages/Categories/ChildMain";
 const ChildFamilyCare = lazy(
   () => import("./pages/Categories/ChildFamilyCare"),
 );
@@ -652,7 +649,7 @@ const HrtGuidance = lazy(
 const FertilityConcerns = lazy(
   () => import("./pages/Conditions/Conditions/FertilityConcerns"),
 );
-// import OCD from "./pages/Conditions/Conditions/OCD";
+import OCD from "./pages/Conditions/Conditions/OCD";
 const EyeIrritation = lazy(() => import("./pages/Conditions/EyeIrritation"));
 // ----------Speciality Pages-------------------
 const AdolescentMedicine = lazy(
@@ -679,13 +676,13 @@ const Pulmonology = lazy(
 );
 const Ent = lazy(() => import("./pages/Specialty/EyeEarAndBone/Ent"));
 const Ophthalmology = lazy(
-  () => import("./pages/Specialty/EyeEarAndBone/Ophthalmology"),
+  () => import("./pages/Specialty/EyeEarAndBone/ophthalmology"),
 );
 const Orthopedics = lazy(
   () => import("./pages/Specialty/EyeEarAndBone/Orthopedics"),
 );
-const MensHealth = lazy(
-  () => import("./pages/Specialty/MensHealth/MensHealth"),
+const SpeMensHealth = lazy(
+  () => import("./pages/Specialty/MensHealth/SpeMensHealth"),
 );
 const Urology = lazy(() => import("./pages/Specialty/MensHealth/Urology"));
 const BehavioralHealth = lazy(
@@ -774,7 +771,7 @@ const LABREQUISITIONS = lazy(
   () => import("./pages/NewServices/LABREQUISITIONS"),
 );
 const ChronicMedicationManagement = lazy(
-  () => import("./pages/Conditions/ChronicMedicationManagement")
+  () => import("./pages/Conditions/ChronicMedicationManagement"),
 );
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
@@ -985,7 +982,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
       },
       10 * 60 * 1000,
     );
@@ -1059,7 +1056,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -1390,10 +1387,7 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route
-            path="/services-prices"
-            element={<ServicesPrices />}
-          />
+          <Route path="/services-prices" element={<ServicesPrices />} />
           <Route
             path="/admin-auth"
             element={<Navigate to="/adminauth" replace />}
@@ -1577,46 +1571,66 @@ function AppLayout() {
             }
           />
           <Route path="/video-call/:appointmentId" element={<VideoCall />} />
-          <Route path="/direct-video-call/:roomId" element={<DirectVideoCall />} />
+          <Route
+            path="/direct-video-call/:roomId"
+            element={<DirectVideoCall />}
+          />
           {/* ALL*/}
           <Route path="/categories" element={<Categories />} />
           <Route path="/specialties" element={<Specialties />} />
           <Route path="/conditions" element={<Symptoms />} />
           {/* categories */}
-          {/* <Route path="/child-care" element={<ChildCare />} /> */}
           <Route path="/child-and-family-care" element={<ChildFamilyCare />} />
-          <Route
-            path="/chronic-care-and-expert-opinion"
-            element={<ChronicCareExpertOpinion />}
-          />
+          <Route path="/chronic-care" element={<ChronicCareExpertOpinion />} />
           <Route path="/eye-ear-bone" element={<EyeEarBone />} />
           <Route
             path="/general-and-everyday-care"
             element={<GeneralEverydayCare />}
           />
-          <Route path="/men-health" element={<MenHealth />} />
+          <Route path="/mens-health" element={<MenHealth />} />
           <Route path="/mental-health" element={<MentalHealth />} />
-          {/* <Route path="/categories-sexual-health" element={<Sexualhealth />} /> */}
-          <Route path="/categories-sexual-health" element={<Sexual_Health />} />
+          <Route path="/sexual-health" element={<Sexual_Health />} />
           <Route path="/skin-and-hair-care" element={<SkinHair />} />
           <Route path="/travel-global-care" element={<TravelGlobalCare />} />
           <Route path="/weight-and-nurtrition" element={<WeightNurtrition />} />
           <Route path="/women-health" element={<WomenHealth />} />
           {/* specialties */}
           {/* <Route path="/sd" element={<SD />} /> */}
-          <Route path="/child-and-family-care/adolescent-medicine" element={<AdolescentMedicine />} />
-          <Route path="/child-and-family-care/pediatrics" element={<Pediatrics />} />
-          <Route path="/chronic-care-and-expert-opinion/cardiology" element={<Cardiology />} />
           <Route
-            path="/export-medical-opinion"
-            element={<ExpertMedicalOpinion />}
+            path="/child-and-family-care/adolescent-medicine"
+            element={<AdolescentMedicine />}
           />
-          <Route path="/gastroenterology" element={<Gastroenterology />} />
-          <Route path="/neurology" element={<Neurology />} />
-          <Route path="/pulmonology" element={<Pulmonology />} />
-          <Route path="/family-medicine" element={<FamilyMedicine />} />
-          <Route path="/general-physician" element={<GeneralPhysician />} />
-          <Route path="/internal-medicine" element={<InternalMedicine />} />
+          <Route
+            path="/child-and-family-care/pediatrics"
+            element={<Pediatrics />}
+          />
+          <Route
+            path="/chronic-care-and-expert-opinion/cardiology"
+            element={<Cardiology />}
+          />
+          <Route
+            path="/child-and-family-care/pediatrics"
+            element={<Pediatrics />}
+          />
+          <Route path="/chronic-care/cardiology" element={<Cardiology />} />
+          <Route
+            path="/chronic-care/gastroenterology"
+            element={<Gastroenterology />}
+          />
+          <Route path="/chronic-care/neurology" element={<Neurology />} />
+          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
+          <Route
+            path="/general-and-everyday-care/family-medicine"
+            element={<FamilyMedicine />}
+          />
+          <Route
+            path="/general-and-everyday-care/general-physician"
+            element={<GeneralPhysician />}
+          />
+          <Route
+            path="/general-and-everyday-care/internal-medicine"
+            element={<InternalMedicine />}
+          />
           <Route path="/menopause-care" element={<MenopauseCare />} />
           <Route
             path="/obstetrics-and-gynaecology"
@@ -1628,28 +1642,36 @@ function AppLayout() {
             element={<LactationConsulting />}
           />
           <Route
-            path="/export-medical-opinion"
-            element={<ExpertMedicalOpinion />}
+            path="/chronic-care/gastroenterology"
+            element={<Gastroenterology />}
           />
-          <Route path="/gastroenterology" element={<Gastroenterology />} />
-          <Route path="/neurology" element={<Neurology />} />
-          <Route path="/pulmonology" element={<Pulmonology />} />
-          <Route path="/ear-nose-throat" element={<Ent />} />
-          <Route path="/ophthalmology" element={<Ophthalmology />} />
-          <Route path="/orthopedics" element={<Orthopedics />} />
-          <Route path="/endocrinology" element={<EndocrinologySpeciality />} />
-          <Route path="/mens-health" element={<MensHealth />} />
-          <Route path="/urology" element={<Urology />} />
-          <Route path="/behavioral-health" element={<BehavioralHealth />} />
+          <Route path="/chronic-care/neurology" element={<Neurology />} />
+          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
+          <Route path="/eye-ear-bone/ear-nose-throat" element={<Ent />} />
+          <Route
+            path="/eye-ear-bone/ophthalmology"
+            element={<Ophthalmology />}
+          />
+          <Route path="/eye-ear-bone/orthopedics" element={<Orthopedics />} />
+          <Route
+            path="/chronic-care/endocrinology"
+            element={<EndocrinologySpeciality />}
+          />
+          <Route path="/mens-health/men-health" element={<SpeMensHealth />} />
+          <Route path="/mens-health/urology" element={<Urology />} />
+          <Route
+            path="/mental-health/behavioral-health"
+            element={<BehavioralHealth />}
+          />
           <Route path="/psychiatry" element={<Psychiatry />} />
           <Route
             path="/psychology-counseling"
             element={<PsychologyCounseling />}
           />
-          <Route
+          {/* <Route
             path="/speciality-sexual-health"
             element={<SexualHealthSpeciality />}
-          />
+          /> */}
           <Route path="/dermatology" element={<Dermatology />} />
           <Route
             path="/global-cross-border-care"
@@ -1663,25 +1685,64 @@ function AppLayout() {
             element={<NutritionAndDietetics />}
           />
           {/* condition pages */}
-          <Route path="/arthritis" element={<Arthritis />} />
-          <Route path="/cancer-second-opinion" element={<CancerSecond />} />
-          <Route path="/chest-pain" element={<ChestPain />} />
-          <Route path="/chronic-kidney-disease" element={<ChronicKidney />} />
-          <Route path="/chronic-migraine" element={<ChronicMigraine />} />
-          <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} />
-          <Route path="/fatty-liver" element={<FattyLiver />} />
-          <Route path="/heart-disease-follow-up" element={<HeartDisease />} />
-          <Route path="/high-blood-pressure" element={<HighBloodPressure />} />
-          <Route path="/high-cholesterol" element={<HighCholesterol />} />
-          <Route path="/hormone-imblance" element={<HormoneImblance />} />
-          <Route path="/memory-concerns" element={<MemoryConcerns />} />
-          <Route path="/obesity" element={<Obesity />} />
-          <Route path="/osteoarthritis" element={<Osteoarthritis />} />
-          <Route path="/osteoporosis" element={<Osteoporosis />} />
-          <Route path="/palpitations" element={<Palpitations />} />
-          <Route path="/post-covid-concerns" element={<PostCovidConcerns />} />
           <Route
-            path="/pre-op-cardiac-clearance"
+            path="/eye-ear-bone/orthopedics/arthritis"
+            element={<Arthritis />}
+          />
+          <Route path="/cancer-second-opinion" element={<CancerSecond />} />
+          <Route
+            path="/chronic-care/cardiology/chest-pain"
+            element={<ChestPain />}
+          />
+          <Route path="/chronic-kidney-disease" element={<ChronicKidney />} />
+          <Route
+            path="/chronic-care/neurology/chronic-migraine"
+            element={<ChronicMigraine />}
+          />
+          <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} />
+          <Route
+            path="/chronic-care/gastroenterology/fatty-liver"
+            element={<FattyLiver />}
+          />
+          <Route
+            path="/chronic-care/pulmonology/heart-disease-follow-up"
+            element={<HeartDisease />}
+          />
+          <Route
+            path="/chronic-care/cardiology/high-blood-pressure"
+            element={<HighBloodPressure />}
+          />
+          <Route
+            path="/chronic-care/cardiology/high-cholesterol"
+            element={<HighCholesterol />}
+          />
+          <Route
+            path="/chronic-care/endocrinology/hormone-imbalance"
+            element={<HormoneImblance />}
+          />
+          <Route
+            path="/chronic-care/neurology/memory-concerns"
+            element={<MemoryConcerns />}
+          />
+          <Route path="/obesity" element={<Obesity />} />
+          <Route
+            path="/eye-ear-bone/orthopedics/osteoarthritis"
+            element={<Osteoarthritis />}
+          />
+          <Route
+            path="/chronic-care/endocrinology/osteoporosis"
+            element={<Osteoporosis />}
+          />
+          <Route
+            path="/chronic-care/cardiology/palpitations"
+            element={<Palpitations />}
+          />
+          <Route
+            path="/chronic-care/pulmonology/post-covid-concerns"
+            element={<PostCovidConcerns />}
+          />
+          <Route
+            path="/chronic-care/cardiology/pre-op-cardiac-clearance"
             element={<PreOpCardiacClearance />}
           />
           <Route
@@ -1689,24 +1750,39 @@ function AppLayout() {
             element={<RheumatoidArthritis />}
           />
           <Route
-            path="/seizures-epilepsy-follow-up"
+            path="/chronic-care/neurology/seizures-epilepsy-follow-up"
             element={<SeizuresEpilepsyFollowUp />}
           />
-          <Route path="/sleep-apnea" element={<SleepApnea />} />
+          <Route
+            path="/chronic-care/pulmonology/sleep-apnea-screening"
+            element={<SleepApnea />}
+          />
           <Route
             path="/surgery-second-opinion"
             element={<SurgerySecondOpinion />}
           />
-          <Route path="/thyroid-disorders" element={<ThyroidDisorders />} />
+          <Route
+            path="/chronic-care/endocrinology/thyroid-disorders"
+            element={<ThyroidDisorders />}
+          />
           <Route
             path="/treatment-plan-review"
             element={<TreatmentPlanReview />}
           />
-          <Route path="/tremor" element={<Tremor />} />
-          <Route path="/type-2-diabetes" element={<TypeTwoDiabetes />} />
-          <Route path="/abdominal-pain" element={<AbdominalPain />} />
+          <Route path="/chronic-care/neurology/tremor" element={<Tremor />} />
+          <Route
+            path="/chronic-care/endocrinology/type-2-diabetes"
+            element={<TypeTwoDiabetes />}
+          />
+          <Route
+            path="/chronic-care/gastroenterology/abdominal-pain"
+            element={<AbdominalPain />}
+          />
           <Route path="/binge-eating" element={<BingeEating />} />
-          <Route path="/bloating" element={<Bloating />} />
+          <Route
+            path="/chronic-care/gastroenterology/bloating"
+            element={<Bloating />}
+          />
           <Route
             path="/cholesterol-lowering-diet"
             element={<CholesterolLoweringDiet />}
@@ -1733,7 +1809,7 @@ function AppLayout() {
           <Route path="/hemorrhoids" element={<Hemorrhoids />} />
           <Route path="/indigestion" element={<Indigestion />} />
           <Route
-            path="/irritable-bowel-syndrome"
+            path="/chronic-care/gastroenterology/irritable-bowel-syndrome"
             element={<IrritableBowelSyndrome />}
           />
           <Route path="/pregnancy-nutrition" element={<PregnancyNutrition />} />
@@ -1746,41 +1822,107 @@ function AppLayout() {
             path="/weight-loss-planning"
             element={<WeightLossPlanning />}
           />
-          <Route path="/back-pain" element={<BackPain />} />
-          <Route path="/dry-eyes" element={<DryEyes />} />
-          <Route path="/ear-infection" element={<EarInfection />} />
-          <Route path="/ear-pain" element={<EarPain />} />
-          <Route path="/eye-redness" element={<EyeRedness />} />
-          <Route path="/eye-strain" element={<EyeStrain />} />
-          <Route path="/hoarseness" element={<Hoarseness />} />
-          <Route path="/knee-pain" element={<KneePain />} />
-          <Route path="/muscle-strain" element={<MuscleStrain />} />
-          <Route path="/nasal-congestion" element={<NasalCongestion />} />
-          <Route path="/neck-pain" element={<NeckPain />} />
-          <Route path="/numbness-tingling" element={<NumbnessAndTingling />} />
-          <Route path="/stye" element={<Stye />} />
+          <Route
+            path="/eye-ear-bone/orthopedics/back-pain"
+            element={<BackPain />}
+          />
+          <Route
+            path="/eye-ear-bone/ophthalmology/dry-eyes"
+            element={<DryEyes />}
+          />
+          <Route
+            path="/eye-ear-bone/ear-nose-throat/ear-infection"
+            element={<EarInfection />}
+          />
+          <Route
+            path="/eye-ear-bone/ear-nose-throat/ear-pain"
+            element={<EarPain />}
+          />
+          <Route
+            path="/eye-ear-bone/ophthalmology/eye-redness"
+            element={<EyeRedness />}
+          />
+          <Route
+            path="/eye-ear-bone/ophthalmology/eye-strain"
+            element={<EyeStrain />}
+          />
+          <Route
+            path="/eye-ear-bone/ear-nose-throat/hoarseness"
+            element={<Hoarseness />}
+          />
+          <Route
+            path="/eye-ear-bone/orthopedics/knee-pain"
+            element={<KneePain />}
+          />
+          <Route
+            path="/eye-ear-bone/orthopedics/muscle-strain"
+            element={<MuscleStrain />}
+          />
+          <Route
+            path="/eye-ear-bone/ear-nose-throat/nasal-congestion"
+            element={<NasalCongestion />}
+          />
+          <Route
+            path="/eye-ear-bone/orthopedics/neck-pain"
+            element={<NeckPain />}
+          />
+          <Route
+            path="/chronic-care/neurology/numbness-and-tingling"
+            element={<NumbnessAndTingling />}
+          />
+          <Route path="/eye-ear-bone/ophthalmology/stye" element={<Stye />} />
           <Route path="/swollen-feet-ankles" element={<SwollenFeetAnkles />} />
-          <Route path="/tonsillitis" element={<Tonsillitis />} />
+          <Route
+            path="/eye-ear-bone/ear-nose-throat/tonsillitis"
+            element={<Tonsillitis />}
+          />
           <Route path="/joint-pain" element={<JointPain />} />
-          <Route path="/vision-changes" element={<VisionChanges />} />
+          <Route
+            path="/eye-ear-bone/ophthalmology/vision-changes"
+            element={<VisionChanges />}
+          />
           <Route path="/childhood-allergies" element={<ChildhoodAllergies />} />
-          <Route path="/ear-pain-children" element={<EarPainChildren />} />
-          <Route path="/feeding-concerns" element={<FeedingConcerns />} />
+          <Route
+            path="/child-and-family-care/pediatrics/ear-pain-children"
+            element={<EarPainChildren />}
+          />
+          <Route
+            path="/child-and-family-care/pediatrics/feeding-concerns"
+            element={<FeedingConcerns />}
+          />
           <Route
             path="/mild-asthma-symptoms"
             element={<MildAsthmaSymptoms />}
           />
-          <Route path="/mood-anxiety-teens" element={<MoodAnxietyTeens />} />
-          <Route path="/pediatric-cold-flu" element={<PediatricColdFlu />} />
-          <Route path="/pediatric-fever" element={<PediatricFever />} />
+          <Route
+            path="/child-and-family-care/adolescent-medicine/mood-anxiety-teens"
+            element={<MoodAnxietyTeens />}
+          />
+          <Route
+            path="/child-and-family-care/pediatrics/pediatric-cold-flu"
+            element={<PediatricColdFlu />}
+          />
+          <Route
+            path="/child-and-family-care/pediatrics/pediatric-fever"
+            element={<PediatricFever />}
+          />
           <Route path="/pink-eye-children" element={<PinkEyeChildren />} />
-          <Route path="/puberty-concerns" element={<PubertyConcerns />} />
-          <Route path="/skin-rash-children" element={<SkinRashChildren />} />
+          <Route
+            path="/child-and-family-care/adolescent-medicine/puberty-concerns"
+            element={<PubertyConcerns />}
+          />
+          <Route
+            path="/child-and-family-care/pediatrics/skin-rash-in-children"
+            element={<SkinRashChildren />}
+          />
           <Route
             path="/sore-throat-children"
             element={<SoreThroatChildren />}
           />
-          <Route path="/sports-injuries" element={<SportsInjuries />} />
+          <Route
+            path="/child-and-family-care/adolescent-medicine/sports-injuries"
+            element={<SportsInjuries />}
+          />
           <Route
             path="/stomach-pain-children"
             element={<StomachPainChildren />}
@@ -1809,32 +1951,53 @@ function AppLayout() {
           />
           <Route path="/specialist-referral" element={<SpecialistReferral />} />
           <Route path="/allergic-rhinitis" element={<AllergicRhinitis />} />
-          <Route path="/asthma" element={<Asthma />} />
+          <Route path="/chronic-care/pulmonology/asthma" element={<Asthma />} />
           <Route path="/asthma-flare-up" element={<AsthmaFlareUp />} />
-          <Route path="/copd" element={<Copd />} />
-          <Route path="/persistent-cough" element={<PersistentCough />} />
+          <Route path="/chronic-care/pulmonology/copd" element={<Copd />} />
+          <Route
+            path="/chronic-care/pulmonology/persistent-cough"
+            element={<PersistentCough />}
+          />
           <Route path="/pneumonia-follow-up" element={<PneumoniaFollowUp />} />
-          <Route path="/shortness-of-breath" element={<ShortnessOfBreath />} />
+          <Route
+            path="/chronic-care/pulmonology/shortness-of-breath"
+            element={<ShortnessOfBreath />}
+          />
           <Route
             path="/upper-respiratory-infection"
             element={<UpperRespiratoryInfection />}
           />
           <Route path="/wheezing" element={<Wheezing />} />
-          <Route path="/chlamydia" element={<Chlamydia />} />
+          <Route
+            path="/sexual-health/sexual-health-and-wellness/chlamydia"
+            element={<Chlamydia />}
+          />
           <Route path="/genital-itching" element={<GenitalItching />} />
           <Route path="/genital-rash" element={<GenitalRash />} />
-          <Route path="/gonorrhea" element={<Gonorrhea />} />
-          <Route path="/herpes" element={<Herpes />} />
           <Route
-            path="/hiv-prevention-guidance"
+            path="/sexual-health/sexual-health-and-wellness/gonorrhea"
+            element={<Gonorrhea />}
+          />
+          <Route
+            path="/sexual-health/sexual-health-and-wellness/herpes"
+            element={<Herpes />}
+          />
+          <Route
+            path="/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance"
             element={<HivPreventionGuidance />}
           />
           <Route
-            path="/partner-exposure-concerns"
+            path="/sexual-health/sexual-health-and-wellness/partner-exposure-concerns"
             element={<PartnerExposureConcerns />}
           />
-          <Route path="/safe-sex-counseling" element={<SafeSexCounseling />} />
-          <Route path="/sti-consultation" element={<StiConsultation />} />
+          <Route
+            path="/sexual-health/sexual-health-and-wellness/safe-sex-counseling"
+            element={<SafeSexCounseling />}
+          />
+          <Route
+            path="/sexual-health/sexual-health-and-wellness/sti-consultation"
+            element={<StiConsultation />}
+          />
           <Route path="/acne" element={<Acne />} />
           <Route path="/athletes-foot" element={<AthletesFoot />} />
           <Route path="/cellulitis" element={<Cellulitis />} />
@@ -1905,59 +2068,119 @@ function AppLayout() {
             element={<TravelRelatedFever />}
           />
           <Route path="/travelers-diarrhea" element={<TravelersDiarrhea1 />} />
-          <Route path="/acid-reflux-gerd" element={<AcidRefluxGerd />} />
-          <Route path="/body-aches" element={<BodyAches />} />
+          <Route
+            path="/chronic-care/gastroenterology/acid-reflux-gerd"
+            element={<AcidRefluxGerd />}
+          />
+          <Route
+            path="/general-and-everyday-care/general-physician/body-aches"
+            element={<BodyAches />}
+          />
           <Route path="/bronchitis" element={<Bronchitis />} />
-          <Route path="/cold-and-flu" element={<ColdAndFlu />} />
-          <Route path="/constipation" element={<Constipation />} />
-          <Route path="/cough" element={<Cough />} />
+          <Route
+            path="/general-and-everyday-care/general-physician/cold-and-flu"
+            element={<ColdAndFlu />}
+          />
+          <Route
+            path="/chronic-care/gastroenterology/constipation"
+            element={<Constipation />}
+          />
+          <Route
+            path="/general-and-everyday-care/general-physician/cough"
+            element={<Cough />}
+          />
           <Route path="/covid-19" element={<Covid19 />} />
           <Route path="/diarrhea" element={<Diarrhea />} />
-          <Route path="/dizziness" element={<Dizziness />} />
-          <Route path="/ear-infection" element={<EarInfection1 />} />
-          <Route path="/fatigue" element={<Fatigue />} />
-          <Route path="/fever" element={<Fever />} />
-          <Route path="/food-poisoning" element={<FoodPoisoning />} />
-          <Route path="/headache" element={<Headache />} />
-          <Route path="/insect-bite" element={<InsectBites />} />
-          <Route path="/migraines" element={<Migraine />} />
-          <Route path="/minor-burns" element={<MinorBurns />} />
-          <Route path="/minor-infections" element={<MinorInfections />} />
           <Route
-            path="/multi-system-complaints"
+            path="/chronic-care/neurology/dizziness"
+            element={<Dizziness />}
+          />
+          <Route
+            path="/eye-ear-bone/ear-nose-throat/ear-infection"
+            element={<EarInfection1 />}
+          />
+          <Route
+            path="/general-and-everyday-care/general-physician/fatigue"
+            element={<Fatigue />}
+          />
+          <Route
+            path="/general-and-everyday-care/general-physician/fever"
+            element={<Fever />}
+          />
+          <Route path="/food-poisoning" element={<FoodPoisoning />} />
+          <Route
+            path="/general-and-everyday-care/general-physician/headache"
+            element={<Headache />}
+          />
+          <Route path="/insect-bite" element={<InsectBites />} />
+          <Route
+            path="/chronic-care/neurology/migraine"
+            element={<Migraine />}
+          />
+          <Route path="/minor-burns" element={<MinorBurns />} />
+          <Route
+            path="/general-and-everyday-care/general-physician/minor-infections"
+            element={<MinorInfections />}
+          />
+          <Route
+            path="/general-and-everyday-care/internal-medicine/multi-system-complaints"
             element={<MultiSystemComplaints />}
           />
-          <Route path="/nausea-and-vomiting" element={<NauseaAndVomiting />} />
-          <Route path="/pink-eye" element={<PinkEye />} />
           <Route
-            path="/preventive-screening"
+            path="/general-and-everyday-care/general-physician/nausea-and-vomiting"
+            element={<NauseaAndVomiting />}
+          />
+          <Route
+            path="/general-and-everyday-care/general-physician/pink-eye"
+            element={<PinkEye />}
+          />
+          <Route
+            path="/general-and-everyday-care/internal-medicine/preventive-screening"
             element={<PreventiveScreening />}
           />
-          <Route path="/routine-check-ups" element={<RoutineCheckUps />} />
+          <Route
+            path="/general-and-everyday-care/family-medicine/routine-check-ups"
+            element={<RoutineCheckUps />}
+          />
           <Route path="/seasonal-allergies" element={<SeasonalAllergies />} />
-          <Route path="/sinus-infection" element={<SinusInfection />} />
-          <Route path="/sore-throat" element={<SoreThroat />} />
+          <Route
+            path="/general-and-everyday-care/general-physician/sinus-infection"
+            element={<SinusInfection />}
+          />
+          <Route
+            path="/eye-ear-bone/ear-nose-throat/sore-throat"
+            element={<SoreThroat />}
+          />
           <Route path="/strep-throat" element={<StrepThroat />} />
           <Route
-            path="/undiagnosed-symptoms"
+            path="/general-and-everyday-care/internal-medicine/undiagnosed-symptoms"
             element={<UndiagnosedSymptoms />}
           />
-          <Route path="/vaccination-advice" element={<VaccinationAdvice />} />
           <Route
-            path="/whole-family-illnesses"
+            path="/general-and-everyday-care/family-medicine/vaccination-advice"
+            element={<VaccinationAdvice />}
+          />
+          <Route
+            path="/general-and-everyday-care/family-medicine/whole-family-illnesses"
             element={<WholeFamilyIllnesses />}
           />
           <Route path="/bladder-infection" element={<BladderInfection />} />
-          <Route path="/blood-in-urine" element={<BloodInUrine />} />
+          <Route
+            path="/mens-health/urology/blood-in-urine"
+            element={<BloodInUrine />}
+          />
           <Route path="/burning-urination" element={<BurningUrination />} />
           <Route path="/frequent-urination" element={<FrequentUrination />} />
-          <Route path="/kidney-stones" element={<KidneyStones />} />
           <Route
-            path="/urinary-incontinence"
+            path="/mens-health/urology/kidney-stones"
+            element={<KidneyStones />}
+          />
+          <Route
+            path="/mens-health/urology/urinary-incontinence"
             element={<UrinaryIncontinence />}
           />
           <Route
-            path="/urinary-tract-infection"
+            path="/mens-health/urology/urinary-tract-infection"
             element={<UrinaryTractInfection />}
           />
           <Route path="/bacterial-vaginosis" element={<BacterialVaginosis />} />
@@ -1999,17 +2222,20 @@ function AppLayout() {
           />
           <Route path="/weaning-guidance" element={<WeaningGuidance />} />
           <Route path="/stress" element={<Stress />} />
-          <Route path="/anger-management" element={<AngerManagement />} />
           <Route
-            path="/adjustment-difficulties"
+            path="/mental-health/behavioral-health/anger-management"
+            element={<AngerManagement />}
+          />
+          <Route
+            path="/mental-health/behavioral-health/adjustment-difficulties"
             element={<AdjustmentDifficulties />}
           />
           <Route
-            path="/substance-use-support"
+            path="/mental-health/behavioral-health/substance-use-support"
             element={<SubstanceUseSupport />}
           />
           <Route
-            path="/sleep-related-anxiety"
+            path="/mental-health/behavioral-health/sleep-related-anxiety"
             element={<SleepRelatedAnxiety />}
           />
           <Route path="/depression" element={<Depression />} />
@@ -2022,26 +2248,29 @@ function AppLayout() {
           <Route path="/ptsd" element={<PTSD />} />
           <Route path="/panic-attack" element={<PanicAttacks />} />
           <Route path="/insomnia" element={<Insomnia />} />
-          <Route path="/ADHD-evaluation" element={<AdhdEvaluation />} />
+          <Route path="/adhd-evaluation" element={<AdhdEvaluation />} />
           <Route path="/grief-and-loss" element={<GriefAndLoss />} />
           <Route path="/relationship-stress" element={<RelationshipStress />} />
           <Route path="/low-self-esteem" element={<LowSelfEsteem />} />
           <Route path="/trauma-support" element={<TraumaSupport />} />
           <Route path="/hot-flashes" element={<HotFlashes />} />
           <Route path="/hrt-guidance" element={<HrtGuidance />} />
-          <Route path="/chronic-medication-management" element={<ChronicMedicationManagement />} />
-          {/* <Route path="/bladder-problems" element={<BladderProblems />} /> */}
+          <Route
+            path="/chronic-medication-management"
+            element={<ChronicMedicationManagement />}
+          />
+          {/* <Route path="/mens-health/urology/bladder-problems" element={<BladderProblems />} /> */}
           {/* <Route
-            path="/erectile-dysfunction"
+            path="/mens-health/men-health/erectile-dysfunction"
             element={<ErectileDysfunction />}
           /> */}
           <Route
-            path="/hair-loss-mens-health"
+            path="/mens-health/men-health/hair-loss"
             element={<HairLossMensHealth />}
           />
-          {/* <Route path="/low-libido" element={<LowLibido />} /> */}
+          {/* <Route path="/mens-health/men-health/low-libido" element={<LowLibido />} /> */}
           {/* <Route
-            path="/low-testosterone-symptoms"
+            path="/mens-health/men-health/low-testosterone-symptoms"
             element={<LowTestosteroneSymptoms />}
           /> */}
           {/* <Route
@@ -2052,7 +2281,7 @@ function AppLayout() {
             path="/premature-ejaculation"
             element={<PrematureEjaculation />}
           /> */}
-          {/* <Route path="/prostate-health" element={<ProstateHealth />} /> */}
+          {/* <Route path="/mens-health/men-health/prostate-health" element={<ProstateHealth />} /> */}
           {/* <Route
             path="/urinary-symptoms-men"
             element={<UrinarySymptomsMen />}
@@ -2060,15 +2289,21 @@ function AppLayout() {
           <Route path="/ADHD-evaluation" element={<ADHDEvaluation />} />
           <Route
           /> */}
-          <Route path="/bladder-problems" element={<BladderProblems1 />} />
           <Route
-            path="/erectile-dysfunction"
+            path="/mens-health/urology/bladder-problems"
+            element={<BladderProblems1 />}
+          />
+          <Route
+            path="/mens-health/men-health/erectile-dysfunction"
             element={<ErectileDysfunction1 />}
           />
           {/* <Route path="/hair-loss" element={<HairLoss />} /> */}
-          <Route path="/low-libido" element={<LowLibido1 />} />
           <Route
-            path="/low-testosterone-symptoms"
+            path="/mens-health/men-health/low-libido"
+            element={<LowLibido1 />}
+          />
+          <Route
+            path="/mens-health/men-health/low-testosterone-symptoms"
             element={<LowTestosteroneSymptoms1 />}
           />
           <Route
@@ -2079,16 +2314,22 @@ function AppLayout() {
             path="/premature-ejaculation"
             element={<PrematureEjaculation1 />}
           />
-          <Route path="/prostate-health" element={<ProstateHealth1 />} />
+          <Route
+            path="/mens-health/men-health/prostate-health"
+            element={<ProstateHealth1 />}
+          />
           <Route
             path="/urinary-symptoms-in-men"
             element={<UrinarySymptomsMen1 />}
           />
           <Route path="/fertility-concerns" element={<FertilityConcerns />} />
-          {/* <Route path="/OCD" element={<OCD />} /> */}
-          <Route path="/eye-irritation" element={<EyeIrritation />} />
+          <Route path="/ocd" element={<OCD />} />
+          <Route
+            path="/eye-ear-bone/ophthalmology/eye-irritation"
+            element={<EyeIrritation />}
+          />
           {/* <Route
-            path="/adjustment-difficulties"
+            path="/mental-health/behavioral-health/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
           /> */}
           <Route path="/doctors-note" element={<DoctorsNote />} />
@@ -2206,7 +2447,7 @@ function AppLayout() {
             path="/online-prescription-refills"
             element={<OnlinePrescriptionRefills />}
           />
-          <Route path="/sexual-health" element={<SexualHealth />} />
+          <Route path="/service-sexual-health" element={<SexualHealth />} />
           <Route
             path="/weight-loss-programs"
             element={<WeightLossPrograms />}
@@ -2215,22 +2456,31 @@ function AppLayout() {
             path="/export-medical-opinion"
             element={<ExpertMedicalOpinion />}
           />
-          <Route path="/gastroenterology" element={<Gastroenterology />} />
-          <Route path="/neurology" element={<Neurology />} />
-          <Route path="/pulmonology" element={<Pulmonology />} />
+          <Route
+            path="/chronic-care/gastroenterology"
+            element={<Gastroenterology />}
+          />
+          <Route path="/chronic-care/neurology" element={<Neurology />} />
+          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
           <Route path="/ent" element={<Ent />} />
-          <Route path="/ophthalmology" element={<Ophthalmology />} />
-          <Route path="/orthopedics" element={<Orthopedics />} />
-          <Route path="/mens-health" element={<MensHealth />} />
-          <Route path="/urology" element={<Urology />} />
-          <Route path="/behavioral-health" element={<BehavioralHealth />} />
+          <Route
+            path="/eye-ear-bone/ophthalmology"
+            element={<Ophthalmology />}
+          />
+          <Route path="/eye-ear-bone/orthopedics" element={<Orthopedics />} />
+          {/* <Route path="/mens-health-men-health" element={<SpeMensHealth />} /> */}
+          <Route path="/mens-health/urology" element={<Urology />} />
+          <Route
+            path="/mental-health/behavioral-health"
+            element={<BehavioralHealth />}
+          />
           <Route path="/psychiatry" element={<Psychiatry />} />
           <Route
             path="/psychology-counseling"
             element={<PsychologyCounseling />}
           />
           <Route
-            path="/sexual-health-speciality"
+            path="/sexual-health/sexual-health-and-wellness"
             element={<SexualHealthSpeciality />}
           />
           <Route path="/dermatology" element={<Dermatology />} />
@@ -2251,7 +2501,10 @@ function AppLayout() {
             path="/doctor-note-or-sick-notes"
             element={<DoctorNoteSickNote />}
           />
-          <Route path="/vertigo" element={<Vertigo />} />
+          <Route
+            path="/eye-ear-bone/ear-nose-throat/vertigo"
+            element={<Vertigo />}
+          />
           <Route path="/category-consultant" element={<CategoryConsultant />} />
           <Route
             path="/appointment-booking/category-confirm"

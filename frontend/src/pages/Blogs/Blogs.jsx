@@ -1,6 +1,18 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import "./Blogs.css";
+import bestTelemedicineProvider from "../../assets/BlogImages/best-telemedicine-provider.webp";
+import doctorConsultation from "../../assets/BlogImages/doctor-consultation.webp";
+import futureOfTelemedicine from "../../assets/BlogImages/future-of-telemedicine.webp";
+import medicalConditions from "../../assets/BlogImages/medical-conditions.webp";
+import realDoctors from "../../assets/BlogImages/real-doctors.webp";
+import telemedicineAppointment from "../../assets/BlogImages/telemedicine-appointment.webp";
+import telemedicineCost from "../../assets/BlogImages/telemedicine-cost.webp";
+import telemedicineSafe from "../../assets/BlogImages/telemedicine-safe.webp";
+import telemedicineServices from "../../assets/BlogImages/telemedicine-services.webp";
+import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
+import telemedicine from "../../assets/BlogImages/telemedicine.webp";
+import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 
 const blogs = [
   {
@@ -9,40 +21,27 @@ const blogs = [
       "What Is Telemedicine? Complete Guide to Meaning, Benefits, Types & How It Works",
     description:
       "Telemedicine refers to the delivery of healthcare services remotely through digital technologies, including video consultations, phone calls, mobile applications, and secure online platforms. It enables the patients to get the consultation of doctors and healthcare professionals without visiting the hospital or a clinic physically.",
-    image:
-      "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80",
-    // NOTE: no matching route was provided for this article — update the path
-    // once a route/page for it exists.
+    image: telemedicine,
     path: "/what-is-telemedicine",
-    // category: "Preventive Care",
-    // readTime: 5,
-    // date: "Jun 12, 2025",
+    readTime: 5,
   },
   {
     id: 2,
     title:
-      "Top Telemedicine Platforms & Providers: Features, Benefits & How to Choose",
+      "Telemedicine Services: Everything You Need to Know About Virtual Healthcare",
     description:
-      "The best telemedicine platforms provide access to qualified healthcare professionals, multiple medical specialties, secure technology, easy appointment scheduling, transparent communication, and reliable patient support.",
-    image:
-      "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80",
+      "Telemedicine services are healthcare services provided remotely using digital technologies such as video consultations, phone calls, secure messaging, and online healthcare platforms",
+    image: telemedicineServices,
     path: "/top-telemedicine-platforms-providers",
-    // category: "Nutrition",
-    // readTime: 7,
-    // date: "Jun 8, 2025",
   },
   {
     id: 3,
     title:
-      "The Future of Telemedicine: AI, Remote Monitoring & Digital Healthcare Trends",
+      "How Does a Telemedicine Appointment Work? A Complete Step-by-Step Guide",
     description:
       "The future of telemedicine involves a combination of artificial intelligence, remote patient monitoring, wearable health technology, improved digital platforms, and more personalized virtual healthcare experiences. ",
-    image:
-      "https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=600&q=80",
+    image: telemedicineAppointment,
     path: "/future-of-telemedicine",
-    // category: "Mental Health",
-    // readTime: 6,
-    // date: "Jun 5, 2025",
   },
   {
     id: 4,
@@ -50,12 +49,8 @@ const blogs = [
       "Online Doctor Consultation: Benefits, Process & When to Choose Virtual Care",
     description:
       "An online doctor consultation is a virtual healthcare appointment where patients connect with doctors or specialists through video calls, phone calls, or secure digital platforms. It allows patients to discuss symptoms, share medical reports, receive professional medical guidance, and understand the next steps in their care without visiting a clinic or hospital in person.",
-    image:
-      "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80",
+    image: doctorConsultation,
     path: "/online-doctor-consultation",
-    // category: "Paediatrics",
-    // readTime: 8,
-    // date: "May 30, 2025",
   },
   {
     id: 5,
@@ -63,58 +58,130 @@ const blogs = [
       "What Medical Conditions Can Be Treated Through Telemedicine? Complete List",
     description:
       "Telemedicine can help manage many non-emergency health concerns, including common illnesses, chronic disease follow-ups, skin conditions, mental health concerns, medication reviews, specialist consultations, and medical second opinions.",
-    image:
-      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&q=80",
+    image: medicalConditions,
     path: "/conditions-treated-through-telemedicine",
-    // category: "Chronic Care",
-    // readTime: 9,
-    // date: "May 25, 2025",
   },
   {
     id: 6,
     title:
       "How to Choose the Best Telemedicine Provider: 10 Important Factors to Consider",
     description:
-      "The best telemedicine provider should offer qualified healthcare professionals, multiple medical specialties, secure technology, transparent pricing, convenient appointment scheduling, and reliable patient support. Patients should also consider privacy standards, ease of use, availability of second opinions, and the provider’s overall healthcare approach before making a decision.",
-    image:
-      "https://images.unsplash.com/photo-1541480601022-2308c0f02487?w=600&q=80",
+      "The best telemedicine provider should offer qualified healthcare professionals, multiple medical specialties, secure technology, transparent pricing, convenient appointment scheduling, and reliable patient support. Patients should also consider privacy standards, ease of use, availability of second opinions, and the provider's overall healthcare approach before making a decision.",
+    image: bestTelemedicineProvider,
     path: "/top-telemedicine-platforms-providers",
-    // category: "Wellness",
-    // readTime: 5,
-    // date: "May 20, 2025",
+  },
+  {
+    id: 7,
+    title:
+      "Top Telemedicine Platforms & Providers: Features, Benefits & How to Choose",
+    description:
+      "The best telemedicine platforms provide access to qualified healthcare professionals, multiple medical specialties, secure technology, easy appointment scheduling, transparent communication, and reliable patient support.",
+    image: topTelemedicinePlatforms,
+    path: "/top-telemedicine-platforms-providers",
+  },
+  {
+    id: 8,
+    title:
+      "Is Telemedicine Safe? A Complete Guide to Privacy, Security & Trust",
+    description:
+      "Yes, telemedicine can be a safe and secure way to receive healthcare when provided through reputable healthcare organizations using appropriate security practices and following applicable privacy and healthcare regulations.",
+    image: telemedicineSafe,
+    path: "/is-telemedicine-safe",
+  },
+  {
+    id: 9,
+    title:
+      "Telemedicine vs In-Person Doctor Visits: Benefits, Differences & Limitations",
+    description:
+      "Telemedicine and in-person doctor visits each have unique advantages. Telemedicine provides convenience, faster access to healthcare professionals, easier follow-up care, and access to specialists without travel. In-person visits are essential for physical examinations, emergency treatment, diagnostic procedures, and complex medical situations requiring direct evaluation.",
+    image: telemedicineVsInPersonDoctorVisits,
+    path: "/telemedicine-vs-in-person-doctor-visits",
+  },
+
+  // ── PAGE 2 PLACEHOLDER ENTRIES ──
+  // Replace these with your real articles once you have more content.
+  // They exist so Next/Prev actually pages through a second set of 9 cards.
+  // Delete this block once real posts replace them.
+  {
+    id: 10,
+    title: "The Cost of Telemedicine: What You Should Know Before Booking",
+    description:
+      "Understanding telemedicine pricing, insurance coverage, and what to expect when comparing virtual care costs against traditional in-person visits.",
+    image: telemedicineCost,
+    path: "/telemedicine-cost",
+    readTime: 6,
+  },
+  {
+    id: 11,
+    title: "Meet the Real Doctors Behind Virtual Healthcare",
+    description:
+      "A look at the licensed physicians and healthcare professionals who provide consultations through telemedicine platforms, and how their credentials are verified.",
+    image: realDoctors,
+    path: "/real-doctors",
+    readTime: 6,
+  },
+  {
+    id: 12,
+    title: "The Future of Telemedicine: Trends Shaping Virtual Care",
+    description:
+      "Artificial intelligence, remote monitoring, and wearable technology are reshaping how patients and doctors connect. Here's what's coming next.",
+    image: futureOfTelemedicine,
+    path: "/future-of-telemedicine",
+    readTime: 7,
   },
   // {
-  //   id: 7,
-  //   title: "Gut Health and Immunity: What Research Reveals",
+  //   id: 13,
+  //   title: "What Is Telemedicine? A Refresher on the Basics",
   //   description:
-  //     "The gut-brain axis is reshaping how doctors treat everything from anxiety to autoimmune conditions. Here is what you need to know.",
-  //   image:
-  //     "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&q=80",
-  //   category: "Nutrition",
-  //   readTime: 6,
-  //   date: "May 15, 2025",
+  //     "A quick refresher on how telemedicine works, who it's for, and why more patients are choosing virtual care every year.",
+  //   image: telemedicine,
+  //   path: "/what-is-telemedicine",
+  //   readTime: 4,
   // },
   // {
-  //   id: 8,
-  //   title: "Telehealth in India: A New Era of Patient Care",
+  //   id: 14,
+  //   title: "Telemedicine Services Explained for First-Time Users",
   //   description:
-  //     "How digital consultations are closing the healthcare access gap across tier-2 and tier-3 cities, saving time and improving outcomes.",
-  //   image:
-  //     "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&q=80",
-  //   category: "Digital Health",
-  //   readTime: 7,
-  //   date: "May 10, 2025",
-  // },
-  // {
-  //   id: 9,
-  //   title: "Managing Hypertension Naturally",
-  //   description:
-  //     "Beyond medication — lifestyle, mindfulness, and dietary changes that can help bring blood pressure under control sustainably.",
-  //   image:
-  //     "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=600&q=80",
-  //   category: "Chronic Care",
+  //     "New to virtual healthcare? Here's a plain-language walkthrough of what telemedicine services include and how to get started.",
+  //   image: telemedicineServices,
+  //   path: "/top-telemedicine-platforms-providers",
   //   readTime: 5,
-  //   date: "May 5, 2025",
+  // },
+  // {
+  //   id: 15,
+  //   title: "How a Telemedicine Appointment Actually Works",
+  //   description:
+  //     "From booking to follow-up, here is exactly what happens during a typical telemedicine appointment, step by step.",
+  //   image: telemedicineAppointment,
+  //   path: "/future-of-telemedicine",
+  //   readTime: 5,
+  // },
+  // {
+  //   id: 16,
+  //   title: "Choosing Between Virtual Care and an In-Person Doctor Visit",
+  //   description:
+  //     "Not every health concern is right for a video call. Here's how to decide whether telemedicine or an in-person visit is the better choice.",
+  //   image: telemedicineVsInPersonDoctorVisits,
+  //   path: "/telemedicine-vs-in-person-doctor-visits",
+  //   readTime: 6,
+  // },
+  // {
+  //   id: 17,
+  //   title: "10 Factors That Make a Great Telemedicine Provider",
+  //   description:
+  //     "Qualified professionals, transparent pricing, and secure technology are just the start. Here's the full checklist for choosing a provider.",
+  //   image: bestTelemedicineProvider,
+  //   path: "/top-telemedicine-platforms-providers",
+  //   readTime: 5,
+  // },
+  // {
+  //   id: 18,
+  //   title: "Privacy & Security in Telemedicine: What Patients Should Ask",
+  //   description:
+  //     "Questions to ask any telemedicine provider about how your health data is stored, shared, and protected.",
+  //   image: telemedicineSafe,
+  //   path: "/is-telemedicine-safe",
+  //   readTime: 6,
   // },
 ];
 
@@ -134,12 +201,6 @@ const ALL_CATEGORIES = ["All"];
 // Full category list kept for later — uncomment to restore all filters:
 // const ALL_CATEGORIES = ["All", ...Object.keys(categoryColors)];
 
-// const stats = [
-//   { value: "50+", label: "Expert Authors" },
-//   { value: "200+", label: "Articles Published" },
-//   { value: "1M+", label: "Monthly Readers" },
-// ];
-
 export default function BlogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeCategory, setActiveCategory] = useState("All");
@@ -156,7 +217,7 @@ export default function BlogPage() {
     });
   }, [activeCategory, searchQuery]);
 
-  const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
   const start = (currentPage - 1) * CARDS_PER_PAGE;
   const visibleBlogs = filtered.slice(start, start + CARDS_PER_PAGE);
 
@@ -235,16 +296,6 @@ export default function BlogPage() {
               </button>
             )}
           </div>
-
-          {/* Stats row */}
-          {/* <div className="hero-stats">
-            {stats.map((s) => (
-              <div className="hero-stat" key={s.label}>
-                <span className="stat-value">{s.value}</span>
-                <span className="stat-label">{s.label}</span>
-              </div>
-            ))}
-          </div> */}
         </div>
 
         {/* Decorative blobs */}
@@ -253,7 +304,7 @@ export default function BlogPage() {
       </section>
 
       {/* ── CATEGORY FILTER (only "All" shown for now — ALL_CATEGORIES limits this) ── */}
-      <div className="filter-bar">
+      {/* <div className="filter-bar">
         <div className="filter-bar-inner">
           {ALL_CATEGORIES.map((cat) => (
             <button
@@ -275,7 +326,7 @@ export default function BlogPage() {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* ── GRID SECTION ── */}
       <section className="blog-grid-section" id="blog-grid">
@@ -340,22 +391,23 @@ export default function BlogPage() {
                             {blog.date}
                           </span>
                         )}
-                        {/* <span className="meta-read">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <span className="meta-read">
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                          >
                             <circle cx="12" cy="12" r="10" />
                             <path d="M12 6v6l4 2" strokeLinecap="round" />
                           </svg>
                           {blog.readTime} min read
-                        </span> */}
+                        </span>
                       </div>
                       <h3 className="card-title">{blog.title}</h3>
                       <p className="card-desc">{blog.description}</p>
-                      {/* <button type="button" className="card-btn">
-                        Read More
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button> */}
                     </div>
                   </article>
                 </Link>
@@ -391,95 +443,74 @@ export default function BlogPage() {
           </div>
         )}
 
-        {/* Pagination — only shown when results span multiple pages */}
-        {totalPages > 1 && (
-          <div
-            className="pagination"
-            role="navigation"
-            aria-label="Article pagination"
+        {/* Pagination — Prev / page numbers / Next, always visible at the bottom */}
+        <div
+          className="pagination"
+          role="navigation"
+          aria-label="Article pagination"
+        >
+          <button
+            type="button"
+            className="page-btn nav-btn"
+            onClick={() => goTo(currentPage - 1)}
+            disabled={currentPage === 1}
+            aria-label="Previous page"
           >
-            <button
-              type="button"
-              className="page-btn nav-btn"
-              onClick={() => goTo(currentPage - 1)}
-              disabled={currentPage === 1}
-              aria-label="Previous page"
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
             >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path
-                  d="M15 18l-6-6 6-6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Prev
-            </button>
+              <path
+                d="M15 18l-6-6 6-6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Prev
+          </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                type="button"
-                className={`page-btn num-btn${currentPage === page ? " active" : ""}`}
-                onClick={() => goTo(page)}
-                aria-label={`Page ${page}`}
-                aria-current={currentPage === page ? "page" : undefined}
-              >
-                {page}
-              </button>
-            ))}
-
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
+              key={page}
               type="button"
-              className="page-btn nav-btn"
-              onClick={() => goTo(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              aria-label="Next page"
+              className={`page-btn num-btn${currentPage === page ? " active" : ""}`}
+              onClick={() => goTo(page)}
+              aria-label={`Page ${page}`}
+              aria-current={currentPage === page ? "page" : undefined}
             >
-              Next
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path
-                  d="M9 18l6-6-6-6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {page}
             </button>
-          </div>
-        )}
-      </section>
+          ))}
 
-      {/* ── NEWSLETTER STRIP ── */}
-      {/* <section className="newsletter-strip">
-        <div className="newsletter-inner">
-          <div className="newsletter-text">
-            <h3>Get weekly health insights</h3>
-            <p>No spam, just curated articles delivered to your inbox.</p>
-          </div>
-          <div className="newsletter-form">
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="newsletter-input"
-              aria-label="Email address for newsletter"
-            />
-            <button type="button" className="newsletter-btn">Subscribe</button>
-          </div>
+          <button
+            type="button"
+            className="page-btn nav-btn"
+            onClick={() => goTo(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            aria-label="Next page"
+          >
+            Next
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <path
+                d="M9 18l6-6-6-6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
-      </section> */}
+      </section>
     </div>
   );
 }

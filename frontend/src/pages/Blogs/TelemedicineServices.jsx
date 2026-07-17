@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
+import telemedicine from "../../assets/BlogImages/telemedicine.webp";
+import telemedicineServices from "../../assets/BlogImages/telemedicine-services.webp";
+import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
+import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
 
 const PAGE_TITLE =
   "What Is Telemedicine? Meaning, Benefits, Types & How It Works";
 const PAGE_DESCRIPTION =
   "Discover what telemedicine is, how it works, its benefits, different types, limitations, costs, and how online healthcare is changing the future of medicine.";
 const PAGE_URL = "https://humancareconnect.co/blog/what-is-telemedicine";
-const PAGE_IMAGE =
-  "https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop";
+const PAGE_IMAGE = telemedicineServices;
 
 const TOC_ITEMS = [
   { id: "definition", label: "What is telemedicine?" },
@@ -45,33 +48,35 @@ const FAQ_ITEMS = [
     a: "Most major insurers now reimburse virtual visits at parity with in-person care, though coverage depends on your specific plan and the specialty consulted.",
   },
 ];
-
 const RELATED_ARTICLES = [
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop",
+    href: "/what-is-telemedicine",
+    img: telemedicine,
     alt: "Doctor reviewing patient chart",
-    cat: "Chronic Care",
-    title: "Managing Diabetes with Remote Monitoring",
-    desc: "How continuous glucose data and virtual check-ins improve long-term control.",
+    // cat: "Chronic Care",
+    title:
+      "What Is Telemedicine? Complete Guide to Meaning, Benefits, Types & How It Works",
+    desc: "Telemedicine refers to the delivery of healthcare services remotely through digital technologies, including video consultations, phone calls, mobile applications, and secure online platforms.",
     time: "6 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?q=80&w=800&auto=format&fit=crop",
-    alt: "Person taking notes during a virtual therapy session",
-    cat: "Mental Health",
-    title: "Online Therapy: What to Expect from Your First Session",
-    desc: "A practical walkthrough of booking, privacy, and what happens in session one.",
+    href: "/telemedicine-vs-in-person-doctor-visits",
+    img: telemedicineVsInPersonDoctorVisits,
+    alt: "Virtual doctor vs teleconsultation doctor  ",
+    // cat: "Mental Health",
+    title:
+      "Telemedicine vs In-Person Doctor Visits: Benefits, Differences & Limitations",
+    desc: "Quick Answer: Is Telemedicine Better Than an In-Person Doctor Visit?",
     time: "7 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=800&auto=format&fit=crop",
-    alt: "Pharmacist checking an e-prescription",
-    cat: "Prescriptions",
-    title: "How E-Prescriptions Work — and Where They're Valid",
-    desc: "Everything about getting, filling, and renewing prescriptions issued online.",
+    href: "/top-telemedicine-platforms-providers",
+    img: topTelemedicinePlatforms,
+    alt: "Top Telemedicine Platforms & Providers",
+    // cat: "Prescriptions",
+    title:
+      "Top Telemedicine Platforms & Providers: Features, Benefits & How to Choose",
+    desc: "Quick Answer: What Are the Best Telemedicine Platforms?",
     time: "5 min read",
   },
 ];
@@ -269,14 +274,14 @@ export default function TelemedicineServices() {
 
               <figure className="hero-media">
                 <img
-                  src="https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop"
+                  src={telemedicineServices}
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
                 />
-                <figcaption>
+                {/* <figcaption>
                   A virtual consultation in progress — patient and physician
                   connected by video from home.
-                </figcaption>
+                </figcaption> */}
               </figure>
             </section>
 
@@ -1013,7 +1018,7 @@ export default function TelemedicineServices() {
             </div>
 
             {/* ============ RELATED ARTICLES ============ */}
-            {/* <section className="related-section" aria-label="Related articles">
+            <section className="related-section" aria-label="Related articles">
               <div className="eyebrow" style={{ marginBottom: "8px" }}>
                 Keep reading
               </div>
@@ -1047,7 +1052,7 @@ export default function TelemedicineServices() {
                   </a>
                 ))}
               </div>
-            </section> */}
+            </section>
           </div>
         </main>
       </div>

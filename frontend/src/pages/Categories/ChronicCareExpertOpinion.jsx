@@ -27,93 +27,199 @@ import "./categoriesGlobal.css";
 // but clicking does nothing).
 
 const cat = {
-  label: "Children & Family Care",
-  tagline: "Caring for your little ones",
-  headline: "Personalized Chronic Care & Expert Medical Opinions, ",
+  label: "Chronic Care",
+  // tagline: "Caring for your little ones",
+  headline: "Personalized Chronic Care , ",
   headlineAccent: "Whenever You Need It",
   subheadline:
     "Connect with experienced healthcare professionals for ongoing chronic condition management, specialized medical guidance, and expert second opinions helping you make confident decisions about your long-term health.",
-  bookingSpecialtyPlaceholder: "e.g. Adolescent Medicine",
+  // bookingSpecialtyPlaceholder: "e.g. Adolescent Medicine",
 
   specialties: [
     {
       name: "Cardiology",
+<<<<<<< HEAD
+      desc: "Expert heart and cardiovascular care for high blood pressure, cholesterol management, heart disease, palpitations, preventive screenings, and long-term heart health support. ",
+      path: "/chronic-care/cardiology",
+=======
       desc: "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. ",
       path: "/chronic-care-and-expert-opinion/cardiology",
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
     },
     {
       name: "Endocrinology",
-      desc: "Endocrinology specialists diagnose and treat conditions related to hormones, glands, metabolism, and the endocrine system.",
-      path: "/endocrinology",
+      desc: "Specialized care for hormone imbalances, diabetes, thyroid disorders, metabolic conditions, bone health concerns, and long-term endocrine wellness through personalized treatment plans.",
+      path: "/chronic-care/endocrinology",
     },
-    {
-      name: "Expert Medical Opinion",
-      desc: "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. ",
-      path: "/expert-medical-opinion",
-    },
+    // {
+    //   name: "Expert Medical Opinion",
+    //   desc: "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. ",
+    //   path: "/expert-medical-opinion",
+    // },
     {
       name: "Gastroenterology",
-      desc: "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. ",
-      path: "/gastroenterology",
+      desc: "Expert digestive health care for acid reflux, abdominal pain, bloating, IBS, liver conditions, bowel concerns, and long-term gastrointestinal wellness. ",
+      path: "/chronic-care/gastroenterology",
     },
     {
       name: "Neurology",
-      desc: "Neurology specialists diagnose and treat conditions affecting the brain, spinal cord, nerves, and nervous system. ",
-      path: "/neurology",
+      desc: " Specialized care for migraines, dizziness, memory concerns, seizures, tremors, nerve disorders, and neurological conditions affecting brain and nerve health.",
+      path: "/chronic-care/neurology",
     },
     {
       name: "Pulmonology",
-      desc: "Pulmonology specialists diagnose and treat lung and respiratory conditions such as asthma, chronic cough, COPD, sleep apnea, and post-COVID breathing issues, helping improve breathing, lung function, and overall health.",
-      path: "/pulmonology",
+      desc: "Expert respiratory care for asthma, COPD, chronic cough, sleep apnea, breathing difficulties, lung conditions, and long-term respiratory health management.",
+      path: "/chronic-care/pulmonology",
     },
   ],
 
   conditions: [
     {
       name: "Chest Pain (Non-Emergency)",
-      desc: "Evaluation for ongoing chest discomfort",
-      path: "/chest-pain",
+      // desc: "Evaluation for ongoing chest discomfort",
+      path: "/chronic-care/cardiology/chest-pain",
     },
     {
       name: "Heart Disease Follow-Up",
-      desc: "Ongoing care after heart treatment",
-      path: "/heart-disease-follow-up",
+      // desc: "Ongoing care after heart treatment",
+      path: "/chronic-care/cardiology/heart-disease-follow-up",
     },
     {
       name: "High Blood Pressure",
-      desc: "Elevated blood pressure affecting circulation",
-      path: "/high-blood-pressure",
+      // desc: "Elevated blood pressure affecting circulation",
+      path: "/chronic-care/cardiology/high-blood-pressure",
     },
     {
       name: "High Cholesterol",
-      desc: "Elevated cholesterol affects heart health",
-      path: "/high-cholesterol",
+      // desc: "Elevated cholesterol affects heart health",
+      path: "/chronic-care/cardiology/high-cholesterol",
     },
     {
       name: "Palpitations",
-      desc: "Evaluation for irregular heart sensations.",
-      path: "/palpitations",
+      // desc: "Evaluation for irregular heart sensations.",
+      path: "/chronic-care/cardiology/palpitations",
     },
     {
       name: "Pre-Op Cardiac Clearance",
-      desc: "Support for healthy infant feeding",
-      path: "/pre-op-cardiac-clearance",
+      // desc: "Support for healthy infant feeding",
+      path: "/chronic-care/cardiology/pre-op-cardiac-clearance",
     },
-    // {
-    //   name: "Pediatric Cold & Flu",
-    //   desc: "Cold and flu symptoms in children",
-    //   path: "/pediatric-cold-flu",
-    // },
-    // {
-    //   name: "Pediatric Fever",
-    //   desc: "Fever and illness in children",
-    //   path: "/pediatric-fever",
-    // },
-    // {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-children",
-    // },
+    {
+      name: "Thyroid disorders",
+      // desc: "Cold and flu symptoms in children",
+      path: "/chronic-care/endocrinology/thyroid-disorders",
+    },
+    {
+      name: "Diabetes Type 2",
+      // desc: "Fever and illness in children",
+      path: "/chronic-care/endocrinology/type-2-diabetes",
+    },
+    {
+      name: "Hormone imbalance",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/endocrinology/chronic-care/endocrinology/hormone-imbalance",
+    },
+    {
+      name: "Osteoporosis",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/endocrinology/osteoporosis",
+    },
+    //
+    {
+      name: "Acid reflux / GERD",
+      // desc: "Evaluation for irregular heart sensations.",
+      path: "/chronic-care/gastroenterology/acid-reflux-gerd",
+    },
+    {
+      name: "Irritable Bowel Syndrome",
+      // desc: "Support for healthy infant feeding",
+      path: "/chronic-care/gastroenterology/irritable-bowel-syndrome",
+    },
+    {
+      name: "Constipation",
+      path: "/chronic-care/gastroenterology/constipation",
+    },
+    {
+      name: "Abdominal pain",
+      // desc: "Fever and illness in children",
+      path: "/chronic-care/gastroenterology/chronic-care/gastroenterology/abdominal-pain",
+    },
+    {
+      name: "Bloating",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/gastroenterology/bloating",
+    },
+    {
+      name: "Fatty liver follow-up",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/gastroenterology/fatty-liver",
+    },
+    //
+    {
+      name: "Migraine ",
+      // desc: "Evaluation for irregular heart sensations.",
+      path: "/chronic-care/neurology/migraine",
+    },
+    {
+      name: "Chronic Migraine",
+      // desc: "Support for healthy infant feeding",
+      path: "/chronic-care/neurology/chronic-migraine",
+    },
+    {
+      name: "Seizures / Epilepsy follow-up",
+      // desc: "Cold and flu symptoms in children",
+      path: "/chronic-care/neurology/seizures-epilepsy-follow-up",
+    },
+    {
+      name: "Numbness & Tingling",
+      // desc: "Fever and illness in children",
+      path: "/chronic-care/neurology/numbness-and-tingling",
+    },
+    {
+      name: "Tremor",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/neurology/tremor",
+    },
+    {
+      name: "Dizziness",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/neurology/dizziness",
+    },
+    {
+      name: "Memory concerns",
+      // desc: "Evaluation for irregular heart sensations.",
+      path: "/chronic-care/neurology/memory-concerns",
+    },
+    {
+      name: "Asthma",
+      // desc: "Support for healthy infant feeding",
+      path: "/chronic-care/pulmonology/asthma",
+    },
+    {
+      name: "COPD",
+      // desc: "Cold and flu symptoms in children",
+      path: "/chronic-care/pulmonology/copd",
+    },
+    {
+      name: "Persistent cough",
+      // desc: "Fever and illness in children",
+      path: "/chronic-care/pulmonology/persistent-cough",
+    },
+    {
+      name: "Shortness of breath",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/pulmonology/shortness-of-breath",
+    },
+    {
+      name: "Sleep apnea screening",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/pulmonology/sleep-apnea-screening",
+    },
+    {
+      name: "Post-COVID concerns",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "post-covid-concerns",
+    },
   ],
 
   treatments: [
@@ -416,27 +522,29 @@ function SpecialtyCard({ sp, index }) {
   return (
     <motion.div
       className="hcc-specialty-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => sp.path && navigate(sp.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && sp.path) {
-          e.preventDefault();
-          navigate(sp.path);
-        }
-      }}
-      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
-      <div className="hcc-specialty-name">{sp.name}</div>
-      <p className="hcc-specialty-desc">{sp.desc}</p>
-      {sp.path && (
-        <div className="hcc-specialty-arrow">
-          Learn more <FiArrowRight size={13} />
-        </div>
+      {sp.path ? (
+        <Link
+          to={sp.path}
+          className="hcc-specialty-link"
+          aria-label={`View ${sp.name}`}
+          style={{ display: "block", color: "inherit", textDecoration: "none" }}
+        >
+          <div className="hcc-specialty-name">{sp.name}</div>
+          <p className="hcc-specialty-desc">{sp.desc}</p>
+          <div className="hcc-specialty-arrow">
+            Learn more <FiArrowRight size={13} />
+          </div>
+        </Link>
+      ) : (
+        <>
+          <div className="hcc-specialty-name">{sp.name}</div>
+          <p className="hcc-specialty-desc">{sp.desc}</p>
+        </>
       )}
     </motion.div>
   );
@@ -450,27 +558,29 @@ function ConditionCard({ cond, index }) {
   return (
     <motion.div
       className="hcc-condition-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => cond.path && navigate(cond.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && cond.path) {
-          e.preventDefault();
-          navigate(cond.path);
-        }
-      }}
-      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
-      <div className="hcc-condition-name">{cond.name}</div>
-      <p className="hcc-condition-desc">{cond.desc}</p>
-      {cond.path && (
-        <div className="hcc-condition-expand">
-          Learn more <FiArrowRight size={11} />
-        </div>
+      {cond.path ? (
+        <Link
+          to={cond.path}
+          className="hcc-condition-link"
+          aria-label={`View ${cond.name}`}
+          style={{ display: "block", color: "inherit", textDecoration: "none" }}
+        >
+          <div className="hcc-condition-name">{cond.name}</div>
+          <p className="hcc-condition-desc">{cond.desc}</p>
+          <div className="hcc-condition-expand">
+            Learn more <FiArrowRight size={11} />
+          </div>
+        </Link>
+      ) : (
+        <>
+          <div className="hcc-condition-name">{cond.name}</div>
+          <p className="hcc-condition-desc">{cond.desc}</p>
+        </>
       )}
     </motion.div>
   );
@@ -492,7 +602,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -502,7 +612,7 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
@@ -598,7 +708,7 @@ export default function ChronicCareExpertOpinion() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "chronic" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div
@@ -660,14 +770,14 @@ export default function ChronicCareExpertOpinion() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
+            {/* <div className="hcc-cta-row">
               <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
-              </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              </button> */}
+            {/* <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
               </button> */}
-            </div>
+            {/* </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

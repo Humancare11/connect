@@ -128,7 +128,12 @@ export default function Sa() {
               <div className="services-content-left">
                 <h3 className="services-card-title">Prescription Refills</h3>
                 <p className="services-card-description">
-                  Need a refill but don’t want to wait? Refill prescriptions online with a quick online doctor appointment with a licensed telemedicine doctor. If you have a chronic condition or just need to renew a prescription, get care when you need it and save yourself a trip to the clinic with quick, easy telemedicine appointments.
+                  Need a refill but don’t want to wait? Refill prescriptions
+                  online with a quick online doctor appointment with a licensed
+                  telemedicine doctor. If you have a chronic condition or just
+                  need to renew a prescription, get care when you need it and
+                  save yourself a trip to the clinic with quick, easy
+                  telemedicine appointments.
                 </p>
                 <span className="services-card-cta-link">
                   Refill Prescription <span className="cta-arrow">→</span>
@@ -148,7 +153,6 @@ export default function Sa() {
             </div>
           </RevealCard>
 
-
           {/* Doctors Notes */}
           <RevealCard
             className="services-card-item services-bento-small-weightloss"
@@ -160,8 +164,11 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title">Doctor Note or Sick Note</h3>
             <p className="services-card-description">
-             Need a doctor’s note for work, school or daily activities? Chat with a licensed telemedicine doctor & receive a medical note when clinically indicated through a fast online doctor appointment. Convenient telemedicine services save you time, avoid unnecessary clinic visits, and provide the documentation you need.
-
+              Need a doctor’s note for work, school or daily activities? Chat
+              with a licensed telemedicine doctor & receive a medical note when
+              clinically indicated through a fast online doctor appointment.
+              Convenient telemedicine services save you time, avoid unnecessary
+              clinic visits, and provide the documentation you need.
             </p>
             <div className="services-weight-stat-block">
               <span className="services-card-cta-link services-weight-cta">
@@ -199,11 +206,14 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title"> Fit to Fly Certificate</h3>
             <p className="services-card-description">
-              Travel with confidence by getting a fit to fly certificate from a licensed telemedicine provider. If medically appropriate, obtain a professional fitness-to-travel assessment to meet airline requirements, recent surgery, pregnancy, or other health conditions without an unnecessary clinic visit.
-
+              Travel with confidence by getting a fit to fly certificate from a
+              licensed telemedicine provider. If medically appropriate, obtain a
+              professional fitness-to-travel assessment to meet airline
+              requirements, recent surgery, pregnancy, or other health
+              conditions without an unnecessary clinic visit.
             </p>
             <span className="services-card-cta-link">
-              Get Certificate  <span className="cta-arrow">→</span>
+              Get Certificate <span className="cta-arrow">→</span>
             </span>
           </RevealCard>
           {/* ── General Consultation (2-col) ── */}
@@ -217,7 +227,12 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title">General Consultation</h3>
             <p className="services-card-description">
-              Get expert care for everyday health concerns with a licensed primary care doctor through a fast online doctor appointment. From cold and flu symptoms to infections, headaches, minor injuries, and preventive healthcare, our telemedicine services make it easy to get timely medical advice and personalized treatment from the comfort of home. 
+              Get expert care for everyday health concerns with a licensed
+              primary care doctor through a fast online doctor appointment. From
+              cold and flu symptoms to infections, headaches, minor injuries,
+              and preventive healthcare, our telemedicine services make it easy
+              to get timely medical advice and personalized treatment from the
+              comfort of home.
             </p>
             <span className="services-card-cta-link">
               See a Doctor <span className="cta-arrow">→</span>
@@ -228,7 +243,7 @@ export default function Sa() {
           {/* <RevealCard
             className="services-card-item services-bento-small-0"
             delay={D[4]}
-            to="/sexual-health"
+            to="/service-sexual-health"
           >
             <div className="services-icon-box">
               <FaHeart />
@@ -251,7 +266,11 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title"> Lab Requisition</h3>
             <p className="services-card-description">
-              Need lab testing for new symptoms, ongoing conditions, or routine health monitoring? Connect with a licensed healthcare provider to receive a lab requisition when medically appropriate, helping you take the next step toward an accurate diagnosis and personalized treatment.
+              Need lab testing for new symptoms, ongoing conditions, or routine
+              health monitoring? Connect with a licensed healthcare provider to
+              receive a lab requisition when medically appropriate, helping you
+              take the next step toward an accurate diagnosis and personalized
+              treatment.
             </p>
             <span className="services-card-cta-link">
               Learn more <span className="cta-arrow">→</span>
@@ -269,8 +288,12 @@ export default function Sa() {
             </div>
             <h3 className="services-card-title">Chronic Care</h3>
             <p className="services-card-description">
-              Manage chronic conditions with ongoing support from licensed healthcare providers through our telemedicine services. Whether you're living with diabetes, asthma, thyroid disorders, hypertension, or high cholesterol, receive personalized treatment plans, regular follow-ups, and continuity of care to help you stay healthier every day. 
-
+              Manage chronic conditions with ongoing support from licensed
+              healthcare providers through our telemedicine services. Whether
+              you're living with diabetes, asthma, thyroid disorders,
+              hypertension, or high cholesterol, receive personalized treatment
+              plans, regular follow-ups, and continuity of care to help you stay
+              healthier every day.
             </p>
             <span className="services-card-cta-link">
               Manage condition <span className="cta-arrow">→</span>
