@@ -38,13 +38,8 @@ const cat = {
   specialties: [
     {
       name: "Cardiology",
-<<<<<<< HEAD
-      desc: "Expert heart and cardiovascular care for high blood pressure, cholesterol management, heart disease, palpitations, preventive screenings, and long-term heart health support. ",
-      path: "/chronic-care/cardiology",
-=======
       desc: "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. ",
       path: "/chronic-care-and-expert-opinion/cardiology",
->>>>>>> 8c0363897c1995506a930504978d95507388135c
     },
     {
       name: "Endocrinology",
