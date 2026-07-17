@@ -39,7 +39,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-import ConditionBannerImage from "../../assets/images/conditions/Type-2-Diabetes.webp";
+import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Type-2-Diabetes.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
