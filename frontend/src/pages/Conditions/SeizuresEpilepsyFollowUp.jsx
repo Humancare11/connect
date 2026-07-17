@@ -42,7 +42,7 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Seizures-Epilepsy-Follow-Up.webp";
 
 // ─────────────────────────────────────────────────────────────────
-// EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
+// EMBEDES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
 const STYLES = `
   /* ── keyframes ── */
