@@ -53,7 +53,10 @@ import {
 
 import { Helmet } from "react-helmet-async";
 
+import api from "../../api";
 import heroBanner from "../../assets/MedicalServices/chronic-care-management-telemedicine.webp";
+import BookingCard from "../../components/SpecialityBookingCard";
+import "../Specialty/SpecialtyPage.css";
 
 const HERO_IMAGE = {
   src: heroBanner,
@@ -84,6 +87,7 @@ const SERVICES = {
   "telehealth-services": {
     slug: "telehealth-services",
     name: "CHRONIC CARE MANAGEMENT",
+    serviceName: "Chronic Care Management", // must exactly match ServicePrice.name in admin
     tagline: "Ongoing support for long term health conditions.",
     intro:
       "Manage chronic health conditions with personalized telemedicine services designed to support your long term health and well being. Connect with licensed healthcare providers who can help monitor symptoms, review treatment plans, manage medications, and provide ongoing healthcare guidance from the comfort of home.",
@@ -426,7 +430,7 @@ const GhostBtn = ({ children, onClick }) => (
    HERO
   
 ────────────────────────────────────────────────────────────────────────── */
-const Hero = ({ s }) => {
+const Hero = ({ s, price, priceLoading }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -491,94 +495,110 @@ const Hero = ({ s }) => {
           padding: "100px 24px",
           width: "100%",
           opacity: op,
+          display: "grid",
+          gridTemplateColumns: "1fr 340px",
+          gap: 48,
+          alignItems: "center",
         }}
-      >
+      ><div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+          >
+            <Pill ac={s.accentColor}>HumanCare Connect</Pill>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.18 }}
+            style={{
+              fontSize: "clamp(36px, 5.5vw, 60px)",
+              fontWeight: 900,
+              color: "#FFFFFF",
+              lineHeight: 1.08,
+              letterSpacing: "-0.03em",
+              marginBottom: 18,
+              maxWidth: 760,
+            }}
+          >
+            {s.name.split(" ").map((w, i, arr) => (
+              <span key={i}>
+                {i === Math.floor(arr.length / 2) ? (
+                  <span style={{ color: s.accentColor }}>{w} </span>
+                ) : (
+                  <span>{w} </span>
+                )}
+              </span>
+            ))}
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.26 }}
+            style={{
+              fontSize: 18,
+              color: "#E5E7EB",
+              fontStyle: "italic",
+              marginBottom: 10,
+            }}
+          >
+            {s.tagline}
+          </motion.p>
+
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.32 }}
+            style={{
+              fontSize: 16,
+              color: "#F3F4F6",
+              lineHeight: 1.7,
+              maxWidth: 560,
+              marginBottom: 28,
+            }}
+          >
+            {s.intro}
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.38 }}
+            style={{
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <PrimaryBtn ac={s.accentColor}>
+              <a
+                href="/appointment-booking"
+                style={{ color: "#fff", textDecoration: "none" }}
+              >
+                Book Appointment
+              </a>
+            </PrimaryBtn>
+          </motion.div>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <Pill ac={s.accentColor}>HumanCare Connect</Pill>
+          <BookingCard
+            price={price}
+            priceLoading={priceLoading}
+            name={s.serviceName}
+          />
         </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.18 }}
-          style={{
-            fontSize: "clamp(36px, 5.5vw, 60px)",
-            fontWeight: 900,
-            color: "#FFFFFF",
-            lineHeight: 1.08,
-            letterSpacing: "-0.03em",
-            marginBottom: 18,
-            maxWidth: 760,
-          }}
-        >
-          {s.name.split(" ").map((w, i, arr) => (
-            <span key={i}>
-              {i === Math.floor(arr.length / 2) ? (
-                <span style={{ color: s.accentColor }}>{w} </span>
-              ) : (
-                <span>{w} </span>
-              )}
-            </span>
-          ))}
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.26 }}
-          style={{
-            fontSize: 18,
-            color: "#E5E7EB",
-            fontStyle: "italic",
-            marginBottom: 10,
-          }}
-        >
-          {s.tagline}
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.32 }}
-          style={{
-            fontSize: 16,
-            color: "#F3F4F6",
-            lineHeight: 1.7,
-            maxWidth: 560,
-            marginBottom: 28,
-          }}
-        >
-          {s.intro}
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.38 }}
-          style={{
-            display: "flex",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <PrimaryBtn ac={s.accentColor}>
-            <a
-              href="/appointment-booking"
-              style={{ color: "#fff", textDecoration: "none" }}
-            >
-              Book Appointment
-            </a>
-          </PrimaryBtn>
-        </motion.div>
-      </motion.div>
-    </section>
+      </motion.div >
+    </section >
   );
 };
-
 /* ──────────────────────────────────────────────────────────────────────────
    CONSULTATION FORM — 
 ────────────────────────────────────────────────────────────────────────── */
@@ -1381,7 +1401,7 @@ const whyUsItems = [
 ];
 
 const WhyUs = ({ s }) => {
-  
+
   // numbers are actually visible.
   const [inView, setInView] = useState(false);
 
@@ -1742,6 +1762,29 @@ export default function ChronicCareManagement() {
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
 
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchServicePrice() {
+      setPriceLoading(true);
+      try {
+        const res = await api.get("/api/services");
+        const match = Array.isArray(res.data)
+          ? res.data.find((svc) => svc.name === s.serviceName)
+          : null;
+        if (!cancelled) setPrice(match?.price ?? null);
+      } catch (err) {
+        console.error("Failed to fetch service price:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchServicePrice();
+    return () => { cancelled = true; };
+  }, [s.serviceName]);
+
   return (
     <>
       <Helmet>
@@ -1763,7 +1806,7 @@ export default function ChronicCareManagement() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} />
+            <Hero s={s} price={price} priceLoading={priceLoading} />
             <Overview s={s} />
             <HowItWorks s={s} />
             <Features s={s} />

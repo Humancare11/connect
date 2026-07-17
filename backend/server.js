@@ -742,6 +742,38 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
 // tracked by a client-generated guestId (not an authenticated identity) purely
 // so a page refresh in the same tab is treated as a rejoin, not a 3rd seat.
 const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
+// roomId -> { initiatorGuestId, participantGuestIds: Set }
+// Assigns the initiator/polite role once per guestId, the first time it's
+// ever seen in a room, and keeps it stable across refreshes/reconnects.
+// Recomputing this role from "who else is currently connected" (as before)
+// flips both peers to "initiator" simultaneously whenever the original
+// non-initiator refreshes while the other party is still connected, which
+// deadlocks perfect-negotiation's offer-collision handling on both sides.
+const directRoomRoles = new Map();
+
+function getDirectRoomRole(roomId, guestId) {
+  let entry = directRoomRoles.get(roomId);
+  if (!entry) {
+    entry = { initiatorGuestId: null, participantGuestIds: new Set() };
+    directRoomRoles.set(roomId, entry);
+  }
+
+  const isReturningGuest = entry.participantGuestIds.has(guestId);
+  entry.participantGuestIds.add(guestId);
+
+  if (!entry.initiatorGuestId) {
+    // First guest ever seen in this room becomes (and remains) the
+    // initiator/impolite peer, whether this is their first join or not.
+    entry.initiatorGuestId = guestId;
+    return { isInitiator: true, isReturningGuest };
+  }
+
+  return { isInitiator: entry.initiatorGuestId === guestId, isReturningGuest };
+}
+
+function clearDirectRoomRoles(roomId) {
+  directRoomRoles.delete(roomId);
+}
 const DIRECT_ROOM_ID_PATTERN = /^[a-f0-9]{16,128}$/i;
 const DIRECT_GUEST_ID_PATTERN = /^[a-zA-Z0-9-]{8,64}$/;
 
@@ -1254,7 +1286,7 @@ io.on("connection", (socket) => {
 
     if (roomDoc.status === "active" && roomDoc.expiresAt && roomDoc.expiresAt.getTime() <= Date.now()) {
       roomDoc.status = "expired";
-      await roomDoc.save().catch(() => {});
+      await roomDoc.save().catch(() => { });
     }
 
     if (roomDoc.status !== "active") {
@@ -1306,17 +1338,22 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const isInitiator = existingSocketIds.length > 0;
+    const { isInitiator, isReturningGuest } = getDirectRoomRole(roomId, guestId);
+    // "Resumed" means this guest has been in this room before (a refresh or
+    // network-change reconnect), as opposed to a first-time join — the peer
+    // side uses this to know it should proactively renegotiate rather than
+    // wait passively for a normal first handshake.
+    const resumedCall = isReturningGuest && existingSocketIds.length > 0;
 
     socket.join(room);
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
 
     const now = new Date();
-    DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => {});
-    DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => {});
+    DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => { });
+    DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => { });
 
-    socket.emit("direct-room-joined", { roomId, isInitiator });
-    socket.to(room).emit("direct-peer-joined", { name: guestName });
+    socket.emit("direct-room-joined", { roomId, isInitiator, resumedCall });
+    socket.to(room).emit("direct-peer-joined", { name: guestName, resumedCall });
   });
 
   socket.on("leave-direct-room", ({ roomId } = {}) => {
@@ -1327,6 +1364,9 @@ io.on("connection", (socket) => {
     socket.to(room).emit("direct-participant-left");
     socket.leave(room);
     directRoomSockets.delete(socket.id);
+
+    const remaining = io.sockets.adapter.rooms.get(room);
+    if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
   });
 
   socket.on("direct-video-offer", ({ roomId, offer } = {}) => {
@@ -1384,6 +1424,8 @@ io.on("connection", (socket) => {
 
       if (!sameGuestStillInRoom) {
         io.to(room).emit("direct-participant-left");
+        const remaining = io.sockets.adapter.rooms.get(room);
+        if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
       }
     }, Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000));
   });
