@@ -39,7 +39,7 @@ const cat = {
     {
       name: "Cardiology",
       desc: "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. ",
-      path: "/cardiology",
+      path: "/chronic-care-and-expert-opinion/cardiology",
     },
     {
       name: "Endocrinology",

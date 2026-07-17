@@ -1606,7 +1606,7 @@ function AppLayout() {
           {/* <Route path="/sd" element={<SD />} /> */}
           <Route path="/child-and-family-care/adolescent-medicine" element={<AdolescentMedicine />} />
           <Route path="/child-and-family-care/pediatrics" element={<Pediatrics />} />
-          <Route path="/cardiology" element={<Cardiology />} />
+          <Route path="/chronic-care-and-expert-opinion/cardiology" element={<Cardiology />} />
           <Route
             path="/export-medical-opinion"
             element={<ExpertMedicalOpinion />}

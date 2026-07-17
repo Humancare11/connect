@@ -11,6 +11,7 @@ const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { getS3ObjectUrl } = require("../config/s3");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
+const { sendPushToUser } = require("../utils/pushNotifications");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 
@@ -532,6 +533,12 @@ const confirmAppointment = async (req, res) => {
       });
     }
 
+    sendPushToUser(appointment.patientId, {
+      title: "Appointment confirmed",
+      body: "Your doctor has confirmed your appointment.",
+      data: { type: "appointment", appointmentId: String(appointment._id) },
+    });
+
     res.status(200).json({ msg: "Appointment confirmed.", appointment });
   } catch (error) {
     console.error("confirmAppointment error:", error);
@@ -587,6 +594,12 @@ const completeAppointment = async (req, res) => {
       io.to(`appointment_${appointment._id}`).emit("appointment-updated", payload);
       io.to("admin_room").emit("appointment-updated", payload);
     }
+
+    sendPushToUser(appointment.patientId, {
+      title: "Appointment completed",
+      body: "Your appointment has been marked as complete.",
+      data: { type: "appointment", appointmentId: String(appointment._id) },
+    });
 
     res.status(200).json({ msg: "Appointment marked as completed.", appointment });
   } catch (error) {
@@ -644,6 +657,12 @@ const cancelAppointment = async (req, res) => {
         status: isCategory ? "cancelled" : appointment.status,
       });
     }
+
+    sendPushToUser(appointment.patientId, {
+      title: "Appointment cancelled",
+      body: "Your appointment has been cancelled.",
+      data: { type: "appointment", appointmentId: String(appointment._id) },
+    });
 
     res.status(200).json({ msg: "Appointment cancelled.", appointment });
   } catch (error) {

@@ -457,6 +457,7 @@ app.use(
   require("./routes/categoryConsultation")
 );
 app.use("/api/direct-video-room", require("./routes/directVideoRoom"));
+app.use("/api/notifications", require("./routes/notifications"));
 const CategoryConsultation = require("./models/CategoryConsultation");
 const Enrollment = require("./models/Enrollment");
 

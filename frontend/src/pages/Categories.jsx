@@ -273,7 +273,7 @@ const SPECIALTIES = [
   { slug: "dermatology", path: "/dermatology", icon: "skin", name: "Dermatology", featured: false },
   { slug: "obstetrics-gynaecology-ob-gyn", path: "/obstetrics-and-gynaecology", icon: "women", name: "Obstetrics & Gynaecology (OB-GYN)", featured: false },
   { slug: "pediatrics", path: "/child-and-family-care/pediatrics", icon: "child", name: "Pediatrics", featured: false },
-  { slug: "cardiology", path: "/cardiology", icon: "heart", name: "Cardiology", featured: false },
+  { slug: "cardiology", path: "/chronic-care-and-expert-opinion/cardiology", icon: "heart", name: "Cardiology", featured: false },
   { slug: "ophthalmology", path: "/ophthalmology", icon: "eye", name: "Ophthalmology", featured: false },
 ];
 
