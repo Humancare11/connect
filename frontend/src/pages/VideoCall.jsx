@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import socket from "../socket";
 import "./videocall.css";
-import api from "../api";
+import api, { getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
@@ -189,167 +189,43 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
   );
 }
 
-const FALLBACK_STUN_URLS = [
-  "stun:stun.l.google.com:19302",
-  "stun:stun1.l.google.com:19302",
-  "stun:stun2.l.google.com:19302",
-  "stun:stun3.l.google.com:19302",
-  "stun:stun4.l.google.com:19302",
-];
-
-const parseCsv = (value) =>
-  String(value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-
+// ── ICE server config: fetched from the backend, not baked in at build time ──
+// TURN credentials used to live in VITE_* env vars, which Vite inlines
+// directly into the public JS bundle — anyone opening devtools on the site
+// could read the permanent TURN username/password and use the relay
+// indefinitely. The backend now mints a short-lived, per-request TURN
+// credential (coturn's "TURN REST API" convention) behind an authenticated
+// endpoint (see GET /api/rtc/ice-servers) instead, so nothing long-lived ever
+// reaches the client. These helpers just validate what came back.
 const isTurnUrl = (url) => /^turns?:/i.test(String(url || ""));
 
 const normalizeIceUrls = (urls) =>
-  Array.isArray(urls) ? urls : parseCsv(urls);
+  Array.isArray(urls) ? urls : [urls].filter(Boolean);
 
-const isSupportedIceUrl = (url) =>
-  /^(stun|stuns|turn|turns):/i.test(String(url || ""));
-
-const sanitizeIceCredential = (value) =>
-  typeof value === "string" ? value.trim() : value;
-
-const sanitizeIceServers = (iceServers) => {
-  if (!Array.isArray(iceServers)) return [];
-
-  return iceServers.reduce((servers, server) => {
-    if (!server || typeof server !== "object") return servers;
-
-    const urls = normalizeIceUrls(server.urls).filter(isSupportedIceUrl);
-    if (!urls.length) return servers;
-
-    const sanitized = {
-      urls: urls.length === 1 ? urls[0] : urls,
-    };
-    const username = sanitizeIceCredential(server.username);
-    const credential = sanitizeIceCredential(server.credential);
-
-    if (username) sanitized.username = username;
-    if (credential) sanitized.credential = credential;
-    if (
-      server.credentialType === "password" ||
-      server.credentialType === "oauth"
-    ) {
-      sanitized.credentialType = server.credentialType;
-    }
-
-    servers.push(sanitized);
-    return servers;
-  }, []);
-};
+const sanitizeIceServers = (iceServers) =>
+  Array.isArray(iceServers)
+    ? iceServers.filter(
+        (server) =>
+          server &&
+          typeof server === "object" &&
+          normalizeIceUrls(server.urls).length > 0,
+      )
+    : [];
 
 const validateIceServers = (iceServers) => {
-  if (!Array.isArray(iceServers) || iceServers.length === 0) {
-    return "No ICE servers are configured.";
-  }
+  if (!iceServers.length) return "No ICE servers were returned by the server.";
 
   for (const server of iceServers) {
-    const urls = normalizeIceUrls(server?.urls);
-    if (!urls.length) return "An ICE server is missing urls.";
-
+    const urls = normalizeIceUrls(server.urls);
     for (const url of urls) {
-      if (isTurnUrl(url)) {
-        if (!server.username || !server.credential) {
-          return "TURN servers require username and credential.";
-        }
+      if (isTurnUrl(url) && (!server.username || !server.credential)) {
+        return "A TURN server is missing its credential.";
       }
     }
   }
 
   return "";
 };
-
-const hasTurnServer = (iceServers) =>
-  Array.isArray(iceServers) &&
-  iceServers.some((server) => normalizeIceUrls(server?.urls).some(isTurnUrl));
-
-const buildIceServerConfig = () => {
-  const jsonConfig = import.meta.env.VITE_RTC_ICE_SERVERS_JSON;
-  if (jsonConfig) {
-    try {
-      const parsed = JSON.parse(jsonConfig);
-      const iceServers = sanitizeIceServers(
-        Array.isArray(parsed) ? parsed : parsed?.iceServers,
-      );
-      if (Array.isArray(iceServers) && iceServers.length) {
-        const error = validateIceServers(iceServers);
-        if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
-          console.warn(
-            "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail.",
-          );
-        }
-        return {
-          config: {
-            iceServers,
-            iceCandidatePoolSize: Number(
-              import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10,
-            ),
-            bundlePolicy: "max-bundle",
-            rtcpMuxPolicy: "require",
-          },
-          error,
-        };
-      }
-      console.warn("VITE_RTC_ICE_SERVERS_JSON did not contain iceServers.");
-    } catch (err) {
-      return {
-        config: null,
-        error: `Invalid VITE_RTC_ICE_SERVERS_JSON: ${err.message}`,
-      };
-    }
-  }
-
-  const stunUrls = parseCsv(import.meta.env.VITE_RTC_STUN_URLS);
-  const turnUrls = parseCsv(import.meta.env.VITE_RTC_TURN_URLS);
-  const turnUsername = import.meta.env.VITE_RTC_TURN_USERNAME || "";
-  const turnCredential = import.meta.env.VITE_RTC_TURN_CREDENTIAL || "";
-
-  const iceServers = [
-    ...(stunUrls.length ? stunUrls : FALLBACK_STUN_URLS).map((urls) => ({
-      urls,
-    })),
-  ];
-
-  if (turnUrls.length && turnUsername && turnCredential) {
-    iceServers.push({
-      urls: turnUrls,
-      username: turnUsername,
-      credential: turnCredential,
-    });
-  } else if (turnUrls.length) {
-    console.warn(
-      "VITE_RTC_TURN_URLS is set, but TURN username/credential is missing. Continuing with STUN-only ICE.",
-    );
-  }
-
-  const error = validateIceServers(iceServers);
-  if (import.meta.env.PROD && !hasTurnServer(iceServers)) {
-    console.warn(
-      "No TURN server configured. Same-network calls may work, but calls across strict NATs can fail.",
-    );
-  }
-
-  return {
-    config: {
-      iceServers,
-      iceCandidatePoolSize: Number(
-        import.meta.env.VITE_RTC_ICE_CANDIDATE_POOL_SIZE || 10,
-      ),
-      bundlePolicy: "max-bundle",
-      rtcpMuxPolicy: "require",
-    },
-    error,
-  };
-};
-
-const RTC_SETUP = buildIceServerConfig();
-const RTC_CONFIG = RTC_SETUP.config;
-const RTC_CONFIG_ERROR = RTC_SETUP.error;
 
 const getIceCandidateType = (candidate = "") => {
   if (candidate.includes(" typ host")) return "host (local)";
@@ -646,6 +522,10 @@ export default function VideoCall() {
   const [apptError, setApptError] = useState("");
   const [activeRole, setActiveRole] = useState("");
 
+  // ── ICE server config (STUN + short-lived TURN credential) ────────
+  const [iceConfig, setIceConfig] = useState(null);
+  const [iceConfigError, setIceConfigError] = useState("");
+
   const apptDoctorId = appt?.doctorId?._id || appt?.doctorId || "";
   const apptPatientId = appt?.patientId?._id || appt?.patientId || "";
   const requestedRole = useMemo(() => {
@@ -930,6 +810,67 @@ export default function VideoCall() {
     };
   }, [appointmentId, doctor, user, doctorLoading, userLoading, requestedRole]);
 
+  // ── Fetch ICE server config once the role is known ────────────────
+  // A fresh, short-lived TURN credential is minted server-side on every
+  // page load — see the note above the validation helpers for why this
+  // replaced a static credential baked into the build. Unlike the old
+  // build-time constant, this now depends on one network round trip
+  // succeeding, so a momentary blip (not a real server misconfiguration)
+  // shouldn't be able to permanently block the call — retry a couple of
+  // times with a short backoff before giving up. Only request failures are
+  // retried; a response that came back but failed validation indicates a
+  // persistent server-side config problem, not a blip, so that's reported
+  // immediately instead of being retried pointlessly.
+  useEffect(() => {
+    if (activeRole !== "doctor" && activeRole !== "user") return;
+    let cancelled = false;
+    let retryTimer = null;
+
+    const RETRY_DELAYS_MS = [1000, 2000]; // delay before the 2nd and 3rd attempts
+
+    const attemptFetch = (attempt) => {
+      api
+        .get("/api/rtc/ice-servers", { authRole: activeRole })
+        .then((res) => {
+          if (cancelled) return;
+          const iceServers = sanitizeIceServers(res.data?.iceServers);
+          const error = validateIceServers(iceServers);
+          if (error) {
+            setIceConfigError(error);
+            return;
+          }
+          setIceConfig({
+            iceServers,
+            iceCandidatePoolSize: 10,
+            bundlePolicy: "max-bundle",
+            rtcpMuxPolicy: "require",
+          });
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          const nextDelay = RETRY_DELAYS_MS[attempt - 1];
+          if (nextDelay !== undefined) {
+            retryTimer = window.setTimeout(() => {
+              if (!cancelled) attemptFetch(attempt + 1);
+            }, nextDelay);
+            return;
+          }
+          setIceConfigError(
+            err.response?.data?.msg ||
+              err.message ||
+              "Could not fetch video call configuration.",
+          );
+        });
+    };
+
+    attemptFetch(1);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
+    };
+  }, [activeRole]);
+
   // ── Reliable cleanup: stop tracks + notify peers ───
   const performCleanup = useCallback(() => {
     if (completedRef.current) return;
@@ -1073,18 +1014,26 @@ export default function VideoCall() {
     joinedSocketIdRef.current = socket.id || "";
     setConnectionState((prev) => (prev === "connected" ? prev : "connecting"));
 
+    const activeRole = isDoctor ? "doctor" : "user";
     const activeUserId = isDoctor ? doctorId : userId;
+    // Explicit, role-scoped token on both emits — each is handled
+    // independently and asynchronously on the server, so "join-appointment-room"
+    // can't assume "user-online" (sent just before it) has already finished
+    // resolving identity. See the server's resolveSocketIdentity for why.
+    const authToken = getUserAuthToken(activeRole);
     if (activeUserId) {
       socket.emit("user-online", {
         userId: activeUserId,
-        role: isDoctor ? "doctor" : "user",
+        role: activeRole,
+        token: authToken,
       });
     }
 
     socket.emit("join-appointment-room", {
       appointmentId,
       userId: activeUserId,
-      role: isDoctor ? "doctor" : "user",
+      role: activeRole,
+      token: authToken,
     });
     logVideoEvent("appointment_room_join_requested", { socketId: socket.id });
     return true;
@@ -1217,8 +1166,10 @@ export default function VideoCall() {
   // ── Main WebRTC + Socket setup ────────────────────────────────────
   useEffect(() => {
     if (!canJoinConsultation) return;
-    if (RTC_CONFIG_ERROR || !RTC_CONFIG) {
-      setApptError(`Video consultation is not configured: ${RTC_CONFIG_ERROR}`);
+    if (!iceConfig) {
+      if (iceConfigError) {
+        setApptError(`Video consultation is not configured: ${iceConfigError}`);
+      }
       return;
     }
 
@@ -1241,10 +1192,10 @@ export default function VideoCall() {
       pcRef.current.close();
     }
 
-    const pc = new RTCPeerConnection(RTC_CONFIG);
+    const pc = new RTCPeerConnection(iceConfig);
     pcRef.current = pc;
     console.info("WebRTC peer connection created", {
-      iceServers: RTC_CONFIG.iceServers.map((server) => ({
+      iceServers: iceConfig.iceServers.map((server) => ({
         urls: server.urls,
         hasUsername: Boolean(server.username),
       })),
@@ -1987,6 +1938,8 @@ export default function VideoCall() {
     logVideoEvent,
     stopStatsCollection,
     reconnectNonce,
+    iceConfig,
+    iceConfigError,
   ]);
 
   // ── Call timer ────────────────────────────────────────────────────

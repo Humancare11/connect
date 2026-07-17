@@ -38,11 +38,7 @@ export const specialties = [
     keywords: ["pediatrics", "pediatrician", "child health", "baby"] },
 
   // Chronic Care & Expert Opinion
-<<<<<<< HEAD
-  { id: "cardiology", title: "Cardiology", type: "specialty", category: "chronic-care", route: "/chronic-care/cardiology",
-=======
   { id: "cardiology", title: "Cardiology", type: "specialty", category: "chronic-care-and-expert-opinion", route: "/chronic-care-and-expert-opinion/cardiology",
->>>>>>> 8c0363897c1995506a930504978d95507388135c
     keywords: ["cardiology", "heart", "cardiac"] },
   { id: "export-medical-opinion", title: "Expert Medical Opinion", type: "specialty", category: "chronic-care", route: "/export-medical-opinion",
     keywords: ["expert opinion", "second opinion", "specialist review"] },

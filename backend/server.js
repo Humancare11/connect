@@ -69,8 +69,6 @@ const startServer = async () => {
       password: hashed,
       role: "admin",
     });
-
-    console.log("Admin account created ✅");
   }
 
   // Seed superadmin
@@ -88,7 +86,6 @@ const startServer = async () => {
       role: "superadmin",
     });
 
-    console.log("Super Admin created ✅");
   }
 
   // Backfill 5-digit doctorId for any doctor that doesn't have one yet
@@ -103,10 +100,6 @@ const startServer = async () => {
       taken = await Doctor.exists({ doctorId: newId });
     }
     await Doctor.findByIdAndUpdate(doc._id, { doctorId: newId });
-    console.log(`Assigned doctorId ${newId} to doctor ${doc.email}`);
-  }
-  if (doctorsWithoutId.length > 0) {
-    console.log(`✅ Backfilled doctorId for ${doctorsWithoutId.length} doctor(s).`);
   }
 
   await seedCategoryPricing();
@@ -458,74 +451,9 @@ app.use(
 );
 app.use("/api/direct-video-room", require("./routes/directVideoRoom"));
 app.use("/api/notifications", require("./routes/notifications"));
+app.use("/api/rtc", require("./routes/rtc"));
 const CategoryConsultation = require("./models/CategoryConsultation");
 const Enrollment = require("./models/Enrollment");
-
-
-// app.post("/api/search", async (req, res) => {
-//   const { query, routes } = req.body;
-//   console.log("🔍 Search hit:", query); // ✅ add this
-
-//   try {
-//     const message = await client.messages.create({
-//       model: "claude-sonnet-4-6",
-//       max_tokens: 500,
-//       messages: [{
-//         role: "user",
-//         content: `A patient searched: "${query}".
-// From this list, return the top 5 most relevant as a JSON array (same shape as input).
-// List: ${JSON.stringify(routes)}
-// Return ONLY a valid JSON array. No explanation, no markdown.`
-//       }]
-//     });
-
-//     const results = JSON.parse(message.content[0].text);
-//     res.json({ results });
-
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: "Search failed" });
-//   }
-// });
-
-
-// app.post("/api/search", async (req, res) => {
-//   const { query, routes } = req.body;
-
-//   try {
-//     const completion = await client.chat.completions.create({
-//       model: "llama-3.1-8b-instant",
-//       max_tokens: 500,
-//       messages: [
-//         {
-//           role: "system",
-//           content: "You are a medical search assistant. Always respond with ONLY a valid JSON array. Never include markdown, backticks, or explanation."
-//         },
-//         {
-//           role: "user",
-//           // highlight-start
-//           content: `A patient typed: "${query}" (may be partial or misspelled).
-// Match against these medical routes using their title AND keywords.
-// Return the top 5 most relevant as a JSON array (same shape as input, include the keywords field).
-// Prioritize: exact title match > keyword match > partial/fuzzy match.
-// List: ${JSON.stringify(routes)}
-// Return ONLY a valid JSON array.`
-//           // highlight-end
-//         }
-//       ]
-//     });
-
-//     let raw = completion.choices[0].message.content.trim();
-//     raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
-
-//     const results = JSON.parse(raw);
-//     res.json({ results });
-
-//   } catch (err) {
-//     console.error("Search error:", err);
-//     res.status(500).json({ error: "Search failed", detail: err.message });
-//   }
-// });
 
 const searchRoutes = require("./searchRoutes");
 
@@ -679,6 +607,58 @@ function getSocketIdentity(socket, requested = {}) {
   return { userId: String(userId), role };
 }
 
+// Async, race-free identity resolution for a SPECIFIC requested role/userId.
+// socket.authIdentities is a snapshot taken once, when this transport
+// connection was first established, from whatever cookies existed then —
+// it is not re-derived per event. A client can emit several events
+// back-to-back (e.g. "user-online" then "join-appointment-room") that are
+// each handled independently and asynchronously on the server, so nothing
+// here can assume one has already finished priming shared state before the
+// other runs. Every caller that needs a specific identity resolves it
+// itself, the same way, rather than depending on ordering between events.
+async function resolveSocketIdentity(socket, requested = {}) {
+  // Fast path: already known to this connection (cookie-derived, or a token
+  // validated earlier on this same connection — see below).
+  const cached = getRequestedSocketIdentity(socket, requested);
+  if (cached) return cached;
+
+  // Slow path: an explicit, fresh bearer token was supplied — validate it
+  // directly instead of relying on some other event to have primed
+  // socket.authIdentities first.
+  if (requested.token) {
+    const tokenIdentity = await validateSocketAccessToken(requested.token);
+    if (
+      tokenIdentity &&
+      (!requested.userId || String(tokenIdentity.id) === String(requested.userId)) &&
+      (!requested.role || tokenIdentity.role === requested.role)
+    ) {
+      const already = socket.authIdentities.some(
+        (i) => i.id === tokenIdentity.id && i.role === tokenIdentity.role,
+      );
+      if (!already) socket.authIdentities.push(tokenIdentity);
+      return tokenIdentity;
+    }
+  }
+
+  // Last resort: whatever is already registered on this socket — but ONLY
+  // when the caller didn't ask for anything specific (a plain "still here"
+  // ping). If a SPECIFIC role/userId was requested but couldn't be verified
+  // by either the token or the cached identities, silently keeping a stale
+  // registration risks resolving a doctor's request as an old patient
+  // identity from earlier on this same connection — doing nothing is the
+  // safe failure mode.
+  if (!requested.role && !requested.userId && socket.userId && socket.userRole) {
+    return {
+      id: socket.userId,
+      role: socket.userRole,
+      email: socket.userEmail,
+      sid: socket.sessionId,
+    };
+  }
+
+  return null;
+}
+
 function isSocketInAppointmentRoom(socket, appointmentId) {
   if (!appointmentId) return false;
   const room = appointmentRoomName(appointmentId);
@@ -688,8 +668,9 @@ function isSocketInAppointmentRoom(socket, appointmentId) {
 async function canSocketAccessAppointment(socket, appointmentId, requestedIdentity = {}) {
   if (!appointmentId) return { allowed: false, reason: "missing_appointment" };
 
-  const identity = getSocketIdentity(socket, requestedIdentity);
-  if (!identity) return { allowed: false, reason: "unauthenticated" };
+  const resolved = await resolveSocketIdentity(socket, requestedIdentity);
+  if (!resolved) return { allowed: false, reason: "unauthenticated" };
+  const identity = { userId: String(resolved.id), role: resolved.role };
 
   const userId = String(identity.userId);
   let appointment = null;
@@ -742,6 +723,38 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
 // tracked by a client-generated guestId (not an authenticated identity) purely
 // so a page refresh in the same tab is treated as a rejoin, not a 3rd seat.
 const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
+// roomId -> { initiatorGuestId, participantGuestIds: Set }
+// Assigns the initiator/polite role once per guestId, the first time it's
+// ever seen in a room, and keeps it stable across refreshes/reconnects.
+// Recomputing this role from "who else is currently connected" (as before)
+// flips both peers to "initiator" simultaneously whenever the original
+// non-initiator refreshes while the other party is still connected, which
+// deadlocks perfect-negotiation's offer-collision handling on both sides.
+const directRoomRoles = new Map();
+
+function getDirectRoomRole(roomId, guestId) {
+  let entry = directRoomRoles.get(roomId);
+  if (!entry) {
+    entry = { initiatorGuestId: null, participantGuestIds: new Set() };
+    directRoomRoles.set(roomId, entry);
+  }
+
+  const isReturningGuest = entry.participantGuestIds.has(guestId);
+  entry.participantGuestIds.add(guestId);
+
+  if (!entry.initiatorGuestId) {
+    // First guest ever seen in this room becomes (and remains) the
+    // initiator/impolite peer, whether this is their first join or not.
+    entry.initiatorGuestId = guestId;
+    return { isInitiator: true, isReturningGuest };
+  }
+
+  return { isInitiator: entry.initiatorGuestId === guestId, isReturningGuest };
+}
+
+function clearDirectRoomRoles(roomId) {
+  directRoomRoles.delete(roomId);
+}
 const DIRECT_ROOM_ID_PATTERN = /^[a-f0-9]{16,128}$/i;
 const DIRECT_GUEST_ID_PATTERN = /^[a-zA-Z0-9-]{8,64}$/;
 
@@ -764,11 +777,6 @@ function isSocketInDirectRoom(socket, roomId) {
 // Authenticate socket connections via HttpOnly cookies.
 io.use(async (socket, next) => {
   const cookies = parseCookieHeader(socket.handshake.headers.cookie || "");
-
-  // ── TEMP DEBUG LOG ──
-  console.log("[socket-auth] raw cookie header:", socket.handshake.headers.cookie);
-  console.log("[socket-auth] parsed cookies:", cookies);
-
   const accessTokens = [cookies.userToken, cookies.doctorToken, cookies.adminToken].filter(Boolean);
   const refreshTokens = [cookies.userRefreshToken, cookies.doctorRefreshToken, cookies.adminRefreshToken].filter(Boolean);
   socket.authIdentities = [];
@@ -842,36 +850,26 @@ io.use(async (socket, next) => {
   next();
 });
 
-// Socket Events
 io.on("connection", (socket) => {
-  console.log("[socket] connected", {
-    id: socket.id,
-    transport: socket.conn.transport.name,
-    origin: socket.handshake.headers.origin,
-    userId: socket.userId || null,
-    role: socket.userRole || null,
-  });
-
-  socket.conn.on("upgrade", (transport) => {
-    console.log("[socket] transport upgraded", {
-      id: socket.id,
-      transport: transport.name,
+  // Socket.IO restored socket.rooms/socket.data from a prior session within
+  // connectionStateRecovery's window — see the join-appointment-room repair
+  // below for why our own bookkeeping still needs to be rebuilt on top of it.
+  if (socket.recovered) {
+    console.info("[socket] connection state recovered", {
+      socketId: socket.id,
+      rooms: Array.from(socket.rooms),
     });
-  });
+  }
 
-  socket.on("user-online", ({ userId: requestedUserId, role: requestedRole } = {}) => {
-    const matchingIdentity = Array.isArray(socket.authIdentities)
-      ? socket.authIdentities.find((identity) =>
-        (!requestedUserId || String(identity.id) === String(requestedUserId)) &&
-        (!requestedRole || identity.role === requestedRole)
-      )
-      : null;
-
-    const identity = matchingIdentity || (
-      socket.userId && socket.userRole
-        ? { id: socket.userId, role: socket.userRole, email: socket.userEmail, sid: socket.sessionId }
-        : null
-    );
+  socket.on("user-online", async ({ userId: requestedUserId, role: requestedRole, token } = {}) => {
+    // See resolveSocketIdentity's comment for why this can't just trust
+    // socket.authIdentities' connection-time snapshot when a specific role
+    // is being requested.
+    const identity = await resolveSocketIdentity(socket, {
+      userId: requestedUserId,
+      role: requestedRole,
+      token,
+    });
 
     if (!identity?.id || !identity?.role) return;
 
@@ -918,15 +916,13 @@ io.on("connection", (socket) => {
     if (role !== "admin") {
       io.emit("active-users-count", onlineUsers.size);
     }
-
-    console.log("Socket joined rooms:", userId, role);
   });
 
-  socket.on("join-appointment-room", async ({ appointmentId, userId, role } = {}) => {
+  socket.on("join-appointment-room", async ({ appointmentId, userId, role, token } = {}) => {
     if (!appointmentId) return;
 
     const room = appointmentRoomName(appointmentId);
-    const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role });
+    const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role, token });
 
     if (!access.allowed) {
       socket.emit("room-access-denied", { msg: "Access to this call room was denied." });
@@ -940,15 +936,30 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // If this socket is already in the room (e.g. duplicate emit from an
-    // effect re-run), re-notify peers AND tell ourselves about any peer
-    // already present — otherwise a rejoin can leave both sides without a
-    // "peer-joined" signal (e.g. if our previous listener was detached
-    // between the original join and this duplicate emit).
+    // Socket.IO may report this socket as already in the room in two
+    // distinct cases: (a) a genuine duplicate emit on the same live
+    // connection (e.g. an effect re-run), or (b) a connection recovered via
+    // Socket.IO's connectionStateRecovery after a brief disconnect (a
+    // network blip, or a Wi-Fi <-> mobile data switch) — the library
+    // restores `socket.rooms` for these automatically, but our own
+    // bookkeeping (`socketRooms`, keyed by socket.id) is cleared
+    // unconditionally in the "disconnect" handler below and is NOT restored
+    // by the library, since it lives outside `socket.data`. Every
+    // signaling/chat event downstream is gated on isSocketInAppointmentRoom(),
+    // which checks `socketRooms` — so without repairing it here, a recovered
+    // socket looks connected and "in the room" while every
+    // video-offer/answer/ice-candidate and chat message is silently dropped.
+    // Repair it unconditionally in both cases before returning.
     if (socket.rooms.has(room)) {
-      socket.to(room).emit("peer-joined");
+      socketRooms.set(socket.id, appointmentId);
+
       const existing = io.sockets.adapter.rooms.get(room);
-      if (existing && existing.size > 1) socket.emit("peer-joined");
+      const peerPresent = !!existing && existing.size > 1;
+      const wasActivated = roomActivated.get(appointmentId) === true;
+      if (peerPresent) roomActivated.set(appointmentId, true);
+
+      socket.to(room).emit("peer-joined", { resumedCall: wasActivated });
+      if (peerPresent) socket.emit("peer-joined", { resumedCall: wasActivated });
       return;
     }
 
@@ -1217,11 +1228,7 @@ io.on("connection", (socket) => {
     }
 
     io.emit("active-users-count", onlineUsers.size);
-    console.log("[socket] disconnected", {
-      id: socket.id,
-      reason,
-      activeUsers: onlineUsers.size,
-    });
+
   });
 
   // ── Direct Video Room events (ad-hoc, link-based, guest access) ────────────
@@ -1254,7 +1261,7 @@ io.on("connection", (socket) => {
 
     if (roomDoc.status === "active" && roomDoc.expiresAt && roomDoc.expiresAt.getTime() <= Date.now()) {
       roomDoc.status = "expired";
-      await roomDoc.save().catch(() => {});
+      await roomDoc.save().catch(() => { });
     }
 
     if (roomDoc.status !== "active") {
@@ -1306,17 +1313,22 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const isInitiator = existingSocketIds.length > 0;
+    const { isInitiator, isReturningGuest } = getDirectRoomRole(roomId, guestId);
+    // "Resumed" means this guest has been in this room before (a refresh or
+    // network-change reconnect), as opposed to a first-time join — the peer
+    // side uses this to know it should proactively renegotiate rather than
+    // wait passively for a normal first handshake.
+    const resumedCall = isReturningGuest && existingSocketIds.length > 0;
 
     socket.join(room);
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
 
     const now = new Date();
-    DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => {});
-    DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => {});
+    DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => { });
+    DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => { });
 
-    socket.emit("direct-room-joined", { roomId, isInitiator });
-    socket.to(room).emit("direct-peer-joined", { name: guestName });
+    socket.emit("direct-room-joined", { roomId, isInitiator, resumedCall });
+    socket.to(room).emit("direct-peer-joined", { name: guestName, resumedCall });
   });
 
   socket.on("leave-direct-room", ({ roomId } = {}) => {
@@ -1327,6 +1339,9 @@ io.on("connection", (socket) => {
     socket.to(room).emit("direct-participant-left");
     socket.leave(room);
     directRoomSockets.delete(socket.id);
+
+    const remaining = io.sockets.adapter.rooms.get(room);
+    if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
   });
 
   socket.on("direct-video-offer", ({ roomId, offer } = {}) => {
@@ -1384,10 +1399,13 @@ io.on("connection", (socket) => {
 
       if (!sameGuestStillInRoom) {
         io.to(room).emit("direct-participant-left");
+        const remaining = io.sockets.adapter.rooms.get(room);
+        if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
       }
     }, Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000));
   });
-});
+
+}); // end io.on("connection")
 
 const PORT = process.env.PORT || 5000;
 

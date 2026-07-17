@@ -13,11 +13,14 @@ import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State, City } from "country-state-city";
 
 // Helper functions to convert ISO codes to display names
-const getCountryName = (isoCode) => {
-  if (!isoCode) return "";
-  const country = Country.getCountryByCode(isoCode);
-  return country?.name || isoCode;
-};
+function doctorCountry(appointment) {
+  const country =
+    appointment.doctorMeta?.country ||
+    appointment.doctorId?.country ||
+    "";
+
+  return getCountryName(country) || "-";
+}
 
 const getStateName = (stateIsoCode, countryIsoCode) => {
   if (!stateIsoCode || !countryIsoCode) return "";
@@ -480,6 +483,13 @@ const STATUS_PIPELINE = [
   { key: "approved", label: "Approved", icon: "✅" },
   { key: "completed", label: "Completed", icon: "🎉" },
 ];
+
+const getCountryName = (countryCode) => {
+  if (!countryCode) return "";
+
+  const country = Country.getCountryByCode(countryCode);
+  return country?.name || countryCode;
+};
 
 // ─── Styles ───
 const css = `

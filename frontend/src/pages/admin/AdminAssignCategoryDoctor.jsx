@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Country } from "country-state-city";
 import api from "../../api";
 import "./AdminAssignDoctor.css";
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 function normalize(value) {
   return String(value || "")
@@ -107,7 +114,7 @@ function DoctorRow({
       <div className="aad-cell aad-cell-specialty">
         {doctor.specialty || "-"}
       </div>
-      <div className="aad-cell aad-cell-country">{doctor.country || "-"}</div>
+      <div className="aad-cell aad-cell-country">{getCountryName(doctor.country) || "-"}</div>
       <div className="aad-doctor-action">
         <button
           type="button"

@@ -60,6 +60,12 @@ if (!socket.__hcDiagnosticsInstalled) {
   });
 
   socket.io.on("reconnect_attempt", (attempt) => {
+    // The token may have been refreshed (or expired) since the initial
+    // handshake. socket.auth is only read at the moment a connection
+    // attempt is made, so updating it here ensures every reconnect
+    // (network change, tab resume, etc.) authenticates with a current token
+    // instead of replaying whatever was valid at module load time.
+    socket.auth = { token: getUserAuthToken() };
     console.info("[socket] reconnect_attempt", { attempt });
   });
 

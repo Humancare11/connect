@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import socket from "../../socket";
 import "./DoctorLayout.css";
-import api from "../../api";
+import api, { getUserAuthToken } from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 
 /* ── SVG icon set ─────────────────────────────────────────────── */
@@ -257,9 +257,16 @@ export default function DoctorLayout({ children }) {
   useEffect(() => {
     if (!socket.connected) socket.connect();
     if (doctor?._id || doctor?.id) {
+      // Pass an explicit, doctor-scoped token so the server can verify this
+      // registration fresh instead of relying only on whatever this socket
+      // connection's cookies looked like when it first connected — see the
+      // matching comment on the server's "user-online" handler for why that
+      // distinction matters (it's what prevents a stale identity from an
+      // earlier role on this same connection from sticking).
       socket.emit("user-online", {
         userId: doctor._id || doctor.id,
         role: "doctor",
+        token: getUserAuthToken("doctor"),
       });
     }
   }, [doctor]);

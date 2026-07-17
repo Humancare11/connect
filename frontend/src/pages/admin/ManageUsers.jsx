@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
+import { Country } from "country-state-city";
 import api from "../../api";
 import "./ManageUsers.css";
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 function InfoSection({ title, children }) {
   return (
@@ -228,7 +235,7 @@ function UserModal({ user, onClose, onDelete }) {
                       color: "rgba(255,255,255,0.85)",
                     }}
                   >
-                    🌍 {user.country}
+                    🌍 {getCountryName(user.country)}
                   </span>
                 )}
               </div>
@@ -240,7 +247,7 @@ function UserModal({ user, onClose, onDelete }) {
             <InfoRow icon="📱" label="Mobile" value={user.mobile} />
             <InfoRow icon="⚧" label="Gender" value={user.gender} />
             <InfoRow icon="🎂" label="Date of Birth" value={user.dob} />
-            <InfoRow icon="🌍" label="Country" value={user.country} noBorder />
+            <InfoRow icon="🌍" label="Country" value={getCountryName(user.country)} noBorder />
           </InfoSection>
 
           {/* Account Information */}
@@ -484,7 +491,7 @@ export default function ManageUsers() {
                     <td style={{ textTransform: "capitalize" }}>
                       {u.gender || "—"}
                     </td>
-                    <td>{u.country || "—"}</td>
+                    <td>{getCountryName(u.country) || "—"}</td>
                     <td>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button

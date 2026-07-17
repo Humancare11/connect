@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { getUserAuthToken } from "../../api";
 import socket from "../../socket";
 import "./user.css";
 
@@ -105,7 +106,14 @@ export default function UserLayout({ children }) {
   useEffect(() => {
     if (!user?._id) return;
     if (!socket.connected) socket.connect();
-    socket.emit("user-online", { userId: user._id, role: user.role });
+    // Explicit, role-scoped token — see the matching comment on the
+    // server's "user-online" handler for why this must not rely on the
+    // socket connection's cookie snapshot alone.
+    socket.emit("user-online", {
+      userId: user._id,
+      role: user.role,
+      token: getUserAuthToken(user.role),
+    });
   }, [user]);
 
   /* Close drawer on route change */
