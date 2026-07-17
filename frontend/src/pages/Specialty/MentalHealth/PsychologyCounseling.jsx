@@ -74,12 +74,15 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/psychology-counseling-mental-health-support-therapy.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/psychology-counseling-session-emotional-wellness.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
   slug: "psychology-counseling",
   name: "Psychology Counseling",
+  categoryId: "mental",
   tagline: "Compassionate Support for Life's Emotional Challenges.",
   heroDescription:
     "Psychology counseling provides a safe, supportive space to explore thoughts, emotions, behaviors, and life experiences. Whether you're facing stress, grief, relationship difficulties, trauma, or self-esteem concerns, counseling can help you develop healthier coping strategies, improve emotional well-being, and build resilience for everyday life. Through personalized counseling and evidence-based therapeutic approaches, psychology specialists help individuals navigate challenges, strengthen emotional health, and achieve personal growth.",
@@ -568,6 +571,28 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
     return () => clearTimeout(t);
   }, []);
 
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
+
   return (
     <>
       <HelmetProvider>
@@ -594,6 +619,7 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
+<<<<<<< HEAD
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
@@ -612,6 +638,35 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
                   Book Appointment
                 </a>
               </div> */}
+=======
+            <div className="sp-hero__layout">
+              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
+
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
+              </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
             </div>
           </div>
         </section>

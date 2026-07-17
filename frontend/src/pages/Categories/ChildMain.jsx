@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,10 +27,10 @@ import "./categoriesGlobal.css";
 // but clicking does nothing).
 
 const cat = {
-  label: "Children & Family Care",
+  label: "Children ",
   tagline: "Caring for your little ones",
   headline: "Compassionate Children & Family Care,",
-  headlineAccent: "Whenever You Need It",
+  headlineAccent: " Whenever You Need It",
   subheadline:
     "Connect with experienced healthcare professionals for personalized family healthcare, pediatric support, and everyday medical guidance, delivering convenient, compassionate care for every stage of life.",
   bookingSpecialtyPlaceholder: "e.g. Adolescent Medicine",
@@ -38,12 +38,12 @@ const cat = {
   specialties: [
     {
       name: "Adolescent Medicine",
-      desc: "Adolescent Medicine Comprehensive health care for teenagers and young adults with support for puberty, mental health, growth, nutrition, sports injuries and overall adolescent wellness",
+      desc: "Adolescent medicine specialists provide personalized healthcare for teenagers and young adults, addressing their unique physical, emotional, and developmental needs.",
       path: "/child-and-family-care/adolescent-medicine",
     },
     {
       name: "Pediatrics",
-      desc: "Kids’ Care Comprehensive care for infants, children and teens, from routine wellness exams and vaccinations to illness treatment, developmental support and preventive care that promotes healthy growth.",
+      desc: "Pediatric specialists provide comprehensive healthcare for infants, children, and teenagers, focusing on growth, development, illness prevention, and treatment of common childhood conditions.",
       path: "/child-and-family-care/pediatrics",
     },
   ],
@@ -51,43 +51,48 @@ const cat = {
   conditions: [
     {
       name: "Mood & Anxiety in Teens",
-      // desc: "Support for teen emotional wellness",
-      path: "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
+      desc: "Support for teen emotional wellness",
+      path: "/mood-anxiety-teens",
     },
     {
       name: "Puberty Concerns",
-      // desc: "Guidance through developmental changes",
-      path: "/child-and-family-care/adolescent-medicine/puberty-concerns",
+      desc: "Guidance through developmental changes",
+      path: "/puberty-concerns",
     },
     {
       name: "Sports Injuries",
-      // desc: "Care for active lifestyles",
-      path: "/child-and-family-care/adolescent-medicine/sports-injuries",
+      desc: "Care for active lifestyles",
+      path: "/sports-injuries",
     },
     {
       name: "Ear Pain in Children",
-      // desc: "Ear discomfort and irritation in kids",
-      path: "/child-and-family-care/pediatrics/ear-pain-children",
+      desc: "Ear discomfort and irritation in kids",
+      path: "/ear-pain-children",
+    },
+    {
+      name: "Ear Infections",
+      desc: "Bacterial or viral infections of the middle ear common in young children.",
+      path: "/ear-infections",
     },
     {
       name: "Feeding Concerns",
-      // desc: "Support for healthy infant feeding",
-      path: "/child-and-family-care/pediatrics/feeding-concerns",
+      desc: "Support for healthy infant feeding",
+      path: "/feeding-concerns",
     },
     {
       name: "Pediatric Cold & Flu",
-      // desc: "Cold and flu symptoms in children",
-      path: "/child-and-family-care/pediatrics/pediatric-cold-flu",
+      desc: "Cold and flu symptoms in children",
+      path: "/pediatric-cold-flu",
     },
     {
       name: "Pediatric Fever",
-      // desc: "Fever and illness in children",
-      path: "/child-and-family-care/pediatrics/pediatric-fever",
+      desc: "Fever and illness in children",
+      path: "/pediatric-fever",
     },
     {
       name: "Skin Rash in Children",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/child-and-family-care/pediatrics/skin-rash-in-children",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/skin-rash-in-children",
     },
   ],
 
@@ -233,7 +238,8 @@ const cat = {
 };
 
 // ─── Booking Form ─────────────────────────────────────────────────────────────
-function BookingForm({ specialtyPlaceholder, categoryCode }) {
+
+function BookingForm({ specialtyPlaceholder }) {
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -247,53 +253,13 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
   const [priceLoading, setPriceLoading] = useState(true);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  // Fetch dynamic pricing for the "family" category
-  // useEffect(() => {
-  //   const fetchPrice = async () => {
-  //     try {
-  //       const response = await api.get("/api/pricing");
-  //       const familyPricing = response.data?.family;
-  //       if (familyPricing) {
-  //         setPrice(familyPricing.price);
-  //       }
-  //     } catch (error) {
-  //       console.error("Failed to fetch pricing:", error);
-  //       setPrice(49);
-  //     } finally {
-  //       setPriceLoading(false);
-  //     }
-  //   };
-  //   fetchPrice();
-  // }, []);
-
   useEffect(() => {
     const fetchPrice = async () => {
       try {
-        const response = await api.get("/api/appointment-tree");
-
-        const DB_CATEGORY_NAMES = {
-          general: "General & Everyday Care",
-          mental: "Mental Health",
-          skin: "Skin & Hair",
-          women: "Women's Health",
-          men: "Men's Health",
-          family: "Children & Family",
-          weight: "Weight & Nutrition",
-          chronic: "Chronic Care & Expert Opinion",
-          eeb: "Eye, Ear & Bone",
-          sexual: "Sexual Health",
-          travel: "Travel & Global Care",
-        };
-
-        const categoryName = DB_CATEGORY_NAMES[categoryCode] || categoryCode;
-        const category = response.data.find(
-          (item) => item.name === categoryName,
-        );
-
-        if (category && category.price !== undefined) {
-          setPrice(category.price);
-        } else {
-          setPrice(49);
+        const response = await api.get("/api/pricing");
+        const familyPricing = response.data?.family;
+        if (familyPricing) {
+          setPrice(familyPricing.price);
         }
       } catch (error) {
         console.error("Failed to fetch pricing:", error);
@@ -302,9 +268,8 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
         setPriceLoading(false);
       }
     };
-
     fetchPrice();
-  }, [categoryCode]);
+  }, []);
 
   const handleSubmit = () => {
     if (!form.name || !form.phone || !form.date) return;
@@ -343,7 +308,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
           {priceLoading ? (
             <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
           ) : (
-            `$${price ?? 49}`
+            `$${price || 49}`
           )}
         </div>
         <p className="hcc-booking-price-sub">
@@ -380,9 +345,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
         ))}
       </div>
 
-      <Link to="/category-consultant?category=family">
-        <button className="hcc-booking-cta">Start Consultation →</button>
-      </Link>
+      <button className="hcc-booking-cta">Start Consultation →</button>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="hcc-booking-link">
@@ -405,29 +368,27 @@ function SpecialtyCard({ sp, index }) {
   return (
     <motion.div
       className="hcc-specialty-card"
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
+      onClick={() => sp.path && navigate(sp.path)}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && sp.path) {
+          e.preventDefault();
+          navigate(sp.path);
+        }
+      }}
+      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
-      {sp.path ? (
-        <Link
-          to={sp.path}
-          className="hcc-specialty-link"
-          aria-label={`View ${sp.name}`}
-          style={{ display: "block", color: "inherit", textDecoration: "none" }}
-        >
-          <div className="hcc-specialty-name">{sp.name}</div>
-          <p className="hcc-specialty-desc">{sp.desc}</p>
-          <div className="hcc-specialty-arrow">
-            Learn more <FiArrowRight size={13} />
-          </div>
-        </Link>
-      ) : (
-        <>
-          <div className="hcc-specialty-name">{sp.name}</div>
-          <p className="hcc-specialty-desc">{sp.desc}</p>
-        </>
+      <div className="hcc-specialty-name">{sp.name}</div>
+      <p className="hcc-specialty-desc">{sp.desc}</p>
+      {sp.path && (
+        <div className="hcc-specialty-arrow">
+          Learn more <FiArrowRight size={13} />
+        </div>
       )}
     </motion.div>
   );
@@ -441,29 +402,27 @@ function ConditionCard({ cond, index }) {
   return (
     <motion.div
       className="hcc-condition-card"
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
+      onClick={() => cond.path && navigate(cond.path)}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && cond.path) {
+          e.preventDefault();
+          navigate(cond.path);
+        }
+      }}
+      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
-      {cond.path ? (
-        <Link
-          to={cond.path}
-          className="hcc-condition-link"
-          aria-label={`View ${cond.name}`}
-          style={{ display: "block", color: "inherit", textDecoration: "none" }}
-        >
-          <div className="hcc-condition-name">{cond.name}</div>
-          <p className="hcc-condition-desc">{cond.desc}</p>
-          <div className="hcc-condition-expand">
-            Learn more <FiArrowRight size={13} />
-          </div>
-        </Link>
-      ) : (
-        <>
-          <div className="hcc-condition-name">{cond.name}</div>
-          <p className="hcc-condition-desc">{cond.desc}</p>
-        </>
+      <div className="hcc-condition-name">{cond.name}</div>
+      <p className="hcc-condition-desc">{cond.desc}</p>
+      {cond.path && (
+        <div className="hcc-condition-expand">
+          Learn more <FiArrowRight size={11} />
+        </div>
       )}
     </motion.div>
   );
@@ -485,18 +444,12 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-
-          {/* <button
-            className="hcc-faq-chat-btn"
-            onClick={() =>
-              (window.location.href = "mailto:support@humancareconnect.co")
-            }
-          >
+          <button className="hcc-faq-chat-btn">
             <span className="chat-icon">
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button> */}
+          </button>
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
@@ -571,7 +524,7 @@ function FaqSection({ faqGroups, catLabel }) {
             ))}
           </div>
 
-          {/* <div className="hcc-faq-still">
+          <div className="hcc-faq-still">
             <div className="hcc-faq-still-text">
               <strong>Still have questions?</strong>
               Our care team is available every day, 8 AM – 10 PM.
@@ -579,7 +532,7 @@ function FaqSection({ faqGroups, catLabel }) {
             <button className="hcc-faq-call-btn">
               <FiPhone size={13} /> Book a Call
             </button>
-          </div> */}
+          </div>
         </div>
       </div>
     </section>
@@ -592,7 +545,6 @@ export default function ChildFamilyCare() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "family" } });
-  const goToContact = () => navigate("/contact-us");
 
   return (
     <div
@@ -654,14 +606,14 @@ export default function ChildFamilyCare() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            {/* <div className="hcc-cta-row"> */}
-            {/* <button className="hcc-btn-primary" onClick={goToBooking}>
+            <div className="hcc-cta-row">
+              <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
-              </button> */}
-            {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              </button>
+              <button className="hcc-btn-secondary" onClick={goToBooking}>
                 <FiUser size={15} /> Know More
-              </button> */}
-            {/* </div> */}
+              </button>
+            </div>
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits
@@ -682,7 +634,6 @@ export default function ChildFamilyCare() {
           >
             <BookingForm
               specialtyPlaceholder={cat.bookingSpecialtyPlaceholder}
-              categoryCode="family"
             />
           </motion.div>
         </div>
@@ -777,7 +728,7 @@ export default function ChildFamilyCare() {
             <button
               className="hcc-btn-secondary"
               style={{ borderColor: "rgba(255,255,255,0.35)" }}
-              onClick={goToContact}
+              onClick={goToBooking}
             >
               <FiPhone size={14} /> Call Us Now
             </button>

@@ -503,14 +503,14 @@ const CATEGORIES = [
 const SPECIALTIES = [
   {
     slug: "general-physician",
-    path: "/general-and-everyday-care/general-physician",
+    path: "/general-physician",
     icon: "stethoscope",
     name: "General Physician (GP)",
     featured: true,
   },
   {
     slug: "internal-medicine",
-    path: "/general-and-everyday-care/internal-medicine",
+    path: "/internal-medicine",
     icon: "activity",
     name: "Internal Medicine",
     featured: false,
@@ -538,21 +538,21 @@ const SPECIALTIES = [
   },
   {
     slug: "pediatrics",
-    path: "/pediatrics",
+    path: "/child-and-family-care/pediatrics",
     icon: "child",
     name: "Pediatrics",
     featured: false,
   },
   {
     slug: "cardiology",
-    path: "/chronic-care/cardiology",
+    path: "/chronic-care-and-expert-opinion/cardiology",
     icon: "heart",
     name: "Cardiology",
     featured: false,
   },
   {
     slug: "ophthalmology",
-    path: "/eye-ear-bone/ophthalmology",
+    path: "/ophthalmology",
     icon: "eye",
     name: "Ophthalmology",
     featured: false,

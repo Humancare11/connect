@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
   FiActivity,
   FiHeart,
@@ -54,6 +55,8 @@ import {
   GiBodySwapping,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 
 import heroImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-teen-healthcare-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-consultation.webp";
@@ -63,6 +66,7 @@ import overviewImage from "../../../assets/SpecialitiesImage/adolescent-medicine
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
   slug: "adolescent-medicine",
+  categoryId: "family",
   name: "Adolescent Medicine",
   tagline: "Supporting Teens Through Every Stage of Growth and Development.",
   heroDescription:
@@ -551,11 +555,36 @@ function SectionLabel({ children }) {
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
 
   useEffect(() => {
     const t = setTimeout(() => setHeroLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+
+    fetchPrice();
+    return () => {
+      cancelled = true;
+    };
+  }, [data.categoryId]);
 
   return (
     <main className="sp-page">
@@ -571,7 +600,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__overlay" />
         </div>
 
-        <div className="sp-hero__content">
+        {/* <div className="sp-hero__content">
           <div
             className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
           >
@@ -590,6 +619,39 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                 Book Appointment
               </a>
             </div> */}
+          </div>
+        </div> */}
+        <div className="sp-hero__content">
+          <div className="sp-hero__layout">
+            {/* RIGHT — existing hero text */}
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">HumanCare Connect</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
+
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
+            </div>
+            {/* LEFT — booking card */}
+            <Reveal className="sp-hero__sidebar">
+              <BookingCard
+                price={price}
+                priceLoading={priceLoading}
+                categoryId={data.categoryId}
+                name={data.name}
+              />
+            </Reveal>
           </div>
         </div>
       </section>

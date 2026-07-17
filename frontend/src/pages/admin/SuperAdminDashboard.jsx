@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
+import ServicesPrices from "./ServicesPrices";
 
 function EyeIcon({ open }) {
   return open ? (
@@ -546,6 +547,12 @@ export default function SuperAdminDashboard() {
           <button className="dash-nav-item" onClick={() => navigate("/admin-dashboard/payment-link-history")}>
             Payment History
           </button>
+          <button
+            className={`dash-nav-item${activeTab === "servicesPrices" ? " active" : ""}`}
+            onClick={() => setActiveTab("servicesPrices")}
+          >
+            Services Price
+          </button>
           <button className="dash-nav-item" onClick={() => navigate("/admin-dashboard")}>
             Admin Dashboard
           </button>
@@ -562,6 +569,7 @@ export default function SuperAdminDashboard() {
         <div className="dash-content">
           {activeTab === "admins" && <AdminsTab />}
           {activeTab === "employeeAdmins" && <EmployeeAdminsTab />}
+          {activeTab === "servicesPrices" && <ServicesPrices />}
         </div>
       </main>
     </div>

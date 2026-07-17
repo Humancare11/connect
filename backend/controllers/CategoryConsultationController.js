@@ -1,6 +1,43 @@
 const CategoryConsultation = require("../models/CategoryConsultation");
 
 const Enrollment = require("../models/Enrollment");
+const { getS3ObjectUrl } = require("../config/s3");
+const { keyFromStoredValue } = require("../utils/uploadStorage");
+const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
+
+async function withPresignedMedicalReportUrls(consultation) {
+  if (!consultation) return consultation;
+
+  const plainConsultation =
+    typeof consultation.toObject === "function"
+      ? consultation.toObject()
+      : consultation;
+  const reports = Array.isArray(plainConsultation.medicalReports)
+    ? plainConsultation.medicalReports
+    : [];
+
+  if (!reports.length) return plainConsultation;
+
+  const medicalReports = await Promise.all(
+    reports.map(async (report) => {
+      const key = keyFromStoredValue(report?.key || report?.url);
+      if (!key) return report;
+
+      const signed = await createS3PresignedGetUrl(key);
+      return {
+        ...report,
+        s3Url: getS3ObjectUrl(key),
+        url: signed.url,
+        urlExpiresAt: signed.expiresAt,
+      };
+    })
+  );
+
+  return {
+    ...plainConsultation,
+    medicalReports,
+  };
+}
 
 
 // Create a new consultation
@@ -159,7 +196,7 @@ const getCategoryConsultationById = async (req, res) => {
 
     res.json({
       success: true,
-      data: consultation,
+      data: await withPresignedMedicalReportUrls(consultation),
     });
   } catch (error) {
     console.error("GET CATEGORY CONSULTATION ERROR:", error);

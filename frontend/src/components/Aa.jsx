@@ -165,14 +165,14 @@ export default function SpecialtiesSection() {
       name: "Adolescent Medicine",
       alt: "Adolescent medicine healthcare services for teenagers and young adults",
       conditions: "8 Conditions",
-      path: "/adolescent-medicine",
+      path: "/child-and-family-care/adolescent-medicine",
     },
     {
       img: sp2,
       name: "Pediatrics",
       alt: "Pediatric healthcare services for infants children and adolescents",
       conditions: "32 Conditions",
-      path: "/pediatrics",
+      path: "/child-and-family-care/pediatrics",
     },
     {
       img: sp3,

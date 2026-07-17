@@ -28,6 +28,7 @@ const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
+const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
 
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
@@ -777,6 +778,7 @@ const ChronicMedicationManagement = lazy(
 const ServiceDemo = lazy(() => import("./pages/NewServices/ServiceDemo"));
 
 import AdminAssignCategoryDoctor from "./pages/admin/AdminAssignCategoryDoctor";
+import ServicesPrices from "./pages/admin/ServicesPrices";
 
 import CategoryConsultant from "./pages/CategoryConsultant";
 import CategoryAppointmentConfirm from "./pages/CategoryAppointmentConfirm";
@@ -830,6 +832,9 @@ const AdminAppointmentDetails = lazy(
 );
 const AdminCategoryConsultations = lazy(
   () => import("./pages/admin/AdminCategoryConsultations"),
+);
+const AdminDirectVideoConsultation = lazy(
+  () => import("./pages/admin/AdminDirectVideoConsultation"),
 );
 
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
@@ -1085,7 +1090,8 @@ function AppLayout() {
     location.pathname.startsWith("/employee") ||
     location.pathname.startsWith("/user") ||
     location.pathname.startsWith("/pay/") ||
-    location.pathname.startsWith("/video-call");
+    location.pathname.startsWith("/video-call") ||
+    location.pathname.startsWith("/direct-video-call");
 
   return (
     <>
@@ -1381,6 +1387,7 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
+          <Route path="/services-prices" element={<ServicesPrices />} />
           <Route
             path="/admin-auth"
             element={<Navigate to="/adminauth" replace />}
@@ -1486,6 +1493,16 @@ function AppLayout() {
             }
           />
           <Route
+            path="/admin-dashboard/direct-video-consultation"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDirectVideoConsultation />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/admin-dashboard/category-consultations/:id"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
@@ -1554,6 +1571,10 @@ function AppLayout() {
             }
           />
           <Route path="/video-call/:appointmentId" element={<VideoCall />} />
+          <Route
+            path="/direct-video-call/:roomId"
+            element={<DirectVideoCall />}
+          />
           {/* ALL*/}
           <Route path="/categories" element={<Categories />} />
           <Route path="/specialties" element={<Specialties />} />
@@ -1575,7 +1596,18 @@ function AppLayout() {
           <Route path="/women-health" element={<WomenHealth />} />
           {/* specialties */}
           {/* <Route path="/sd" element={<SD />} /> */}
-          <Route path="/adolescent-medicine" element={<AdolescentMedicine />} />
+          <Route
+            path="/child-and-family-care/adolescent-medicine"
+            element={<AdolescentMedicine />}
+          />
+          <Route
+            path="/child-and-family-care/pediatrics"
+            element={<Pediatrics />}
+          />
+          <Route
+            path="/chronic-care-and-expert-opinion/cardiology"
+            element={<Cardiology />}
+          />
           <Route
             path="/child-and-family-care/pediatrics"
             element={<Pediatrics />}

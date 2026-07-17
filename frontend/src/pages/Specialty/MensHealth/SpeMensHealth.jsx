@@ -70,6 +70,8 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/mens-health-specialist-consultation.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/mens-health-wellness-consultation.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -77,6 +79,7 @@ import overviewImage from "../../../assets/SpecialitiesImage/mens-health-wellnes
 const SPECIALTY_DATA = {
   slug: "mens-health",
   name: "Men's Health",
+  categoryId: "men",
   tagline: "Personalized Healthcare Designed for Men's Unique Health Needs.",
   heroDescription:
     "Men's health specialists focus on the physical, hormonal, sexual, and preventive healthcare needs of men throughout every stage of life. From managing hormone imbalances and sexual wellness concerns to supporting prostate health and healthy aging, men's health care provides personalized treatment plans that help men feel their best and maintain long-term wellness.",
@@ -565,6 +568,28 @@ export default function SpeMensHealth({ data = SPECIALTY_DATA }) {
     return () => clearTimeout(t);
   }, []);
 
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
+
   return (
     <>
       <HelmetProvider>
@@ -591,6 +616,7 @@ export default function SpeMensHealth({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
+<<<<<<< HEAD:frontend/src/pages/Specialty/MensHealth/SpeMensHealth.jsx
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
@@ -609,6 +635,35 @@ export default function SpeMensHealth({ data = SPECIALTY_DATA }) {
                   Book Appointment
                 </a>
               </div> */}
+=======
+            <div className="sp-hero__layout">
+              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
+
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
+              </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
+>>>>>>> 8c0363897c1995506a930504978d95507388135c:frontend/src/pages/Specialty/MensHealth/MensHealth.jsx
             </div>
           </div>
         </section>

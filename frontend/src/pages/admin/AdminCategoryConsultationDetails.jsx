@@ -45,6 +45,10 @@ function formatBytes(value) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function getReportUrl(report) {
+  return report?.url || report?.signedUrl || report?.s3Url || "";
+}
+
 function formatMoney(value) {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return "-";
@@ -132,7 +136,7 @@ export default function AdminCategoryConsultationDetails() {
     : "";
 
   const reports = Array.isArray(consultation.medicalReports)
-    ? consultation.medicalReports
+    ? consultation.medicalReports.filter(getReportUrl)
     : [];
 
   return (
@@ -230,8 +234,8 @@ export default function AdminCategoryConsultationDetails() {
             <div className="adp-report-grid">
               {reports.map((report, index) => (
                 <a
-                  key={`${report.url}-${index}`}
-                  href={report.url}
+                  key={`${getReportUrl(report)}-${index}`}
+                  href={getReportUrl(report)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="adp-report-card"

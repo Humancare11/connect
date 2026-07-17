@@ -58,6 +58,8 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/cardiology-specialist-heart-care-consultation.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-cardiologist-heart-examination.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -65,6 +67,7 @@ import overviewImage from "../../../assets/SpecialitiesImage/board-certified-car
 const SPECIALTY_DATA = {
   slug: "cardiology",
   name: "Cardiology",
+  categoryId: "chronic",
   tagline: "Protecting Your Heart with Expert Cardiovascular Care.",
   heroDescription:
     "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. From routine heart screenings and blood pressure management to treating heart disease, chest pain, and irregular heart rhythms, cardiologists are dedicated to supporting lifelong heart health.",
@@ -548,6 +551,27 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
     const t = setTimeout(() => setHeroLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
 
   return (
     <>
@@ -573,16 +597,27 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
             <div className="sp-hero__overlay" />
           </div>
 
+<<<<<<< HEAD
           <div className="sp-hero__content">
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
               <span className="sp-hero__badge">Chronic Care</span>
+=======
+        <div className="sp-hero__content">
+          <div className="sp-hero__layout">
+            <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+              <span className="sp-hero__badge">HumanCare Connect</span>
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
               <h1 className="sp-hero__title">{data.name}</h1>
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
 
+<<<<<<< HEAD
               {/* <div className="sp-hero__actions">
+=======
+              <div className="sp-hero__actions">
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
                 <a href="/Specialties" className="sp-btn sp-btn--primary">
                   <FiSearch size={17} />
                   Find Specialists
@@ -591,8 +626,21 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                   <FiCalendar size={17} />
                   Book Appointment
                 </a>
+<<<<<<< HEAD
               </div> */}
+=======
+              </div>
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
             </div>
+
+            <Reveal className="sp-hero__sidebar">
+              <BookingCard
+                price={price}
+                priceLoading={priceLoading}
+                categoryId={data.categoryId}
+                name={data.name}
+              />
+            </Reveal>
           </div>
         </section>
 

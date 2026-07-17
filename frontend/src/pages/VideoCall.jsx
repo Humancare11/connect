@@ -716,6 +716,8 @@ export default function VideoCall() {
   const screenShareStartInProgressRef = useRef(false);
   const screenShareStopInProgressRef = useRef(false);
   const socketAuthRefreshedRef = useRef(false);
+  const hasConnectedOnceRef = useRef(false);
+  const reconnectStallTimerRef = useRef(null);
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
@@ -746,6 +748,8 @@ export default function VideoCall() {
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [inlineError, setInlineError] = useState("");
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
+  const [reconnectStalled, setReconnectStalled] = useState(false);
+  const [reconnectNonce, setReconnectNonce] = useState(0);
   const pendingLeaveRef = useRef(null);
 
   // ── Chat state ────────────────────────────────────────────────────
@@ -1225,6 +1229,9 @@ export default function VideoCall() {
     settingRemoteAnswerPendingRef.current = false;
     clearTimeout(iceRestartTimerRef.current);
     clearTimeout(ignoreOfferResetTimerRef.current);
+    clearTimeout(reconnectStallTimerRef.current);
+    reconnectStallTimerRef.current = null;
+    setReconnectStalled(false);
     let resolveLocalReady = () => {};
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
@@ -1333,6 +1340,31 @@ export default function VideoCall() {
         );
         scheduleIceRestart();
       }, CONNECTION_FAIL_TIMEOUT_MS);
+    };
+
+    // UI-only signal, independent of the ICE-restart retry machinery above:
+    // if a peer is known to be present but we still aren't connected after a
+    // while, let the user know and offer a manual full reconnect instead of
+    // leaving them staring at a silent spinner.
+    const clearReconnectStallWatch = () => {
+      clearTimeout(reconnectStallTimerRef.current);
+      reconnectStallTimerRef.current = null;
+      setReconnectStalled(false);
+    };
+
+    const startReconnectStallWatch = (delayMs) => {
+      if (reconnectStallTimerRef.current) return;
+      reconnectStallTimerRef.current = setTimeout(() => {
+        reconnectStallTimerRef.current = null;
+        if (!mounted || pc.signalingState === "closed") return;
+        if (
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed"
+        )
+          return;
+        setReconnectStalled(true);
+      }, delayMs);
     };
 
     const requestPeerIceRestart = () => {
@@ -1455,6 +1487,20 @@ export default function VideoCall() {
         : [event.track].filter(Boolean);
 
       incomingTracks.forEach((track) => {
+        // The sending side only ever sends one track per kind (camera OR
+        // screen share for video, never both — see startScreenShare's
+        // sender.replaceTrack). So a new track of a given kind always
+        // replaces the previous one for that kind. This matters a lot after
+        // the remote peer's connection is recreated (e.g. they refreshed):
+        // their new track has a different id than the old one, so it
+        // wouldn't dedupe by id — without pruning, the dead old track stays
+        // in this stream alongside the new live one, and the video element
+        // can end up stuck rendering (or freezing on) the wrong track.
+        remoteStream
+          .getTracks()
+          .filter((existing) => existing.kind === track.kind && existing.id !== track.id)
+          .forEach((stale) => remoteStream.removeTrack(stale));
+
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
       });
 
@@ -1497,6 +1543,8 @@ export default function VideoCall() {
         iceRestartTimerRef.current = null;
         restartRequestInFlightRef.current = false;
         iceRecoveryAttemptsRef.current = 0;
+        clearReconnectStallWatch();
+        hasConnectedOnceRef.current = true;
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) {
@@ -1529,6 +1577,8 @@ export default function VideoCall() {
         iceRestartTimerRef.current = null;
         restartRequestInFlightRef.current = false;
         iceRecoveryAttemptsRef.current = 0;
+        clearReconnectStallWatch();
+        hasConnectedOnceRef.current = true;
         setConnectionState("connected");
         setIsRemoteConnected(true);
         if (!inCallRef.current) {
@@ -1683,12 +1733,22 @@ export default function VideoCall() {
       await createAndSendOffer({ iceRestart: true });
     };
 
-    const handlePeerJoined = () => {
+    const handlePeerJoined = (payload = {}) => {
+      const { resumedCall } = payload || {};
       if (mounted) {
         peerJoinedRef.current = true;
         setPeerJoined(true);
         setPeerLeft(false);
         if (isReadyRef.current && !inCallRef.current) startConnectionWatchdog();
+        // Resuming a known-active call should recover in ~1-2s (see the
+        // doctor nudge below), so a stall is meaningful much sooner. A
+        // first-time connect has no such guarantee — real handshakes can
+        // legitimately take well past a few seconds on slow networks, so
+        // give it more room before nagging the user with a "reconnecting"
+        // banner that doesn't even apply yet.
+        if (isReadyRef.current && !inCallRef.current) {
+          startReconnectStallWatch(resumedCall ? 8000 : 20000);
+        }
         if (!isDoctor && isReadyRef.current) {
           window.setTimeout(() => {
             if (!mounted || pc.signalingState === "closed") return;
@@ -1701,6 +1761,25 @@ export default function VideoCall() {
             void createAndSendOffer({ iceRestart: inCallRef.current });
           }, 300);
         }
+        // Doctor never self-initiates an offer (polite peer in perfect
+        // negotiation), so recovery after a doctor-side refresh otherwise
+        // depends on the 25s connection watchdog. When the server confirms
+        // this room was already active before (resumedCall), nudge the
+        // patient to renegotiate right away instead of waiting on that
+        // watchdog. Gated on resumedCall so an ordinary first-time call
+        // start (patient already waiting) is never perturbed.
+        if (isDoctor && resumedCall && isReadyRef.current) {
+          window.setTimeout(() => {
+            if (!mounted || pc.signalingState === "closed") return;
+            if (
+              pc.connectionState === "connected" ||
+              pc.iceConnectionState === "connected" ||
+              pc.iceConnectionState === "completed"
+            )
+              return;
+            requestPeerIceRestart();
+          }, 500);
+        }
       }
     };
 
@@ -1711,6 +1790,10 @@ export default function VideoCall() {
         setConnectionState("disconnected");
         setPeerJoined(false);
         setPeerLeft(true);
+        // The peer genuinely left (not a brief reconnect blip, or the grace
+        // period would have suppressed this event) — there's nothing to
+        // "reconnect" to right now, so don't leave a stale stall banner up.
+        clearReconnectStallWatch();
       }
     };
 
@@ -1844,8 +1927,10 @@ export default function VideoCall() {
       clearTimeout(iceRestartTimerRef.current);
       clearTimeout(connectionFailTimerRef.current);
       clearTimeout(ignoreOfferResetTimerRef.current);
+      clearTimeout(reconnectStallTimerRef.current);
       iceRestartTimerRef.current = null;
       ignoreOfferResetTimerRef.current = null;
+      reconnectStallTimerRef.current = null;
       restartRequestInFlightRef.current = false;
       if (
         joinedSocketIdRef.current &&
@@ -1901,6 +1986,7 @@ export default function VideoCall() {
     emitOnlineAndJoinRoom,
     logVideoEvent,
     stopStatsCollection,
+    reconnectNonce,
   ]);
 
   // ── Call timer ────────────────────────────────────────────────────
@@ -2208,6 +2294,14 @@ export default function VideoCall() {
     navigate,
   ]);
 
+  // Manual escape hatch when automatic recovery is taking too long: forces
+  // the main effect to tear down and rebuild the RTCPeerConnection + rejoin
+  // the room from scratch, on either role.
+  const forceReconnect = useCallback(() => {
+    setReconnectStalled(false);
+    setReconnectNonce((n) => n + 1);
+  }, []);
+
   const retryMediaPermissions = useCallback(async () => {
     if (retryingMedia) return;
     const pc = pcRef.current;
@@ -2466,6 +2560,10 @@ export default function VideoCall() {
         </button>
       </div>
     );
+
+
+
+    
   }
 
   if (
@@ -2875,14 +2973,35 @@ export default function VideoCall() {
                 </div>
                 <p className="hc-vc__waiting-title">
                   {peerJoined
-                    ? "Establishing secure connection..."
+                    ? hasConnectedOnceRef.current
+                      ? "Reconnecting..."
+                      : "Establishing secure connection..."
                     : `Waiting for ${isDoctor ? "patient" : "doctor"}...`}
                 </p>
                 <p className="hc-vc__waiting-sub">
                   {peerJoined
-                    ? "Both participants are ready. Video starting soon."
+                    ? hasConnectedOnceRef.current
+                      ? "Restoring your connection to the call."
+                      : "Both participants are ready. Video starting soon."
                     : "Share the appointment link with the other person to begin."}
                 </p>
+              </div>
+            )}
+
+            {/* Reconnect stalled — manual escape hatch if automatic recovery is slow */}
+            {reconnectStalled && (
+              <div className="hc-vc__reconnect-stalled-notice">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>Reconnection is taking longer than expected.</span>
+                <button
+                  type="button"
+                  className="hc-vc__rx-btn-primary"
+                  onClick={forceReconnect}
+                >
+                  Retry
+                </button>
               </div>
             )}
 

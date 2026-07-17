@@ -66,12 +66,15 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/womens-mental-health-specialists-telehealth-support.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/womens-mental-health-consultation-emotional-wellness.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
   slug: "women-mental-health",
   name: "Women's Mental Health",
+  categoryId: "women",
   tagline: "Compassionate Mental Health Support for Every Stage of Womanhood.",
   heroDescription:
     "Women's Mental Health focuses on the emotional, psychological, and behavioral challenges that may occur throughout different stages of life, including menstruation, pregnancy, postpartum recovery, and hormonal transitions. Our specialists provide personalized support designed to help women navigate mental health concerns with confidence and care.Whether you're experiencing anxiety during pregnancy, mood changes related to hormonal fluctuations, or emotional challenges after childbirth, expert support can help improve your well-being and quality of life.",
@@ -542,6 +545,28 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
     return () => clearTimeout(t);
   }, []);
 
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
+
   return (
     <>
       <HelmetProvider>
@@ -568,6 +593,7 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
+<<<<<<< HEAD
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
@@ -586,6 +612,35 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
                   Book Appointment
                 </a>
               </div> */}
+=======
+            <div className="sp-hero__layout">
+              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
+
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
+              </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
             </div>
           </div>
         </section>

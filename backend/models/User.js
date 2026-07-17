@@ -49,6 +49,17 @@ const userSchema = new mongoose.Schema(
       policyVersion: { type: String, default: "" },
       ipAddress: { type: String, default: "" },
     },
+
+    fcmTokens: {
+      type: [
+        {
+          token: { type: String, required: true },
+          platform: { type: String, default: "" },
+          updatedAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

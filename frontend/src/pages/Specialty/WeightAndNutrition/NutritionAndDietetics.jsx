@@ -75,6 +75,8 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/nutrition-and-dietetics-specialist-consultation-healthy-eating-guidance.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/registered-dietitian-personalized-meal-planning-consultation.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -82,6 +84,7 @@ import overviewImage from "../../../assets/SpecialitiesImage/registered-dietitia
 const SPECIALTY_DATA = {
   slug: "nutrition-and-dietetics",
   name: "Nutrition & Dietetics",
+  categoryId: "weight",
   tagline: "Personalized Nutrition for Better Health and Wellness.",
   heroDescription:
     "Nutrition & Dietetics focuses on helping individuals improve their health through evidence-based nutrition guidance and personalized dietary planning. Whether you're managing a chronic condition, pursuing weight goals, improving athletic performance, supporting a healthy pregnancy, or simply wanting to eat better, nutrition specialists provide expert guidance tailored to your unique needs. Good nutrition plays a critical role in overall wellness, disease prevention, energy levels, and long-term health. Through customized meal planning and lifestyle-focused support, patients can build healthier eating habits that last.",
@@ -568,6 +571,27 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
     const t = setTimeout(() => setHeroLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
 
   return (
     <>
@@ -595,6 +619,7 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
+<<<<<<< HEAD
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
@@ -613,6 +638,35 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
                   Book Appointment
                 </a>
               </div> */}
+=======
+            <div className="sp-hero__layout">
+              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
+
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
+              </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
             </div>
           </div>
         </section>

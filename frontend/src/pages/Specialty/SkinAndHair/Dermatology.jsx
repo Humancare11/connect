@@ -74,6 +74,8 @@ import "../SpecialtyPage.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/dermatology-specialist-skin-care-consultation-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/dermatologist-patient-skin-consultation.webp";
+import BookingCard from "../../../components/SpecialityBookingCard";
+import api from "../../../api";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -81,6 +83,7 @@ import overviewImage from "../../../assets/SpecialitiesImage/dermatologist-patie
 const SPECIALTY_DATA = {
   slug: "dermatology",
   name: "Dermatology",
+  categoryId: "skin",
   tagline: "Expert Care for Healthy Skin, Hair, and Nails.",
   heroDescription:
     "Dermatology specialists diagnose, treat, and manage conditions affecting the skin, hair, and nails. Whether you're dealing with acne, eczema, psoriasis, hair loss, skin infections, or chronic skin concerns, dermatology care helps restore skin health, improve confidence, and support overall wellness. Using evidence-based treatments and personalized care plans, dermatologists help patients manage symptoms, prevent complications, and achieve healthier skin, hair, and nails at every stage of life.",
@@ -569,6 +572,28 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
     return () => clearTimeout(t);
   }, []);
 
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.[data.categoryId];
+          setPrice(record?.price ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => { cancelled = true; };
+  }, [data.categoryId]);
+
   return (
     <>
       <HelmetProvider>
@@ -592,6 +617,7 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
+<<<<<<< HEAD
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
@@ -610,6 +636,35 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
                   Book Appointment
                 </a>
               </div> */}
+=======
+            <div className="sp-hero__layout">
+              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
+
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
+              </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
             </div>
           </div>
         </section>

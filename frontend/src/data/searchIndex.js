@@ -32,13 +32,17 @@ export const categories = [
 
 export const specialties = [
   // Children & Family Care
-  { id: "adolescent-medicine", title: "Adolescent Medicine", type: "specialty", category: "child-and-family-care", route: "/adolescent-medicine",
+  { id: "adolescent-medicine", title: "Adolescent Medicine", type: "specialty", category: "child-and-family-care", route: "/child-and-family-care/adolescent-medicine",
     keywords: ["adolescent", "teen", "teenager"] },
-  { id: "pediatrics", title: "Pediatrics", type: "specialty", category: "child-and-family-care", route: "/pediatrics",
+  { id: "pediatrics", title: "Pediatrics", type: "specialty", category: "child-and-family-care", route: "/child-and-family-care/pediatrics",
     keywords: ["pediatrics", "pediatrician", "child health", "baby"] },
 
   // Chronic Care & Expert Opinion
+<<<<<<< HEAD
   { id: "cardiology", title: "Cardiology", type: "specialty", category: "chronic-care", route: "/chronic-care/cardiology",
+=======
+  { id: "cardiology", title: "Cardiology", type: "specialty", category: "chronic-care-and-expert-opinion", route: "/chronic-care-and-expert-opinion/cardiology",
+>>>>>>> 8c0363897c1995506a930504978d95507388135c
     keywords: ["cardiology", "heart", "cardiac"] },
   { id: "export-medical-opinion", title: "Expert Medical Opinion", type: "specialty", category: "chronic-care", route: "/export-medical-opinion",
     keywords: ["expert opinion", "second opinion", "specialist review"] },

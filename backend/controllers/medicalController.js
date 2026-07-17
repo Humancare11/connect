@@ -3,6 +3,7 @@ const MedicalCertificate = require("../models/MedicalCertificate");
 const Appointment        = require("../models/Appointment");
 const Enrollment         = require("../models/Enrollment");
 const { recordActivity }       = require("../utils/activityLogger");
+const { sendPushToUser }       = require("../utils/pushNotifications");
 
 // ── Doctor: get distinct patients from completed appointments ─────────────────
 const getDoctorPatients = async (req, res) => {
@@ -139,6 +140,12 @@ const createPrescription = async (req, res) => {
       });
     }
 
+    sendPushToUser(patientId, {
+      title: "New prescription available",
+      body: "Your doctor has issued a new prescription.",
+      data: { type: "prescription", recordType: "prescription" },
+    });
+
     await recordActivity(req, {
       action: "PHI_CREATE_PRESCRIPTION",
       resource: "Prescription",
@@ -190,6 +197,12 @@ const createMedicalCertificate = async (req, res) => {
         patientId,
       });
     }
+
+    sendPushToUser(patientId, {
+      title: "Medical certificate issued",
+      body: "Your doctor has issued a new medical certificate.",
+      data: { type: "certificate", recordType: "certificate" },
+    });
 
     await recordActivity(req, {
       action: "PHI_CREATE_CERTIFICATE",
