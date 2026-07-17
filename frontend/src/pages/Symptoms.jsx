@@ -32,10 +32,30 @@ import {
 import "./symptoms.css";
 
 const previewSpecialties = [
-  { name: "Primary Care", path: "/primary-care-provider", icon: Stethoscope, tags: ["Cold & Flu", "Fever"] },
-  { name: "Urgent Care", path: "/urgent-care", icon: ClipboardPlus, tags: ["UTI", "Sore Throat"] },
-  { name: "Mental Health", path: "/mental-health", icon: Brain, tags: ["Anxiety", "Depression"] },
-  { name: "Chronic Care", path: "/chronic-care", icon: Activity, tags: ["Diabetes", "Hypertension"] },
+  {
+    name: "Primary Care",
+    path: "/primary-care-provider",
+    icon: Stethoscope,
+    tags: ["Cold & Flu", "Fever"],
+  },
+  {
+    name: "Urgent Care",
+    path: "/urgent-care",
+    icon: ClipboardPlus,
+    tags: ["UTI", "Sore Throat"],
+  },
+  {
+    name: "Mental Health",
+    path: "/mental-health",
+    icon: Brain,
+    tags: ["Anxiety", "Depression"],
+  },
+  {
+    name: "Chronic Care",
+    path: "/chronic-care",
+    icon: Activity,
+    tags: ["Diabetes", "Hypertension"],
+  },
 ];
 
 const stats = [
@@ -102,131 +122,329 @@ const conditionCategories = [
     category: "Children & Family Care",
     icon: Baby,
     conditions: [
-      { name: "Ear Pain Children", path: "/ear-pain-children" },
-      { name: "Feeding Concerns", path: "/feeding-concerns" },
-      { name: "Pediatrics Cold and Flu", path: "/pediatric-cold-flu" },
-      { name: "Pediatrics Fever", path: "/pediatric-fever" },
+      {
+        name: "Ear Pain Children",
+        path: "/child-and-family-care/pediatrics/ear-pain-children",
+      },
+      {
+        name: "Feeding Concerns",
+        path: "/child-and-family-care/pediatrics/feeding-concerns",
+      },
+      {
+        name: "Pediatrics Cold and Flu",
+        path: "/child-and-family-care/pediatrics/pediatric-cold-flu",
+      },
+      {
+        name: "Pediatrics Fever",
+        path: "/child-and-family-care/pediatrics/pediatric-fever",
+      },
       { name: "Skin Rash Children", path: "/skin-rash-children" },
-      { name: "Mood & Anxiety in Teens", path: "/mood-anxiety-teens" },
-      { name: "Puberty Concerns", path: "/puberty-concerns" },
-      { name: "Sports Injuries", path: "/sports-injuries" },
+      {
+        name: "Mood & Anxiety in Teens",
+        path: "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
+      },
+      {
+        name: "Puberty Concerns",
+        path: "/child-and-family-care/adolescent-medicine/puberty-concerns",
+      },
+      {
+        name: "Sports Injuries",
+        path: "/child-and-family-care/adolescent-medicine/sports-injuries",
+      },
     ],
   },
   {
     category: "Chronic Care & Expert Opinion",
     icon: Activity,
     conditions: [
-      { name: "High Blood Pressure", path: "/high-blood-pressure" },
-      { name: "Chest Pain (Non-Emergency)", path: "/chest-pain" },
-      { name: "Palpitations", path: "/palpitations" },
-      { name: "High Cholesterol", path: "/high-cholesterol" },
-      { name: "Heart Disease Follow-Up", path: "/heart-disease-follow-up" },
-      { name: "Pre-Op Cardiac Clearance", path: "/pre-op-cardiac-clearance" },
-      { name: "Thyroid Disorders", path: "/thyroid-disorders" },
-      { name: "Diabetes Type 2", path: "/type-2-diabetes" },
-      { name: "Hormone Imbalance", path: "/hormone-imblance" },
-      { name: "Osteoporosis", path: "/osteoporosis" },
+      {
+        name: "High Blood Pressure",
+        path: "/chronic-care/cardiology/high-blood-pressure",
+      },
+      {
+        name: "Chest Pain (Non-Emergency)",
+        path: "/chronic-care/cardiology/chest-pain",
+      },
+      { name: "Palpitations", path: "/chronic-care/cardiology/palpitations" },
+      {
+        name: "High Cholesterol",
+        path: "/chronic-care/cardiology/high-cholesterol",
+      },
+      {
+        name: "Heart Disease Follow-Up",
+        path: "/chronic-care/pulmonology/heart-disease-follow-up",
+      },
+      {
+        name: "Pre-Op Cardiac Clearance",
+        path: "/chronic-care/cardiology/pre-op-cardiac-clearance",
+      },
+      {
+        name: "Thyroid Disorders",
+        path: "/chronic-care/endocrinology/thyroid-disorders",
+      },
+      {
+        name: "Diabetes Type 2",
+        path: "/chronic-care/endocrinology/type-2-diabetes",
+      },
+      {
+        name: "Hormone Imbalance",
+        path: "/chronic-care/endocrinology/hormone-imbalance",
+      },
+      {
+        name: "Osteoporosis",
+        path: "/chronic-care/endocrinology/osteoporosis",
+      },
       { name: "Cancer Second Opinion", path: "/cancer-second-opinion" },
       { name: "Surgery Second Opinion", path: "/surgery-second-opinion" },
       { name: "Complex-Diagnosis Review", path: "/complex-diagnosis" },
       { name: "Treatment-Plan Review", path: "/treatment-plan-review" },
       { name: "Second Medical Opinion", path: "/second-medical-opinion" },
-      { name: "Acid Reflux / GERD", path: "/acid-reflux-gerd" },
-      { name: "IBS", path: "/irritable-bowel-syndrome" },
-      { name: "Constipation", path: "/constipation" }, 
-      { name: "Abdominal Pain", path: "/abdominal-pain" },
-      { name: "Bloating", path: "/bloating" },
-      { name: "Fatty Liver Follow-Up", path: "/fatty-liver" },
-      { name: "Migraine", path: "/migraines" },
-      { name: "Chronic Migraine", path: "/chronic-migraine" },
-      { name: "Seizures / Epilepsy Follow-Up", path: "/seizures-epilepsy-follow-up" },
-      { name: "Numbness & Tingling", path: "/numbness-tingling" },
-      { name: "Tremor", path: "/tremor" },
-      { name: "Dizziness", path: "/dizziness" },
-      { name: "Memory Concerns", path: "/memory-concerns" },
-      { name: "Asthma", path: "/asthma" },
-      { name: "COPD", path: "/copd" },
-      { name: "Persistent Cough", path: "/persistent-cough" },
-      { name: "Shortness of Breath", path: "/shortness-of-breath" },
-      { name: "Sleep Apnea Screening", path: "/sleep-apnea" },
-      { name: "Post-COVID Concerns", path: "/post-covid-concerns" },
+      {
+        name: "Acid Reflux / GERD",
+        path: "/chronic-care/gastroenterology/acid-reflux-gerd",
+      },
+      {
+        name: "IBS",
+        path: "/chronic-care/gastroenterology/irritable-bowel-syndrome",
+      },
+      {
+        name: "Constipation",
+        path: "/chronic-care/gastroenterology/constipation",
+      },
+      {
+        name: "Abdominal Pain",
+        path: "/chronic-care/gastroenterology/abdominal-pain",
+      },
+      { name: "Bloating", path: "/chronic-care/gastroenterology/bloating" },
+      {
+        name: "Fatty Liver Follow-Up",
+        path: "/chronic-care/gastroenterology/fatty-liver",
+      },
+      {
+        name: "Migraine",
+        path: "/chronic-care/neurology/migraine",
+      },
+      {
+        name: "Chronic Migraine",
+        path: "/chronic-care/neurology/chronic-migraine",
+      },
+      {
+        name: "Seizures / Epilepsy Follow-Up",
+        path: "/chronic-care/neurology/seizures-epilepsy-follow-up",
+      },
+      {
+        name: "Numbness & Tingling",
+        path: "/chronic-care/neurology/numbness-and-tingling",
+      },
+      { name: "Tremor", path: "/chronic-care/neurology/tremor" },
+      { name: "Dizziness", path: "/chronic-care/neurology/dizziness" },
+      {
+        name: "Memory Concerns",
+        path: "/chronic-care/neurology/memory-concerns",
+      },
+      { name: "Asthma", path: "/chronic-care/pulmonology/asthma" },
+      { name: "COPD", path: "/chronic-care/pulmonology/copd" },
+      {
+        name: "Persistent Cough",
+        path: "/chronic-care/pulmonology/persistent-cough",
+      },
+      {
+        name: "Shortness of Breath",
+        path: "/chronic-care/pulmonology/shortness-of-breath",
+      },
+      {
+        name: "Sleep Apnea Screening",
+        path: "/chronic-care/pulmonology/sleep-apnea-screening",
+      },
+      {
+        name: "Post-COVID Concerns",
+        path: "/chronic-care/pulmonology/post-covid-concerns",
+      },
     ],
   },
   {
     category: "General & Everyday Care",
     icon: ClipboardPlus,
     conditions: [
-      { name: "Routine Check-Ups", path: "/routine-check-ups" },
-      { name: "Whole-Family Illnesses", path: "/whole-family-illnesses" },
-      { name: "Vaccination Advice", path: "/vaccination-advice" },
-      { name: "Undiagnosed Symptoms", path: "/undiagnosed-symptoms" },
-      { name: "Multi-System Complaints", path: "/multi-system-complaints" },
-      { name: "Preventive Screening", path: "/preventive-screening" },
+      {
+        name: "Routine Check-Ups",
+        path: "/general-and-everyday-care/family-medicine/routine-check-ups",
+      },
+      {
+        name: "Whole-Family Illnesses",
+        path: "/general-and-everyday-care/family-medicine/whole-family-illnesses",
+      },
+      {
+        name: "Vaccination Advice",
+        path: "/general-and-everyday-care/family-medicine/vaccination-advice",
+      },
+      {
+        name: "Undiagnosed Symptoms",
+        path: "/general-and-everyday-care/internal-medicine/undiagnosed-symptoms",
+      },
+      {
+        name: "Multi-System Complaints",
+        path: "/general-and-everyday-care/internal-medicine/multi-system-complaints",
+      },
+      {
+        name: "Preventive Screening",
+        path: "/general-and-everyday-care/internal-medicine/preventive-screening",
+      },
       { name: "Medication Review", path: "/medication-review" },
-      { name: "Fever", path: "/fever" },
-      { name: "Cold & Flu", path: "/cold-and-flu" },
-      { name: "Cough", path: "/cough" },
-      { name: "Body Aches", path: "/body-aches" },
-      { name: "Headache", path: "/headache" },
-      { name: "Sinus Infection", path: "/sinus-infection" },
-      { name: "Minor Infections", path: "/minor-infections" },
-      { name: "Fatigue", path: "/fatigue" },
-      { name: "Nausea & Vomiting", path: "/nausea-and-vomiting" },
-      { name: "Pink Eye", path: "/pink-eye" },
+      {
+        name: "Fever",
+        path: "/general-and-everyday-care/general-physician/fever",
+      },
+      {
+        name: "Cold & Flu",
+        path: "/general-and-everyday-care/general-physician/cold-and-flu",
+      },
+      {
+        name: "Cough",
+        path: "/general-and-everyday-care/general-physician/cough",
+      },
+      {
+        name: "Body Aches",
+        path: "/general-and-everyday-care/general-physician/body-aches",
+      },
+      {
+        name: "Headache",
+        path: "/general-and-everyday-care/general-physician/headache",
+      },
+      {
+        name: "Sinus Infection",
+        path: "/general-and-everyday-care/general-physician/sinus-infection",
+      },
+      {
+        name: "Minor Infections",
+        path: "/general-and-everyday-care/general-physician/minor-infections",
+      },
+      {
+        name: "Fatigue",
+        path: "/general-and-everyday-care/general-physician/fatigue",
+      },
+      {
+        name: "Nausea & Vomiting",
+        path: "/general-and-everyday-care/general-physician/nausea-and-vomiting",
+      },
+      {
+        name: "Pink Eye",
+        path: "/general-and-everyday-care/general-physician/pink-eye",
+      },
     ],
   },
   {
     category: "Eye, Ear & Bone",
     icon: Eye,
     conditions: [
-      { name: "Eye Redness", path: "/eye-redness" },
-      { name: "Dry Eyes", path: "/dry-eyes" },
-      { name: "Vision Changes", path: "/vision-changes" },
-      { name: "Eye Irritation", path: "/eye-irritation" },
-      { name: "Stye", path: "/stye" },
-      { name: "Eye-Strain", path: "/eye-strain" },
-      { name: "Back Pain", path: "/back-pain" },
-      { name: "Neck Pain", path: "/neck-pain" },
-      { name: "Knee Pain", path: "/knee-pain" },
-      { name: "Muscle Strains", path: "/muscle-strain" },
-      { name: "Osteoarthritis", path: "/osteoarthritis" },
-      { name: "Arthritis Advice", path: "/arthritis" },
-      { name: "Ear Pain", path: "/ear-pain" },
-      { name: "Sore Throat", path: "/sore-throat" },
-      { name: "Ear Infections", path: "/ear-infection" },
-      { name: "Vertigo", path: "/vertigo" }, 
-      { name: "Nasal Congestion", path: "/nasal-congestion" },
-      { name: "Hoarseness", path: "/hoarseness" },
-      { name: "Tonsillitis", path: "/tonsillitis" },
+      { name: "Eye Redness", path: "/eye-ear-bone/ophthalmology/eye-redness" },
+      { name: "Dry Eyes", path: "/eye-ear-bone/ophthalmology/dry-eyes" },
+      {
+        name: "Vision Changes",
+        path: "/eye-ear-bone/ophthalmology/vision-changes",
+      },
+      {
+        name: "Eye Irritation",
+        path: "/eye-ear-bone/ophthalmology/eye-irritation",
+      },
+      { name: "Stye", path: "/eye-ear-bone/ophthalmology/stye" },
+      { name: "Eye-Strain", path: "/eye-ear-bone/ophthalmology/eye-strain" },
+      { name: "Back Pain", path: "//eye-ear-bone/orthopedics/back-pain" },
+      { name: "Neck Pain", path: "/eye-ear-bone/orthopedics/neck-pain" },
+      { name: "Knee Pain", path: "/eye-ear-bone/orthopedics/knee-pain" },
+      {
+        name: "Muscle Strains",
+        path: "/eye-ear-bone/orthopedics/muscle-strain",
+      },
+      {
+        name: "Osteoarthritis",
+        path: "/eye-ear-bone/orthopedics/osteoarthritis",
+      },
+      { name: "Arthritis Advice", path: "/eye-ear-bone/orthopedics/arthritis" },
+      { name: "Ear Pain", path: "/eye-ear-bone/ear-nose-throat/ear-pain" },
+      {
+        name: "Sore Throat",
+        path: "/eye-ear-bone/ear-nose-throat/sore-throat",
+      },
+      {
+        name: "Ear Infections",
+        path: "/eye-ear-bone/ear-nose-throat/ear-infection",
+      },
+      { name: "Vertigo", path: "/eye-ear-bone/ear-nose-throat/vertigo" },
+      {
+        name: "Nasal Congestion",
+        path: "/eye-ear-bone/ear-nose-throat/nasal-congestion",
+      },
+      { name: "Hoarseness", path: "/eye-ear-bone/ear-nose-throat/hoarseness" },
+      {
+        name: "Tonsillitis",
+        path: "/eye-ear-bone/ear-nose-throat/tonsillitis",
+      },
     ],
   },
   {
     category: "Men's Health",
     icon: Mars,
     conditions: [
-      { name: "Erectile Dysfunction", path: "/erectile-dysfunction" },
-      { name: "Low Testosterone", path: "/low-testosterone-symptoms" },
-      { name: "Hair Loss in men", path: "/hair-loss-mens-health" },
-      { name: "Prostate Health", path: "/prostate-health" },
-      { name: "Low Libido", path: "/low-libido" },
-      { name: "Urinary Tract Infections", path: "/urinary-tract-infection" },
-      { name: "Kidney Stones", path: "/kidney-stones" },
-      { name: "Blood in Urine", path: "/blood-in-urine" },
-      { name: "Urinary Incontinence", path: "/urinary-incontinence" },
-      { name: "Bladder Problems", path: "/bladder-problems" },
+      {
+        name: "Erectile Dysfunction",
+        path: "/mens-health/men-health/erectile-dysfunction",
+      },
+      {
+        name: "Low Testosterone",
+        path: "/mens-health/men-health/low-testosterone-symptoms",
+      },
+      {
+        name: "Hair Loss in men",
+        path: "/mens-health/men-health/hair-loss",
+      },
+      {
+        name: "Prostate Health",
+        path: "/mens-health/men-health/prostate-health",
+      },
+      { name: "Low Libido", path: "/mens-health/men-health/low-libido" },
+      {
+        name: "Urinary Tract Infections",
+        path: "/mens-health/urology/urinary-tract-infection",
+      },
+      { name: "Kidney Stones", path: "/mens-health/urology/kidney-stones" },
+      { name: "Blood in Urine", path: "/mens-health/urology/blood-in-urine" },
+      {
+        name: "Urinary Incontinence",
+        path: "/mens-health/urology/urinary-incontinence",
+      },
+      {
+        name: "Bladder Problems",
+        path: "/mens-health/urology/bladder-problems",
+      },
     ],
   },
   {
     category: "Mental Health",
     icon: Brain,
     conditions: [
-      { name: "Anger Management", path: "/anger-management" },
-      { name: "Adjustment Difficulties", path: "/adjustment-difficulties" },
-      { name: "Substance-Use Concerns", path: "/substance-use-support" },
-      { name: "Sleep-Related Anxiety", path: "/sleep-related-anxiety" },
+      {
+        name: "Anger Management",
+        path: "/mental-health/behavioral-health/anger-management",
+      },
+      {
+        name: "Adjustment Difficulties",
+        path: "/mental-health/behavioral-health/adjustment-difficulties",
+      },
+      {
+        name: "Substance-Use Concerns",
+        path: "/mental-health/behavioral-health/substance-use-support",
+      },
+      {
+        name: "Sleep-Related Anxiety",
+        path: "/mental-health/behavioral-health/sleep-related-anxiety",
+      },
       { name: "Anxiety", path: "/anxiety" },
       { name: "Depression", path: "/depression" },
-      { name: "Bipolar Disorder Follow-Up", path: "/bipolar-disorder-follow-up" },
+      {
+        name: "Bipolar Disorder Follow-Up",
+        path: "/bipolar-disorder-follow-up",
+      },
       { name: "OCD", path: "/OCD" },
       { name: "PTSD", path: "/ptsd" },
       { name: "Panic Attacks", path: "/panic-attack" },
@@ -243,13 +461,34 @@ const conditionCategories = [
     category: "Sexual Health",
     icon: ShieldCheck,
     conditions: [
-      { name: "Chlamydia", path: "/chlamydia" },
-      { name: "Gonorrhea", path: "/gonorrhea" },
-      { name: "Herpes", path: "/herpes" },
-      { name: "HIV Prevention Guidance", path: "/hiv-prevention-guidance" },
-      { name: "Partner Exposure Concerns", path: "/partner-exposure-concerns" },
-      { name: "Safe Sex Counseling", path: "/safe-sex-counseling" },
-      { name: "STI Consultation", path: "/sti-consultation" },
+      {
+        name: "Chlamydia",
+        path: "/sexual-health/sexual-health-and-wellness/chlamydia",
+      },
+      {
+        name: "Gonorrhea",
+        path: "/sexual-health/sexual-health-and-wellness/gonorrhea",
+      },
+      {
+        name: "Herpes",
+        path: "/sexual-health/sexual-health-and-wellness/herpes",
+      },
+      {
+        name: "HIV Prevention Guidance",
+        path: "/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance",
+      },
+      {
+        name: "Partner Exposure Concerns",
+        path: "/sexual-health/sexual-health-and-wellness/partner-exposure-concerns",
+      },
+      {
+        name: "Safe Sex Counseling",
+        path: "/sexual-health/sexual-health-and-wellness/safe-sex-counseling",
+      },
+      {
+        name: "STI Consultation",
+        path: "/sexual-health/sexual-health-and-wellness/sti-consultation",
+      },
     ],
   },
   {
@@ -265,7 +504,7 @@ const conditionCategories = [
       { name: "Fungal Infections", path: "/fungal-skin-infection" },
       { name: "Warts", path: "/warts" },
       { name: "Cold Sores", path: "/cold-sores" },
-      { name: "Hair Loss", path: "/hair-loss" }, 
+      { name: "Hair Loss", path: "/hair-loss" },
       { name: "Nail Problems", path: "/nail-problems" },
       { name: "Mole & Skin Checks", path: "/mole-skin-checks" },
     ],
@@ -279,12 +518,24 @@ const conditionCategories = [
       { name: "Altitude-Sickness Guidance", path: "/altitude-sickness" },
       { name: "Post-Travel Symptoms", path: "/post-travel-symptoms" },
       { name: "Traveler's Diarrhea", path: "/travelers-diarrhea" },
-      { name: "Food Poisoning While Traveling", path: "/food-poisoning-while-traveling" },
+      {
+        name: "Food Poisoning While Traveling",
+        path: "/food-poisoning-while-traveling",
+      },
       { name: "Travel-Related Fever", path: "/travel-related-fever" },
       { name: "Cross-Border Consultation", path: "/cross-border-consultation" },
-      { name: "International Medical Assistance", path: "/international-medical-assistance" },
-      { name: "Medication Refill While Traveling", path: "/medication-refills-traveling" },
-      { name: "Referral Coordination Overseas", path: "/referral-coordination-overseas" },
+      {
+        name: "International Medical Assistance",
+        path: "/international-medical-assistance",
+      },
+      {
+        name: "Medication Refill While Traveling",
+        path: "/medication-refills-traveling",
+      },
+      {
+        name: "Referral Coordination Overseas",
+        path: "/referral-coordination-overseas",
+      },
     ],
   },
   {
@@ -497,7 +748,10 @@ export default function Symptoms() {
   return (
     <>
       <Helmet>
-        <title>Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare Connect</title>
+        <title>
+          Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare
+          Connect
+        </title>
         <meta
           name="description"
           content="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
@@ -553,17 +807,21 @@ export default function Symptoms() {
               </div>
 
               <div className="sy-hero__mini-grid">
-                {previewSpecialties.map(({ name, path, icon: Icon, tags }, i) => (
-                  <Link
-                    key={name}
-                    to={path}
-                    className={`sy-hero__mini-card${i === current.activeIndex ? " sy-hero__mini-card--active" : ""}`}
-                  >
-                    <Icon size={20} />
-                    <div className="sy-hero__mini-name">{name}</div>
-                    <div className="sy-hero__mini-tags">{tags.join(" · ")}</div>
-                  </Link>
-                ))}
+                {previewSpecialties.map(
+                  ({ name, path, icon: Icon, tags }, i) => (
+                    <Link
+                      key={name}
+                      to={path}
+                      className={`sy-hero__mini-card${i === current.activeIndex ? " sy-hero__mini-card--active" : ""}`}
+                    >
+                      <Icon size={20} />
+                      <div className="sy-hero__mini-name">{name}</div>
+                      <div className="sy-hero__mini-tags">
+                        {tags.join(" · ")}
+                      </div>
+                    </Link>
+                  ),
+                )}
               </div>
 
               <Link
@@ -587,7 +845,12 @@ export default function Symptoms() {
               </Link>
 
               <div className="sy-hero__nav">
-                <button type="button" className="sy-hero__nav-arrow" onClick={goPrev} aria-label="Previous">
+                <button
+                  type="button"
+                  className="sy-hero__nav-arrow"
+                  onClick={goPrev}
+                  aria-label="Previous"
+                >
                   <ArrowLeft size={16} />
                 </button>
                 <div className="sy-hero__nav-dots">
@@ -601,7 +864,12 @@ export default function Symptoms() {
                     />
                   ))}
                 </div>
-                <button type="button" className="sy-hero__nav-arrow" onClick={goNext} aria-label="Next">
+                <button
+                  type="button"
+                  className="sy-hero__nav-arrow"
+                  onClick={goNext}
+                  aria-label="Next"
+                >
                   <ArrowRight size={16} />
                 </button>
               </div>
@@ -680,10 +948,17 @@ export default function Symptoms() {
                       borderRadius: "999px",
                       fontSize: "14px",
                       fontWeight: 500,
-                      border: isActive ? "1px solid #0B57E8" : "1px solid rgba(6, 19, 51, 0.15)",
-                      background: isActive ? "#0B57E8" : isHovered ? "#EAF1FF" : "#FFFFFF",
+                      border: isActive
+                        ? "1px solid #0B57E8"
+                        : "1px solid rgba(6, 19, 51, 0.15)",
+                      background: isActive
+                        ? "#0B57E8"
+                        : isHovered
+                          ? "#EAF1FF"
+                          : "#FFFFFF",
                       color: isActive ? "#FFFFFF" : "#061333",
-                      transition: "background 0.15s ease, border-color 0.15s ease",
+                      transition:
+                        "background 0.15s ease, border-color 0.15s ease",
                     }}
                   >
                     {cat}
@@ -756,7 +1031,12 @@ export default function Symptoms() {
               Consult a Doctor Online for Symptoms with Confidence
             </h2>
             <p className="sy-care__copy">
-              Humancare Connect helps you consult a doctor online for symptoms through secure and convenient virtual healthcare services. Whether you are experiencing a new health concern or managing ongoing symptoms, our online consultations provide access to trusted healthcare professionals who can guide you toward appropriate care.
+              Humancare Connect helps you consult a doctor online for symptoms
+              through secure and convenient virtual healthcare services. Whether
+              you are experiencing a new health concern or managing ongoing
+              symptoms, our online consultations provide access to trusted
+              healthcare professionals who can guide you toward appropriate
+              care.
             </p>
           </div>
 

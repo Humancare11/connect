@@ -69,30 +69,26 @@ const cat = {
       desc: "Stomach illness during travel trips",
       path: "/food-poisoning-while-traveling",
     },
-    // {
-    //   name: "Ear Infections",
-    //   desc: "Bacterial or viral infections of the middle ear common in young children.",
-    //   path: "/ear-infections",
-    // },
+
     // {
     //   name: "Feeding Concerns",
     //   desc: "Support for healthy infant feeding",
-    //   path: "/feeding-concerns",
+    //   path: "/child-and-family-care/pediatrics/feeding-concerns",
     // },
     // {
     //   name: "Pediatric Cold & Flu",
     //   desc: "Cold and flu symptoms in children",
-    //   path: "/pediatric-cold-flu",
+    //   path: "/child-and-family-care/pediatrics/pediatric-cold-flu",
     // },
     // {
     //   name: "Pediatric Fever",
     //   desc: "Fever and illness in children",
-    //   path: "/pediatric-fever",
+    //   path: "/child-and-family-care/pediatrics/pediatric-fever",
     // },
     // {
     //   name: "Skin Rash in Children",
     //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-in-children",
+    //   path: "/child-and-family-care/pediatrics/skin-rash-in-children",
     // },
   ],
 
@@ -380,25 +376,13 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
 function SpecialtyCard({ sp, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-specialty-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => sp.path && navigate(sp.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && sp.path) {
-          e.preventDefault();
-          navigate(sp.path);
-        }
-      }}
-      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
       <div className="hcc-specialty-name">{sp.name}</div>
       <p className="hcc-specialty-desc">{sp.desc}</p>
@@ -409,30 +393,26 @@ function SpecialtyCard({ sp, index }) {
       )}
     </motion.div>
   );
+
+  return sp.path ? (
+    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 }
 
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
-  const navigate = useNavigate();
-
-  return (
+  const content = (
     <motion.div
       className="hcc-condition-card"
-      role="button"
-      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onClick={() => cond.path && navigate(cond.path)}
-      onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && cond.path) {
-          e.preventDefault();
-          navigate(cond.path);
-        }
-      }}
-      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
       <div className="hcc-condition-name">{cond.name}</div>
       <p className="hcc-condition-desc">{cond.desc}</p>
@@ -442,6 +422,14 @@ function ConditionCard({ cond, index }) {
         </div>
       )}
     </motion.div>
+  );
+
+  return cond.path ? (
+    <Link to={cond.path} className="hcc-condition-link" aria-label={cond.name}>
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 

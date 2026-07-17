@@ -234,11 +234,29 @@ h1.article-title{
 .info-card h4{margin:0 0 6px; font-size:16px;}
 .info-card p{margin:0; font-size:14.5px; color:var(--navy-500); line-height:1.6;}
 
-/* ---------- Timeline ---------- */
-.timeline{position:relative; margin:30px 0; padding-left:6px;}
-.timeline::before{content:""; position:absolute; left:23px; top:6px; bottom:6px; width:2px; background:var(--line);}
+/* ---------- Timeline ----------
+   NOTE: the connecting line is now drawn per-step (via .t-marker /
+   .t-connector) rather than as one long ::before spanning the whole
+   .timeline container. That old approach measured the line against the
+   container's full height (including the last card's text), so it always
+   overshot past the final circle. This version stops exactly at the last
+   circle regardless of how many steps a given blog page has or how long
+   each step's text is.
+
+   Markup expected per step:
+   <div class="t-step">
+     <div class="t-marker">
+       <div class="t-num">1</div>
+       <div class="t-connector"></div>  <!-- omit on the last step -->
+     </div>
+     <div class="t-body">...</div>
+   </div>
+------------------------------------------------- */
+.timeline{margin:30px 0;}
 .t-step{display:flex; gap:20px; position:relative; padding-bottom:30px;}
 .t-step:last-child{padding-bottom:0;}
+.t-marker{display:flex; flex-direction:column; align-items:center; align-self:stretch; flex-shrink:0;}
+.t-connector{flex:1; width:2px; background:var(--line); margin:6px 0;}
 .t-num{
   width:48px; height:48px; border-radius:50%; background:var(--blue-600); color:#fff; flex-shrink:0;
   display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:17px;
@@ -397,6 +415,12 @@ table.compare td.good::before{content:"✓ ";}
   .article-layout{grid-template-columns:1fr;}
   .toc-col{display:none;}
   .toc-mobile{display:block; margin-bottom:8px;}
+
+  /* Timeline scales down before the full mobile breakpoint so tablets
+     (768–900px) don't inherit oversized desktop circles */
+  .t-num{width:40px; height:40px; font-size:15px;}
+  .t-step{gap:14px;}
+  .t-body{padding:14px 16px;}
 }
 @media (max-width:760px){
   .main-nav ul, .header-cta{display:none;}
@@ -413,8 +437,51 @@ table.compare td.good::before{content:"✓ ";}
   .newsletter{padding:32px 22px;}
   .newsletter-form{flex-direction:column;}
   .newsletter-form button{width:100%; justify-content:center;}
+
+  .hero{padding:28px 0 24px;}
+  .hero-media{aspect-ratio:4/3;}
+  .content-col h2{font-size:23px; gap:8px;}
+  .content-col h3{font-size:18px;}
+  .content-col p, .content-col ul, .content-col ol.plain{font-size:15px;}
+  .takeaway-box{padding:24px 22px;}
+  .info-card{padding:18px;}
+  .faq-q{padding:16px 18px; font-size:14.5px;}
+  .faq-a{padding:4px 18px 18px; font-size:14px;}
+  .progress-meta .wrap{gap:14px;}
+  .progress-meta span{font-size:11.5px;}
 }
 @media (max-width:480px){
   .footer-grid{grid-template-columns:1fr;}
   .wrap{padding:0 18px;}
+
+  .badge-row{margin:24px 0 16px;}
+  h1.article-title{font-size:26px; line-height:1.2;}
+  .hero-dek{font-size:15.5px;}
+  .content-col > section{margin-bottom:36px;}
+
+  .t-num{width:34px; height:34px; font-size:13px; box-shadow:0 0 0 4px #fff;}
+  .t-step{gap:10px; padding-bottom:22px;}
+  .t-body h4{font-size:14.5px;}
+  .t-body p{font-size:13.5px;}
+
+  .takeaway-box{padding:20px 16px; border-radius:var(--radius-md);}
+  .takeaway-box li{font-size:14px;}
+
+  .table-scroll{margin:20px -18px; border-radius:0; border-left:none; border-right:none;}
+  table.compare{min-width:520px;}
+
+  .cta-section{padding:28px 18px; border-radius:var(--radius-md);}
+  .cta-section h2{font-size:20px;}
+  .cta-section p{font-size:14.5px;}
+  .btn{padding:12px 20px; font-size:14px; width:100%; justify-content:center;}
+  .cta-buttons{flex-direction:column;}
+
+  .myth-card, .info-card{padding:16px;}
+  .toc-mobile-summary{padding:12px 16px; font-size:13.5px;}
+  .toc-mobile-list a{font-size:13.5px;}
+}
+@media (max-width:360px){
+  .wrap{padding:0 14px;}
+  h1.article-title{font-size:23px;}
+  .badge{font-size:11.5px; padding:6px 12px;}
 }

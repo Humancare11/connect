@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
+import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
+import telemedicine from "../../assets/BlogImages/telemedicine.webp";
+import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
+import doctorConsultation from "../../assets/BlogImages/doctor-consultation.webp";
 
 const PAGE_TITLE =
   "Telemedicine vs In-Person Doctor Visits: Key Differences, Pros & Cons";
 const PAGE_DESCRIPTION =
   "Compare telemedicine and in-person doctor visits, including benefits, limitations, costs, convenience, safety, and when each option is the right choice for your healthcare needs.";
 const PAGE_URL = "https://humancareconnect.co/blog/online-doctor-consultation";
-const PAGE_IMAGE =
-  "https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop";
+const PAGE_IMAGE = telemedicineVsInPersonDoctorVisits;
 
 const TOC_ITEMS = [
   { id: "definition", label: "Quick Answer:" },
@@ -93,30 +96,33 @@ const FAQ_ITEMS = [
 
 const RELATED_ARTICLES = [
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop",
+    href: "/what-is-telemedicine",
+    img: telemedicine,
     alt: "Doctor reviewing patient chart",
-    cat: "Chronic Care",
-    title: "Managing Diabetes with Remote Monitoring",
-    desc: "How continuous glucose data and virtual check-ins improve long-term control.",
+    // cat: "Chronic Care",
+    title:
+      "What Is Telemedicine? Complete Guide to Meaning, Benefits, Types & How It Works",
+    desc: "Telemedicine refers to the delivery of healthcare services remotely through digital technologies, including video consultations, phone calls, mobile applications, and secure online platforms.",
     time: "6 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?q=80&w=800&auto=format&fit=crop",
-    alt: "Person taking notes during a virtual therapy session",
-    cat: "Mental Health",
-    title: "Online Therapy: What to Expect from Your First Session",
-    desc: "A practical walkthrough of booking, privacy, and what happens in session one.",
-    time: "7 min read",
+    href: "/online-doctor-consultation",
+    img: doctorConsultation,
+    alt: "Online Doctor Consultation: Benefits, Process & When to Choose Virtual Care",
+    // cat: "Prescriptions",
+    title:
+      "Online Doctor Consultation: Benefits, Process & When to Choose Virtual Care",
+    desc: "What Is an Online Doctor Consultation? (Quick Answer)",
+    time: "5 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=800&auto=format&fit=crop",
-    alt: "Pharmacist checking an e-prescription",
-    cat: "Prescriptions",
-    title: "How E-Prescriptions Work — and Where They're Valid",
-    desc: "Everything about getting, filling, and renewing prescriptions issued online.",
+    href: "/top-telemedicine-platforms-providers",
+    img: topTelemedicinePlatforms,
+    alt: "Top Telemedicine Platforms & Providers",
+    // cat: "Prescriptions",
+    title:
+      "Top Telemedicine Platforms & Providers: Features, Benefits & How to Choose",
+    desc: "Quick Answer: What Are the Best Telemedicine Platforms?",
     time: "5 min read",
   },
 ];
@@ -322,14 +328,14 @@ export default function TelemedicineInPerson() {
 
               <figure className="hero-media">
                 <img
-                  src="https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop"
+                  src={telemedicineVsInPersonDoctorVisits}
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
                 />
-                <figcaption>
+                {/* <figcaption>
                   A virtual consultation in progress — patient and physician
                   connected by video from home.
-                </figcaption>
+                </figcaption> */}
               </figure>
             </section>
 
@@ -1144,7 +1150,7 @@ export default function TelemedicineInPerson() {
               </div>
             </section>
             {/* ============ RELATED ARTICLES ============ */}
-            {/* <section className="related-section" aria-label="Related articles">
+            <section className="related-section" aria-label="Related articles">
               <div className="eyebrow" style={{ marginBottom: "8px" }}>
                 Keep reading
               </div>
@@ -1178,7 +1184,7 @@ export default function TelemedicineInPerson() {
                   </a>
                 ))}
               </div>
-            </section> */}
+            </section>
           </div>
         </main>
       </div>

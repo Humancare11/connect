@@ -1,12 +1,47 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Globe2, ArrowRight, Plane, Stethoscope, Brain, Activity,
-  ClipboardPlus, HeartPulse, Venus, Mars, Baby, ShieldCheck,
-  Pill, Users, CheckCircle2, ChevronLeft, ChevronRight,
-  Search, MessageCircle, Clock, Lock, MapPin, Plus, Minus,
-  Soup, Sparkles, HeartHandshake, Wind, Eye, Ear,
-  Bone, Baby as BabyIcon, Scale, FileSearch, Heart
+  Globe2,
+  ArrowRight,
+  Plane,
+  Stethoscope,
+  Brain,
+  Activity,
+  ClipboardPlus,
+  HeartPulse,
+  Venus,
+  Mars,
+  Baby,
+  ShieldCheck,
+  Pill,
+  Users,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  MessageCircle,
+  Clock,
+  Lock,
+  MapPin,
+  Plus,
+  Minus,
+  Soup,
+  Sparkles,
+  HeartHandshake,
+  Wind,
+  Eye,
+  Ear,
+  Bone,
+  Baby as BabyIcon,
+  Scale,
+  FileSearch,
+  Heart,
 } from "lucide-react";
 import "./Specialties.css";
 
@@ -23,10 +58,22 @@ const carouselSlides = [
       ["Status", "Non-emergency triage"],
     ],
     tabs: [
-      { name: "Primary Care", icon: Stethoscope, tags: ["Cold & Flu", "Fever"] },
-      { name: "Urgent Care", icon: ClipboardPlus, tags: ["UTI", "Sore Throat"] },
+      {
+        name: "Primary Care",
+        icon: Stethoscope,
+        tags: ["Cold & Flu", "Fever"],
+      },
+      {
+        name: "Urgent Care",
+        icon: ClipboardPlus,
+        tags: ["UTI", "Sore Throat"],
+      },
       { name: "Mental Health", icon: Brain, tags: ["Anxiety", "Depression"] },
-      { name: "Chronic Care", icon: Activity, tags: ["Diabetes", "Hypertension"] },
+      {
+        name: "Chronic Care",
+        icon: Activity,
+        tags: ["Diabetes", "Hypertension"],
+      },
     ],
   },
   {
@@ -40,10 +87,22 @@ const carouselSlides = [
       ["Status", "Scheduled follow-up"],
     ],
     tabs: [
-      { name: "Chronic Care", icon: Activity, tags: ["Diabetes", "Hypertension"] },
-      { name: "Primary Care", icon: Stethoscope, tags: ["Preventive", "Check-ups"] },
+      {
+        name: "Chronic Care",
+        icon: Activity,
+        tags: ["Diabetes", "Hypertension"],
+      },
+      {
+        name: "Primary Care",
+        icon: Stethoscope,
+        tags: ["Preventive", "Check-ups"],
+      },
       { name: "Medication Mgmt", icon: Pill, tags: ["Refill", "Side Effects"] },
-      { name: "Second Opinion", icon: Users, tags: ["Lab Review", "Diagnosis"] },
+      {
+        name: "Second Opinion",
+        icon: Users,
+        tags: ["Lab Review", "Diagnosis"],
+      },
     ],
   },
   {
@@ -58,7 +117,11 @@ const carouselSlides = [
     ],
     tabs: [
       { name: "Mental Health", icon: Brain, tags: ["Anxiety", "Depression"] },
-      { name: "Primary Care", icon: Stethoscope, tags: ["Insomnia", "Fatigue"] },
+      {
+        name: "Primary Care",
+        icon: Stethoscope,
+        tags: ["Insomnia", "Fatigue"],
+      },
       { name: "Chronic Care", icon: Activity, tags: ["Stress", "Burnout"] },
       { name: "Second Opinion", icon: Users, tags: ["Referral", "Clarity"] },
     ],
@@ -87,181 +150,211 @@ const specialties = [
   {
     name: "General Physician (GP)",
     icon: Stethoscope,
-    description: "Everyday care, preventive guidance, medication support, and follow-up consultations.",
+    description:
+      "Everyday care, preventive guidance, medication support, and follow-up consultations.",
     tags: ["Cold & Flu", "Fever", "Fatigue", "Headache"],
   },
   {
     name: "Internal Medicine",
     icon: ClipboardPlus,
-    description: "Diagnosis and management of complex or overlapping adult health conditions.",
+    description:
+      "Diagnosis and management of complex or overlapping adult health conditions.",
     tags: ["Diagnosis", "Lab Review", "Check-ups"],
   },
   {
     name: "Family Medicine",
     icon: HeartHandshake,
-    description: "Continuing care for every age and stage, from infants to grandparents.",
+    description:
+      "Continuing care for every age and stage, from infants to grandparents.",
     tags: ["All Ages", "Preventive", "Check-ups"],
   },
   {
     name: "Psychiatry",
     icon: Brain,
-    description: "Clinical assessment and medication management for mental health conditions.",
+    description:
+      "Clinical assessment and medication management for mental health conditions.",
     tags: ["Anxiety", "Depression", "Medication"],
   },
   {
     name: "Psychology / Counselling",
     icon: MessageCircle,
-    description: "Talk therapy and coping strategies for stress, mood, and life transitions.",
+    description:
+      "Talk therapy and coping strategies for stress, mood, and life transitions.",
     tags: ["Therapy", "Stress", "Coping Skills"],
   },
   {
     name: "Behavioral Health",
     icon: Activity,
-    description: "Support for habits, routines, and behavior patterns affecting wellbeing.",
+    description:
+      "Support for habits, routines, and behavior patterns affecting wellbeing.",
     tags: ["Habits", "Burnout", "Routine"],
   },
   {
     name: "Dermatology",
     icon: HeartPulse,
-    description: "Skin, hair, and nail concerns reviewed and treated by a specialist.",
+    description:
+      "Skin, hair, and nail concerns reviewed and treated by a specialist.",
     tags: ["Acne", "Rash", "Hair Loss"],
   },
   {
     name: "Obstetrics & Gynaecology (OB-GYN)",
     icon: Venus,
-    description: "Reproductive health, pregnancy guidance, and gynaecological care.",
+    description:
+      "Reproductive health, pregnancy guidance, and gynaecological care.",
     tags: ["Pregnancy", "Cycle Health", "PCOS"],
   },
   {
     name: "Menopause Care",
     icon: Venus,
-    description: "Hormonal symptom management and guidance through perimenopause and beyond.",
+    description:
+      "Hormonal symptom management and guidance through perimenopause and beyond.",
     tags: ["Hot Flashes", "Hormones", "Sleep"],
   },
   {
     name: "Women's Mental Health",
     icon: Brain,
-    description: "Mental health support tailored to hormonal and life-stage changes.",
+    description:
+      "Mental health support tailored to hormonal and life-stage changes.",
     tags: ["Postpartum", "Mood", "Anxiety"],
   },
   {
     name: "Lactation Consulting",
     icon: BabyIcon,
-    description: "Breastfeeding guidance and support for new and expecting parents.",
+    description:
+      "Breastfeeding guidance and support for new and expecting parents.",
     tags: ["Breastfeeding", "Latching", "Newborn"],
   },
   {
     name: "Men's Health",
     icon: Mars,
-    description: "Preventive and condition-specific care focused on men's wellbeing.",
+    description:
+      "Preventive and condition-specific care focused on men's wellbeing.",
     tags: ["Hormones", "Fitness", "Screening"],
   },
   {
     name: "Urology",
     icon: Activity,
-    description: "Diagnosis and treatment of urinary tract and reproductive system issues.",
+    description:
+      "Diagnosis and treatment of urinary tract and reproductive system issues.",
     tags: ["UTI", "Kidney Stones", "Prostate"],
   },
   {
     name: "Pediatrics",
     icon: Baby,
-    description: "Growth, development, and illness care for infants, children, and teens.",
+    description:
+      "Growth, development, and illness care for infants, children, and teens.",
     tags: ["Growth", "Vaccines", "Fever"],
   },
   {
     name: "Adolescent Medicine",
     icon: Users,
-    description: "Health guidance focused on the unique needs of teenage patients.",
+    description:
+      "Health guidance focused on the unique needs of teenage patients.",
     tags: ["Teen Health", "Puberty", "Mental Health"],
   },
   {
     name: "Weight Management",
     icon: Scale,
-    description: "Personalized plans and medical guidance for sustainable weight goals.",
+    description:
+      "Personalized plans and medical guidance for sustainable weight goals.",
     tags: ["Nutrition", "Metabolism", "Coaching"],
   },
   {
     name: "Nutrition & Dietetics",
     icon: Soup,
-    description: "Dietary guidance from licensed professionals for health and recovery goals.",
+    description:
+      "Dietary guidance from licensed professionals for health and recovery goals.",
     tags: ["Meal Plans", "Allergies", "Wellness"],
   },
   {
     name: "Lifestyle Medicine",
     icon: Sparkles,
-    description: "Evidence-based habit changes to prevent and manage chronic disease.",
+    description:
+      "Evidence-based habit changes to prevent and manage chronic disease.",
     tags: ["Sleep", "Stress", "Exercise"],
   },
   {
     name: "Cardiology",
     icon: HeartPulse,
-    description: "Heart health evaluation, monitoring, and chronic condition management.",
+    description:
+      "Heart health evaluation, monitoring, and chronic condition management.",
     tags: ["Hypertension", "Cholesterol", "Heart Rate"],
   },
   {
     name: "Endocrinology",
     icon: Activity,
-    description: "Hormone-related conditions including thyroid and metabolic disorders.",
+    description:
+      "Hormone-related conditions including thyroid and metabolic disorders.",
     tags: ["Diabetes", "Thyroid", "Hormones"],
   },
   {
     name: "Gastroenterology",
     icon: Soup,
-    description: "Digestive system care, from everyday symptoms to chronic GI conditions.",
+    description:
+      "Digestive system care, from everyday symptoms to chronic GI conditions.",
     tags: ["IBS", "Acid Reflux", "Bloating"],
   },
   {
     name: "Neurology",
     icon: Brain,
-    description: "Evaluation and care for conditions affecting the brain and nervous system.",
+    description:
+      "Evaluation and care for conditions affecting the brain and nervous system.",
     tags: ["Migraine", "Dizziness", "Numbness"],
   },
   {
     name: "Pulmonology",
     icon: Wind,
-    description: "Respiratory and lung condition diagnosis, treatment, and monitoring.",
+    description:
+      "Respiratory and lung condition diagnosis, treatment, and monitoring.",
     tags: ["Asthma", "Cough", "Breathing"],
   },
   {
     name: "Expert Medical Opinion",
     icon: FileSearch,
-    description: "A second specialist review of your diagnosis, records, or treatment plan.",
+    description:
+      "A second specialist review of your diagnosis, records, or treatment plan.",
     tags: ["Second Opinion", "Records Review"],
   },
   {
     name: "Ophthalmology",
     icon: Eye,
-    description: "Eye health consultations covering vision changes and common conditions.",
+    description:
+      "Eye health consultations covering vision changes and common conditions.",
     tags: ["Vision", "Eye Strain", "Irritation"],
   },
   {
     name: "ENT (Ear, Nose & Throat)",
     icon: Ear,
-    description: "Care for ear, nose, sinus, and throat symptoms and conditions.",
+    description:
+      "Care for ear, nose, sinus, and throat symptoms and conditions.",
     tags: ["Sinusitis", "Sore Throat", "Hearing"],
   },
   {
     name: "Orthopedics",
     icon: Bone,
-    description: "Bone, joint, and muscle care for pain, injury, and mobility issues.",
+    description:
+      "Bone, joint, and muscle care for pain, injury, and mobility issues.",
     tags: ["Joint Pain", "Sports Injury", "Mobility"],
   },
   {
     name: "Sexual Health",
     icon: ShieldCheck,
-    description: "Confidential consultations for sexual health concerns and screening.",
+    description:
+      "Confidential consultations for sexual health concerns and screening.",
     tags: ["STI Screening", "Confidential"],
   },
   {
     name: "Travel Medicine",
     icon: Plane,
-    description: "Pre-trip vaccinations and care for illness while traveling abroad.",
+    description:
+      "Pre-trip vaccinations and care for illness while traveling abroad.",
     tags: ["Vaccinations", "Travel Illness"],
   },
   {
     name: "Global / Cross-Border Care",
     icon: Globe2,
-    description: "Coordinated medical access and continuity of care across countries.",
+    description:
+      "Coordinated medical access and continuity of care across countries.",
     tags: ["Cross-Border", "Continuity of Care"],
   },
 ];
@@ -425,7 +518,7 @@ const faqJsonLd = {
         "@type": "Answer",
         text: item.a,
       },
-    }))
+    })),
   ),
 };
 
@@ -462,10 +555,13 @@ function HeroCarousel() {
     }, 320);
   }, []);
 
-  const goToOffset = useCallback((offset, dir) => {
-    const current = slideIndexRef.current;
-    goTo((current + offset + total) % total, dir);
-  }, [goTo, total]);
+  const goToOffset = useCallback(
+    (offset, dir) => {
+      const current = slideIndexRef.current;
+      goTo((current + offset + total) % total, dir);
+    },
+    [goTo, total],
+  );
 
   const prev = () => goToOffset(-1, "prev");
   const next = () => goToOffset(1, "next");
@@ -500,7 +596,6 @@ function HeroCarousel() {
         onFocus={() => setIsPaused(true)}
         onBlur={() => setIsPaused(false)}
       >
-
         {/* ── Dark inner card (animated) ── */}
         <div
           className={`sp-hero__card-dark sp-carousel__slide ${animating ? `sp-carousel__slide--exit-${direction}` : "sp-carousel__slide--enter"}`}
@@ -535,7 +630,12 @@ function HeroCarousel() {
               onClick={() => setActiveTab(i)}
               aria-pressed={activeTab === i}
             >
-              <Icon size={20} style={{ color: activeTab === i ? "var(--white)" : "var(--teal)" }} />
+              <Icon
+                size={20}
+                style={{
+                  color: activeTab === i ? "var(--white)" : "var(--teal)",
+                }}
+              />
               <div className="sp-hero__mini-name">{name}</div>
               <div className="sp-hero__mini-tags">{tags.join(" · ")}</div>
             </button>
@@ -543,23 +643,42 @@ function HeroCarousel() {
         </div>
 
         {/* ── Active tab expanded preview ── */}
-        <div className="sp-hero__tab-preview" key={`${slideIndex}-${activeTab}`}>
-          <ActiveTabIcon size={16} style={{ color: "var(--teal)", flexShrink: 0 }} />
-          <span className="sp-hero__tab-preview-name">{activeTabData.name}</span>
+        <div
+          className="sp-hero__tab-preview"
+          key={`${slideIndex}-${activeTab}`}
+        >
+          <ActiveTabIcon
+            size={16}
+            style={{ color: "var(--teal)", flexShrink: 0 }}
+          />
+          <span className="sp-hero__tab-preview-name">
+            {activeTabData.name}
+          </span>
           <div className="sp-hero__tab-preview-tags">
-            {activeTabData.tags.map(t => (
-              <span key={t} className="sp-hero__tab-preview-tag">{t}</span>
+            {activeTabData.tags.map((t) => (
+              <span key={t} className="sp-hero__tab-preview-tag">
+                {t}
+              </span>
             ))}
           </div>
         </div>
 
         {/* ── Carousel controls ── */}
         <div className="sp-carousel__controls">
-          <button type="button" className="sp-carousel__btn" onClick={prev} aria-label="Previous slide">
+          <button
+            type="button"
+            className="sp-carousel__btn"
+            onClick={prev}
+            aria-label="Previous slide"
+          >
             <ChevronLeft size={16} />
           </button>
 
-          <div className="sp-carousel__dots" role="tablist" aria-label="Carousel slides">
+          <div
+            className="sp-carousel__dots"
+            role="tablist"
+            aria-label="Carousel slides"
+          >
             {carouselSlides.map((_, i) => (
               <button
                 key={i}
@@ -573,11 +692,15 @@ function HeroCarousel() {
             ))}
           </div>
 
-          <button type="button" className="sp-carousel__btn" onClick={next} aria-label="Next slide">
+          <button
+            type="button"
+            className="sp-carousel__btn"
+            onClick={next}
+            aria-label="Next slide"
+          >
             <ChevronRight size={16} />
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -587,7 +710,12 @@ function HeroCarousel() {
 function FaqItem({ q, a, isOpen, onToggle }) {
   return (
     <div className={`sp-faq__item${isOpen ? " sp-faq__item--open" : ""}`}>
-      <button type="button" className="sp-faq__item-head" onClick={onToggle} aria-expanded={isOpen}>
+      <button
+        type="button"
+        className="sp-faq__item-head"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+      >
         <span className="sp-faq__item-q">{q}</span>
         <span className="sp-faq__item-icon">
           {isOpen ? <Minus size={13} /> : <Plus size={13} />}
@@ -609,36 +737,54 @@ export default function Specialties() {
     return specialties.filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||
-        s.tags.some((t) => t.toLowerCase().includes(q))
+        s.tags.some((t) => t.toLowerCase().includes(q)),
     );
   }, [query]);
 
   return (
     <>
       <Helmet>
-        <title>Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect</title>
+        <title>
+          Online Specialist Doctor Consultation | Expert Virtual Care |
+          Humancare Connect
+        </title>
         <meta
           name="description"
           content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://www.humancareconnect.com/specialists" />
+        <link
+          rel="canonical"
+          href="https://www.humancareconnect.com/specialists"
+        />
 
         {/* Open Graph */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect" />
+        <meta
+          property="og:title"
+          content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
+        />
         <meta
           property="og:description"
           content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
         />
-        <meta property="og:url" content="https://www.humancareconnect.com/specialists" />
+        <meta
+          property="og:url"
+          content="https://www.humancareconnect.com/specialists"
+        />
         <meta property="og:site_name" content="Humancare Connect" />
         {/* TODO: replace with a real, hosted OG image (1200x630) before launch */}
-        <meta property="og:image" content="https://www.humancareconnect.com/og/specialists.jpg" />
+        <meta
+          property="og:image"
+          content="https://www.humancareconnect.com/og/specialists.jpg"
+        />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect" />
+        <meta
+          name="twitter:title"
+          content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
+        />
         <meta
           name="twitter:description"
           content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
@@ -651,7 +797,6 @@ export default function Specialties() {
       {/* hero */}
       <section id="top" className="sp-hero">
         <div className="sp-hero__inner">
-
           {/* Left column */}
           <div>
             <div className="sp-hero__badge">
@@ -664,7 +809,11 @@ export default function Specialties() {
             </h1>
 
             <p className="sp-hero__copy">
-              Connect with an online specialist doctor through Humancare Connect and receive expert medical guidance, personalized treatment support, and secure virtual consultations designed around your specific health concerns. Our platform makes it easier to access experienced specialists from the comfort of your home.
+              Connect with an online specialist doctor through Humancare Connect
+              and receive expert medical guidance, personalized treatment
+              support, and secure virtual consultations designed around your
+              specific health concerns. Our platform makes it easier to access
+              experienced specialists from the comfort of your home.
             </p>
 
             <div className="sp-hero__stats">
@@ -679,14 +828,12 @@ export default function Specialties() {
 
           {/* Right panel — carousel */}
           <HeroCarousel />
-
         </div>
       </section>
 
       {/* Specialties */}
       <section id="specialties" className="specialties">
         <div className="specialties__container">
-
           <div className="specialties__title-block">
             <div className="specialties__title-text">
               <span className="specialties__eyebrow">All specialties</span>
@@ -697,8 +844,8 @@ export default function Specialties() {
 
             <div className="specialties__search">
               <p className="specialties__copy">
-                Browse all {specialties.length} specialties below, or search to quickly
-                find the right doctor for your specific health concern.
+                Browse all {specialties.length} specialties below, or search to
+                quickly find the right doctor for your specific health concern.
               </p>
 
               <Search size={16} className="specialties__search-icon" />
@@ -714,7 +861,9 @@ export default function Specialties() {
 
           <div className="specialties__grid">
             {filteredSpecialties.length === 0 && (
-              <div className="specialties__empty">No specialties match "{query}".</div>
+              <div className="specialties__empty">
+                No specialties match "{query}".
+              </div>
             )}
             {filteredSpecialties.map((s, i) => {
               const Icon = s.icon;
@@ -725,14 +874,20 @@ export default function Specialties() {
                   style={{ "--delay": `${(i % 10) * 30}ms` }}
                 >
                   <div className="specialties__card-head">
-                    <div className="specialties__card-icon"><Icon size={18} /></div>
-                    <span className="specialties__card-num">{String(i + 1).padStart(2, "0")}</span>
+                    <div className="specialties__card-icon">
+                      <Icon size={18} />
+                    </div>
+                    <span className="specialties__card-num">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
                   </div>
                   <h3 className="specialties__card-name">{s.name}</h3>
                   <p className="specialties__card-desc">{s.description}</p>
                   <div className="specialties__card-tags">
                     {s.tags.map((t) => (
-                      <span key={t} className="specialties__card-tag">{t}</span>
+                      <span key={t} className="specialties__card-tag">
+                        {t}
+                      </span>
                     ))}
                   </div>
                 </article>
@@ -747,9 +902,12 @@ export default function Specialties() {
         <div className="sp-conditions__inner">
           <div className="sp-conditions__head">
             <span className="sp-conditions__eyebrow">Browse by condition</span>
-            <h2 className="sp-conditions__title">Find care for your condition</h2>
+            <h2 className="sp-conditions__title">
+              Find care for your condition
+            </h2>
             <p className="sp-conditions__copy">
-              Search by condition and get matched to the right specialist for your concern.
+              Search by condition and get matched to the right specialist for
+              your concern.
             </p>
           </div>
 
@@ -763,9 +921,14 @@ export default function Specialties() {
                   className="sp-conditions__card"
                   style={{ "--delay": `${i * 40}ms` }}
                 >
-                  <span className="sp-conditions__card-icon"><Icon size={17} /></span>
+                  <span className="sp-conditions__card-icon">
+                    <Icon size={17} />
+                  </span>
                   <span className="sp-conditions__card-name">{c.name}</span>
-                  <ChevronRight size={16} className="sp-conditions__card-arrow" />
+                  <ChevronRight
+                    size={16}
+                    className="sp-conditions__card-arrow"
+                  />
                 </a>
               );
             })}
@@ -786,7 +949,11 @@ export default function Specialties() {
               Expert Care from an Online Specialist Doctor
             </h2>
             <p className="sp-b2b__copy">
-              Humancare Connect provides convenient access to an online specialist doctor who understands your unique healthcare needs. Whether you need expert advice for a specific condition, ongoing care, or a second opinion, our virtual specialist consultations connect you with trusted healthcare professionals.
+              Humancare Connect provides convenient access to an online
+              specialist doctor who understands your unique healthcare needs.
+              Whether you need expert advice for a specific condition, ongoing
+              care, or a second opinion, our virtual specialist consultations
+              connect you with trusted healthcare professionals.
             </p>
           </div>
 
@@ -797,13 +964,9 @@ export default function Specialties() {
                 className="sp-b2b__card"
                 style={{ "--delay": `${i * 50}ms` }}
               >
-                <div className="sp-b2b__card-name">
-                  {item.title}
-                </div>
+                <div className="sp-b2b__card-name">{item.title}</div>
 
-                <p className="sp-b2b__card-desc">
-                  {item.desc}
-                </p>
+                <p className="sp-b2b__card-desc">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -813,23 +976,28 @@ export default function Specialties() {
       {/* FAQ */}
       <section id="faq" className="sp-faq">
         <div className="sp-faq__inner">
-
           {/* Left column */}
           <div className="sp-faq__left">
             <span className="sp-faq__tag">FAQ</span>
             <h2 className="sp-faq__heading">Frequently Asked Questions</h2>
             <p className="sp-faq__copy">
-              Everything you need to know about primary care at Humancare Connect. Can't find an
-              answer?
+              Everything you need to know about primary care at Humancare
+              Connect. Can't find an answer?
             </p>
             <button type="button" className="sp-faq__chat-btn">
               <MessageCircle size={16} /> Chat with our team
             </button>
 
             <div className="sp-faq__trust">
-              <div className="sp-faq__trust-item"><Clock size={14} /> Avg. response in 2 min</div>
-              <div className="sp-faq__trust-item"><Lock size={14} /> HIPAA secure &amp; private</div>
-              <div className="sp-faq__trust-item"><MapPin size={14} /> Available in all 50 states</div>
+              <div className="sp-faq__trust-item">
+                <Clock size={14} /> Avg. response in 2 min
+              </div>
+              <div className="sp-faq__trust-item">
+                <Lock size={14} /> HIPAA secure &amp; private
+              </div>
+              <div className="sp-faq__trust-item">
+                <MapPin size={14} /> Available in all 50 states
+              </div>
             </div>
           </div>
 
@@ -858,7 +1026,6 @@ export default function Specialties() {
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
@@ -866,24 +1033,33 @@ export default function Specialties() {
       <section id="cta" className="sp-cta">
         <div className="sp-cta__card">
           <span className="sp-cta__eyebrow">
-            <span className="sp-cta__eyebrow-dot" /> Ready when you are</span>
-          <h2 className="sp-cta__title">Find your specialist<br />
-            <em>in under 2 minutes.</em></h2>
+            <span className="sp-cta__eyebrow-dot" /> Ready when you are
+          </span>
+          <h2 className="sp-cta__title">
+            Find your specialist
+            <br />
+            <em>in under 2 minutes.</em>
+          </h2>
           <p className="sp-cta__copy">
-            Search, book, and consult with a verified physician from anywhere — serve any
-            eligibility across all categories.
+            Search, book, and consult with a verified physician from anywhere —
+            serve any eligibility across all categories.
           </p>
           <div className="sp-cta__actions">
-            <a href="/appointment-booking" className="sp-cta__btn sp-cta__btn--primary">
+            <a
+              href="/appointment-booking"
+              className="sp-cta__btn sp-cta__btn--primary"
+            >
               Book a consultation <ArrowRight size={15} />
             </a>
-            <a href="#specialties" className="sp-cta__btn sp-cta__btn--secondary">
+            <a
+              href="#specialties"
+              className="sp-cta__btn sp-cta__btn--secondary"
+            >
               Browse specialties
             </a>
           </div>
         </div>
       </section>
-
     </>
   );
 }

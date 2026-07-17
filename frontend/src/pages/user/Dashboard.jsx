@@ -220,7 +220,7 @@ export default function Dashboard() {
       {/* header */}
       <div className="hc-dash__header">
         <div className="hc-dash__header-text">
-          <p className="hc-dash__eyebrow">Humanncare</p>
+          <p className="hc-dash__eyebrow">Humancare Connect</p>
           <h1 className="hc-dash__title">
             {getGreeting()}, {user?.name?.split(" ")[0] || "there"} 👋
           </h1>

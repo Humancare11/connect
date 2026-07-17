@@ -1,20 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
-
+import medicalConditions from "../../assets/BlogImages/medical-conditions.webp";
+import telemedicine from "../../assets/BlogImages/telemedicine.webp";
+import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
+import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
 const PAGE_TITLE =
   " How to Choose the Best Telemedicine Provider: 10 Key Factors";
 const PAGE_DESCRIPTION =
   "Learn how to choose the best telemedicine provider by evaluating doctor qualifications, specialties, security, technology, patient support, and more.";
 const PAGE_URL =
   "https://humancareconnect.co/blog/choose-best-telemedicine-provider";
-const PAGE_IMAGE =
-  "https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop";
+const PAGE_IMAGE = medicalConditions;
 
-// FIX: TOC previously had a dangling "Why-choose-us" entry pointing to a
-// section that doesn't exist, and was missing entries for "how-it-works",
-// "safety", "cost", and "choose" — all real sections in the article that
-// were unreachable from the sidebar. Synced to match the actual sections.
 const TOC_ITEMS = [
   {
     id: "definition",
@@ -86,30 +84,33 @@ const FAQ_ITEMS = [
 
 const RELATED_ARTICLES = [
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop",
+    href: "/what-is-telemedicine",
+    img: telemedicine,
     alt: "Doctor reviewing patient chart",
-    cat: "Chronic Care",
-    title: "Managing Diabetes with Remote Monitoring",
-    desc: "How continuous glucose data and virtual check-ins improve long-term control.",
+    // cat: "Chronic Care",
+    title:
+      "What Is Telemedicine? Complete Guide to Meaning, Benefits, Types & How It Works",
+    desc: "Telemedicine refers to the delivery of healthcare services remotely through digital technologies, including video consultations, phone calls, mobile applications, and secure online platforms.",
     time: "6 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?q=80&w=800&auto=format&fit=crop",
-    alt: "Person taking notes during a virtual therapy session",
-    cat: "Mental Health",
-    title: "Online Therapy: What to Expect from Your First Session",
-    desc: "A practical walkthrough of booking, privacy, and what happens in session one.",
+    href: "/telemedicine-vs-in-person-doctor-visits",
+    img: telemedicineVsInPersonDoctorVisits,
+    alt: "Virtual doctor vs teleconsultation doctor  ",
+    // cat: "Mental Health",
+    title:
+      "Telemedicine vs In-Person Doctor Visits: Benefits, Differences & Limitations",
+    desc: "Quick Answer: Is Telemedicine Better Than an In-Person Doctor Visit?",
     time: "7 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=800&auto=format&fit=crop",
-    alt: "Pharmacist checking an e-prescription",
-    cat: "Prescriptions",
-    title: "How E-Prescriptions Work — and Where They're Valid",
-    desc: "Everything about getting, filling, and renewing prescriptions issued online.",
+    href: "/top-telemedicine-platforms-providers",
+    img: topTelemedicinePlatforms,
+    alt: "Top Telemedicine Platforms & Providers",
+    // cat: "Prescriptions",
+    title:
+      "Top Telemedicine Platforms & Providers: Features, Benefits & How to Choose",
+    desc: "Quick Answer: What Are the Best Telemedicine Platforms?",
     time: "5 min read",
   },
 ];
@@ -310,14 +311,14 @@ export default function MedicalConditions() {
 
               <figure className="hero-media">
                 <img
-                  src="https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop"
+                  src={medicalConditions}
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
                 />
-                <figcaption>
+                {/* <figcaption>
                   A virtual consultation in progress — patient and physician
                   connected by video from home.
-                </figcaption>
+                </figcaption> */}
               </figure>
             </section>
 

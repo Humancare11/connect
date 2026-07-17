@@ -1,116 +1,136 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
+import telemedicineAppointment from "../../assets/BlogImages/telemedicine-appointment.webp";
+
+import telemedicine from "../../assets/BlogImages/telemedicine.webp";
+import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
+import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
 
 const PAGE_TITLE =
-  " What Medical Conditions Can Be Treated Through Telemedicine?";
+  "How Does a Telemedicine Appointment Work? Step-by-Step Guide";
 const PAGE_DESCRIPTION =
-  " Discover the medical conditions that can be treated through telemedicine, including common illnesses, chronic diseases, mental health concerns, specialist consultations, and second opinions.";
+  "Learn how a telemedicine appointment works, what happens before, during, and after your online doctor consultation, and how to prepare for a successful virtual visit.";
 const PAGE_URL =
   "https://humancareconnect.co/blog/how-does-a-telemedicine-appointment-work";
-const PAGE_IMAGE =
-  "https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop";
+const PAGE_IMAGE = telemedicineAppointment;
 
 const TOC_ITEMS = [
   {
     id: "definition",
-    label: "What Medical Conditions Can Be Treated Through Telemedicine? ",
+    label: "Quick Answer ",
   },
   { id: "introduction", label: "Introduction" },
-  { id: "illnesses", label: "Common Illnesses" },
-  { id: "chronic", label: "Chronic Disease Management" },
+  { id: "before-your-appointment", label: "Before Telemedicine Appointment" },
   {
-    id: "skin",
-    label: "Skin Conditions",
+    id: "common-situations",
+    label: "Where Telemedicine Appointments Are Helpful",
   },
-  {
-    id: "mental",
-    label: "Mental Health Conditions",
-  },
-  { id: "digestive", label: "Digestive Health" },
-  { id: "musculoskeletal", label: "Musculoskeletal Conditions" },
-  { id: "heart", label: "Heart and Cardiovascular Conditions" },
-  { id: "neurological", label: "Neurological Conditions" },
-  { id: "cancer", label: "Cancer Care" },
-  { id: "women", label: "Women's Health" },
-  { id: "men", label: "Men’s Health" },
-  { id: "pediatric", label: "Pediatric Telemedicine" },
-  { id: "when-not", label: "When Telemedicine Is Not Appropriate" },
-  { id: "emergency", label: "Emergency Symptoms" },
-  { id: "comparison", label: "Telemedicine vs In-Person Care" },
+  { id: "benefits", label: "Benefits of Telemedicine Appointments" },
+  { id: "who-should-consider", label: " Who Should Consider an Appointment?" },
+  { id: "not-appropriate", label: "When it is Not Appropriate?" },
+  { id: "emergency-care", label: "Emergency Situations" },
+  { id: "privacy-safety", label: "Safety and Privacy" },
+  { id: "costs", label: "Telemedicine Appointment Costs" },
+  { id: "myths-vs-facts", label: "Myths vs Facts" },
+  { id: "future", label: "Future of Telemedicine" },
+  { id: "why-humancare-connect", label: "Why Choose Us" },
   { id: "faq", label: "FAQs" },
   { id: "key-takeaways", label: "Key Takeaways" },
-  { id: "Why-choose-us", label: "Why Choose Us?" },
 ];
+
 const FAQ_ITEMS = [
   {
-    q: "What conditions can be treated through telemedicine?",
-    a: "Telemedicine can support many non-emergency conditions, including common illnesses, chronic disease follow-ups, skin concerns, mental health conditions, digestive issues, and specialist consultations.",
+    q: "What is a telemedicine appointment?",
+    a: "A telemedicine appointment is a virtual healthcare consultation where patients communicate with doctors or healthcare professionals using video calls, phone calls, or secure digital platforms. It allows patients to receive medical guidance without visiting a clinic or hospital physically.",
   },
   {
-    q: "Can chronic diseases be managed through telemedicine?",
-    a: "Yes. Conditions such as diabetes, high blood pressure, asthma, and thyroid disorders can often be managed through regular virtual follow-up appointments.",
+    q: "How long does a telemedicine appointment usually take?",
+    a: "The duration of a telemedicine appointment depends on the healthcare concern, the complexity of the case, and the healthcare provider. Many virtual consultations may last anywhere from a few minutes to longer discussions for complex medical issues or specialist opinions.",
   },
   {
-    q: "Can I consult a specialist online?",
-    a: "Yes. Many specialists, including cardiologists, neurologists, oncologists, dermatologists, and orthopedic doctors, offer telemedicine consultations when appropriate.",
+    q: "What should I do before my first telemedicine appointment?",
+    a: "Before your appointment, write down your symptoms and health concerns, prepare a list of questions for the doctor, keep your medications available, collect previous medical records, reports, and imaging studies, test your internet connection, camera, and microphone, and choose a quiet and private place for the consultation. Good preparation helps make the appointment more productive.",
   },
   {
-    q: "Can telemedicine help with a cancer second opinion?",
-    a: "Yes. Patients can share medical reports, pathology results, and imaging studies with specialists to receive expert opinions on their diagnosis and treatment options.",
+    q: "What happens during a telemedicine appointment?",
+    a: "During a telemedicine appointment, the doctor reviews your symptoms, medical history, medications, and available reports. The healthcare professional may ask detailed questions, discuss possible causes of your concerns, recommend further testing if needed, and provide treatment guidance or next steps.",
   },
   {
-    q: "Are skin conditions suitable for telemedicine?",
-    a: "Many skin concerns, such as acne, rashes, eczema, and follow-up dermatology visits, can be discussed through online consultations.",
-  },
-  {
-    q: "Can I use telemedicine for mental health support?",
-    a: "Yes. Telemedicine may support counseling, therapy follow-ups, stress management, and discussions regarding mental health concerns.",
-  },
-  {
-    q: "Can children receive telemedicine care?",
-    a: "Yes. Telemedicine may be suitable for certain non-emergency pediatric concerns, but severe symptoms require immediate in-person evaluation.",
-  },
-  {
-    q: "When should I avoid telemedicine?",
-    a: "Avoid telemedicine for emergencies, severe symptoms, major injuries, or situations where a physical examination or immediate treatment is necessary.",
+    q: "Can a doctor diagnose a medical condition during an online appointment?",
+    a: "In many situations, healthcare professionals can assess symptoms and review medical information during a virtual consultation. However, some conditions require physical examinations, laboratory tests, imaging studies, or additional procedures before a diagnosis can be confirmed.",
   },
   {
     q: "Can doctors prescribe medication through telemedicine?",
-    a: "Depending on local laws and regulations, healthcare professionals may prescribe certain medications during telemedicine consultations where appropriate.",
+    a: "Depending on local laws, regulations, and the patient's clinical situation, healthcare professionals may prescribe certain medications during telemedicine appointments where legally allowed.",
   },
   {
-    q: "Is telemedicine as effective as an in-person visit?",
-    a: "Telemedicine can be effective for many healthcare needs, but it does not replace physical examinations, emergency treatment, or procedures that require direct medical care.",
+    q: "Are telemedicine appointments private and secure?",
+    a: "Yes, telemedicine appointments can be private and secure when provided through trusted healthcare platforms that use appropriate security measures and follow applicable healthcare privacy requirements. Patients should also protect their privacy by using secure internet connections and attending consultations from a private environment.",
+  },
+  {
+    q: "What technology do I need for a telemedicine visit?",
+    a: "Most telemedicine appointments require a smartphone, tablet, laptop, or desktop computer, a working camera and microphone for video consultations, a stable internet connection, and access to the telemedicine platform or application.",
+  },
+  {
+    q: "Can I use telemedicine for specialist consultations?",
+    a: "Yes. Many specialists provide telemedicine consultations, including specialists in cardiology, oncology, neurology, orthopedics, dermatology, and other fields where virtual care is appropriate.",
+  },
+  {
+    q: "Can I get a second opinion through telemedicine?",
+    a: "Yes. Telemedicine allows patients to connect with specialists, share diagnostic reports, discuss treatment plans, and receive expert second opinions without unnecessary travel. This can be especially helpful for complex conditions, major surgeries, or cancer treatment decisions.",
+  },
+  {
+    q: "Are telemedicine appointments suitable for elderly patients?",
+    a: "Yes. Telemedicine can be very beneficial for elderly patients because it reduces travel, minimizes physical strain, and makes regular follow-up appointments more convenient. Family members or caregivers can also assist older adults during virtual consultations when needed.",
+  },
+  {
+    q: "Can international patients book telemedicine appointments?",
+    a: "Yes. International patients can use telemedicine to discuss health concerns, review medical reports, obtain specialist opinions, and understand possible treatment options. Service availability depends on local regulations and healthcare provider capabilities.",
+  },
+  {
+    q: "How much does an online doctor appointment cost?",
+    a: "The cost varies based on the doctor's specialty, the country or region, the complexity of the consultation, and the healthcare provider's pricing. Some insurance plans may cover telemedicine services depending on applicable policies and regulations.",
+  },
+  {
+    q: "What conditions can be treated during a telemedicine appointment?",
+    a: "Many non-emergency conditions can be addressed through telemedicine, including common illnesses, skin concerns, mental health consultations, chronic disease follow-ups, medication discussions, specialist consultations, and medical second opinions. However, some conditions require in-person examinations or emergency care.",
+  },
+  {
+    q: "What are the advantages of a telemedicine appointment?",
+    a: "The main benefits include convenience, reduced travel time, faster access to healthcare professionals, easier specialist access, better follow-up care, and improved access for international and rural patients.",
   },
 ];
 
 const RELATED_ARTICLES = [
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop",
+    href: "/what-is-telemedicine",
+    img: telemedicine,
     alt: "Doctor reviewing patient chart",
-    cat: "Chronic Care",
-    title: "Managing Diabetes with Remote Monitoring",
-    desc: "How continuous glucose data and virtual check-ins improve long-term control.",
+    // cat: "Chronic Care",
+    title:
+      "What Is Telemedicine? Complete Guide to Meaning, Benefits, Types & How It Works",
+    desc: "Telemedicine refers to the delivery of healthcare services remotely through digital technologies, including video consultations, phone calls, mobile applications, and secure online platforms.",
     time: "6 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?q=80&w=800&auto=format&fit=crop",
-    alt: "Person taking notes during a virtual therapy session",
-    cat: "Mental Health",
-    title: "Online Therapy: What to Expect from Your First Session",
-    desc: "A practical walkthrough of booking, privacy, and what happens in session one.",
+    href: "/telemedicine-vs-in-person-doctor-visits",
+    img: telemedicineVsInPersonDoctorVisits,
+    alt: "Virtual doctor vs teleconsultation doctor  ",
+    // cat: "Mental Health",
+    title:
+      "Telemedicine vs In-Person Doctor Visits: Benefits, Differences & Limitations",
+    desc: "Quick Answer: Is Telemedicine Better Than an In-Person Doctor Visit?",
     time: "7 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=800&auto=format&fit=crop",
-    alt: "Pharmacist checking an e-prescription",
-    cat: "Prescriptions",
-    title: "How E-Prescriptions Work — and Where They're Valid",
-    desc: "Everything about getting, filling, and renewing prescriptions issued online.",
+    href: "/top-telemedicine-platforms-providers",
+    img: topTelemedicinePlatforms,
+    alt: "Top Telemedicine Platforms & Providers",
+    // cat: "Prescriptions",
+    title:
+      "Top Telemedicine Platforms & Providers: Features, Benefits & How to Choose",
+    desc: "Quick Answer: What Are the Best Telemedicine Platforms?",
     time: "5 min read",
   },
 ];
@@ -304,21 +324,21 @@ export default function HowTelemedicineAppointmentWork() {
                   <span className="badge outline">Patient Guide</span>
                 </div>
                 <h1 className="article-title">
-                  What Medical Conditions Can Be Treated Through Telemedicine?
-                  Complete List
+                  How Does a Telemedicine Appointment Work? A Complete
+                  Step-by-Step Guide
                 </h1>
               </div>
 
               <figure className="hero-media">
                 <img
-                  src="https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop"
-                  alt="Patient having a video consultation with a doctor on a laptop from home"
+                  src={telemedicineAppointment}
+                  alt="Process of Telemedicine Appointment Working"
                   loading="eager"
                 />
-                <figcaption>
+                {/* <figcaption>
                   A virtual consultation in progress — patient and physician
                   connected by video from home.
-                </figcaption>
+                </figcaption> */}
               </figure>
             </section>
 
@@ -373,22 +393,23 @@ export default function HowTelemedicineAppointmentWork() {
               >
                 <section id="definition">
                   <h2>
-                    Quick Answer: What Conditions Can Be Treated Through
-                    Telemedicine?
+                    Quick Answer: How Does a Telemedicine Appointment Work?
                     <HeadingLink id="definition" />
                   </h2>
                   <p>
-                    Telemedicine can help manage many non-emergency health
-                    concerns, including common illnesses, chronic disease
-                    follow-ups, skin conditions, mental health concerns,
-                    medication reviews, specialist consultations, and medical
-                    second opinions.
+                    A telemedicine appointment is a virtual healthcare visit
+                    where patients communicate with doctors through video calls,
+                    phone calls, or secure digital platforms. The process
+                    usually includes scheduling an appointment, sharing medical
+                    information, connecting with the healthcare professional
+                    remotely, discussing symptoms and medical history, receiving
+                    medical guidance, and arranging follow-up care if needed.
                   </p>
                   <p>
-                    However, some conditions require physical examinations,
-                    diagnostic tests, procedures, or emergency medical
-                    treatment. A healthcare professional can determine whether
-                    virtual care is appropriate for your situation.
+                    Telemedicine appointments make healthcare more convenient by
+                    reducing the need for travel while allowing patients to
+                    receive professional medical advice from their home or any
+                    private location with an internet connection.
                   </p>
                 </section>
                 {/* intro */}
@@ -397,633 +418,1319 @@ export default function HowTelemedicineAppointmentWork() {
                     Introduction <HeadingLink id="introduction" />
                   </h2>
                   <p>
-                    Telemedicine has changed how patients access healthcare by
-                    allowing them to consult doctors and specialists remotely
-                    using video calls, phone consultations, and secure online
-                    platforms.
+                    Visiting a doctor traditionally involved traveling to a
+                    clinic, waiting for your appointment, and having an
+                    in-person consultation. While face-to-face medical care
+                    remains essential in many situations, digital technology has
+                    created a more convenient way to access healthcare —
+                    telemedicine appointments.
                   </p>
                   <p>
-                    Many patients ask, “Can my medical condition be treated
-                    through telemedicine?”
+                    Today, patients can speak with doctors, specialists, and
+                    healthcare professionals through secure online platforms
+                    without leaving their homes. This is particularly helpful
+                    for people with busy schedules, elderly patients,
+                    individuals living far from specialists, and international
+                    patients seeking expert medical opinions.
                   </p>
                   <p>
-                    The answer depends on the type and severity of the
-                    condition. While telemedicine cannot replace every hospital
-                    visit, it can provide convenient access to medical advice,
-                    follow-up care, and specialist opinions for many health
-                    concerns.
+                    However, many people who have never used virtual healthcare
+                    often ask:
                   </p>
-
-                  <p>
-                    This guide explains the common conditions that may be
-                    suitable for telemedicine and when an in-person medical
-                    evaluation may be necessary.
-                  </p>
-                </section>
-
-                {/* Online Doctor Consultation  */}
-                <section id="illnesses">
-                  <h2>
-                    Common Illnesses That Can Be Managed Through Telemedicine
-                    <HeadingLink id="how-it-works" />
-                  </h2>
-                  <p>
-                    Many everyday health concerns can be evaluated through an
-                    online doctor consultation.
-                  </p>
-                  <p>Examples include:</p>
                   <ul>
-                    <li>• Cold and flu symptoms</li>
-                    <li>• Fever</li>
-                    <li>• Sore throat</li>
-                    <li>• Cough</li>
-                    <li>• Allergies</li>
-                    <li>• Sinus symptoms</li>
-                    <li>• Headaches</li>
-                    <li>• Mild digestive problems</li>
-                    <li>• Minor infections (where appropriate)</li>
-                    <li>• General health questions</li>
+                    <li>What happens during an online doctor appointment?</li>
+                    <li>How should I prepare for a telemedicine visit?</li>
+                    <li>What technology do I need?</li>
+                    <li>
+                      Will the doctor be able to understand my health concerns
+                      remotely?
+                    </li>
+                    <li>Is a virtual appointment private and secure?</li>
                   </ul>
+
                   <p>
-                    During the virtual consultation, the doctor will discuss
-                    your symptoms and determine whether home care, additional
-                    testing, medication (where appropriate and legally
-                    permitted), or an in-person visit is needed.
+                    Understanding the telemedicine process can help patients
+                    feel more comfortable and prepared before their first
+                    virtual consultation.
+                  </p>
+                  <p>
+                    This complete guide explains every stage of a telemedicine
+                    appointment, from booking the consultation to receiving
+                    follow-up care.
                   </p>
                 </section>
-                {/* chronic */}
-                <section id="chronic">
+                {/* step */}
+                <section id="before-your-appointment">
                   <h2>
-                    Chronic Disease Management Through Telemedicine{" "}
-                    <HeadingLink id="benefits" />
+                    Before Your Telemedicine Appointment: Getting Started{" "}
+                    <HeadingLink id="before-your-appointment" />
                   </h2>
+
                   <p>
-                    People living with long-term medical conditions often
-                    require regular follow-ups. Telemedicine can make ongoing
-                    care more convenient.
+                    A successful virtual healthcare visit begins before you
+                    speak with a doctor. Proper preparation helps healthcare
+                    professionals better understand your condition and provide
+                    appropriate medical guidance.
                   </p>
-                  <div className="card-grid">
-                    <div className="info-card reveal">
-                      <div className="icon">{/* Keep existing SVG */}</div>
-                      <h4>Diabetes</h4>
-                      <p>
-                        Patients with diabetes may use telemedicine for
-                        reviewing blood sugar records, discussing medications,
-                        receiving lifestyle and dietary guidance, and attending
-                        follow-up appointments.
-                      </p>
+                  <div className="timeline">
+                    {/* Step 1 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">1</div>
+                      <div className="t-body">
+                        <h4>Choose the Right Telemedicine Provider</h4>
+
+                        <p>
+                          Start by selecting a trusted telemedicine provider
+                          that offers the healthcare services you need. A
+                          reliable platform should make the consultation process
+                          simple while maintaining high standards of patient
+                          care.
+                        </p>
+
+                        <p>When comparing providers, consider:</p>
+
+                        <ul>
+                          <li>• Qualified healthcare professionals</li>
+                          <li>• Availability of specialists</li>
+                          <li>• Patient support services</li>
+                          <li>• Privacy and data security practices</li>
+                          <li>• Easy appointment scheduling</li>
+                          <li>• Transparent consultation fees</li>
+                        </ul>
+                      </div>
                     </div>
 
-                    <div className="info-card reveal">
-                      <div className="icon">{/* Keep existing SVG */}</div>
-                      <h4>High Blood Pressure (Hypertension)</h4>
-                      <p>
-                        Virtual consultations may support blood pressure
-                        monitoring discussions, medication reviews, lifestyle
-                        recommendations, and regular follow-up care.
-                      </p>
+                    {/* Step 2 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">2</div>
+                      <div className="t-body">
+                        <h4>Schedule Your Online Doctor Appointment</h4>
+
+                        <p>
+                          After choosing a provider, book your appointment
+                          through the available platform. Most providers allow
+                          scheduling through a website, mobile app, patient
+                          portal, or customer support.
+                        </p>
+
+                        <p>You may be asked to provide:</p>
+
+                        <ul>
+                          <li>• Your name and contact information</li>
+                          <li>• Basic medical history</li>
+                          <li>• Reason for the consultation</li>
+                          <li>• Preferred doctor or specialty</li>
+                          <li>• Preferred appointment date and time</li>
+                        </ul>
+
+                        <p>
+                          Selecting the appropriate healthcare professional
+                          helps ensure you receive guidance suited to your
+                          medical needs.
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="info-card reveal">
-                      <div className="icon">{/* Keep existing SVG */}</div>
-                      <h4>Asthma and Respiratory Conditions</h4>
-                      <p>
-                        Telemedicine can help with reviewing symptoms,
-                        discussing inhaler use, monitoring disease control, and
-                        scheduling follow-up appointments.
-                      </p>
+                    {/* Step 3 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">3</div>
+                      <div className="t-body">
+                        <h4>Prepare Your Medical Information</h4>
+
+                        <p>
+                          Before your appointment, gather important medical
+                          documents so your healthcare professional can better
+                          understand your health history and current condition.
+                        </p>
+
+                        <p>Prepare the following if available:</p>
+
+                        <ul>
+                          <li>• Previous medical records</li>
+                          <li>• Blood test results</li>
+                          <li>• X-rays, CT scans, or MRI reports</li>
+                          <li>• Current medications</li>
+                          <li>• Allergy information</li>
+                          <li>• Previous treatments or surgeries</li>
+                        </ul>
+
+                        <p>
+                          Complete medical records are especially valuable when
+                          seeking specialist consultations or medical second
+                          opinions.
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="info-card reveal">
-                      <div className="icon">{/* Keep existing SVG */}</div>
-                      <h4>Thyroid Disorders</h4>
-                      <p>
-                        Patients may consult doctors online to discuss thyroid
-                        test results, medication adjustments, symptoms, and
-                        ongoing treatment follow-up.
-                      </p>
+                    {/* Step 4 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">4</div>
+                      <div className="t-body">
+                        <h4>Prepare Your Technology and Environment</h4>
+
+                        <p>
+                          A successful telemedicine visit depends on having the
+                          right technology and a comfortable environment before
+                          your consultation begins.
+                        </p>
+
+                        <p>Before your appointment:</p>
+
+                        <ul>
+                          <li>
+                            • Use a smartphone, tablet, laptop, or desktop
+                            computer
+                          </li>
+                          <li>
+                            • Ensure your camera and microphone work properly
+                          </li>
+                          <li>• Test your internet connection</li>
+                          <li>
+                            • Charge your device or keep it connected to power
+                          </li>
+                          <li>• Choose a quiet, private location</li>
+                          <li>
+                            • Ensure good lighting for video consultations
+                          </li>
+                        </ul>
+
+                        <p>
+                          Proper preparation helps create a smoother
+                          consultation and improves communication with your
+                          healthcare professional.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 5 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">5</div>
+                      <div className="t-body">
+                        <h4>Connect With Your Doctor Online</h4>
+
+                        <p>
+                          At your scheduled appointment time, join the
+                          telemedicine platform using your preferred device.
+                          Depending on the provider, consultations may be
+                          conducted through different communication methods.
+                        </p>
+
+                        <p>Common consultation options include:</p>
+
+                        <ul>
+                          <li>
+                            • Video consultations for face-to-face interaction
+                          </li>
+                          <li>
+                            • Telephone consultations for suitable follow-up
+                            care
+                          </li>
+                          <li>
+                            • Secure messaging for non-emergency communication
+                          </li>
+                          <li>• Medical report and document sharing</li>
+                        </ul>
+
+                        <p>
+                          During the consultation, your healthcare professional
+                          will discuss your symptoms, review your medical
+                          information, answer your questions, and recommend the
+                          appropriate next steps based on your individual
+                          healthcare needs.
+                        </p>
+                      </div>
+                    </div>
+                    {/* Step 6 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">6</div>
+                      <div className="t-body">
+                        <h4>Discuss Your Symptoms and Medical History</h4>
+
+                        <p>
+                          During your consultation, your healthcare professional
+                          will ask detailed questions to better understand your
+                          condition and provide appropriate medical guidance.
+                        </p>
+
+                        <p>You may be asked about:</p>
+
+                        <ul>
+                          <li>• When your symptoms started</li>
+                          <li>• How severe your symptoms are</li>
+                          <li>• What makes your symptoms better or worse</li>
+                          <li>• Previous medical conditions</li>
+                          <li>• Current medications</li>
+                          <li>• Allergies</li>
+                          <li>• Family medical history</li>
+                          <li>• Previous treatments or surgeries</li>
+                        </ul>
+
+                        <p>
+                          Providing complete and accurate information helps your
+                          healthcare professional understand your health
+                          concerns and recommend appropriate next steps.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 7 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">7</div>
+                      <div className="t-body">
+                        <h4>Share Medical Reports and Diagnostic Results</h4>
+
+                        <p>
+                          Most telemedicine platforms allow patients to securely
+                          upload medical documents before or during the
+                          consultation, giving doctors important information for
+                          evaluation.
+                        </p>
+
+                        <p>Documents may include:</p>
+
+                        <ul>
+                          <li>• Blood test reports</li>
+                          <li>• X-rays</li>
+                          <li>• MRI scans</li>
+                          <li>• CT scan reports</li>
+                          <li>• Pathology reports</li>
+                          <li>• Previous prescriptions</li>
+                          <li>• Hospital discharge summaries</li>
+                        </ul>
+
+                        <p>
+                          Sharing complete medical records is especially
+                          valuable for specialist consultations and medical
+                          second opinions.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 8 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">8</div>
+                      <div className="t-body">
+                        <h4>Receive Doctor Evaluation and Medical Guidance</h4>
+
+                        <p>
+                          After reviewing your symptoms, medical history, and
+                          available reports, your healthcare professional will
+                          explain their assessment and discuss the most
+                          appropriate recommendations.
+                        </p>
+
+                        <p>You may receive:</p>
+
+                        <ul>
+                          <li>• Possible causes of your symptoms</li>
+                          <li>• Guidance for managing your condition</li>
+                          <li>• Lifestyle recommendations where appropriate</li>
+                          <li>• Advice on additional tests if needed</li>
+                          <li>
+                            • Recommendations for in-person care when necessary
+                          </li>
+                          <li>
+                            • Prescriptions where permitted by applicable laws
+                          </li>
+                        </ul>
+
+                        <p>
+                          Some conditions require physical examinations,
+                          laboratory tests, imaging, or medical procedures, and
+                          your doctor may recommend an in-person visit when
+                          additional evaluation is necessary.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 9 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">9</div>
+                      <div className="t-body">
+                        <h4>Review Your Treatment Plan and Next Steps</h4>
+
+                        <p>
+                          Before your consultation ends, your healthcare
+                          professional will explain the next stage of your care
+                          and answer any questions you may have.
+                        </p>
+
+                        <p>Your treatment plan may include:</p>
+
+                        <ul>
+                          <li>• Treatment recommendations</li>
+                          <li>• Lifestyle and self-care guidance</li>
+                          <li>• Recommended diagnostic tests</li>
+                          <li>• Follow-up appointments</li>
+                          <li>• Referrals to specialists when appropriate</li>
+                        </ul>
+
+                        <p>
+                          Understanding your treatment plan helps you
+                          confidently manage your health after the consultation.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Step 10 */}
+                    <div className="t-step reveal">
+                      <div className="t-num">10</div>
+                      <div className="t-body">
+                        <h4>Attend Follow-Up Telemedicine Appointments</h4>
+
+                        <p>
+                          Healthcare often requires ongoing communication.
+                          Follow-up virtual appointments help healthcare
+                          professionals monitor your progress and make
+                          adjustments when needed.
+                        </p>
+
+                        <p>Follow-up visits can help you:</p>
+
+                        <ul>
+                          <li>• Monitor recovery</li>
+                          <li>• Discuss changes in symptoms</li>
+                          <li>• Review test results</li>
+                          <li>• Adjust treatment plans</li>
+                          <li>• Manage long-term medical conditions</li>
+                        </ul>
+
+                        <p>
+                          Regular follow-up appointments support continuity of
+                          care while reducing unnecessary travel and making
+                          healthcare more convenient.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </section>
 
-                <section id="skin">
+                {/* Common Situations Where Telemedicine Appointments Are Helpful */}
+                <section id="common-situations">
                   <h2>
-                    Skin Conditions and Dermatology Consultations{" "}
-                    <HeadingLink id="when" />
+                    Common Situations Where Telemedicine Appointments Are
+                    Helpful <HeadingLink id="common-situations" />
                   </h2>
 
                   <p>
-                    Dermatology is one of the most suitable specialties for
-                    telemedicine because many skin concerns can be visually
-                    assessed.
+                    Telemedicine can be a convenient option for many
+                    non-emergency healthcare needs, allowing patients to receive
+                    timely medical guidance without unnecessary travel.
                   </p>
-                  <p>Common conditions include:</p>
-                  <ul>
-                    <li>• Acne</li>
-                    <li>• Rashes</li>
-                    <li>• Eczema</li>
-                    <li>• Psoriasis</li>
-                    <li>• Skin irritation</li>
-                    <li>• Follow-up for existing skin conditions</li>
-                  </ul>
-                  <p>
-                    Doctors may recommend an in-person examination if additional
-                    testing or procedures are required.
-                  </p>
+
+                  <div className="card-grid">
+                    {/* Card 1 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M12 21s-7.5-4.6-9.5-9.3C.9 8 2.7 4.3 6.4 4.3c2 0 3.6 1.1 4.6 2.5 1-1.4 2.6-2.5 4.6-2.5 3.7 0 5.5 3.7 3.9 7.4C19.5 16.4 12 21 12 21z"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>General Health Concerns</h4>
+
+                      <p>
+                        Telemedicine is suitable for discussing many common
+                        non-emergency medical concerns, including:
+                      </p>
+
+                      <ul>
+                        <li>• Cold or flu symptoms</li>
+                        <li>• Allergies</li>
+                        <li>• Minor infections</li>
+                        <li>• Digestive concerns</li>
+                        <li>• Headaches</li>
+                      </ul>
+                    </div>
+
+                    {/* Card 2 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M3 12h4l3-8 4 16 3-8h4"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Chronic Disease Follow-Ups</h4>
+
+                      <p>
+                        Virtual appointments can support ongoing monitoring and
+                        management of long-term health conditions such as:
+                      </p>
+
+                      <ul>
+                        <li>• Diabetes</li>
+                        <li>• High blood pressure</li>
+                        <li>• Asthma</li>
+                        <li>• Thyroid disorders</li>
+                      </ul>
+                    </div>
+
+                    {/* Card 3 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M8 10h8M8 14h5"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M21 12c0 4.4-4 8-9 8-1.4 0-2.8-.3-4-.8L3 20l1-4.3C3.4 14.4 3 13.2 3 12c0-4.4 4-8 9-8s9 3.6 9 8z"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Specialist Consultations</h4>
+
+                      <p>
+                        Patients can connect with specialists across multiple
+                        medical specialties, including:
+                      </p>
+
+                      <ul>
+                        <li>• Cardiology</li>
+                        <li>• Neurology</li>
+                        <li>• Orthopedics</li>
+                        <li>• Dermatology</li>
+                        <li>• Oncology second opinions</li>
+                      </ul>
+                    </div>
+
+                    {/* Card 4 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="16"
+                            rx="2"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                          <path
+                            d="M8 2v4M16 2v4M3 10h18"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Reviewing Medical Reports</h4>
+
+                      <p>
+                        Telemedicine is an effective way to review medical
+                        documents and discuss treatment progress, including:
+                      </p>
+
+                      <ul>
+                        <li>• Blood test results</li>
+                        <li>• Imaging reports</li>
+                        <li>• Treatment progress</li>
+                        <li>• Previous diagnoses</li>
+                      </ul>
+                    </div>
+                  </div>
                 </section>
 
-                {/* mental */}
-                <section id="mental">
+                {/* Benefits of Telemedicine Appointments */}
+                <section id="benefits">
                   <h2>
-                    Mental Health Conditions <HeadingLink id="mental" />
+                    Benefits of Telemedicine Appointments{" "}
+                    <HeadingLink id="benefits" />
                   </h2>
 
                   <p>
-                    Virtual consultations have improved access to mental
-                    healthcare.
+                    Telemedicine appointments make healthcare more convenient,
+                    accessible, and efficient by allowing patients to connect
+                    with qualified healthcare professionals without unnecessary
+                    travel.
                   </p>
-                  <p>Telemedicine may support patients dealing with:</p>
-                  <ul>
-                    <li>• Anxiety concerns</li>
-                    <li>• Depression management</li>
-                    <li>• Stress-related concerns</li>
-                    <li>• Counseling and therapy follow-ups</li>
-                    <li>• Medication discussions</li>
-                  </ul>
+
+                  <div className="card-grid">
+                    {/* Card 1 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M12 21s-7.5-4.6-9.5-9.3C.9 8 2.7 4.3 6.4 4.3c2 0 3.6 1.1 4.6 2.5 1-1.4 2.6-2.5 4.6-2.5 3.7 0 5.5 3.7 3.9 7.4C19.5 16.4 12 21 12 21z"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Convenience and Comfort</h4>
+
+                      <p>
+                        Consult healthcare professionals from the comfort of
+                        your home while avoiding:
+                      </p>
+
+                      <ul>
+                        <li>• Long travel times</li>
+                        <li>• Transportation difficulties</li>
+                        <li>• Waiting rooms</li>
+                        <li>• Time away from work or family</li>
+                      </ul>
+                    </div>
+
+                    {/* Card 2 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M3 12h4l3-8 4 16 3-8h4"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Faster Access to Healthcare Professionals</h4>
+
+                      <p>
+                        Virtual appointments often provide quicker access to
+                        medical guidance for:
+                      </p>
+
+                      <ul>
+                        <li>• Minor health concerns</li>
+                        <li>• Follow-up consultations</li>
+                        <li>• Medication discussions</li>
+                        <li>• Test report reviews</li>
+                        <li>• Specialist consultations</li>
+                      </ul>
+                    </div>
+
+                    {/* Card 3 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M8 10h8M8 14h5"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M21 12c0 4.4-4 8-9 8-1.4 0-2.8-.3-4-.8L3 20l1-4.3C3.4 14.4 3 13.2 3 12c0-4.4 4-8 9-8s9 3.6 9 8z"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Access to Specialists</h4>
+
+                      <p>
+                        Connect with experienced specialists across multiple
+                        medical fields, including:
+                      </p>
+
+                      <ul>
+                        <li>• Cardiology</li>
+                        <li>• Oncology</li>
+                        <li>• Neurology</li>
+                        <li>• Orthopedics</li>
+                        <li>• Dermatology</li>
+                        <li>• Gastroenterology</li>
+                      </ul>
+                    </div>
+
+                    {/* Card 4 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="16"
+                            rx="2"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                          <path
+                            d="M8 2v4M16 2v4M3 10h18"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Medical Second Opinions</h4>
+
+                      <p>
+                        Securely share important medical documents to receive
+                        expert second opinions, including:
+                      </p>
+
+                      <ul>
+                        <li>• Medical records</li>
+                        <li>• Blood reports</li>
+                        <li>• Imaging scans</li>
+                        <li>• Previous treatment plans</li>
+                      </ul>
+                    </div>
+
+                    {/* Card 5 */}
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M12 8v4l3 2"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Better Continuity of Care</h4>
+
+                      <p>
+                        Telemedicine supports ongoing healthcare by making it
+                        easier to:
+                      </p>
+
+                      <ul>
+                        <li>• Monitor long-term conditions</li>
+                        <li>• Review recovery progress</li>
+                        <li>• Discuss medication changes</li>
+                        <li>• Evaluate test results</li>
+                        <li>• Schedule follow-up appointments</li>
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Who Should Consider a Telemedicine Appointment? */}
+                <section id="who-should-consider">
+                  <h2>
+                    Who Should Consider a Telemedicine Appointment?{" "}
+                    <HeadingLink id="who-should-consider" />
+                  </h2>
+
                   <p>
-                    Patients experiencing a mental health crisis or immediate
-                    danger should seek emergency support.
+                    Telemedicine can benefit many patients by making healthcare
+                    more convenient, accessible, and easier to fit into everyday
+                    life. It is particularly helpful for the following groups:
+                  </p>
+
+                  <div className="points-grid">
+                    <div className="point-card reveal">
+                      <h4>Elderly Patients</h4>
+                      <p>
+                        Older adults with mobility challenges or chronic health
+                        conditions can receive medical guidance from home,
+                        reducing the need for frequent travel while maintaining
+                        regular communication with healthcare professionals.
+                      </p>
+                    </div>
+
+                    <div className="point-card reveal">
+                      <h4>Busy Professionals</h4>
+                      <p>
+                        People with demanding schedules can save time by
+                        avoiding travel and long waiting periods, making it
+                        easier to keep up with routine consultations and
+                        follow-up appointments.
+                      </p>
+                    </div>
+
+                    <div className="point-card reveal">
+                      <h4>Patients in Rural or Remote Areas</h4>
+                      <p>
+                        Individuals with limited access to nearby hospitals or
+                        specialists can connect with qualified healthcare
+                        professionals from different cities or regions through
+                        virtual consultations.
+                      </p>
+                    </div>
+
+                    <div className="point-card reveal">
+                      <h4>International Patients</h4>
+                      <p>
+                        Telemedicine allows international patients to discuss
+                        medical concerns, securely share reports and imaging
+                        studies, obtain specialist opinions, and understand
+                        treatment options before medical travel, especially for
+                        complex conditions.
+                      </p>
+                    </div>
+
+                    <div className="point-card reveal">
+                      <h4>Patients Managing Chronic Conditions</h4>
+                      <p>
+                        Patients with long-term conditions such as diabetes,
+                        high blood pressure, heart disease, asthma, or thyroid
+                        disorders can use regular virtual follow-up appointments
+                        to monitor their health and discuss ongoing treatment
+                        with their healthcare providers.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+                {/* When Is a Telemedicine Appointment Not Appropriate? */}
+                <section id="not-appropriate">
+                  <h2>
+                    When Is a Telemedicine Appointment Not Appropriate?{" "}
+                    <HeadingLink id="not-appropriate" />
+                  </h2>
+
+                  <p>
+                    While telemedicine is a convenient option for many
+                    non-emergency healthcare needs, some medical situations
+                    require an in-person evaluation, diagnostic testing, or
+                    immediate medical attention.
+                  </p>
+
+                  <div className="points-grid">
+                    <div className="point-card reveal">
+                      <h4>Severe Injuries</h4>
+                      <p>
+                        Serious injuries such as fractures, deep wounds, or
+                        major trauma require immediate in-person assessment and
+                        treatment.
+                      </p>
+                    </div>
+
+                    <div className="point-card reveal">
+                      <h4>Conditions Requiring Surgery</h4>
+                      <p>
+                        Medical conditions that need surgical procedures or
+                        direct medical intervention must be managed at a
+                        hospital or healthcare facility.
+                      </p>
+                    </div>
+
+                    <div className="point-card reveal">
+                      <h4>Physical Examinations</h4>
+                      <p>
+                        Some symptoms can only be properly evaluated through a
+                        hands-on physical examination performed by a healthcare
+                        professional.
+                      </p>
+                    </div>
+
+                    <div className="point-card reveal">
+                      <h4>Emergency Medical Conditions</h4>
+                      <p>
+                        Severe chest pain, difficulty breathing, signs of
+                        stroke, severe bleeding, or loss of consciousness
+                        require immediate emergency medical care rather than a
+                        virtual consultation.
+                      </p>
+                    </div>
+
+                    <div className="point-card reveal">
+                      <h4>Diagnostic Tests and Procedures</h4>
+                      <p>
+                        Certain laboratory tests, imaging studies, and
+                        specialized diagnostic procedures must be performed in
+                        person to support accurate diagnosis and treatment.
+                      </p>
+                    </div>
+                  </div>
+
+                  <p>
+                    If a virtual consultation does not provide enough
+                    information, your healthcare professional may recommend an
+                    in-person visit for further evaluation or treatment.
                   </p>
                 </section>
-                {/* digestive */}
-                <section id="digestive">
+                {/* Emergency Situations */}
+                <section id="emergency-care">
                   <h2>
-                    Digestive Health Conditions <HeadingLink id="digestive" />
+                    Emergency Situations That Require Immediate In-Person
+                    Medical Care <HeadingLink id="emergency-care" />
                   </h2>
 
                   <p>
-                    Patients may use telemedicine for digestive concerns such
-                    as:
+                    Telemedicine should not be used for life-threatening
+                    emergencies.
+                    <br />
+                    <br />
+                    Seek immediate emergency medical assistance if you
+                    experience:
                   </p>
-                  <p>Telemedicine may support patients dealing with:</p>
-                  <ul>
-                    <li>• Acid reflux</li>
-                    <li>• Stomach discomfort</li>
-                    <li>• Constipation</li>
-                    <li>• Diarrhea</li>
-                    <li>• Irritable bowel symptoms</li>
-                    <li>• Follow-up for chronic digestive conditions</li>
-                  </ul>
-                  <p>
-                    Doctors may recommend further testing or in-person
-                    evaluation depending on symptoms.
-                  </p>
-                </section>
-                {/* Musculoskeletal Conditions */}
-                <section id="musculoskeletal">
-                  <h2>
-                    Musculoskeletal Conditions{" "}
-                    <HeadingLink id="musculoskeletal" />
-                  </h2>
-
-                  <p>
-                    Many bone, joint, and muscle concerns can initially be
-                    discussed through telemedicine. as:
-                  </p>
-                  <p>Examples include:</p>
-                  <ul>
-                    <li>• Back pain</li>
-                    <li>• Neck pain</li>
-                    <li>• Knee pain</li>
-                    <li>• Joint discomfort</li>
-                    <li>• Minor sports-related injuries</li>
-                    <li>• Follow-up after orthopedic treatment</li>
-                  </ul>
-                  <p>
-                    Medical imaging or a physical examination may be required in
-                    certain cases.
-                  </p>
-                </section>
-
-                {/* Heart and Cardiovascular Conditions
-                 */}
-                <section id="heart">
-                  <h2>
-                    Heart and Cardiovascular Conditions{" "}
-                    <HeadingLink id="heart" />
-                  </h2>
-
-                  <p>
-                    Telemedicine can support certain aspects of cardiovascular
-                    care, especially regular monitoring and follow-up
-                    consultations.
-                  </p>
-                  <p>Patients may use online consultations for:</p>
-                  <ul>
-                    <li>• High blood pressure follow-ups</li>
-                    <li>• Reviewing blood pressure records</li>
-                    <li>• Discussing heart-related symptoms</li>
-                    <li>• Medication reviews</li>
-                    <li>• Lifestyle and heart health guidance</li>
-                    <li>• Understanding test reports and treatment plans</li>
-                  </ul>
-                  <p>
-                    However, symptoms such as severe chest pain, sudden
-                    shortness of breath, or fainting require immediate emergency
-                    medical attention.
-                  </p>
-                </section>
-                {/* neuro */}
-                <section id="neurological">
-                  <h2>
-                    Neurological Conditions <HeadingLink id="neurological" />
-                  </h2>
-
-                  <p>
-                    Telemedicine can be useful for discussing and managing
-                    certain neurological concerns.
-                  </p>
-
-                  <p>Examples include:</p>
-
-                  <ul>
-                    <li>• Migraine and recurring headaches</li>
-                    <li>
-                      • Follow-up care for chronic neurological conditions
-                    </li>
-                    <li>• Medication reviews</li>
-                    <li>• Discussion of neurological test reports</li>
-                    <li>• Treatment follow-ups</li>
-                  </ul>
-
-                  <p>
-                    Emergency symptoms such as sudden weakness, difficulty
-                    speaking, confusion, loss of balance, or signs of a stroke
-                    require urgent in-person medical care.
-                  </p>
-                </section>
-
-                {/* 'cancer-care-second-opinions */}
-                <section id="cancer">
-                  <h2>
-                    Cancer Care and Medical Second Opinions{" "}
-                    <HeadingLink id="cancer" />
-                  </h2>
-
-                  <p>
-                    A cancer diagnosis often involves complex decisions.
-                    Telemedicine allows patients to connect with specialists and
-                    seek expert medical second opinions.
-                  </p>
-
-                  <p>Online cancer consultations may include:</p>
-
-                  <ul>
-                    <li>• Reviewing pathology reports</li>
-                    <li>
-                      • Discussing imaging studies such as CT scans, MRI scans,
-                      and PET scans
-                    </li>
-                    <li>• Understanding diagnosis and staging information</li>
-                    <li>• Discussing available treatment options</li>
-                    <li>• Reviewing existing treatment plans</li>
-                  </ul>
-
-                  <p>
-                    Telemedicine can help patients make informed decisions, but
-                    treatments such as surgery, chemotherapy administration, or
-                    radiation therapy require appropriate in-person medical
-                    care.
-                  </p>
-                </section>
-
-                {/* women's health */}
-                <section id="women">
-                  <h2>
-                    Women’s Health Consultations <HeadingLink id="women" />
-                  </h2>
-
-                  <p>
-                    Many non-emergency women’s health concerns can be discussed
-                    through telemedicine, including:
-                  </p>
-
-                  <ul>
-                    <li>• Menstrual concerns</li>
-                    <li>• Birth control discussions</li>
-                    <li>• Menopause-related symptoms</li>
-                    <li>• Follow-up consultations</li>
-                    <li>• Review of laboratory reports</li>
-                  </ul>
-
-                  <p>
-                    Certain symptoms may require physical examinations or
-                    diagnostic testing.
-                  </p>
-                </section>
-                {/* men */}
-                <section id="men">
-                  <h2>
-                    Men’s Health Consultations <HeadingLink id="men" />
-                  </h2>
-
-                  <p>Telemedicine may support discussions related to:</p>
-
-                  <ul>
-                    <li>• Sexual health concerns</li>
-                    <li>• Hormonal health discussions</li>
-                    <li>• General wellness concerns</li>
-                    <li>• Follow-up appointments</li>
-                    <li>• Review of test results</li>
-                  </ul>
-
-                  <p>
-                    Patients should seek in-person care when physical
-                    examination or urgent evaluation is needed.
-                  </p>
-                </section>
-                {/* pediatric telemedicine */}
-                <section id="pediatric">
-                  <h2>
-                    Pediatric Telemedicine <HeadingLink id="pediatric" />
-                  </h2>
-
-                  <p>
-                    Parents may use telemedicine for certain non-emergency
-                    concerns involving children, such as:
-                  </p>
-
-                  <ul>
-                    <li>• Mild fever</li>
-                    <li>• Common cold symptoms</li>
-                    <li>• Allergies</li>
-                    <li>• Minor skin concerns</li>
-                    <li>• Follow-up discussions</li>
-                  </ul>
-
-                  <p>
-                    However, infants, severe symptoms, breathing difficulties,
-                    dehydration, or emergencies require immediate medical
-                    evaluation.
-                  </p>
-                </section>
-                {/* when telemedicine is not appropriate */}
-                <section id="when-not">
-                  <h2>
-                    When Is Telemedicine Not Appropriate?{" "}
-                    <HeadingLink id="when-telemedicine-not-appropriate" />
-                  </h2>
-
-                  <p>
-                    Although telemedicine can manage many healthcare concerns,
-                    some situations require direct medical attention.
-                  </p>
-
-                  <p>Telemedicine may not be suitable for:</p>
-
-                  <ul>
-                    <li>• Severe injuries or trauma</li>
-                    <li>• Conditions requiring physical examination</li>
-                    <li>• Surgical procedures</li>
-                    <li>• Complex diagnostic testing</li>
-                    <li>• Severe or rapidly worsening symptoms</li>
-                    <li>• Medical emergencies</li>
-                  </ul>
-
-                  <p>
-                    A healthcare professional can guide you on whether an
-                    in-person visit is necessary.
-                  </p>
-                </section>
-                {/* Emergency Symptoms */}
-                <section id="emergency">
-                  <h2>
-                    Emergency Symptoms That Require Immediate Medical Care{" "}
-                    <HeadingLink id="emergency" />
-                  </h2>
-
-                  <p>Do not rely on telemedicine if you experience:</p>
 
                   <ul>
                     <li>• Severe chest pain</li>
                     <li>• Difficulty breathing</li>
+                    <li>• Sudden weakness or paralysis</li>
                     <li>
-                      • Signs of stroke (facial drooping, arm weakness,
-                      difficulty speaking)
+                      • Signs of stroke, such as difficulty speaking or facial
+                      drooping
                     </li>
-                    <li>• Severe bleeding</li>
+                    <li>• Heavy bleeding</li>
                     <li>• Loss of consciousness</li>
-                    <li>• Serious injuries</li>
                     <li>• Severe allergic reactions</li>
+                    <li>• Major accidents or injuries</li>
                   </ul>
 
                   <p>
-                    Contact your local emergency services or visit the nearest
-                    emergency department immediately.
+                    Immediate emergency services or the nearest emergency
+                    department should be contacted in these situations.
                   </p>
                 </section>
-                {/* comparison */}
-                <section id="comparison">
+                {/* Privacy & Safety */}
+                <section id="privacy-safety">
                   <h2>
-                    Telemedicine vs In-Person Care: Which Is Right for You?{" "}
-                    <HeadingLink id="telemedicine-vs-in-person-care" />
+                    Is a Telemedicine Appointment Safe and Private?{" "}
+                    <HeadingLink id="privacy-safety" />
                   </h2>
 
                   <p>
-                    The right choice depends on your symptoms, medical history,
-                    urgency, and your healthcare professional’s recommendation.
+                    Patient safety and confidentiality are essential parts of
+                    virtual healthcare.
                   </p>
+
+                  <p>
+                    Reputable telemedicine providers use secure technologies and
+                    follow appropriate healthcare privacy and data protection
+                    practices to protect patient information.
+                  </p>
+
+                  <p>Patients can improve their privacy by:</p>
+
+                  <ul>
+                    <li>• Using a secure internet connection</li>
+                    <li>• Attending appointments in a private location</li>
+                    <li>
+                      • Avoiding public Wi-Fi when discussing sensitive health
+                      information
+                    </li>
+                    <li>• Choosing trusted telemedicine providers</li>
+                  </ul>
+                </section>
+                {/* Cost */}
+                <section id="costs">
+                  <h2>
+                    Understanding Telemedicine Appointment Costs{" "}
+                    <HeadingLink id="costs" />
+                  </h2>
+
+                  <p>
+                    The cost of a telemedicine appointment depends on multiple
+                    factors, including:
+                  </p>
+
+                  <ul>
+                    <li>• Type of healthcare professional</li>
+                    <li>• Medical specialty</li>
+                    <li>• Country or region</li>
+                    <li>• Duration and complexity of the consultation</li>
+                    <li>• Healthcare provider's pricing structure</li>
+                  </ul>
+
+                  <p>
+                    In some regions, health insurance may cover certain
+                    telemedicine services depending on the patient’s insurance
+                    plan and local regulations.
+                  </p>
+
+                  <p>
+                    Patients should check with both their healthcare provider
+                    and insurance company to understand their coverage and
+                    potential out-of-pocket costs.
+                  </p>
+                </section>
+                {/* Cost */}
+                <section id="costs">
+                  <h2>
+                    Understanding Telemedicine Appointment Costs{" "}
+                    <HeadingLink id="costs" />
+                  </h2>
+
+                  <p>
+                    The cost of a telemedicine appointment depends on multiple
+                    factors, including:
+                  </p>
+
+                  <ul>
+                    <li>• Type of healthcare professional</li>
+                    <li>• Medical specialty</li>
+                    <li>• Country or region</li>
+                    <li>• Duration and complexity of the consultation</li>
+                    <li>• Healthcare provider's pricing structure</li>
+                  </ul>
+
+                  <p>
+                    In some regions, health insurance may cover certain
+                    telemedicine services depending on the patient’s insurance
+                    plan and local regulations.
+                  </p>
+
+                  <p>
+                    Patients should check with both their healthcare provider
+                    and insurance company to understand their coverage and
+                    potential out-of-pocket costs.
+                  </p>
+                </section>
+                {/* Telemedicine Myths vs Facts */}
+
+                <section id="myths-vs-facts">
+                  <h2>
+                    Telemedicine Appointment Myths vs Facts{" "}
+                    <HeadingLink id="myths-vs-facts" />
+                  </h2>
 
                   <div className="table-scroll">
                     <table className="compare">
                       <thead>
                         <tr>
-                          <th>Healthcare Need</th>
-                          <th>Telemedicine</th>
-                          <th>In-Person Visit</th>
+                          <th>Myth</th>
+                          <th>Fact</th>
                         </tr>
                       </thead>
 
                       <tbody>
                         <tr>
-                          <th scope="row">Common illnesses</th>
-                          <td className="good">✓ Often suitable</td>
-                          <td>Sometimes needed</td>
+                          <th scope="row">
+                            Online doctor appointments are not real medical
+                            consultations
+                          </th>
+                          <td>
+                            Qualified healthcare professionals can provide
+                            appropriate medical guidance remotely where
+                            suitable.
+                          </td>
                         </tr>
 
                         <tr>
-                          <th scope="row">Chronic disease follow-ups</th>
-                          <td className="good">✓ Often suitable</td>
-                          <td>Sometimes needed</td>
+                          <th scope="row">
+                            Telemedicine is only useful for minor illnesses
+                          </th>
+                          <td>
+                            Telemedicine can also support specialist
+                            consultations, chronic disease management, and
+                            medical second opinions.
+                          </td>
                         </tr>
 
                         <tr>
-                          <th scope="row">Medication reviews</th>
-                          <td className="good">✓ Suitable</td>
-                          <td>Sometimes needed</td>
+                          <th scope="row">
+                            A virtual appointment can replace every hospital
+                            visit
+                          </th>
+                          <td>
+                            Some conditions require physical examinations,
+                            tests, procedures, or emergency treatment.
+                          </td>
                         </tr>
 
                         <tr>
-                          <th scope="row">Specialist advice</th>
-                          <td className="good">✓ Suitable</td>
-                          <td>May be needed</td>
+                          <th scope="row">Telemedicine is not secure</th>
+                          <td>
+                            Reputable platforms use security measures designed
+                            to protect patient information.
+                          </td>
                         </tr>
 
                         <tr>
-                          <th scope="row">Medical second opinions</th>
-                          <td className="good">✓ Suitable</td>
-                          <td>Sometimes needed</td>
-                        </tr>
-
-                        <tr>
-                          <th scope="row">Physical examination</th>
-                          <td>Limited</td>
-                          <td className="good">✓ Required</td>
-                        </tr>
-
-                        <tr>
-                          <th scope="row">Diagnostic procedures</th>
-                          <td>Not available</td>
-                          <td className="good">✓ Required</td>
-                        </tr>
-
-                        <tr>
-                          <th scope="row">Emergency treatment</th>
-                          <td>Not suitable</td>
-                          <td className="good">✓ Required</td>
+                          <th scope="row">
+                            Older adults cannot use telemedicine
+                          </th>
+                          <td>
+                            Many elderly patients successfully use virtual
+                            healthcare with appropriate support.
+                          </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-
-                  <p>
-                    The right choice depends on your symptoms, medical history,
-                    urgency, and your healthcare professional’s recommendation.
-                  </p>
                 </section>
-
-                <section id="safety">
+                {/* Future of Telemedicine */}
+                <section id="future">
                   <h2>
-                    Is an Online Doctor Consultation Safe?{" "}
-                    <HeadingLink id="safety" />
+                    The Future of Telemedicine Appointments{" "}
+                    <HeadingLink id="future" />
                   </h2>
+
                   <p>
-                    Yes, online consultations can be safe when conducted through
-                    trusted healthcare providers that use secure communication
-                    systems and follow appropriate privacy and medical
-                    standards.
+                    Telemedicine continues to evolve with advancements in
+                    digital healthcare technology, making virtual care more
+                    accessible, efficient, and patient-centered.
                   </p>
 
-                  <div className="callout tip reveal">
-                    <div className="icon" aria-hidden="true">
-                      {/* <svg
-                        width="26"
-                        height="26"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <path
-                          d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"
-                          stroke="currentColor"
-                          strokeWidth="1.7"
-                          strokeLinecap="round"
-                        />
-                      </svg> */}
-                    </div>
-                    <div>
-                      <h4>For a safer experience:</h4>
-                      <ul>
-                        <li>• Use a private and quiet location</li>
-                        <li>
-                          • Avoid public Wi-Fi when discussing sensitive health
-                          information
-                        </li>
-                        <li>• Use trusted telemedicine platforms</li>
-                        <li>
-                          • Verify the healthcare professional’s credentials
-                        </li>
-                      </ul>
-                      <p>
-                        Protecting patient privacy and maintaining
-                        confidentiality are essential parts of quality virtual
-                        healthcare.
-                      </p>
-                    </div>
-                  </div>
-                </section>
+                  <p>Future developments may include:</p>
 
-                <section id="cost">
-                  <h2>
-                    How Much Does an Online Doctor Consultation Cost?{" "}
-                    <HeadingLink id="cost" />
-                  </h2>
-                  <p>
-                    The cost of an online consultation varies depending on
-                    several factors:
-                  </p>
                   <ul>
-                    <li>• Doctor’s specialty</li>
-                    <li>• Country or location</li>
-                    <li>• Type of consultation</li>
-                    <li>• Duration and complexity of the medical concern</li>
-                    <li>• Healthcare provider’s pricing</li>
+                    <li>• Better video communication systems</li>
+                    <li>• Improved patient portals</li>
+                    <li>• Remote monitoring devices</li>
+                    <li>• Artificial intelligence-assisted healthcare tools</li>
+                    <li>• More personalized virtual healthcare experiences</li>
                   </ul>
 
                   <p>
-                    Some health insurance plans may cover online consultations
-                    depending on the provider, policy, and local regulations.
-                    Patients should confirm coverage and costs before booking an
-                    appointment.
+                    These advancements aim to improve convenience and healthcare
+                    accessibility while supporting healthcare professionals in
+                    delivering effective care.
                   </p>
                 </section>
-
-                <section id="choose">
+                {/* Why Choose Humancare Connect */}
+                <section id="why-humancare-connect">
                   <h2>
-                    How to Choose the Best Online Doctor Consultation Service{" "}
-                    <HeadingLink id="choose-online-doctor" />
+                    Why Choose Humancare Connect for Your Telemedicine
+                    Appointment? <HeadingLink id="why-humancare-connect" />
                   </h2>
 
-                  <div className="myth-grid">
-                    <div className="myth-card fact reveal">
-                      <span className="tag">Qualified Doctors</span>
+                  <p>
+                    At Humancare Connect, we aim to make quality healthcare
+                    accessible and convenient for patients across different
+                    regions. Our telemedicine services connect you with
+                    experienced healthcare professionals through a secure and
+                    patient-centered virtual care experience.
+                  </p>
+
+                  <div className="card-grid">
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            cx="12"
+                            cy="8"
+                            r="4"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                          <path
+                            d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Experienced Healthcare Professionals</h4>
+
                       <p>
-                        Choose a service that connects you with licensed and
-                        experienced healthcare professionals.
+                        Connect with qualified doctors and specialists who can
+                        review your concerns, evaluate your medical information,
+                        and guide you through the next steps of your healthcare
+                        journey.
                       </p>
                     </div>
 
-                    <div className="myth-card fact reveal">
-                      <span className="tag">Medical Specialties</span>
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M12 3v18M3 12h18"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Specialist Consultations</h4>
+
                       <p>
-                        Ensure the platform offers access to the specialists you
-                        may need.
+                        Access expert opinions across multiple medical
+                        specialties without the need for unnecessary travel,
+                        helping you receive the care and guidance you need more
+                        conveniently.
                       </p>
                     </div>
 
-                    <div className="myth-card fact reveal">
-                      <span className="tag">Privacy & Security</span>
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M12 6v6l4 2"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="9"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Medical Second Opinions</h4>
+
                       <p>
-                        Check whether the provider uses secure systems to
-                        protect your medical information.
+                        Receive additional expert insights on complex diagnoses,
+                        major treatment decisions, and ongoing treatment plans
+                        to help you make informed healthcare decisions.
                       </p>
                     </div>
 
-                    <div className="myth-card fact reveal">
-                      <span className="tag">Easy Appointments</span>
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9z"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                          <path
+                            d="M3 12h18M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9z"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>International Patient Support</h4>
+
                       <p>
-                        A good platform should make scheduling, communication,
-                        and sharing medical records simple.
+                        Patients from different countries can securely share
+                        medical reports, discuss treatment options, and seek
+                        specialist guidance remotely before planning further
+                        care.
                       </p>
                     </div>
 
-                    <div className="myth-card fact reveal">
-                      <span className="tag">Patient Support</span>
+                    <div className="info-card reveal">
+                      <div className="icon">
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <path
+                            d="M5 12h14M12 5v14"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                          />
+                          <rect
+                            x="3"
+                            y="3"
+                            width="18"
+                            height="18"
+                            rx="3"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                          />
+                        </svg>
+                      </div>
+
+                      <h4>Convenient and Patient-Centered Care</h4>
+
                       <p>
-                        Reliable customer assistance can help resolve technical
-                        or appointment-related issues.
+                        Our goal is to simplify healthcare by providing an easy,
+                        secure, and patient-focused way to connect with
+                        healthcare professionals from the comfort of your home.
                       </p>
                     </div>
                   </div>
+
+                  <p>
+                    Book your telemedicine appointment with Humancare Connect
+                    today and take the first step toward accessible, modern
+                    healthcare.
+                  </p>
                 </section>
 
                 {/* FAQ */}
@@ -1060,7 +1767,8 @@ export default function HowTelemedicineAppointmentWork() {
                     </details>
                   ))}
                 </section>
-                {/* key */}
+                {/* Key Takeaways */}
+                {/* Key Takeaways */}
                 <section id="key-takeaways">
                   <div className="takeaway-box reveal">
                     <h3>
@@ -1104,8 +1812,9 @@ export default function HowTelemedicineAppointmentWork() {
                             strokeLinejoin="round"
                           />
                         </svg>
-                        Telemedicine can help patients access care for many
-                        non-emergency medical conditions.
+                        A telemedicine appointment allows patients to consult
+                        healthcare professionals remotely using secure digital
+                        technology.
                       </li>
 
                       <li>
@@ -1123,9 +1832,10 @@ export default function HowTelemedicineAppointmentWork() {
                             strokeLinejoin="round"
                           />
                         </svg>
-                        Common illnesses, chronic diseases, skin concerns,
-                        mental health conditions, and specialist consultations
-                        are often suitable for virtual care.
+                        The process typically involves booking an appointment,
+                        preparing medical information, attending the virtual
+                        consultation, receiving medical guidance, and scheduling
+                        follow-up care when necessary.
                       </li>
 
                       <li>
@@ -1143,8 +1853,9 @@ export default function HowTelemedicineAppointmentWork() {
                             strokeLinejoin="round"
                           />
                         </svg>
-                        Online medical second opinions allow patients to discuss
-                        complex diagnoses and treatment options with experts.
+                        Telemedicine provides convenient access to doctors,
+                        specialists, and second opinions without unnecessary
+                        travel.
                       </li>
 
                       <li>
@@ -1162,8 +1873,9 @@ export default function HowTelemedicineAppointmentWork() {
                             strokeLinejoin="round"
                           />
                         </svg>
-                        Some situations require physical examinations, tests,
-                        procedures, or emergency treatment.
+                        It is suitable for many non-emergency healthcare needs
+                        but does not replace emergency medical treatment or
+                        situations requiring physical examination.
                       </li>
 
                       <li>
@@ -1181,8 +1893,8 @@ export default function HowTelemedicineAppointmentWork() {
                             strokeLinejoin="round"
                           />
                         </svg>
-                        Choosing the right healthcare option depends on your
-                        symptoms and the advice of your healthcare professional.
+                        Choosing a trusted telemedicine provider helps ensure a
+                        safe, private, and effective healthcare experience.
                       </li>
                     </ul>
                   </div>
@@ -1192,21 +1904,31 @@ export default function HowTelemedicineAppointmentWork() {
 
             {/* CTA */}
             <section className="cta-section reveal">
-              <h2>Need Expert Medical Guidance From Home?</h2>
+              <h2>Ready to Schedule Your Telemedicine Appointment?</h2>
               <p>
-                Humancare Connect makes healthcare more accessible by connecting
-                patients with experienced doctors and specialists through secure
-                telemedicine services.
-                <br />
-                <br />
-                Whether you need a general consultation, specialist advice,
-                chronic disease follow-up, or a medical second opinion, our team
-                is here to support your healthcare journey.
+                Getting expert medical guidance is now easier than ever. With
+                Humancare Connect, you can connect with experienced healthcare
+                professionals from the comfort and privacy of your home.
+              </p>
+              <p>Our telemedicine services allow you to:</p>
+              <ul>
+                <li>Book convenient online doctor appointments</li>
+                <li>Consult experienced specialists</li>
+                <li>Share medical reports and receive expert guidance</li>
+                <li>
+                  Obtain medical second opinions for complex health concerns
+                </li>
+                <li>Receive follow-up care without unnecessary travel</li>
+              </ul>
+              <p>
+                Whether you are seeking a routine consultation, specialist
+                advice, or a second opinion, Humancare Connect is here to make
+                quality healthcare more accessible.
               </p>
               <p>
                 <strong>
-                  Book your online consultation today and receive expert
-                  healthcare guidance from anywhere in the world.
+                  Book your telemedicine appointment today and take the first
+                  step toward convenient, personalized healthcare.
                 </strong>
               </p>
               <div className="cta-buttons">
@@ -1219,7 +1941,7 @@ export default function HowTelemedicineAppointmentWork() {
               </div>
             </section>
             {/* ============ RELATED ARTICLES ============ */}
-            {/* <section className="related-section" aria-label="Related articles">
+            <section className="related-section" aria-label="Related articles">
               <div className="eyebrow" style={{ marginBottom: "8px" }}>
                 Keep reading
               </div>
@@ -1253,7 +1975,7 @@ export default function HowTelemedicineAppointmentWork() {
                   </a>
                 ))}
               </div>
-            </section> */}
+            </section>
           </div>
         </main>
       </div>
