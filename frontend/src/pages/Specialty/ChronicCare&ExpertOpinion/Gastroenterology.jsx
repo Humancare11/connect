@@ -157,80 +157,41 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: GiHeartOrgan,
-      name: "Abdominal Pain",
-      path: "/chronic-care/gastroenterology/abdominal-pain",
-      description:
-        "Evaluation and treatment of stomach pain, cramping, digestive discomfort, and gastrointestinal symptoms.",
+      name: "Acid reflux / GERD",
+      desc: "Evaluation for irregular heart sensations.",
+      path: "/chronic-care/gastroenterology/acid-reflux-gerd",
     },
     {
       Icon: FiHeart,
-      name: "Acid Reflux / GERD",
-      path: "/chronic-care/gastroenterology/acid-reflux-gerd",
-      description:
-        "Management of chronic heartburn, acid reflux, regurgitation, and esophageal irritation.",
+      name: "Irritable Bowel Syndrome",
+      desc: "Support for healthy infant feeding",
+      path: "/chronic-care/gastroenterology/irritable-bowel-syndrome",
     },
     {
       Icon: FiZap,
-      name: "Bloating",
-      path: "/chronic-care/gastroenterology/bloating",
-      description:
-        "Care for abdominal fullness, gas, bloating, digestive discomfort, and related gastrointestinal concerns.",
+      name: "Constipation",
+      desc: "Difficulty passing regular stools",
+      path: "/chronic-care/gastroenterology/constipation",
     },
     {
       Icon: MdOutlineBloodtype,
-      name: "Constipation",
-      path: "/chronic-care/gastroenterology/constipation",
-      description:
-        "Diagnosis and treatment of infrequent bowel movements, difficulty passing stool, and digestive irregularities.",
+      name: "Abdominal pain",
+      desc: "Fever and illness in children",
+      path: "/chronic-care/gastroenterology/chronic-care/gastroenterology/abdominal-pain",
     },
     {
       Icon: FiTrendingUp,
-      name: "Fatty Liver Follow-Up",
-      description:
-        "Ongoing monitoring and management of fatty liver disease to support long-term liver health.",
+      name: "Bloating",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/gastroenterology/bloating",
     },
     {
       Icon: FiTarget,
-      name: "Irritable Bowel Syndrome (IBS)",
-      description:
-        "Treatment for IBS symptoms including abdominal pain, bloating, diarrhea, constipation, and bowel irregularities.",
+      name: "Fatty liver follow-up",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/gastroenterology/fatty-liver",
     },
-    {
-      Icon: GiLungs,
-      name: "Chronic Heartburn",
-      description:
-        "Evaluation of persistent heartburn and digestive symptoms affecting daily comfort and health.",
-    },
-    {
-      Icon: FiShield,
-      name: "Diarrhea & Digestive Upset",
-      description:
-        "Diagnosis and treatment of acute and chronic diarrhea, digestive infections, and gastrointestinal disturbances.",
-    },
-    {
-      Icon: GiHeartOrgan,
-      name: "Nausea & Indigestion",
-      description:
-        "Care for digestive discomfort, nausea, upset stomach, and difficulty digesting food.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Liver Function Concerns",
-      description:
-        "Evaluation of abnormal liver tests, liver inflammation, and metabolic liver conditions.",
-    },
-    {
-      Icon: FiZap,
-      name: "Digestive Tract Inflammation",
-      description:
-        "Management of inflammation affecting the stomach, intestines, and gastrointestinal tract.",
-    },
-    {
-      Icon: MdOutlineBloodtype,
-      name: "Preventive Digestive Health",
-      description:
-        "Routine digestive evaluations, lifestyle counseling, and gastrointestinal wellness support.",
-    },
+
   ],
 
   faqs: [
@@ -501,15 +462,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -626,38 +579,24 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Chronic Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -758,11 +697,7 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

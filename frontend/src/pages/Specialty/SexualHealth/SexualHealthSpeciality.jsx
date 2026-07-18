@@ -173,81 +173,46 @@ const SPECIALTY_DATA = {
     {
       Icon: FiHeart,
       name: "Chlamydia",
+      desc: "Common sexually transmitted bacterial infection",
       path: "/sexual-health/sexual-health-and-wellness/chlamydia",
-      description:
-        "Diagnosis, treatment guidance, and follow-up care for one of the most common sexually transmitted infections.",
     },
     {
       Icon: FiTrendingUp,
       name: "Gonorrhea",
+      desc: "Common bacterial sexually transmitted infection",
       path: "/sexual-health/sexual-health-and-wellness/gonorrhea",
-      description:
-        "Evaluation and management of gonorrhea symptoms, testing concerns, and treatment support.",
     },
     {
       Icon: FiUsers,
       name: "Herpes",
+      desc: "Viral infection causing painful sores",
       path: "/sexual-health/sexual-health-and-wellness/herpes",
-      description:
-        "Care for herpes-related symptoms, outbreak management, and sexual health education.",
     },
     {
       Icon: FiZap,
-      name: "HIV Prevention & PrEP Guidance",
-      description:
-        "Assessment of HIV risk and personalized recommendations regarding PrEP and prevention strategies.",
+      name: "HIV Prevention / PrEP Guidance",
+      desc: "Preventive care for HIV protection",
+      path: "/sexual-health/sexual-health-and-wellness/hiv-prevention",
     },
     {
       Icon: FiShield,
       name: "Partner Exposure Concerns",
+      desc: "Concerns after sexual exposure",
       path: "/sexual-health/sexual-health-and-wellness/partner-exposure-concerns",
-      description:
-        "Support for individuals concerned about potential exposure to sexually transmitted infections.",
     },
     {
       Icon: FiCompass,
       name: "Safe Sex Counseling",
+      desc: "Guidance for healthier intimate relationships",
       path: "/sexual-health/sexual-health-and-wellness/safe-sex-counseling",
-      description:
-        "Education and practical guidance for reducing risks and maintaining sexual wellness.",
     },
     {
       Icon: FiActivity,
       name: "STI Consultation",
+      desc: "Testing, treatment, and sexual health support",
       path: "/sexual-health/sexual-health-and-wellness/sti-consultation",
-      description:
-        "Evaluation of symptoms, testing recommendations, treatment options, and prevention planning.",
     },
-    {
-      Icon: FiTarget,
-      name: "HPV Concerns",
-      description:
-        "Guidance regarding HPV-related symptoms, risks, prevention, and sexual health education.",
-    },
-    {
-      Icon: FiBriefcase,
-      name: "Sexual Wellness Questions",
-      description:
-        "Professional support for general sexual health concerns and preventive care discussions.",
-    },
-    {
-      Icon: FiHome,
-      name: "STI Prevention Planning",
-      description:
-        "Personalized recommendations to reduce infection risks and support healthy sexual practices.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Recurrent STI Concerns",
-      description:
-        "Evaluation and management strategies for individuals experiencing recurring infections.",
-    },
-    {
-      Icon: FiLayers,
-      name: "Preventive Sexual Health Screening",
-      description:
-        "Routine sexual health evaluations designed to support long-term wellness and early detection.",
-    },
+
   ],
 
   faqs: [
@@ -520,15 +485,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -650,38 +607,24 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Sexual Health</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -782,11 +725,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

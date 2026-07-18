@@ -169,81 +169,34 @@ const SPECIALTY_DATA = {
     {
       Icon: FiActivity,
       name: "Erectile Dysfunction",
+      desc: "Difficulty getting or maintaining erections",
       path: "/mens-health/men-health/erectile-dysfunction",
-      description:
-        "Evaluation and treatment of difficulty achieving or maintaining erections and other sexual performance concerns.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Hair Loss",
-      path: "/skin-and-hair-care/dermatology/hair-loss",
-      description:
-        "Assessment of male pattern hair loss, thinning hair, and scalp health concerns with personalized treatment recommendations.",
+      name: "Low Testosterone Symptoms",
+      desc: "Low hormone levels affecting energy",
+      path: "/mens-health/men-health/low-testosterone-symptoms",
     },
     {
       Icon: FiHeart,
-      name: "Low Libido",
-      path: "/mens-health/men-health/low-libido",
-      description:
-        "Management of reduced sexual desire and factors affecting intimacy, relationships, and overall wellness.",
+      name: "Hair Loss",
+      desc: "Thinning hair and excessive shedding",
+      path: "/mens-health/men-health/hair-loss",
     },
     {
       Icon: FiZap,
-      name: "Low Testosterone Symptoms",
-      path: "/mens-health/men-health/low-testosterone-symptoms",
-      description:
-        "Evaluation of hormonal changes associated with fatigue, low energy, reduced muscle mass, mood changes, and decreased motivation.",
+      name: "Low Libido",
+      desc: "Support for changes in sexual desire",
+      path: "/mens-health/men-health/low-libido",
     },
     {
       Icon: FiShield,
       name: "Prostate Health",
+      desc: "Common concerns affecting prostate function",
       path: "/mens-health/men-health/prostate-health",
-      description:
-        "Preventive prostate screenings, urinary symptom evaluation, and ongoing prostate wellness monitoring.",
     },
-    {
-      Icon: FiLayers,
-      name: "Testosterone Deficiency",
-      description:
-        "Diagnosis and management of testosterone-related concerns affecting physical performance, energy levels, and sexual health.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Male Fertility Concerns",
-      description:
-        "Assessment of reproductive health factors that may impact fertility, hormone balance, and family planning goals.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Urinary Symptoms",
-      description:
-        "Evaluation of frequent urination, weak urine flow, nighttime urination, and other urinary tract concerns common in men.",
-    },
-    {
-      Icon: FiAlertCircle,
-      name: "Premature Ejaculation",
-      path: "/premature-ejaculation",
-      description:
-        "Confidential evaluation and treatment options for ejaculation concerns affecting sexual satisfaction and confidence.",
-    },
-    {
-      Icon: FiTarget,
-      name: "Sexual Performance Concerns",
-      description:
-        "Comprehensive support for physical and psychological factors affecting sexual performance and intimacy.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Men's Wellness Screening",
-      description:
-        "Routine health assessments designed to identify risk factors, monitor overall health, and support disease prevention.",
-    },
-    {
-      Icon: FiCompass,
-      name: "Healthy Aging for Men",
-      description:
-        "Personalized guidance for age-related changes in hormone levels, energy, metabolism, sexual health, and overall wellness.",
-    },
+
   ],
 
   faqs: [
@@ -514,15 +467,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -644,38 +589,24 @@ export default function SpeMensHealth({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Men's Health</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -776,11 +707,7 @@ export default function SpeMensHealth({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

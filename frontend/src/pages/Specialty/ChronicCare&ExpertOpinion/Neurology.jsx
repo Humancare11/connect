@@ -155,83 +155,47 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: GiHeartOrgan,
-      name: "Chronic Migraine",
-      path: "/chronic-care/neurology/chronic-migraine",
-      description:
-        "Management of recurring migraine headaches associated with neurological symptoms, sensitivity to light, and chronic pain.",
+      name: "Migraine ",
+      desc: "Evaluation for irregular heart sensations.",
+      path: "/chronic-care/neurology/migraine",
     },
     {
       Icon: FiHeart,
-      name: "Dizziness",
-      path: "/chronic-care/neurology/dizziness",
-      description:
-        "Evaluation and treatment of dizziness, lightheadedness, balance problems, and neurological causes of vertigo.",
+      name: "Chronic Migraine",
+      desc: "Support for healthy infant feeding",
+      path: "/chronic-care/neurology/chronic-migraine",
     },
     {
       Icon: FiZap,
-      name: "Memory Concerns",
-      path: "/chronic-care/neurology/memory-concerns",
-      description:
-        "Assessment of memory loss, forgetfulness, cognitive decline, concentration difficulties, and neurological changes.",
+      name: "Seizures / Epilepsy follow-up",
+      desc: "Cold and flu symptoms in children",
+      path: "/chronic-care/neurology/seizures-epilepsy-follow-up",
     },
     {
       Icon: MdOutlineBloodtype,
-      name: "Migraine",
-      path: "/chronic-care/neurology/migraine",
-      description:
-        "Diagnosis and treatment of migraine headaches, aura symptoms, nausea, and recurring neurological pain.",
+      name: "Numbness & Tingling",
+      desc: "Fever and illness in children",
+      path: "/chronic-care/neurology/numbness-and-tingling",
     },
     {
       Icon: FiTrendingUp,
-      name: "Numbness and Tingling",
-      path: "/chronic-care/neurology/numbness-and-tingling",
-      description:
-        "Evaluation of abnormal sensations, nerve-related symptoms, neuropathy, and neurological disorders.",
+      name: "Tremor",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/neurology/tremor",
     },
     {
       Icon: FiTarget,
-      name: "Seizures & Epilepsy Follow-Up",
-      path: "/chronic-care/neurology/seizures-epilepsy-follow-up",
-      description:
-        "Ongoing care and monitoring for seizure disorders, epilepsy management, and medication adjustments.",
+      name: "Dizziness",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/neurology/dizziness",
     },
     {
       Icon: GiLungs,
-      name: "Tremor",
-      path: "/chronic-care/neurology/tremor",
-      description:
-        "Assessment and treatment of shaking, involuntary movements, and neurological movement disorders.",
+      name: "Memory concerns",
+      desc: "Evaluation for irregular heart sensations.",
+      path: "/chronic-care/neurology/memory-concerns",
     },
-    {
-      Icon: FiShield,
-      name: "Peripheral Neuropathy",
-      description:
-        "Management of nerve damage causing pain, weakness, numbness, and tingling in the hands and feet.",
-    },
-    {
-      Icon: GiHeartOrgan,
-      name: "Balance & Coordination Disorders",
-      description:
-        "Evaluation of instability, falls, walking difficulties, and neurological coordination concerns.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Nerve Compression Disorders",
-      description:
-        "Diagnosis and treatment of conditions affecting nerve function and causing pain or weakness.",
-    },
-    {
-      Icon: FiZap,
-      name: "Cognitive Function Changes",
-      description:
-        "Support for changes in attention, thinking, processing speed, and overall cognitive health.",
-    },
-    {
-      Icon: MdOutlineBloodtype,
-      name: "Neurological Weakness",
-      description:
-        "Assessment of unexplained muscle weakness, nerve dysfunction, and neurological symptoms affecting mobility.",
-    },
+
   ],
 
   faqs: [
@@ -502,15 +466,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -628,38 +584,24 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Chronic Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -760,11 +702,7 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

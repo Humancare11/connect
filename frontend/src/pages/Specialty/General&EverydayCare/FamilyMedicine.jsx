@@ -157,79 +157,20 @@ const SPECIALTY_DATA = {
     {
       Icon: FiCalendar,
       name: "Routine Check-Ups",
+      desc: "Ongoing care for everyday health",
       path: "/general-and-everyday-care/family-medicine/routine-check-ups",
-      description:
-        "Annual wellness visits, preventive screenings, health assessments, and ongoing wellness monitoring.",
     },
     {
-      Icon: MdOutlineVaccines,
-      name: "Vaccination Advice",
-      path: "/general-and-everyday-care/family-medicine/vaccination-advice",
-      description:
-        "Guidance on recommended immunizations for children, adults, seniors, travel needs, and preventive healthcare.",
-    },
-    {
-      Icon: FiUsers,
       name: "Whole-Family Illnesses",
+      desc: "Care for illnesses affecting families",
       path: "/general-and-everyday-care/family-medicine/whole-family-illnesses",
-      description:
-        "Diagnosis and treatment of common illnesses that affect multiple family members, including viral and seasonal infections.",
     },
     {
-      Icon: FiThermometer,
-      name: "Common Cold & Flu",
-      description:
-        "Evaluation and treatment of cold symptoms, influenza, cough, congestion, fever, and seasonal illnesses.",
+      name: "Vaccination Advice",
+      desc: "Guidance for recommended immunizations",
+      path: "/general-and-everyday-care/family-medicine/vaccination-advice",
     },
-    {
-      Icon: FiShield,
-      name: "Minor Infections",
-      path: "/general-and-everyday-care/general-physician/minor-infections",
-      description:
-        "Care for common infections affecting the respiratory system, skin, urinary tract, and other areas of the body.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Hypertension Management",
-      description:
-        "Monitoring and treatment of high blood pressure to support cardiovascular health.",
-    },
-    {
-      Icon: MdOutlineBloodtype,
-      name: "Diabetes Follow-Up",
-      description:
-        "Ongoing management and monitoring of blood sugar levels and diabetes-related health concerns.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Asthma & Respiratory Conditions",
-      description:
-        "Care for asthma symptoms, breathing concerns, allergies, and chronic respiratory conditions.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Preventive Health Screenings",
-      description:
-        "Routine screenings designed to identify health risks and detect conditions early.",
-    },
-    {
-      Icon: FiTrendingUp,
-      name: "Lifestyle & Wellness Counseling",
-      description:
-        "Support for nutrition, exercise, weight management, stress reduction, and healthy living.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Minor Injuries & Health Concerns",
-      description:
-        "Evaluation of minor injuries, strains, aches, and common non-emergency medical issues.",
-    },
-    {
-      Icon: FiTarget,
-      name: "General Primary Care Needs",
-      description:
-        "Comprehensive healthcare services addressing everyday health concerns and long-term wellness goals.",
-    },
+
   ],
 
   faqs: [
@@ -500,15 +441,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -628,38 +561,24 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">General & Everyday Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -760,11 +679,7 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

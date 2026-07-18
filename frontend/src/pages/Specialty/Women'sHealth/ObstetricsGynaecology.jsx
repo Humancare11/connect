@@ -160,84 +160,64 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiShield,
-      name: "Bacterial Vaginosis",
-      path: "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
-      description:
-        "Diagnosis and treatment support for common vaginal bacterial infections.",
+      name: "Irregular Periods",
+      desc: "Evaluation of menstrual cycle irregularities",
+      path: "/women-health/obstetrics-and-gynaecology/irregular-periods",
     },
     {
       Icon: FiUserCheck,
-      name: "Birth Control Consultation",
-      path: "/women-health/obstetrics-and-gynaecology/birth-control",
-      description:
-        "Personalized contraceptive counseling and family planning guidance.",
+      name: "Birth Control",
+      desc: "Contraception counseling and guidance",
+      path: "/women-health/obstetrics-and-gynaecology/birth-control-consultation",
     },
     {
       Icon: FiActivity,
-      name: "Fertility Concerns",
-      path: "/women-health/obstetrics-and-gynaecology/fertility-concerns",
-      description:
-        "Evaluation and support for individuals experiencing difficulty conceiving.",
+      name: "PCOS",
+      desc: "Management of polycystic ovary syndrome",
+      path: "/women-health/obstetrics-and-gynaecology/pcos",
     },
     {
       Icon: FiCalendar,
-      name: "Irregular Periods",
-      path: "/women-health/obstetrics-and-gynaecology/irregular-periods",
-      description:
-        "Assessment and management of menstrual cycle irregularities and hormonal concerns.",
+      name: "Bacterial Vaginosis",
+      desc: "Diagnosis and treatment guidance",
+      path: "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
     },
     {
       Icon: FiWind,
-      name: "Menstrual Cramps",
-      path: "/women-health/obstetrics-and-gynaecology/menstrual-cramps",
-      description:
-        "Care for painful periods and menstrual discomfort affecting daily activities.",
+      name: "Bacterial Vaginosis",
+      desc: "Diagnosis and treatment guidance",
+      path: "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
     },
     {
       Icon: FiHeart,
-      name: "PCOS",
-      path: "/women-health/obstetrics-and-gynaecology/pcos",
-      description:
-        "Management of polycystic ovary syndrome and related hormonal symptoms.",
+      name: "Menstrual Cramps",
+      desc: "Relief and management of period pain",
+      path: "/women-health/obstetrics-and-gynaecology/menstrual-cramps",
     },
     {
       Icon: FiTarget,
       name: "Pelvic Pain",
+      desc: "Assessment of pelvic discomfort and pain",
       path: "/women-health/obstetrics-and-gynaecology/pelvic-pain",
-      description:
-        "Evaluation of pelvic discomfort, pressure, cramping, and reproductive health concerns.",
     },
     {
       Icon: FiActivity,
       name: "Prenatal Consultation",
+      desc: "Virtual prenatal care and guidance",
       path: "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
-      description:
-        "Pregnancy planning, prenatal care guidance, and maternal health support.",
     },
     {
       Icon: FiShield,
-      name: "Vaginal Yeast Infection",
-      path: "/vaginal-yeast-infection",
-      description:
-        "Assessment and treatment support for vaginal itching, irritation, and yeast infections.",
+      name: "Prenatal Consultation",
+      desc: "Virtual prenatal care and guidance",
+      path: "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
     },
     {
-      Icon: FiSearch,
-      name: "Hormonal Imbalances",
-      description: "Evaluation of symptoms related to changing hormone levels.",
+      name: "Fertility Concerns",
+      desc: "Consultation for fertility and conception",
+      path: "/women-health/obstetrics-and-gynaecology/fertility-concerns",
     },
-    {
-      Icon: FiUsers,
-      name: "Family Planning",
-      description:
-        "Guidance regarding reproductive goals, pregnancy planning, and contraception.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Reproductive Wellness",
-      description:
-        "Comprehensive support for long-term gynecological and reproductive health.",
-    },
+
   ],
 
   faqs: [
@@ -515,15 +495,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -645,38 +617,23 @@ export default function ObstetricsGynaecology({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
-
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Women's Health</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -777,11 +734,7 @@ export default function ObstetricsGynaecology({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

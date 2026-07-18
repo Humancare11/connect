@@ -168,83 +168,41 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiActivity,
-      name: "Arthritis",
-      path: "/eye-ear-bone/orthopedics/arthritis",
-      description:
-        "Management of joint pain, stiffness, inflammation, swelling, and reduced mobility caused by arthritis.",
+      name: "Back pain",
+      desc: "Pain, pressure, and ear discomfort",
+      path: "/eye-ear-bone/orthopedics/back-pain",
     },
     {
       Icon: FiTrendingUp,
-      name: "Back Pain",
-      path: "/eye-ear-bone/orthopedics/back-pain",
-      description:
-        "Diagnosis and treatment of lower back pain, upper back pain, spinal discomfort, and movement-related pain.",
+      name: "Neck pain",
+      desc: "Relief for voice and throat changes",
+      path: "/eye-ear-bone/orthopedics/neck-pain",
     },
     {
       Icon: FiShield,
-      name: "Knee Pain",
+      name: "Knee pain",
+      desc: "Relief for a blocked nose",
       path: "/eye-ear-bone/orthopedics/knee-pain",
-      description:
-        "Evaluation and care for knee injuries, arthritis-related knee pain, ligament concerns, and mobility issues.",
     },
     {
       Icon: FiZap,
-      name: "Muscle Strain",
+      name: "Muscle Strains",
+      desc: "Pain, irritation, or a scratchy throat",
       path: "/eye-ear-bone/orthopedics/muscle-strain",
-      description:
-        "Treatment for muscle injuries, overuse conditions, muscle tightness, and soft tissue damage.",
     },
     {
       Icon: FiCompass,
-      name: "Neck Pain",
-      path: "/eye-ear-bone/orthopedics/neck-pain",
-      description:
-        "Management of neck stiffness, pain, muscle tension, posture-related issues, and cervical spine conditions.",
+      name: "Osteoarthritis",
+      desc: "Relief for sore throat and swollen tonsils",
+      path: "/eye-ear-bone/orthopedics/osteoarthritis",
     },
     {
       Icon: FiLayers,
-      name: "Osteoarthritis",
-      path: "/eye-ear-bone/orthopedics/osteoarthritis",
-      description:
-        "Comprehensive care for joint degeneration, cartilage wear, chronic pain, and stiffness.",
+      name: "Arthritis Advice",
+      desc: "Spinning sensation and balance issues",
+      path: "/eye-ear-bone/orthopedics/arthritis",
     },
-    {
-      Icon: FiAlertCircle,
-      name: "Joint Injuries",
-      description:
-        "Assessment and treatment of sprains, ligament injuries, and joint-related trauma.",
-    },
-    {
-      Icon: FiTool,
-      name: "Tendon Disorders",
-      description:
-        "Care for tendon inflammation, tendon injuries, repetitive strain conditions, and overuse injuries.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Shoulder Pain",
-      description:
-        "Diagnosis and management of shoulder discomfort, reduced mobility, and musculoskeletal injuries.",
-    },
-    {
-      Icon: FiMove,
-      name: "Hip Pain",
-      description:
-        "Evaluation of hip joint pain, stiffness, arthritis, and mobility limitations.",
-    },
-    {
-      Icon: FiTarget,
-      name: "Sports Injuries",
-      path: "/child-and-family-care/adolescent-medicine/sports-injuries",
-      description:
-        "Treatment for athletic injuries affecting muscles, joints, ligaments, tendons, and bones.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Mobility & Movement Disorders",
-      description:
-        "Assessment of movement limitations, flexibility concerns, balance issues, and functional impairments.",
-    },
+
   ],
 
   faqs: [
@@ -515,15 +473,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -643,38 +593,24 @@ export default function Orthopedics({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Eye Ear & Bone</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -775,11 +711,7 @@ export default function Orthopedics({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

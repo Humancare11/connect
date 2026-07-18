@@ -172,82 +172,40 @@ const SPECIALTY_DATA = {
 
   conditions: [
     {
-      Icon: FiHeart,
-      name: "Cholesterol-Lowering Diet",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
-      description:
-        "Nutrition plans designed to support healthy cholesterol levels and cardiovascular wellness.",
-    },
-    {
       Icon: FiActivity,
-      name: "Diabetic Diet",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet",
-      description:
-        "Personalized dietary guidance to help manage blood sugar levels and diabetes-related health goals.",
-    },
-    {
-      Icon: FiShield,
-      name: "Food Intolerance Planning",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning",
-      description:
-        "Nutrition strategies for managing food sensitivities, digestive concerns, and dietary restrictions.",
+      name: "Sports Nutrition",
+      desc: "Nutrition plans for active lifestyles",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition",
     },
     {
       Icon: FiHeart,
       name: "Pregnancy Nutrition",
+      desc: "Healthy eating during pregnancy",
       path: "/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition",
-      description:
-        "Healthy eating guidance that supports maternal wellness and fetal development during pregnancy.",
+    },
+    {
+      Icon: FiMoon,
+      name: "Food-Intolerance Planning",
+      desc: "Diet guidance for food sensitivities",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning",
     },
     {
       Icon: FiTrendingUp,
-      name: "Sports Nutrition",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition",
-      description:
-        "Nutrition plans focused on athletic performance, recovery, endurance, and strength goals.",
+      name: "Cholesterol-Lowering Diet",
+      desc: "Heart-healthy meal planning",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
     },
     {
-      Icon: FiTarget,
-      name: "Weight Management",
-      path: "/weight-and-nurtrition/weight-management",
-      description:
-        "Evidence-based dietary strategies for healthy weight loss and long-term weight maintenance.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Heart-Healthy Nutrition",
-      description:
-        "Nutrition recommendations designed to support cardiovascular health and wellness.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Digestive Health Nutrition",
-      description:
-        "Dietary support for bloating, digestive discomfort, and gastrointestinal wellness.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Preventive Nutrition Counseling",
-      description:
-        "Healthy eating strategies focused on reducing future health risks.",
+      Icon: FiShield,
+      name: "Cholesterol-Lowering Diet",
+      desc: "Heart-healthy meal planning",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
     },
     {
       Icon: FiActivity,
-      name: "Healthy Eating Education",
-      description:
-        "Guidance for making informed food choices and improving daily nutrition habits.",
-    },
-    {
-      Icon: FiZap,
-      name: "Energy & Performance Nutrition",
-      description:
-        "Nutrition planning to support physical activity, recovery, and overall energy levels.",
-    },
-    {
-      Icon: FiCompass,
-      name: "Wellness Nutrition Programs",
-      description:
-        "Comprehensive nutrition support designed to promote long-term health and well-being.",
+      name: "Diabetic Diet",
+      desc: "Nutrition plans for diabetes management",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet",
     },
   ],
 
@@ -518,15 +476,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -647,38 +597,24 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Weight & Nutrition</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -779,11 +715,7 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

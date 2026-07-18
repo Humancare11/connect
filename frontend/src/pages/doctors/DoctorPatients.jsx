@@ -4,7 +4,7 @@ import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 
 const PrescriptionSlip = lazy(() =>
-  import("../../components/PrescriptionSlip").then((module) => ({
+  import("../../components/RxSlip").then((module) => ({
     default: module.PrescriptionSlip,
   })),
 );
@@ -210,7 +210,7 @@ function RxSlipModal({ rx, patient, doctor, onClose }) {
     if (!slipRef.current) return;
     setBusy(true);
     try {
-      const { downloadPrescriptionPDF } = await import("../../components/PrescriptionSlip");
+      const { downloadPrescriptionPDF } = await import("../../components/RxSlip");
       const name = patient?.name?.replace(/\s+/g, "_") || "patient";
       const date = rx.createdAt ? new Date(rx.createdAt).toISOString().split("T")[0] : "rx";
       await downloadPrescriptionPDF(slipRef.current, `prescription_${name}_${date}.pdf`);

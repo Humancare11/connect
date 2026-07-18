@@ -1,5 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+// import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -156,80 +157,29 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiActivity,
-      name: "Hormone Imbalance",
-      path: "/hormone-imblance",
-      description:
-        "Evaluation and treatment of hormonal disruptions affecting metabolism, mood, energy levels, reproductive health, and overall wellness.",
+      name: "Thyroid disorders",
+      desc: "Cold and flu symptoms in children",
+      path: "/chronic-care/endocrinology/thyroid-disorders",
     },
     {
       Icon: FiTrendingUp,
-      name: "Osteoporosis",
-      path: "/chronic-care/endocrinology/osteoporosis",
-      description:
-        "Comprehensive care for low bone density and bone loss to help strengthen bones and reduce fracture risk.",
+      name: "Diabetes Type 2",
+      desc: "Fever and illness in children",
+      path: "/chronic-care/endocrinology/type-2-diabetes",
     },
     {
       Icon: FiThermometer,
-      name: "Thyroid Disorders",
-      path: "/chronic-care/endocrinology/thyroid-disorders",
-      description:
-        "Diagnosis and management of hypothyroidism, hyperthyroidism, thyroid nodules, and thyroid hormone imbalances.",
+      name: "Hormone imbalance",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/endocrinology/chronic-care/endocrinology/hormone-imbalance",
     },
     {
       Icon: FiDroplet,
-      name: "Type 2 Diabetes",
-      path: "/chronic-care/endocrinology/type-2-diabetes",
-      description:
-        "Personalized diabetes management focused on blood sugar control, lifestyle modifications, and complication prevention.",
+      name: "Osteoporosis",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/endocrinology/osteoporosis",
     },
-    {
-      Icon: FiActivity,
-      name: "Insulin Resistance",
-      description:
-        "Evaluation and treatment of insulin resistance to support healthy blood sugar levels and metabolic function.",
-    },
-    {
-      Icon: FiAlertCircle,
-      name: "Prediabetes",
-      description:
-        "Early intervention strategies to help prevent the progression from prediabetes to Type 2 diabetes.",
-    },
-    {
-      Icon: FiBarChart2,
-      name: "Metabolic Disorders",
-      description:
-        "Care for conditions affecting metabolism, weight regulation, and energy balance.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Adrenal Gland Disorders",
-      description:
-        "Diagnosis and management of conditions affecting adrenal hormone production and overall endocrine health.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Polycystic Ovary Syndrome (PCOS)",
-      description:
-        "Treatment for hormone-related symptoms including irregular periods, fertility concerns, and metabolic complications.",
-    },
-    {
-      Icon: FiTrendingUp,
-      name: "Weight Management Concerns",
-      description:
-        "Medical support for endocrine-related weight gain, obesity, and metabolic challenges.",
-    },
-    {
-      Icon: FiShield,
-      name: "Vitamin D Deficiency",
-      description:
-        "Evaluation and treatment of vitamin deficiencies that may impact bone strength and overall health.",
-    },
-    {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Calcium & Bone Metabolism Disorders",
-      description:
-        "Management of conditions affecting calcium balance, bone health, and endocrine function.",
-    },
+
   ],
 
   faqs: [
@@ -500,15 +450,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -628,38 +570,24 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Chronic Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -760,11 +688,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

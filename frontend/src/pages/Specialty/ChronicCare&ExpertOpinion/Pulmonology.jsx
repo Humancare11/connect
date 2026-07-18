@@ -157,82 +157,40 @@ const SPECIALTY_DATA = {
     {
       Icon: GiHeartOrgan,
       name: "Asthma",
+      // desc: "Support for healthy infant feeding",
       path: "/chronic-care/pulmonology/asthma",
-      description:
-        "Management of airway inflammation, wheezing, shortness of breath, chest tightness, and asthma flare-ups.",
     },
     {
       Icon: FiHeart,
       name: "COPD",
+      // desc: "Cold and flu symptoms in children",
       path: "/chronic-care/pulmonology/copd",
-      description:
-        "Comprehensive care for chronic obstructive pulmonary disease, including breathing difficulties and long-term symptom management.",
     },
     {
       Icon: FiZap,
-      name: "Persistent Cough",
+      name: "Persistent cough",
+      // desc: "Fever and illness in children",
       path: "/chronic-care/pulmonology/persistent-cough",
-      description:
-        "Evaluation and treatment of chronic cough caused by respiratory conditions, infections, allergies, or airway irritation.",
     },
     {
       Icon: MdOutlineBloodtype,
-      name: "Post-COVID Concerns",
-      path: "/chronic-care/pulmonology/post-covid-concerns",
-      description:
-        "Support for lingering respiratory symptoms, fatigue, breathing difficulties, and lung health concerns following COVID-19.",
+      name: "Shortness of breath",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/pulmonology/shortness-of-breath",
     },
     {
       Icon: FiTrendingUp,
-      name: "Shortness of Breath",
-      path: "/chronic-care/pulmonology/shortness-of-breath",
-      description:
-        "Diagnosis and management of breathing difficulties during rest, exercise, or everyday activities.",
+      name: "Sleep apnea screening",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "/chronic-care/pulmonology/sleep-apnea-screening",
     },
     {
       Icon: FiTarget,
-      name: "Sleep Apnea",
-      path: "/chronic-care/pulmonology/sleep-apnea-screening",
-      description:
-        "Evaluation and treatment of interrupted breathing during sleep, snoring, and sleep-related respiratory disorders.",
+      name: "Post-COVID concerns",
+      // desc: "Red, itchy, irritated skin in kids",
+      path: "post-covid-concerns",
     },
-    {
-      Icon: GiLungs,
-      name: "Wheezing",
-      path: "/wheezing",
-      description:
-        "Assessment of airway narrowing, asthma-related symptoms, and breathing difficulties.",
-    },
-    {
-      Icon: FiShield,
-      name: "Recurrent Respiratory Infections",
-      description:
-        "Care for frequent lung infections, bronchitis, and respiratory illnesses affecting lung health.",
-    },
-    {
-      Icon: GiHeartOrgan,
-      name: "Chronic Bronchitis",
-      description:
-        "Management of long-term airway inflammation, mucus production, and persistent cough.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Lung Function Concerns",
-      description:
-        "Evaluation of reduced breathing capacity, abnormal lung function, and respiratory performance issues.",
-    },
-    {
-      Icon: FiZap,
-      name: "Respiratory Allergies",
-      description:
-        "Treatment of allergy-related respiratory symptoms affecting breathing and airway health.",
-    },
-    {
-      Icon: MdOutlineBloodtype,
-      name: "Preventive Lung Health Care",
-      description:
-        "Routine respiratory evaluations, risk assessments, and preventive strategies to maintain healthy lung function.",
-    },
+
   ],
 
   faqs: [
@@ -503,15 +461,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -629,38 +579,24 @@ export default function Pulmonology({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Chronic Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -761,11 +697,7 @@ export default function Pulmonology({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

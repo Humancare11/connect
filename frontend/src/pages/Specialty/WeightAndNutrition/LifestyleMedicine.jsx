@@ -173,80 +173,24 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiActivity,
-      name: "Diet & Exercise Planning",
-      path: "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
-      description:
-        "Personalized nutrition and fitness strategies designed to support long-term health goals.",
+      name: "Healthy-Habit Coaching",
+      desc: "Lifestyle guidance for healthier living",
+      path: "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching",
     },
     {
       Icon: FiHeart,
-      name: "Healthy Habit Coaching",
-      path: "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching",
-      description:
-        "Guidance for creating and maintaining healthy daily routines and sustainable behavior changes.",
+      name: "Diet & Exercise Planning",
+      desc: "Personalized nutrition and fitness plans",
+      path: "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
     },
     {
       Icon: FiMoon,
       name: "Sleep Hygiene",
+      desc: "Guidance for better sleep habits",
       path: "/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene",
-      description:
-        "Support for improving sleep habits, sleep quality, recovery, and overall wellness.",
     },
-    {
-      Icon: FiTrendingUp,
-      name: "Weight Management",
-      path: "/weight-and-nurtrition/weight-management",
-      description:
-        "Personalized approaches to healthy weight loss, weight maintenance, and metabolic health.",
-    },
-    {
-      Icon: FiShield,
-      name: "Nutrition Concerns",
-      description:
-        "Support for improving eating habits, nutritional balance, and overall dietary wellness.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Physical Activity Planning",
-      description:
-        "Customized exercise recommendations designed around fitness levels and health goals.",
-    },
-    {
-      Icon: FiZap,
-      name: "Stress Management",
-      description:
-        "Evidence-based strategies to reduce stress and improve emotional resilience.",
-    },
-    {
-      Icon: FiCompass,
-      name: "Healthy Aging Support",
-      description:
-        "Lifestyle recommendations that promote longevity, vitality, and healthy aging.",
-    },
-    {
-      Icon: FiShield,
-      name: "Chronic Disease Prevention",
-      description:
-        "Preventive health planning focused on reducing risk factors for chronic conditions.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Energy & Fatigue Concerns",
-      description:
-        "Lifestyle interventions designed to improve energy levels and daily performance.",
-    },
-    {
-      Icon: FiTarget,
-      name: "Wellness Goal Coaching",
-      description:
-        "Personalized support for achieving health, fitness, and wellness objectives.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Preventive Lifestyle Care",
-      description:
-        "Comprehensive health optimization focused on long-term wellness and disease prevention.",
-    },
+
+
   ],
 
   faqs: [
@@ -517,15 +461,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -646,38 +582,24 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Weight & Nutrition</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -778,11 +700,7 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
