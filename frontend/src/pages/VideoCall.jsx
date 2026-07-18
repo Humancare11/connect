@@ -1428,7 +1428,7 @@ export default function VideoCall() {
           setCamErrorReason(mediaErrorMessage(err));
           setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
         }
-        resolveLocalReady(true);
+        resolveLocalReady(false);
       }
     })();
 
