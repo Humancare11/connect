@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -128,6 +129,13 @@ export default function AdjustmentDifficulties() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+    <SEO
+  title="Adjustment Difficulties Support Online | Virtual Mental Care"
+  description="Get online support for adjustment difficulties, stress, and life changes. Connect with a licensed provider for coping strategies, emotional support, and personalized care."
+  keywords="adjustment difficulties, adjustment disorder, stress management, life changes, emotional support, coping strategies, mental health support, virtual mental care, telemedicine services, telehealth services, virtual healthcare services, online doctor appointment, online provider, licensed providers"
+  url="https://humancareconnect.co/adjustment-difficulties"
+/>
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -179,6 +187,7 @@ export default function AdjustmentDifficulties() {
           </div>
         </div>
       </section>
+   
 
       {/* ══════════════════════ ABOUT + STICKY BOOKING ══════════════════════ */}
       <div className="condition-mid-section">
@@ -434,5 +443,6 @@ export default function AdjustmentDifficulties() {
         </div>
       </section>
     </div>
+     </>
   );
 }

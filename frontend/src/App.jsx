@@ -1119,7 +1119,7 @@ function AppLayout() {
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/cookies" element={<CookieBanner />} />
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-          <Route path="/images" element={<Images />} />"
+          <Route path="/images" element={<Images />} />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
@@ -2511,6 +2511,7 @@ function AppLayout() {
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
 
         {!hideLayout && <Footer />}

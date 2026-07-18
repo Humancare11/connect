@@ -1,7 +1,20 @@
+import { Helmet, HelmetProvider } from "react-helmet-async";
 import "./NotFound.css";
 import notFoundIllustration from "../assets/404-hero.png";
 
 export default function NotFound() {
+  return (
+    <HelmetProvider>
+      <Helmet>
+        <title>Page Not Found | Humancare Connect</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <NotFoundContent />
+    </HelmetProvider>
+  );
+}
+
+function NotFoundContent() {
   return (
     <main className="nf-page">
       {/* ---------- HERO ---------- */}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -710,6 +711,14 @@ function HeroSection({ data }) {
 // ─────────────────────────────────────────────────────────────────
 function AboutSpecialty() {
   return (
+<>
+<SEO
+  title="Online Asthma Treatment | Virtual Asthma Care & Support"
+  description="Get online asthma care for wheezing, shortness of breath, chest tightness, and breathing problems. Connect with a licensed provider for evaluation and treatment guidance."
+  keywords="asthma, asthma symptoms, wheezing, shortness of breath, chest tightness, breathing problems, asthma treatment, asthma care, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, online provider, licensed providers"
+  url="https://humancareconnect.co/allergic-rhinitis"
+/>
+
     <div className="sp-glass-card">
       <div className="sp-glass-shine" />
       <div className="sp-about-grid">
@@ -795,6 +804,7 @@ function AboutSpecialty() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
@@ -1200,6 +1210,7 @@ function FaqSection() {
         </div>
       </div>
     </section>
+    
   );
 }
 
@@ -1242,5 +1253,7 @@ export default function Asthma() {
         <FaqSection />
       </div>
     </>
+    
+
   );
 }

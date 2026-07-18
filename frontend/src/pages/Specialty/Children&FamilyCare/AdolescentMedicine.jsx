@@ -61,7 +61,7 @@ import api from "../../../api";
 
 import heroImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-teen-healthcare-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-consultation.webp";
-
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -589,6 +589,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <main className="sp-page">
+      <SEO
+  title="Adolescent Medicine Specialists | Teen Health & Wellness Care"
+  description="Get expert adolescent medicine care for teen physical, emotional, and behavioral health, including puberty concerns, anxiety, and sports injuries."
+  keywords="adolescent medicine, teen health, teen wellness, puberty concerns, adolescent health, behavioral health, emotional support, stress management, anxiety support, sports injuries, telemedicine services, virtual healthcare services, online doctor appointment, online provider, licensed providers"
+  url="https://humancareconnect.co/adolescent-medicine"
+/>
       {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
       <section className="sp-hero">
         <div className="sp-hero__bg">
