@@ -168,4 +168,3 @@ if (routes.length === 0) {
 fs.writeFileSync(path.join(outDir, "sitemap.xml"), buildSitemap(routes));
 fs.writeFileSync(path.join(outDir, "robots.txt"), buildRobotsTxt());
 
-console.log(`Generated sitemap.xml and robots.txt for ${routes.length} routes.`);

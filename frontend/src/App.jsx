@@ -982,7 +982,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -1056,7 +1056,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -2506,6 +2506,7 @@ function AppLayout() {
             element={<Vertigo />}
           />
           <Route path="/category-consultant" element={<CategoryConsultant />} />
+          <Route path="/service-consultant" element={<CategoryConsultant />} />
           <Route
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}

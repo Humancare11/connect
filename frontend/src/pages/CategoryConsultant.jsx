@@ -146,9 +146,22 @@ export default function CategoryConsultant({ onComplete }) {
     queryParams.get("specialty") || location.state?.specialtyName || "";
   const conditionName =
     queryParams.get("condition") || location.state?.conditionName || "";
+  const serviceSlug = queryParams.get("service") || "";
+  const isServiceMode = Boolean(serviceSlug);
+  const [serviceName, setServiceName] = useState("");
 
   useEffect(() => {
     const fetchPrice = async () => {
+      if (isServiceMode) {
+        try {
+          const response = await api.get(`/api/services/by-slug/${serviceSlug}`);
+          setPrice(response.data?.price ?? 49);
+          setServiceName(response.data?.name ?? "");
+        } catch (err) {
+          console.error("Failed to fetch service price in CategoryConsultant:", err);
+        }
+        return;
+      }
       try {
         const response = await api.get("/api/appointment-tree");
         const categoryName = CATEGORY_MAP[categoryId] || categoryId;
@@ -161,7 +174,7 @@ export default function CategoryConsultant({ onComplete }) {
       }
     };
     fetchPrice();
-  }, [categoryId]);
+  }, [categoryId, isServiceMode, serviceSlug]);
 
   const textareaRef = useRef(null);
 
@@ -257,20 +270,33 @@ export default function CategoryConsultant({ onComplete }) {
       return;
     }
     try {
-      const selection = {
-        catId: categoryId,
-        catLabel: categoryLabel,
-        specName: specialtyName || "",
-        specIco: "stethoscope",
-        condName: conditionName || "",
-        condIco: "activity",
-        cost: price,
-        currency: "USD",
-        isCategoryBooking: true,
-        categoryName: categoryLabel,
-        specialtyName: specialtyName || "",
-        conditionName: conditionName || "",
-      };
+      const selection = isServiceMode
+        ? {
+          catId: serviceSlug,
+          catLabel: serviceName || serviceSlug,
+          specName: "",
+          specIco: "stethoscope",
+          condName: "",
+          condIco: "activity",
+          cost: price,
+          currency: "USD",
+          isServiceBooking: true,
+          serviceName: serviceName || serviceSlug,
+        }
+        : {
+          catId: categoryId,
+          catLabel: categoryLabel,
+          specName: specialtyName || "",
+          specIco: "stethoscope",
+          condName: conditionName || "",
+          condIco: "activity",
+          cost: price,
+          currency: "USD",
+          isCategoryBooking: true,
+          categoryName: categoryLabel,
+          specialtyName: specialtyName || "",
+          conditionName: conditionName || "",
+        };
 
       // Save raw data directly
       sessionStorage.setItem(

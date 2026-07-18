@@ -546,7 +546,7 @@ const setTrackHint = (track, hint) => {
   if (!track || !("contentHint" in track)) return;
   try {
     track.contentHint = hint;
-  } catch (_) {}
+  } catch (_) { }
 };
 
 const getSenderForKind = (pc, kind) => {
@@ -605,7 +605,7 @@ const tuneSenderQuality = async (
     }
 
     await sender.setParameters(params);
-  } catch (_) {}
+  } catch (_) { }
 };
 
 const fmtDate = (d) => {
@@ -1193,10 +1193,10 @@ export default function VideoCall() {
             activeSender,
             track.kind === "video"
               ? {
-                  maxBitrate: BITRATE_PROFILE.cameraVideo,
-                  maxFramerate: 30,
-                  maintainResolution: true,
-                }
+                maxBitrate: BITRATE_PROFILE.cameraVideo,
+                maxFramerate: 30,
+                maintainResolution: true,
+              }
               : { maxBitrate: BITRATE_PROFILE.voiceAudio },
           ),
         );
@@ -1232,7 +1232,7 @@ export default function VideoCall() {
     clearTimeout(reconnectStallTimerRef.current);
     reconnectStallTimerRef.current = null;
     setReconnectStalled(false);
-    let resolveLocalReady = () => {};
+    let resolveLocalReady = () => { };
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
@@ -1419,7 +1419,6 @@ export default function VideoCall() {
           requestPeerIceRestart();
           return;
         }
-        console.log("Restarting ICE...");
         await createAndSendOffer({ iceRestart: true });
       }, ICE_RESTART_DELAY_MS);
     };
@@ -1525,11 +1524,9 @@ export default function VideoCall() {
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         const candidateInfo = describeIceCandidate(e.candidate.candidate);
-        console.log("ICE candidate gathered:", candidateInfo);
         logVideoEvent("ice_candidate_gathered", candidateInfo);
         socket.emit("ice-candidate", { appointmentId, candidate: e.candidate });
       } else {
-        console.log("ICE gathering complete");
         logVideoEvent("ice_gathering_complete", {});
       }
     };
@@ -1569,7 +1566,6 @@ export default function VideoCall() {
     // Fallback for browsers where onconnectionstatechange fires late or not at all
     pc.oniceconnectionstatechange = () => {
       const s = pc.iceConnectionState;
-      console.log("ICE connection state:", s);
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
         clearTimeout(iceRestartTimerRef.current);
@@ -1599,7 +1595,6 @@ export default function VideoCall() {
         });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
-        console.log("Attempting ICE recovery...");
         scheduleIceRestart();
       } else if (s === "disconnected") {
         console.warn("ICE connection disconnected");
@@ -2016,7 +2011,7 @@ export default function VideoCall() {
           .post("/api/auth/refresh", null, {
             authRole: isDoctor ? "doctor" : "user",
           })
-          .catch(() => {});
+          .catch(() => { });
       },
       4 * 60 * 1000,
     );
@@ -2227,7 +2222,7 @@ export default function VideoCall() {
         assignStreams(isSwapped);
       }
 
-      pipVideoRef.current.play?.().catch(() => {});
+      pipVideoRef.current.play?.().catch(() => { });
     });
 
     return () => cancelAnimationFrame(frameId);
@@ -2281,7 +2276,7 @@ export default function VideoCall() {
       setCompleting(false);
       setInlineError(
         err.response?.data?.msg ||
-          "Failed to complete appointment. Please try again.",
+        "Failed to complete appointment. Please try again.",
       );
       setTimeout(() => setInlineError(""), 5000);
     }
@@ -2563,7 +2558,7 @@ export default function VideoCall() {
 
 
 
-    
+
   }
 
   if (
@@ -2619,12 +2614,12 @@ export default function VideoCall() {
   const pipStyle =
     pipPos.x !== null
       ? {
-          position: "fixed",
-          left: `${pipPos.x}px`,
-          top: `${pipPos.y}px`,
-          right: "auto",
-          bottom: "auto",
-        }
+        position: "fixed",
+        left: `${pipPos.x}px`,
+        top: `${pipPos.y}px`,
+        right: "auto",
+        bottom: "auto",
+      }
       : {};
   const screenShareSupported = canUseScreenShare();
 
@@ -3165,10 +3160,10 @@ export default function VideoCall() {
                               {msg.fileType?.includes("pdf")
                                 ? "📄"
                                 : msg.fileType?.includes("word") ||
-                                    msg.fileType?.includes("doc")
+                                  msg.fileType?.includes("doc")
                                   ? "📝"
                                   : msg.fileType?.includes("sheet") ||
-                                      msg.fileType?.includes("excel")
+                                    msg.fileType?.includes("excel")
                                     ? "📊"
                                     : "📎"}
                             </span>

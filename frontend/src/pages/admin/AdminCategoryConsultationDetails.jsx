@@ -171,13 +171,14 @@ export default function AdminCategoryConsultationDetails() {
             <InfoTile label="Severity" value={consultation.severity} />
             <InfoTile label="Support Type" value={consultation.supportType} />
             <InfoTile label="Consultation Fee" value={formatMoney(consultation.consultationPrice)} />
-            <InfoTile label="Urgency" value={consultation.urgency} />
+            <InfoTile label="Consultation Date" value={consultation.date} />
             <InfoTile label="Time Window" value={consultation.timeWindow} />
             <InfoTile label="Slot" value={consultation.slot} />
             <InfoTile label="Status" value={statusLabel(consultation.status)} />
             <InfoTile label="Source Category" value={consultation.categoryName} />
             <InfoTile label="Source Specialty" value={consultation.specialtyName} />
             <InfoTile label="Source Condition" value={consultation.conditionName} />
+            <InfoTile label="Source Service" value={consultation.serviceName} />
           </div>
         </Section>
 

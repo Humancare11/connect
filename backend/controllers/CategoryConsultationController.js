@@ -58,11 +58,8 @@ const createCategoryConsultation = async (req, res) => {
       categoryName: req.body.categoryName,
       specialtyName: req.body.specialtyName,
       conditionName: req.body.conditionName,
+      serviceName: req.body.serviceName,
     });
-
-    console.log("✅ Saved Document:", consultation);
-    console.log("✅ Database:", consultation.db.name);
-    console.log("✅ Collection:", consultation.collection.name);
 
     res.status(201).json({
       success: true,

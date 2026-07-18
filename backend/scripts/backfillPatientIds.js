@@ -69,7 +69,6 @@ async function backfillPatientIds() {
     updated += 1;
   }
 
-  console.log(`Backfilled ${updated} patient IDs.`);
   process.exit(0);
 }
 

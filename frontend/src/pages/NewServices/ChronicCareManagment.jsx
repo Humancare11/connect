@@ -53,10 +53,13 @@ import {
 
 import { Helmet } from "react-helmet-async";
 
-import api from "../../api";
 import heroBanner from "../../assets/MedicalServices/chronic-care-management-telemedicine.webp";
-import BookingCard from "../../components/SpecialityBookingCard";
+import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
 import "../Specialty/SpecialtyPage.css";
+import "../Categories/categoriesGlobal.css";
+import { useServicePrice } from "../../hooks/useServicePrice";
+
+
 
 const HERO_IMAGE = {
   src: heroBanner,
@@ -80,12 +83,30 @@ const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
 const BORDER = "#E2E8F0";
 const BORDER_HOVER = "#CBD5E1";
 
+const useBreakpoint = () => {
+  const getBreakpoint = () => {
+    const w = typeof window !== "undefined" ? window.innerWidth : 1200;
+    return {
+      isMobile: w < 640,
+      isTablet: w >= 640 && w < 1024,
+      isDesktop: w >= 1024,
+    };
+  };
+  const [bp, setBp] = useState(getBreakpoint);
+  useEffect(() => {
+    const handler = () => setBp(getBreakpoint());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return bp;
+};
+
 /* ──────────────────────────────────────────────────────────────────────────
    DATA
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
-    slug: "telehealth-services",
+    slug: "chronic-care-management",
     name: "CHRONIC CARE MANAGEMENT",
     serviceName: "Chronic Care Management", // must exactly match ServicePrice.name in admin
     tagline: "Ongoing support for long term health conditions.",
@@ -490,13 +511,13 @@ const Hero = ({ s, price, priceLoading }) => {
         style={{
           position: "relative",
           zIndex: 10,
-          maxWidth: 1200,
+          maxWidth: 1381,
           margin: "0 auto",
-          padding: "100px 24px",
+          padding: "90px 50px 15px",
           width: "100%",
           opacity: op,
           display: "grid",
-          gridTemplateColumns: "1fr 340px",
+          gridTemplateColumns: "1fr 450px",
           gap: 48,
           alignItems: "center",
         }}
@@ -589,10 +610,11 @@ const Hero = ({ s, price, priceLoading }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <BookingCard
+          <ServiceBookingCard
             price={price}
             priceLoading={priceLoading}
             name={s.serviceName}
+            slug={s.slug}
           />
         </motion.div>
       </motion.div >
@@ -1761,29 +1783,8 @@ export default function ChronicCareManagement() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
-
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchServicePrice() {
-      setPriceLoading(true);
-      try {
-        const res = await api.get("/api/services");
-        const match = Array.isArray(res.data)
-          ? res.data.find((svc) => svc.name === s.serviceName)
-          : null;
-        if (!cancelled) setPrice(match?.price ?? null);
-      } catch (err) {
-        console.error("Failed to fetch service price:", err);
-      } finally {
-        if (!cancelled) setPriceLoading(false);
-      }
-    }
-    fetchServicePrice();
-    return () => { cancelled = true; };
-  }, [s.serviceName]);
+  const bp = useBreakpoint();
+  const { price, priceLoading } = useServicePrice(s.slug);
 
   return (
     <>

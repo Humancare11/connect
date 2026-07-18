@@ -175,7 +175,7 @@ export default function AdminCategoryConsultations() {
                   <th>Concern</th>
                   <th>Severity</th>
                   <th>Support Type</th>
-                  <th>Urgency</th>
+                  <th>Consultation Date</th>
                   <th>Time Window</th>
                   <th>Slot</th>
                   <th>Source Page</th>
@@ -191,7 +191,7 @@ export default function AdminCategoryConsultations() {
                     <td>{item.concern || "-"}</td>
                     <td>{item.severity || "-"}</td>
                     <td>{item.supportType || "-"}</td>
-                    <td>{item.urgency || "-"}</td>
+                    <td>{item.date || "-"}</td>
                     <td>{item.timeWindow || "-"}</td>
                     <td>{item.slot || "-"}</td>
                     <td>
@@ -202,6 +202,10 @@ export default function AdminCategoryConsultations() {
                       ) : item.specialtyName ? (
                         <div style={{ fontSize: "0.85rem" }}>
                           <div><strong>Speciality:</strong> <br /> {item.specialtyName}</div>
+                        </div>
+                      ) : item.serviceName ? (
+                        <div style={{ fontSize: "0.85rem" }}>
+                          <div><strong>Service:</strong> <br /> {item.serviceName}</div>
                         </div>
                       ) : (
                         <span style={{ fontSize: "0.85rem", color: "#666" }}>{item.categoryName || "Category"}</span>

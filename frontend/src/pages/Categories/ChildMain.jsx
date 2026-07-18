@@ -348,13 +348,8 @@ function BookingForm({ specialtyPlaceholder }) {
       <button className="hcc-booking-cta">Start Consultation →</button>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
-        <a href="#" className="hcc-booking-link">
-          Terms of Service
-        </a>{" "}
-        and{" "}
-        <a href="#" className="hcc-booking-link">
-          Privacy Policy
-        </a>
+        <a href="/terms-of-service" className="hcc-booking-link">Terms of Service</a> and{" "}
+        <a href="/privacy-policy" className="hcc-booking-link">Privacy Policy</a>
       </p>
     </div>
   );

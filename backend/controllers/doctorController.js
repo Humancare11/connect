@@ -127,9 +127,6 @@ export const saveEnrollmentStep = async (req, res) => {
     try {
         const { doctorId, step, data } = req.body;
 
-        // TEMP DEBUG — remove once the missing-fields issue is confirmed fixed
-        console.log("[saveEnrollmentStep] doctorId:", doctorId, "step:", step, "data:", JSON.stringify(data));
-
         if (!doctorId || !mongoose.isValidObjectId(doctorId)) {
             return res.status(400).json({ message: "Valid doctorId is required" });
         }

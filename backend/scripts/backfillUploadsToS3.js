@@ -28,7 +28,6 @@ const MIME_BY_EXT = {
 async function main() {
   const uploadsDir = path.resolve(__dirname, "..", "uploads");
   if (!fs.existsSync(uploadsDir)) {
-    console.log("No local uploads directory found.");
     return;
   }
 
@@ -47,10 +46,8 @@ async function main() {
       mimetype: MIME_BY_EXT[path.extname(filename).toLowerCase()] || "application/octet-stream",
       size: buffer.length,
     });
-    console.log(`Backfilled ${filename}`);
   }
 
-  console.log(`Backfilled ${files.length} upload file(s) to S3.`);
 }
 
 main().catch((err) => {

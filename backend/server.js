@@ -69,8 +69,6 @@ const startServer = async () => {
       password: hashed,
       role: "admin",
     });
-
-    console.log("Admin account created ✅");
   }
 
   // Seed superadmin
@@ -88,7 +86,6 @@ const startServer = async () => {
       role: "superadmin",
     });
 
-    console.log("Super Admin created ✅");
   }
 
   // Backfill 5-digit doctorId for any doctor that doesn't have one yet
@@ -103,10 +100,6 @@ const startServer = async () => {
       taken = await Doctor.exists({ doctorId: newId });
     }
     await Doctor.findByIdAndUpdate(doc._id, { doctorId: newId });
-    console.log(`Assigned doctorId ${newId} to doctor ${doc.email}`);
-  }
-  if (doctorsWithoutId.length > 0) {
-    console.log(`✅ Backfilled doctorId for ${doctorsWithoutId.length} doctor(s).`);
   }
 
   await seedCategoryPricing();
@@ -461,72 +454,6 @@ app.use("/api/notifications", require("./routes/notifications"));
 const CategoryConsultation = require("./models/CategoryConsultation");
 const Enrollment = require("./models/Enrollment");
 
-
-// app.post("/api/search", async (req, res) => {
-//   const { query, routes } = req.body;
-//   console.log("🔍 Search hit:", query); // ✅ add this
-
-//   try {
-//     const message = await client.messages.create({
-//       model: "claude-sonnet-4-6",
-//       max_tokens: 500,
-//       messages: [{
-//         role: "user",
-//         content: `A patient searched: "${query}".
-// From this list, return the top 5 most relevant as a JSON array (same shape as input).
-// List: ${JSON.stringify(routes)}
-// Return ONLY a valid JSON array. No explanation, no markdown.`
-//       }]
-//     });
-
-//     const results = JSON.parse(message.content[0].text);
-//     res.json({ results });
-
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: "Search failed" });
-//   }
-// });
-
-
-// app.post("/api/search", async (req, res) => {
-//   const { query, routes } = req.body;
-
-//   try {
-//     const completion = await client.chat.completions.create({
-//       model: "llama-3.1-8b-instant",
-//       max_tokens: 500,
-//       messages: [
-//         {
-//           role: "system",
-//           content: "You are a medical search assistant. Always respond with ONLY a valid JSON array. Never include markdown, backticks, or explanation."
-//         },
-//         {
-//           role: "user",
-//           // highlight-start
-//           content: `A patient typed: "${query}" (may be partial or misspelled).
-// Match against these medical routes using their title AND keywords.
-// Return the top 5 most relevant as a JSON array (same shape as input, include the keywords field).
-// Prioritize: exact title match > keyword match > partial/fuzzy match.
-// List: ${JSON.stringify(routes)}
-// Return ONLY a valid JSON array.`
-//           // highlight-end
-//         }
-//       ]
-//     });
-
-//     let raw = completion.choices[0].message.content.trim();
-//     raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
-
-//     const results = JSON.parse(raw);
-//     res.json({ results });
-
-//   } catch (err) {
-//     console.error("Search error:", err);
-//     res.status(500).json({ error: "Search failed", detail: err.message });
-//   }
-// });
-
 const searchRoutes = require("./searchRoutes");
 
 app.post("/api/search", (req, res) => {
@@ -796,11 +723,6 @@ function isSocketInDirectRoom(socket, roomId) {
 // Authenticate socket connections via HttpOnly cookies.
 io.use(async (socket, next) => {
   const cookies = parseCookieHeader(socket.handshake.headers.cookie || "");
-
-  // ── TEMP DEBUG LOG ──
-  console.log("[socket-auth] raw cookie header:", socket.handshake.headers.cookie);
-  console.log("[socket-auth] parsed cookies:", cookies);
-
   const accessTokens = [cookies.userToken, cookies.doctorToken, cookies.adminToken].filter(Boolean);
   const refreshTokens = [cookies.userRefreshToken, cookies.doctorRefreshToken, cookies.adminRefreshToken].filter(Boolean);
   socket.authIdentities = [];
@@ -874,22 +796,7 @@ io.use(async (socket, next) => {
   next();
 });
 
-// Socket Events
 io.on("connection", (socket) => {
-  console.log("[socket] connected", {
-    id: socket.id,
-    transport: socket.conn.transport.name,
-    origin: socket.handshake.headers.origin,
-    userId: socket.userId || null,
-    role: socket.userRole || null,
-  });
-
-  socket.conn.on("upgrade", (transport) => {
-    console.log("[socket] transport upgraded", {
-      id: socket.id,
-      transport: transport.name,
-    });
-  });
 
   socket.on("user-online", ({ userId: requestedUserId, role: requestedRole } = {}) => {
     const matchingIdentity = Array.isArray(socket.authIdentities)
@@ -950,8 +857,6 @@ io.on("connection", (socket) => {
     if (role !== "admin") {
       io.emit("active-users-count", onlineUsers.size);
     }
-
-    console.log("Socket joined rooms:", userId, role);
   });
 
   socket.on("join-appointment-room", async ({ appointmentId, userId, role } = {}) => {
@@ -1249,11 +1154,7 @@ io.on("connection", (socket) => {
     }
 
     io.emit("active-users-count", onlineUsers.size);
-    console.log("[socket] disconnected", {
-      id: socket.id,
-      reason,
-      activeUsers: onlineUsers.size,
-    });
+
   });
 
   // ── Direct Video Room events (ad-hoc, link-based, guest access) ────────────
@@ -1429,7 +1330,8 @@ io.on("connection", (socket) => {
       }
     }, Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000));
   });
-});
+
+}); // end io.on("connection")
 
 const PORT = process.env.PORT || 5000;
 

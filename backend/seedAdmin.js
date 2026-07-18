@@ -10,7 +10,6 @@ const createAdmin = async () => {
     const existing = await User.findOne({ email: "admin@gmail.com" });
 
     if (existing) {
-      console.log("Admin already exists");
       process.exit();
     }
 
@@ -22,11 +21,8 @@ const createAdmin = async () => {
       password: hashedPassword,
       role: "admin",
     });
-
-    console.log("Admin created ✅");
     process.exit();
   } catch (err) {
-    console.log(err);
     process.exit(1);
   }
 };
