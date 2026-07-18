@@ -478,23 +478,20 @@ function FaqSection({ faqGroups, catLabel }) {
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div>
+              <div className="badge-content">
                 <strong>Avg. response in 2 min</strong>
-                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🏥</span>
-              <div>
+              <span className="badge-icon">🔒</span>
+              <div className="badge-content">
                 <strong>HIPAA secure &amp; private</strong>
-                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-dot" />
-              <div>
-                <strong>Available on all devices</strong>
-                <div>Web, iOS &amp; Android</div>
+              <span className="badge-icon">✓</span>
+              <div className="badge-content">
+                <strong>Available in all 50 states</strong>
               </div>
             </div>
           </div>

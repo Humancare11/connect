@@ -509,7 +509,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -519,27 +519,24 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div>
+              <div className="badge-content">
                 <strong>Avg. response in 2 min</strong>
-                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🏥</span>
-              <div>
+              <span className="badge-icon">🔒</span>
+              <div className="badge-content">
                 <strong>HIPAA secure &amp; private</strong>
-                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-dot" />
-              <div>
-                <strong>Available on all devices</strong>
-                <div>Web, iOS &amp; Android</div>
+              <span className="badge-icon">✓</span>
+              <div className="badge-content">
+                <strong>Available in all 50 states</strong>
               </div>
             </div>
           </div>

@@ -461,7 +461,7 @@ const CATEGORIES = [
   },
 
   {
-    path: "/travel-global-care",
+    path: "/travel-and-global-care",
     icon: "globe",
     name: "Travel & Global Care",
     tagline:
@@ -517,21 +517,21 @@ const SPECIALTIES = [
   },
   {
     slug: "psychiatry",
-    path: "/psychiatry",
+    path: "/mental-health/psychiatry",
     icon: "mental",
     name: "Psychiatry",
     featured: false,
   },
   {
     slug: "dermatology",
-    path: "/dermatology",
+    path: "/skin-and-hair-care/dermatology",
     icon: "skin",
     name: "Dermatology",
     featured: false,
   },
   {
     slug: "obstetrics-gynaecology-ob-gyn",
-    path: "/obstetrics-and-gynaecology",
+    path: "/women-health/obstetrics-and-gynaecology",
     icon: "women",
     name: "Obstetrics & Gynaecology (OB-GYN)",
     featured: false,
@@ -552,7 +552,7 @@ const SPECIALTIES = [
   },
   {
     slug: "ophthalmology",
-    path: "/ophthalmology",
+    path: "/eye-ear-bone/ophthalmology",
     icon: "eye",
     name: "Ophthalmology",
     featured: false,

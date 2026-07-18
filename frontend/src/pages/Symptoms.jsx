@@ -439,22 +439,43 @@ const conditionCategories = [
         name: "Sleep-Related Anxiety",
         path: "/mental-health/behavioral-health/sleep-related-anxiety",
       },
-      { name: "Anxiety", path: "/anxiety" },
-      { name: "Depression", path: "/depression" },
+      { name: "Anxiety", path: "/mental-health/psychiatry/anxiety" },
+      { name: "Depression", path: "/mental-health/psychiatry/depression" },
       {
         name: "Bipolar Disorder Follow-Up",
-        path: "/bipolar-disorder-follow-up",
+        path: "/mental-health/psychiatry/bipolar-disorder-follow-up",
       },
-      { name: "OCD", path: "/OCD" },
-      { name: "PTSD", path: "/ptsd" },
-      { name: "Panic Attacks", path: "/panic-attack" },
-      { name: "Insomnia", path: "/insomnia" },
-      { name: "ADHD (Assessment & Follow-Up)", path: "/ADHD-evaluation" },
-      { name: "Stress", path: "/stress" },
-      { name: "Grief & Loss", path: "/grief-and-loss" },
-      { name: "Relationship Issues", path: "/relationship-stress" },
-      { name: "Low Self-Esteem", path: "/low-self-esteem" },
-      { name: "Trauma Support", path: "/trauma-support" },
+      { name: "OCD", path: "/mental-health/psychiatry/ocd" },
+      {
+        name: "PTSD",
+        path: "/mental-health/psychiatry/ptsd",
+      },
+      {
+        name: "Panic Attacks",
+        path: "/mental-health/psychiatry/panic-attacks",
+      },
+      { name: "Insomnia", path: "/mental-health/psychiatry/insomnia" },
+      {
+        name: "ADHD (Assessment & Follow-Up)",
+        path: "/mental-health/psychiatry/adhd-evaluation",
+      },
+      { name: "Stress", path: "/mental-health/psychology-counseling/stress" },
+      {
+        name: "Grief & Loss",
+        path: "/mental-health/psychology-counseling/grief-and-loss",
+      },
+      {
+        name: "Relationship Issues",
+        path: "/mental-health/psychology-counseling/relationship-stress",
+      },
+      {
+        name: "Low Self-Esteem",
+        path: "/mental-health/psychology-counseling/low-self-esteem",
+      },
+      {
+        name: "Trauma Support",
+        path: "/mental-health/psychology-counseling/trauma-support",
+      },
     ],
   },
   {
@@ -495,38 +516,74 @@ const conditionCategories = [
     category: "Skin & Hair",
     icon: Sparkles,
     conditions: [
-      { name: "Acne", path: "/acne" },
-      { name: "Eczema", path: "/eczema" },
-      { name: "Psoriasis", path: "/psoriasis" },
-      { name: "Skin Rashes", path: "/skin-rash" },
-      { name: "Hives", path: "/hives" },
-      { name: "Rosacea", path: "/rosacea" },
-      { name: "Fungal Infections", path: "/fungal-skin-infection" },
-      { name: "Warts", path: "/warts" },
-      { name: "Cold Sores", path: "/cold-sores" },
-      { name: "Hair Loss", path: "/hair-loss" },
-      { name: "Nail Problems", path: "/nail-problems" },
-      { name: "Mole & Skin Checks", path: "/mole-skin-checks" },
+      { name: "Acne", path: "/skin-and-hair-care/dermatology/acne" },
+      { name: "Eczema", path: "/skin-and-hair-care/dermatology/eczema" },
+      { name: "Psoriasis", path: "/skin-and-hair-care/dermatology/psoriasis" },
+      {
+        name: "Skin Rashes",
+        path: "/skin-and-hair-care/dermatology/skin-rash",
+      },
+      { name: "Hives", path: "/skin-and-hair-care/dermatology/hives" },
+      { name: "Rosacea", path: "/skin-and-hair-care/dermatology/rosacea" },
+      {
+        name: "Fungal Infections",
+        path: "/skin-and-hair-care/dermatology/fungal-skin-infection",
+      },
+      { name: "Warts", path: "/skin-and-hair-care/dermatology/warts" },
+      {
+        name: "Cold Sores",
+        path: "/skin-and-hair-care/dermatology/cold-sores",
+      },
+      { name: "Hair Loss", path: "/skin-and-hair-care/dermatology/hair-loss" },
+      {
+        name: "Nail Problems",
+        path: "/skin-and-hair-care/dermatology/nail-problems",
+      },
+      {
+        name: "Mole & Skin Checks",
+        path: "/skin-and-hair-care/dermatology/mole-skin-checks",
+      },
     ],
   },
   {
     category: "Travel & Global Care",
     icon: Plane,
     conditions: [
-      { name: "Pre-Travel Vaccination", path: "/pre-travel-vaccinations" },
-      { name: "Malaria Prevention", path: "/malaria-prevention" },
-      { name: "Altitude-Sickness Guidance", path: "/altitude-sickness" },
-      { name: "Post-Travel Symptoms", path: "/post-travel-symptoms" },
-      { name: "Traveler's Diarrhea", path: "/travelers-diarrhea" },
+      {
+        name: "Pre-Travel Vaccination",
+        path: "/travel-and-global-care/travel-medicine/pre-travel-vaccinations",
+      },
+      {
+        name: "Malaria Prevention",
+        path: "/travel-and-global-care/travel-medicine/malaria-prevention",
+      },
+      {
+        name: "Altitude-Sickness Guidance",
+        path: "/travel-and-global-care/travel-medicine/altitude-sickness",
+      },
+      {
+        name: "Post-Travel Symptoms",
+        path: "/travel-and-global-care/travel-medicine/post-travel-symptoms",
+      },
+      {
+        name: "Traveler's Diarrhea",
+        path: "/travel-and-global-care/travel-medicine/travelers-diarrhea",
+      },
       {
         name: "Food Poisoning While Traveling",
-        path: "/food-poisoning-while-traveling",
+        path: "/travel-and-global-care/travel-medicine/food-poisoning-while-traveling",
       },
-      { name: "Travel-Related Fever", path: "/travel-related-fever" },
-      { name: "Cross-Border Consultation", path: "/cross-border-consultation" },
+      {
+        name: "Travel-Related Fever",
+        path: "/travel-and-global-care/travel-medicine/travel-related-fever",
+      },
+      {
+        name: "Cross-Border Consultation",
+        path: "/travel-and-global-care/global-cross-border-care/cross-border-consultation",
+      },
       {
         name: "International Medical Assistance",
-        path: "/international-medical-assistance",
+        path: "/travel-and-global-care/global-cross-border-care/international-medical-assistance",
       },
       {
         name: "Medication Refill While Traveling",
@@ -534,7 +591,7 @@ const conditionCategories = [
       },
       {
         name: "Referral Coordination Overseas",
-        path: "/referral-coordination-overseas",
+        path: "/travel-and-global-care/global-cross-border-care/referral-coordination-overseas",
       },
     ],
   },
@@ -542,38 +599,113 @@ const conditionCategories = [
     category: "Weight & Nutrition",
     icon: Utensils,
     conditions: [
-      { name: "Healthy-Habit Coaching", path: "/healthy-habit-coaching" },
-      { name: "Diet & Exercise Planning", path: "/diet-exercise-planning" },
-      { name: "Sleep Hygiene", path: "/sleep-hygiene" },
-      { name: "Diabetic Diet", path: "/diabetic-diet" },
-      { name: "Cholesterol-Lowering Diet", path: "/cholesterol-lowering-diet" },
-      { name: "Food-Intolerance Planning", path: "/food-intolerance-planning" },
-      { name: "Pregnancy Nutrition", path: "/pregnancy-nutrition" },
-      { name: "Sports Nutrition", path: "/sports-nutrition" },
-      { name: "Obesity", path: "/obesity" },
-      { name: "Weight-Loss Planning", path: "/weight-loss-planning" },
-      { name: "Binge Eating", path: "/binge-eating" },
+      {
+        name: "Healthy-Habit Coaching",
+        path: "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching",
+      },
+      {
+        name: "Diet & Exercise Planning",
+        path: "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
+      },
+      {
+        name: "Sleep Hygiene",
+        path: "/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene",
+      },
+      {
+        name: "Diabetic Diet",
+        path: "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet",
+      },
+      {
+        name: "Cholesterol-Lowering Diet",
+        path: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
+      },
+      {
+        name: "Food-Intolerance Planning",
+        path: "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning",
+      },
+      {
+        name: "Pregnancy Nutrition",
+        path: "/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition",
+      },
+      {
+        name: "Sports Nutrition",
+        path: "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition",
+      },
+      {
+        name: "Obesity",
+        path: "/weight-and-nurtrition/weight-management/obesity",
+      },
+      {
+        name: "Weight-Loss Planning",
+        path: "/weight-and-nurtrition/weight-management/weight-loss-planning",
+      },
+      {
+        name: "Binge Eating",
+        path: "/weight-and-nurtrition/weight-management/binge-eating",
+      },
     ],
   },
   {
     category: "Women's Health",
     icon: Venus,
     conditions: [
-      { name: "Low Milk Supply", path: "/low-milk-supply" },
-      { name: "Latch Problems", path: "/latch-problems" },
-      { name: "Nipple Pain", path: "/nipple-pain" },
-      { name: "Weaning Guidance", path: "/weaning-guidance" },
-      { name: "Hot Flashes", path: "/hot-flashes" },
-      { name: "HRT Guidance", path: "/hrt-guidance" },
-      { name: "Menopause Symptoms", path: "/menopause-symptoms" },
-      { name: "Irregular Periods", path: "/irregular-periods" },
-      { name: "Birth Control", path: "/birth-control-consultation" },
-      { name: "PCOS", path: "/pcos" },
-      { name: "Bacterial Vaginosis", path: "/bacterial-vaginosis" },
-      { name: "Menstrual Cramps", path: "/menstrual-cramps" },
-      { name: "Pelvic Pain", path: "/pelvic-pain" },
-      { name: "Prenatal Teleconsult", path: "/prenatal-consultation" },
-      { name: "Fertility Concerns", path: "/fertility-concerns" },
+      {
+        name: "Low Milk Supply",
+        path: "/women-health/lactation-consulting/low-milk-supply",
+      },
+      {
+        name: "Latch Problems",
+        path: "/women-health/lactation-consulting/latch-problems",
+      },
+      {
+        name: "Nipple Pain",
+        path: "/women-health/lactation-consulting/nipple-pain",
+      },
+      {
+        name: "Weaning Guidance",
+        path: "/women-health/lactation-consulting/weaning-guidance",
+      },
+      {
+        name: "Hot Flashes",
+        path: "/women-health/menopause-care/hot-flashes",
+      },
+      {
+        name: "HRT Guidance",
+        path: "/women-health/menopause-care/hrt-guidance",
+      },
+      {
+        name: "Menopause Symptoms",
+        path: "/women-health/menopause-care/hrt-guidance",
+      },
+      {
+        name: "Irregular Periods",
+        path: "/women-health/obstetrics-and-gynaecology/irregular-periods",
+      },
+      {
+        name: "Birth Control",
+        path: "/women-health/obstetrics-and-gynaecology/birth-control",
+      },
+      { name: "PCOS", path: "/women-health/obstetrics-and-gynaecology/pcos" },
+      {
+        name: "Bacterial Vaginosis",
+        path: "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
+      },
+      {
+        name: "Menstrual Cramps",
+        path: "/women-health/obstetrics-and-gynaecology/menstrual-cramps",
+      },
+      {
+        name: "Pelvic Pain",
+        path: "/women-health/obstetrics-and-gynaecology/pelvic-pain",
+      },
+      {
+        name: "Prenatal Teleconsult",
+        path: "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
+      },
+      {
+        name: "Fertility Concerns",
+        path: "/women-health/obstetrics-and-gynaecology/fertility-concerns",
+      },
     ],
   },
 ];

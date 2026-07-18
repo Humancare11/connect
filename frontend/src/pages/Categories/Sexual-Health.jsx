@@ -79,17 +79,6 @@ const cat = {
       // desc: "Testing, treatment, and sexual health support",
       path: "/sexual-health/sexual-health-and-wellness/sti-consultation",
     },
-
-    // {
-    //   name: "Pediatric Fever",
-    //   desc: "Fever and illness in children",
-    //   path: "/child-and-family-care/pediatrics/pediatric-fever",
-    // },
-    // {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-children",
-    // },
   ],
 
   treatments: [
@@ -449,23 +438,20 @@ function FaqSection({ faqGroups, catLabel }) {
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div>
+              <div className="badge-content">
                 <strong>Avg. response in 2 min</strong>
-                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🏥</span>
-              <div>
+              <span className="badge-icon">🔒</span>
+              <div className="badge-content">
                 <strong>HIPAA secure &amp; private</strong>
-                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-dot" />
-              <div>
-                <strong>Available on all devices</strong>
-                <div>Web, iOS &amp; Android</div>
+              <span className="badge-icon">✓</span>
+              <div className="badge-content">
+                <strong>Available in all 50 states</strong>
               </div>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -171,30 +172,35 @@ const SPECIALTY_DATA = {
     {
       Icon: FiActivity,
       name: "ADHD Evaluation",
+      path: "/mental-health/psychiatry/adhd-evaluation",
       description:
         "Assessment and treatment of attention difficulties, hyperactivity, impulsivity, and executive function challenges.",
     },
     {
       Icon: FiZap,
       name: "Anxiety",
+      path: "/mental-health/psychiatry/anxiety",
       description:
         "Management of excessive worry, nervousness, fear, racing thoughts, and anxiety-related symptoms.",
     },
     {
       Icon: FiTrendingUp,
       name: "Bipolar Disorder Follow-Up",
+      path: "/mental-health/psychiatry/bipolar-disorder-follow-up",
       description:
         "Ongoing monitoring and treatment of mood fluctuations, emotional stability, and bipolar disorder symptoms.",
     },
     {
       Icon: FiHeart,
       name: "Depression",
+      path: "/mental-health/psychiatry/depression",
       description:
         "Evaluation and treatment of persistent sadness, low motivation, hopelessness, and mood-related concerns.",
     },
     {
       Icon: FiMoon,
       name: "Insomnia",
+      path: "/mental-health/psychiatry/insomnia",
       description:
         "Support for difficulty falling asleep, staying asleep, poor sleep quality, and sleep-related challenges.",
     },
@@ -207,6 +213,7 @@ const SPECIALTY_DATA = {
     {
       Icon: FiAlertCircle,
       name: "Panic Attacks",
+      path: "/mental-health/psychiatry/panic-attacks",
       description:
         "Care for sudden episodes of intense fear, rapid heartbeat, shortness of breath, and panic symptoms.",
     },
@@ -490,22 +497,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -564,6 +581,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function Psychiatry({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -590,7 +608,9 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -619,7 +639,6 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-<<<<<<< HEAD
             <div
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
             >
@@ -638,35 +657,6 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
                   Book Appointment
                 </a>
               </div> */}
-=======
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
-
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
->>>>>>> 8c0363897c1995506a930504978d95507388135c
             </div>
           </div>
         </section>
@@ -767,7 +757,7 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

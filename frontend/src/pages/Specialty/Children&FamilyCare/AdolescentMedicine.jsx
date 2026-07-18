@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   FiActivity,
   FiHeart,
@@ -158,18 +158,21 @@ const SPECIALTY_DATA = {
       name: "Mood & Anxiety in Teens",
       description:
         "Support for teen anxiety, mood changes, stress, and emotional challenges with personalized treatment plans and mental health guidance.",
+      path: "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
     },
     {
       Icon: FiActivity,
       name: "Puberty Concerns",
       description:
         "Evaluation and care for early or delayed puberty, hormonal changes, growth concerns, and healthy adolescent development.",
+      path: "/child-and-family-care/adolescent-medicine/puberty-concerns",
     },
     {
       Icon: GiBoneKnife,
       name: "Sports Injuries",
       description:
         "Diagnosis and treatment for sprains, strains, overuse injuries, and activity-related conditions to support safe recovery and return to sports.",
+      path: "/child-and-family-care/adolescent-medicine/sports-injuries",
     },
     {
       Icon: FiAlertCircle,
@@ -305,7 +308,7 @@ const SPECIALTY_DATA = {
     {
       question: "How often should teenagers have wellness checkups?",
       answer:
-        "Most teenagers should have an annual wellness visit to monitor growth, development, mental health, vaccinations, and overall well-being.",
+        "Mon – Sun, 8 AM – 10 PM IST.",
     },
     {
       question: "Can adolescent medicine specialists address sleep problems?",
@@ -348,28 +351,10 @@ const TRUST_CARDS = [
       "Schedule appointments quickly with convenient availability, including timely care for urgent health concerns.",
   },
   {
-    Icon: FiMonitor,
-    title: "Telehealth Access",
-    description:
-      "Connect with healthcare providers from the comfort of your home through secure, convenient virtual visits.",
-  },
-  {
     Icon: FiShield,
-    title: "Insurance Support",
+    title: "Safe & Secure",
     description:
-      "Get assistance understanding insurance coverage, benefits, authorizations, and billing questions.",
-  },
-  {
-    Icon: FiHeart,
-    title: "Personalised Care",
-    description:
-      "Receive customized treatment recommendations designed around your medical history, lifestyle, health needs, and goals.",
-  },
-  {
-    Icon: FiGlobe,
-    title: "Global Provider Network",
-    description:
-      "Access a broad network of healthcare specialists and coordinated care services wherever you need support.",
+      "Your health information is protected by industry-leading security and privacy practices, ensuring secure interactions.",
   },
 ];
 
@@ -480,22 +465,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -554,6 +549,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
   const [price, setPrice] = useState(null);
   const [priceLoading, setPriceLoading] = useState(true);
@@ -600,63 +596,26 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__overlay" />
         </div>
 
-        {/* <div className="sp-hero__content">
-          <div
-            className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-          >
-            <span className="sp-hero__badge">Child & Family Care </span>
-            <h1 className="sp-hero__title">{data.name}</h1>
-            <p className="sp-hero__tagline">{data.tagline}</p>
-            <p className="sp-hero__description">{data.heroDescription}</p>
-
-            {/* <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div> */}
-          </div>
-        </div> */}
         <div className="sp-hero__content">
           <div className="sp-hero__layout">
-            {/* RIGHT — existing hero text */}
-            <div
-              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-            >
-              <span className="sp-hero__badge">HumanCare Connect</span>
+            <div className="sp-hero__content-inner">
+              <span className="sp-hero__badge">Child & Family Care</span>
               <h1 className="sp-hero__title">{data.name}</h1>
               <p className="sp-hero__tagline">{data.tagline}</p>
               <p className="sp-hero__description">{data.heroDescription}</p>
-
-              <div className="sp-hero__actions">
-                <a href="/Specialties" className="sp-btn sp-btn--primary">
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
-              </div>
             </div>
-            {/* LEFT — booking card */}
-            <Reveal className="sp-hero__sidebar">
-              <BookingCard
-                price={price}
-                priceLoading={priceLoading}
-                categoryId={data.categoryId}
-                name={data.name}
-              />
-            </Reveal>
+
+            <BookingCard
+              price={price}
+              priceLoading={priceLoading}
+              title={data.name}
+              specialitySlug={data.slug}
+            />
           </div>
         </div>
       </section>
 
-      {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
+      {/* ── 2. OVERVIEW & BENEFITS ─────────────────────────────────────────── */}
       <section className="sp-overview">
         <div className="sp-container">
           <div className="sp-overview__grid">
@@ -746,7 +705,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
       <section className="sp-conditions">
         <div className="sp-container">
           <Reveal>
-            <div className="sp-conditions__head">
+            <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
               <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
               <h2>What We Treat</h2>
               <p>
@@ -874,23 +833,6 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
               ))}
             </div>
           </Reveal>
-
-          {/* <Reveal delay={170}>
-            <div className="sp-cta__contact">
-              <a href="tel:+918008001234" className="sp-cta__contact-link">
-                <FiPhone size={14} />
-                +91 800 800 1234
-              </a>
-              <a href="mailto:care@humancareconnect.co" className="sp-cta__contact-link">
-                <FiMail size={14} />
-                care@humancareconnect.co
-              </a>
-              <span className="sp-cta__contact-item">
-                <FiClock size={14} />
-                Mon – Sun, 8 AM – 10 PM IST
-              </span>
-            </div>
-          </Reveal> */}
         </div>
       </section>
     </main>

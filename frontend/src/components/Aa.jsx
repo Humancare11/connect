@@ -186,7 +186,7 @@ export default function SpecialtiesSection() {
       name: "Opthalmology",
       alt: "Ophthalmology services for eye care vision health and eye diseases",
       conditions: "6 Conditions",
-      path: "/ophthalmology",
+      path: "/eye-ear-bone/ophthalmology",
     },
     {
       img: sp5,
@@ -214,7 +214,7 @@ export default function SpecialtiesSection() {
       name: "Dermatology",
       alt: "Dermatology services for skin hair and nail conditions",
       conditions: "12 Conditions",
-      path: "/dermatology",
+      path: "/skin-and-hair-care/dermatology",
     },
   ];
 
@@ -266,14 +266,14 @@ export default function SpecialtiesSection() {
       name: "Stress",
       alt: "Stress management and mental wellness support services",
       count: "85 doctors",
-      path: "/stress",
+      path: "/mental-health/psychology-counseling/stress",
     },
     {
       img: cod8,
       name: "Skin Rash",
       alt: "Red, itchy, irritated skin",
       count: "55 doctors",
-      path: "/skin-rash",
+      path: "/skin-and-hair-care/dermatology/skin-rash",
     },
   ];
 

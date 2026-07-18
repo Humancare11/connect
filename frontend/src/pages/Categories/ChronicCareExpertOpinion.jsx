@@ -38,13 +38,9 @@ const cat = {
   specialties: [
     {
       name: "Cardiology",
-<<<<<<< HEAD
+
       desc: "Expert heart and cardiovascular care for high blood pressure, cholesterol management, heart disease, palpitations, preventive screenings, and long-term heart health support. ",
       path: "/chronic-care/cardiology",
-=======
-      desc: "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. ",
-      path: "/chronic-care-and-expert-opinion/cardiology",
->>>>>>> 8c0363897c1995506a930504978d95507388135c
     },
     {
       name: "Endocrinology",
@@ -616,23 +612,20 @@ function FaqSection({ faqGroups, catLabel }) {
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div>
+              <div className="badge-content">
                 <strong>Avg. response in 2 min</strong>
-                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🏥</span>
-              <div>
+              <span className="badge-icon">🔒</span>
+              <div className="badge-content">
                 <strong>HIPAA secure &amp; private</strong>
-                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-dot" />
-              <div>
-                <strong>Available on all devices</strong>
-                <div>Web, iOS &amp; Android</div>
+              <span className="badge-icon">✓</span>
+              <div className="badge-content">
+                <strong>Available in all 50 states</strong>
               </div>
             </div>
           </div>

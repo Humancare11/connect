@@ -27,7 +27,7 @@ import "./categoriesGlobal.css";
 // but clicking does nothing).
 
 const cat = {
-  label: "Skin & Hair",
+  label: "Skin & Hair Care",
   tagline: "Skin & Hair",
   headline: "Healthy Skin & Hair Care,",
   headlineAccent: " Personalized for You ",
@@ -39,107 +39,72 @@ const cat = {
     {
       name: " Dermatology ",
       desc: " Expert care for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail disorders, skin rashes, and long-term skin, hair, and nail health. ",
-      path: "/sexual-health",
+      path: "/skin-and-hair-care/dermatology",
     },
-    // {
-    //   name: "Psychiatry",
-    //   desc: "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support. ",
-    //   path: "/psychiatry",
-    // },
-    // {
-    //   name: "Psychology Counseling",
-    //   desc: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
-    //   path: "/psychology-counseling",
-    // },
-    // {
-    //   name: "Gastroenterology",
-    //   desc: "Gastroenterology specialists diagnose, treat, and manage conditions affecting the digestive system, including the stomach, intestines, liver, pancreas, gallbladder, and esophagus. ",
-    //   path: "/chronic-care/chronic-care/gastroenterology",
-    // },
-    // {
-    //   name: "Neurology",
-    //   desc: "Neurology specialists diagnose and treat conditions affecting the brain, spinal cord, nerves, and nervous system. ",
-    //   path: "/chronic-care/neurology",
-    // },
-    // {
-    //   name: "Pulmonology",
-    //   desc: "Pulmonology specialists diagnose and treat lung and respiratory conditions such as asthma, chronic cough, COPD, sleep apnea, and post-COVID breathing issues, helping improve breathing, lung function, and overall health.",
-    //   path: "/chronic-care/pulmonology",
-    // },
   ],
 
   conditions: [
     {
       name: "Acne",
-      desc: "Clogged pores causing breakouts",
-      path: "/acne",
+      // desc: "Clogged pores causing breakouts",
+      path: "/skin-and-hair-care/dermatology/acne",
     },
     {
       name: "Cold Sores",
-      desc: "Painful blisters around the mouth",
-      path: "/cold-sores",
+      // desc: "Painful blisters around the mouth",
+      path: "/skin-and-hair-care/dermatology/cold-sores",
     },
     {
       name: "Eczema",
-      desc: "Dry, itchy, inflamed skin",
-      path: "/eczema",
+      // desc: "Dry, itchy, inflamed skin",
+      path: "/skin-and-hair-care/dermatology/eczema",
     },
     {
       name: "Fungal Skin Infection",
-      desc: "Itchy, red, irritated skin patches",
-      path: "/fungal-skin-infection",
+      // desc: "Itchy, red, irritated skin patches",
+      path: "/skin-and-hair-care/dermatology/fungal-skin-infection",
     },
     {
       name: "Hair Loss",
-      desc: "Thinning hair and excessive shedding",
-      path: "/hair-loss",
+      // desc: "Thinning hair and excessive shedding",
+      path: "/skin-and-hair-care/dermatology/hair-loss",
     },
     {
       name: "Hives",
-      desc: "Raised, itchy skin welts",
-      path: "/hives",
+      // desc: "Raised, itchy skin welts",
+      path: "/skin-and-hair-care/dermatology/hives",
     },
     {
       name: "Mole & Skin Checks",
-      desc: "Early evaluation of skin changes",
-      path: "/mole-skin-checks",
+      // desc: "Early evaluation of skin changes",
+      path: "/skin-and-hair-care/dermatology/mole-skin-checks",
     },
 
     {
       name: "Nail Problems",
-      desc: "Expert care for nail concerns",
-      path: "/nail-problems",
+      // desc: "Expert care for nail concerns",
+      path: "/skin-and-hair-care/dermatology/nail-problems",
     },
     {
       name: "Psoriasis",
-      desc: "Chronic skin condition causing flare-ups",
-      path: "/psoriasis",
+      // desc: "Chronic skin condition causing flare-ups",
+      path: "/skin-and-hair-care/dermatology/psoriasis",
     },
     {
       name: "Rosacea",
-      desc: "Redness and facial skin irritation",
-      path: "/rosacea",
+      // desc: "Redness and facial skin irritation",
+      path: "/skin-and-hair-care/dermatology/rosacea",
     },
     {
       name: "Skin Rash",
-      desc: "Red, itchy, irritated skin",
-      path: "/skin-rash",
+      // desc: "Red, itchy, irritated skin",
+      path: "/skin-and-hair-care/dermatology/skin-rash",
     },
     {
       name: "Warts",
-      desc: "Small rough bumps on the skin",
-      path: "/warts",
+      // desc: "Small rough bumps on the skin",
+      path: "/skin-and-hair-care/dermatology/warts",
     },
-    //  {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-children",
-    // },
-    //  {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/skin-rash-children",
-    // },
   ],
 
   treatments: [
@@ -502,7 +467,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -512,27 +477,24 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div>
+              <div className="badge-content">
                 <strong>Avg. response in 2 min</strong>
-                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🏥</span>
-              <div>
+              <span className="badge-icon">🔒</span>
+              <div className="badge-content">
                 <strong>HIPAA secure &amp; private</strong>
-                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-dot" />
-              <div>
-                <strong>Available on all devices</strong>
-                <div>Web, iOS &amp; Android</div>
+              <span className="badge-icon">✓</span>
+              <div className="badge-content">
+                <strong>Available in all 50 states</strong>
               </div>
             </div>
           </div>
@@ -671,14 +633,14 @@ export default function SkinHair() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
+            {/* <div className="hcc-cta-row">
               <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
               </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
-              </button> */}
-            </div>
+              </button>
+            </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits
