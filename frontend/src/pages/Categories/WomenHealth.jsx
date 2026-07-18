@@ -39,71 +39,117 @@ const cat = {
     {
       name: " Lactation Consulting ",
       desc: "Expert breastfeeding support for latch difficulties, low milk supply, nipple pain, pumping guidance, infant feeding concerns, weaning transitions, and postpartum feeding success.",
-      path: "/lactation-consulting ",
+      path: "/women-health/lactation-consulting ",
     },
     {
       name: " Menopause Care  ",
       desc: " Personalized support for menopause symptoms, hot flashes, night sweats, hormone replacement therapy (HRT) guidance, sleep disturbances, mood changes, vaginal health, and healthy aging.",
-      path: "/menopause-care ",
+      path: "/women-health/menopause-care ",
     },
     {
       name: "Obstetrics & Gynaecology (OB-GYN)  ",
       desc: " Comprehensive women's healthcare for PCOS, fertility concerns, pregnancy support, birth control consultations, menstrual health, pelvic pain, vaginal infections, hormonal balance, and reproductive wellness.",
-      path: "/obstetrics-gynaecology",
+      path: "/obstetrics-and-gynaecology",
     },
     {
       name: " Women's Health ",
       desc: " Personalized care for menstrual health, hormonal concerns, fertility support, pregnancy guidance, menopause management, reproductive wellness, birth control consultations, and preventive women's healthcare.",
-      path: "/weight-management",
+      path: "/women-health/women-mental-health",
     },
   ],
 
   conditions: [
     {
-      name: "Latch Problems",
-      desc: "Help for successful breastfeeding",
-      path: "/latch-problems",
+      name: "Low Milk Supply",
+      // desc: "Support for breastfeeding milk production",
+      path: "/women-health/lactation-consulting/low-milk-supply",
     },
     {
-      name: "Low Milk Supply",
-      desc: "Support for breastfeeding concerns",
-      path: "/low-milk-supply",
+      name: "Latch Problems",
+      // desc: "Breastfeeding latch assessment and guidance",
+      path: "/women-health/lactation-consulting/latch-problems",
+    },
+    {
+      name: "Nipple Pain",
+      // desc: "Evaluation and treatment of breastfeeding pain",
+      path: "/women-health/lactation-consulting/nipple-pain",
+    },
+    {
+      name: "Weaning Guidance",
+      // desc: "Support for transitioning from breastfeeding",
+      path: "/women-health/lactation-consulting/weaning-guidance",
     },
     {
       name: "Hot Flashes",
-      desc: "Relief from sudden heat episodes",
-      path: "/hot-flashes",
+      // desc: "Management of menopause-related hot flashes",
+      path: "/women-health/menopause-care/hot-flashes",
     },
     {
       name: "HRT Guidance",
-      desc: "Personalized support for hormone therapy",
-      path: "/HRT-guidance",
+      // desc: "Hormone replacement therapy consultation",
+      path: "/women-health/menopause-care/hrt-guidance",
     },
     {
+      name: "Menopause Symptoms",
+      // desc: "Care for menopause-related symptoms",
+      path: "/women-health/menopause-care/hrt-guidance",
+    },
+    {
+      name: "Irregular Periods",
+      // desc: "Evaluation of menstrual cycle irregularities",
+      path: "/women-health/obstetrics-and-gynaecology/irregular-periods",
+    },
+    {
+      name: "Birth Control",
+      // desc: "Contraception counseling and guidance",
+      path: "/women-health/obstetrics-and-gynaecology/birth-control-consultation",
+    },
+    {
+      name: "PCOS",
+      // desc: "Management of polycystic ovary syndrome",
+      path: "/women-health/obstetrics-and-gynaecology/pcos",
+    },
+    {
+      name: "Bacterial Vaginosis",
+      // desc: "Diagnosis and treatment guidance",
+      path: "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
+    },
+    {
+      name: "Menstrual Cramps",
+      // desc: "Relief and management of period pain",
+      path: "/women-health/obstetrics-and-gynaecology/menstrual-cramps",
+    },
+    {
+      name: "Pelvic Pain",
+      // desc: "Assessment of pelvic discomfort and pain",
+      path: "/women-health/obstetrics-and-gynaecology/pelvic-pain",
+    },
+    {
+      name: "Prenatal Consultation",
+      // desc: "Virtual prenatal care and guidance",
+      path: "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
+    },
+    {
+      name: "Fertility Concerns",
+      // desc: "Consultation for fertility and conception",
+      path: "/women-health/obstetrics-and-gynaecology/fertility-concerns",
+    },
+
+    {
       name: "Perinatal Anxiety",
-      desc: "Support during pregnancy and beyond.",
-      path: "/perinatal-anxiety",
+      // desc: "Support for anxiety during and after pregnancy",
+      path: "/women-health/women-mental-health/perinatal-anxiety",
     },
     {
       name: "PMDD",
-      desc: "Support for severe premenstrual symptoms",
-      path: "/PMDD",
+      // desc: "Care for premenstrual dysphoric disorder",
+      path: "/women-health/women-mental-health/pmdd",
     },
-    // {
-    //   name: "Pediatric Cold & Flu",
-    //   desc: "Cold and flu symptoms in children",
-    //   path: "/child-and-family-care/pediatrics/pediatric-cold-flu",
-    // },
-    // {
-    //   name: "Pediatric Fever",
-    //   desc: "Fever and illness in children",
-    //   path: "/child-and-family-care/pediatrics/pediatric-fever",
-    // },
-    // {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/child-and-family-care/pediatrics/skin-rash-in-children",
-    // },
+    {
+      name: "Postnatal Depression",
+      // desc: "Support for depression after childbirth",
+      path: "/women-health/women-mental-health/postnatal-depression",
+    },
   ],
 
   treatments: [
@@ -463,7 +509,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -473,27 +519,24 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div>
+              <div className="badge-content">
                 <strong>Avg. response in 2 min</strong>
-                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🏥</span>
-              <div>
+              <span className="badge-icon">🔒</span>
+              <div className="badge-content">
                 <strong>HIPAA secure &amp; private</strong>
-                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-dot" />
-              <div>
-                <strong>Available on all devices</strong>
-                <div>Web, iOS &amp; Android</div>
+              <span className="badge-icon">✓</span>
+              <div className="badge-content">
+                <strong>Available in all 50 states</strong>
               </div>
             </div>
           </div>
@@ -632,14 +675,14 @@ export default function WomenHealth() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
+            {/* <div className="hcc-cta-row">
               <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
               </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
-              </button> */}
-            </div>
+              </button>
+            </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

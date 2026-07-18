@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -171,76 +172,23 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiActivity,
-      name: "Binge Eating",
-      description:
-        "Support for managing episodes of overeating, emotional eating, and unhealthy eating behaviors.",
+      name: "Obesity",
+      desc: "Weight management and obesity care",
+      path: "/weight-and-nurtrition/weight-management/obesity",
     },
     {
       Icon: FiShield,
-      name: "GLP-1 Program Eligibility",
-      description:
-        "Professional assessments for patients exploring medically supervised weight management options.",
+      name: "Weight-Loss Planning",
+      desc: "Personalized weight loss strategies",
+      path: "/weight-and-nurtrition/weight-management/weight-loss-planning",
     },
     {
       Icon: FiTrendingUp,
-      name: "Obesity",
-      description:
-        "Comprehensive care for individuals living with obesity and obesity-related health risks.",
+      name: "Binge Eating",
+      desc: "Support for binge eating management",
+      path: "/weight-and-nurtrition/weight-management/binge-eating",
     },
-    {
-      Icon: FiHeart,
-      name: "Weight-Loss Planning",
-      description:
-        "Personalized weight reduction strategies based on health history and individual goals.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Weight Gain Concerns",
-      description:
-        "Evaluation of factors contributing to unexpected or difficult-to-manage weight gain.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Emotional Eating",
-      description:
-        "Support for stress-related eating patterns and behavioral challenges.",
-    },
-    {
-      Icon: FiCompass,
-      name: "Appetite Management",
-      description:
-        "Strategies designed to improve hunger awareness and eating habits.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Metabolic Health",
-      description:
-        "Assessment of factors affecting metabolism and overall weight regulation.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Weight Maintenance",
-      description:
-        "Long-term support for maintaining weight loss achievements and healthy routines.",
-    },
-    {
-      Icon: FiMap,
-      name: "Lifestyle Modification",
-      description:
-        "Guidance for nutrition, activity, sleep, and wellness habits that support healthy weight management.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Nutrition Counseling",
-      description:
-        "Personalized dietary recommendations to support healthy weight goals.",
-    },
-    {
-      Icon: FiGlobe,
-      name: "Preventive Wellness Support",
-      description:
-        "Comprehensive approaches to improving health through sustainable lifestyle changes.",
-    },
+
   ],
 
   faqs: [
@@ -500,22 +448,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -574,6 +532,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function WeightManagement({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -600,7 +559,9 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -629,33 +590,24 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Weight & Nutrition</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -756,7 +708,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

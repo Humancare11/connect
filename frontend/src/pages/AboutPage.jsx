@@ -4,7 +4,7 @@ import WhyHumancareImg from "../assets/AboutUsPage/why-humancare-connect-healthc
 import PatientTrustImg from "../assets/AboutUsPage/global-healthcare-professionals-network.webp";
 import NetworkDoctorsImg from "../assets/AboutUsPage//patient-virtual-healthcare-experience.webp";
 import DoctorTrustImg from "../assets/AboutUsPage/doctor-telemedicine-consultation.webp";
-
+import SEO from "../components/Seo";
 /* ─── Shared primitives ─── */
 function Eyebrow({ children, light }) {
   return (
@@ -257,6 +257,13 @@ const offices = [
 /* ─── ROOT EXPORT — every section's markup lives directly in here ─── */
 export default function AboutPage() {
   return (
+    <>
+    <SEO
+  title="About Humancare Connect | Trusted Virtual Healthcare"
+  description="Learn about Humancare Connect, a trusted virtual healthcare platform offering secure online doctor consultations, quality care, and telemedicine services."
+  keywords="virtual healthcare platform, online doctor consultations, virtual healthcare services, telemedicine services, online healthcare, virtual care, online medical consultation, digital healthcare, licensed providers, Humancare Connect"
+  url="https://humancareconnect.co/about-us"
+/>
     <div className="about-page">
       {/* 1. Hero */}
       <section className="about-hero">
@@ -714,5 +721,6 @@ export default function AboutPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

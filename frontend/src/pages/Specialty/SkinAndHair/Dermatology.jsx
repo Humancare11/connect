@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -172,74 +173,73 @@ const SPECIALTY_DATA = {
     {
       Icon: FiActivity,
       name: "Acne",
-      description:
-        "Treatment for pimples, blackheads, whiteheads, cystic acne, and acne-related skin concerns.",
+      path: "/skin-and-hair-care/dermatology/acne",
+      description: "Clogged pores causing breakouts",
     },
     {
       Icon: FiZap,
       name: "Cold Sores",
-      description:
-        "Management of recurring cold sores, lip lesions, and herpes-related skin symptoms.",
+      path: "/skin-and-hair-care/dermatology/cold-sores",
+      description: "Painful blisters around the mouth",
     },
     {
       Icon: FiDroplet,
       name: "Eczema",
-      description:
-        "Care for dry, itchy, inflamed skin and chronic eczema flare-ups.",
+      path: "/skin-and-hair-care/dermatology/eczema",
+      description: "Dry, itchy, inflamed skin",
     },
     {
       Icon: FiShield,
       name: "Fungal Skin Infection",
-      description:
-        "Diagnosis and treatment of fungal infections affecting the skin, scalp, or nails.",
+      path: "/skin-and-hair-care/dermatology/fungal-skin-infection",
+      description: "Itchy, red, irritated skin patches",
     },
     {
       Icon: FiTrendingUp,
       name: "Hair Loss",
-      description:
-        "Evaluation and management of hair thinning, excessive shedding, and scalp-related hair concerns.",
+      path: "/skin-and-hair-care/dermatology/hair-loss",
+      description: "Thinning hair and excessive shedding",
     },
     {
       Icon: FiAlertCircle,
       name: "Hives",
-      description:
-        "Treatment for itchy, raised skin welts caused by allergic reactions and other triggers.",
+      path: "/skin-and-hair-care/dermatology/hives",
+      description: "Raised, itchy skin welts",
     },
     {
       Icon: FiSearch,
       name: "Mole & Skin Checks",
-      description:
-        "Assessment of moles, skin growths, pigmentation changes, and skin abnormalities.",
+      path: "/skin-and-hair-care/dermatology/mole-skin-checks",
+      description: "Early evaluation of skin changes",
     },
     {
       Icon: FiTarget,
       name: "Nail Problems",
-      description:
-        "Care for nail infections, discoloration, thickened nails, brittle nails, and nail injuries.",
+      path: "/skin-and-hair-care/dermatology/nail-problems",
+      description: "Expert care for nail concerns",
     },
     {
       Icon: FiLayers,
       name: "Psoriasis",
-      description:
-        "Management of chronic inflammatory skin conditions causing scaling, redness, and irritation.",
+      path: "/skin-and-hair-care/dermatology/psoriasis",
+      description: "Chronic skin condition causing flare-ups",
     },
     {
       Icon: FiHeart,
       name: "Rosacea",
-      description:
-        "Treatment for facial redness, visible blood vessels, skin sensitivity, and rosacea flare-ups.",
+      path: "/skin-and-hair-care/dermatology/rosacea",
+      description: "Redness and facial skin irritation",
     },
     {
       Icon: FiCompass,
       name: "Skin Rashes",
-      description:
-        "Evaluation of unexplained rashes, redness, irritation, itching, and allergic skin reactions.",
+      description: "Red, itchy, irritated skin",
     },
     {
       Icon: FiUsers,
-      name: "Sensitive Skin Concerns",
-      description:
-        "Support for skin sensitivity, irritation, and reactions to environmental or skincare triggers.",
+      name: "Warts",
+      path: "/skin-and-hair-care/dermatology/warts",
+      description: "Small rough bumps on the skin",
     },
   ],
 
@@ -491,22 +491,40 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
+      {path ? (
+        <Link
+          to={path}
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+            display: "block",
+            height: "100%",
+          }}
         >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -565,6 +583,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function Dermatology({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -591,7 +610,9 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -618,7 +639,9 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
 
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
+              <div
+                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+              >
                 <span className="sp-hero__badge">HumanCare Connect</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
@@ -629,7 +652,10 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
                     <FiSearch size={17} />
                     Find Specialists
                   </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <a
+                    href="/appointment-booking"
+                    className="sp-btn sp-btn--ghost"
+                  >
                     <FiCalendar size={17} />
                     Book Appointment
                   </a>
@@ -744,7 +770,11 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div
+                className="sp-conditions__head"
+                onClick={() => navigate("/conditions")}
+                style={{ cursor: "pointer" }}
+              >
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

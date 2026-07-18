@@ -44,7 +44,7 @@ const helpRoutes = {
   "Mental Health": "/mental-health",
   "Sexual Health": "/categories-sexual-health",
   "Skin & Hair": "/skin-and-hair-care",
-  "Travel & Global Care": "/travel-global-care",
+  "Travel & Global Care": "/travel-and-global-care",
   "Weight & Nutrition": "/weight-and-nurtrition",
   "Women's Health": "/women-health",
 };

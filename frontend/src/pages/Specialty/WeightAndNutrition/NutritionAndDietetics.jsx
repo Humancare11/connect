@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -171,76 +172,40 @@ const SPECIALTY_DATA = {
 
   conditions: [
     {
-      Icon: FiHeart,
-      name: "Cholesterol-Lowering Diet",
-      description:
-        "Nutrition plans designed to support healthy cholesterol levels and cardiovascular wellness.",
-    },
-    {
       Icon: FiActivity,
-      name: "Diabetic Diet",
-      description:
-        "Personalized dietary guidance to help manage blood sugar levels and diabetes-related health goals.",
-    },
-    {
-      Icon: FiShield,
-      name: "Food Intolerance Planning",
-      description:
-        "Nutrition strategies for managing food sensitivities, digestive concerns, and dietary restrictions.",
+      name: "Sports Nutrition",
+      desc: "Nutrition plans for active lifestyles",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition",
     },
     {
       Icon: FiHeart,
       name: "Pregnancy Nutrition",
-      description:
-        "Healthy eating guidance that supports maternal wellness and fetal development during pregnancy.",
+      desc: "Healthy eating during pregnancy",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition",
+    },
+    {
+      Icon: FiMoon,
+      name: "Food-Intolerance Planning",
+      desc: "Diet guidance for food sensitivities",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning",
     },
     {
       Icon: FiTrendingUp,
-      name: "Sports Nutrition",
-      description:
-        "Nutrition plans focused on athletic performance, recovery, endurance, and strength goals.",
+      name: "Cholesterol-Lowering Diet",
+      desc: "Heart-healthy meal planning",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
     },
     {
-      Icon: FiTarget,
-      name: "Weight Management",
-      description:
-        "Evidence-based dietary strategies for healthy weight loss and long-term weight maintenance.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Heart-Healthy Nutrition",
-      description:
-        "Nutrition recommendations designed to support cardiovascular health and wellness.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Digestive Health Nutrition",
-      description:
-        "Dietary support for bloating, digestive discomfort, and gastrointestinal wellness.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Preventive Nutrition Counseling",
-      description:
-        "Healthy eating strategies focused on reducing future health risks.",
+      Icon: FiShield,
+      name: "Cholesterol-Lowering Diet",
+      desc: "Heart-healthy meal planning",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
     },
     {
       Icon: FiActivity,
-      name: "Healthy Eating Education",
-      description:
-        "Guidance for making informed food choices and improving daily nutrition habits.",
-    },
-    {
-      Icon: FiZap,
-      name: "Energy & Performance Nutrition",
-      description:
-        "Nutrition planning to support physical activity, recovery, and overall energy levels.",
-    },
-    {
-      Icon: FiCompass,
-      name: "Wellness Nutrition Programs",
-      description:
-        "Comprehensive nutrition support designed to promote long-term health and well-being.",
+      name: "Diabetic Diet",
+      desc: "Nutrition plans for diabetes management",
+      path: "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet",
     },
   ],
 
@@ -491,22 +456,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -565,6 +540,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -590,7 +566,9 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -619,33 +597,24 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Weight & Nutrition</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -746,7 +715,7 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

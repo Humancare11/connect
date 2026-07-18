@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import Seo from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function AcidRefluxGerd() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+    <SEO
+  title="Acid Reflux & GERD Treatment Online | Virtual Doctor Care"
+  description="Get online care for acid reflux and GERD symptoms, including heartburn and chest discomfort. Connect with a licensed provider for treatment guidance and symptom management."
+  keywords="acid reflux, GERD symptoms, heartburn, chest discomfort, acid reflux treatment, GERD treatment, digestive health, gastroesophageal reflux disease, telemedicine services, online doctor appointment, virtual healthcare services, online provider, licensed providers"
+  url="https://humancareconnect.co/acid-reflux-gerd"
+/>
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function AcidRefluxGerd() {
         </div>
       </section>
     </div>
+    </>
   );
 }

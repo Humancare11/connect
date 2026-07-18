@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -163,75 +164,46 @@ const SPECIALTY_DATA = {
     {
       Icon: GiHumanEar,
       name: "Ear Infection",
-      description:
-        "Diagnosis and treatment of bacterial and viral ear infections causing pain, pressure, and discomfort.",
+      desc: "Pain, pressure, and ear discomfort",
+      path: "/eye-ear-bone/ear-nose-throat/ear-infection",
     },
     {
       Icon: GiHumanEar,
       name: "Ear Pain",
-      description:
-        "Evaluation of ear discomfort, pressure, inflammation, infection, and underlying ENT conditions.",
+      desc: "Pain, pressure, and ear discomfort",
+      path: "/eye-ear-bone/ear-nose-throat/ear-pain",
     },
     {
       Icon: FiVolume2,
       name: "Hoarseness",
-      description:
-        "Management of voice changes, vocal strain, throat irritation, and vocal cord-related concerns.",
+      desc: "Relief for voice and throat changes",
+      path: "/eye-ear-bone/ear-nose-throat/hoarseness",
     },
     {
       Icon: GiNoseSide,
       name: "Nasal Congestion",
-      description:
-        "Treatment for blocked nasal passages, sinus pressure, breathing difficulties, and congestion symptoms.",
+      desc: "Relief for a blocked nose",
+      path: "/eye-ear-bone/ear-nose-throat/nasal-congestion",
     },
     {
       Icon: FiZap,
       name: "Sore Throat",
-      description:
-        "Care for throat irritation, pain, inflammation, infections, and swallowing discomfort.",
+      desc: "Pain, irritation, or a scratchy throat",
+      path: "/eye-ear-bone/ear-nose-throat/sore-throat",
     },
     {
       Icon: MdOutlineSick,
       name: "Tonsillitis",
-      description:
-        "Diagnosis and treatment of inflamed tonsils causing throat pain, fever, and difficulty swallowing.",
+      desc: "Relief for sore throat and swollen tonsils",
+      path: "/eye-ear-bone/ear-nose-throat/tonsillitis",
     },
     {
       Icon: FiCompass,
       name: "Vertigo",
-      description:
-        "Evaluation and management of dizziness, spinning sensations, balance problems, and vestibular disorders.",
+      desc: "Spinning sensation and balance issues",
+      path: "/eye-ear-bone/ear-nose-throat/vertigo",
     },
-    {
-      Icon: FiShield,
-      name: "Sinus Infections",
-      description:
-        "Treatment for sinus inflammation, facial pressure, nasal discharge, and chronic sinus symptoms.",
-    },
-    {
-      Icon: MdOutlineHearing,
-      name: "Hearing Concerns",
-      description:
-        "Assessment of hearing changes, ear-related symptoms, and conditions affecting auditory health.",
-    },
-    {
-      Icon: FiVolume,
-      name: "Tinnitus",
-      description:
-        "Management of ringing, buzzing, or other sounds in the ears affecting daily life.",
-    },
-    {
-      Icon: GiNoseSide,
-      name: "Allergic Rhinitis",
-      description:
-        "Treatment for allergy-related nasal symptoms, sneezing, congestion, and sinus discomfort.",
-    },
-    {
-      Icon: FiTrendingUp,
-      name: "Swallowing Difficulties",
-      description:
-        "Evaluation of throat-related conditions that affect swallowing, eating, and daily comfort.",
-    },
+
   ],
 
   faqs: [
@@ -491,37 +463,31 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay, href }) {
-  const inner = (
-    <div className="sp-condition-card">
-      <div className="sp-condition-card__icon">
-        <Icon size={22} />
-      </div>
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
       <h3 className="sp-condition-card__title">{name}</h3>
       <p className="sp-condition-card__desc">{description}</p>
-      {href ? (
-        <span className="sp-condition-card__link" aria-hidden="true">
-          Learn more <FiArrowRight size={13} />
-        </span>
-      ) : (
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      )}
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
     </div>
   );
 
   return (
     <Reveal delay={delay}>
-      {href ? (
-        <a href={href} className="sp-card-link" aria-label={name}>
-          {inner}
-        </a>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
       ) : (
-        inner
+        cardContent
       )}
     </Reveal>
   );
@@ -591,6 +557,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function Ent({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -642,33 +609,24 @@ export default function Ent({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Eye Ear & Bone</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -774,7 +732,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

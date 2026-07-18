@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -171,75 +172,57 @@ const SPECIALTY_DATA = {
     {
       Icon: FiActivity,
       name: "ADHD Evaluation",
-      description:
-        "Assessment and treatment of attention difficulties, hyperactivity, impulsivity, and executive function challenges.",
+      desc: "Attention, focus, and hyperactivity concerns",
+      path: "/mental-health/psychiatry/adhd-evaluation",
     },
     {
-      Icon: FiZap,
       name: "Anxiety",
-      description:
-        "Management of excessive worry, nervousness, fear, racing thoughts, and anxiety-related symptoms.",
+      desc: "Excessive worry, stress, and nervousness",
+      path: "/mental-health/psychiatry/anxiety",
     },
     {
       Icon: FiTrendingUp,
-      name: "Bipolar Disorder Follow-Up",
-      description:
-        "Ongoing monitoring and treatment of mood fluctuations, emotional stability, and bipolar disorder symptoms.",
+      name: "Bipolar disorder follow-up",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/mental-health/psychiatry/bipolar-disorder-follow-up",
     },
     {
       Icon: FiHeart,
       name: "Depression",
-      description:
-        "Evaluation and treatment of persistent sadness, low motivation, hopelessness, and mood-related concerns.",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/mental-health/psychiatry/depression",
     },
     {
       Icon: FiMoon,
-      name: "Insomnia",
-      description:
-        "Support for difficulty falling asleep, staying asleep, poor sleep quality, and sleep-related challenges.",
+      name: "PTSD",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/mental-health/psychiatry/ptsd",
     },
     {
       Icon: FiShield,
-      name: "OCD (Obsessive-Compulsive Disorder)",
-      description:
-        "Treatment for obsessive thoughts, compulsive behaviors, repetitive actions, and anxiety-driven routines.",
+      ame: "OCD",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/mental-health/psychiatry/ocd",
     },
     {
       Icon: FiAlertCircle,
-      name: "Panic Attacks",
-      description:
-        "Care for sudden episodes of intense fear, rapid heartbeat, shortness of breath, and panic symptoms.",
+      name: "PTSD (Post-Traumatic Stress Disorder)",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/mental-health/psychiatry/ptsd",
     },
     {
       Icon: FiCompass,
-      name: "PTSD (Post-Traumatic Stress Disorder)",
-      description:
-        "Support for trauma-related symptoms, flashbacks, emotional distress, and post-traumatic challenges.",
+      name: "Panic attacks",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/mental-health/psychiatry/panic-attacks",
     },
     {
       Icon: FiBriefcase,
-      name: "Stress & Burnout",
-      description:
-        "Evaluation and treatment of chronic stress, emotional exhaustion, and work-related burnout.",
+      name: "Insomnia",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/mental-health/psychiatry/insomnia",
     },
-    {
-      Icon: FiTarget,
-      name: "Emotional Regulation Difficulties",
-      description:
-        "Support for managing strong emotions, irritability, impulsive reactions, and emotional balance.",
-    },
-    {
-      Icon: FiLayers,
-      name: "Mood Disorders",
-      description:
-        "Assessment and treatment of mood-related conditions affecting emotional well-being and daily functioning.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Mental Wellness Support",
-      description:
-        "Comprehensive care focused on maintaining emotional health, resilience, and overall psychological wellness.",
-    },
+
   ],
 
   faqs: [
@@ -490,22 +473,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -564,6 +557,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function Psychiatry({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -590,7 +584,9 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -619,33 +615,24 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Mental Health</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -746,7 +733,7 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

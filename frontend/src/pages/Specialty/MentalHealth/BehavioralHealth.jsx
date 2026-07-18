@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -171,75 +172,28 @@ const SPECIALTY_DATA = {
     {
       Icon: FiActivity,
       name: "Adjustment Difficulties",
-      description:
-        "Support for emotional challenges associated with life transitions, personal changes, and stressful events.",
+      desc: "Support through life changes",
+      path: "/mental-health/behavioral-health/adjustment-difficulties",
     },
     {
       Icon: FiZap,
       name: "Anger Management",
-      description:
-        "Strategies to help manage frustration, emotional reactions, and healthy expression of emotions.",
+      desc: "Healthy strategies for emotional control",
+      path: "/mental-health/behavioral-health/anger-management",
     },
     {
       Icon: FiMoon,
       name: "Sleep-Related Anxiety",
-      description:
-        "Care for anxiety affecting sleep quality, bedtime worries, racing thoughts, and sleep disturbances.",
+      desc: "Spinning sensation and balance issues",
+      path: "/mental-health/behavioral-health/sleep-related-anxiety",
     },
     {
       Icon: FiShield,
-      name: "Substance Use Support",
-      description:
-        "Guidance and support for individuals seeking help with substance-related concerns and recovery goals.",
+      name: "Substance-use Support",
+      desc: "Fever and illness in children",
+      path: "/mental-health/behavioral-health/substance-use-support",
     },
-    {
-      Icon: FiTrendingUp,
-      name: "Stress Management",
-      description:
-        "Evaluation and treatment strategies for chronic stress, burnout, and overwhelming life demands.",
-    },
-    {
-      Icon: FiCompass,
-      name: "Emotional Regulation Challenges",
-      description:
-        "Support for managing intense emotions and developing healthier coping mechanisms.",
-    },
-    {
-      Icon: FiBriefcase,
-      name: "Work & Career Stress",
-      description:
-        "Assistance navigating workplace stress, professional burnout, and performance-related concerns.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Relationship Concerns",
-      description:
-        "Guidance for communication challenges, interpersonal conflicts, and emotional relationship stress.",
-    },
-    {
-      Icon: FiMap,
-      name: "Life Transition Support",
-      description:
-        "Care for major life events including career changes, relocation, parenting, and personal transitions.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Self-Esteem & Confidence Issues",
-      description:
-        "Support for building self-confidence, self-worth, and emotional resilience.",
-    },
-    {
-      Icon: FiTarget,
-      name: "Behavioral Wellness Coaching",
-      description:
-        "Personalized strategies to improve daily habits, emotional health, and overall wellness.",
-    },
-    {
-      Icon: FiSearch,
-      name: "Mental Wellness Support",
-      description:
-        "Comprehensive care focused on maintaining emotional balance and psychological well-being.",
-    },
+
   ],
 
   faqs: [
@@ -491,22 +445,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -565,6 +529,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -591,7 +556,9 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -620,33 +587,24 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Mental Health</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -747,7 +705,7 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

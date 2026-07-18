@@ -40,7 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Abdominal-Pain.webp";
-
+import Seo from "../../components/Seo";
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -613,6 +613,7 @@ function SectionLabel({ children, variant = "light" }) {
 // ─────────────────────────────────────────────────────────────────
 function HeroSection({ data }) {
   return (
+
     <section
       className="sp-hero"
       style={{
@@ -1219,6 +1220,13 @@ function FaqSection() {
 export default function AbdominalPain() {
   return (
     <>
+
+    <SEO
+  title="Abdominal Pain Treatment Online | Virtual Digestive Care"
+  description="Get online care for abdominal pain, stomach pain, cramping, bloating, and digestive discomfort. Connect with a licensed provider for evaluation and treatment guidance."
+  keywords="abdominal pain, abdominal pain symptoms, stomach pain, stomach cramps, bloating, digestive discomfort, digestive issues, abdominal pain treatment, virtual digestive care, telemedicine services, online doctor appointment, virtual healthcare services, online provider, licensed providers"
+  url="https://humancareconnect.co/abdominal-pain"
+/>
       <style>{STYLES}</style>
 
       <div
@@ -1251,6 +1259,7 @@ export default function AbdominalPain() {
 
         <FaqSection />
       </div>
+   
     </>
   );
 }

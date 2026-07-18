@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -161,76 +162,65 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiActivity,
-      name: "Body Aches",
-      description:
-        "Evaluation and treatment of muscle pain, body soreness, aches, and discomfort associated with illness or physical strain.",
+      name: "Pink eye",
+      desc: "Fever and illness in children",
+      path: "/general-and-everyday-care/general-physician/pink-eye",
     },
     {
       Icon: FiThermometer,
-      name: "Cold & Flu",
-      description:
-        "Diagnosis and management of cold symptoms, influenza, congestion, sore throat, cough, and seasonal illnesses.",
+      name: "Nausea & Vomiting",
+      desc: "Spinning sensation and balance issues",
+      path: "/general-and-everyday-care/general-physician/nausea-and-vomiting",
     },
     {
       Icon: FiWind,
-      name: "Cough",
-      description:
-        "Assessment and treatment of acute and persistent cough caused by infections, allergies, or respiratory conditions.",
+      name: "Fatigue",
+      desc: "Relief for sore throat and swollen tonsils",
+      path: "/general-and-everyday-care/general-physician/fatigue",
     },
     {
       Icon: FiBatteryCharging,
-      name: "Fatigue",
-      description:
-        "Evaluation of ongoing tiredness, low energy levels, weakness, and unexplained fatigue.",
+      name: "Minor Infections",
+      desc: "Pain, irritation, or a scratchy throat",
+      path: "/general-and-everyday-care/general-physician/minor-infections",
     },
     {
       Icon: FiAlertCircle,
-      name: "Fever",
-      description:
-        "Diagnosis and treatment of fever, chills, infection-related symptoms, and illness-related temperature changes.",
+      name: "Sinus Infection",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/general-and-everyday-care/general-physician/sinus-infection",
     },
     {
       Icon: FiTarget,
       name: "Headache",
-      description:
-        "Management of tension headaches, illness-related headaches, and common headache symptoms.",
+      desc: "Fever and illness in children",
+      path: "/general-and-everyday-care/general-physician/headache",
     },
     {
       Icon: FiShield,
-      name: "Minor Infections",
-      description:
-        "Treatment for common bacterial and viral infections affecting the respiratory system, skin, urinary tract, and more.",
+      name: "Body aches",
+      desc: "Spinning sensation and balance issues",
+      path: "/general-and-everyday-care/general-physician/body-aches",
     },
     {
       Icon: FiDroplet,
-      name: "Nausea & Vomiting",
-      description:
-        "Care for digestive symptoms, stomach discomfort, nausea, vomiting, and related health concerns.",
+      name: "Cough",
+      desc: "Relief for sore throat and swollen tonsils",
+      path: "/general-and-everyday-care/general-physician/cough",
     },
     {
       Icon: FiEye,
-      name: "Pink Eye",
-      description:
-        "Diagnosis and treatment of conjunctivitis causing redness, irritation, discharge, and eye discomfort.",
+      name: "Cold & flu",
+      desc: "Pain, irritation, or a scratchy throat",
+      path: "/general-and-everyday-care/general-physician/cold-and-flu",
     },
     {
       Icon: FiCloud,
-      name: "Sinus Infection",
-      description:
-        "Evaluation and management of sinus pressure, facial pain, congestion, and sinus-related symptoms.",
+      name: "Fever",
+      desc: "Relief for a blocked nose",
+      path: "/general-and-everyday-care/general-physician/fever",
     },
-    {
-      Icon: FiCalendar,
-      name: "Seasonal Illnesses",
-      description:
-        "Treatment for common viral illnesses, seasonal infections, and flu-related conditions.",
-    },
-    {
-      Icon: FiHeart,
-      name: "General Health Concerns",
-      description:
-        "Comprehensive evaluation of everyday symptoms, wellness concerns, and non-emergency medical conditions.",
-    },
+
   ],
   faqs: [
     {
@@ -479,22 +469,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -553,6 +553,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -578,7 +579,9 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -606,33 +609,24 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">General & Everyday Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -733,7 +727,7 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

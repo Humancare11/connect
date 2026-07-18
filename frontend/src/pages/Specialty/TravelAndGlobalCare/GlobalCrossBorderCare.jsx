@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -172,76 +173,29 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiActivity,
-      name: "Cross-Border Consultation",
-      description:
-        "Medical consultations designed for individuals seeking healthcare guidance across countries.",
+      name: "Referral Coordination Overseas",
+      desc: "Specialist referrals across countries",
+      path: "/travel-and-global-care/global-cross-border-care/referral-coordination-overseas",
     },
     {
       Icon: FiGlobe,
-      name: "International Medical Assistance",
-      description:
-        "Support navigating healthcare needs while living, working, or traveling abroad.",
+      name: "Medication Refill While Traveling",
+      desc: "Prescription refill support abroad",
+      path: "/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
     },
     {
       Icon: FiDroplet,
-      name: "Medication Refill While Traveling",
-      description:
-        "Guidance for managing prescription medications and continuity of treatment overseas.",
+      name: "International Medical Assistance",
+      desc: "Medical support while traveling abroad",
+      path: "/travel-and-global-care/global-cross-border-care/international-medical-assistance",
     },
     {
       Icon: FiCompass,
-      name: "Referral Coordination Overseas",
-      description:
-        "Assistance connecting with specialists, healthcare providers, and medical facilities internationally.",
+      name: "Cross-Border Consultation",
+      desc: "Healthcare guidance across locations",
+      path: "/travel-and-global-care/global-cross-border-care/cross-border-consultation",
     },
-    {
-      Icon: FiHeart,
-      name: "Chronic Disease Follow-Up",
-      description:
-        "Ongoing monitoring and support for chronic health conditions while abroad.",
-    },
-    {
-      Icon: FiMap,
-      name: "Travel-Related Health Concerns",
-      description:
-        "Medical guidance for common health issues experienced during international travel.",
-    },
-    {
-      Icon: FiShield,
-      name: "Preventive Health Consultations",
-      description:
-        "Wellness assessments and preventive care recommendations for global travelers.",
-    },
-    {
-      Icon: FiFileText,
-      name: "Medical Record Review",
-      description:
-        "Support reviewing healthcare documentation and treatment history across locations.",
-    },
-    {
-      Icon: FiRepeat,
-      name: "Post-Treatment Follow-Up",
-      description:
-        "Continuity care after procedures, treatments, or hospitalizations received internationally.",
-    },
-    {
-      Icon: FiSearch,
-      name: "International Second Opinions",
-      description:
-        "Access to experienced healthcare professionals for additional medical guidance.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Relocation Health Support",
-      description:
-        "Healthcare assistance for individuals moving to a new country or region.",
-    },
-    {
-      Icon: FiTarget,
-      name: "Global Healthcare Navigation",
-      description:
-        "Guidance understanding healthcare systems, referrals, insurance coordination, and treatment options abroad.",
-    },
+
   ],
 
   faqs: [
@@ -491,22 +445,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -565,6 +529,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -591,7 +556,9 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -620,33 +587,24 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Travel & Global Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -747,7 +705,7 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

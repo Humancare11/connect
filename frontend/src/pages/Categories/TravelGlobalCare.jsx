@@ -39,57 +39,71 @@ const cat = {
     {
       name: "Travel Medicine ",
       desc: "Expert travel health support for pre-travel consultations, vaccination guidance, malaria prevention, traveler's diarrhea, altitude sickness, post-travel illness evaluations, and destination-specific health risks.",
-      path: "/travel-medicine ",
+      path: "/travel-and-global-care/travel-medicine ",
     },
     {
       name: " Global Cross-Border Care",
       desc: "International healthcare support for travelers, expatriates, medical tourists, medication refill assistance, specialist referrals, chronic care follow-ups, and secure telemedicine consultations across borders.",
-      path: "/global-cross-border-care ",
+      path: "/travel-and-global-care/global-cross-border-care ",
     },
   ],
 
   conditions: [
     {
-      name: "Cross-Border Consultation",
-      desc: "Healthcare guidance across locations",
-      path: "/cross-border-consultation",
+      name: "Pre-Travel Vaccination",
+      // desc: "Vaccinations before international travel",
+      path: "/travel-and-global-care/travel-medicine/pre-travel-vaccination",
     },
     {
-      name: "International Medical Assistance",
-      desc: "Medical support while traveling abroad ",
-      path: "/international-medical-assistance",
+      name: "Malaria Prevention",
+      // desc: "Prevention and medication guidance",
+      path: "/travel-and-global-care/travel-medicine/malaria-prevention",
     },
     {
-      name: "Altitude Sickness",
-      desc: "Symptoms caused by high elevation",
-      path: "/altitude-sickness",
+      name: "Altitude Sickness ",
+      // desc: "Advice for high-altitude travel",
+      path: "/travel-and-global-care/travel-medicine/altitude-sickness",
+    },
+    {
+      name: "Post-Travel Symptoms",
+      // desc: "Evaluation of symptoms after returning",
+      path: "/travel-and-global-care/travel-medicine/post-travel-symptoms",
+    },
+    {
+      name: "Traveler's Diarrhea",
+      // desc: "Treatment for travel-related diarrhea",
+      path: "/travel-and-global-care/travel-medicine/travelers-diarrhea",
     },
     {
       name: "Food Poisoning While Traveling",
-      desc: "Stomach illness during travel trips",
-      path: "/food-poisoning-while-traveling",
+      // desc: "Stomach illness during travel trips",
+      path: "/travel-and-global-care/travel-medicine/food-poisoning-while-traveling",
     },
-
-    // {
-    //   name: "Feeding Concerns",
-    //   desc: "Support for healthy infant feeding",
-    //   path: "/child-and-family-care/pediatrics/feeding-concerns",
-    // },
-    // {
-    //   name: "Pediatric Cold & Flu",
-    //   desc: "Cold and flu symptoms in children",
-    //   path: "/child-and-family-care/pediatrics/pediatric-cold-flu",
-    // },
-    // {
-    //   name: "Pediatric Fever",
-    //   desc: "Fever and illness in children",
-    //   path: "/child-and-family-care/pediatrics/pediatric-fever",
-    // },
-    // {
-    //   name: "Skin Rash in Children",
-    //   desc: "Red, itchy, irritated skin in kids",
-    //   path: "/child-and-family-care/pediatrics/skin-rash-in-children",
-    // },
+    {
+      name: "Travel-Related Fever",
+      // desc: "Assessment of fever after travel",
+      path: "/travel-and-global-care/travel-medicine/travel-related-fever",
+    },
+    {
+      name: "Cross-Border Consultation",
+      // desc: "Healthcare guidance across locations",
+      path: "/travel-and-global-care/global-cross-border-care/cross-border-consultation",
+    },
+    {
+      name: "International Medical Assistance",
+      // desc: "Medical support while traveling abroad",
+      path: "/travel-and-global-care/global-cross-border-care/international-medical-assistance",
+    },
+    {
+      name: "Medication Refill While Traveling",
+      // desc: "Prescription refill support abroad",
+      path: "/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
+    },
+    {
+      name: "Referral Coordination Overseas",
+      // desc: "Specialist referrals across countries",
+      path: "/travel-and-global-care/global-cross-border-care/referral-coordination-overseas",
+    },
   ],
 
   treatments: [
@@ -444,7 +458,7 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          <button
+          {/* <button
             className="hcc-faq-chat-btn"
             onClick={() =>
               (window.location.href = "mailto:support@humancareconnect.co")
@@ -454,27 +468,24 @@ function FaqSection({ faqGroups, catLabel }) {
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button>
+          </button> */}
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div>
+              <div className="badge-content">
                 <strong>Avg. response in 2 min</strong>
-                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🏥</span>
-              <div>
+              <span className="badge-icon">🔒</span>
+              <div className="badge-content">
                 <strong>HIPAA secure &amp; private</strong>
-                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-dot" />
-              <div>
-                <strong>Available on all devices</strong>
-                <div>Web, iOS &amp; Android</div>
+              <span className="badge-icon">✓</span>
+              <div className="badge-content">
+                <strong>Available in all 50 states</strong>
               </div>
             </div>
           </div>
@@ -612,14 +623,14 @@ export default function TravelGlobalCare() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            <div className="hcc-cta-row">
+            {/* <div className="hcc-cta-row">
               <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
               </button>
-              {/* <button className="hcc-btn-secondary" onClick={goToContact}>
+              <button className="hcc-btn-secondary" onClick={goToContact}>
                 <FiUser size={15} /> Know More
-              </button> */}
-            </div>
+              </button>
+            </div> */}
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits

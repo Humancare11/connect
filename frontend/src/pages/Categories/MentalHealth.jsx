@@ -44,12 +44,12 @@ const cat = {
     {
       name: "Psychiatry",
       desc: "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support. ",
-      path: "/psychiatry",
+      path: "/mental-health/psychiatry",
     },
     {
       name: "Psychology Counseling",
       desc: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
-      path: "/psychology-counseling",
+      path: "/mental-health/psychology-counseling",
     },
   ],
 
@@ -78,73 +78,68 @@ const cat = {
     {
       name: "Anxiety",
       // desc: "Excessive worry, stress, and nervousness",
-      path: "/anxiety",
+      path: "/mental-health/psychiatry/anxiety",
     },
 
     {
       name: "Bipolar disorder follow-up",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "/bipolar-disorder-follow-up",
+      path: "/mental-health/psychiatry/bipolar-disorder-follow-up",
     },
     {
       name: "Depression",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "/depression",
+      path: "/mental-health/psychiatry/depression",
     },
     {
       name: "OCD",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "/ocd",
+      path: "/mental-health/psychiatry/ocd",
     },
     {
       name: "ADHD Evaluation",
       // desc: "Attention, focus, and hyperactivity concerns",
-      path: "/ADHD-evaluation",
+      path: "/mental-health/psychiatry/adhd-evaluation",
     },
     {
       name: "PTSD",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "ptsd",
+      path: "/mental-health/psychiatry/ptsd",
     },
     {
       name: "Panic attacks",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "/panic-attacks",
+      path: "/mental-health/psychiatry/panic-attacks",
     },
     {
       name: "Insomnia",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "/insomnia",
+      path: "/mental-health/psychiatry/insomnia",
     },
     {
-      name: "Anxiety",
+      name: "Stress",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "",
-    },
-    {
-      name: "Low self-esteem",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/low-self-esteem",
+      path: "/mental-health/psychology-counseling/stress",
     },
     {
       name: "Relationship Stress",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "/relationship-stress",
+      path: "/mental-health/psychology-counseling/relationship-stress",
     },
     {
       name: "Trauma support",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "/trauma-support",
+      path: "/mental-health/psychology-counseling/trauma-support",
     },
     {
       name: "Grief and Loss",
       // desc: "Emotional pain after a loss",
-      path: "/grief-and-loss",
+      path: "/mental-health/psychology-counseling/grief-and-loss",
     },
     {
       name: "Low Self-Esteem",
       // desc: "Building confidence and self worth",
-      path: "/low-self-esteem",
+      path: "/mental-health/psychology-counseling/low-self-esteem",
     },
   ],
 
@@ -568,23 +563,20 @@ function FaqSection({ faqGroups, catLabel }) {
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div>
+              <div className="badge-content">
                 <strong>Avg. response in 2 min</strong>
-                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🏥</span>
-              <div>
+              <span className="badge-icon">🔒</span>
+              <div className="badge-content">
                 <strong>HIPAA secure &amp; private</strong>
-                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-dot" />
-              <div>
-                <strong>Available on all devices</strong>
-                <div>Web, iOS &amp; Android</div>
+              <span className="badge-icon">✓</span>
+              <div className="badge-content">
+                <strong>Available in all 50 states</strong>
               </div>
             </div>
           </div>

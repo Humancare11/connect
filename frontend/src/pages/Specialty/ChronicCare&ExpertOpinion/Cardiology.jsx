@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -156,75 +157,41 @@ const SPECIALTY_DATA = {
     {
       Icon: FiAlertCircle,
       name: "Chest Pain (Non-Emergency)",
-      description:
-        "Evaluation of ongoing or recurring chest discomfort to identify possible heart-related causes and provide appropriate treatment.",
+      desc: "Evaluation for ongoing chest discomfort",
+      path: "/chronic-care/cardiology/chest-pain",
     },
     {
       Icon: GiHeartOrgan,
       name: "Heart Disease Follow-Up",
-      description:
-        "Continuous monitoring and management of existing heart conditions to support better heart function and long-term health.",
+      desc: "Ongoing care after heart treatment",
+      path: "/chronic-care/cardiology/heart-disease-follow-up",
     },
     {
       Icon: FiActivity,
       name: "High Blood Pressure",
-      description:
-        "Diagnosis and treatment of hypertension through lifestyle modifications, medication management, and routine monitoring.",
+      desc: "Elevated blood pressure affecting circulation",
+      path: "/chronic-care/cardiology/high-blood-pressure",
     },
     {
       Icon: MdOutlineBloodtype,
       name: "High Cholesterol",
-      description:
-        "Care for elevated cholesterol levels and lipid disorders to reduce the risk of cardiovascular disease and stroke.",
+      desc: "Elevated cholesterol affects heart health",
+      path: "/chronic-care/cardiology/high-cholesterol",
     },
     {
       Icon: FiZap,
       name: "Palpitations",
-      description:
-        "Evaluation of irregular, rapid, or pounding heartbeats to determine the cause and provide appropriate cardiac care.",
+      name: "Palpitations",
+      desc: "Evaluation for irregular heart sensations.",
+      path: "/chronic-care/cardiology/palpitations",
     },
     {
       Icon: FiClipboard,
-      name: "Pre-Operative Cardiac Clearance",
-      description:
-        "Heart evaluations before surgery to assess cardiovascular risk and ensure safe surgical planning.",
+      name: "Pre-Op Cardiac Clearance",
+      desc: "Support for healthy infant feeding",
+      path: "/chronic-care/cardiology/pre-op-cardiac-clearance",
     },
-    {
-      Icon: FiTarget,
-      name: "Coronary Artery Disease",
-      description:
-        "Management of narrowed or blocked heart arteries that may cause chest pain, heart attacks, or reduced blood flow.",
-    },
-    {
-      Icon: FiRefreshCw,
-      name: "Heart Rhythm Disorders",
-      description:
-        "Diagnosis and treatment of arrhythmias, including abnormal heart rhythms that affect heart performance.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Heart Failure Management",
-      description:
-        "Comprehensive care for weakened heart function, including symptom management and long-term treatment strategies.",
-    },
-    {
-      Icon: FiWind,
-      name: "Shortness of Breath & Exercise Intolerance",
-      description:
-        "Assessment of breathing difficulties, fatigue, and reduced physical capacity that may be related to heart conditions.",
-    },
-    {
-      Icon: FiBarChart2,
-      name: "Preventive Heart Screenings",
-      description:
-        "Routine cardiovascular evaluations to detect risk factors such as hypertension, cholesterol abnormalities, and inherited heart conditions.",
-    },
-    {
-      Icon: FiEye,
-      name: "Cardiovascular Risk Assessment",
-      description:
-        "Evaluation of personal and family health history, lifestyle factors, and medical conditions that may increase heart disease risk.",
-    },
+
   ],
 
   faqs: [
@@ -471,22 +438,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -545,6 +522,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -570,7 +548,9 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -598,35 +578,35 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Chronic Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
+            </div>
 
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
-            </div>
-            </div>
+            <Reveal className="sp-hero__sidebar">
+              <BookingCard
+                price={price}
+                priceLoading={priceLoading}
+                categoryId={data.categoryId}
+                name={data.name}
+              />
+            </Reveal>
+          </div>
         </section>
 
         {/* ── 2. OVERVIEW ────────────────────────────────────────────────────── */}
@@ -725,7 +705,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

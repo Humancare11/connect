@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -161,74 +162,22 @@ const SPECIALTY_DATA = {
     {
       Icon: FiAlertCircle,
       name: "Perinatal Anxiety",
-      description:
-        "Support for anxiety experienced during pregnancy and the postpartum period.",
+      desc: "Support for anxiety during and after pregnancy",
+      path: "/women-health/women-mental-health/perinatal-anxiety",
     },
     {
       Icon: FiActivity,
       name: "PMDD",
-      description:
-        "Evaluation and management of Premenstrual Dysphoric Disorder and severe menstrual-related mood symptoms.",
+      desc: "Care for premenstrual dysphoric disorder",
+      path: "/women-health/women-mental-health/pmdd",
     },
     {
       Icon: FiHeart,
       name: "Postnatal Depression",
-      description:
-        "Support for emotional challenges and depression experienced after childbirth.",
+      desc: "Support for depression after childbirth",
+      path: "/women-health/women-mental-health/postnatal-depression",
     },
-    {
-      Icon: FiTrendingUp,
-      name: "Pregnancy-Related Stress",
-      description:
-        "Guidance for emotional concerns associated with pregnancy and major life changes.",
-    },
-    {
-      Icon: FiUserCheck,
-      name: "Hormonal Mood Changes",
-      description:
-        "Assessment of emotional symptoms influenced by hormonal fluctuations.",
-    },
-    {
-      Icon: FiWind,
-      name: "Emotional Overwhelm",
-      description:
-        "Support for managing feelings of stress, exhaustion, and emotional fatigue.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Maternal Mental Health",
-      description:
-        "Comprehensive care focused on emotional well-being during motherhood.",
-    },
-    {
-      Icon: FiMoon,
-      name: "Sleep & Mood Concerns",
-      description:
-        "Evaluation of emotional symptoms connected to sleep disruption and fatigue.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Parenting Stress",
-      description:
-        "Support for the emotional demands and challenges of parenting.",
-    },
-    {
-      Icon: FiAlertCircle,
-      name: "Anxiety Disorders",
-      description:
-        "Personalized care for excessive worry, nervousness, and anxiety-related symptoms.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Mood Disorders",
-      description: "Assessment and support for ongoing mood-related concerns.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Women's Emotional Wellness",
-      description:
-        "Comprehensive mental health support designed around women's unique life experiences.",
-    },
+
   ],
   faqs: [
     {
@@ -464,22 +413,32 @@ function FAQItem({ question, answer }) {
 }
 
 // ── Condition Card ────────────────────────────────────────────────────────────
-function ConditionCard({ Icon, name, description, delay }) {
+function ConditionCard({ Icon, name, description, delay, path }) {
+  const cardContent = (
+    <div
+      className="sp-condition-card"
+      style={{ cursor: path ? "pointer" : "default", height: "100%" }}
+    >
+      <h3 className="sp-condition-card__title">{name}</h3>
+      <p className="sp-condition-card__desc">{description}</p>
+      <span
+        className="sp-condition-card__link"
+        aria-label={`Learn more about ${name}`}
+      >
+        Learn more <FiArrowRight size={13} />
+      </span>
+    </div>
+  );
+
   return (
     <Reveal delay={delay}>
-      <div className="sp-condition-card">
-        <div className="sp-condition-card__icon">
-          <Icon size={22} />
-        </div>
-        <h3 className="sp-condition-card__title">{name}</h3>
-        <p className="sp-condition-card__desc">{description}</p>
-        <button
-          className="sp-condition-card__link"
-          aria-label={`Learn more about ${name}`}
-        >
-          Learn more <FiArrowRight size={13} />
-        </button>
-      </div>
+      {path ? (
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+          {cardContent}
+        </Link>
+      ) : (
+        cardContent
+      )}
     </Reveal>
   );
 }
@@ -538,6 +497,7 @@ function SectionLabel({ children }) {
 
 // ── Main Page Component ───────────────────────────────────────────────────────
 export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
+  const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   useEffect(() => {
@@ -564,7 +524,9 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data.categoryId]);
 
   return (
@@ -593,33 +555,24 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}>
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Women's Health</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -720,7 +673,7 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head">
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run generate:sitemap && npm run copy:spa-fallback",
-    "build:prod": "vite build --mode production && npm run generate:sitemap && npm run copy:spa-fallback",
-    "build:uat": "vite build --mode uat && npm run generate:sitemap && npm run copy:spa-fallback",
+    "build": "vite build && npm run generate:sitemap -- --mode=production && npm run copy:spa-fallback",
+    "build:prod": "vite build --mode production && npm run generate:sitemap -- --mode=production && npm run copy:spa-fallback",
+    "build:uat": "vite build --mode uat && npm run generate:sitemap -- --mode=uat && npm run copy:spa-fallback",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "copy:spa-fallback": "node -e \"const fs=require('fs');fs.copyFileSync('dist/index.html','dist/200.html')\"",
     "preview": "vite preview",
