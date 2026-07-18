@@ -40,6 +40,8 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Skin-Rash.webp";
+
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
