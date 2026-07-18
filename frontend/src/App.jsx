@@ -2482,7 +2482,7 @@ function AppLayout() {
             path="/women-health/obstetrics-and-gynaecology/fertility-concerns"
             element={<FertilityConcerns />}
           />
-          <Route path="/mental-health/psychiatry/ocd" element={<OCD />} />
+          <Route path="/mental-health/psychiatry/Ocd" element={<Ocd />} />
           <Route
             path="/eye-ear-bone/ophthalmology/eye-irritation"
             element={<EyeIrritation />}
