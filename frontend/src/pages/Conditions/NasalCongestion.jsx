@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Nasal-Congestion.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1216,6 +1217,12 @@ function FaqSection() {
 export default function NasalCongestion() {
   return (
     <>
+                  <SEO
+        title="Nasal Congestion Treatment Online | Blocked Nose & Sinus Relief"
+        description="Get expert treatment for nasal congestion online. Consult a licensed provider for a blocked nose, sinus pressure, runny nose, allergies, breathing difficulties, and personalized care."
+        keywords="Nasal congestion treatment, Blocked nose relief, Sinus congestion care, Online doctor consultation"
+        url="https://humancareconnect.co/nasal-congestion"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1210,6 +1211,12 @@ function FaqSection() {
 export default function DoctorsNote() {
   return (
     <>
+                  <SEO
+        title="Doctor�s Note Online | Telemedicine Medical Documentation"
+        description="Get a doctor�s note online through trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive medical documentation when clinically appropriate."
+        keywords="Doctor�s note online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/doctors-note"
+      />
       <style>{STYLES}</style>
 
       <div

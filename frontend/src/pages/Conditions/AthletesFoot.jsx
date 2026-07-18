@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -39,6 +39,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1042,6 +1043,12 @@ function FaqSection() {
 export default function AthletesFoot() {
   return (
     <>
+                  <SEO
+        title="Athlete�s Foot Treatment Online | Fungal Skin Infection Care"
+        description="Itchy, burning, or peeling skin between your toes? Get athlete�s foot treatment guidance, skincare support, and prescription care when appropriate from a licensed provider online."
+        keywords="Athlete�s foot, Athlete�s foot treatment, Fungal skin infection, Peeling skin, Skincare guidance, Online doctor appointment"
+        url="https://humancareconnect.co/athletes-foot"
+      />
       <style>{STYLES}</style>
 
       <div

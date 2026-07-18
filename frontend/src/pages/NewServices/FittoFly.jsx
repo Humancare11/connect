@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -52,6 +52,7 @@ import {
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
+import SEO from "../components/Seo";
 
 import heroBanner from "../../assets/MedicalServices/fit-to-fly-medical-certificate.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
@@ -1836,6 +1837,12 @@ export default function FitToFly() {
 
   return (
     <>
+                  <SEO
+        title="Fit to Fly Certificate Online | Medical Clearance for Air Travel | Humancare Connect"
+        description="Need a Fit to Fly Certificate? Connect with a licensed healthcare provider online for travel health assessments and medical clearance documentation when clinically appropriate."
+        keywords="Fit to Fly Certificate, Travel medical clearance, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/fit-to-fly-certificate"
+      />
       <Helmet>
         <title>
           Fit to Fly Certificate Online | Medical Clearance for Air Travel |

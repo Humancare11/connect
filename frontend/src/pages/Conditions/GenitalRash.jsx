@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -39,6 +39,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1043,6 +1044,12 @@ function FaqSection() {
 export default function GenitalRash() {
   return (
     <>
+                  <SEO
+        title="Genital Rash Treatment Online | Confidential Virtual Care"
+        description="Get expert care for genital rash online. Connect with a licensed provider for redness, itching, burning, skin irritation, and personalized treatment through secure telemedicine services."
+        keywords="Genital rash treatment, Confidential online care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/genital-rash"
+      />
       <style>{STYLES}</style>
 
       <div

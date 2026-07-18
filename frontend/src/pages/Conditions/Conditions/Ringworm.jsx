@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function Ringworm() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Ringworm Treatment Online | Virtual Care for Fungal Skin Infections"
+        description="Get fast online treatment for ringworm. Connect with a licensed provider for itchy, red, circular rashes, antifungal treatment, and personalized skincare guidance."
+        keywords="ringworm treatment online, fungal skin infection, ringworm rash, antifungal treatment, online dermatologist, itchy skin rash, tinea infection, virtual skin consultation"
+        url="https://humancareconnect.co/ringworm"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -424,5 +432,6 @@ export default function Ringworm() {
         </div>
       </section>
     </div>
+    </>
   );
 }

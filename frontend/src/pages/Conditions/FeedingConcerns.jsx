@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1215,6 +1216,12 @@ function FaqSection() {
 export default function FeedingConcerns() {
   return (
     <>
+                  <SEO
+        title="Infant Feeding Support Online | Expert Feeding Guidance"
+        description="Get expert support for infant feeding concerns online. Connect with a licensed provider for breastfeeding, bottle feeding, nutrition guidance, and personalized feeding recommendations through telemedicine services."
+        keywords="Infant feeding support, Feeding concerns, Telemedicine services, Online doctor appointment"
+        url="https://humancareconnect.co/feeding-concerns"
+      />
       <style>{STYLES}</style>
 
       <div

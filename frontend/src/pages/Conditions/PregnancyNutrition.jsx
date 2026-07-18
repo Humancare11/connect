@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function PregnancyNutrition() {
   return (
     <>
+                  <SEO
+        title="Pregnancy Nutrition Online | Prenatal Diet & Nutrition Support"
+        description="Get expert pregnancy nutrition guidance online. Connect with a licensed provider for prenatal nutrition, healthy eating, dietary planning, fetal development support, and personalized pregnancy care."
+        keywords="Pregnancy nutrition, Prenatal nutrition, Online pregnancy nutrition consultation, Healthy pregnancy diet, Prenatal wellness support"
+        url="https://humancareconnect.co/pregnancy-nutrition"
+      />
       <style>{STYLES}</style>
 
       <div

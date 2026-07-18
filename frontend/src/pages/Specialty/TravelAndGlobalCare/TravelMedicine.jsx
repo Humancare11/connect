@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -78,6 +78,7 @@ import heroImage from "../../../assets/SpecialitiesImage/travel-medicine-special
 import overviewImage from "../../../assets/SpecialitiesImage/travel-medicine-health-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -625,16 +626,12 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Global Cross-Border Care | International Telemedicine & Medical
-          Support
-        </title>
-        <meta
-          name="description"
-          content="Access global healthcare support through international telemedicine services, cross-border consultations, medication refill assistance, referral coordination, and medical guidance while traveling abroad."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Travel Medicine Specialists | Pre-Travel Care, Vaccinations & Travel Health Support"
+        description="Connect with travel medicine specialists for pre-travel vaccinations, travel-related illness prevention, traveler's diarrhea, altitude sickness, malaria prevention, and post-travel health consultations."
+        keywords="travel medicine, travel medicine specialist, travel health consultation, pre-travel consultation, travel vaccinations, malaria prevention, traveler�s diarrhea treatment, altitude sickness, post-travel symptoms, travel health services, online travel doctor, telehealth travel medicine"
+        url="https://humancareconnect.co/travel-medicine"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

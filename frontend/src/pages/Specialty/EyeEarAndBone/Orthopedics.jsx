@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -73,6 +73,7 @@ import heroImage from "../../../assets/SpecialitiesImage/orthopedics-bone-joint-
 import overviewImage from "../../../assets/SpecialitiesImage/orthopedic-doctor-bone-joint-examination.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -620,15 +621,12 @@ export default function Orthopedics({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Ophthalmology Specialists | Eye Care & Vision Health Services
-        </title>
-        <meta
-          name="description"
-          content="Get expert ophthalmology care for dry eyes, eye irritation, eye redness, vision changes, styes, eye strain, and comprehensive vision health support."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Orthopedic Specialists | Joint, Bone & Muscle Care"
+        description="Get expert orthopedic care for arthritis, osteoarthritis, back pain, knee pain, neck pain, muscle strains, and musculoskeletal conditions."
+        keywords="Orthopedic specialist, Online orthopedic consultation, Joint pain treatment, Bone and muscle care"
+        url="https://humancareconnect.co/orthopedics"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

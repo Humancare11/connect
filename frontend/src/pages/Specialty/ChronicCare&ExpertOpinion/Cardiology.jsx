@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -61,6 +61,7 @@ import heroImage from "../../../assets/SpecialitiesImage/cardiology-specialist-h
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-cardiologist-heart-examination.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -601,15 +602,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Cardiology Specialists | Heart Care & Cardiovascular Health
-        </title>
-        <meta
-          name="description"
-          content="Receive expert cardiology care for heart disease, high blood pressure, high cholesterol, chest pain, palpitations, and preventive cardiovascular wellness."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Cardiology Specialists | Heart Care & Cardiovascular Health"
+        description="Receive expert cardiology care for heart disease, high blood pressure, high cholesterol, chest pain, palpitations, and preventive cardiovascular wellness."
+        keywords="Cardiology specialists, Heart care, Cardiovascular health, Telehealth services, Virtual cardiology appointments, Virtual visits"
+        url="https://humancareconnect.co/cardiology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function SeasonalAllergies() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Seasonal Allergy Treatment Online | Fast Relief for Allergy Symptoms"
+        description="Get online treatment for seasonal allergies. Connect with a licensed provider for sneezing, congestion, itchy eyes, sinus pressure, and personalized allergy relief."
+        keywords="seasonal allergy treatment, online allergy doctor, hay fever treatment, pollen allergy, allergy relief online, itchy eyes and sneezing, allergic rhinitis, virtual allergy consultation"
+        url="https://humancareconnect.co/seasonal-allergies"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -426,5 +434,6 @@ export default function SeasonalAllergies() {
         </div>
       </section>
     </div>
+    </>
   );
 }

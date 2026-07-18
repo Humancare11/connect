@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function SeizuresEpilepsyFollowUp() {
   return (
     <>
+                  <SEO
+        title="Seizure & Epilepsy Follow-Up Online | Ongoing Neurology Care"
+        description="Book an online epilepsy follow-up to review seizure symptoms, medications, treatment progress, and ongoing neurological care with a licensed provider."
+        keywords="epilepsy follow-up, seizure management, online neurologist, epilepsy treatment online, seizure medication review, neurology follow-up, virtual epilepsy care, seizure disorder consultation"
+        url="https://humancareconnect.co/seizures-epilepsy-follow-up"
+      />
       <style>{STYLES}</style>
 
       <div

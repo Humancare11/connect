@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function SinusInfection() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Sinus Infection Treatment Online | Virtual Care for Sinusitis"
+        description="Get online treatment for sinus infections. Connect with a licensed provider for sinus pressure, nasal congestion, facial pain, headaches, and personalized care."
+        keywords="sinus infection treatment, sinusitis treatment online, online sinus doctor, nasal congestion treatment, sinus pressure relief, virtual sinus consultation, telehealth sinus care, online ENT consultation"
+        url="https://humancareconnect.co/sinus-infection"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function SinusInfection() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1215,6 +1216,12 @@ function FaqSection() {
 export default function SportsInjuries() {
   return (
     <>
+                  <SEO
+        title="Sports Injury Treatment Online | Virtual Care for Sprains & Strains"
+        description="Get online care for sports injuries. Consult a licensed provider for sprains, strains, joint pain, swelling, muscle injuries, and personalized recovery guidance."
+        keywords="sports injury treatment online, sports injury consultation, sprain treatment, muscle strain treatment, joint injury care, online orthopedic consultation, sports medicine online, virtual injury assessment, telehealth sports injuries, sports injury recovery"
+        url="https://humancareconnect.co/sports-injuries"
+      />
       <style>{STYLES}</style>
 
       <div

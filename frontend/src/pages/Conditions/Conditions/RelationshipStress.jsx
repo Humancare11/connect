@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Relationship-Stress.webp";
 
 
@@ -127,6 +128,13 @@ export default function RelationshipStress() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Relationship Stress Counseling Online | Emotional & Relationship Support"
+        description="Talk to a licensed mental health provider online for relationship stress, communication challenges, emotional support, and healthy coping strategies."
+        keywords="relationship stress counseling, online relationship counseling, relationship anxiety, communication problems, emotional support, couples stress, virtual counseling, mental health consultation"
+        url="https://humancareconnect.co/relationship-stress"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function RelationshipStress() {
         </div>
       </section>
     </div>
+    </>
   );
 }

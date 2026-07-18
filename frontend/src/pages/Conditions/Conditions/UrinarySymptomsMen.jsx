@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MensHealth/Urinary-Symptoms-in-Men.webp";
 
 
@@ -127,6 +128,13 @@ export default function UrinarySymptomsMen() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Urinary Symptoms in Men | Online Men�s Urinary Care"
+        description="Get online care for male urinary symptoms, including frequent urination, weak urine flow, burning, urgency, and prostate-related concerns."
+        keywords="urinary symptoms in men, frequent urination in men, weak urine flow, burning urination in men, male urinary problems, prostate health, online urologist, bladder problems in men, virtual urology consultation, telehealth urinary care"
+        url="https://humancareconnect.co/urinary-symptoms-in-men"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function UrinarySymptomsMen() {
         </div>
       </section>
     </div>
+    </>
   );
 }

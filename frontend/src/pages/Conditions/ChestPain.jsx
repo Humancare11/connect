@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -10,6 +10,7 @@ import {
   MessageCircle, X
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Chest-Pain-Non-Emergency.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -905,7 +906,12 @@ function FaqSection() {
 export default function ChestPain() {
   return (
     <>
-
+                  <SEO
+        title="Non-Emergency Chest Pain | Understand Ongoing Chest Discomfort"
+        description="Experiencing mild chest pressure, tightness, or ongoing discomfort? Discuss your symptoms and possible causes with a licensed provider and get personalized next-step guidance."
+        keywords="Non emergency chest pain, Chest discomfort, Chest pressure, Online doctor appointment, Virtual healthcare services, Telehealth services"
+        url="https://humancareconnect.co/chest-pain"
+      />
       <style>{STYLES}</style>
 
       <div style={{ fontFamily: "Satoshi, sans-serif", color: "#0A1F44", background: "#fff" }}>

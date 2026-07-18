@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function TravelMedicalCertificate() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Travel Medical Certificate Online | Virtual Medical Clearance"
+        description="Get online support for travel medical certificates, fitness-to-travel clearance, prescription documentation, and other travel health requirements."
+        keywords="travel medical certificate, medical certificate for travel, fit to fly certificate, fitness to travel certificate, travel medical clearance, online medical certificate, travel health documentation, virtual doctor consultation, international travel medical certificate, telehealth travel care"
+        url="https://humancareconnect.co/travel-medical-certification"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function TravelMedicalCertificate() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1212,6 +1213,12 @@ function FaqSection() {
 export default function SwollenFeetAnkles() {
   return (
     <>
+                  <SEO
+        title="Swollen Feet & Ankles Treatment Online | Virtual Doctor Consultation"
+        description="Get online care for swollen feet or ankles. Consult a licensed provider for swelling, fluid retention, discomfort, and personalized treatment guidance."
+        keywords="swollen feet treatment, swollen ankles treatment, ankle swelling, foot swelling, edema treatment online, fluid retention, online doctor consultation, virtual healthcare services, telehealth swelling care, swollen feet and ankles causes"
+        url="https://humancareconnect.co/swollen-feet-ankles"
+      />
       <style>{STYLES}</style>
 
       <div

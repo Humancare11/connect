@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Hoarseness.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1216,6 +1217,12 @@ function FaqSection() {
 export default function Hoarseness() {
   return (
     <>
+                  <SEO
+        title="Hoarseness Treatment Online | Expert Voice & Throat Care"
+        description="Get expert care for hoarseness online. Connect with a licensed provider for voice changes, sore throat, vocal strain, and personalized treatment through secure telemedicine services."
+        keywords="Hoarseness treatment, Voice and throat care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/hoarseness"
+      />
       <style>{STYLES}</style>
 
       <div

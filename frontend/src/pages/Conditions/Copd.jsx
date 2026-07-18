@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1210,6 +1211,12 @@ function FaqSection() {
 export default function Copd() {
   return (
     <>
+                  <SEO
+        title="COPD Treatment Online | Telemedicine Services for COPD Care"
+        description="Get expert COPD treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized breathing care from home."
+        keywords="COPD treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/copd"
+      />
       <style>{STYLES}</style>
 
       <div

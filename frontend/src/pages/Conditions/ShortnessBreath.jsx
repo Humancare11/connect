@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1210,6 +1211,12 @@ function FaqSection() {
 export default function ShortnessOfBreath() {
   return (
     <>
+                  <SEO
+        title="Shortness of Breath Treatment Online | Virtual Respiratory Care"
+        description="Talk to a licensed provider online for shortness of breath, wheezing, chest tightness, breathing difficulties, and personalized treatment guidance."
+        keywords="shortness of breath treatment, breathing difficulty, online pulmonologist, wheezing treatment, respiratory consultation online, chest tightness, virtual respiratory care, telehealth breathing support"
+        url="https://humancareconnect.co/shortness-of-breath"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Binge-Eating.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function BingeEating() {
   return (
     <>
+                  <SEO
+        title="Binge Eating Support Online | Healthier Eating & Emotional Care"
+        description="Struggling with loss of control, emotional eating, or guilt around food? Get personalized binge eating support, coping strategies, and emotional wellness guidance online."
+        keywords="Binge eating, Eating behaviors, Emotional distress, Emotional wellness support, Telemedicine services, Virtual healthcare services"
+        url="https://humancareconnect.co/binge-eating"
+      />
       <style>{STYLES}</style>
 
       <div

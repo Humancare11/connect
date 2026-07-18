@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -68,6 +68,7 @@ import heroImage from "../../../assets/SpecialitiesImage/obstetrics-gynaecology-
 import overviewImage from "../../../assets/SpecialitiesImage/ob-gyn-womens-health-examination-reproductive-care.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -621,16 +622,12 @@ export default function ObstetricsGynaecology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          OB-GYN Specialists | Women's Health, Fertility, Pregnancy &
-          Gynecological Care
-        </title>
-        <meta
-          name="description"
-          content="Connect with OB-GYN specialists for PCOS, fertility concerns, birth control consultations, pregnancy care, menstrual health, vaginal infections, pelvic pain, and personalized women's healthcare."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="OB-GYN Specialists | Women's Health, Fertility, Pregnancy & Gynecological Care"
+        description="Connect with OB-GYN specialists for PCOS, fertility concerns, birth control consultations, pregnancy care, menstrual health, vaginal infections, pelvic pain, and personalized women's healthcare."
+        keywords="OB-GYN online, Women's health specialist, Fertility consultation, Online gynecology consultation"
+        url="https://humancareconnect.co/obstetrics-and-gynaecology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

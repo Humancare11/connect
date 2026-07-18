@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -42,6 +42,7 @@ import {
 
 import arthritisImage from "./arthritis.jpeg";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Arthritis.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1213,6 +1214,12 @@ function FaqSection() {
 export default function Arthritis() {
   return (
     <>
+                  <SEO
+        title="Arthritis Pain Relief Online | Joint Pain & Stiffness Care"
+        description="Joint pain, swelling, or stiffness making daily life harder? Get personalized arthritis care, pain management guidance, and treatment recommendations from a licensed provider online."
+        keywords="Arthritis, Arthritis symptoms, Joint pain, Joint stiffness, Pain management guidance, Telemedicine services"
+        url="https://humancareconnect.co/arthritis"
+      />
       <style>{STYLES}</style>
 
       <div

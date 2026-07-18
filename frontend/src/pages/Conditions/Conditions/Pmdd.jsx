@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function Pmdd() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="PMDD Treatment Online | Premenstrual Dysphoric Disorder Care"
+        description="Get expert online care for PMDD. Connect with a licensed provider for severe premenstrual symptoms, mood changes, anxiety, depression, hormone-related concerns, and personalized treatment."
+        keywords="PMDD treatment, Premenstrual dysphoric disorder, Online PMDD consultation, Women's hormonal health, Virtual women's healthcare"
+        url="https://humancareconnect.co/pmdd"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -430,5 +438,6 @@ export default function Pmdd() {
         </div>
       </section>
     </div>
+    </>
   );
 }

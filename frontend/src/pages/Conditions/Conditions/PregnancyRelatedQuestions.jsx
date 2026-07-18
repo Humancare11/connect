@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function PregnancyRelatedQuestions() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Pregnancy Questions Online | Expert Pregnancy Guidance & Support"
+        description="Get trusted answers to pregnancy-related questions online. Connect with a licensed provider for pregnancy symptoms, nutrition, medication safety, prenatal care, and personalized guidance throughout your pregnancy."
+        keywords="Pregnancy questions, Online pregnancy consultation, Pregnancy guidance, Prenatal care, Virtual pregnancy support"
+        url="https://humancareconnect.co/pregnancy-related-questions"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function PregnancyRelatedQuestions() {
         </div>
       </section>
     </div>
+    </>
   );
 }

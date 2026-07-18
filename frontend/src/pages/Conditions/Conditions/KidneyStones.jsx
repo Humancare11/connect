@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function KidneyStones() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Kidney Stone Treatment Online | Expert Urology Consultation"
+        description="Get expert care for kidney stones online. Consult a licensed provider for severe side pain, painful urination, blood in urine, nausea, and personalized treatment through secure telemedicine services."
+        keywords="Kidney stone treatment, Online urology consultation, Online doctor appointment, Urinary health care"
+        url="https://humancareconnect.co/kidney-stones"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function KidneyStones() {
         </div>
       </section>
     </div>
+    </>
   );
 }

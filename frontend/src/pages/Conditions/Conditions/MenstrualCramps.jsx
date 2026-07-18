@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function MenstrualCramps() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Menstrual Cramps Treatment Online | Period Pain Relief Consultation"
+        description="Get expert care for menstrual cramps online. Consult a licensed provider for period pain, lower abdominal cramps, back pain, bloating, and personalized treatment to help you feel better."
+        keywords="Menstrual cramps treatment, Period pain relief, Women's health consultation, Online gynecologist"
+        url="https://humancareconnect.co/menstrual-cramps"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function MenstrualCramps() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
 import futureOfTelemedicine from "../../assets/BlogImages/future-of-telemedicine.webp";
+import SEO from "../../components/Seo";
 const PAGE_TITLE =
   "The Future of Telemedicine: AI, Remote Monitoring & Digital Healthcare Trends";
 const PAGE_DESCRIPTION =
@@ -219,6 +220,7 @@ export default function FutureofTelemedicine() {
 
   return (
     <>
+      <SEO title="Future of Telemedicine | Healthcare Technology Trends" description="Explore the future of telemedicine and healthcare technology trends." keywords="Future of telemedicine" url="https://humancareconnect.co/future-of-telemedicine" />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />

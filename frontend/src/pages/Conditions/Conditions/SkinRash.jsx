@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function SkinRash() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Skin Rash Treatment Online | Virtual Dermatologist for Rashes & Itching"
+        description="Get online treatment for skin rashes. Connect with a licensed provider for itchy skin, redness, bumps, allergic reactions, and personalized skincare guidance."
+        keywords="skin rash treatment online, itchy skin rash, online dermatologist, rash diagnosis online, allergic skin rash, eczema rash treatment, virtual skin consultation, telehealth dermatology, skin irritation treatment, red skin rash"
+        url="https://humancareconnect.co/skin-rash"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function SkinRash() {
         </div>
       </section>
     </div>
+    </>
   );
 }

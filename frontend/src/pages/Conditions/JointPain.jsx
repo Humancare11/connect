@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Joint-Pain.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1212,6 +1213,12 @@ function FaqSection() {
 export default function JointPain() {
   return (
     <>
+                  <SEO
+        title="Joint Pain Treatment Online | Orthopedic Consultation from Home"
+        description="Get expert care for joint pain online. Consult a licensed provider for knee, shoulder, hip, back, or hand pain, stiffness, swelling, and personalized treatment through secure telemedicine services."
+        keywords="Joint pain treatment, Online orthopedic consultation, Online doctor appointment, Pain management care"
+        url="https://humancareconnect.co/joint-pain"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function LatchProblems() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Breastfeeding Latch Problems | Online Lactation Consultant"
+        description="Get expert help for breastfeeding latch problems online. Connect with a lactation consultant for latch assessments, feeding support, nipple pain relief, and personalized breastfeeding guidance."
+        keywords="Breastfeeding latch problems, Online lactation consultant, Breastfeeding support, Infant feeding guidance"
+        url="https://humancareconnect.co/latch-problems"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function LatchProblems() {
         </div>
       </section>
     </div>
+    </>
   );
 }

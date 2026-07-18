@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function MoleSkinChecks() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Mole & Skin Check Online | Skin Lesion & Mole Evaluation"
+        description="Get expert online mole and skin checks. Consult a licensed provider for new or changing moles, skin spots, lesions, discoloration, and personalized skin health guidance."
+        keywords="Mole and skin check, Online skin evaluation, Skin lesion assessment, Virtual dermatology consultation"
+        url="https://humancareconnect.co/mole-skin-checks"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -431,5 +439,6 @@ export default function MoleSkinChecks() {
         </div>
       </section>
     </div>
+    </>
   );
 }

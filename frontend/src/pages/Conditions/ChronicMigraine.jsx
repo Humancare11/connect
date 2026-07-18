@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -10,6 +10,7 @@ import {
   MessageCircle, X
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Chronic-Migraine.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -906,7 +907,12 @@ function FaqSection() {
 export default function ChronicMigraine() {
   return (
     <>
-
+                  <SEO
+        title="Chronic Migraine Management | Support for Recurring Headaches"
+        description="Recurring migraines can disrupt work, sleep, and daily life. Access personalized migraine management, symptom evaluation, and ongoing treatment guidance from home."
+        keywords="Chronic migraine, Chronic migraines, Migraine management support, Telemedicine services, Online doctor appointment, Telemedicine platform"
+        url="https://humancareconnect.co/chronic-migraine"
+      />
       <style>{STYLES}</style>
 
       <div style={{ fontFamily: "Satoshi, sans-serif", color: "#0A1F44", background: "#fff" }}>

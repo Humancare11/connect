@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -711,6 +712,12 @@ export default function ChronicCareExpertOpinion() {
         minHeight: "100vh",
       }}
     >
+                  <SEO
+        title="Online Chronic Care Management & Expert Medical Opinions | Humancare Connect"
+        description="Get expert online chronic care management and medical opinions from trusted healthcare professionals. Receive personalized treatment guidance, ongoing support, and virtual consultations from home."
+        keywords="Chronic care management, Expert medical opinions, Chronic condition management, Online doctor consultations, Virtual chronic care, Virtual healthcare"
+        url="https://humancareconnect.co/chronic-care-and-expert-opinion"
+      />
       <Helmet>
         <title>
           Online Chronic Care Management & Expert Medical Opinions | Humancare

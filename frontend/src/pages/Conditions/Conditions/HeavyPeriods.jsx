@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function HeavyPeriods() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Heavy Period Treatment Online | Women's Health Consultation"
+        description="Get expert care for heavy periods online. Connect with a licensed provider for excessive menstrual bleeding, severe cramps, hormone health guidance, and personalized treatment through telemedicine services."
+        keywords="Heavy period treatment, Women's health consultation, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/heavy-periods"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function HeavyPeriods() {
         </div>
       </section>
     </div>
+    </>
   );
 }

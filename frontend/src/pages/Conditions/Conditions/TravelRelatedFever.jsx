@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function TravelRelatedFever() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Travel-Related Fever Treatment Online | Virtual Travel Health Care"
+        description="Get online care for travel-related fever. Consult a licensed provider for fever, chills, fatigue, body aches, and illness during or after travel."
+        keywords="travel-related fever, fever after travel, fever during travel, travel illness treatment, online travel doctor, post-travel fever, travel health consultation, virtual doctor consultation, telehealth travel care, international travel illness"
+        url="https://humancareconnect.co/travel-related-fever"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function TravelRelatedFever() {
         </div>
       </section>
     </div>
+    </>
   );
 }

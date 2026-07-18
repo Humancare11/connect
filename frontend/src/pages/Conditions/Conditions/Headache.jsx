@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function Headache() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Headache Treatment Online | Fast Relief from Head Pain"
+        description="Get expert headache treatment online for migraines, tension headaches, head pain, and pressure. Connect with a licensed provider through secure telemedicine services for fast relief."
+        keywords="Headache treatment online, Migraine & head pain, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/headache"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -424,5 +432,6 @@ export default function Headache() {
         </div>
       </section>
     </div>
+    </>
   );
 }

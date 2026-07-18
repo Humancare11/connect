@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function PelvicPain() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Pelvic Pain Treatment Online | Women's & Men's Pelvic Health Care"
+        description="Get expert care for pelvic pain online. Connect with a licensed provider for lower abdominal pain, pelvic discomfort, urinary or reproductive concerns, and personalized treatment guidance."
+        keywords="Pelvic pain treatment, Online pelvic pain consultation, Women's pelvic health, Pelvic health specialist"
+        url="https://humancareconnect.co/pelvic-pain"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function PelvicPain() {
         </div>
       </section>
     </div>
+    </>
   );
 }

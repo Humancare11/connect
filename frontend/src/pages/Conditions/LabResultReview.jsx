@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1212,6 +1213,12 @@ function FaqSection() {
 export default function LabResultReview() {
   return (
     <>
+                  <SEO
+        title="Lab Result Review Online | Understand Your Blood Test Results"
+        description="Confused about your lab results? Consult a licensed provider online to review blood tests, cholesterol, hormone panels, urine reports, and receive clear explanations with personalized medical guidance."
+        keywords="Lab result review, Blood test interpretation, Online doctor appointment, Medical test results"
+        url="https://humancareconnect.co/lab-results-review"
+      />
       <style>{STYLES}</style>
 
       <div

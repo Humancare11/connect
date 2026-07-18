@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function LowTestosteroneSymptoms() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Low Testosterone Treatment Online | Men's Hormone Health Consultation"
+        description="Experiencing low testosterone symptoms? Consult a licensed provider online for fatigue, low libido, reduced muscle strength, mood changes, hormone evaluation, and personalized treatment options."
+        keywords="Low testosterone treatment, Men's hormone health, Testosterone deficiency, Online hormone consultation"
+        url="https://humancareconnect.co/low-testosterone-symptoms"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function LowTestosteroneSymptoms() {
         </div>
       </section>
     </div>
+    </>
   );
 }

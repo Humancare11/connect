@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function InternationalMedicalAssistance() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="International Medical Assistance | Online Doctor While Traveling"
+        description="Get international medical assistance online while traveling abroad. Connect with a licensed provider for illness, prescriptions, travel health concerns, and personalized care through secure telemedicine services."
+        keywords="International medical assistance, Online doctor while traveling, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/international-medical-assistance"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function InternationalMedicalAssistance() {
         </div>
       </section>
     </div>
+    </>
   );
 }

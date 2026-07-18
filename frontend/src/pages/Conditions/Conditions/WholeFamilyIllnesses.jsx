@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function WholeFamilyIllnesses() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Whole-Family Illnesses Care Online | Family Healthcare"
+        description="Get convenient care for whole-family illnesses, including colds, flu, respiratory infections, and stomach viruses. Connect with an online provider from home."
+        keywords="Whole-family illnesses, family healthcare, family illness care, family healthcare online, contagious conditions, colds, flu, respiratory infections, stomach viruses, common health concerns, symptom evaluation, treatment guidance, recovery recommendations, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"
+        url="https://humancareconnect.co/whole-family-illnesses"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -431,5 +439,6 @@ export default function WholeFamilyIllnesses() {
         </div>
       </section>
     </div>
+    </>
   );
 }

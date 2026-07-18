@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -39,6 +39,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1041,6 +1042,12 @@ function FaqSection() {
 export default function ColdSores() {
   return (
     <>
+                  <SEO
+        title="Cold Sores & HSV-1 | Care for Painful Lip Blisters"
+        description="Tingling, burning, or painful blisters around the lips may signal a cold sore. Receive symptom evaluation, treatment guidance, and prescription support when appropriate."
+        keywords="Cold sores, Cold sore symptoms, Herpes simplex virus (HSV-1), Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/cold-sores"
+      />
       <style>{STYLES}</style>
 
       <div

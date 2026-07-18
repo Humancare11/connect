@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -52,6 +52,7 @@ import {
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
+import SEO from "../components/Seo";
 
 import heroBanner from "../../assets/MedicalServices/online-prescription-digital-healthcare.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
@@ -1871,6 +1872,12 @@ export default function OnlinePrescriptionRefills() {
 
   return (
     <>
+                  <SEO
+        title="Online Prescription Refills | Renew Medications Online | Humancare Connect"
+        description="Need a prescription refill? Connect with licensed healthcare providers through secure telemedicine services and renew eligible medications online."
+        keywords="Online prescription refills, Medication refill online, Prescription renewal, Telemedicine prescription services"
+        url="https://humancareconnect.co/online-prescription-refills"
+      />
       <Helmet>
         <title>
           Online Prescription Refills | Renew Medications Online | Humancare

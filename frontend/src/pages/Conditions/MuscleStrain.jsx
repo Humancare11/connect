@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Muscle-Strain.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1211,6 +1212,12 @@ function FaqSection() {
 export default function MuscleStrain() {
   return (
     <>
+                  <SEO
+        title="Muscle Strain Treatment Online | Sprain, Pain & Recovery Support"
+        description="Get expert care for muscle strains online. Consult a licensed provider for pulled muscles, pain, stiffness, swelling, sports injuries, and personalized recovery guidance from home."
+        keywords="Muscle strain treatment, Pulled muscle care, Sports injury consultation, Online doctor consultation"
+        url="https://humancareconnect.co/muscle-strain"
+      />
       <style>{STYLES}</style>
 
       <div

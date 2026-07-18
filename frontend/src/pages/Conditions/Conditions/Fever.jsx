@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function Fever() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Fever Treatment Online | Fast Virtual Doctor Consultation"
+        description="Get expert fever treatment online for high temperature, chills, body aches, and flu-like symptoms. Connect with a licensed provider through secure telemedicine services from home."
+        keywords="Fever treatment online, Virtual doctor consultation, Telemedicine services, Online doctor appointment"
+        url="https://humancareconnect.co/fever"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -424,5 +432,6 @@ export default function Fever() {
         </div>
       </section>
     </div>
+    </>
   );
 }

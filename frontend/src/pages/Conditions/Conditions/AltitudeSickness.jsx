@@ -1,7 +1,9 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/SEO";
+
 import {
   Calendar,
   Star,
@@ -99,7 +101,7 @@ const faqData = [
         q: "Are referrals and lab orders included in the fee?",
         a: "Yes. Specialist referrals and lab test orders issued during your visit are included at no extra charge.",
       },
-    ],
+    ], 
   },
   {
     category: "Your Health & Records",
@@ -126,6 +128,13 @@ export default function AltitudeSickness() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+<>
+            <SEO
+        title="Altitude Sickness Treatment Online | Virtual Travel Health Care"
+        description="Get online care for altitude sickness symptoms, including headaches, dizziness, nausea, and shortness of breath. Connect with a licensed provider for treatment guidance."
+        keywords="Altitude sickness, Altitude sickness symptoms, Telemedicine services, Online doctor appointment, Telemedicine platform, Online provider"
+        url="https://humancareconnect.co/altitude-sickness"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +437,6 @@ export default function AltitudeSickness() {
         </div>
       </section>
     </div>
+    </>
   );
 }

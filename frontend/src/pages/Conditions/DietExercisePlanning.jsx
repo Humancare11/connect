@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1225,6 +1226,12 @@ function FaqSection() {
 export default function DieExercisePlanning() {
   return (
     <>
+                  <SEO
+        title="Diet & Exercise Planning Online | Telemedicine Wellness Care"
+        description="Get personalized diet and exercise planning online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and achieve your health and wellness goals."
+        keywords="Diet & exercise planning, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/diet-exercise-planning"
+      />
       <style>{STYLES}</style>
 
       <div

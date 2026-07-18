@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -78,6 +78,7 @@ import heroImage from "../../../assets/SpecialitiesImage/nutrition-and-dietetics
 import overviewImage from "../../../assets/SpecialitiesImage/registered-dietitian-personalized-meal-planning-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -623,16 +624,12 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Lifestyle Medicine Specialists | Healthy Habits, Nutrition & Wellness
-          Care
-        </title>
-        <meta
-          name="description"
-          content="Connect with lifestyle medicine specialists for diet and exercise planning, healthy habit coaching, sleep improvement, preventive wellness care, and long-term health optimization."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Nutrition & Dietetics Specialists | Personalized Nutrition & Healthy Eating Plans"
+        description="Connect with nutrition and dietetics specialists for diabetic diets, cholesterol management, sports nutrition, pregnancy nutrition, food intolerance planning, and personalized nutrition support."
+        keywords="Nutrition and dietetics, Online nutrition consultation, Personalized meal planning, Registered dietitian online"
+        url="https://humancareconnect.co/nutrition-and-dietetics"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

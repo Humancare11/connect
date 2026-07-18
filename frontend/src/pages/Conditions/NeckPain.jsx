@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Neck-Pain.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1212,6 +1213,12 @@ function FaqSection() {
 export default function NeckPain() {
   return (
     <>
+                  <SEO
+        title="Neck Pain Treatment Online | Stiff Neck & Pain Relief Consultation"
+        description="Get expert treatment for neck pain online. Consult a licensed provider for neck stiffness, muscle strain, soreness, headaches, posture-related pain, and personalized recovery guidance."
+        keywords="Neck pain treatment, Stiff neck relief, Muscle strain consultation, Online doctor consultation"
+        url="https://humancareconnect.co/neck-pain"
+      />
       <style>{STYLES}</style>
 
       <div

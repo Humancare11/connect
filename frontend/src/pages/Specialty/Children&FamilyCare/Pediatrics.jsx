@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import {
   FiActivity,
@@ -60,6 +60,7 @@ import heroImage from "../../../assets/SpecialitiesImage/pediatrics-specialist-c
 import overviewImage from "../../../assets/SpecialitiesImage/pediatric-specialist-child-health-checkup-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -599,6 +600,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <main className="sp-page">
+                  <SEO
+        title="Pediatric Specialists | Child Healthcare & Wellness Services"
+        description="Get compassionate pediatric care for infants, children, and adolescents, including colds, fevers, feeding concerns, ear pain, skin conditions, and preventive wellness."
+        keywords="Pediatric specialist, Online pediatric consultation, Child healthcare, Virtual pediatric care"
+        url="https://humancareconnect.co/pediatrics"
+      />
       {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
       <section className="sp-hero">
         <div className="sp-hero__bg">

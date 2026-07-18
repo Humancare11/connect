@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function HotFlashes() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Hot Flashes Treatment Online | Menopause & Hormone Support"
+        description="Get expert care for hot flashes online. Connect with a licensed provider for menopause symptoms, hormone health evaluations, personalized treatment, and ongoing support through secure telemedicine services."
+        keywords="Hot flashes treatment, Menopause support, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/hot-flashes"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function HotFlashes() {
         </div>
       </section>
     </div>
+    </>
   );
 }

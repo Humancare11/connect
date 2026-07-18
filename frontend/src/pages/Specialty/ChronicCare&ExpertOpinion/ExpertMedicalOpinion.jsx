@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -61,6 +61,7 @@ import heroImage from "../../../assets/SpecialitiesImage/expert-medical-opinion-
 import overviewImage from "../../../assets/SpecialitiesImage/expert-medical-opinion-consultation-review-medical-records.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -608,15 +609,12 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Expert Medical Opinion Services | Trusted Healthcare Guidance
-        </title>
-        <meta
-          name="description"
-          content="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Expert Medical Opinion Services | Trusted Healthcare Guidance"
+        description="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
+        keywords="Expert medical opinion, Second medical opinion, Online specialist consultation, Telemedicine services"
+        url="https://humancareconnect.co/expert-medical-opinion"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

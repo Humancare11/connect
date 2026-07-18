@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Cholesterol-Lowering-Diet.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1217,6 +1218,12 @@ function FaqSection() {
 export default function CholesterolLoweringDiet() {
   return (
     <>
+                  <SEO
+        title="Cholesterol-Lowering Diet | Heart-Healthy Nutrition Guidance"
+        description="Make smarter food choices to support healthy cholesterol levels and heart health. Get personalized nutrition planning, dietary guidance, and cholesterol management support online."
+        keywords="Cholesterol lowering diet, Heart healthy nutrition, Cholesterol management, Telemedicine services, Virtual healthcare services, Telehealth services"
+        url="https://humancareconnect.co/cholesterol-lowering-diet"
+      />
       <style>{STYLES}</style>
 
       <div

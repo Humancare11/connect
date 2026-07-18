@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -595,6 +596,12 @@ export default function ChildFamilyCare() {
         minHeight: "100vh",
       }}
     >
+                  <SEO
+        title="Online Children & Family Care | Virtual Doctor Consultation | Humancare Connect"
+        description="Access online children and family care with trusted healthcare professionals. Get virtual doctor consultations, pediatric guidance, family healthcare support, and personalized medical advice from home."
+        keywords="Children and family care, Family healthcare, Pediatric support, Virtual doctor consultations, Virtual healthcare services, Online doctor consultation"
+        url="https://humancareconnect.co/child-and-family-care"
+      />
       <Helmet>
         <title>
           Online Children &amp; Family Care | Virtual Doctor Consultation |

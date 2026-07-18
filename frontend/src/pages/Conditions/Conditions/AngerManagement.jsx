@@ -1,7 +1,9 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/SEO";
+
 import {
   Calendar,
   Star,
@@ -127,6 +129,13 @@ export default function AngerManagement() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Anger Management Online | Virtual Emotional Wellness Support"
+        description="Get online anger management support to understand emotional triggers, manage stress, and build healthier coping strategies with guidance from a licensed provider."
+        keywords="Anger management, Emotional wellness support, Coping strategies, Stress management, Telemedicine services, Virtual healthcare services"
+        url="https://humancareconnect.co/anger-management"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -433,5 +442,6 @@ export default function AngerManagement() {
         </div>
       </section>
     </div>
+    </>
   );
 }

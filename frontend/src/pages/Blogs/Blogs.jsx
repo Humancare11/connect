@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import "./Blogs.css";
 import bestTelemedicineProvider from "../../assets/BlogImages/best-telemedicine-provider.webp";
@@ -13,6 +13,7 @@ import telemedicineServices from "../../assets/BlogImages/telemedicine-services.
 import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
+import SEO from "../../components/Seo";
 
 const blogs = [
   {
@@ -240,7 +241,14 @@ export default function BlogPage() {
   };
 
   return (
-    <div className="blog-page">
+    <>
+                  <SEO
+        title="Healthcare & Wellness | Telemedicine Insights"
+        description="Explore trusted healthcare insights, telemedicine guidance, wellness tips, and expert information to help you make informed decisions about your health."
+        keywords="Healthcare insights, Telemedicine guidance, Wellness tips, Healthcare information, Expert guidance, Health and wellness"
+        url="https://humancareconnect.co/blogs"
+      />
+      <div className="blog-page">
       {/* ── HERO ── */}
       <section className="blog-hero">
         <div className="blog-hero-inner">
@@ -512,5 +520,6 @@ export default function BlogPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Indigestion.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1212,6 +1213,12 @@ function FaqSection() {
 export default function Indigestion() {
   return (
     <>
+                  <SEO
+        title="Indigestion Treatment Online | Fast Digestive Health Care"
+        description="Get expert indigestion treatment online for heartburn, bloating, stomach pain, nausea, and digestive discomfort. Connect with a licensed provider through secure telemedicine services."
+        keywords="Indigestion treatment online, Digestive health care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/indigestion"
+      />
       <style>{STYLES}</style>
 
       <div

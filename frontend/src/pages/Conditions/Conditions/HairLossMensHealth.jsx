@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,8 @@ export default function HairLossMensHealth() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+    <SEO title="Hair Loss Treatment for Men | Online Consultation" description="Concerned about male hair loss?" keywords="Hair loss men" url="https://humancareconnect.co/hair-loss-mens-health" />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +431,6 @@ export default function HairLossMensHealth() {
         </div>
       </section>
     </div>
+    </>
   );
 }

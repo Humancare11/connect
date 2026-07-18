@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function Rosacea() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Rosacea Treatment Online | Virtual Dermatologist for Facial Redness"
+        description="Get expert online treatment for rosacea. Connect with a licensed provider for facial redness, flushing, skin irritation, and personalized skincare solutions."
+        keywords="rosacea treatment online, rosacea symptoms, facial redness treatment, online dermatologist, rosacea flare-up, virtual skin consultation, redness and flushing, telehealth dermatology"
+        url="https://humancareconnect.co/rosacea"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -424,5 +432,6 @@ export default function Rosacea() {
         </div>
       </section>
     </div>
+    </>
   );
 }

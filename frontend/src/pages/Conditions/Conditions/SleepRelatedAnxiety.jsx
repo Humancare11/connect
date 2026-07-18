@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Sleep-Related-Anxiety.webp";
 
 
@@ -127,6 +128,13 @@ export default function SleepRelatedAnxiety() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Sleep-Related Anxiety Treatment Online | Virtual Anxiety & Sleep Support"
+        description="Get online support for sleep-related anxiety. Connect with a licensed provider for racing thoughts, stress, insomnia, and personalized sleep care"
+        keywords="sleep-related anxiety, sleep anxiety treatment online, anxiety and insomnia, racing thoughts at night, online anxiety consultation, virtual mental health care, sleep disorder support, stress and sleep problems, telehealth anxiety treatment, better sleep support"
+        url="https://humancareconnect.co/sleep-related-anxiety"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function SleepRelatedAnxiety() {
         </div>
       </section>
     </div>
+    </>
   );
 }

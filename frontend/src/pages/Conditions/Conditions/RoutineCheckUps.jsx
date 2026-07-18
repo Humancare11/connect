@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function RoutineCheckUps() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Routine Check-Up Online | Preventive Health & Wellness Consultation"
+        description="Book an online routine check-up to review your health, manage ongoing conditions, receive preventive care guidance, and stay on track with your wellness goals."
+        keywords="routine check-up online, annual health check-up, preventive healthcare, wellness consultation, online primary care, health assessment, virtual doctor consultation, preventive health services"
+        url="https://humancareconnect.co/routine-check-ups"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -431,5 +439,6 @@ export default function RoutineCheckUps() {
         </div>
       </section>
     </div>
+    </>
   );
 }

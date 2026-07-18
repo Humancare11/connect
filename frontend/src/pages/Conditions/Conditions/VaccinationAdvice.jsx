@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function VaccinationAdvice() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Vaccination Advice Online | Immunization & Vaccine Guidance"
+        description="Get trusted vaccination advice through telemedicine services. Connect with an online provider for vaccine recommendations, immunization planning, booster guidance, and travel vaccines."
+        keywords="Vaccination advice, vaccine schedules, booster requirements, travel vaccines, vaccine recommendations, immunization planning, travel health guidance, vaccination guidance, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"
+        url="https://humancareconnect.co/vaccination-advice"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -431,5 +439,6 @@ export default function VaccinationAdvice() {
         </div>
       </section>
     </div>
+    </>
   );
 }

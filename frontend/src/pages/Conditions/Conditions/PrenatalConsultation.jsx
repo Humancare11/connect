@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function PrenatalConsultation() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Online Prenatal Consultation | Pregnancy Care & OB-GYN Support"
+        description="Meet with a licensed prenatal care provider online for pregnancy check-ins, symptom assessment, nutrition advice, medication safety, prenatal planning, and expert guidance from the first trimester through delivery."
+        keywords="online prenatal consultation, prenatal care online, pregnancy doctor consultation, virtual prenatal care, pregnancy health advice, online OB-GYN consultation, prenatal telehealth, pregnancy wellness support"
+        url="https://humancareconnect.co/prenatal-consultation"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function PrenatalConsultation() {
         </div>
       </section>
     </div>
+    </>
   );
 }

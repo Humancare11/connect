@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1219,6 +1220,12 @@ function FaqSection() {
 export default function SleepApneas() {
   return (
     <>
+                  <SEO
+        title="Sleep Apnea Treatment Online | Virtual Sleep Health Consultation"
+        description="Consult a licensed provider online for sleep apnea, loud snoring, interrupted breathing, daytime fatigue, and personalized sleep health guidance."
+        keywords="sleep apnea treatment online, online sleep consultation, sleep apnea symptoms, loud snoring treatment, sleep disorder specialist, virtual sleep doctor, breathing problems during sleep, telehealth sleep care, obstructive sleep apnea, sleep health consultation"
+        url="https://humancareconnect.co/sleep-apnea"
+      />
       <style>{STYLES}</style>
 
       <div

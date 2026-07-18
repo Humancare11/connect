@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -78,6 +78,7 @@ import heroImage from "../../../assets/SpecialitiesImage/weight-management-speci
 import overviewImage from "../../../assets/SpecialitiesImage/weight-management-nutrition-counseling-lifestyle-support.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -631,16 +632,12 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Weight Management Specialists | Personalized Weight Loss & Obesity
-          Care
-        </title>
-        <meta
-          name="description"
-          content="Connect with weight management specialists for obesity care, weight loss planning, binge eating support, GLP-1 eligibility assessments, nutrition guidance, and long-term weight management solutions."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Weight Management Specialists | Personalized Weight Loss & Obesity Care"
+        description="Connect with weight management specialists for obesity care, weight loss planning, binge eating support, GLP-1 eligibility assessments, nutrition guidance, and long-term weight management solutions."
+        keywords="Weight management, weight management specialists, personalized weight loss, obesity care, weight loss planning, weight loss programs, sustainable weight loss, obesity management, binge eating, binge eating support, GLP-1 eligibility assessments, GLP-1 program eligibility, GLP-1 medications, nutrition guidance, nutrition counseling, meal planning, behavioral health support, emotional eating, appetite management, metabolic health, weight gain concerns, weight maintenance, lifestyle modification, personalized care plans"
+        url="https://humancareconnect.co/weight-management"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

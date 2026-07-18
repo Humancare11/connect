@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Mild-Asthma-Symptoms-in-children.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1212,6 +1213,12 @@ function FaqSection() {
 export default function MildAsthmaSymptoms() {
   return (
     <>
+                  <SEO
+        title="Mild Asthma Treatment Online | Virtual Asthma Care & Breathing Support"
+        description="Manage mild asthma symptoms with expert online care. Consult a licensed provider for wheezing, coughing, chest tightness, shortness of breath, asthma treatment, and personalized breathing support."
+        keywords="Mild asthma treatment, Online asthma consultation, Breathing support, Virtual asthma care"
+        url="https://humancareconnect.co/mild-asthma-symptoms"
+      />
       <style>{STYLES}</style>
 
       <div

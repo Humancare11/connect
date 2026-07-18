@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1211,6 +1212,12 @@ function FaqSection() {
 export default function PersistentCough() {
   return (
     <>
+                  <SEO
+        title="Persistent Cough Treatment Online | Expert Respiratory Care"
+        description="Get expert care for a persistent cough online. Connect with a licensed provider for cough, throat irritation, wheezing, mucus, respiratory symptoms, and personalized treatment guidance."
+        keywords="Persistent cough, Chronic cough treatment, Online cough consultation, Respiratory care, Telemedicine cough treatment"
+        url="https://humancareconnect.co/persistent-cough"
+      />
       <style>{STYLES}</style>
 
       <div

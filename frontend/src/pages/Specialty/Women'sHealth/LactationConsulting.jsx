@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -68,6 +68,7 @@ import heroImage from "../../../assets/SpecialitiesImage/lactation-consulting-br
 import overviewImage from "../../../assets/SpecialitiesImage/lactation-consant-breastfeeding-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -610,16 +611,12 @@ export default function LactationConsulting({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Lactation Consulting Specialists | Breastfeeding Support & Infant
-          Feeding Guidance
-        </title>
-        <meta
-          name="description"
-          content="Connect with lactation consultants for breastfeeding support, latch problems, low milk supply concerns, nipple pain management, weaning guidance, and personalized infant feeding support."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Lactation Consulting Specialists | Breastfeeding Support & Infant Feeding Guidance"
+        description="Connect with lactation consultants for breastfeeding support, latch problems, low milk supply concerns, nipple pain management, weaning guidance, and personalized infant feeding support."
+        keywords="Lactation consultant, Breastfeeding support, Online doctor appointment, Infant feeding guidance"
+        url="https://humancareconnect.co/lactation-consulting"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

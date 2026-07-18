@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function JetLag() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Jet Lag Treatment Online | Travel Sleep & Recovery Support"
+        description="Beat jet lag with expert online care. Consult a licensed provider for sleep disruption, fatigue, time zone adjustment, and personalized travel recovery support from anywhere."
+        keywords="Jet lag treatment, Travel sleep recovery, Online doctor for travelers, Circadian rhythm support"
+        url="https://humancareconnect.co/jet-lag"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -426,5 +434,6 @@ export default function JetLag() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -10,6 +10,7 @@ import {
   MessageCircle, X
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Chronic-Kidney-Disease.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -907,7 +908,12 @@ function FaqSection() {
 export default function ChronicKidneyDisease() {
   return (
     <>
-
+                  <SEO
+        title="Chronic Kidney Disease Management | Long-Term Kidney Health Support"
+        description="Protect your kidney health with ongoing symptom monitoring, lifestyle guidance, and personalized support for chronic kidney disease and long-term care needs."
+        keywords="Chronic kidney disease, Kidney function, Kidney health, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/chronic-kidney-disease"
+      />
       <style>{STYLES}</style>
 
       <div style={{ fontFamily: "Satoshi, sans-serif", color: "#0A1F44", background: "#fff" }}>

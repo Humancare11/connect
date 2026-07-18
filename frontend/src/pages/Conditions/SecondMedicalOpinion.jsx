@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1214,6 +1215,12 @@ function FaqSection() {
 export default function SecondMedicalOpinion() {
   return (
     <>
+                  <SEO
+        title="Second Medical Opinion Online | Expert Diagnosis & Treatment Review"
+        description="Get a trusted second medical opinion online. Review your diagnosis, treatment plan, lab results, medications, or surgery recommendations with a licensed provider."
+        keywords="second medical opinion, online second opinion doctor, diagnosis review, treatment plan review, medical consultation online, expert medical advice, virtual second opinion, healthcare consultation"
+        url="https://humancareconnect.co/second-medical-opinion"
+      />
       <style>{STYLES}</style>
 
       <div

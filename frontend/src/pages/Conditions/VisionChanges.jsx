@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1215,6 +1216,12 @@ function FaqSection() {
 export default function VisionChanges() {
   return (
     <>
+                  <SEO
+        title="Vision Changes Care Online | Eye Health & Vision Evaluation"
+        description="Get support for vision changes, blurry vision, double vision, floaters, and light sensitivity. Connect with an online provider for eye health guidance and care."
+        keywords="Blurry vision, double vision, difficulty focusing, reduced visual clarity, sensitivity to light, floaters, eyesight changes, eye health, vision evaluation, eye health guidance, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"
+        url="https://humancareconnect.co/vision-changes"
+      />
       <style>{STYLES}</style>
 
       <div

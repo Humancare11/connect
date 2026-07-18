@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Ear-Pain-in-Children.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1211,6 +1212,12 @@ function FaqSection() {
 export default function EarPainChildren() {
   return (
     <>
+                  <SEO
+        title="Ear Pain in Children Treatment Online | Pediatric Telemedicine Care"
+        description="Get expert ear pain treatment for children online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized pediatric care from home."
+        keywords="Ear pain in children, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/ear-pain-children"
+      />
       <style>{STYLES}</style>
 
       <div

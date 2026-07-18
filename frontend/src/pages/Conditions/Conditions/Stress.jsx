@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Stress.webp";
 
 
@@ -126,6 +127,13 @@ export default function Stress() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Stress Management Online | Virtual Mental Health Support"
+        description="Get online support for stress, anxiety, burnout, and emotional exhaustion. Connect with a licensed provider for personalized stress management strategies."
+        keywords="stress management online, stress treatment, online mental health support, stress relief consultation, anxiety and stress, burnout support, virtual therapy consultation, emotional wellness, telehealth mental health services, stress counseling online"
+        url="https://humancareconnect.co/stress"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -418,5 +426,6 @@ export default function Stress() {
         </div>
       </section>
     </div>
+    </>
   );
 }

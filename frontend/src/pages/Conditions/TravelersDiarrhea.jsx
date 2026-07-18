@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1220,6 +1221,7 @@ function FaqSection() {
 export default function TravelersDiarrhea() {
   return (
     <>
+      <SEO title="Traveler's Diarrhea Treatment Online | Travel Health Care | Humancare Connect" description="Get expert traveler's diarrhea treatment online. Connect with a licensed provider for travel health care, symptom relief, and personalized guidance through telemedicine services." keywords="Traveler's diarrhea, Travel health care, Online doctor appointment, Telemedicine services" url="https://humancareconnect.co/travelers-diarrhea" />
       <style>{STYLES}</style>
 
       <div

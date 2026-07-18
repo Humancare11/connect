@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Metabolic-Syndrome.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function MetabolicSyndrome() {
   return (
     <>
+                  <SEO
+        title="Metabolic Syndrome Treatment Online | Heart & Diabetes Risk Management"
+        description="Manage metabolic syndrome with expert online care. Connect with a licensed provider for high blood pressure, blood sugar, cholesterol, weight management, and personalized treatment plans."
+        keywords="Metabolic syndrome treatment, Heart disease risk management, Diabetes prevention, Online metabolic health consultation"
+        url="https://humancareconnect.co/metabolic-syndrome"
+      />
       <style>{STYLES}</style>
 
       <div

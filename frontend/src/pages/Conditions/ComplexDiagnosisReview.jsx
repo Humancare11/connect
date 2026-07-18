@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Complex-Diagnosis-Review.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1225,6 +1226,12 @@ function FaqSection() {
 export default function ComplexDiagnosisReview() {
   return (
     <>
+                  <SEO
+        title="Complex Diagnosis Review | Clarity for Difficult Health Conditions"
+        description="Unclear symptoms or multiple medical conditions can make care decisions difficult. Get a detailed review of your health history, test results, and treatment journey for clearer next steps."
+        keywords="Complex diagnosis review, Complex health concerns, Medical record reviews, Telemedicine services, Virtual healthcare services, Telehealth services"
+        url="https://humancareconnect.co/complex-diagnosis"
+      />
       <style>{STYLES}</style>
 
       <div

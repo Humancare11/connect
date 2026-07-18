@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -39,6 +39,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1043,6 +1044,12 @@ function FaqSection() {
 export default function Chlamydia() {
   return (
     <>
+                  <SEO
+        title="Chlamydia Care | Confidential STI Guidance & Treatment Support"
+        description="Chlamydia may cause burning urination, unusual discharge, or pelvic discomfort, while some people have no symptoms. Access private sexual health guidance and appropriate care online."
+        keywords="Chlamydia, Chlamydia care, Sexually transmitted bacterial infection, Sexual health guidance, Telemedicine services, Online doctor appointment"
+        url="https://humancareconnect.co/chlamydia"
+      />
       <style>{STYLES}</style>
 
       <div

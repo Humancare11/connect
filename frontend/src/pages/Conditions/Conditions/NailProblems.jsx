@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,8 @@ export default function NeilProblems() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+    <SEO title="Nail Problems Treatment Online | Virtual Dermatology Care" description="Get expert care for nail problems online." keywords="Nail problems" url="https://humancareconnect.co/nail-problems" />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +435,6 @@ export default function NeilProblems() {
         </div>
       </section>
     </div>
+    </>
   );
 }

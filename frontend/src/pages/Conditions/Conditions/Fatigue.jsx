@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function Fatigue() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Fatigue Treatment Online | Find the Cause of Low Energy"
+        description="Feeling tired all the time? Connect with a licensed provider online to evaluate fatigue, identify possible causes, and receive personalized treatment guidance through secure telemedicine services."
+        keywords="Fatigue treatment online, Low energy evaluation, Telemedicine services, Online doctor appointment"
+        url="https://humancareconnect.co/fatigue"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -431,5 +439,6 @@ export default function Fatigue() {
         </div>
       </section>
     </div>
+    </>
   );
 }

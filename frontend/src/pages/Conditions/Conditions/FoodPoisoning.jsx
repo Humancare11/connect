@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function FoodPoisoning() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Food Poisoning Treatment Online | Fast Stomach Care"
+        description="Get fast food poisoning treatment online for nausea, vomiting, diarrhea, stomach cramps, and dehydration. Connect with a licensed provider through secure telemedicine services."
+        keywords="Food poisoning treatment, Stomach illness online, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/food-poisoning"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function FoodPoisoning() {
         </div>
       </section>
     </div>
+    </>
   );
 }

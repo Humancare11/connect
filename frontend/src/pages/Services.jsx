@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import api from "../api";
 import "./Services.css";
+import SEO from "../components/Seo";
 
 function ServiceIcon({ icon, name }) {
   const value = String(icon || "").trim();
@@ -42,7 +43,14 @@ export default function HealthcareAlternating() {
   }, []);
 
   return (
-    <div className="ha-page">
+    <>
+                  <SEO
+        title="Online Healthcare Services | Doctor Consultation, Prescriptions & Telehealth Care"
+        description="Access reliable online healthcare services including doctor consultations, online prescriptions, lab tests, home care, and medical certificates. Fast, secure, and available anytime, anywhere."
+        keywords="Online healthcare services, Virtual doctor consultation, Online prescriptions, Telehealth services"
+        url="https://humancareconnect.co/medical-services"
+      />
+      <div className="ha-page">
       <section>
         <div className="ms-hero">
           <div className="ms-hero-inner">
@@ -77,5 +85,6 @@ export default function HealthcareAlternating() {
         )}
       </main>
     </div>
+    </>
   );
 }

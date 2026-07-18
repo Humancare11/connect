@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function Psoriasis() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Psoriasis Treatment Online | Virtual Dermatology Consultation"
+        description="Get online care for psoriasis from a licensed provider. Receive expert treatment for itchy, scaly skin, flare-ups, redness, and personalized skincare recommendations."
+        keywords="psoriasis treatment online, psoriasis symptoms, virtual dermatologist, online skin specialist, psoriasis flare-up treatment, chronic skin condition, telehealth dermatology, psoriasis consultation"
+        url="https://humancareconnect.co/psoriasis"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function Psoriasis() {
         </div>
       </section>
     </div>
+    </>
   );
 }

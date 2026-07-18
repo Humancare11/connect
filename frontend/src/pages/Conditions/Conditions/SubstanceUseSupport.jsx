@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Substance-Use-Support.webp";
 
 
@@ -127,6 +128,13 @@ export default function SubstanceUseSupport() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Substance Use Support Online | Confidential Recovery & Mental Health Care"
+        description="Get confidential online support for substance use challenges. Connect with a licensed provider for recovery guidance, mental health support, and personalized care."
+        keywords="substance use support, substance use treatment online, addiction support online, recovery support, online mental health care, substance use counseling, virtual recovery support, telehealth addiction care, confidential substance use care, addiction recovery guidance"
+        url="https://humancareconnect.co/substance-use-support"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -430,5 +438,6 @@ export default function SubstanceUseSupport() {
         </div>
       </section>
     </div>
+    </>
   );
 }

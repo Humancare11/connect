@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -77,6 +77,7 @@ import heroImage from "../../../assets/SpecialitiesImage/sexual-health-specialis
 import overviewImage from "../../../assets/SpecialitiesImage/sexual-health-doctor-patient-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -626,16 +627,12 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Psychology Counseling Services | Stress, Trauma, Relationships &
-          Emotional Support
-        </title>
-        <meta
-          name="description"
-          content="Connect with licensed psychology counselors for stress, grief and loss, trauma support, relationship challenges, self-esteem concerns, and emotional wellness counseling."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Sexual Health Specialists | STI Care, HIV Prevention & Sexual Wellness"
+        description="Connect with experienced sexual health specialists for STI consultations, HIV prevention, herpes, chlamydia, gonorrhea, partner exposure concerns, and confidential sexual wellness care."
+        keywords="online sexual health consultation, STI consultation online, STI treatment, HIV prevention, PrEP consultation, herpes treatment, chlamydia treatment, gonorrhea treatment, confidential sexual health, sexual wellness, virtual sexual health clinic, telehealth STI care"
+        url="https://humancareconnect.co/sexual-health-speciality"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

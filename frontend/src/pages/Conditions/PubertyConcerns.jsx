@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1215,6 +1216,12 @@ function FaqSection() {
 export default function PubertyConcerns() {
   return (
     <>
+                  <SEO
+        title="Puberty Concerns Consultation Online | Adolescent Growth & Development Care"
+        description="Talk to a licensed provider online about puberty concerns, growth, hormonal changes, delayed or early puberty, menstrual health, and adolescent development."
+        keywords="puberty concerns, online puberty consultation, adolescent health, delayed puberty, early puberty, hormonal changes, teen development, pediatric telehealth, puberty doctor online"
+        url="https://humancareconnect.co/puberty-concerns"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1218,6 +1219,12 @@ function FaqSection() {
 export default function PreOpCardiacClearance() {
   return (
     <>
+                  <SEO
+        title="Pre-Op Cardiac Clearance Online | Pre-Surgery Heart Evaluation"
+        description="Get expert pre-op cardiac clearance online. Connect with a licensed provider for heart health evaluation, surgical risk assessment, cardiovascular review, and personalized pre-surgery guidance."
+        keywords="Pre-op cardiac clearance, Pre-surgery heart evaluation, Cardiac clearance online, Cardiovascular risk assessment, Virtual preoperative consultation"
+        url="https://humancareconnect.co/pre-op-cardiac-clearance"
+      />
       <style>{STYLES}</style>
 
       <div

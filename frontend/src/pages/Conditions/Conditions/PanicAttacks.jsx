@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function PanicAttacks() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Panic Attack Treatment Online | Anxiety & Mental Health Support"
+        description="Get expert care for panic attacks online. Connect with a licensed provider for anxiety, sudden fear, rapid heartbeat, treatment guidance, therapy support, and personalized mental health care."
+        keywords="Panic attack treatment, Anxiety support, Online mental health consultation, Panic disorder care"
+        url="https://humancareconnect.co/panic-attack"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function PanicAttacks() {
         </div>
       </section>
     </div>
+    </>
   );
 }

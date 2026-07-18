@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -618,6 +619,12 @@ export default function GeneralEverydayCare() {
         minHeight: "100vh",
       }}
     >
+                  <SEO
+        title="Online General & Everyday Care | Virtual Doctor Consultation | Humancare Connect"
+        description="Access online general and everyday care with trusted healthcare professionals. Get virtual doctor consultations for common illnesses, preventive care, symptoms, and personalized medical guidance from home."
+        keywords="General & everyday care, Virtual primary care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/general-and-everyday-care"
+      />
       <Helmet>
         <title>
           Online General & Everyday Care | Virtual Doctor Consultation |

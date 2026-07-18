@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -39,6 +39,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1042,6 +1043,12 @@ function FaqSection() {
 export default function ContactDermatitis() {
   return (
     <>
+                  <SEO
+        title="Contact Dermatitis Treatment Online | Telemedicine Services"
+        description="Get expert contact dermatitis treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized skin care from home."
+        keywords="Contact dermatitis treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/contact-dermatitis"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -77,6 +77,7 @@ import heroImage from "../../../assets/SpecialitiesImage/psychology-counseling-m
 import overviewImage from "../../../assets/SpecialitiesImage/psychology-counseling-session-emotional-wellness.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -622,16 +623,12 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Psychology Counseling Services | Stress, Trauma, Relationships &
-          Emotional Support
-        </title>
-        <meta
-          name="description"
-          content="Connect with licensed psychology counselors for stress, grief and loss, trauma support, relationship challenges, self-esteem concerns, and emotional wellness counseling."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Psychology Counseling Services | Stress, Trauma, Relationships & Emotional Support"
+        description="Connect with licensed psychology counselors for stress, grief and loss, trauma support, relationship challenges, self-esteem concerns, and emotional wellness counseling."
+        keywords="online psychology counseling, licensed psychologist online, online therapist, stress counseling, trauma counseling, relationship counseling, grief counseling, self-esteem counseling, emotional wellness, virtual therapy, online mental health counseling, telepsychology"
+        url="https://humancareconnect.co/psychology-counseling"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function FungalSkinInfection() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Fungal Skin Infection Treatment Online | Virtual Dermatology Care"
+        description="Get expert treatment for fungal skin infections online. Connect with a licensed provider for itchy rashes, redness, peeling skin, and prescription treatment through secure telemedicine services."
+        keywords="Fungal skin infection treatment, Online dermatology consultation, Telemedicine services, Online doctor appointment"
+        url="https://humancareconnect.co/fungal-skin-infection"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function FungalSkinInfection() {
         </div>
       </section>
     </div>
+    </>
   );
 }

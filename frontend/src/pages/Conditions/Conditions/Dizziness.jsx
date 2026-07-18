@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function Dizziness() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Dizziness Treatment Online | Telemedicine Services for Fast Care"
+        description="Get expert dizziness treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized care from home."
+        keywords="Dizziness treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/dizziness"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -426,5 +434,6 @@ export default function Dizziness() {
         </div>
       </section>
     </div>
+    </>
   );
 }

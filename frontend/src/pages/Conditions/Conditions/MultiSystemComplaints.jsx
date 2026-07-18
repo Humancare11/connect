@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function MultiSystemComplaints() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Multi-System Complaints Online | Complex Symptom Evaluation & Care"
+        description="Get expert evaluation for multiple unexplained symptoms online. Consult a licensed provider for fatigue, pain, digestive issues, dizziness, headaches, and personalized treatment recommendations."
+        keywords="Multi-system complaints, Complex symptom evaluation, Online internal medicine consultation, Unexplained symptoms"
+        url="https://humancareconnect.co/multi-system-complaints"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function MultiSystemComplaints() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function TravelersDiarrhea() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Traveler�s Diarrhea Treatment Online | Virtual Travel Health Care"
+        description="Get online care for traveler�s diarrhea. Consult a licensed provider for diarrhea, stomach cramps, nausea, dehydration, and digestive symptoms during travel."
+        keywords="traveler�s diarrhea treatment, traveler�s diarrhea treatment online, diarrhea during travel, travel digestive illness, stomach cramps while traveling, online travel doctor, travel health consultation, dehydration support, virtual doctor consultation, telehealth travel care"
+        url="https://humancareconnect.co/travelers-diarrhea"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function TravelersDiarrhea() {
         </div>
       </section>
     </div>
+    </>
   );
 }
