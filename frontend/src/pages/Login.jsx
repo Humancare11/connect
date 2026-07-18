@@ -115,7 +115,7 @@ function getDobError(dob) {
   if (dob < DOB_MIN) return "Date of Birth must be in or after 1900";
   return "";
 }
-import api, { setUserAuthToken } from "../api";
+import api, { setUserAuthToken, getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import PhoneInputField, {
   COUNTRIES as PHONE_COUNTRIES,
@@ -512,7 +512,15 @@ export default function AuthPage() {
     login(user);
     void import("../socket").then(({ default: socket }) => {
       if (!socket.connected) socket.connect();
-      socket.emit("user-online", { userId: user._id, role: user.role });
+      // Explicit, role-scoped token — this is exactly the moment a stale
+      // identity from an earlier role on the same live socket connection
+      // would otherwise linger (e.g. the browser was previously used for a
+      // doctor session). See the server's resolveSocketIdentity for why.
+      socket.emit("user-online", {
+        userId: user._id,
+        role: user.role,
+        token: getUserAuthToken(user.role),
+      });
     });
     const from = location.state?.from;
     const doctor = location.state?.doctor;

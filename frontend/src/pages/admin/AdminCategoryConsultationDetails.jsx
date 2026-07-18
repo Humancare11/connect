@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Country } from "country-state-city";
 import api from "../../api";
 // Reusing the same stylesheet as the Appointment details page so the two
 // layouts stay visually identical. Adjust the path if you move this file.
 import "./AdminAppointments.css";
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 function InfoTile({ label, value }) {
   return (
@@ -127,9 +134,9 @@ export default function AdminCategoryConsultationDetails() {
 
   const assignmentLabel = doctorAssigned ? "Alternate Doctor" : "Assign Doctor";
 
-  const userLocation = patient.country || "-";
+  const userLocation = getCountryName(patient.country) || "-";
   const doctorLocation = doctor
-    ? [doctor.city, doctor.country].filter(Boolean).join(", ")
+    ? [doctor.city, getCountryName(doctor.country)].filter(Boolean).join(", ")
     : "";
   const doctorPhone = doctor
     ? [doctor.countryCode, doctor.phoneNumber].filter(Boolean).join(" ")

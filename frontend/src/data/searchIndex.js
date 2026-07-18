@@ -64,30 +64,18 @@ export const specialties = [
   },
 
   // Chronic Care & Expert Opinion
-  {
-    id: "cardiology", title: "Cardiology", type: "specialty", category: "chronic-care-and-expert-opinion", route: "/chronic-care-and-expert-opinion/cardiology",
-    keywords: ["cardiology", "heart", "cardiac"]
-  },
-  {
-    id: "export-medical-opinion", title: "Expert Medical Opinion", type: "specialty", category: "chronic-care", route: "/export-medical-opinion",
-    keywords: ["expert opinion", "second opinion", "specialist review"]
-  },
-  {
-    id: "gastroenterology", title: "Gastroenterology", type: "specialty", category: "chronic-care", route: "/chronic-care/gastroenterology",
-    keywords: ["gastroenterology", "digestive", "stomach", "gi"]
-  },
-  {
-    id: "neurology", title: "Neurology", type: "specialty", category: "chronic-care", route: "/chronic-care/neurology",
-    keywords: ["neurology", "brain", "nerve", "neurological"]
-  },
-  {
-    id: "pulmonology", title: "Pulmonology", type: "specialty", category: "chronic-care", route: "/chronic-care/pulmonology",
-    keywords: ["pulmonology", "lungs", "breathing", "respiratory"]
-  },
-  {
-    id: "endocrinology", title: "Endocrinology", type: "specialty", category: "chronic-care", route: "/chronic-care/endocrinology",
-    keywords: ["endocrinology", "hormones", "thyroid", "diabetes"]
-  },
+  { id: "cardiology", title: "Cardiology", type: "specialty", category: "chronic-care-and-expert-opinion", route: "/chronic-care-and-expert-opinion/cardiology",
+    keywords: ["cardiology", "heart", "cardiac"] },
+  { id: "export-medical-opinion", title: "Expert Medical Opinion", type: "specialty", category: "chronic-care", route: "/export-medical-opinion",
+    keywords: ["expert opinion", "second opinion", "specialist review"] },
+  { id: "gastroenterology", title: "Gastroenterology", type: "specialty", category: "chronic-care", route: "/chronic-care/gastroenterology",
+    keywords: ["gastroenterology", "digestive", "stomach", "gi"] },
+  { id: "neurology", title: "Neurology", type: "specialty", category: "chronic-care", route: "/chronic-care/neurology",
+    keywords: ["neurology", "brain", "nerve", "neurological"] },
+  { id: "pulmonology", title: "Pulmonology", type: "specialty", category: "chronic-care", route: "/chronic-care/pulmonology",
+    keywords: ["pulmonology", "lungs", "breathing", "respiratory"] },
+  { id: "endocrinology", title: "Endocrinology", type: "specialty", category: "chronic-care", route: "/chronic-care/endocrinology",
+    keywords: ["endocrinology", "hormones", "thyroid", "diabetes"] },
 
   // Eye, Ear & Bone
   {

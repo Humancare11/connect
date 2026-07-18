@@ -451,6 +451,7 @@ app.use(
 );
 app.use("/api/direct-video-room", require("./routes/directVideoRoom"));
 app.use("/api/notifications", require("./routes/notifications"));
+app.use("/api/rtc", require("./routes/rtc"));
 const CategoryConsultation = require("./models/CategoryConsultation");
 const Enrollment = require("./models/Enrollment");
 
@@ -606,6 +607,58 @@ function getSocketIdentity(socket, requested = {}) {
   return { userId: String(userId), role };
 }
 
+// Async, race-free identity resolution for a SPECIFIC requested role/userId.
+// socket.authIdentities is a snapshot taken once, when this transport
+// connection was first established, from whatever cookies existed then —
+// it is not re-derived per event. A client can emit several events
+// back-to-back (e.g. "user-online" then "join-appointment-room") that are
+// each handled independently and asynchronously on the server, so nothing
+// here can assume one has already finished priming shared state before the
+// other runs. Every caller that needs a specific identity resolves it
+// itself, the same way, rather than depending on ordering between events.
+async function resolveSocketIdentity(socket, requested = {}) {
+  // Fast path: already known to this connection (cookie-derived, or a token
+  // validated earlier on this same connection — see below).
+  const cached = getRequestedSocketIdentity(socket, requested);
+  if (cached) return cached;
+
+  // Slow path: an explicit, fresh bearer token was supplied — validate it
+  // directly instead of relying on some other event to have primed
+  // socket.authIdentities first.
+  if (requested.token) {
+    const tokenIdentity = await validateSocketAccessToken(requested.token);
+    if (
+      tokenIdentity &&
+      (!requested.userId || String(tokenIdentity.id) === String(requested.userId)) &&
+      (!requested.role || tokenIdentity.role === requested.role)
+    ) {
+      const already = socket.authIdentities.some(
+        (i) => i.id === tokenIdentity.id && i.role === tokenIdentity.role,
+      );
+      if (!already) socket.authIdentities.push(tokenIdentity);
+      return tokenIdentity;
+    }
+  }
+
+  // Last resort: whatever is already registered on this socket — but ONLY
+  // when the caller didn't ask for anything specific (a plain "still here"
+  // ping). If a SPECIFIC role/userId was requested but couldn't be verified
+  // by either the token or the cached identities, silently keeping a stale
+  // registration risks resolving a doctor's request as an old patient
+  // identity from earlier on this same connection — doing nothing is the
+  // safe failure mode.
+  if (!requested.role && !requested.userId && socket.userId && socket.userRole) {
+    return {
+      id: socket.userId,
+      role: socket.userRole,
+      email: socket.userEmail,
+      sid: socket.sessionId,
+    };
+  }
+
+  return null;
+}
+
 function isSocketInAppointmentRoom(socket, appointmentId) {
   if (!appointmentId) return false;
   const room = appointmentRoomName(appointmentId);
@@ -615,8 +668,9 @@ function isSocketInAppointmentRoom(socket, appointmentId) {
 async function canSocketAccessAppointment(socket, appointmentId, requestedIdentity = {}) {
   if (!appointmentId) return { allowed: false, reason: "missing_appointment" };
 
-  const identity = getSocketIdentity(socket, requestedIdentity);
-  if (!identity) return { allowed: false, reason: "unauthenticated" };
+  const resolved = await resolveSocketIdentity(socket, requestedIdentity);
+  if (!resolved) return { allowed: false, reason: "unauthenticated" };
+  const identity = { userId: String(resolved.id), role: resolved.role };
 
   const userId = String(identity.userId);
   let appointment = null;
@@ -797,20 +851,25 @@ io.use(async (socket, next) => {
 });
 
 io.on("connection", (socket) => {
+  // Socket.IO restored socket.rooms/socket.data from a prior session within
+  // connectionStateRecovery's window — see the join-appointment-room repair
+  // below for why our own bookkeeping still needs to be rebuilt on top of it.
+  if (socket.recovered) {
+    console.info("[socket] connection state recovered", {
+      socketId: socket.id,
+      rooms: Array.from(socket.rooms),
+    });
+  }
 
-  socket.on("user-online", ({ userId: requestedUserId, role: requestedRole } = {}) => {
-    const matchingIdentity = Array.isArray(socket.authIdentities)
-      ? socket.authIdentities.find((identity) =>
-        (!requestedUserId || String(identity.id) === String(requestedUserId)) &&
-        (!requestedRole || identity.role === requestedRole)
-      )
-      : null;
-
-    const identity = matchingIdentity || (
-      socket.userId && socket.userRole
-        ? { id: socket.userId, role: socket.userRole, email: socket.userEmail, sid: socket.sessionId }
-        : null
-    );
+  socket.on("user-online", async ({ userId: requestedUserId, role: requestedRole, token } = {}) => {
+    // See resolveSocketIdentity's comment for why this can't just trust
+    // socket.authIdentities' connection-time snapshot when a specific role
+    // is being requested.
+    const identity = await resolveSocketIdentity(socket, {
+      userId: requestedUserId,
+      role: requestedRole,
+      token,
+    });
 
     if (!identity?.id || !identity?.role) return;
 
@@ -859,11 +918,11 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("join-appointment-room", async ({ appointmentId, userId, role } = {}) => {
+  socket.on("join-appointment-room", async ({ appointmentId, userId, role, token } = {}) => {
     if (!appointmentId) return;
 
     const room = appointmentRoomName(appointmentId);
-    const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role });
+    const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role, token });
 
     if (!access.allowed) {
       socket.emit("room-access-denied", { msg: "Access to this call room was denied." });
@@ -877,15 +936,30 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // If this socket is already in the room (e.g. duplicate emit from an
-    // effect re-run), re-notify peers AND tell ourselves about any peer
-    // already present — otherwise a rejoin can leave both sides without a
-    // "peer-joined" signal (e.g. if our previous listener was detached
-    // between the original join and this duplicate emit).
+    // Socket.IO may report this socket as already in the room in two
+    // distinct cases: (a) a genuine duplicate emit on the same live
+    // connection (e.g. an effect re-run), or (b) a connection recovered via
+    // Socket.IO's connectionStateRecovery after a brief disconnect (a
+    // network blip, or a Wi-Fi <-> mobile data switch) — the library
+    // restores `socket.rooms` for these automatically, but our own
+    // bookkeeping (`socketRooms`, keyed by socket.id) is cleared
+    // unconditionally in the "disconnect" handler below and is NOT restored
+    // by the library, since it lives outside `socket.data`. Every
+    // signaling/chat event downstream is gated on isSocketInAppointmentRoom(),
+    // which checks `socketRooms` — so without repairing it here, a recovered
+    // socket looks connected and "in the room" while every
+    // video-offer/answer/ice-candidate and chat message is silently dropped.
+    // Repair it unconditionally in both cases before returning.
     if (socket.rooms.has(room)) {
-      socket.to(room).emit("peer-joined");
+      socketRooms.set(socket.id, appointmentId);
+
       const existing = io.sockets.adapter.rooms.get(room);
-      if (existing && existing.size > 1) socket.emit("peer-joined");
+      const peerPresent = !!existing && existing.size > 1;
+      const wasActivated = roomActivated.get(appointmentId) === true;
+      if (peerPresent) roomActivated.set(appointmentId, true);
+
+      socket.to(room).emit("peer-joined", { resumedCall: wasActivated });
+      if (peerPresent) socket.emit("peer-joined", { resumedCall: wasActivated });
       return;
     }
 

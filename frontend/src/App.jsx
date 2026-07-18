@@ -649,7 +649,7 @@ const HrtGuidance = lazy(
 const FertilityConcerns = lazy(
   () => import("./pages/Conditions/Conditions/FertilityConcerns"),
 );
-import OCD from "./pages/Conditions/Conditions/OCD";
+import Ocd from "./pages/Conditions/Conditions/Ocd";
 const EyeIrritation = lazy(() => import("./pages/Conditions/EyeIrritation"));
 // ----------Speciality Pages-------------------
 const AdolescentMedicine = lazy(
@@ -676,7 +676,7 @@ const Pulmonology = lazy(
 );
 const Ent = lazy(() => import("./pages/Specialty/EyeEarAndBone/Ent"));
 const Ophthalmology = lazy(
-  () => import("./pages/Specialty/EyeEarAndBone/ophthalmology"),
+  () => import("./pages/Specialty/EyeEarAndBone/Ophthalmology"),
 );
 const Orthopedics = lazy(
   () => import("./pages/Specialty/EyeEarAndBone/Orthopedics"),
@@ -2323,7 +2323,7 @@ function AppLayout() {
             element={<UrinarySymptomsMen1 />}
           />
           <Route path="/fertility-concerns" element={<FertilityConcerns />} />
-          <Route path="/ocd" element={<OCD />} />
+          <Route path="/ocd" element={<Ocd/>} />
           <Route
             path="/eye-ear-bone/ophthalmology/eye-irritation"
             element={<EyeIrritation />}
