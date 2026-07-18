@@ -70,7 +70,6 @@ async function ensureBucketCors(allowedOrigins) {
         },
       })
     );
-    console.log("S3 bucket CORS configured ✅");
   } catch (err) {
     console.warn("Could not set S3 CORS policy (check bucket permissions):", err.message);
   }

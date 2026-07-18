@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Country } from "country-state-city";
 import api from "../../api";
 import "./AdminAppointments.css";
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 function formatMoney(value) {
   const amount = Number(value);
@@ -201,13 +208,15 @@ export default function AdminAppointmentDetails() {
     "-";
   const userLocation = [
     appointment.patientDetails?.city || appointment.patientId?.city,
-    appointment.patientDetails?.country || appointment.patientId?.country,
+    getCountryName(
+      appointment.patientDetails?.country || appointment.patientId?.country,
+    ),
   ]
     .filter(Boolean)
     .join(", ");
   const doctorLocation = [
     appointment.doctorMeta?.city,
-    appointment.doctorMeta?.country,
+    getCountryName(appointment.doctorMeta?.country),
   ]
     .filter(Boolean)
     .join(", ");

@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { Country } from "country-state-city";
 import api from "../../api";
 import "./AdminAppointments.css";
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 const STATUS_ORDER = ["upcoming", "assigned", "pending", "confirmed", "complete", "cancelled", "all"];
 
@@ -215,6 +222,7 @@ export default function AdminAppointments() {
                   <th>Appointment Booking ID</th>
                   <th>Patient Name</th>
                   <th>Consultation Fee</th>
+                  <th>Doctor Country</th>
                   <th>Status</th>
                   <th>Assigned By</th>
                   <th>View</th>
@@ -234,10 +242,11 @@ export default function AdminAppointments() {
                       <td>
                         <div className="adp-patient-cell">
                           <strong>{appointment.patientId?.name || "Unknown patient"}</strong>
-                          <span>{patientGender(appointment)} - {patientCountry(appointment)}</span>
+                          <span>{patientGender(appointment)} - {getCountryName(patientCountry(appointment))}</span>
                         </div>
                       </td>
                       <td>{formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)}</td>
+                      <td>{getCountryName(doctorCountry(appointment))}</td>
                       <td>
                         <StatusPill status={appointment.status} />
                       </td>
@@ -253,7 +262,7 @@ export default function AdminAppointments() {
                             <>
                               <div className="adp-assigned-doctor-mini">
                                 <strong>{appointment.doctorId?.name || "Assigned doctor"}</strong>
-                                <span>{appointment.category || "-"} - {doctorCountry(appointment)}</span>
+                                <span>{appointment.category || "-"} - {getCountryName(doctorCountry(appointment))}</span>
                               </div>
                               <Link className="adp-secondary-link" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
                                 Alternate Doctor

@@ -949,9 +949,7 @@ const getAppointmentById = async (req, res) => {
 // confirms the caller is a doctor; here we confirm they own this appointment).
 const getDoctorOwnAppointment = async (req, res) => {
   try {
-    console.log("[getDoctorOwnAppointment] doctorJwtId:", req.user.id, "appointmentId:", req.params.id);
     let owns = await Appointment.exists({ _id: req.params.id, doctorId: req.user.id });
-    console.log("[getDoctorOwnAppointment] owns (Appointment):", owns);
 
     let appointment;
     if (owns) {
@@ -962,7 +960,6 @@ const getDoctorOwnAppointment = async (req, res) => {
     } else {
       const enrollment = await Enrollment.findOne({ doctorId: req.user.id }).select("_id");
       const ccOwns = enrollment ? await CategoryConsultation.exists({ _id: req.params.id, assignedDoctorId: enrollment._id }) : false;
-      console.log("[getDoctorOwnAppointment] owns (CategoryConsultation):", ccOwns);
       if (ccOwns) {
         const cc = await CategoryConsultation.findById(req.params.id)
           .populate("patientId", "patientId name email mobile gender dob")

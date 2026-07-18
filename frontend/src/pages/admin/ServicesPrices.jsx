@@ -3,7 +3,7 @@ import api from "../../api";
 import "./Dashboard.css";
 
 function ServicesPrices() {
-  const emptyForm = { name: "", price: "", icon: "", description: "" };
+  const emptyForm = { name: "", price: "", icon: "", description: "", slug: "" };
   const [services, setServices] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState("");
@@ -45,6 +45,10 @@ function ServicesPrices() {
       price: Number(form.price),
       icon: form.icon.trim(),
       description: form.description.trim(),
+      // Only send slug when editing an existing service and the admin
+      // explicitly changed it. On create, omit it so the backend derives
+      // one from the name automatically.
+      ...(editingId && form.slug.trim() ? { slug: form.slug.trim() } : {}),
     };
 
     try {
@@ -75,6 +79,7 @@ function ServicesPrices() {
       price: service.price ?? "",
       icon: service.icon || "",
       description: service.description || "",
+      slug: service.slug || "",
     });
     setError("");
     setMessage("");
@@ -101,6 +106,16 @@ function ServicesPrices() {
       return <img className="sp-icon-img" src={value} alt="" />;
     }
     return <span className="sp-icon-text">{value}</span>;
+  };
+
+  const copySlug = async (slug) => {
+    try {
+      await navigator.clipboard.writeText(slug);
+      setMessage(`Copied slug "${slug}" to clipboard.`);
+    } catch {
+      // Clipboard API can fail (permissions/insecure context) — not critical,
+      // the slug is still visible in the table for manual copying.
+    }
   };
 
   return (
@@ -164,6 +179,23 @@ function ServicesPrices() {
             />
           </div>
 
+          {editingId && (
+            <div className="sa-field">
+              <label>
+                Slug (used by the website to look up this service's price
+                &mdash; changing it will break any page still using the old
+                slug)
+              </label>
+              <input
+                type="text"
+                value={form.slug}
+                onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                placeholder="auto-generated-from-name"
+                disabled={saving}
+              />
+            </div>
+          )}
+
           <div className="sp-form-actions">
             <button type="submit" className="sa-create-btn" disabled={saving}>
               {saving ? "Saving..." : editingId ? "Update Service" : "+ Create Service"}
@@ -191,6 +223,7 @@ function ServicesPrices() {
                 <tr>
                   <th>Icon</th>
                   <th>Name</th>
+                  <th>Slug</th>
                   <th>Description</th>
                   <th>Price</th>
                   <th>Actions</th>
@@ -201,6 +234,15 @@ function ServicesPrices() {
                   <tr key={service._id} className={index % 2 === 0 ? "" : "alt"}>
                     <td>{renderIcon(service.icon)}</td>
                     <td className="bold">{service.name}</td>
+                    <td className="muted">
+                      <code
+                        style={{ cursor: "pointer" }}
+                        title="Click to copy"
+                        onClick={() => copySlug(service.slug)}
+                      >
+                        {service.slug}
+                      </code>
+                    </td>
                     <td className="muted">{service.description}</td>
                     <td className="muted">${Number(service.price || 0).toFixed(2)}</td>
                     <td>

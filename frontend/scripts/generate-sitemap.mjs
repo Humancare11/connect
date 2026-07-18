@@ -132,7 +132,13 @@ function buildSitemap(routePaths) {
   ].join("\n");
 }
 
-function buildRobotsTxt() {
+function buildRobotsTxt(isProduction) {
+  if (!isProduction) {
+    // Non-production deployments (UAT, staging, etc.) must never be indexed
+    // or have their URLs surfaced as duplicates of the production site.
+    return ["User-agent: *", "Disallow: /", ""].join("\n");
+  }
+
   return [
     "User-agent: *",
     "Allow: /",
@@ -159,6 +165,10 @@ function ensureBuildOutput() {
 
 ensureBuildOutput();
 
+const modeArg = process.argv.find((arg) => arg.startsWith("--mode="));
+const mode = modeArg ? modeArg.slice("--mode=".length) : "production";
+const isProduction = mode === "production";
+
 const routes = normalizeRoutes(readAppRoutes());
 
 if (routes.length === 0) {
@@ -166,6 +176,5 @@ if (routes.length === 0) {
 }
 
 fs.writeFileSync(path.join(outDir, "sitemap.xml"), buildSitemap(routes));
-fs.writeFileSync(path.join(outDir, "robots.txt"), buildRobotsTxt());
+fs.writeFileSync(path.join(outDir, "robots.txt"), buildRobotsTxt(isProduction));
 
-console.log(`Generated sitemap.xml and robots.txt for ${routes.length} routes.`);

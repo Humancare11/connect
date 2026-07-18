@@ -159,77 +159,77 @@ const SPECIALTY_DATA = {
       name: "Chest Pain (Non-Emergency)",
       description:
         "Evaluation of ongoing or recurring chest discomfort to identify possible heart-related causes and provide appropriate treatment.",
-      },
+    },
     {
       Icon: GiHeartOrgan,
       name: "Heart Disease Follow-Up",
       path: "/chronic-care/pulmonology/heart-disease-follow-up",
       description:
         "Continuous monitoring and management of existing heart conditions to support better heart function and long-term health.",
-      },
+    },
     {
       Icon: FiActivity,
       name: "High Blood Pressure",
       path: "/chronic-care/cardiology/high-blood-pressure",
       description:
         "Diagnosis and treatment of hypertension through lifestyle modifications, medication management, and routine monitoring.",
-      },
+    },
     {
       Icon: MdOutlineBloodtype,
       name: "High Cholesterol",
       path: "/chronic-care/cardiology/high-cholesterol",
       description:
         "Care for elevated cholesterol levels and lipid disorders to reduce the risk of cardiovascular disease and stroke.",
-      },
+    },
     {
       Icon: FiZap,
       name: "Palpitations",
       path: "/chronic-care/cardiology/palpitations",
       description:
         "Evaluation of irregular, rapid, or pounding heartbeats to determine the cause and provide appropriate cardiac care.",
-      },
+    },
     {
       Icon: FiClipboard,
       name: "Pre-Operative Cardiac Clearance",
       description:
         "Heart evaluations before surgery to assess cardiovascular risk and ensure safe surgical planning.",
-      },
+    },
     {
       Icon: FiTarget,
       name: "Coronary Artery Disease",
       description:
         "Management of narrowed or blocked heart arteries that may cause chest pain, heart attacks, or reduced blood flow.",
-      },
+    },
     {
       Icon: FiRefreshCw,
       name: "Heart Rhythm Disorders",
       description:
         "Diagnosis and treatment of arrhythmias, including abnormal heart rhythms that affect heart performance.",
-      },
+    },
     {
       Icon: FiHeart,
       name: "Heart Failure Management",
       description:
         "Comprehensive care for weakened heart function, including symptom management and long-term treatment strategies.",
-      },
+    },
     {
       Icon: FiWind,
       name: "Shortness of Breath & Exercise Intolerance",
       description:
         "Assessment of breathing difficulties, fatigue, and reduced physical capacity that may be related to heart conditions.",
-      },
+    },
     {
       Icon: FiBarChart2,
       name: "Preventive Heart Screenings",
       description:
         "Routine cardiovascular evaluations to detect risk factors such as hypertension, cholesterol abnormalities, and inherited heart conditions.",
-      },
+    },
     {
       Icon: FiEye,
       name: "Cardiovascular Risk Assessment",
       description:
         "Evaluation of personal and family health history, lifestyle factors, and medical conditions that may increase heart disease risk.",
-      },
+    },
   ],
 
   faqs: [
@@ -496,7 +496,15 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+        <Link
+          to={path}
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+            display: "block",
+            height: "100%",
+          }}
+        >
           {cardContent}
         </Link>
       ) : (
@@ -616,34 +624,39 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div
-              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-            >
-              <span className="sp-hero__badge">Chronic Care</span>
-              <h1 className="sp-hero__title">{data.name}</h1>
-              <p className="sp-hero__tagline">{data.tagline}</p>
-              <p className="sp-hero__description">{data.heroDescription}</p>
+            <div className="sp-hero__layout">
+              <div
+                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+              >
+                <span className="sp-hero__badge">HumanCare Connect</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
 
-              {/* <div className="sp-hero__actions">
-                <a href="/Specialties" className="sp-btn sp-btn--primary">
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
-              </div> */}
+                <div className="sp-hero__actions">
+                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                    <FiSearch size={17} />
+                    Find Specialists
+                  </a>
+                  <a
+                    href="/appointment-booking"
+                    className="sp-btn sp-btn--ghost"
+                  >
+                    <FiCalendar size={17} />
+                    Book Appointment
+                  </a>
+                </div>
+              </div>
+
+              <Reveal className="sp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId={data.categoryId}
+                  name={data.name}
+                />
+              </Reveal>
             </div>
-
-            <Reveal className="sp-hero__sidebar">
-              <BookingCard
-                price={price}
-                priceLoading={priceLoading}
-                categoryId={data.categoryId}
-                name={data.name}
-              />
-            </Reveal>
           </div>
         </section>
 
@@ -743,7 +756,11 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
+              <div
+                className="sp-conditions__head"
+                onClick={() => navigate("/conditions")}
+                style={{ cursor: "pointer" }}
+              >
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

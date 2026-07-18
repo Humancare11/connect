@@ -73,7 +73,7 @@ const consultationSchema = new mongoose.Schema(
     },
     medicalReports: [
       {
-        url:  { type: String },
+        url: { type: String },
         name: { type: String },
         type: { type: String },
         size: { type: Number },
@@ -92,6 +92,10 @@ const consultationSchema = new mongoose.Schema(
       default: "",
     },
     conditionName: {
+      type: String,
+      default: "",
+    },
+    serviceName: {
       type: String,
       default: "",
     },

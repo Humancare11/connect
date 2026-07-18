@@ -475,7 +475,6 @@ export default function PhoneInputField({
   }, [defaultCountry, value]);
   // useEffect(() => {
   //   let cancelled = false;
-  //   console.log("country effect fired");
   //   if (defaultCountry !== "auto" || value) {
   //     onCountryChange?.({
   //       code: country.code,

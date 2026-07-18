@@ -169,7 +169,7 @@ export default function CategoryAppointmentConfirm() {
     setStage("confirming");
     setConfirmErr("");
     try {
-      if (selection?.isCategoryBooking) {
+      if (selection?.isCategoryBooking || selection?.isServiceBooking) {
         const body = {
           concern: pending.formData.concern,
           duration: pending.formData.duration,
@@ -184,6 +184,7 @@ export default function CategoryAppointmentConfirm() {
           categoryName: selection.categoryName || "",
           specialtyName: selection.specialtyName || "",
           conditionName: selection.conditionName || "",
+          serviceName: selection.serviceName || "",
         };
         await api.post("/api/category-consultation", body);
       } else {

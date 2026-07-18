@@ -9,6 +9,14 @@ const servicePriceSchema = new mongoose.Schema(
       unique: true,
       maxlength: 120,
     },
+    slug: {
+      type: String,
+      required: true,
+      trim: true,
+      unique: true,
+      lowercase: true,
+      maxlength: 120,
+    },
     price: {
       type: Number,
       required: true,

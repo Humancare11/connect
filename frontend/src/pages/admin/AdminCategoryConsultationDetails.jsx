@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Country } from "country-state-city";
 import api from "../../api";
 // Reusing the same stylesheet as the Appointment details page so the two
 // layouts stay visually identical. Adjust the path if you move this file.
 import "./AdminAppointments.css";
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 function InfoTile({ label, value }) {
   return (
@@ -127,9 +134,9 @@ export default function AdminCategoryConsultationDetails() {
 
   const assignmentLabel = doctorAssigned ? "Alternate Doctor" : "Assign Doctor";
 
-  const userLocation = patient.country || "-";
+  const userLocation = getCountryName(patient.country) || "-";
   const doctorLocation = doctor
-    ? [doctor.city, doctor.country].filter(Boolean).join(", ")
+    ? [doctor.city, getCountryName(doctor.country)].filter(Boolean).join(", ")
     : "";
   const doctorPhone = doctor
     ? [doctor.countryCode, doctor.phoneNumber].filter(Boolean).join(" ")
@@ -171,13 +178,14 @@ export default function AdminCategoryConsultationDetails() {
             <InfoTile label="Severity" value={consultation.severity} />
             <InfoTile label="Support Type" value={consultation.supportType} />
             <InfoTile label="Consultation Fee" value={formatMoney(consultation.consultationPrice)} />
-            <InfoTile label="Urgency" value={consultation.urgency} />
+            <InfoTile label="Consultation Date" value={consultation.date} />
             <InfoTile label="Time Window" value={consultation.timeWindow} />
             <InfoTile label="Slot" value={consultation.slot} />
             <InfoTile label="Status" value={statusLabel(consultation.status)} />
             <InfoTile label="Source Category" value={consultation.categoryName} />
             <InfoTile label="Source Specialty" value={consultation.specialtyName} />
             <InfoTile label="Source Condition" value={consultation.conditionName} />
+            <InfoTile label="Source Service" value={consultation.serviceName} />
           </div>
         </Section>
 

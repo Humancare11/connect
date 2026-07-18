@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
+import { Country } from "country-state-city";
 import api from "../../api";
 import { useAuth } from "../../context/AuthContext";
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 /* ── shared glass style objects ── */
 const glassCard = {
@@ -324,7 +331,7 @@ export default function ProfileSettings() {
                   <MetaRow icon="📞" label="Mobile" value={formData.mobile} />
                 )}
                 {formData.country && (
-                  <MetaRow icon="🌍" label="Country" value={formData.country} />
+                  <MetaRow icon="🌍" label="Country" value={getCountryName(formData.country)} />
                 )}
               </div>
             </div>
@@ -452,7 +459,7 @@ export default function ProfileSettings() {
                 <Field label="Country" icon="🌍">
                   <input
                     style={inputStyle} type="text" id="country" name="country"
-                    value={formData.country} onChange={handleChange}
+                    value={getCountryName(formData.country)} onChange={handleChange}
                     placeholder="e.g. India, USA"
                     onFocus={onFocus} onBlur={onBlur}
                   />

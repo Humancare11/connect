@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,119 +27,72 @@ import "./categoriesGlobal.css";
 // but clicking does nothing).
 
 const cat = {
-  label: "Mental Health",
-  tagline: "Mental Health",
-  headline: "Compassionate Mental Health Support,",
-  headlineAccent: "Designed Around You",
+  label: "Children ",
+  tagline: "Caring for your little ones",
+  headline: "Compassionate Children & Family Care,",
+  headlineAccent: " Whenever You Need It",
   subheadline:
-    "Connect with experienced mental health professionals for personalized support with stress, anxiety, depression, emotional challenges, and overall mental well-being through secure online consultations.",
-  bookingSpecialtyPlaceholder: "e.g. Behavioral Health",
+    "Connect with experienced healthcare professionals for personalized family healthcare, pediatric support, and everyday medical guidance, delivering convenient, compassionate care for every stage of life.",
+  bookingSpecialtyPlaceholder: "e.g. Adolescent Medicine",
 
   specialties: [
     {
-      name: "Behavioral Health",
-      desc: "Professional support for stress, anxiety-related concerns, life transitions, emotional wellness, anger management, sleep challenges, and healthier coping strategies.",
-      path: "/mental-health/behavioral-health",
+      name: "Adolescent Medicine",
+      desc: "Adolescent medicine specialists provide personalized healthcare for teenagers and young adults, addressing their unique physical, emotional, and developmental needs.",
+      path: "/child-and-family-care/adolescent-medicine",
     },
     {
-      name: "Psychiatry",
-      desc: "Specialized mental healthcare for anxiety, depression, ADHD, PTSD, insomnia, mood disorders, medication management, and long-term emotional wellness support. ",
-      path: "/mental-health/psychiatry",
-    },
-    {
-      name: "Psychology Counseling",
-      desc: "Professional counseling support for stress, grief, trauma, relationship challenges, self-esteem concerns, life transitions, and emotional well-being in a safe, confidential environment.",
-      path: "/mental-health/psychology-counseling",
+      name: "Pediatrics",
+      desc: "Pediatric specialists provide comprehensive healthcare for infants, children, and teenagers, focusing on growth, development, illness prevention, and treatment of common childhood conditions.",
+      path: "/child-and-family-care/pediatrics",
     },
   ],
 
   conditions: [
     {
-      name: "Adjustment Difficulties",
-      // desc: "Support through life changes",
-      path: "/mental-health/behavioral-health/adjustment-difficulties",
+      name: "Mood & Anxiety in Teens",
+      desc: "Support for teen emotional wellness",
+      path: "/mood-anxiety-teens",
     },
     {
-      name: "Anger Management",
-      // desc: "Healthy strategies for emotional control",
-      path: "/mental-health/behavioral-health/anger-management",
+      name: "Puberty Concerns",
+      desc: "Guidance through developmental changes",
+      path: "/puberty-concerns",
     },
     {
-      name: "Sleep-Related Anxiety",
-      // desc: "Spinning sensation and balance issues",
-      path: "/mental-health/behavioral-health/sleep-related-anxiety",
-    },
-
-    {
-      name: "Substance-use Support",
-      // desc: "Fever and illness in children",
-      path: "/mental-health/behavioral-health/substance-use-support",
+      name: "Sports Injuries",
+      desc: "Care for active lifestyles",
+      path: "/sports-injuries",
     },
     {
-      name: "Anxiety",
-      // desc: "Excessive worry, stress, and nervousness",
-      path: "/mental-health/psychiatry/anxiety",
-    },
-
-    {
-      name: "Bipolar disorder follow-up",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychiatry/bipolar-disorder-follow-up",
+      name: "Ear Pain in Children",
+      desc: "Ear discomfort and irritation in kids",
+      path: "/ear-pain-children",
     },
     {
-      name: "Depression",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychiatry/depression",
+      name: "Ear Infections",
+      desc: "Bacterial or viral infections of the middle ear common in young children.",
+      path: "/ear-infections",
     },
     {
-      name: "OCD",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychiatry/ocd",
+      name: "Feeding Concerns",
+      desc: "Support for healthy infant feeding",
+      path: "/feeding-concerns",
     },
     {
-      name: "ADHD Evaluation",
-      // desc: "Attention, focus, and hyperactivity concerns",
-      path: "/mental-health/psychiatry/adhd-evaluation",
+      name: "Pediatric Cold & Flu",
+      desc: "Cold and flu symptoms in children",
+      path: "/pediatric-cold-flu",
     },
     {
-      name: "PTSD",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychiatry/ptsd",
+      name: "Pediatric Fever",
+      desc: "Fever and illness in children",
+      path: "/pediatric-fever",
     },
     {
-      name: "Panic attacks",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychiatry/panic-attacks",
-    },
-    {
-      name: "Insomnia",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychiatry/insomnia",
-    },
-    {
-      name: "Stress",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychology-counseling/stress",
-    },
-    {
-      name: "Relationship Stress",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychology-counseling/relationship-stress",
-    },
-    {
-      name: "Trauma support",
-      // desc: "Red, itchy, irritated skin in kids",
-      path: "/mental-health/psychology-counseling/trauma-support",
-    },
-    {
-      name: "Grief and Loss",
-      // desc: "Emotional pain after a loss",
-      path: "/mental-health/psychology-counseling/grief-and-loss",
-    },
-    {
-      name: "Low Self-Esteem",
-      // desc: "Building confidence and self worth",
-      path: "/mental-health/psychology-counseling/low-self-esteem",
+      name: "Skin Rash in Children",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/skin-rash-in-children",
     },
   ],
 
@@ -178,161 +131,115 @@ const cat = {
 
   faqGroups: [
     {
-      label: "General Healthcare",
+      label: "General Care",
       items: [
         {
-          q: "What is General & Everyday Care?",
-          a: "General & Everyday Care provides medical support for common illnesses, routine health concerns, preventive healthcare, and everyday symptoms through convenient online doctor consultations.",
+          q: "What is online children and family care?",
+          a: "Online children and family care allows you to connect with licensed healthcare professionals through virtual doctor consultations for common illnesses, health concerns, preventive care, and general medical guidance for children and family members.",
         },
         {
-          q: "What conditions can be treated through General & Everyday Care?",
-          a: "Healthcare professionals can provide guidance for common conditions such as colds, flu symptoms, fever, allergies, cough, sore throat, headaches, digestive concerns, skin conditions, and other non-emergency health issues.",
+          q: "What health concerns can be treated through virtual children and family care?",
+          a: "Virtual children and family care can help address common concerns such as colds, flu symptoms, fever, allergies, skin conditions, minor infections, digestive issues, and other non-emergency health conditions.",
         },
         {
-          q: "When should I book an online doctor consultation?",
-          a: "You should consider a virtual consultation when you experience new symptoms, ongoing discomfort, mild illnesses, or need professional medical advice without waiting for an in-person appointment.",
+          q: "When should I schedule an online doctor consultation for my child?",
+          a: "You should consider an online doctor consultation when your child has symptoms that need medical advice, such as a persistent fever, cough, rash, stomach discomfort, allergies, or other health concerns that are not life-threatening.",
         },
         {
-          q: "Is virtual General & Everyday Care suitable for all ages?",
-          a: "Yes, online healthcare can support many common health concerns for adults and children depending on their medical condition and individual healthcare needs.",
+          q: "Can online doctors provide treatment recommendations for children?",
+          a: "Yes, healthcare professionals can evaluate symptoms, provide medical guidance, recommend appropriate treatment options, and advise whether an in-person examination is necessary.",
         },
         {
-          q: "Can General & Everyday Care help with preventive health?",
-          a: "Yes, healthcare professionals can provide preventive healthcare advice, wellness recommendations, and guidance to help maintain your overall health.",
+          q: "Are virtual doctor visits safe and effective for children?",
+          a: "Yes, virtual healthcare provides a convenient and secure way for families to receive professional medical advice for many everyday health concerns while avoiding unnecessary travel and waiting rooms.",
         },
       ],
     },
-
     {
-      label: "Common Conditions",
+      label: "Child Wellness",
       items: [
         {
-          q: "Can I consult a doctor online for cold, flu, or fever symptoms?",
-          a: "Yes, online doctor consultations can help evaluate symptoms such as fever, cough, congestion, body aches, and other common seasonal illnesses.",
+          q: "Can I speak with a doctor about my child's growth and development?",
+          a: "Yes, children and family care consultations can include discussions about your child's growth, developmental milestones, nutrition, sleep habits, and overall wellness.",
         },
         {
-          q: "Can online healthcare help with allergies?",
-          a: "Yes, healthcare professionals can assess allergy symptoms, discuss possible triggers, recommend management options, and determine whether additional medical care is required.",
+          q: "Is children and family care available for newborns and infants?",
+          a: "Healthcare professionals can provide guidance for many newborn and infant concerns, including feeding, sleep, minor illnesses, and general wellness. Emergency situations require immediate in-person medical care.",
         },
         {
-          q: "Can I receive medical advice for headaches and body aches?",
-          a: "Yes, virtual consultations can help evaluate headaches, minor pain, and everyday discomforts while providing appropriate medical guidance.",
+          q: "Can virtual healthcare help with childhood allergies?",
+          a: "Yes, online healthcare professionals can evaluate allergy symptoms, discuss possible triggers, recommend management strategies, and determine whether additional care is needed.",
         },
         {
-          q: "Can I discuss more than one health concern during a consultation?",
-          a: "Yes, you can discuss multiple symptoms or health questions during a consultation, allowing your healthcare professional to understand your overall health needs.",
+          q: "Can I consult a doctor for my child's fever online?",
+          a: "Yes, virtual consultations can help assess fever symptoms, provide care recommendations, and guide you on whether your child needs further medical attention.",
+        },
+        {
+          q: "Can I use virtual family care for preventive health advice?",
+          a: "Yes, online consultations can provide preventive health guidance, wellness advice, nutrition support, and recommendations for maintaining your family's overall health.",
         },
       ],
     },
-
     {
-      label: "Consultations & Treatment",
+      label: "Virtual Consultations",
       items: [
         {
-          q: "Can online doctors diagnose common illnesses?",
-          a: "Healthcare professionals can assess your symptoms, provide medical guidance, recommend appropriate treatment options, and advise whether further testing or in-person evaluation is needed.",
+          q: "Can online family healthcare help with common illnesses?",
+          a: "Yes, virtual family healthcare can support common conditions such as colds, seasonal illnesses, allergies, minor infections, and general health concerns for both children and adults.",
         },
         {
-          q: "Can I receive prescriptions during a virtual consultation?",
-          a: "When medically appropriate and permitted by applicable regulations, healthcare professionals may provide prescriptions or treatment recommendations based on your health needs.",
+          q: "Do online doctors prescribe medications for children?",
+          a: "When medically appropriate and permitted by applicable regulations, healthcare professionals may provide prescriptions or treatment recommendations based on the child's condition and consultation.",
         },
         {
-          q: "What information should I prepare before my online appointment?",
-          a: "Having details about your symptoms, medical history, current medications, allergies, and previous treatments can help your healthcare professional provide better guidance.",
+          q: "What information should I prepare before my child's virtual appointment?",
+          a: "It is helpful to have your child's symptoms, medical history, current medications, allergies, and any recent health changes ready before the consultation.",
         },
         {
-          q: "Can virtual consultations help with follow-up care?",
-          a: "Yes, online consultations can support follow-up appointments by allowing healthcare professionals to review your progress, discuss recovery, and address ongoing concerns.",
+          q: "Can doctors diagnose illnesses during a virtual consultation?",
+          a: "Healthcare professionals can assess many common conditions through a virtual consultation. However, some situations may require physical examinations, testing, or in-person care.",
         },
         {
-          q: "Can I discuss medications during an online consultation?",
-          a: "Yes, healthcare professionals can review your current medications, answer your questions, and provide guidance regarding your treatment plan.",
-        },
-        {
-          q: "Can I get a doctor's note or sick note through an online consultation?",
-          a: "When medically appropriate and permitted by applicable regulations, healthcare professionals may provide a doctor's note, sick note, or other necessary medical documentation based on your consultation and health condition.",
+          q: "How quickly can my family connect with a healthcare professional?",
+          a: "Humancare Connect offers convenient access to healthcare professionals, allowing families to receive timely medical guidance without long waits.",
         },
       ],
     },
-
     {
-      label: "Patient Support & Safety",
+      label: "Family Support & Safety",
       items: [
         {
-          q: "How quickly can I connect with a healthcare professional?",
-          a: "Humancare Connect offers convenient access to healthcare professionals, allowing patients to receive timely medical guidance without long waiting periods.",
+          q: "Can I get medical advice for my entire family through Humancare Connect?",
+          a: "Yes, Humancare Connect provides convenient virtual healthcare services designed to support children, adults, and families with a wide range of everyday health concerns.",
         },
         {
-          q: "Are online doctor consultations private and secure?",
-          a: "Yes, Humancare Connect prioritizes patient confidentiality and uses secure virtual healthcare technology to protect your personal health information.",
+          q: "Is my family's medical information secure during online consultations?",
+          a: "Yes, Humancare Connect prioritizes patient privacy and uses secure virtual healthcare technology to protect personal health information and maintain confidentiality.",
         },
         {
-          q: "What are the benefits of virtual General & Everyday Care?",
-          a: "Virtual healthcare provides convenience, easier access to trusted healthcare professionals, personalized medical support, and the ability to receive care from the comfort of your home.",
+          q: "What are the benefits of online children and family healthcare?",
+          a: "Virtual healthcare offers convenience, easier access to healthcare professionals, personalized medical guidance, reduced travel time, and support from the comfort of your home.",
         },
         {
-          q: "When should I seek emergency medical attention instead of a virtual visit?",
-          a: "You should seek immediate emergency care for severe chest pain, difficulty breathing, serious injuries, uncontrolled bleeding, sudden weakness, or other life-threatening symptoms.",
+          q: "When should I choose in-person emergency care instead of a virtual visit?",
+          a: "You should seek immediate emergency medical care for serious symptoms such as difficulty breathing, severe injuries, seizures, unconsciousness, or any other urgent medical emergency.",
         },
         {
-          q: "Is General & Everyday Care a replacement for emergency services?",
-          a: "No, virtual General & Everyday Care is intended for non-emergency health concerns and routine medical support. Emergency situations require immediate in-person medical care.",
-        },
-        {
-          q: "Why choose Humancare Connect for General & Everyday Care?",
-          a: "Humancare Connect provides secure online doctor consultations with trusted healthcare professionals, delivering convenient, compassionate, and patient-centered healthcare designed around your everyday needs.",
-        },
-      ],
-    },
-
-    {
-      label: "Mental Health",
-      items: [
-        {
-          q: "What is virtual mental health care?",
-          a: "Virtual mental health care allows you to connect with licensed mental health professionals online to discuss emotional, psychological, and behavioral concerns from a private and comfortable setting.",
-        },
-        {
-          q: "What mental health concerns can be addressed through online consultations?",
-          a: "Online mental health support can help with anxiety, depression, stress, mood changes, burnout, sleep difficulties, relationship challenges, and other emotional wellness concerns.",
-        },
-        {
-          q: "Is online mental health care effective?",
-          a: "Yes, virtual mental health services can be an effective option for therapy, counseling, and ongoing emotional wellness support for many individuals.",
-        },
-        {
-          q: "Can online mental health support help with anxiety and depression?",
-          a: "Yes, professionals can help you understand symptoms, provide coping strategies, and guide appropriate treatment options for anxiety and depression.",
-        },
-        {
-          q: "Is my mental health information private and confidential?",
-          a: "Yes, Humancare Connect prioritizes patient privacy and uses secure systems to protect your personal health information.",
-        },
-        {
-          q: "Can I receive therapy or counseling online?",
-          a: "Yes, depending on your needs, virtual consultations may include therapy, counseling, and structured mental health support.",
-        },
-        {
-          q: "When should I seek emergency mental health support?",
-          a: "If you experience a mental health crisis or thoughts of self-harm, seek immediate emergency services or in-person urgent care.",
-        },
-        {
-          q: "Why choose Humancare Connect for mental health support?",
-          a: "Humancare Connect provides secure, compassionate, and confidential online mental health consultations with trusted professionals.",
+          q: "Why choose Humancare Connect for children and family care?",
+          a: "Humancare Connect provides secure online doctor consultations with trusted healthcare professionals, making it easier for families to access compassionate, personalized, and convenient healthcare whenever they need it.",
         },
       ],
     },
   ],
 
-  ctaHeadline: "Care That Supports Your Mind & Body",
-
+  ctaHeadline: "Comprehensive Family Care, Wherever You Are",
   ctaBody:
-    "Get trusted online support for everyday healthcare needs and mental wellness through secure consultations with experienced healthcare professionals. Whether it's physical symptoms or emotional well-being, we're here to help you feel better, every day.",
+    "Connect with trusted healthcare professionals for children, infants, and the entire family. Get expert medical guidance, treatment recommendations, and preventive care from the comfort of home.",
 };
 
 // ─── Booking Form ─────────────────────────────────────────────────────────────
 
-function BookingForm({ specialtyPlaceholder, categoryCode }) {
+function BookingForm({ specialtyPlaceholder }) {
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -342,39 +249,17 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
     specialty: "",
   });
   const [submitted, setSubmitted] = useState(false);
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-
   const [price, setPrice] = useState(null);
   const [priceLoading, setPriceLoading] = useState(true);
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
     const fetchPrice = async () => {
       try {
-        const response = await api.get("/api/appointment-tree");
-
-        const DB_CATEGORY_NAMES = {
-          general: "General & Everyday Care",
-          mental: "Mental Health",
-          skin: "Skin & Hair",
-          women: "Women's Health",
-          men: "Men's Health",
-          family: "Children & Family",
-          weight: "Weight & Nutrition",
-          chronic: "Chronic Care & Expert Opinion",
-          eeb: "Eye, Ear & Bone",
-          sexual: "Sexual Health",
-          travel: "Travel & Global Care",
-        };
-
-        const categoryName = DB_CATEGORY_NAMES[categoryCode] || categoryCode;
-        const category = response.data.find(
-          (item) => item.name === categoryName,
-        );
-
-        if (category && category.price !== undefined) {
-          setPrice(category.price);
-        } else {
-          setPrice(49);
+        const response = await api.get("/api/pricing");
+        const familyPricing = response.data?.family;
+        if (familyPricing) {
+          setPrice(familyPricing.price);
         }
       } catch (error) {
         console.error("Failed to fetch pricing:", error);
@@ -383,9 +268,8 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
         setPriceLoading(false);
       }
     };
-
     fetchPrice();
-  }, [categoryCode]);
+  }, []);
 
   const handleSubmit = () => {
     if (!form.name || !form.phone || !form.date) return;
@@ -424,7 +308,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
           {priceLoading ? (
             <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
           ) : (
-            `$${price ?? 49}`
+            `$${price || 49}`
           )}
         </div>
         <p className="hcc-booking-price-sub">
@@ -461,9 +345,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
         ))}
       </div>
 
-      <Link to="/category-consultant?category=mental">
-        <button className="hcc-booking-cta">Start Consultation →</button>
-      </Link>
+      <button className="hcc-booking-cta">Start Consultation →</button>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
         <a href="/terms-of-service" className="hcc-booking-link">Terms of Service</a> and{" "}
@@ -476,13 +358,25 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
 function SpecialtyCard({ sp, index }) {
-  const content = (
+  const navigate = useNavigate();
+
+  return (
     <motion.div
       className="hcc-specialty-card"
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
+      onClick={() => sp.path && navigate(sp.path)}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && sp.path) {
+          e.preventDefault();
+          navigate(sp.path);
+        }
+      }}
+      style={{ cursor: sp.path ? "pointer" : "default" }}
     >
       <div className="hcc-specialty-name">{sp.name}</div>
       <p className="hcc-specialty-desc">{sp.desc}</p>
@@ -493,26 +387,30 @@ function SpecialtyCard({ sp, index }) {
       )}
     </motion.div>
   );
-
-  return sp.path ? (
-    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
-      {content}
-    </Link>
-  ) : (
-    content
-  );
 }
 
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
-  const content = (
+  const navigate = useNavigate();
+
+  return (
     <motion.div
       className="hcc-condition-card"
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ delay: Math.min(index * 0.04, 0.4) }}
+      onClick={() => cond.path && navigate(cond.path)}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && cond.path) {
+          e.preventDefault();
+          navigate(cond.path);
+        }
+      }}
+      style={{ cursor: cond.path ? "pointer" : "default" }}
     >
       <div className="hcc-condition-name">{cond.name}</div>
       <p className="hcc-condition-desc">{cond.desc}</p>
@@ -522,14 +420,6 @@ function ConditionCard({ cond, index }) {
         </div>
       )}
     </motion.div>
-  );
-
-  return cond.path ? (
-    <Link to={cond.path} className="hcc-condition-link" aria-label={cond.name}>
-      {content}
-    </Link>
-  ) : (
-    content
   );
 }
 
@@ -549,34 +439,32 @@ function FaqSection({ faqGroups, catLabel }) {
             Everything you need to know about {catLabel} care at HumanCare
             Connect. Can't find an answer?
           </p>
-          {/* <button
-            className="hcc-faq-chat-btn"
-            onClick={() =>
-              (window.location.href = "mailto:support@humancareconnect.co")
-            }
-          >
+          <button className="hcc-faq-chat-btn">
             <span className="chat-icon">
               <FiMessageSquare size={10} />
             </span>
             Chat with our team
-          </button> */}
+          </button>
           <div className="hcc-faq-trust-badges">
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
-              <div className="badge-content">
+              <div>
                 <strong>Avg. response in 2 min</strong>
+                <div>Live chat available</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🔒</span>
-              <div className="badge-content">
+              <span className="badge-icon">🏥</span>
+              <div>
                 <strong>HIPAA secure &amp; private</strong>
+                <div>Your data is protected</div>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">✓</span>
-              <div className="badge-content">
-                <strong>Available in all 50 states</strong>
+              <span className="badge-dot" />
+              <div>
+                <strong>Available on all devices</strong>
+                <div>Web, iOS &amp; Android</div>
               </div>
             </div>
           </div>
@@ -631,7 +519,7 @@ function FaqSection({ faqGroups, catLabel }) {
             ))}
           </div>
 
-          {/* <div className="hcc-faq-still">
+          <div className="hcc-faq-still">
             <div className="hcc-faq-still-text">
               <strong>Still have questions?</strong>
               Our care team is available every day, 8 AM – 10 PM.
@@ -639,7 +527,7 @@ function FaqSection({ faqGroups, catLabel }) {
             <button className="hcc-faq-call-btn">
               <FiPhone size={13} /> Book a Call
             </button>
-          </div> */}
+          </div>
         </div>
       </div>
     </section>
@@ -648,11 +536,10 @@ function FaqSection({ faqGroups, catLabel }) {
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
-export default function MentalHealth() {
+export default function ChildFamilyCare() {
   const navigate = useNavigate();
   const goToBooking = () =>
-    navigate("/appointment-booking", { state: { categoryId: "mental" } });
-  const goToContact = () => navigate("/contact");
+    navigate("/appointment-booking", { state: { categoryId: "family" } });
 
   return (
     <div
@@ -665,12 +552,12 @@ export default function MentalHealth() {
     >
       <Helmet>
         <title>
-          Online Mental Health Support | Virtual Therapy & Counseling |
+          Online Children &amp; Family Care | Virtual Doctor Consultation |
           Humancare Connect
         </title>
         <meta
           name="description"
-          content=" Access online mental health support with trusted professionals. Get virtual therapy, counseling, and guidance for anxiety, depression, stress, emotional wellness, and overall mental well-being. "
+          content="Access online children and family care with trusted healthcare professionals. Get virtual doctor consultations, pediatric guidance, family healthcare support, and personalized medical advice from home."
         />
       </Helmet>
 
@@ -714,14 +601,14 @@ export default function MentalHealth() {
               </span>
             </h1>
             <p className="hcc-subline">{cat.subheadline}</p>
-            {/* <div className="hcc-cta-row">
+            <div className="hcc-cta-row">
               <button className="hcc-btn-primary" onClick={goToBooking}>
                 <FiCalendar /> Book Appointment
               </button>
               <button className="hcc-btn-secondary" onClick={goToBooking}>
                 <FiUser size={15} /> Know More
               </button>
-            </div> */}
+            </div>
             <div className="hcc-trust-row">
               <div className="hcc-trust-item">
                 <FiCheckCircle size={14} /> Same Day Visits
@@ -742,7 +629,6 @@ export default function MentalHealth() {
           >
             <BookingForm
               specialtyPlaceholder={cat.bookingSpecialtyPlaceholder}
-              categoryCode="mental"
             />
           </motion.div>
         </div>
@@ -837,7 +723,7 @@ export default function MentalHealth() {
             <button
               className="hcc-btn-secondary"
               style={{ borderColor: "rgba(255,255,255,0.35)" }}
-              onClick={goToContact}
+              onClick={goToBooking}
             >
               <FiPhone size={14} /> Call Us Now
             </button>

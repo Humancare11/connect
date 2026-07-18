@@ -649,7 +649,7 @@ const HrtGuidance = lazy(
 const FertilityConcerns = lazy(
   () => import("./pages/Conditions/Conditions/FertilityConcerns"),
 );
-import OCD from "./pages/Conditions/Conditions/OCD";
+import Ocd from "./pages/Conditions/Conditions/Ocd";
 const EyeIrritation = lazy(() => import("./pages/Conditions/EyeIrritation"));
 // ----------Speciality Pages-------------------
 const AdolescentMedicine = lazy(
@@ -676,7 +676,7 @@ const Pulmonology = lazy(
 );
 const Ent = lazy(() => import("./pages/Specialty/EyeEarAndBone/Ent"));
 const Ophthalmology = lazy(
-  () => import("./pages/Specialty/EyeEarAndBone/ophthalmology"),
+  () => import("./pages/Specialty/EyeEarAndBone/Ophthalmology"),
 );
 const Orthopedics = lazy(
   () => import("./pages/Specialty/EyeEarAndBone/Orthopedics"),
@@ -1119,7 +1119,7 @@ function AppLayout() {
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
           <Route path="/cookies" element={<CookieBanner />} />
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-          <Route path="/images" element={<Images />} />"
+          <Route path="/images" element={<Images />} />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
@@ -2374,10 +2374,7 @@ function AppLayout() {
             path="/mental-health/psychiatry/bipolar-disorder-follow-up"
             element={<BipolarDisorderFollowUp />}
           />
-          <Route
-            path="/mental-health/psychiatry/ptsd"
-            element={<PTSD />}
-          />
+          <Route path="/mental-health/psychiatry/ptsd" element={<PTSD />} />
           <Route
             path="/mental-health/psychiatry/panic-attacks"
             element={<PanicAttacks />}
@@ -2680,10 +2677,12 @@ function AppLayout() {
             element={<Vertigo />}
           />
           <Route path="/category-consultant" element={<CategoryConsultant />} />
+          <Route path="/service-consultant" element={<CategoryConsultant />} />
           <Route
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
 
         {!hideLayout && <Footer />}

@@ -604,6 +604,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         </div>
 
         <div className="sp-hero__content">
+<<<<<<< HEAD:frontend/src/pages/Specialty/Children&FamilyCare/Pediatrics.JSX
           <div
             className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
           >
@@ -622,6 +623,38 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                 Book Appointment
               </a>
             </div> */}
+=======
+          <div className="sp-hero__layout">
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">HumanCare Connect</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
+
+              <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div>
+            </div>
+
+            {/* LEFT — booking card */}
+            <Reveal className="sp-hero__sidebar">
+              <BookingCard
+                price={price}
+                priceLoading={priceLoading}
+                categoryId={data.categoryId}
+                name={data.name}
+              />
+            </Reveal>
+>>>>>>> 507722a14ced49249295a8c0ea243e259bcc8a98:frontend/src/pages/Specialty/Children&FamilyCare/Pediatrics.jsx
           </div>
         </div>
       </section>

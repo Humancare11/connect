@@ -38,9 +38,8 @@ const cat = {
   specialties: [
     {
       name: "Cardiology",
-
-      desc: "Expert heart and cardiovascular care for high blood pressure, cholesterol management, heart disease, palpitations, preventive screenings, and long-term heart health support. ",
-      path: "/chronic-care/cardiology",
+      desc: "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. ",
+      path: "/chronic-care-and-expert-opinion/cardiology",
     },
     {
       name: "Endocrinology",
@@ -498,11 +497,11 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
       </Link>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
-        <a href="#" className="hcc-booking-link">
+        <a href="/terms-of-service" className="hcc-booking-link">
           Terms of Service
         </a>{" "}
         and{" "}
-        <a href="#" className="hcc-booking-link">
+        <a href="/privacy-policy" className="hcc-booking-link">
           Privacy Policy
         </a>
       </p>
