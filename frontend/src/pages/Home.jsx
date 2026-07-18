@@ -14,7 +14,7 @@ import sceneVideo from "../assets/gifts/HeroVideo.mp4";
 import heroPoster from "../assets/gifts/HeroPoster.webp";
 import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
-import { Helmet } from "react-helmet-async";
+import SEO from "../components/Seo";
 const LogoMarquee = lazy(() => import("../components/LogoMarquee"));
 import {
   FiSmartphone,
@@ -553,66 +553,16 @@ export default function HomePage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-      <Helmet>
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@graph": [
-              {
-                "@type": "MedicalOrganization",
-                "@id": "https://humancareconnect.co/#organization",
-                name: "Humancare Connect",
-                url: "https://humancareconnect.co/",
-                logo: "https://humancareconnect.co/logo.png",
-                image: "https://humancareconnect.co/preview.jpg",
-                description:
-                  "Humancare Connect provides online doctor consultation and telehealth services across the United States.",
-                areaServed: {
-                  "@type": "Country",
-                  name: "United States",
-                },
-                availableService: [
-                  {
-                    "@type": "MedicalTherapy",
-                    name: "Online Doctor Consultation",
-                  },
-                  {
-                    "@type": "MedicalTherapy",
-                    name: "Telehealth Consultation",
-                  },
-                ],
-              },
-              {
-                "@type": "WebSite",
-                "@id": "https://humancareconnect.co/#website",
-                url: "https://humancareconnect.co/",
-                name: "Humancare Connect",
-              },
-              {
-                "@type": "WebPage",
-                "@id": "https://humancareconnect.co/#homepage",
-                url: "https://humancareconnect.co/",
-                name: "Humancare Connect | Online Doctor Consultation & Telehealth Services",
-                description:
-                  "Consult licensed doctors online through Humancare Connect.",
-              },
-              {
-                "@type": "Service",
-                "@id": "https://humancareconnect.co/#telehealth-service",
-                name: "Online Doctor Consultation",
-                serviceType: "Telehealth",
-                provider: {
-                  "@id": "https://humancareconnect.co/#organization",
-                },
-                areaServed: {
-                  "@type": "Country",
-                  name: "United States",
-                },
-              },
-            ],
-          })}
-        </script>
-      </Helmet>
+    
+
+
+<SEO
+  title="Telemedicine Services | Online Doctor Appointments | Humancare Connect"
+  description="Telemedicine services with fast online doctor appointments, virtual healthcare services, prescription refills, mental health support, chronic care, and secure telehealth services through Humancare Connect."
+  keywords="Telemedicine services, online doctor appointments, virtual healthcare services, telehealth services, telemedicine platform, online doctor consultation, licensed healthcare providers, prescription refills online, chronic care, mental health support, same-day online medical care, secure telemedicine platform"
+  url="https://humancareconnect.co/"
+ 
+/>
       <div className="hero-light" />
       <div className="hero-grid" />
 
