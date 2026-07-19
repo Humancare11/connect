@@ -183,7 +183,7 @@ const SPECIALTY_DATA = {
       name: "Skin Rash in Children",
       desc: "Red, itchy, irritated skin in kids",
       path: "/child-and-family-care/pediatrics/skin-rash-in-children",
-    }
+    },
   ],
 
   faqs: [
@@ -449,7 +449,15 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+        <Link
+          to={path}
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+            display: "block",
+            height: "100%",
+          }}
+        >
           {cardContent}
         </Link>
       ) : (
@@ -547,7 +555,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <main className="sp-page">
-                  <SEO
+      <SEO
         title="Pediatric Specialists | Child Healthcare & Wellness Services"
         description="Get compassionate pediatric care for infants, children, and adolescents, including colds, fevers, feeding concerns, ear pain, skin conditions, and preventive wellness."
         keywords="Pediatric specialist, Online pediatric consultation, Child healthcare, Virtual pediatric care"
@@ -566,24 +574,24 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         </div>
 
         <div className="sp-hero__content">
-          <div
-            className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-          >
-            <span className="sp-hero__badge">Child & Family Care</span>
-            <h1 className="sp-hero__title">{data.name}</h1>
-            <p className="sp-hero__tagline">{data.tagline}</p>
-            <p className="sp-hero__description">{data.heroDescription}</p>
+          <div className="sp-hero__layout">
+            <div
+              className={`sp-hero__content-inner${
+                heroLoaded ? " sp-hero__content-inner--loaded" : ""
+              }`}
+            >
+              <span className="sp-hero__badge">Child & Family Care</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
+            </div>
 
-            {/* <div className="sp-hero__actions">
-              <a href="/Specialties" className="sp-btn sp-btn--primary">
-                <FiSearch size={17} />
-                Find Specialists
-              </a>
-              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                <FiCalendar size={17} />
-                Book Appointment
-              </a>
-            </div> */}
+            <BookingCard
+              price={price}
+              priceLoading={priceLoading}
+              title={data.name}
+              specialitySlug={data.slug}
+            />
           </div>
         </div>
       </section>
@@ -678,7 +686,11 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
       <section className="sp-conditions">
         <div className="sp-container">
           <Reveal>
-            <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
+            <div
+              className="sp-conditions__head"
+              onClick={() => navigate("/conditions")}
+              style={{ cursor: "pointer" }}
+            >
               <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
               <h2>What We Treat</h2>
               <p>

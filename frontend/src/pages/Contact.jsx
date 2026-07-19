@@ -1,4 +1,5 @@
 import { useState } from "react";
+import api from "../api";
 import "./contact.css";
 
 const CONTACT_NOTE = {
@@ -16,6 +17,8 @@ export default function Contact() {
   });
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const validate = () => {
     const e = {};
@@ -32,14 +35,40 @@ export default function Contact() {
       setErrors((er) => ({ ...er, [e.target.name]: undefined }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
+
     const e2 = validate();
     if (Object.keys(e2).length) {
       setErrors(e2);
       return;
     }
-    setSent(true);
+
+    setSubmitError("");
+    setSubmitting(true);
+    try {
+      const { data } = await api.post("/api/contact", {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        subject: form.subject.trim(),
+        message: form.message.trim(),
+      });
+
+      if (data.success) {
+        setSent(true);
+      } else {
+        setSubmitError(data.message || "Failed to send your message. Please try again.");
+      }
+    } catch (error) {
+      setSubmitError(
+        error.response?.data?.message ||
+          "Unable to send your message right now. Please try again shortly."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -109,6 +138,7 @@ export default function Contact() {
                   className="btn-outline"
                   onClick={() => {
                     setSent(false);
+                    setSubmitError("");
                     setForm({
                       name: "",
                       email: "",
@@ -226,11 +256,18 @@ export default function Contact() {
                   )}
                 </div>
 
+                {submitError && (
+                  <span className="contact-field__error" role="alert">
+                    {submitError}
+                  </span>
+                )}
+
                 <button
                   type="submit"
                   className="btn-primary contact-form__submit"
+                  disabled={submitting}
                 >
-                  Send Message
+                  {submitting ? "Sending..." : "Send Message"}
                   <svg
                     width="15"
                     height="15"

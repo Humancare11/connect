@@ -615,7 +615,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
   }, [data.categoryId]);
   return (
     <>
-                  <SEO
+      <SEO
         title="Internal Medicine Specialists | Adult Health & Complex Care"
         description="Get expert internal medicine care for medication reviews, preventive screenings, unexplained symptoms, chronic conditions, and complex adult health concerns."
         keywords="Internal medicine specialists, Adult healthcare, Online doctor appointment, Telemedicine services"

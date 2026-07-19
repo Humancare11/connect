@@ -58,6 +58,8 @@ import "../SpecialtyPage.css";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 
+import SEO from "../../../components/SEO";
+
 import heroImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-teen-healthcare-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-consultation.webp";
 
@@ -171,9 +173,6 @@ const SPECIALTY_DATA = {
       desc: "Care for active lifestyles",
       path: "/child-and-family-care/adolescent-medicine/sports-injuries",
     },
-
-
-
   ],
 
   faqs: [
@@ -253,8 +252,7 @@ const SPECIALTY_DATA = {
     },
     {
       question: "How often should teenagers have wellness checkups?",
-      answer:
-        "Mon – Sun, 8 AM – 10 PM IST.",
+      answer: "Mon – Sun, 8 AM – 10 PM IST.",
     },
     {
       question: "Can adolescent medicine specialists address sleep problems?",
@@ -431,7 +429,15 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+        <Link
+          to={path}
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+            display: "block",
+            height: "100%",
+          }}
+        >
           {cardContent}
         </Link>
       ) : (
@@ -530,7 +536,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <main className="sp-page">
-                  <SEO
+      <SEO
         title="Adolescent Medicine Specialists | Teen Health & Wellness Care"
         description="Get expert adolescent medicine care for teen physical, emotional, and behavioral health, including puberty concerns, anxiety, and sports injuries."
         keywords="Emotional support, Stress management, Telemedicine services, Virtual healthcare services"
@@ -550,7 +556,11 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
         <div className="sp-hero__content">
           <div className="sp-hero__layout">
-            <div className="sp-hero__content-inner">
+            <div
+              className={`sp-hero__content-inner${
+                heroLoaded ? " sp-hero__content-inner--loaded" : ""
+              }`}
+            >
               <span className="sp-hero__badge">Child & Family Care</span>
               <h1 className="sp-hero__title">{data.name}</h1>
               <p className="sp-hero__tagline">{data.tagline}</p>
@@ -657,7 +667,11 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
       <section className="sp-conditions">
         <div className="sp-container">
           <Reveal>
-            <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
+            <div
+              className="sp-conditions__head"
+              onClick={() => navigate("/conditions")}
+              style={{ cursor: "pointer" }}
+            >
               <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
               <h2>What We Treat</h2>
               <p>

@@ -5,7 +5,12 @@ import api from "../../api";
 import socket from "../../socket";
 import { useAuth } from "../../context/AuthContext";
 
-const PrescriptionSlip = lazy(() => import("../../components/RxSlip"));
+const PrescriptionSlip = lazy(() =>
+  import("../../components/RxSlip").then((module) => ({
+    default: module.PrescriptionSlip,
+  })),
+);
+
 const MedicalCertificateSlip = lazy(() =>
   import("../../components/MedicalCertificateSlip").then((module) => ({
     default: module.MedicalCertificateSlip,
@@ -22,7 +27,7 @@ function formatDate(d) {
 // ── Prescription Card with letterhead view ─────────────────────────────────────
 
 function PrescriptionCard({ rx, patient }) {
-  const [open, setOpen] = useState(false);
+  const [open,        setOpen]        = useState(false);
   const [downloading, setDownloading] = useState(false);
   const slipRef = useRef(null);
 
@@ -76,7 +81,7 @@ function PrescriptionCard({ rx, patient }) {
 // ── Certificate Card with letterhead view ─────────────────────────────────────
 
 function CertificateCard({ cert, patient }) {
-  const [open, setOpen] = useState(false);
+  const [open,        setOpen]        = useState(false);
   const [downloading, setDownloading] = useState(false);
   const slipRef = useRef(null);
 
@@ -132,11 +137,11 @@ export default function MyRecords() {
   const location = useLocation();
   const { user } = useAuth();
 
-  const [prescriptions, setPrescriptions] = useState([]);
-  const [certificates, setCertificates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("prescriptions");
+  const [prescriptions,  setPrescriptions]  = useState([]);
+  const [certificates,   setCertificates]   = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [error,          setError]          = useState("");
+  const [activeTab,      setActiveTab]      = useState("prescriptions");
   const refreshTimerRef = useRef(null);
 
   useEffect(() => {
@@ -182,17 +187,17 @@ export default function MyRecords() {
   useEffect(() => { loadRecords(true); }, [loadRecords]);
 
   useEffect(() => {
-    const onFocus = () => queueRefresh();
+    const onFocus   = () => queueRefresh();
     const onVisible = () => { if (document.visibilityState === "visible") queueRefresh(); };
 
     socket.on("new-prescription", queueRefresh);
-    socket.on("new-certificate", queueRefresh);
+    socket.on("new-certificate",  queueRefresh);
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       socket.off("new-prescription", queueRefresh);
-      socket.off("new-certificate", queueRefresh);
+      socket.off("new-certificate",  queueRefresh);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
@@ -200,8 +205,8 @@ export default function MyRecords() {
   }, [queueRefresh]);
 
   const tabs = [
-    { key: "prescriptions", label: "Prescriptions", icon: "💊", count: prescriptions.length },
-    { key: "certificates", label: "Medical Certificates", icon: "📄", count: certificates.length },
+    { key: "prescriptions", label: "Prescriptions",       icon: "💊", count: prescriptions.length },
+    { key: "certificates",  label: "Medical Certificates", icon: "📄", count: certificates.length  },
   ];
 
   return (

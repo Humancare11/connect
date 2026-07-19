@@ -4,7 +4,7 @@
 
 :root {
   --blue: #01164a;
-  --blue-mid: #08308E;
+  --blue-mid: #08308e;
   --blue-soft: rgba(1, 22, 74, 0.07);
   --blue-border: rgba(1, 22, 74, 0.14);
   --text: #1e293b;
@@ -21,7 +21,7 @@
 
 .dp-root-mp {
   padding: 4px 0 24px;
-  font-family: 'Outfit', 'DM Sans', sans-serif;
+  font-family: "Outfit", "DM Sans", sans-serif;
   color: var(--text);
 }
 
@@ -38,7 +38,7 @@
 .dp-eyebrow {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: .15em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--blue-mid);
 }
@@ -83,7 +83,9 @@
   outline: none;
   min-width: 240px;
   color: var(--text);
-  transition: border-color .2s, background .2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .dp-search:focus {
@@ -137,7 +139,7 @@
   border: 3px solid var(--border);
   border-top-color: var(--blue);
   border-radius: 50%;
-  animation: dp-spin .7s linear infinite;
+  animation: dp-spin 0.7s linear infinite;
 }
 
 @keyframes dp-spin {
@@ -180,7 +182,10 @@
   border-radius: var(--radius-md);
   text-align: left;
   cursor: pointer;
-  transition: border-color .2s, box-shadow .2s, transform .15s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
   width: 100%;
   box-shadow: var(--shadow-sm);
 }
@@ -260,7 +265,7 @@
 .dp-card-last span:first-child {
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing: 0.06em;
 }
 
 .dp-card-last span:last-child {
@@ -278,9 +283,9 @@
 .dp-panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, .40);
+  background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(4px);
-  z-index: 100;
+  z-index: 9998;
   display: flex;
   justify-content: flex-end;
 }
@@ -291,8 +296,8 @@
   background: var(--card);
   overflow-y: auto;
   padding: 28px;
-  box-shadow: -8px 0 40px rgba(1, 22, 74, .12);
-  animation: dp-slideIn .25s var(--ease);
+  box-shadow: -8px 0 40px rgba(1, 22, 74, 0.12);
+  animation: dp-slideIn 0.25s var(--ease);
   position: relative;
 }
 
@@ -356,7 +361,7 @@
 .dp-section-title {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-3);
   margin: 24px 0 10px;
@@ -445,17 +450,17 @@
 }
 
 .dp-badge--confirmed {
-  background: rgba(12, 139, 122, 0.10);
+  background: rgba(12, 139, 122, 0.1);
   color: #0c8b7a;
 }
 
 .dp-badge--pending {
-  background: rgba(245, 158, 11, 0.10);
+  background: rgba(245, 158, 11, 0.1);
   color: #b45309;
 }
 
 .dp-badge--cancelled {
-  background: rgba(239, 68, 68, 0.10);
+  background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
 }
 
@@ -512,7 +517,9 @@
   font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background .15s, color .15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .dp-slip-btn:hover {
@@ -542,7 +549,7 @@
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 200;
+  z-index: 10000;
   background: var(--blue);
   color: #fff;
   padding: 12px 20px;
@@ -550,7 +557,7 @@
   font-size: 14px;
   font-weight: 500;
   box-shadow: var(--shadow-md);
-  animation: dp-fadeIn .3s ease;
+  animation: dp-fadeIn 0.3s ease;
 }
 
 @keyframes dp-fadeIn {
@@ -569,36 +576,121 @@
 .dp-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, .50);
+  background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(6px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  z-index: 9999; /* must beat the app's sidebar/nav z-index */
+
+  display: block;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 40px 20px;
 }
 
 .dp-modal {
   background: var(--card);
   border-radius: 18px;
   width: 100%;
-  max-width: 600px;
+  max-width: 750px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 24px 80px rgba(1, 22, 74, .18);
-  animation: dp-scaleIn .25s var(--ease);
+  box-shadow: 0 24px 80px rgba(1, 22, 74, 0.18);
+  animation: dp-scaleIn 0.25s var(--ease);
+  margin: auto; /* centers horizontally AND vertically */
+}
+
+/* Letterhead preview modals (prescription / certificate) — these can be
+   arbitrarily tall depending on how many medicines are listed, so they
+   must NOT get the 90vh cap + inner scrollbar that the short form modals
+   use. The overlay above scrolls instead — one scrollbar, not three
+   nested ones. */
+.dp-modal--slip {
+  max-height: none;
+  overflow: visible;
+  margin: 0 auto;
+  touch-action: pan-y;
 }
 
 @keyframes dp-scaleIn {
   from {
     opacity: 0;
-    transform: scale(.94);
+    transform: scale(0.94);
   }
 
   to {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* Slip preview modals (RxSlipModal / CertSlipModal) — letterhead-style
+   prescription & certificate previews, wider than the standard form modal.
+   These classes replace the inline styles that used to live in the JSX. */
+.dp-slip-modal-box {
+  max-width: 860px;
+  width: 95vw;
+  padding: 0;
+}
+
+.dp-slip-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 18px 18px 0 0;
+}
+
+.dp-slip-toolbar-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.dp-slip-toolbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.dp-slip-download-btn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: 1.5px solid #1a3f7a;
+  background: #1a3f7a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dp-slip-download-btn:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.dp-slip-close-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  color: #64748b;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dp-slip-body {
+  background: #f1f5f9;
+  padding: 20px;
+  border-radius: 0 0 18px 18px;
+}
+
+.dp-slip-body-inner {
+  margin: 0 auto;
+  max-width: 100%;
 }
 
 .dp-modal-header {
@@ -674,7 +766,7 @@
   color: var(--text-2);
   margin: 10px 0 4px;
   text-transform: uppercase;
-  letter-spacing: .07em;
+  letter-spacing: 0.07em;
 }
 
 .dp-input {
@@ -686,7 +778,9 @@
   background: #f8fafc;
   outline: none;
   color: var(--text);
-  transition: border-color .2s, background .2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
   box-sizing: border-box;
 }
 
@@ -745,7 +839,9 @@ select.dp-input {
   font-size: 13px;
   cursor: pointer;
   margin-top: 4px;
-  transition: border-color .2s, color .2s;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 }
 
 .dp-add-med-btn:hover {
@@ -767,7 +863,7 @@ select.dp-input {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all .2s;
+  transition: all 0.2s;
 }
 
 .dp-btn--primary {
@@ -781,7 +877,7 @@ select.dp-input {
 }
 
 .dp-btn--primary:disabled {
-  opacity: .5;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -796,7 +892,7 @@ select.dp-input {
 }
 
 .dp-btn--secondary:disabled {
-  opacity: .5;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -848,4 +944,52 @@ select.dp-input {
   .dp-date-row {
     grid-template-columns: 1fr;
   }
+}
+
+.dp-med-card {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #f8fafc;
+}
+
+.dp-timing-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.dp-timing-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 80px;
+}
+
+.dp-timing-slot--food {
+  min-width: 130px;
+}
+
+.dp-timing-label {
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.dp-timing-select {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.dp-timing-preview {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  background: var(--blue-soft);
+  padding: 6px 10px;
+  border-radius: 6px;
 }

@@ -403,7 +403,7 @@ const CATEGORIES = [
   },
 
   {
-    path: "/men-health",
+    path: "/mens-health",
     icon: "activity",
     name: "Men's Health",
     tagline:
@@ -429,7 +429,7 @@ const CATEGORIES = [
   },
 
   {
-    path: "/categories-sexual-health",
+    path: "/sexual-health",
     icon: "heart",
     name: "Sexual Health",
     tagline:

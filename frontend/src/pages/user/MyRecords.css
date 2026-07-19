@@ -7,7 +7,7 @@
   padding: 32px;
   max-width: 950px;
   margin: 0 auto;
-  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-family: "DM Sans", "Inter", sans-serif;
   color: #0f172a;
 }
 
@@ -15,9 +15,9 @@
 .mr-eyebrow {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #08308E;
+  color: #08308e;
 }
 
 .mr-title {
@@ -60,7 +60,7 @@
 .mr-summary-num {
   font-size: 28px;
   font-weight: 700;
-  color: #08308E;
+  color: #08308e;
   line-height: 1;
 }
 
@@ -90,22 +90,22 @@
   font-weight: 500;
   color: #64748b;
   cursor: pointer;
-  transition: all .2s;
+  transition: all 0.2s;
 }
 
 .mr-tab:hover {
-  border-color: #08308E;
+  border-color: #08308e;
   color: #0f172a;
 }
 
 .mr-tab--active {
-  background: #08308E;
-  border-color: #08308E;
+  background: #08308e;
+  border-color: #08308e;
   color: #fff;
 }
 
 .mr-tab-count {
-  background: rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 20px;
   padding: 1px 8px;
   font-size: 12px;
@@ -113,7 +113,7 @@
 }
 
 .mr-tab--active .mr-tab-count {
-  background: rgba(255, 255, 255, .3);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .mr-tab:not(.mr-tab--active) .mr-tab-count {
@@ -137,7 +137,7 @@
   border: 3px solid #e2e8f0;
   border-top-color: #19c9a3;
   border-radius: 50%;
-  animation: mr-spin .7s linear infinite;
+  animation: mr-spin 0.7s linear infinite;
 }
 
 @keyframes mr-spin {
@@ -150,8 +150,8 @@
 .mr-error-banner {
   margin: 0 24px 16px;
   padding: 12px 18px;
-  background: rgba(239, 68, 68, .1);
-  border: 1px solid rgba(239, 68, 68, .3);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 10px;
   color: #ef4444;
   font-size: 13px;
@@ -194,12 +194,12 @@
   border: 1.5px solid transparent;
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, .06);
-  transition: box-shadow .2s;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+  transition: box-shadow 0.2s;
 }
 
 .mr-card:hover {
-  box-shadow: 0 4px 16px rgba(15, 23, 42, .1);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
 }
 
 .mr-card--rx {
@@ -267,7 +267,7 @@
   font-size: 20px;
   color: #94a3b8;
   flex-shrink: 0;
-  transition: transform .2s;
+  transition: transform 0.2s;
   display: inline-block;
 }
 
@@ -279,7 +279,7 @@
 .mr-card-body {
   padding: 0 20px 20px;
   border-top: 1px solid #f1f5f9;
-  animation: mr-expand .2s ease;
+  animation: mr-expand 0.2s ease;
 }
 
 @keyframes mr-expand {
@@ -297,7 +297,7 @@
 .mr-section-label {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #94a3b8;
   margin: 16px 0 8px;
@@ -352,7 +352,7 @@
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .07em;
+  letter-spacing: 0.07em;
   color: #94a3b8;
   margin-bottom: 4px;
 }
@@ -374,7 +374,9 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background .18s, color .18s;
+  transition:
+    background 0.18s,
+    color 0.18s;
   margin-right: 6px;
 }
 
@@ -384,7 +386,7 @@
 }
 
 .mr-download-btn:disabled {
-  opacity: .55;
+  opacity: 0.55;
   cursor: wait;
 }
 
@@ -396,22 +398,19 @@
   border-top: 1px solid #e2e8f0;
 }
 
-.mr-slip-wrap>div {
+.mr-slip-wrap > div {
   margin: 0 auto;
-  box-shadow: 0 4px 24px rgba(15, 23, 42, .13);
-  border: 1px solid #d0daf0;
 }
 
-/* Hidden but in DOM so PDF ref stays valid */
+/* Hidden but in DOM so PDF ref stays valid.
+   IMPORTANT: keep real dimensions & visibility so html2canvas
+   can still capture it correctly when the card is collapsed —
+   width:0/height:0/visibility:hidden breaks the PDF capture. */
 .mr-slip-offscreen {
-  position: fixed;
-  top: -9999px;
-  left: -9999px;
-  visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: -99999px;
   pointer-events: none;
-  width: 0;
-  height: 0;
-  overflow: hidden;
 }
 
 /* ── Responsive ── */

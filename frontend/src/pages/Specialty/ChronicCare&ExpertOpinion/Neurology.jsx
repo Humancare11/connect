@@ -196,7 +196,6 @@ const SPECIALTY_DATA = {
       desc: "Evaluation for irregular heart sensations.",
       path: "/chronic-care/neurology/memory-concerns",
     },
-
   ],
 
   faqs: [
@@ -467,7 +466,15 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+        <Link
+          to={path}
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+            display: "block",
+            height: "100%",
+          }}
+        >
           {cardContent}
         </Link>
       ) : (
@@ -564,7 +571,7 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Neurology Specialists | Brain, Nerve & Neurological Care"
         description="Get expert neurology care for migraines, dizziness, memory concerns, tremors, seizures, numbness, tingling, and neurological disorders."
         keywords="Neurology specialist, Migraine treatment, Neurological care, Online neurology consultation"
@@ -584,24 +591,24 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div
-              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-            >
-              <span className="sp-hero__badge">Chronic Care</span>
-              <h1 className="sp-hero__title">{data.name}</h1>
-              <p className="sp-hero__tagline">{data.tagline}</p>
-              <p className="sp-hero__description">{data.heroDescription}</p>
+            <div className="sp-hero__layout">
+              <div
+                className={`sp-hero__content-inner${
+                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                }`}
+              >
+                <span className="sp-hero__badge">Child & Family Care</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
+              </div>
 
-              {/* <div className="sp-hero__actions">
-                <a href="/Specialties" className="sp-btn sp-btn--primary">
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
-              </div> */}
+              <BookingCard
+                price={price}
+                priceLoading={priceLoading}
+                title={data.name}
+                specialitySlug={data.slug}
+              />
             </div>
           </div>
         </section>
@@ -702,7 +709,11 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
+              <div
+                className="sp-conditions__head"
+                onClick={() => navigate("/conditions")}
+                style={{ cursor: "pointer" }}
+              >
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

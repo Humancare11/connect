@@ -227,6 +227,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(require("cookie-parser")());
 
+const contactRoutes = require("./routes/contact");
+app.use("/api/contact", contactRoutes);
+
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -489,6 +492,21 @@ app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
   res.json({ activeUsers: onlineUsers.size });
 });
 
+// How long the "disconnect" handler waits before telling the peer someone
+// left (see that handler, below) — long enough to ride out a brief mobile
+// network blip without a false "left the call" notice, short enough that a
+// genuine departure is still reported promptly. Socket.IO's own
+// connectionStateRecovery window (below) is capped to this same value: a
+// recovery window longer than the grace period let a socket recover
+// invisibly at, say, 60s while the grace-period timer had already declared
+// it "left" at 10s — a real gap the peer would briefly (and wrongly) see as
+// "left the call" before self-healing. Capping the recovery window to the
+// grace period means a socket that recovers has always done so before that
+// verdict is reached, closing the gap; anything slower already falls
+// through to the (already-correct) normal-join re-eviction/re-negotiation
+// path handled in join-appointment-room.
+const SOCKET_LEAVE_GRACE_MS = Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000);
+
 // HTTP server
 const server = http.createServer(app);
 
@@ -512,7 +530,10 @@ const io = new Server(server, {
   pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 25000),
   pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 30000),
   connectionStateRecovery: {
-    maxDisconnectionDuration: Number(process.env.SOCKET_STATE_RECOVERY_MS || 120000),
+    maxDisconnectionDuration: Math.min(
+      Number(process.env.SOCKET_STATE_RECOVERY_MS || SOCKET_LEAVE_GRACE_MS),
+      SOCKET_LEAVE_GRACE_MS,
+    ),
     skipMiddlewares: false,
   },
 });
@@ -612,6 +633,27 @@ function getSocketIdentity(socket, requested = {}) {
   const role = liveIdentity?.role || socket.userRole;
   if (!userId || !role) return null;
   return { userId: String(userId), role };
+}
+
+// True iff at least one live socket in `existingSocketIds` belongs to a real
+// user other than `excludeUserId`. Used to decide whether a rejoining
+// participant is actually resuming a call with someone else already present,
+// as opposed to just seeing their own not-yet-disconnected pre-refresh
+// socket (which briefly lingers in the room until its ping/pong timeout —
+// see the "disconnect" handler). Counting raw socket ids instead of unique
+// users here previously caused a rejoining participant's own stale socket to
+// be mistaken for a peer.
+function hasOtherUserInRoom(existingSocketIds, excludeUserId) {
+  if (!existingSocketIds) return false;
+  for (const sid of existingSocketIds) {
+    const peerSocket = io.sockets.sockets.get(sid);
+    if (!peerSocket) continue;
+    const peerIdentity = getSocketIdentity(peerSocket);
+    if (peerIdentity?.userId && String(peerIdentity.userId) !== String(excludeUserId)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Async, race-free identity resolution for a SPECIFIC requested role/userId.
@@ -961,7 +1003,7 @@ io.on("connection", (socket) => {
       socketRooms.set(socket.id, appointmentId);
 
       const existing = io.sockets.adapter.rooms.get(room);
-      const peerPresent = !!existing && existing.size > 1;
+      const peerPresent = hasOtherUserInRoom(existing, access.identity.userId);
       const wasActivated = roomActivated.get(appointmentId) === true;
       if (peerPresent) roomActivated.set(appointmentId, true);
 
@@ -1044,12 +1086,20 @@ io.on("connection", (socket) => {
 
     // Distinguish "resuming an already-active call" (peer should renegotiate
     // quickly) from "first time these two are meeting in this room" (a normal
-    // handshake may still be in progress and must not be perturbed).
+    // handshake may still be in progress and must not be perturbed). Must be
+    // based on a REAL other user, not the raw pre-eviction currentSize — a
+    // refreshing participant's own not-yet-disconnected stale socket is
+    // still counted in currentSize at this point, which previously made a
+    // solo rejoin look like "peer already here" and short-circuited the
+    // reconnect-stall timeout on the frontend down to 8s instead of 20s.
+    const peerPresent = Array.from(uniqueUsersInRoom).some(
+      (id) => id !== String(socketUserId),
+    );
     const wasActivated = roomActivated.get(appointmentId) === true;
-    if (currentSize > 0) roomActivated.set(appointmentId, true);
+    if (peerPresent) roomActivated.set(appointmentId, true);
 
     socket.to(room).emit("peer-joined", { resumedCall: wasActivated });
-    if (currentSize > 0) socket.emit("peer-joined", { resumedCall: wasActivated });
+    if (peerPresent) socket.emit("peer-joined", { resumedCall: wasActivated });
   });
 
   socket.on("leave-appointment-room", ({ appointmentId }) => {
@@ -1219,7 +1269,7 @@ io.on("connection", (socket) => {
             roomActivated.delete(appointmentId);
           }
         }
-      }, Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000));
+      }, SOCKET_LEAVE_GRACE_MS);
 
       socketRooms.delete(socket.id);
     }
@@ -1409,7 +1459,7 @@ io.on("connection", (socket) => {
         const remaining = io.sockets.adapter.rooms.get(room);
         if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
       }
-    }, Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000));
+    }, SOCKET_LEAVE_GRACE_MS);
   });
 
 }); // end io.on("connection")

@@ -196,7 +196,6 @@ const SPECIALTY_DATA = {
       desc: "Healthcare guidance across locations",
       path: "/travel-and-global-care/global-cross-border-care/cross-border-consultation",
     },
-
   ],
 
   faqs: [
@@ -466,7 +465,15 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
+        <Link
+          to={path}
+          style={{
+            textDecoration: "none",
+            color: "inherit",
+            display: "block",
+            height: "100%",
+          }}
+        >
           {cardContent}
         </Link>
       ) : (
@@ -564,13 +571,13 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-                  <SEO
-        title="Global Cross-Border Care | International Telemedicine & Medical Support"
-        description="Access global healthcare support through international telemedicine services, cross-border consultations, medication refill assistance, referral coordination, and medical guidance while traveling abroad."
-        keywords="Global cross-border care, International telemedicine, Cross-border consultation, Online doctor appointment"
-        url="https://humancareconnect.co/global-cross-border-care"
-      />
       <main className="sp-page">
+        <SEO
+          title="Global Cross-Border Care | International Telemedicine & Medical Support"
+          description="Access global healthcare support through international telemedicine services, cross-border consultations, medication refill assistance, referral coordination, and medical guidance while traveling abroad."
+          keywords="Global cross-border care, International telemedicine, Cross-border consultation, Online doctor appointment"
+          url="https://humancareconnect.co/global-cross-border-care"
+        />
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
@@ -584,24 +591,24 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div
-              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-            >
-              <span className="sp-hero__badge">Travel & Global Care</span>
-              <h1 className="sp-hero__title">{data.name}</h1>
-              <p className="sp-hero__tagline">{data.tagline}</p>
-              <p className="sp-hero__description">{data.heroDescription}</p>
+            <div className="sp-hero__layout">
+              <div
+                className={`sp-hero__content-inner${
+                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                }`}
+              >
+                <span className="sp-hero__badge">Child & Family Care</span>
+                <h1 className="sp-hero__title">{data.name}</h1>
+                <p className="sp-hero__tagline">{data.tagline}</p>
+                <p className="sp-hero__description">{data.heroDescription}</p>
+              </div>
 
-              {/* <div className="sp-hero__actions">
-                <a href="/Specialties" className="sp-btn sp-btn--primary">
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
-              </div> */}
+              <BookingCard
+                price={price}
+                priceLoading={priceLoading}
+                title={data.name}
+                specialitySlug={data.slug}
+              />
             </div>
           </div>
         </section>
@@ -702,7 +709,11 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
+              <div
+                className="sp-conditions__head"
+                onClick={() => navigate("/conditions")}
+                style={{ cursor: "pointer" }}
+              >
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

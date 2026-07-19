@@ -136,13 +136,14 @@ const sendOTPEmail = async (to, otp, type = "register", name) => {
   });
 };
 
-const sendEmail = async ({ to, subject, text, html }) => {
+const sendEmail = async ({ to, subject, text, html, replyTo }) => {
   await sendMail({
     from: `"HumanCare Connect" <${MAIL_FROM}>`,
     to,
     subject,
     text,
     html,
+    ...(replyTo ? { replyTo } : {}),
   });
 };
 
