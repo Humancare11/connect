@@ -10,7 +10,7 @@ import {
   FiCpu, FiAlertCircle, FiThumbsUp, FiVideo, FiPieChart,
   FiBookOpen, FiNavigation, FiWifi, FiHeadphones, FiUser,
 } from "react-icons/fi";
-import SEO from "../../components/SEO";
+import SEO from "../../components/Seo";
 import ServiceContact from "./ServiceContact";
 
 /* ──────────────────────────────────────────────────────────────────────────
