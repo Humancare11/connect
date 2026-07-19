@@ -50,7 +50,7 @@ import {
   FiHeadphones,
   FiUser,
 } from "react-icons/fi";
-import SEO from "../../components/SEO";
+import SEO from "../../components/Seo";
 import ServiceContact from "./ServiceContact";
 /* ──────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS — light theme

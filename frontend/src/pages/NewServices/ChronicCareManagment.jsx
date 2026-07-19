@@ -54,7 +54,7 @@ import {
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
-import SEO from "../../components/SEO";
+import SEO from "../../components/Seo";
 
 import heroBanner from "../../assets/MedicalServices/chronic-care-management-telemedicine.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";

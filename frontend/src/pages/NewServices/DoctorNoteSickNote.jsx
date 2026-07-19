@@ -53,7 +53,7 @@ import {
 import emailjs from "@emailjs/browser";
 
 import { Helmet } from "react-helmet-async";
-import SEO from "../../components/SEO";
+import SEO from "../../components/Seo";
 import heroBanner from "../../assets/MedicalServices/sick-notes-medical-certificates.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
 import "../Specialty/SpecialtyPage.css";

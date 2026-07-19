@@ -58,7 +58,7 @@ import "../SpecialtyPage.css";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 
-import SEO from "../../../components/SEO";
+import SEO from "../../../components/Seo";
 
 import heroImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-teen-healthcare-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-consultation.webp";
