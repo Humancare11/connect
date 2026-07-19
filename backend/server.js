@@ -1175,7 +1175,7 @@ io.on("connection", (socket) => {
         );
       }
 
-      socket.to(`appointment_${appointmentId}`).emit(
+      io.to(`appointment_${appointmentId}`).emit(
         "appointment-message",
         {
           appointmentId,
