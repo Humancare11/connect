@@ -495,8 +495,15 @@ const server = http.createServer(app);
 // Socket.IO setup
 const io = new Server(server, {
   path: "/socket.io/",
+  allowEIO3: true,
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(normalizeOrigin(origin)) !== -1) {
+        return callback(null, true);
+      }
+      callback(null, true);
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
