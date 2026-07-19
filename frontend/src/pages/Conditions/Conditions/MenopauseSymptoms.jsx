@@ -41,6 +41,8 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ConditionBannerImage from "../../../assets/ConditionImages/WomensHealth/menopause-symptoms.webp";
+
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -50,8 +52,7 @@ const pageData = {
   heading: "Menopause Symptoms",
   description: "Hormonal changes affecting daily life",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-  bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 const faqData = [

@@ -41,7 +41,8 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-import ConditionBannerImage from "../../../assets/ConditionImages/MensHealth/Hair-Loss.webp";
+import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Hair-Loss.webp";
+
 
 
 // ─────────────────────────────────────────────────────────────────

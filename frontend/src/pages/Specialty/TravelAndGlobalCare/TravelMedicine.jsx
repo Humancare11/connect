@@ -173,82 +173,47 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiActivity,
-      name: "Altitude Sickness",
-      path: "/travel-and-global-care/travel-medicine/altitude-sickness",
-      description:
-        "Evaluation and management of symptoms caused by high-altitude travel, including headaches, nausea, and dizziness.",
+      name: "Travel-Related Fever",
+      desc: "Assessment of fever after travel",
+      path: "/travel-and-global-care/travel-medicine/travel-related-fever",
     },
     {
       Icon: FiDroplet,
-      name: "Food Poisoning While Traveling",
-      path: "/travel-and-global-care/travel-medicine/food-poisoning-while-traveling",
-      description:
-        "Care for gastrointestinal symptoms caused by contaminated food or water during travel.",
+      name: "Pre-Travel Vaccination",
+      desc: "Vaccinations before international travel",
+      path: "/travel-and-global-care/travel-medicine/pre-travel-vaccination",
     },
     {
       Icon: FiShield,
       name: "Malaria Prevention",
+      desc: "Prevention and medication guidance",
       path: "/travel-and-global-care/travel-medicine/malaria-prevention",
-      description:
-        "Risk assessments, prevention strategies, and travel health guidance for malaria-prone destinations.",
     },
     {
       Icon: FiThermometer,
-      name: "Post-Travel Symptoms",
-      path: "/travel-and-global-care/travel-medicine/post-travel-symptoms",
-      description:
-        "Evaluation of unexplained symptoms that develop after returning from travel.",
+      name: "Altitude Sickness ",
+      desc: "Advice for high-altitude travel",
+      path: "/travel-and-global-care/travel-medicine/altitude-sickness",
     },
     {
       Icon: MdOutlineVaccines,
-      name: "Pre-Travel Vaccination",
-      description:
-        "Vaccination recommendations and preparation for domestic and international travel.",
+      name: "Post-Travel Symptoms",
+      desc: "Evaluation of symptoms after returning",
+      path: "/travel-and-global-care/travel-medicine/post-travel-symptoms",
     },
     {
       Icon: FiAlertCircle,
-      name: "Travel-Related Fever",
-      path: "/travel-and-global-care/travel-medicine/travel-related-fever",
-      description:
-        "Assessment of fever occurring during or after travel, including potential infectious causes.",
+      name: "Food Poisoning While Traveling",
+      desc: "Stomach illness during travel trips",
+      path: "/travel-and-global-care/travel-medicine/food-poisoning-while-traveling",
     },
     {
       Icon: FiTrendingUp,
-      name: "Traveler's Diarrhea",
-      description:
-        "Treatment recommendations and prevention strategies for common travel-related digestive illnesses.",
+      name: "Travel-Related Fever",
+      desc: "Assessment of fever after travel",
+      path: "/travel-and-global-care/travel-medicine/travel-related-fever",
     },
-    {
-      Icon: FiCompass,
-      name: "Motion Sickness",
-      path: "/motion-sickness",
-      description:
-        "Guidance for preventing and managing nausea, dizziness, and discomfort during travel.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Insect Bite Prevention",
-      description:
-        "Strategies to reduce exposure to mosquito-borne and insect-related illnesses.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Travel Medication Planning",
-      description:
-        "Personalized recommendations for travel medications and emergency health preparedness.",
-    },
-    {
-      Icon: FiMap,
-      name: "Destination-Specific Health Risks",
-      description:
-        "Guidance regarding environmental, infectious, and regional health concerns.",
-    },
-    {
-      Icon: FiGlobe,
-      name: "International Travel Health Support",
-      description:
-        "Comprehensive healthcare planning and support for international travelers.",
-    },
+
   ],
 
   faqs: [
@@ -520,15 +485,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -646,38 +603,24 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Travel Medicine</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -778,11 +721,7 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

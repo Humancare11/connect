@@ -41,6 +41,9 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Hives.webp";
+
+
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -50,8 +53,7 @@ const pageData = {
   heading: "Hives",
   description: "Raised, itchy skin welts",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-  bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 const faqData = [

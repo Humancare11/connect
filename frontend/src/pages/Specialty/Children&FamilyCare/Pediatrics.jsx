@@ -156,79 +156,34 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiAlertCircle,
-      name: "Ear Pain & Ear Infections",
-      description:
-        "Diagnosis and treatment for earaches, middle ear infections, ear pressure, and discomfort that commonly affect children.",
+      name: "Ear Pain in Children",
+      desc: "Ear discomfort and irritation in kids",
+      path: "/child-and-family-care/pediatrics/ear-pain-children",
     },
     {
-      Icon: FiDroplet,
+      Icon: FiTool,
       name: "Feeding Concerns",
+      desc: "Support for healthy infant feeding",
       path: "/child-and-family-care/pediatrics/feeding-concerns",
-      description:
-        "Support for breastfeeding challenges, picky eating, poor appetite, nutritional concerns, and healthy feeding habits.",
-    },
-    {
-      Icon: FiWind,
-      name: "Pediatric Cold & Flu",
-      path: "/child-and-family-care/pediatrics/pediatric-cold-flu",
-      description:
-        "Treatment for cough, congestion, sore throat, viral infections, and flu symptoms to help children recover safely.",
-    },
-    {
-      Icon: FiThermometer,
-      name: "Pediatric Fever",
-      path: "/child-and-family-care/pediatrics/pediatric-fever",
-      description:
-        "Evaluation and care for fever, infection-related symptoms, and signs requiring medical attention.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Skin Rashes in Children",
-      description:
-        "Diagnosis and treatment for childhood rashes, eczema, allergic reactions, irritation, and common skin conditions.",
-    },
-    {
-      Icon: FiFeather,
-      name: "Allergies in Children",
-      description:
-        "Management of seasonal allergies, food allergies, environmental triggers, and allergy-related symptoms.",
-    },
-    {
-      Icon: GiLungs,
-      name: "Asthma & Breathing Concerns",
-      description:
-        "Care for wheezing, shortness of breath, chronic cough, and respiratory conditions affecting children.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Childhood Infections",
-      description:
-        "Diagnosis and treatment of bacterial and viral infections, including throat, sinus, and other common infections.",
     },
     {
       Icon: FiTrendingUp,
-      name: "Growth & Development Concerns",
-      description:
-        "Evaluation of delayed milestones, growth patterns, and developmental challenges.",
-    },
-    {
-      Icon: FiClock,
-      name: "Sleep Problems in Children",
-      description:
-        "Support for sleep difficulties, bedtime challenges, poor sleep habits, and concerns affecting a child's health.",
+      name: "Pediatric Cold & Flu",
+      desc: "Cold and flu symptoms in children",
+      path: "/child-and-family-care/pediatrics/pediatric-cold-flu",
     },
     {
       Icon: FiBarChart2,
-      name: "Digestive & Stomach Issues",
-      description:
-        "Care for abdominal pain, constipation, diarrhea, reflux, and other gastrointestinal concerns in children.",
+      name: "Pediatric Fever",
+      desc: "Fever and illness in children",
+      path: "/child-and-family-care/pediatrics/pediatric-fever",
     },
     {
-      Icon: MdOutlineHealthAndSafety,
-      name: "Preventive Pediatric Care",
-      description:
-        "Routine wellness visits, immunizations, health screenings, and guidance to maintain long-term childhood health.",
-    },
+      Icon: FiFeather,
+      name: "Skin Rash in Children",
+      desc: "Red, itchy, irritated skin in kids",
+      path: "/child-and-family-care/pediatrics/skin-rash-in-children",
+    }
   ],
 
   faqs: [
@@ -494,15 +449,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -619,36 +566,24 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         </div>
 
         <div className="sp-hero__content">
-          <div className="sp-hero__layout">
-            <div
-              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-            >
-              <span className="sp-hero__badge">HumanCare Connect</span>
-              <h1 className="sp-hero__title">{data.name}</h1>
-              <p className="sp-hero__tagline">{data.tagline}</p>
-              <p className="sp-hero__description">{data.heroDescription}</p>
+          <div
+            className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+          >
+            <span className="sp-hero__badge">Child & Family Care</span>
+            <h1 className="sp-hero__title">{data.name}</h1>
+            <p className="sp-hero__tagline">{data.tagline}</p>
+            <p className="sp-hero__description">{data.heroDescription}</p>
 
-              <div className="sp-hero__actions">
-                <a href="/Specialties" className="sp-btn sp-btn--primary">
-                  <FiSearch size={17} />
-                  Find Specialists
-                </a>
-                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
-                  <FiCalendar size={17} />
-                  Book Appointment
-                </a>
-              </div>
-            </div>
-
-            {/* LEFT — booking card */}
-            <Reveal className="sp-hero__sidebar">
-              <BookingCard
-                price={price}
-                priceLoading={priceLoading}
-                categoryId={data.categoryId}
-                name={data.name}
-              />
-            </Reveal>
+            {/* <div className="sp-hero__actions">
+              <a href="/Specialties" className="sp-btn sp-btn--primary">
+                <FiSearch size={17} />
+                Find Specialists
+              </a>
+              <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                <FiCalendar size={17} />
+                Book Appointment
+              </a>
+            </div> */}
           </div>
         </div>
       </section>
@@ -743,11 +678,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
       <section className="sp-conditions">
         <div className="sp-container">
           <Reveal>
-            <div
-              className="sp-conditions__head"
-              onClick={() => navigate("/conditions")}
-              style={{ cursor: "pointer" }}
-            >
+            <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
               <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
               <h2>What We Treat</h2>
               <p>

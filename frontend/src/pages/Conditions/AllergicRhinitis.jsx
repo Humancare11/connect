@@ -40,6 +40,8 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ConditionBannerImage from "../../assets/ConditionImages/RespiratoryHealth/Allergic-Rhinitis.webp";
+
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -408,7 +410,7 @@ const pageData = {
   description: "Breathing problems and chest tightness",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
   bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+    ConditionBannerImage,
 };
 
 const relatedSpecialties = [

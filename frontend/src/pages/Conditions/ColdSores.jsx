@@ -39,6 +39,8 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ConditionBannerImage from "../../assets/ConditionImages/SkinCondition/Cold-Sores.webp";
+
 import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
@@ -407,8 +409,7 @@ const pageData = {
   heading: "Cold Sores",
   description: "Painful blisters around the mouth",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
-  bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 const relatedSpecialties = [

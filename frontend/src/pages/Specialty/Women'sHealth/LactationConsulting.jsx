@@ -163,80 +163,29 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiTarget,
-      name: "Latch Problems",
-      path: "/women-health/lactation-consulting/latch-problems",
-      description:
-        "Help for babies experiencing difficulty attaching properly during breastfeeding.",
+      name: "Low Milk Supply",
+      desc: "Support for breastfeeding milk production",
+      path: "/women-health/lactation-consulting/low-milk-supply",
     },
     {
       Icon: FiActivity,
-      name: "Low Milk Supply",
-      path: "/women-health/lactation-consulting/low-milk-supply",
-      description:
-        "Evaluation and support for concerns about breast milk production and feeding adequacy.",
+      name: "Latch Problems",
+      desc: "Breastfeeding latch assessment and guidance",
+      path: "/women-health/lactation-consulting/latch-problems",
     },
     {
       Icon: FiShield,
       name: "Nipple Pain",
+      desc: "Evaluation and treatment of breastfeeding pain",
       path: "/women-health/lactation-consulting/nipple-pain",
-      description:
-        "Guidance for breastfeeding discomfort, nipple soreness, cracking, and feeding-related pain.",
     },
     {
       Icon: FiRefreshCw,
       name: "Weaning Guidance",
+      desc: "Support for transitioning from breastfeeding",
       path: "/women-health/lactation-consulting/weaning-guidance",
-      description:
-        "Support for transitioning from breastfeeding to formula feeding, solid foods, or other feeding plans.",
     },
-    {
-      Icon: FiUsers,
-      name: "Breastfeeding Challenges",
-      description:
-        "Assessment and support for common feeding difficulties experienced by parents and infants.",
-    },
-    {
-      Icon: FiTool,
-      name: "Pumping Concerns",
-      description:
-        "Guidance regarding pumping schedules, milk expression, and storage recommendations.",
-    },
-    {
-      Icon: FiCalendar,
-      name: "Feeding Schedule Questions",
-      description:
-        "Support creating feeding routines that fit your baby's developmental needs.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Infant Feeding Difficulties",
-      description:
-        "Evaluation of feeding patterns, feeding efficiency, and nutrition concerns.",
-    },
-    {
-      Icon: FiUserCheck,
-      name: "Breastfeeding Positioning",
-      description:
-        "Recommendations for comfortable feeding positions that support successful nursing.",
-    },
-    {
-      Icon: FiBriefcase,
-      name: "Returning to Work While Breastfeeding",
-      description:
-        "Planning support for pumping, milk storage, and maintaining feeding goals.",
-    },
-    {
-      Icon: FiGlobe,
-      name: "Combination Feeding Support",
-      description:
-        "Guidance for families using both breastfeeding and supplemental feeding methods.",
-    },
-    {
-      Icon: MdOutlineSpa,
-      name: "Postpartum Feeding Education",
-      description:
-        "Comprehensive support during the early weeks and months after delivery.",
-    },
+
   ],
 
   faqs: [
@@ -505,15 +454,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -604,9 +545,7 @@ export default function LactationConsulting({ data = SPECIALTY_DATA }) {
       }
     }
     fetchPrice();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [data.categoryId]);
 
   return (
@@ -631,38 +570,24 @@ export default function LactationConsulting({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Women's Health</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -763,11 +688,7 @@ export default function LactationConsulting({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

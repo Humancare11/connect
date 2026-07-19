@@ -40,6 +40,8 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Skin-Rash.webp";
+
 import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────

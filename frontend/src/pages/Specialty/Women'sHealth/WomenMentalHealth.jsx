@@ -163,77 +163,22 @@ const SPECIALTY_DATA = {
     {
       Icon: FiAlertCircle,
       name: "Perinatal Anxiety",
+      desc: "Support for anxiety during and after pregnancy",
       path: "/women-health/women-mental-health/perinatal-anxiety",
-      description:
-        "Support for anxiety experienced during pregnancy and the postpartum period.",
     },
     {
       Icon: FiActivity,
       name: "PMDD",
+      desc: "Care for premenstrual dysphoric disorder",
       path: "/women-health/women-mental-health/pmdd",
-      description:
-        "Evaluation and management of Premenstrual Dysphoric Disorder and severe menstrual-related mood symptoms.",
     },
     {
       Icon: FiHeart,
       name: "Postnatal Depression",
+      desc: "Support for depression after childbirth",
       path: "/women-health/women-mental-health/postnatal-depression",
-      description:
-        "Support for emotional challenges and depression experienced after childbirth.",
     },
-    {
-      Icon: FiTrendingUp,
-      name: "Pregnancy-Related Stress",
-      description:
-        "Guidance for emotional concerns associated with pregnancy and major life changes.",
-    },
-    {
-      Icon: FiUserCheck,
-      name: "Hormonal Mood Changes",
-      description:
-        "Assessment of emotional symptoms influenced by hormonal fluctuations.",
-    },
-    {
-      Icon: FiWind,
-      name: "Emotional Overwhelm",
-      description:
-        "Support for managing feelings of stress, exhaustion, and emotional fatigue.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Maternal Mental Health",
-      description:
-        "Comprehensive care focused on emotional well-being during motherhood.",
-    },
-    {
-      Icon: FiMoon,
-      name: "Sleep & Mood Concerns",
-      description:
-        "Evaluation of emotional symptoms connected to sleep disruption and fatigue.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Parenting Stress",
-      description:
-        "Support for the emotional demands and challenges of parenting.",
-    },
-    {
-      Icon: FiAlertCircle,
-      name: "Anxiety Disorders",
-      description:
-        "Personalized care for excessive worry, nervousness, and anxiety-related symptoms.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Mood Disorders",
-      description: "Assessment and support for ongoing mood-related concerns.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Women's Emotional Wellness",
-      description:
-        "Comprehensive mental health support designed around women's unique life experiences.",
-    },
+
   ],
   faqs: [
     {
@@ -489,15 +434,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -615,38 +552,24 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Women's Health</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -747,11 +670,7 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions & Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>

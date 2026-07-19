@@ -167,82 +167,41 @@ const SPECIALTY_DATA = {
   conditions: [
     {
       Icon: FiDroplet,
-      name: "Dry Eyes",
-      path: "/eye-ear-bone/ophthalmology/dry-eyes",
-      description:
-        "Treatment for eye dryness, burning, irritation, discomfort, and reduced tear production.",
+      name: "Eye Redness",
+      // desc: "Relief for voice and throat changes",
+      path: "/eye-ear-bone/ophthalmology/eye-redness",
     },
     {
       Icon: FiEye,
-      name: "Eye Irritation",
-      path: "/eye-ear-bone/ophthalmology/eye-irritation",
-      description:
-        "Evaluation and management of itchy, burning, watery, or uncomfortable eyes.",
+      name: "Dry eyes",
+      // desc: "Relief for a blocked nose",
+      path: "/eye-ear-bone/ophthalmology/dry-eyes",
     },
     {
       Icon: FiAlertCircle,
-      name: "Eye Redness",
-      path: "/eye-ear-bone/ophthalmology/eye-redness",
-      description:
-        "Care for red, inflamed, irritated eyes caused by infections, allergies, dryness, or other eye conditions.",
+      name: "Vision changes",
+      // desc: "Pain, irritation, or a scratchy throat",
+      path: "/eye-ear-bone/ophthalmology/vision-changes",
     },
     {
       Icon: FiMonitor,
-      name: "Eye Strain",
-      path: "/eye-ear-bone/ophthalmology/eye-strain",
-      description:
-        "Treatment for tired eyes, digital eye strain, focusing difficulties, and screen-related vision discomfort.",
+      name: "Eye irritation",
+      // desc: "Relief for sore throat and swollen tonsils",
+      path: "/eye-ear-bone/ophthalmology/eye-irritation",
     },
     {
       Icon: MdOutlineVisibility,
       name: "Stye",
+      // desc: "Spinning sensation and balance issues",
       path: "/eye-ear-bone/ophthalmology/stye",
-      description:
-        "Diagnosis and treatment of painful eyelid bumps, eyelid infections, and gland blockages.",
     },
     {
       Icon: FiEye,
-      name: "Vision Changes",
-      path: "/eye-ear-bone/ophthalmology/vision-changes",
-      description:
-        "Evaluation of blurry vision, reduced visual clarity, focusing problems, and sudden vision concerns.",
+      name: "Eye-strain",
+      // desc: "Pain, pressure, and ear discomfort",
+      path: "/eye-ear-bone/ophthalmology/eye-strain",
     },
-    {
-      Icon: FiShield,
-      name: "Allergic Eye Conditions",
-      description:
-        "Management of eye symptoms caused by allergies, environmental triggers, and seasonal factors.",
-    },
-    {
-      Icon: FiSun,
-      name: "Light Sensitivity",
-      description:
-        "Assessment of discomfort caused by bright lights and underlying eye health conditions.",
-    },
-    {
-      Icon: FiDroplet,
-      name: "Watery Eyes",
-      description:
-        "Diagnosis and treatment of excessive tearing, tear drainage issues, and eye irritation.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Eye Fatigue",
-      description:
-        "Care for tired, strained eyes associated with reading, computer use, and prolonged visual tasks.",
-    },
-    {
-      Icon: MdOutlineRemoveRedEye,
-      name: "Eyelid Conditions",
-      description:
-        "Evaluation of eyelid inflammation, swelling, irritation, and related eye concerns.",
-    },
-    {
-      Icon: FiCheckCircle,
-      name: "Preventive Vision Care",
-      description:
-        "Routine eye health assessments and preventive care to maintain healthy eyesight.",
-    },
+
   ],
 
   faqs: [
@@ -513,15 +472,7 @@ function ConditionCard({ Icon, name, description, delay, path }) {
   return (
     <Reveal delay={delay}>
       {path ? (
-        <Link
-          to={path}
-          style={{
-            textDecoration: "none",
-            color: "inherit",
-            display: "block",
-            height: "100%",
-          }}
-        >
+        <Link to={path} style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}>
           {cardContent}
         </Link>
       ) : (
@@ -638,38 +589,24 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
           </div>
 
           <div className="sp-hero__content">
-            <div className="sp-hero__layout">
-              <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
-              >
-                <span className="sp-hero__badge">HumanCare Connect</span>
-                <h1 className="sp-hero__title">{data.name}</h1>
-                <p className="sp-hero__tagline">{data.tagline}</p>
-                <p className="sp-hero__description">{data.heroDescription}</p>
+            <div
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
+            >
+              <span className="sp-hero__badge">Eye Ear & Bone</span>
+              <h1 className="sp-hero__title">{data.name}</h1>
+              <p className="sp-hero__tagline">{data.tagline}</p>
+              <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
-                    <FiSearch size={17} />
-                    Find Specialists
-                  </a>
-                  <a
-                    href="/appointment-booking"
-                    className="sp-btn sp-btn--ghost"
-                  >
-                    <FiCalendar size={17} />
-                    Book Appointment
-                  </a>
-                </div>
-              </div>
-
-              <Reveal className="sp-hero__sidebar">
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId={data.categoryId}
-                  name={data.name}
-                />
-              </Reveal>
+              {/* <div className="sp-hero__actions">
+                <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <FiSearch size={17} />
+                  Find Specialists
+                </a>
+                <a href="/appointment-booking" className="sp-btn sp-btn--ghost">
+                  <FiCalendar size={17} />
+                  Book Appointment
+                </a>
+              </div> */}
             </div>
           </div>
         </section>
@@ -770,11 +707,7 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
-                className="sp-conditions__head"
-                onClick={() => navigate("/conditions")}
-                style={{ cursor: "pointer" }}
-              >
+              <div className="sp-conditions__head" onClick={() => navigate("/conditions")} style={{ cursor: "pointer" }}>
                 <SectionLabel>Conditions &amp; Symptoms</SectionLabel>
                 <h2>What We Treat</h2>
                 <p>
