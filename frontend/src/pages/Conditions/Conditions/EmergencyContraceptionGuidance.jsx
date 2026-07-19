@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function EmergencyContraceptionGuidance() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Emergency Contraception Online | Fast & Confidential Care"
+        description="Need emergency contraception advice? Connect with a licensed provider online for confidential guidance, birth control support, treatment recommendations, and prescriptions when appropriate."
+        keywords="Emergency contraception online, Confidential online care, Telemedicine services, Online doctor appointment"
+        url="https://humancareconnect.co/emergency-contraception-guidance"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function EmergencyContraceptionGuidance() {
         </div>
       </section>
     </div>
+    </>
   );
 }

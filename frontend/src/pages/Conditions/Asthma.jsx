@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import SEO from "../../components/Seo";
@@ -713,12 +713,12 @@ function HeroSection({ data }) {
 function AboutSpecialty() {
   return (
 <>
-<SEO
-  title="Online Asthma Treatment | Virtual Asthma Care & Support"
-  description="Get online asthma care for wheezing, shortness of breath, chest tightness, and breathing problems. Connect with a licensed provider for evaluation and treatment guidance."
-  keywords="asthma, asthma symptoms, wheezing, shortness of breath, chest tightness, breathing problems, asthma treatment, asthma care, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, online provider, licensed providers"
-  url="https://humancareconnect.co/allergic-rhinitis"
-/>
+            <SEO
+        title="Asthma Treatment Online | Breathing & Respiratory Care"
+        description="Get convenient asthma care online for wheezing, shortness of breath, chest tightness, and coughing. Connect with a licensed provider for personalized treatment guidance."
+        keywords="Asthma, asthma treatment, asthma symptoms, asthma care, wheezing, shortness of breath, chest tightness, breathing difficulties, respiratory care, telemedicine services, online doctor appointment, online provider"
+        url="https://humancareconnect.co/asthma"
+      />
 
     <div className="sp-glass-card">
       <div className="sp-glass-shine" />

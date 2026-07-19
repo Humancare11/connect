@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,7 +42,8 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/WomensHealth/bacterial-vaginosis.webp";
 
-
+import SEO from "../../../components/Seo";
+ 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
@@ -127,6 +128,13 @@ export default function BacterialVaginosis() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Bacterial Vaginosis Care Online | Private BV Symptom Support"
+        description="Unusual vaginal discharge, odor, itching, or irritation? Get discreet bacterial vaginosis care with symptom evaluation, treatment guidance, and prescription support online."
+        keywords="Bacterial vaginosis, Bacterial vaginosis symptoms, Vaginal discharge, Vaginal bacterial imbalance, Treatment guidance, Online doctor appointment"
+        url="https://humancareconnect.co/bacterial-vaginosis"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function BacterialVaginosis() {
         </div>
       </section>
     </div>
+    </>
   );
 }

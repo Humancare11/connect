@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function FrequentUrination() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Frequent Urination Treatment Online | Bladder Health Consultation"
+        description="Get expert care for frequent urination online. Connect with a licensed provider for bladder health evaluation, treatment guidance, and personalized care through secure telemedicine services."
+        keywords="Frequent urination treatment, Bladder health consultation, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/frequent-urination"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function FrequentUrination() {
         </div>
       </section>
     </div>
+    </>
   );
 }

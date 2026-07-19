@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -73,6 +73,7 @@ import heroImage from "../../../assets/SpecialitiesImage/mens-health-specialist-
 import overviewImage from "../../../assets/SpecialitiesImage/mens-health-wellness-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -565,16 +566,12 @@ export default function SpeMensHealth({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Men's Health Specialists | Sexual Wellness, Hormone Health &
-          Preventive Care
-        </title>
-        <meta
-          name="description"
-          content="Connect with experienced men's health specialists for erectile dysfunction, low testosterone, low libido, prostate health, hair loss, fertility concerns, and preventive wellness care."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Men's Health Specialists | Sexual Wellness, Hormone Health & Preventive Care"
+        description="Connect with experienced men's health specialists for erectile dysfunction, low testosterone, low libido, prostate health, hair loss, fertility concerns, and preventive wellness care."
+        keywords="Men's health specialist, Erectile dysfunction treatment, Low testosterone, Online men's health consultation"
+        url="https://humancareconnect.co/mens-health"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

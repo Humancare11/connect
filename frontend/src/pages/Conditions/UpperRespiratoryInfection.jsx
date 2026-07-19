@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1214,6 +1215,12 @@ function FaqSection() {
 export default function UpperRespiratoryInfection() {
   return (
     <>
+                  <SEO
+        title="Upper Respiratory Infection Treatment Online | Virtual Care"
+        description="Get online care for an upper respiratory infection. Consult a licensed provider for cough, congestion, sore throat, fever, and personalized treatment."
+        keywords="upper respiratory infection treatment, URI treatment online, respiratory infection, online doctor consultation, cough and congestion treatment, sore throat and fever, virtual urgent care, telehealth respiratory care, viral respiratory infection, upper respiratory infection symptoms"
+        url="https://humancareconnect.co/upper-respiratory-infection"
+      />
       <style>{STYLES}</style>
 
       <div

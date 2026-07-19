@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -69,6 +69,7 @@ import heroImage from "../../../assets/SpecialitiesImage/womens-mental-health-sp
 import overviewImage from "../../../assets/SpecialitiesImage/womens-mental-health-consultation-emotional-wellness.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -531,16 +532,12 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Women's Mental Health Specialists | Anxiety, PMDD & Postpartum Mental
-          Health Support
-        </title>
-        <meta
-          name="description"
-          content="Connect with women's mental health specialists for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, emotional wellness support, and personalized mental healthcare."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Women's Mental Health Specialists | Anxiety, PMDD & Postpartum Mental Health Support"
+        description="Connect with women's mental health specialists for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, emotional wellness support, and personalized mental healthcare."
+        keywords="Women's mental health, women's mental health specialists, women's mental health care, perinatal anxiety, PMDD, Premenstrual Dysphoric Disorder, postpartum depression, postnatal depression, pregnancy-related stress, pregnancy anxiety, hormonal mood changes, maternal mental health, emotional wellness, emotional overwhelm"
+        url="https://humancareconnect.co/women-mental-health"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

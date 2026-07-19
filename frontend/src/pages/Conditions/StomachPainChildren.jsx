@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1214,6 +1215,12 @@ function FaqSection() {
 export default function StomachPainChildren() {
   return (
     <>
+                  <SEO
+        title="Stomach Pain in Children Treatment Online | Virtual Pediatric Care"
+        description="Get online care for your child's stomach pain. Consult a licensed provider for abdominal pain, cramps, nausea, constipation, diarrhea, and digestive concerns."
+        keywords="stomach pain in children, pediatric stomach pain, child abdominal pain, online pediatric consultation, stomach ache in kids, pediatric digestive care, constipation in children, diarrhea in children, virtual pediatric doctor, telehealth pediatric care"
+        url="https://humancareconnect.co/stomach-pain-children"
+      />
       <style>{STYLES}</style>
 
       <div

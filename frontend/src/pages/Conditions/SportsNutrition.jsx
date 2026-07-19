@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1215,6 +1216,12 @@ function FaqSection() {
 export default function SportsNutrition() {
   return (
     <>
+                  <SEO
+        title="Sports Nutrition Consultation Online | Virtual Nutrition & Performance Support"
+        description="Get personalized online sports nutrition guidance to improve performance, recovery, endurance, muscle health, and achieve your fitness goals."
+        keywords="sports nutrition consultation, online sports nutrition, sports dietitian online, athletic nutrition, performance nutrition, muscle recovery nutrition, fitness nutrition consultation, virtual nutrition coaching, sports diet plan, telehealth nutrition services"
+        url="https://humancareconnect.co/sports-nutrition"
+      />
       <style>{STYLES}</style>
 
       <div

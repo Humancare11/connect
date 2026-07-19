@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1214,6 +1215,12 @@ function FaqSection() {
 export default function VomitingDiarrheaChildren() {
   return (
     <>
+                  <SEO
+        title="Vomiting and Diarrhea in Children | Pediatric Care Online"
+        description="Get trusted pediatric care for vomiting and diarrhea in children. Connect with an online provider for symptom evaluation, hydration guidance, and treatment recommendations."
+        keywords="Vomiting and diarrhea in children, pediatric care, child vomiting, diarrhea in children, dehydration in children, stomach cramps, fever, nausea, digestive discomfort, viral infections, food poisoning, stomach bugs, hydration guidance, telemedicine services, online doctor appointment, virtual healthcare services, online provider"
+        url="https://humancareconnect.co/vomiting-diarrhea-children"
+      />
       <style>{STYLES}</style>
 
       <div

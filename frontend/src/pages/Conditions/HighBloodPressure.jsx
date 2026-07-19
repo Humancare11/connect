@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -10,6 +10,7 @@ import {
   MessageCircle, X
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/High-Blood-Pressure.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -905,6 +906,12 @@ function FaqSection() {
 export default function HighBloodPressure() {
   return (
     <>
+                  <SEO
+        title="High Blood Pressure Treatment Online | Hypertension Care"
+        description="Take control of high blood pressure with expert online care. Connect with a licensed provider for hypertension management, medication reviews, lifestyle guidance, and ongoing support through telemedicine services."
+        keywords="High blood pressure treatment, Hypertension care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/high-blood-pressure"
+      />
 
       <style>{STYLES}</style>
 

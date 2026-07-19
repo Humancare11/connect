@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Childhood-Allergies.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1212,6 +1213,12 @@ function FaqSection() {
 export default function ChildhoodAllergies() {
   return (
     <>
+                  <SEO
+        title="Childhood Allergies | Relief for Rashes, Sneezing & Congestion"
+        description="Pollen, dust, pet dander, or food may trigger allergy symptoms in children. Access personalized allergy management guidance and treatment recommendations from home."
+        keywords="Childhood allergies, Allergy symptoms, Allergy care, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/childhood-allergies"
+      />
       <style>{STYLES}</style>
 
       <div

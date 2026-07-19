@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -38,6 +38,7 @@ import {
   FaCloudArrowUp,
 } from "react-icons/fa6";
 import "./DoctorCareers.css";
+import SEO from "../components/Seo";
 
 /* -------------------------------------------------------------------- */
 /*  Static content                                                      */
@@ -623,7 +624,14 @@ export default function DoctorCareers() {
     );
 
   return (
-    <main className="doctor-careers-page">
+    <>
+                  <SEO
+        title="Doctor Careers | Join Humancare Connect's Global Network"
+        description="Join Humancare Connect's global network of licensed healthcare professionals. Deliver secure, HIPAA-compliant virtual care, expand your professional reach, and shape the future of healthcare."
+        keywords="Licensed healthcare professionals, Global healthcare network, Telemedicine platform, Virtual consultations, Virtual care, HIPAA-compliant telemedicine platform"
+        url="https://humancareconnect.co/career"
+      />
+      <main className="doctor-careers-page">
       {/* ---------------------------------------------------------- */}
       {/* 1. Hero                                                     */}
       {/* ---------------------------------------------------------- */}
@@ -1052,5 +1060,6 @@ export default function DoctorCareers() {
         </div>
       </section>
     </main>
+    </>
   );
 }

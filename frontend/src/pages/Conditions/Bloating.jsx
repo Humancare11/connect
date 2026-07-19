@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Bloating.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1217,6 +1218,12 @@ function FaqSection() {
 export default function Bloating() {
   return (
     <>
+                  <SEO
+        title="Bloating Relief Online | Digestive Health & Stomach Discomfort Care"
+        description="Feeling full, gassy, or uncomfortable after eating? Get personalized support for bloating symptoms with digestive health guidance and treatment recommendations online."
+        keywords="Bloating, Bloating symptoms, Stomach fullness, Digestive discomfort, Digestive health guidance, Online doctor appointment"
+        url="https://humancareconnect.co/bloating"
+      />
       <style>{STYLES}</style>
 
       <div

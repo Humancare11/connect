@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,8 @@ export default function EarInfection() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+    <SEO title="Ear Infection Treatment Online | Telemedicine Ear Care" description="Get expert ear infection treatment online." keywords="Ear infection treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services" url="https://humancareconnect.co/ear-infection" />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +431,6 @@ export default function EarInfection() {
         </div>
       </section>
     </div>
+    </>
   );
 }

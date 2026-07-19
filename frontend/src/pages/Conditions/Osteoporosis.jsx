@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Osteoporosis.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function Osteoporosis() {
   return (
     <>
+                  <SEO
+        title="Osteoporosis Treatment Online | Bone Health & Fracture Prevention"
+        description="Connect with a licensed provider online for osteoporosis care. Get expert guidance on bone health, fracture prevention, osteoporosis treatment, risk assessment, and personalized management."
+        keywords="Osteoporosis treatment, Bone health, Fracture prevention, Online osteoporosis consultation"
+        url="https://humancareconnect.co/osteoporosis"
+      />
       <style>{STYLES}</style>
 
       <div

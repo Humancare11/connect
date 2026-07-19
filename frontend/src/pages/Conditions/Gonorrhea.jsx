@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/SexualHealth/Gonorrhea.webp";
 
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1044,6 +1045,12 @@ function FaqSection() {
 export default function Gonorrhea() {
   return (
     <>
+                  <SEO
+        title="Gonorrhea Treatment Online | Confidential STI Care"
+        description="Get confidential gonorrhea treatment online from licensed providers. Receive STI evaluation, sexual health guidance, treatment recommendations, and prescriptions when appropriate through telemedicine services."
+        keywords="Gonorrhea treatment online, Confidential STI care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/gonorrhea"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 // import { HelmetProvider } from "react-helmet-async";
 import {
@@ -62,6 +62,7 @@ import heroImage from "../../../assets/SpecialitiesImage/endocrinology-specialis
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-endocrinologist-hormone-health-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -547,15 +548,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Endocrinology Specialists | Hormone & Metabolic Health Care
-        </title>
-        <meta
-          name="description"
-          content="Get expert endocrinology care for hormone imbalances, thyroid disorders, diabetes, osteoporosis, and metabolic conditions with personalized treatment plans."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Endocrinology Specialists | Hormone & Metabolic Health Care"
+        description="Get expert endocrinology care for hormone imbalances, thyroid disorders, diabetes, osteoporosis, and metabolic conditions with personalized treatment plans."
+        keywords="Endocrinology specialists, Hormone health, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/endocrinology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

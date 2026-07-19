@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -30,6 +30,7 @@ import {
   Utensils,
 } from "lucide-react";
 import "./symptoms.css";
+import SEO from "../components/Seo";
 
 const previewSpecialties = [
   {
@@ -879,6 +880,12 @@ export default function Symptoms() {
 
   return (
     <>
+                  <SEO
+        title="Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare Connect"
+        description="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
+        keywords="Consult a doctor online for symptoms, online doctor consultation, symptom-based online care, virtual healthcare services, symptom evaluation, medical advice online"
+        url="https://humancareconnect.co/conditions"
+      />
       <Helmet>
         <title>
           Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare

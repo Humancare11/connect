@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Healthy-Habit-Coaching.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function HealthyHabitCoaching() {
   return (
     <>
+                  <SEO
+        title="Healthy Habit Coaching Online | Build Better Lifestyle Habits"
+        description="Build healthier routines with expert healthy habit coaching online. Connect with a licensed provider for wellness coaching, nutrition, exercise, sleep, and stress management through telemedicine services."
+        keywords="Healthy habit coaching, Lifestyle wellness coaching, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/healthy-habit-coaching"
+      />
       <style>{STYLES}</style>
 
       <div

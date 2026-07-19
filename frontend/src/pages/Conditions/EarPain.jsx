@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Ear-Pain.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1212,6 +1213,12 @@ function FaqSection() {
 export default function EarPain() {
   return (
     <>
+                  <SEO
+        title="Ear Pain Treatment Online | Telemedicine Ear Care"
+        description="Get expert ear pain treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized ear care from home."
+        keywords="Ear pain treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/ear-pain"
+      />
       <style>{STYLES}</style>
 
       <div

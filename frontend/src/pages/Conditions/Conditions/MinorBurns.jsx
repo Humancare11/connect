@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Minor-burns.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function MinorBurns() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Minor Burn Treatment Online | First Aid & Wound Care Consultation"
+        description="Get expert care for minor burns online. Consult a licensed provider for burn treatment, blister care, pain relief, wound management, and personalized recovery guidance from home."
+        keywords="Minor burn treatment, Online burn care, Wound care consultation, First aid for burns"
+        url="https://humancareconnect.co/minor-burns"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function MinorBurns() {
         </div>
       </section>
     </div>
+    </>
   );
 }

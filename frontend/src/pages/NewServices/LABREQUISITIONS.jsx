@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -53,6 +53,7 @@ import {
 import emailjs from "@emailjs/browser";
 
 import { Helmet } from "react-helmet-async";
+import SEO from "../components/Seo";
 
 import heroBanner from "../../assets/MedicalServices/laboratory-diagnostic-testing-services.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
@@ -1829,6 +1830,12 @@ export default function LABREQUISITIONS() {
 
   return (
     <>
+                  <SEO
+        title="Lab Requisitions Online | Laboratory Testing Orders | Humancare Connect"
+        description="Need a lab requisition? Connect with licensed healthcare providers online and receive laboratory testing orders when clinically appropriate through secure telemedicine services."
+        keywords="Lab requisitions online, Doctor ordered lab tests, Preventive health screening, Online doctor appointment"
+        url="https://humancareconnect.co/lab-requisitions"
+      />
       <Helmet>
         <title>
           Lab Requisitions Online | Laboratory Testing Orders | Humancare

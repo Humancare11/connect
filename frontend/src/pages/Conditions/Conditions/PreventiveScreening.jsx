@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/preventive-screening.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function PreventiveScreening() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Preventive Health Screening Online | Early Detection & Wellness Assessment"
+        description="Book an online preventive health screening consultation for personalized risk assessments, early detection guidance, and recommendations to support long-term wellness."
+        keywords="preventive health screening, online health screening consultation, preventive care services, early disease detection, health risk assessment, wellness screening, virtual preventive healthcare, routine health check guidance"
+        url="https://humancareconnect.co/preventive-screening"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -433,5 +441,6 @@ export default function PreventiveScreening() {
         </div>
       </section>
     </div>
+    </>
   );
 }

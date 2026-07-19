@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function MedicationRefillTraveling() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+          <SEO
+        title="Medication Refill While Traveling | Online Prescription Renewal"
+        description="Need a medication refill while traveling? Connect with a licensed provider online for prescription renewal, treatment continuity, and travel medication support when clinically appropriate."
+        keywords="Medication refill while traveling, Online prescription renewal, Travel medication support, Prescription refill online"
+        url="https://humancareconnect.co/medication-refills-traveling"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function MedicationRefillTraveling() {
         </div>
       </section>
     </div>
+    </>
   );
 }

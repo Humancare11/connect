@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function MenopauseSymptoms() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Menopause Symptoms Treatment Online | Hot Flashes & Hormone Care"
+        description="Find relief from menopause symptoms with expert online care. Consult a licensed provider for hot flashes, night sweats, mood changes, sleep issues, hormone support, and personalized treatment."
+        keywords="Menopause symptoms, Hot flashes treatment, Hormone health, Online menopause care"
+        url="https://humancareconnect.co/menopause-symptoms"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function MenopauseSymptoms() {
         </div>
       </section>
     </div>
+    </>
   );
 }

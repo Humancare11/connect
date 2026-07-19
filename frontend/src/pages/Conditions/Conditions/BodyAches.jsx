@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function BodyAches() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Body Aches Relief Online | Muscle Soreness & Pain Care"
+        description="Feeling sore, stiff, or achy all over? Get online care for body aches with symptom evaluation, pain management recommendations, and personalized treatment guidance."
+        keywords="Body aches, Body ache relief, Muscle soreness, Body discomfort, Pain management recommendations, Online doctor appointment"
+        url="https://humancareconnect.co/body-aches"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function BodyAches() {
         </div>
       </section>
     </div>
+    </>
   );
 }

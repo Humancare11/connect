@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1210,6 +1211,12 @@ function FaqSection() {
 export default function PinkEyeChildren() {
   return (
     <>
+                  <SEO
+        title="Pink Eye in Children Treatment Online | Pediatric Eye Care"
+        description="Get expert online care for pink eye in children. Connect with a licensed pediatric provider for red, itchy, watery eyes, conjunctivitis symptoms, treatment guidance, and prescriptions when appropriate."
+        keywords="Pink eye in children, Pediatric pink eye treatment, Children's conjunctivitis, Online pediatric consultation, Virtual pediatric care"
+        url="https://humancareconnect.co/pink-eye-children"
+      />
       <style>{STYLES}</style>
 
       <div

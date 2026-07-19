@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -61,6 +61,7 @@ import heroImage from "../../../assets/SpecialitiesImage/pulmonology-specialist-
 import overviewImage from "../../../assets/SpecialitiesImage/pulmonology-lung-health-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -558,13 +559,12 @@ export default function Pulmonology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>Pulmonology Specialists | Lung & Respiratory Health Care</title>
-        <meta
-          name="description"
-          content="Get expert pulmonology care for asthma, COPD, chronic cough, shortness of breath, sleep apnea, and post-COVID respiratory concerns."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Pulmonology Specialists | Lung & Respiratory Health Care"
+        description="Get expert pulmonology care for asthma, COPD, chronic cough, shortness of breath, sleep apnea, and post-COVID respiratory concerns."
+        keywords="online pulmonologist, pulmonology consultation, lung specialist online, asthma treatment, COPD management, chronic cough treatment, shortness of breath, sleep apnea care, respiratory specialist, virtual lung doctor, telehealth pulmonology, respiratory care online"
+        url="https://humancareconnect.co/pulmonology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

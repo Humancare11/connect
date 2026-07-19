@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function MensWellnessConsultation() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Men's Wellness Consultation Online | Preventive Health & Wellness Care"
+        description="Book an online men's wellness consultation for preventive care, hormone health, sexual wellness, weight management, stress, and personalized health guidance from licensed providers"
+        keywords="Men's wellness consultation, Preventive men's health, Men's health checkup, Online men's health care"
+        url="https://humancareconnect.co/mens-wellness-consultation"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function MensWellnessConsultation() {
         </div>
       </section>
     </div>
+    </>
   );
 }

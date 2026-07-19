@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1211,6 +1212,12 @@ function FaqSection() {
 export default function MedicationReview() {
   return (
     <>
+                  <SEO
+        title="Medication Review Online | Safe Prescription & Drug Management"
+        description="Review your medications with a licensed provider online. Get expert guidance on side effects, drug interactions, dosage adjustments, prescription management, and treatment effectiveness."
+        keywords="Medication review, Prescription management, Drug interaction check, Online medication consultation"
+        url="https://humancareconnect.co/medication-review"
+      />
       <style>{STYLES}</style>
 
       <div

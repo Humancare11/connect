@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1219,6 +1220,12 @@ function FaqSection() {
 export default function TypeTwoDiabetes() {
   return (
     <>
+                  <SEO
+        title="Type 2 Diabetes Treatment Online | Virtual Diabetes Care"
+        description="Manage Type 2 diabetes online with a licensed provider. Get support for blood sugar control, medications, lifestyle changes, and personalized diabetes care."
+        keywords="Type 2 diabetes treatment, diabetes treatment online, blood sugar management, online diabetes doctor, diabetes medication management, insulin resistance, virtual diabetes care, telehealth diabetes consultation, diabetes management, Type 2 diabetes symptoms"
+        url="https://humancareconnect.co/type-2-diabetes"
+      />
       <style>{STYLES}</style>
 
       <div

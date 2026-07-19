@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -649,6 +650,12 @@ export default function EyeEarBone() {
         minHeight: "100vh",
       }}
     >
+                  <SEO
+        title="Online Eye, Ear & Bone Care | Virtual Doctor Consultation | Humancare Connect"
+        description="Get expert online eye, ear & bone care with trusted healthcare professionals. Receive virtual consultations for vision, hearing, joint, and musculoskeletal concerns from home"
+        keywords="Eye, ear & bone care, Virtual specialist consultation, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/eye-ear-bone"
+      />
       <Helmet>
         <title>
           Online Chronic Care Management & Expert Medical Opinions | Humancare

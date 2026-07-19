@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -573,6 +574,12 @@ export default function MenHealth() {
         minHeight: "100vh",
       }}
     >
+            <SEO
+        title="Online Men's Health Care | Virtual Doctor Consultation | Humancare Connect"
+        description="Access online men's health care with trusted healthcare professionals. Get virtual doctor consultations for sexual wellness, hormonal health, hair loss, preventive care, and personalized medical guidance."
+        keywords="Men's health care, Online men's health consultation, Sexual wellness, Hormone health"
+        url="https://humancareconnect.co/men-health"
+      />
       <Helmet>
         <title>
           {" "}

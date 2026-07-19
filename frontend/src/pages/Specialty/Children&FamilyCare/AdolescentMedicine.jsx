@@ -530,6 +530,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <main className="sp-page">
+                  <SEO
+        title="Adolescent Medicine Specialists | Teen Health & Wellness Care"
+        description="Get expert adolescent medicine care for teen physical, emotional, and behavioral health, including puberty concerns, anxiety, and sports injuries."
+        keywords="Emotional support, Stress management, Telemedicine services, Virtual healthcare services"
+        url="https://humancareconnect.co/adolescent-medicine"
+      />
       {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
       <section className="sp-hero">
         <div className="sp-hero__bg">

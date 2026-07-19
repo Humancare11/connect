@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function SleepHygiene() {
   return (
     <>
+                  <SEO
+        title="Sleep Hygiene Support Online | Virtual Consultation for Better Sleep"
+        description="Improve your sleep with online sleep hygiene support. Get expert guidance for healthy sleep habits, insomnia, poor sleep quality, and lasting wellness."
+        keywords="sleep hygiene, sleep hygiene tips, improve sleep quality, healthy sleep habits, online sleep consultation, insomnia support, better sleep routine, virtual sleep health, sleep wellness, telehealth sleep care"
+        url="https://humancareconnect.co/sleep-hygiene"
+      />
       <style>{STYLES}</style>
 
       <div

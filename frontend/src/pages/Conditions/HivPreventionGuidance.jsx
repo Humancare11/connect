@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/SexualHealth/HIV-Prevention--PrEP-Guidance.webp";
 
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1046,6 +1047,12 @@ function FaqSection() {
 export default function HivPreventionGuidance() {
   return (
     <>
+                  <SEO
+        title="HIV Prevention & PrEP Online | Confidential Sexual Health Care"
+        description="Get confidential HIV prevention and PrEP guidance online. Connect with a licensed provider for HIV risk assessment, sexual health support, PrEP information, and personalized care through telemedicine services."
+        keywords="HIV prevention, PrEP guidance, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/hiv-prevention-guidance"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Obesity.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1218,6 +1219,12 @@ function FaqSection() {
 export default function Obesity() {
   return (
     <>
+                  <SEO
+        title="Obesity Treatment Online | Weight Management & Medical Support"
+        description="Get expert obesity treatment online. Connect with a licensed provider for weight management, healthy weight loss, lifestyle guidance, GLP-1 eligibility assessment, and personalized care."
+        keywords="Obesity treatment, Weight management, Healthy weight loss, Online weight loss consultation"
+        url="https://humancareconnect.co/obesity"
+      />
       <style>{STYLES}</style>
 
       <div

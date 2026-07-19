@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -128,6 +129,13 @@ export default function HairLoss() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Hair Loss Treatment Online | Expert Hair & Scalp Care"
+        description="Concerned about hair loss? Connect with a licensed provider online for hair thinning, excessive shedding, scalp evaluations, personalized treatment plans, and prescription support through telemedicine services."
+        keywords="Hair loss treatment online, Hair & scalp care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/hair-loss"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function HairLoss() {
         </div>
       </section>
     </div>
+    </>
   );
 }

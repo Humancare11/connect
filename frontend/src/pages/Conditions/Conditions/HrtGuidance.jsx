@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function HrtGuidance() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="HRT Guidance Online | Hormone Replacement Therapy Support"
+        description="Get expert HRT guidance online. Connect with a licensed provider to discuss hormone replacement therapy, menopause symptoms, treatment options, and personalized hormone health care through secure telemedicine services."
+        keywords="Hormone replacement therapy, HRT guidance, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/hrt-guidance"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -433,5 +441,6 @@ export default function HrtGuidance() {
         </div>
       </section>
     </div>
+    </>
   );
 }

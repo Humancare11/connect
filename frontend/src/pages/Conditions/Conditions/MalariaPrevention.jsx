@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function MalariaPrevention() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Malaria Prevention Online | Travel Health & Antimalarial Guidance"
+        description="Traveling to a malaria-risk area? Consult a licensed provider online for malaria prevention, travel vaccinations, antimalarial medication guidance, and personalized travel health recommendations."
+        keywords="Malaria prevention, Travel health consultation, Antimalarial medication, Online travel medicine"
+        url="https://humancareconnect.co/malaria-prevention"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -433,5 +441,6 @@ export default function MalariaPrevention() {
         </div>
       </section>
     </div>
+    </>
   );
 }

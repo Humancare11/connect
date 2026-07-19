@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1220,6 +1221,12 @@ function FaqSection() {
 export default function RheumatoidArthritis() {
   return (
     <>
+                  <SEO
+        title="Rheumatoid Arthritis Treatment Online | Joint Pain & Inflammation Care"
+        description="Connect with a licensed provider online for rheumatoid arthritis treatment, joint pain relief, inflammation management, medication support, and ongoing care."
+        keywords="rheumatoid arthritis treatment, rheumatoid arthritis symptoms, online rheumatology consultation, joint inflammation, autoimmune arthritis, RA treatment online, chronic joint pain, virtual arthritis care"
+        url="https://humancareconnect.co/rheumatoid-arthritis"
+      />
       <style>{STYLES}</style>
 
       <div

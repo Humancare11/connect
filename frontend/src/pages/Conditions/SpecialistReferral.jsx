@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1211,6 +1212,12 @@ function FaqSection() {
 export default function SpecialistReferral() {
   return (
     <>
+                  <SEO
+        title="Specialist Referral Online | Virtual Referral & Care Coordination"
+        description="Get an online specialist referral for ongoing symptoms, chronic conditions, advanced evaluations, and expert care coordination from licensed providers."
+        keywords="specialist referral online, online specialist referral, virtual referral service, specialist consultation, care coordination, chronic condition management, online doctor referral, telehealth specialist referral, medical referral support, virtual healthcare services"
+        url="https://humancareconnect.co/specialist-referral"
+      />
       <style>{STYLES}</style>
 
       <div

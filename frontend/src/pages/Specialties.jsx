@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   useState,
   useEffect,
   useCallback,
@@ -44,6 +44,7 @@ import {
   Heart,
 } from "lucide-react";
 import "./Specialties.css";
+import SEO from "../components/Seo";
 
 // ── Carousel slides ──────────────────────────────────────────────────────────
 const carouselSlides = [
@@ -743,6 +744,12 @@ export default function Specialties() {
 
   return (
     <>
+                  <SEO
+        title="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
+        description="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
+        keywords="online specialist doctor, specialist doctor consultation, virtual specialist consultation, online medical specialist, telehealth specialist services, second opinion online, specialist healthcare, chronic disease specialist, expert medical consultation, online healthcare provider, virtual doctor appointment, specialist care online"
+        url="https://humancareconnect.co/specialties"
+      />
       <Helmet>
         <title>
           Online Specialist Doctor Consultation | Expert Virtual Care |

@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -69,6 +69,7 @@ import heroImage from "../../../assets/SpecialitiesImage/menopause-care-speciali
 import overviewImage from "../../../assets/SpecialitiesImage/menopause-specialist-hormonal-health-patient-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -542,16 +543,12 @@ export default function MenopauseCare({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Menopause Care Specialists | Menopause Symptoms, HRT Guidance &
-          Women's Health Support
-        </title>
-        <meta
-          name="description"
-          content="Connect with menopause care specialists for menopause symptom management, hot flashes, hormone replacement therapy guidance, hormonal health support, and personalized women's healthcare."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Menopause Care Specialists | Menopause Symptoms, HRT Guidance & Women's Health Support"
+        description="Connect with menopause care specialists for menopause symptom management, hot flashes, hormone replacement therapy guidance, hormonal health support, and personalized women's healthcare."
+        keywords="Menopause care, HRT guidance, Hormone health support, Online menopause consultation"
+        url="https://humancareconnect.co/menopause-care"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

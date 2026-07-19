@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function EmergencyTeleconsultationAbroad() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Emergency Teleconsultation Abroad | Online Travel Medical Care"
+        description="Get urgent medical support while traveling abroad. Connect with a licensed provider online for emergency teleconsultation, travel health advice, treatment guidance, and prescriptions when appropriate."
+        keywords="Emergency teleconsultation abroad, Travel health consultation, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/emergency-teleconsultation-abroad"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function EmergencyTeleconsultationAbroad() {
         </div>
       </section>
     </div>
+    </>
   );
 }

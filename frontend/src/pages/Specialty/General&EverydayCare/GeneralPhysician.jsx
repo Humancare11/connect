@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -68,6 +68,7 @@ import heroImage from "../../../assets/SpecialitiesImage/general-physician-prima
 import overviewImage from "../../../assets/SpecialitiesImage/general-physician-patient-health-checkup.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -586,15 +587,12 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          General Physician (GP) | Primary Care & Everyday Healthcare
-        </title>
-        <meta
-          name="description"
-          content="Connect with experienced General Physicians for cold and flu, fever, cough, headaches, minor infections, fatigue, body aches, and everyday healthcare needs."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="General Physician (GP) | Primary Care & Everyday Healthcare"
+        description="Connect with experienced General Physicians for cold and flu, fever, cough, headaches, minor infections, fatigue, body aches, and everyday healthcare needs."
+        keywords="General physician, Primary care online, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/general-physician"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Shingles.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function Shingles() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Shingles Treatment Online | Virtual Care for Rash & Nerve Pain"
+        description="Get fast online treatment for shingles. Connect with a licensed provider for painful rashes, blisters, nerve pain, antiviral treatment, and symptom relief."
+        keywords="shingles treatment online, shingles symptoms, herpes zoster treatment, painful skin rash, antiviral treatment for shingles, online dermatologist, nerve pain from shingles, virtual skin consultation"
+        url="https://humancareconnect.co/shingles"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -426,5 +434,6 @@ export default function Shingles() {
         </div>
       </section>
     </div>
+    </>
   );
 }

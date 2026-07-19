@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
+import SEO from "../../components/Seo";
 
 const PAGE_TITLE =
   "Top Telemedicine Platforms & Providers: Features, Benefits & Comparison";
@@ -223,6 +224,7 @@ export default function TopTelemedicinePlatforms() {
 
   return (
     <>
+      <SEO title="Top Telemedicine Platforms & Providers | Best Telehealth Services" description="Discover the top telemedicine platforms and providers." keywords="Top telemedicine platforms" url="https://humancareconnect.co/top-telemedicine-platforms" />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />

@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -68,6 +68,7 @@ import heroImage from "../../../assets/SpecialitiesImage/ent-ear-nose-throat-spe
 import overviewImage from "../../../assets/SpecialitiesImage/ent-specialist-ear-nose-throat-examination-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -588,13 +589,12 @@ export default function Ent({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>ENT Specialists | Ear, Nose & Throat Care Services</title>
-        <meta
-          name="description"
-          content="Get expert ENT care for ear infections, ear pain, sore throat, tonsillitis, nasal congestion, hoarseness, vertigo, and other ear, nose, and throat conditions."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="ENT Specialists | Ear, Nose & Throat Care Services"
+        description="Get expert ENT care for ear infections, ear pain, sore throat, tonsillitis, nasal congestion, hoarseness, vertigo, and other ear, nose, and throat conditions."
+        keywords="ENT specialists, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/ear-nose-throat"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

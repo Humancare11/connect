@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/SEO";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function Anxiety() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Online Anxiety Treatment | Virtual Mental Health Support"
+        description="Get online anxiety support for excessive worry, stress, racing thoughts, and restlessness. Connect with a licensed provider for evaluation and personalized care."
+        keywords="Anxiety, Anxiety support, Mental health support, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/anxiety"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function Anxiety() {
         </div>
       </section>
     </div>
+    </>
   );
 }

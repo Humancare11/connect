@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+﻿import { useState, useRef } from "react";
 import "./FAQPage.css";
+import SEO from "../components/Seo";
 
 /**
  * FAQPage — Nurecare Connect
@@ -431,10 +432,18 @@ const CATEGORIES = [
 
 export default function FAQPage() {
   return (
-    <div className="faq-page">
+    <>
+                  <SEO
+        title="Telemedicine & Online Doctor Support | Humancare Connect"
+        description="Find answers about online doctor appointments, telemedicine services, virtual healthcare, prescriptions, privacy, security, billing, and patient support."
+        keywords="Telemedicine help center, Online doctor support, Virtual healthcare services, Online doctor appointment"
+        url="https://humancareconnect.co/faq"
+      />
+      <div className="faq-page">
       <Hero />
       <FAQContent />
     </div>
+    </>
   );
 }
 

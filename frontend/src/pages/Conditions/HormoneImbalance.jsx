@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Hormone-Imbalance.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function HormoneImbalance() {
   return (
     <>
+                  <SEO
+        title="�Hormone Imbalance Treatment Online | Expert Hormone Health Care"
+        description="Get expert care for hormone imbalance online. Connect with a licensed provider for hormone health evaluations, symptom assessment, personalized treatment, and ongoing support through secure telemedicine services."
+        keywords="Hormone imbalance treatment, Hormone health care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/hormone-imblance"
+      />
       <style>{STYLES}</style>
 
       <div

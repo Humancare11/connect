@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -61,6 +61,7 @@ import heroImage from "../../../assets/SpecialitiesImage/neurology-specialist-br
 import overviewImage from "../../../assets/SpecialitiesImage/neurology-consultation-brain-health-specialist.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -563,13 +564,12 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>Neurology Specialists | Brain, Nerve & Neurological Care</title>
-        <meta
-          name="description"
-          content="Get expert neurology care for migraines, dizziness, memory concerns, tremors, seizures, numbness, tingling, and neurological disorders."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Neurology Specialists | Brain, Nerve & Neurological Care"
+        description="Get expert neurology care for migraines, dizziness, memory concerns, tremors, seizures, numbness, tingling, and neurological disorders."
+        keywords="Neurology specialist, Migraine treatment, Neurological care, Online neurology consultation"
+        url="https://humancareconnect.co/neurology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

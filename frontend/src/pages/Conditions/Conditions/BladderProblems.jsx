@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -128,6 +129,13 @@ export default function BladderProblems() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Bladder Problems Care Online | Urinary Health & Symptom Support"
+        description="Frequent urination, urgency, leakage, or bladder discomfort? Get personalized urinary health support, symptom evaluation, and treatment guidance from an online provider."
+        keywords="Bladder problems, Urinary health, Frequent urination, Bladder concerns, Telemedicine services, Virtual healthcare services"
+        url="https://humancareconnect.co/bladder-problems"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -434,5 +442,6 @@ export default function BladderProblems() {
         </div>
       </section>
     </div>
+    </>
   );
 }

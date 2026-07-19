@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Knee-Pain.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1221,6 +1222,12 @@ function FaqSection() {
 export default function KneePain() {
   return (
     <>
+                  <SEO
+        title="Knee Pain Treatment Online | Orthopedic Knee Specialist"
+        description="Get expert care for knee pain online. Consult a licensed provider for knee injuries, arthritis, swelling, stiffness, reduced mobility, and personalized treatment through secure telemedicine services."
+        keywords="Knee pain treatment, Online orthopedic specialist, Online doctor appointment, Knee pain relief"
+        url="https://humancareconnect.co/knee-pain"
+      />
       <style>{STYLES}</style>
 
       <div

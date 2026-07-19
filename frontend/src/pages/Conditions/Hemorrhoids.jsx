@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Hemorrhoids.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1219,6 +1220,12 @@ function FaqSection() {
 export default function Hemorrhoids() {
   return (
     <>
+                  <SEO
+        title="Hemorrhoid Treatment Online | Private Relief for Piles"
+        description="Get confidential hemorrhoid treatment online for pain, itching, swelling, bleeding, and rectal discomfort. Connect with a licensed provider through secure telemedicine services."
+        keywords="Hemorrhoid treatment online, Piles treatment, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/hemorrhoids"
+      />
       <style>{STYLES}</style>
 
       <div

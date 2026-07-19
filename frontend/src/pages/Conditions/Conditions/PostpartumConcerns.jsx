@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function PostpartumConcerns() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Postpartum Care Online | Recovery & Postnatal Health Support"
+        description="Get expert postpartum care online. Connect with a licensed provider for recovery after childbirth, breastfeeding support, mood changes, healing concerns, and personalized postnatal care."
+        keywords="Postpartum care, Postpartum recovery, Online postpartum consultation, Postnatal health support, Virtual women's healthcare"
+        url="https://humancareconnect.co/postpartum-concerns"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function PostpartumConcerns() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function Pcos() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="PCOS Treatment Online | Hormonal Health & Women's Care"
+        description="Connect with a licensed provider online for PCOS care. Get expert support for irregular periods, hormonal imbalance, fertility concerns, acne, weight management, and personalized treatment."
+        keywords="PCOS treatment, Hormonal health, Online PCOS consultation, Women's health specialist"
+        url="https://humancareconnect.co/pcos"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function Pcos() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function Bronchitis() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Bronchitis Care Online | Cough, Mucus & Chest Symptom Relief"
+        description="Dealing with a persistent cough, mucus, wheezing, or chest discomfort? Get online bronchitis care with symptom relief, treatment guidance, and prescriptions when appropriate."
+        keywords="Bronchitis, Bronchitis symptoms, Persistent cough, Chest discomfort, Telemedicine services, Online doctor appointment"
+        url="https://humancareconnect.co/bronchitis"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function Bronchitis() {
         </div>
       </section>
     </div>
+    </>
   );
 }

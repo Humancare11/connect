@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/SexualHealth/Herpes.webp";
 
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1044,6 +1045,12 @@ function FaqSection() {
 export default function Herpes() {
   return (
     <>
+                  <SEO
+        title="Herpes Treatment Online | Confidential HSV Care"
+        description="Get confidential herpes treatment online for oral or genital HSV symptoms. Connect with a licensed provider for outbreak management, treatment guidance, and prescription support through telemedicine services."
+        keywords="Herpes treatment online, HSV care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/herpes"
+      />
       <style>{STYLES}</style>
 
       <div

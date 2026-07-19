@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrineryKidneyHealth/urinary-tract-infection.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function UrinaryTractInfection() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="UTI Treatment Online | Virtual Urinary Tract Infection Care"
+        description="Get online UTI care for burning urination, frequent urges, pelvic discomfort, and other urinary symptoms. Consult a licensed provider for treatment."
+        keywords="UTI treatment online, urinary tract infection treatment, online UTI doctor, UTI symptoms, burning urination, frequent urination, bladder infection treatment, virtual UTI care, telehealth UTI treatment, online doctor consultation"
+        url="https://humancareconnect.co/urinary-tract-infection"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function UrinaryTractInfection() {
         </div>
       </section>
     </div>
+    </>
   );
 }

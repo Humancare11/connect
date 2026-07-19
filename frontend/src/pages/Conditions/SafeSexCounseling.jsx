@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1050,6 +1051,12 @@ function FaqSection() {
 export default function SafeSexCounseling() {
   return (
     <>
+                  <SEO
+        title="Safe Sex Counseling Online | Confidential Sexual Health Consultation"
+        description="Talk to a licensed provider online about safe sex, contraception, STI prevention, sexual wellness, and healthy relationships in a confidential consultation."
+        keywords="safe sex counseling, online sexual health consultation, STI prevention, contraception counseling, sexual wellness, reproductive health consultation, confidential sex counseling, telehealth sexual health"
+        url="https://humancareconnect.co/safe-sex-counseling"
+      />
       <style>{STYLES}</style>
 
       <div

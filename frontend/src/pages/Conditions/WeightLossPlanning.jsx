@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function WeightLossPlanning() {
   return (
     <>
+                  <SEO
+        title="Weight-Loss Planning Online | Personalized Weight Management"
+        description="Get personalized weight-loss planning with an online provider. Access nutrition guidance, lifestyle planning, weight management support, and customized care recommendations."
+        keywords="Weight-loss planning, weight loss plan, weight management, personalized weight loss, weight loss journey, sustainable weight loss, healthy weight, nutrition guidance, physical activity, lifestyle changes, weight management assessments, lifestyle planning, customized weight loss plan, weight loss goals, health and wellness, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"
+        url="https://humancareconnect.co/weight-loss-planning"
+      />
       <style>{STYLES}</style>
 
       <div

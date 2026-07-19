@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function NipplePain() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Nipple Pain Treatment Online | Breastfeeding & Lactation Support"
+        description="Get expert care for nipple pain during breastfeeding. Connect with a licensed provider online for lactation support, sore nipples, latch guidance, breastfeeding discomfort, and personalized treatment."
+        keywords="Nipple pain treatment, Breastfeeding support, Lactation consultation, Online breastfeeding care"
+        url="https://humancareconnect.co/nipple-pain"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function NipplePain() {
         </div>
       </section>
     </div>
+    </>
   );
 }

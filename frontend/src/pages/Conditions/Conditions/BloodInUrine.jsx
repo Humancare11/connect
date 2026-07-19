@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -126,6 +127,13 @@ export default function BloodInUrine() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Blood in Urine Care Online | Urinary Symptom Evaluation"
+        description="Noticed pink, red, or dark urine? Get prompt online care for blood in urine symptoms with evaluation, treatment guidance, and personalized next-step recommendations."
+        keywords="Blood in urine, Blood in urine symptoms, Urinary tract infections, Kidney stones, Urinary symptom care, Online doctor appointment"
+        url="https://humancareconnect.co/blood-in-urine"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function BloodInUrine() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Gastritis.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1218,6 +1219,12 @@ function FaqSection() {
 export default function Gastritis() {
   return (
     <>
+                  <SEO
+        title="Gastritis Treatment Online | Stomach Pain & Acid Relief"
+        description="Get expert gastritis treatment online for stomach pain, nausea, bloating, indigestion, and acid-related discomfort. Connect with a licensed provider through secure telemedicine services."
+        keywords="Gastritis treatment online, Stomach pain relief, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/gastritis"
+      />
       <style>{STYLES}</style>
 
       <div

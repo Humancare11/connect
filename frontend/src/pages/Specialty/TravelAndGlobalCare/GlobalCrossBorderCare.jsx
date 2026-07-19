@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -78,6 +78,7 @@ import heroImage from "../../../assets/SpecialitiesImage/aglobal-cross-border-ca
 import overviewImage from "../../../assets/SpecialitiesImage/global-cross-border-healthcare-support-specialists.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -563,16 +564,12 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Global Cross-Border Care | International Telemedicine & Medical
-          Support
-        </title>
-        <meta
-          name="description"
-          content="Access global healthcare support through international telemedicine services, cross-border consultations, medication refill assistance, referral coordination, and medical guidance while traveling abroad."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Global Cross-Border Care | International Telemedicine & Medical Support"
+        description="Access global healthcare support through international telemedicine services, cross-border consultations, medication refill assistance, referral coordination, and medical guidance while traveling abroad."
+        keywords="Global cross-border care, International telemedicine, Cross-border consultation, Online doctor appointment"
+        url="https://humancareconnect.co/global-cross-border-care"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

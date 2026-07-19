@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/strep-throat.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function StrepThroat() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Strep Throat Treatment Online | Virtual Doctor Consultation"
+        description="Get online treatment for strep throat. Consult a licensed provider for severe throat pain, fever, swollen glands, difficulty swallowing, and prescription care."
+        keywords="strep throat treatment online, strep throat symptoms, online doctor for strep throat, bacterial throat infection, sore throat treatment, throat infection consultation, virtual doctor consultation, telehealth strep throat care, prescription treatment online, fever and sore throat"
+        url="https://humancareconnect.co/strep-throat"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function StrepThroat() {
         </div>
       </section>
     </div>
+    </>
   );
 }

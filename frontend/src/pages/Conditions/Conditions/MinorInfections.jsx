@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Minor-infections.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function MinorInfections() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Minor Infection Treatment Online | Virtual Doctor for Common Infections"
+        description="Get fast treatment for minor infections online. Consult a licensed provider for sore throat, cough, fever, skin infections, urinary symptoms, and personalized care from the comfort of home."
+        keywords="Minor infections, minor infection treatment online, common infections, sore throat, cough, mild fever, skin infections, urinary symptoms, telemedicine services, online doctor appointment, virtual healthcare services, online provider"
+        url="https://humancareconnect.co/minor-infections"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -431,5 +439,6 @@ export default function MinorInfections() {
         </div>
       </section>
     </div>
+    </>
   );
 }

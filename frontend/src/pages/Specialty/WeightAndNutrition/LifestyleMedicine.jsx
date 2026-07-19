@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -78,6 +78,7 @@ import heroImage from "../../../assets/SpecialitiesImage/lifestyle-medicine-spec
 import overviewImage from "../../../assets/SpecialitiesImage/lifestyle-medicine-wellness-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -558,16 +559,12 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Lifestyle Medicine Specialists | Healthy Habits, Nutrition & Wellness
-          Care
-        </title>
-        <meta
-          name="description"
-          content="Connect with lifestyle medicine specialists for diet and exercise planning, healthy habit coaching, sleep improvement, preventive wellness care, and long-term health optimization."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Lifestyle Medicine Specialists | Healthy Habits, Nutrition & Wellness Care"
+        description="Connect with lifestyle medicine specialists for diet and exercise planning, healthy habit coaching, sleep improvement, preventive wellness care, and long-term health optimization."
+        keywords="Lifestyle medicine specialist, Healthy lifestyle coaching, Weight management, Preventive wellness care"
+        url="https://humancareconnect.co/lifestyle-medicine"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

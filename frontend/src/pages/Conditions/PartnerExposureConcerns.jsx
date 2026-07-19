@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/SexualHealth/Partner-Exposure-Concerns.webp";
 
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1046,6 +1047,12 @@ function FaqSection() {
 export default function PartnerExposureConcerns() {
   return (
     <>
+                  <SEO
+        title="Partner Exposure Concerns | Online STI Exposure Consultation"
+        description="Get confidential care for partner exposure concerns. Connect with a licensed provider online for STI exposure assessment, testing guidance, prevention options, treatment recommendations, and sexual health support."
+        keywords="Partner exposure concerns, STI exposure consultation, Sexual health consultation, Online STI assessment"
+        url="https://humancareconnect.co/partner-exposure-concerns"
+      />
       <style>{STYLES}</style>
 
       <div

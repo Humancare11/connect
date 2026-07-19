@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function IrregularPeriods() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Irregular Periods Treatment | Online Gynecologist Consultation"
+        description="Missed, delayed, or irregular periods? Consult a licensed gynecologist online for menstrual cycle concerns, hormone imbalance evaluation, personalized treatment, and expert women's health support."
+        keywords="Irregular periods treatment, Online gynecologist consultation, Menstrual cycle problems, Hormone imbalance"
+        url="https://humancareconnect.co/irregular-periods"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -430,5 +438,6 @@ export default function IrregularPeriods() {
         </div>
       </section>
     </div>
+    </>
   );
 }

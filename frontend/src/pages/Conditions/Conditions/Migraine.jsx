@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Migrane.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function Migraine() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Migraine Treatment Online | Headache Specialist Consultation"
+        description="Get expert migraine treatment online. Consult a licensed provider for severe headaches, nausea, light sensitivity, dizziness, migraine relief, and personalized treatment plans from home."
+        keywords="Migraine treatment, Online headache consultation, Migraine relief, Virtual neurology care"
+        url="https://humancareconnect.co/migraines"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function Migraine() {
         </div>
       </section>
     </div>
+    </>
   );
 }

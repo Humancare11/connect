@@ -5,6 +5,7 @@ import telemedicineSafe from "../../assets/BlogImages/telemedicine-safe.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import doctorConsultation from "../../assets/BlogImages/doctor-consultation.webp";
+import SEO from "../../components/Seo";
 const PAGE_TITLE =
   "Is Telemedicine Safe? Privacy, Security & Patient Confidentiality Explained";
 const PAGE_DESCRIPTION =
@@ -244,6 +245,7 @@ export default function TelemedicineSafe() {
 
   return (
     <>
+      <SEO title="Is Telemedicine Safe? | Virtual Healthcare Security" description="Learn about telemedicine safety and security." keywords="Is telemedicine safe" url="https://humancareconnect.co/is-telemedicine-safe" />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />

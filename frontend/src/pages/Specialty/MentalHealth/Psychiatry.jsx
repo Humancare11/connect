@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -76,6 +76,7 @@ import heroImage from "../../../assets/SpecialitiesImage/psychiatry-mental-healt
 import overviewImage from "../../../assets/SpecialitiesImage/psychiatrist-patient-mental-health-evaluation-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -591,16 +592,12 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Psychiatry Specialists | Mental Health, Medication Management &
-          Emotional Wellness
-        </title>
-        <meta
-          name="description"
-          content="Connect with experienced psychiatry specialists for anxiety, depression, ADHD, PTSD, insomnia, bipolar disorder, panic attacks, OCD, and personalized mental health care."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Psychiatry Specialists | Mental Health, Medication Management & Emotional Wellness"
+        description="Connect with experienced psychiatry specialists for anxiety, depression, ADHD, PTSD, insomnia, bipolar disorder, panic attacks, OCD, and personalized mental health care."
+        keywords="online psychiatrist, psychiatry services, psychiatrist online, anxiety treatment, depression treatment, ADHD evaluation, PTSD treatment, OCD treatment, bipolar disorder care, medication management, virtual mental health care, telepsychiatry"
+        url="https://humancareconnect.co/psychiatry"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

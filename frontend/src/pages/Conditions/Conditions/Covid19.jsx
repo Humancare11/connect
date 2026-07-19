@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function Covid19() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="COVID-19 Treatment Online | Telemedicine Services & Virtual Care"
+        description="Get trusted COVID-19 treatment online with secure telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive expert care from home."
+        keywords="COVID-19 treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/covid-19"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -426,5 +434,6 @@ export default function Covid19() {
         </div>
       </section>
     </div>
+    </>
   );
 }

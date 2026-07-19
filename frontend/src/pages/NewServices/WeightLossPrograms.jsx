@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -52,6 +52,7 @@ import {
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
+import SEO from "../components/Seo";
 
 /* ──────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS — light theme
@@ -1726,6 +1727,12 @@ export default function WeightLossPrograms() {
 
   return (
     <>
+                  <SEO
+        title="Weight Loss Programs Online | Personalized Weight Management | Humancare Connect"
+        description="Explore personalized weight loss programs through secure telemedicine services. Connect with licensed healthcare providers and achieve your health goals."
+        keywords="Weight loss programs, weight loss programs online, personalized weight loss programs, weight management, personalized weight management, healthy weight management, weight loss plan, weight management plan, weight loss journey, sustainable weight loss, obesity management, overweight, nutrition guidance, lifestyle changes, lifestyle modifications, physical activity, healthy lifestyle habits, long term weight management, weight related health conditions, telemedicine services, virtual healthcare services, online weight loss consultation, licensed healthcare providers, personalized care, health and wellnes"
+        url="https://humancareconnect.co/weight-loss-programs"
+      />
       <Helmet>
         <title>
           Weight Loss Programs Online | Personalized Weight Management |

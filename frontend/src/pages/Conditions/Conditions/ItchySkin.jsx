@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function ItchySkin() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Itchy Skin Treatment Online | Dermatologist for Skin Irritation"
+        description="Relieve itchy skin with expert online dermatology care. Consult a licensed skin specialist for itching, rashes, eczema, allergies, redness, and personalized treatment from home."
+        keywords="Itchy skin treatment, Online dermatologist, Skin irritation relief, Eczema and allergy care"
+        url="https://humancareconnect.co/itchy-skin"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function ItchySkin() {
         </div>
       </section>
     </div>
+    </>
   );
 }

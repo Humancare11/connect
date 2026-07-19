@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/pink-eye.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function PinkEye() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Pink Eye Treatment Online | Conjunctivitis Virtual Care"
+        description="Get fast online treatment for pink eye. Connect with a licensed provider for red, itchy, watery eyes, conjunctivitis symptoms, treatment recommendations, and prescriptions when appropriate."
+        keywords="Pink eye treatment, Conjunctivitis treatment, Online eye consultation, Red eye treatment, Virtual eye care"
+        url="https://humancareconnect.co/pink-eye"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -426,5 +434,6 @@ export default function PinkEye() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1213,6 +1214,12 @@ function FaqSection() {
 export default function ReturnWorkClearance() {
   return (
     <>
+                  <SEO
+        title="Return-to-Work Clearance Online | Medical Fitness Evaluation"
+        description="Get a return-to-work clearance online. Connect with a licensed provider for medical evaluations, recovery assessments, and work clearance documentation when appropriate."
+        keywords="return-to-work clearance, work clearance online, fitness for work evaluation, medical clearance certificate, return to work assessment, online doctor consultation, work fitness exam, telehealth medical clearance"
+        url="https://humancareconnect.co/return-to-work-clearance"
+      />
       <style>{STYLES}</style>
 
       <div

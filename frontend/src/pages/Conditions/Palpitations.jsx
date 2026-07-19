@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Palpitations.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1216,6 +1217,12 @@ function FaqSection() {
 export default function Palpitations() {
   return (
     <>
+                  <SEO
+        title="Palpitations Evaluation Online | Irregular Heartbeat Consultation"
+        description="Get expert care for heart palpitations online. Connect with a licensed provider for racing heartbeat, fluttering sensations, irregular heart rhythm evaluation, and personalized heart health guidance."
+        keywords="Heart palpitations, Irregular heartbeat, Online heart consultation, Palpitations evaluation"
+        url="https://humancareconnect.co/palpitations"
+      />
       <style>{STYLES}</style>
 
       <div

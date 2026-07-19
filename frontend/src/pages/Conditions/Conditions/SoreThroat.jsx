@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/sore-throat.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function SoreThroat() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Sore Throat Treatment Online | Virtual Doctor Consultation"
+        description="Get online treatment for a sore throat. Connect with a licensed provider for throat pain, difficulty swallowing, irritation, and personalized care."
+        keywords="sore throat treatment online, sore throat symptoms, online doctor for sore throat, throat pain treatment, difficulty swallowing, virtual doctor consultation, telehealth sore throat care, strep throat evaluation, throat infection treatment, online medical consultation"
+        url="https://humancareconnect.co/sore-throat"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function SoreThroat() {
         </div>
       </section>
     </div>
+    </>
   );
 }

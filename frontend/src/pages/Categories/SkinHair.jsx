@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -576,6 +577,12 @@ export default function SkinHair() {
         minHeight: "100vh",
       }}
     >
+                  <SEO
+        title="Online Skin & Hair Care | Virtual Dermatology Consultation | Humancare Connect"
+        description="Access online skin and hair care with trusted healthcare professionals. Get virtual dermatology consultations for acne, hair loss, scalp concerns, skin conditions, and personalized treatment guidance."
+        keywords="online skin and hair care, virtual dermatologist, online dermatology consultation, hair loss treatment online, scalp treatment, acne treatment online, eczema treatment, skin rash consultation, mole check online, telehealth dermatology, skin specialist online, hair care consultation"
+        url="https://humancareconnect.co/skin-and-hair-care"
+      />
       <Helmet>
         <title>
           Online Skin & Hair Care | Virtual Dermatology Consultation | Humancare

@@ -5,6 +5,7 @@ import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import telemedicineServices from "../../assets/BlogImages/telemedicine-services.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
+import SEO from "../../components/Seo";
 
 const PAGE_TITLE =
   "What Is Telemedicine? Meaning, Benefits, Types & How It Works";
@@ -176,6 +177,7 @@ export default function TelemedicineServices() {
 
   return (
     <>
+      <SEO title="Telemedicine Services | Virtual Healthcare Solutions" description="Explore telemedicine services and virtual healthcare solutions." keywords="Telemedicine services" url="https://humancareconnect.co/telemedicine-services" />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function PostnatalDepression() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Postnatal Depression Treatment Online | Postpartum Mental Health Care"
+        description="Get compassionate support for postnatal depression online. Connect with a licensed provider for postpartum depression, anxiety, mood changes, emotional wellness, and personalized mental health treatment."
+        keywords="Postnatal depression, Postpartum depression treatment, Online postpartum mental health, Postpartum anxiety support, Virtual mental healthcare"
+        url="https://humancareconnect.co/postnatal-depression"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function PostnatalDepression() {
         </div>
       </section>
     </div>
+    </>
   );
 }

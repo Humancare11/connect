@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/Referral-Coordination-Overseas.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function ReferralCoordinationOverseas() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="International Medical Referral Coordination | Overseas Specialist Consultation"
+        description="Get expert assistance with international medical referrals, overseas specialist coordination, treatment planning, and cross-border healthcare support."
+        keywords="international medical referral, overseas specialist referral, medical referral coordination, cross-border healthcare, international healthcare services, overseas medical consultation, global patient coordination, medical tourism support"
+        url="https://humancareconnect.co/referral-coordination-overseas"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -434,5 +442,6 @@ export default function ReferralCoordinationOverseas() {
         </div>
       </section>
     </div>
+    </>
   );
 }

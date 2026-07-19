@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function FitnessTravelEvaluation() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Fitness-to-Travel Evaluation Online | Travel Health Assessment"
+        description="Get a fitness-to-travel evaluation online with licensed healthcare providers. Receive travel health guidance, medical clearance, and documentation support through secure telemedicine services."
+        keywords="Fitness-to-travel evaluation, Travel health assessment, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/fitness-travel-evaluation"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function FitnessTravelEvaluation() {
         </div>
       </section>
     </div>
+    </>
   );
 }

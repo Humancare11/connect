@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1211,6 +1212,12 @@ function FaqSection() {
 export default function PneumoniaFollowUp() {
   return (
     <>
+                  <SEO
+        title="Pneumonia Follow-Up Online | Recovery & Respiratory Care"
+        description="Get expert pneumonia follow-up care online. Connect with a licensed provider for recovery monitoring, lingering cough, fatigue, breathing concerns, chest discomfort, and personalized treatment guidance."
+        keywords="Pneumonia follow-up, Pneumonia recovery care, Online pneumonia consultation, Respiratory follow-up, Virtual respiratory care"
+        url="https://humancareconnect.co/pneumonia-follow-up"
+      />
       <style>{STYLES}</style>
 
       <div

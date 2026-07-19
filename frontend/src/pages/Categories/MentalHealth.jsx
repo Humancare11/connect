@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -663,6 +664,12 @@ export default function MentalHealth() {
         minHeight: "100vh",
       }}
     >
+                  <SEO
+        title="Online Mental Health Support | Virtual Therapy & Counseling | Humancare Connect"
+        description="Access online mental health support with trusted professionals. Get virtual therapy, counseling, and guidance for anxiety, depression, stress, emotional wellness, and overall mental well-being."
+        keywords="Online mental health care, Virtual therapy, Online counseling, Emotional wellness support"
+        url="https://humancareconnect.co/mental-health"
+      />
       <Helmet>
         <title>
           Online Mental Health Support | Virtual Therapy & Counseling |

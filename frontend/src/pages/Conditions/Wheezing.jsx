@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1211,6 +1212,12 @@ function FaqSection() {
 export default function Wheezing() {
   return (
     <>
+                  <SEO
+        title="Wheezing Treatment Online | Breathing & Respiratory Care"
+        description="Get fast care for wheezing symptoms, chest tightness, coughing, and shortness of breath. Connect with an online provider for breathing care and treatment guidance."
+        keywords="Wheezing, wheezing symptoms, wheezing treatment, noisy breathing, chest tightness, coughing, shortness of breath, airway irritation, asthma, allergies, respiratory infections, breathing conditions, breathing care guidance, respiratory care, symptom evaluation, treatment recommendations, telemedicine services, online doctor appointment, telemedicine platform, online provider"
+        url="https://humancareconnect.co/wheezing"
+      />
       <style>{STYLES}</style>
 
       <div

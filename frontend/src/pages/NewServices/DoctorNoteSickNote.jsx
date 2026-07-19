@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -53,6 +53,7 @@ import {
 import emailjs from "@emailjs/browser";
 
 import { Helmet } from "react-helmet-async";
+import SEO from "../components/Seo";
 
 import heroBanner from "../../assets/MedicalServices/sick-notes-medical-certificates.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
@@ -1845,6 +1846,12 @@ export default function DoctorNote() {
 
   return (
     <>
+                  <SEO
+        title="Doctor Notes & Sick Notes Online | Medical Documentation | Humancare Connect"
+        description="Need a Doctor Note or Sick Note? Connect with licensed healthcare providers online and receive medical documentation when clinically appropriate through secure telemedicine services."
+        keywords="Doctor notes online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/doctor-note-or-sick-notes"
+      />
       <Helmet>
         <title>
           Doctor Notes & Sick Notes Online | Medical Documentation | Humancare

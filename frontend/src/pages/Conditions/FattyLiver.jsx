@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1222,6 +1223,12 @@ function FaqSection() {
 export default function FattyLiver() {
   return (
     <>
+                  <SEO
+        title="Fatty Liver Follow-Up Online | Ongoing Liver Health Care"
+        description="Manage fatty liver disease with expert online follow-up care. Connect with a licensed provider for liver health monitoring, lifestyle guidance, and personalized treatment through telemedicine services."
+        keywords="Fatty liver follow-up, Liver health monitoring, Telemedicine services, Online doctor appointment"
+        url="https://humancareconnect.co/fatty-liver"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -61,6 +61,7 @@ import heroImage from "../../../assets/SpecialitiesImage/family-medicine-primary
 import overviewImage from "../../../assets/SpecialitiesImage/family-medicine-doctor-patient-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -538,15 +539,12 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Family Medicine Specialists | Comprehensive Care for All Ages
-        </title>
-        <meta
-          name="description"
-          content="Get personalized family medicine care for routine check-ups, vaccinations, preventive care, and common illnesses for individuals and families."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Family Medicine Specialists | Comprehensive Care for All Ages"
+        description="Get personalized family medicine care for routine check-ups, vaccinations, preventive care, and common illnesses for individuals and families."
+        keywords="Family medicine specialists, Primary care online, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/family-medicine"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

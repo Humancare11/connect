@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1211,6 +1212,12 @@ function FaqSection() {
 export default function PediatricColdFlu() {
   return (
     <>
+                  <SEO
+        title="Pediatric Cold & Flu Treatment Online | Children's Virtual Care"
+        description="Get expert pediatric cold and flu care online. Connect with a licensed provider for fever, cough, congestion, sore throat, flu symptoms, and personalized treatment for your child."
+        keywords="Pediatric cold and flu, Children's cold treatment, Online pediatric consultation, Virtual pediatric care"
+        url="https://humancareconnect.co/pediatric-cold-flu"
+      />
       <style>{STYLES}</style>
 
       <div

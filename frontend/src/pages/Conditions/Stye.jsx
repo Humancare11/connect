@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1213,6 +1214,12 @@ function FaqSection() {
 export default function Stye() {
   return (
     <>
+                  <SEO
+        title="Stye Treatment Online | Virtual Eye Care Consultation"
+        description="Get online treatment for a stye. Consult a licensed provider for painful eyelid bumps, swelling, redness, eye irritation, and personalized care guidance."
+        keywords="stye treatment online, eyelid stye treatment, painful eyelid bump, eye infection consultation, online eye doctor, swollen eyelid treatment, virtual eye care, telehealth eye consultation, hordeolum treatment, online ophthalmology consultation"
+        url="https://humancareconnect.co/stye"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import "./Corporates.css";
 import IndustrySlider from "../components/IndustrySlider";
 import ECGTimeline from "../components/ECGTimeline";
@@ -12,6 +12,7 @@ import MentalHealthImg from "../assets/CorporateSolutions/employee-mental-health
 import PrescriptionsImg from "../assets/CorporateSolutions/digital-prescription-service-telehealth.webp";
 import HrDashboardImg from "../assets/CorporateSolutions/health-analytics-reporting-dashboard.webp";
 import SickLeaveImg from "../assets/CorporateSolutions/employee-absence-management-solution.webp";
+import SEO from "../components/Seo";
 
 const SERVICES = [
   {
@@ -298,6 +299,12 @@ export default function CorporateDemo() {
 
   return (
     <>
+                  <SEO
+        title="Corporate Telemedicine Services | Humancare Connect for Corporates"
+        description="Corporate telemedicine services designed to improve employee wellness, workforce productivity, and healthcare access through secure virtual healthcare services, online doctor appointments, and scalable telehealth solutions by Humancare Connect."
+        keywords="Corporate telemedicine services, Virtual healthcare services, Online doctor appointment, Employee healthcare solutions"
+        url="https://humancareconnect.co/corporates"
+      />
       {/* HERO */}
       <section>
         <div

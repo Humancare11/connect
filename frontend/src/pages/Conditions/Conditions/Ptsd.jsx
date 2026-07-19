@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/PTSD.webp";
 
 
@@ -127,6 +128,13 @@ export default function Ptsd() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="PTSD Treatment Online | Virtual Trauma & Mental Health Support"
+        description="Get confidential PTSD treatment online. Connect with a licensed provider for trauma, flashbacks, anxiety, nightmares, emotional distress, and personalized mental health care."
+        keywords="PTSD treatment online, post-traumatic stress disorder, trauma therapy online, PTSD counseling, online psychiatrist for PTSD, virtual mental health care, anxiety after trauma, PTSD support"
+        url="https://humancareconnect.co/ptsd"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function Ptsd() {
         </div>
       </section>
     </div>
+    </>
   );
 }

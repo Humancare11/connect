@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -128,6 +129,13 @@ export default function BurningUrination() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Burning Urination Relief Online | Painful Urination Care"
+        description="Pain, stinging, or burning while urinating? Get prompt online care for burning urination symptoms with evaluation, treatment guidance, and prescription support when appropriate."
+        keywords="Burning urination, Burning urination symptoms, Pain while urinating, Urinary tract infections, Urinary symptom relief, Online doctor appointment"
+        url="https://humancareconnect.co/burning-urination"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function BurningUrination() {
         </div>
       </section>
     </div>
+    </>
   );
 }

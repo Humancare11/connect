@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/SexualHealth/Genital-Itching.webp";
 
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1044,6 +1045,12 @@ function FaqSection() {
 export default function GenitalItching() {
   return (
     <>
+                  <SEO
+        title="Genital Itching Treatment Online | Private Virtual Consultation"
+        description="Get confidential treatment for genital itching online. Connect with a licensed provider for symptom evaluation, treatment recommendations, and prescription support through secure telemedicine services."
+        keywords="Genital itching treatment, Private online consultation, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/genital-itching"
+      />
       <style>{STYLES}</style>
 
       <div

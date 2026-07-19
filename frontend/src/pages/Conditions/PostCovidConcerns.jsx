@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function PostCovidConcerns() {
   return (
     <>
+                  <SEO
+        title="Post-COVID Care Online | Long COVID Recovery Support"
+        description="Get expert online care for post-COVID concerns. Connect with a licensed provider for lingering fatigue, brain fog, shortness of breath, headaches, loss of smell or taste, and personalized recovery support."
+        keywords="Post-COVID care, Long COVID treatment, Online post-COVID consultation, Long COVID recovery, Virtual healthcare services"
+        url="https://humancareconnect.co/post-covid-concerns"
+      />
       <style>{STYLES}</style>
 
       <div

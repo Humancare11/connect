@@ -5,6 +5,7 @@ import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedi
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import doctorConsultation from "../../assets/BlogImages/doctor-consultation.webp";
+import SEO from "../../components/Seo";
 
 const PAGE_TITLE =
   "Telemedicine vs In-Person Doctor Visits: Key Differences, Pros & Cons";
@@ -244,6 +245,7 @@ export default function TelemedicineInPerson() {
 
   return (
     <>
+      <SEO title="Telemedicine vs In-Person Doctor Visits | Comparison Guide" description="Compare telemedicine vs in-person doctor visits." keywords="Telemedicine vs in person" url="https://humancareconnect.co/telemedicine-vs-in-person" />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Memory-concerns.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1223,6 +1224,12 @@ function FaqSection() {
 export default function MemoryConcerns() {
   return (
     <>
+                  <SEO
+        title="Memory Concerns Evaluation Online | Cognitive Health Consultation"
+        description="Concerned about memory changes or forgetfulness? Connect with a licensed provider online for cognitive health evaluation, memory support, symptom assessment, and personalized care guidance."
+        keywords="Memory concerns, Cognitive health evaluation, Memory loss consultation, Online doctor consultation"
+        url="https://humancareconnect.co/memory-concerns"
+      />
       <style>{STYLES}</style>
 
       <div

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -10,6 +10,7 @@ import {
   MessageCircle, X
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/High-Cholesterol.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -906,6 +907,12 @@ function FaqSection() {
 export default function HighCholesterol() {
   return (
     <>
+                  <SEO
+        title="High Cholesterol Treatment Online | Heart Health Management"
+        description="Manage high cholesterol with expert online care. Connect with a licensed provider for cholesterol management, heart health guidance, lifestyle recommendations, and personalized treatment through telemedicine services."
+        keywords="High cholesterol treatment, Heart health management, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/high-cholesterol"
+      />
 
       <style>{STYLES}</style>
 

@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -77,6 +77,7 @@ import heroImage from "../../../assets/SpecialitiesImage/dermatology-specialist-
 import overviewImage from "../../../assets/SpecialitiesImage/dermatologist-patient-skin-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -617,13 +618,12 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>Dermatology Specialists | Skin, Hair & Nail Care Online</title>
-        <meta
-          name="description"
-          content="Connect with experienced dermatology specialists for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail problems, and personalized skin care treatment."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Dermatology Specialists | Skin, Hair & Nail Care Online"
+        description="Connect with experienced dermatology specialists for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail problems, and personalized skin care treatment."
+        keywords="Dermatology specialists, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/dermatology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrineryKidneyHealth/kidney-infection.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,8 @@ export default function KidneyInfection() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+    <SEO title="Kidney Infection Treatment Online | Urinary Health Care" description="Get expert care for kidney infections online." keywords="Kidney infection" url="https://humancareconnect.co/kidney-infection" />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +431,6 @@ export default function KidneyInfection() {
         </div>
       </section>
     </div>
+    </>
   );
 }

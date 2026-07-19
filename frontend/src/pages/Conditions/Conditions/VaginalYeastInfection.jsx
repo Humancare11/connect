@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function VaginalYeastInfection() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Vaginal Yeast Infection Treatment Online | Symptom Care"
+        description="Get fast, discreet care for vaginal yeast infection symptoms. Connect with an online provider for symptom evaluation, treatment guidance, and prescriptions when appropriate."
+        keywords="Vaginal yeast infection, Yeast infection treatment, vaginal yeast infection symptoms, vaginal itching, vaginal burning, vaginal irritation, unusual vaginal discharge, vaginal discomfort, yeast overgrowth, telemedicine services, online doctor appointment, telemedicine platform, online provider, prescription support"
+        url="https://humancareconnect.co/vaginal-yeast-infection"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function VaginalYeastInfection() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "./AppointmentBooking.css";
 import api from "../api";
 import HealthcareIcon from "../components/HealthcareIcon";
+import SEO from "../components/Seo";
 
 // --- Search helpers ---------------------------------------------------------
 // Plain `.includes()` matches a query ANYWHERE inside a string, including
@@ -371,7 +372,14 @@ export default function Ab() {
     activeCatIndex >= 0 ? String(activeCatIndex + 1).padStart(2, "0") : null;
 
   return (
-    <section className="hcc-sx">
+    <>
+                  <SEO
+        title="Online Doctor Appointment | Find a Doctor Online | Humancare Connect"
+        description="Book an online doctor appointment and connect with licensed providers through secure virtual healthcare services, telemedicine services, and fast online consultations without long clinic wait times."
+        keywords="Online doctor appointment, find a doctor online, online doctor, licensed providers, virtual healthcare services, telemedicine services, online consultation, virtual doctor visit, search providers, healthcare providers, book doctor appointment online, secure virtual care"
+        url="https://humancareconnect.co/appointment-booking"
+      />
+      <section className="hcc-sx">
       <div className="wrap">
         {/* -- CENTERED HERO -- */}
         <div className="head">
@@ -670,5 +678,6 @@ export default function Ab() {
         {/* /content-card */}
       </div >
     </section >
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Dry-Eyes.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1215,6 +1216,12 @@ function FaqSection() {
 export default function DryEyes() {
   return (
     <>
+                  <SEO
+        title="Dry Eyes Treatment Online | Telemedicine Eye Care"
+        description="Get expert dry eyes treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized eye care from home."
+        keywords="Dry eyes treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/dry-eyes"
+      />
       <style>{STYLES}</style>
 
       <div

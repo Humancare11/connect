@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -61,6 +61,7 @@ import heroImage from "../../../assets/SpecialitiesImage/gastroenterology-specia
 import overviewImage from "../../../assets/SpecialitiesImage/gastroenterologist-digestive-system-examination.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -558,13 +559,12 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
   }, [data.categoryId]);
   return (
     <>
-      <HelmetProvider>
-        <title>Gastroenterology Specialists | Digestive Health & GI Care</title>
-        <meta
-          name="description"
-          content="Get expert gastroenterology care for abdominal pain, acid reflux, bloating, constipation, IBS, fatty liver disease, and digestive health concerns."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Gastroenterology Specialists | Digestive Health & GI Care"
+        description="Get expert gastroenterology care for abdominal pain, acid reflux, bloating, constipation, IBS, fatty liver disease, and digestive health concerns."
+        keywords="Gastroenterology specialists, Digestive health care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/gastroenterology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

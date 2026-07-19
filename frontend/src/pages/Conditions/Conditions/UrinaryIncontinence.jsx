@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrineryKidneyHealth/urinary-incontinence.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function UrinaryIncontinence() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Urinary Incontinence Treatment Online | Virtual Bladder Care"
+        description="Get online care for urinary incontinence. Consult a licensed provider for bladder leakage, frequent urination, urgency, and personalized treatment guidance."
+        keywords="urinary incontinence treatment, bladder leakage treatment, loss of bladder control, frequent urination, urinary urgency, online urologist, bladder control treatment, virtual bladder care, telehealth urology, urinary incontinence consultation"
+        url="https://humancareconnect.co/urinary-incontinence"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function UrinaryIncontinence() {
         </div>
       </section>
     </div>
+    </>
   );
 }

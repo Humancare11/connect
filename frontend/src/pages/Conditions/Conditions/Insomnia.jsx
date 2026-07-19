@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function Insomnia() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Insomnia Treatment Online | Expert Sleep Health Support"
+        description="Get expert treatment for insomnia online. Connect with a licensed provider for sleep problems, insomnia evaluation, personalized treatment, and ongoing sleep support through secure telemedicine services."
+        keywords="Insomnia treatment online, Sleep health support, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/insomnia"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -428,5 +436,6 @@ export default function Insomnia() {
         </div>
       </section>
     </div>
+    </>
   );
 }

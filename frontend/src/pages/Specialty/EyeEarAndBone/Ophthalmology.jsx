@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -71,6 +71,7 @@ import heroImage from "../../../assets/SpecialitiesImage/ophthalmology-eye-speci
 import overviewImage from "../../../assets/SpecialitiesImage/ophthalmologist-comprehensive-eye-examination-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -568,15 +569,12 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Ophthalmology Specialists | Eye Care & Vision Health Services
-        </title>
-        <meta
-          name="description"
-          content="Get expert ophthalmology care for dry eyes, eye irritation, eye redness, vision changes, styes, eye strain, and comprehensive vision health support."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Ophthalmology Specialists | Eye Care & Vision Health Services"
+        description="Get expert ophthalmology care for dry eyes, eye irritation, eye redness, vision changes, styes, eye strain, and comprehensive vision health support."
+        keywords="Ophthalmology specialist, Online eye care, Vision health consultation, Eye doctor online"
+        url="https://humancareconnect.co/ophthalmology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

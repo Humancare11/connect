@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function FoodPoisoningWhileTraveling() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Travel Food Poisoning Treatment | Online Doctor Abroad"
+        description="Get expert care for food poisoning while traveling. Connect with a licensed provider online for treatment, hydration guidance, and recovery support through secure telemedicine services."
+        keywords="Travel food poisoning, Food poisoning while traveling, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/food-poisoning-while-traveling"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -429,5 +437,6 @@ export default function FoodPoisoningWhileTraveling() {
         </div>
       </section>
     </div>
+    </>
   );
 }

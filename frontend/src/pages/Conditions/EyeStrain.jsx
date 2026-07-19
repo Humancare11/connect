@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Eye-Strain.webp";
+import SEO from "../../components/Seo";
 
 
 // ─────────────────────────────────────────────────────────────────
@@ -1215,6 +1216,12 @@ function FaqSection() {
 export default function EyeStrain() {
   return (
     <>
+                  <SEO
+        title="Eye Strain Treatment Online | Digital Eye Fatigue Relief"
+        description="Experiencing tired or strained eyes? Connect with a licensed provider online for expert eye strain treatment, digital eye fatigue relief, and personalized eye care through telemedicine services."
+        keywords="Eye strain treatment, Digital eye fatigue, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/eye-strain"
+      />
       <style>{STYLES}</style>
 
       <div

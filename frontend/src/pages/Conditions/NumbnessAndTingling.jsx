@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1213,6 +1214,12 @@ function FaqSection() {
 export default function NumbersAndTingling() {
   return (
     <>
+                  <SEO
+        title="Numbness & Tingling Treatment Online | Nerve Pain & Sensation Care"
+        description="Get expert care for numbness and tingling online. Consult a licensed provider for pins and needles, nerve pain, loss of sensation, weakness, and personalized treatment guidance."
+        keywords="Numbness and tingling, Nerve pain treatment, Online neurology consultation, Peripheral neuropathy care"
+        url="https://humancareconnect.co/numbness-tingling"
+      />
       <style>{STYLES}</style>
 
       <div

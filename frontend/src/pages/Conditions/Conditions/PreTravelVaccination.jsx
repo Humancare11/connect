@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/Pre-Travel-Vaccination.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function PreTravelVaccination() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Pre-Travel Vaccination Online | Travel Vaccine Consultation"
+        description="Get expert pre-travel vaccination guidance online. Connect with a licensed provider for travel vaccines, destination-specific immunization advice, health assessments, and personalized travel health recommendations."
+        keywords="Pre-travel vaccination, Travel vaccine consultation, Travel immunizations, Online travel health consultation, Travel medicine services"
+        url="https://humancareconnect.co/pre-travel-vaccinations"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -433,5 +441,6 @@ export default function PreTravelVaccination() {
         </div>
       </section>
     </div>
+    </>
   );
 }

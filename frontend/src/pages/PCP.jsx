@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, memo } from 'react'
+﻿import { useState, useRef, useMemo, memo } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import {
   ArrowRight,
@@ -26,6 +26,7 @@ import {
   Syringe,
 } from 'lucide-react'
 import './PCP.css'
+import SEO from "../components/Seo"
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const FADE_VARIANTS = {
@@ -821,7 +822,14 @@ function CTA() {
 // ─── Page composition ──────────────────────────────────────────────────────────
 export default function PCP() {
   return (
-    <main className="pcp-root">
+    <>
+                  <SEO
+        title="Primary Care Doctor Online (PCP) | Same Day Virtual Care | Humancare Connect"
+        description="Connect with a licensed Primary Care Doctor online for preventive care, sick visits, prescription refills, chronic condition management, lab orders, and specialist referrals all from home."
+        keywords="online primary care doctor, virtual primary care, primary care provider online, PCP online, telemedicine primary care, same-day virtual doctor, online family doctor, preventive care online, prescription refills online, chronic care management, online sick visit, virtual healthcare services"
+        url="https://humancareconnect.co/primary-care-provider"
+      />
+      <main className="pcp-root">
       <Hero />
       <AboutPrimaryCare />
       <HowItWorks />
@@ -829,5 +837,6 @@ export default function PCP() {
       <FAQ />
       <CTA />
     </main>
+    </>
   )
 }

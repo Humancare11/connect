@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1222,6 +1223,12 @@ function FaqSection() {
 export default function Tremor() {
   return (
     <>
+                  <SEO
+        title="Tremor Treatment Online | Virtual Neurology Consultation"
+        description="Get online care for tremors and involuntary shaking. Consult a licensed provider for symptom evaluation, neurological guidance, and personalized care."
+        keywords="tremor treatment online, hand tremor, involuntary shaking, tremor symptoms, online neurologist, neurological consultation, movement disorder, virtual neurology care, telehealth neurology, shaking hands treatment"
+        url="https://humancareconnect.co/tremor"
+      />
       <style>{STYLES}</style>
 
       <div

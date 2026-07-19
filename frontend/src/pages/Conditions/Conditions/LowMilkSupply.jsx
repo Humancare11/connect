@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function LowMilkSupply() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Low Milk Supply Support Online | Lactation Consultant for Breastfeeding"
+        description="Worried about low milk supply? Connect with an online lactation consultant for breastfeeding support, milk production guidance, feeding assessments, and personalized care for you and your baby."
+        keywords="Low milk supply, Online lactation consultant, Breastfeeding support, Milk production guidance"
+        url="https://humancareconnect.co/low-milk-supply"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -433,5 +441,6 @@ export default function LowMilkSupply() {
         </div>
       </section>
     </div>
+    </>
   );
 }

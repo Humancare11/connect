@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import "./Categories.css";
@@ -40,6 +40,7 @@ import {
 } from "react-icons/tb";
 import { MdChildCare, MdOutlineLocalHospital } from "react-icons/md";
 import { RiMentalHealthLine } from "react-icons/ri";
+import SEO from "../components/Seo";
 
 /* ─────────────────────────────────────────────────────────────
    ICON MAP
@@ -895,6 +896,12 @@ export default function Categories() {
 
   return (
     <>
+                  <SEO
+        title="Online Doctor Consultation | Virtual Healthcare Services | Humancare Connect"
+        description="Book secure online doctor consultations with experienced healthcare professionals. Get personalized virtual healthcare services for everyday health, specialist care, mental wellness, and more with Humancare Connect."
+        keywords="Online doctor consultation, Online doctor consultation services, Virtual healthcare services, Online doctor consultations, Virtual healthcare experience, Healthcare professionals"
+        url="https://humancareconnect.co/categories"
+      />
       <Helmet>
         <title>
           Online Doctor Consultation | Virtual Healthcare Services | Humancare

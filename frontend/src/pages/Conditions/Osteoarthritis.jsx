@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Osteoarthritis.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1219,6 +1220,12 @@ function FaqSection() {
 export default function Osteoarthritis() {
   return (
     <>
+                  <SEO
+        title="Osteoarthritis Treatment Online | Joint Pain & Arthritis Care"
+        description="Get expert osteoarthritis treatment online. Connect with a licensed provider for joint pain, stiffness, reduced mobility, arthritis management, and personalized care from home."
+        keywords="Osteoarthritis treatment, Joint pain relief, Arthritis care online, Online orthopedic consultation"
+        url="https://humancareconnect.co/osteoarthritis"
+      />
       <style>{STYLES}</style>
 
       <div

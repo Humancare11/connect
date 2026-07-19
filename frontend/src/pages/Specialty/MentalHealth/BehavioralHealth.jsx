@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -76,6 +76,7 @@ import heroImage from "../../../assets/SpecialitiesImage/behavioral-health-menta
 import overviewImage from "../../../assets/SpecialitiesImage/behavioral-health-therapy-patient-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -563,16 +564,12 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Behavioral Health Specialists | Mental Health & Emotional Wellness
-          Support
-        </title>
-        <meta
-          name="description"
-          content="Connect with experienced behavioral health specialists for adjustment difficulties, anger management, sleep-related anxiety, substance use support, stress management, and emotional wellness care."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Behavioral Health Specialists | Mental Health & Emotional Wellness Support"
+        description="Connect with experienced behavioral health specialists for adjustment difficulties, anger management, sleep-related anxiety, substance use support, stress management, and emotional wellness care."
+        keywords="Behavioral Health, Behavioral Health Specialists, Mental Health, Emotional Wellness, Behavioral Health Care, Telehealth Access"
+        url="https://humancareconnect.co/behavioral-health"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

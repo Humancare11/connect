@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function NauseaAndVomiting() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Nausea & Vomiting Treatment Online | Stomach Relief & Virtual Care"
+        description="Get expert treatment for nausea and vomiting online. Consult a licensed provider for stomach illness, food poisoning, motion sickness, dehydration, and personalized care from home."
+        keywords="Nausea and vomiting treatment, Stomach illness care, Online doctor consultation, Digestive health support"
+        url="https://humancareconnect.co/nausea-and-vomiting"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function NauseaAndVomiting() {
         </div>
       </section>
     </div>
+    </>
   );
 }

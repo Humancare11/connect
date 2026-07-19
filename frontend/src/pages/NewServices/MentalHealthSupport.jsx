@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+﻿import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -52,6 +52,7 @@ import {
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
+import SEO from "../components/Seo";
 
 /* ──────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS — light theme
@@ -1723,6 +1724,12 @@ export default function MentalHealthSupport() {
 
   return (
     <>
+                  <SEO
+        title="Mental Health Support Online | Virtual Mental Health Care | Humancare Connect"
+        description="Access confidential mental health support through secure telemedicine services. Connect with licensed healthcare providers for anxiety, stress, depression, and emotional wellness care."
+        keywords="Mental health support, Online therapy, Virtual counseling, Emotional wellness care"
+        url="https://humancareconnect.co/mental-health-support"
+      />
       <Helmet>
         <title>
           Mental Health Support Online | Virtual Mental Health Care | Humancare

@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -128,6 +129,13 @@ export default function HairLoss() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Hives Treatment Online | Fast Allergy & Skin Rash Care"
+        description="Get expert treatment for hives online. Connect with a licensed provider for itchy skin welts, allergic reactions, symptom evaluation, and prescription support through secure telemedicine services."
+        keywords="Hives treatment online, Allergy skin rash care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/hives"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -426,5 +434,6 @@ export default function HairLoss() {
         </div>
       </section>
     </div>
+    </>
   );
 }

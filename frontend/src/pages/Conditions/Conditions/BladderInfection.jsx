@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -126,6 +127,13 @@ export default function BladderInfection() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Bladder Infection Treatment Online | UTI Symptom Care"
+        description="Burning urination, pelvic pressure, or frequent urges to urinate? Get online bladder infection care with symptom evaluation, treatment guidance, and prescriptions when appropriate."
+        keywords="Bladder infection, Bladder infection symptoms, Burning during urination, Urinary discomfort, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/bladder-infection"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -427,5 +435,6 @@ export default function BladderInfection() {
         </div>
       </section>
     </div>
+    </>
   );
 }

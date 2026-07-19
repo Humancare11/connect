@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function LowSelfEsteem() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Low Self-Esteem Support Online | Confidence & Mental Wellness Care"
+        description="Struggling with low self-esteem? Connect with a licensed mental health provider online for confidence building, emotional support, coping strategies, and personalized mental wellness care."
+        keywords="Low self-esteem support, Confidence building, Online mental health care, Emotional wellness"
+        url="https://humancareconnect.co/low-self-esteem"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function LowSelfEsteem() {
         </div>
       </section>
     </div>
+    </>
   );
 }

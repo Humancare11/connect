@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function PerinatalAnxiety() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Perinatal Anxiety Treatment Online | Pregnancy & Postpartum Mental Health"
+        description="Get compassionate support for perinatal anxiety online. Connect with a licensed provider for pregnancy and postpartum anxiety, emotional wellness, symptom evaluation, and personalized mental health care."
+        keywords="Perinatal anxiety, Pregnancy anxiety treatment, Postpartum anxiety support, Online mental health consultation"
+        url="https://humancareconnect.co/perinatal-anxiety"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -433,5 +441,6 @@ export default function PerinatalAnxiety() {
         </div>
       </section>
     </div>
+    </>
   );
 }

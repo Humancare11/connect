@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/undiagnosed-symptoms.webp";
 
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -127,6 +128,13 @@ export default function UndiagnosedSymptoms() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Undiagnosed Symptoms Online | Virtual Doctor Consultation"
+        description="Get online medical guidance for unexplained symptoms like fatigue, pain, dizziness, digestive issues, and other undiagnosed health concerns."
+        keywords="undiagnosed symptoms, unexplained symptoms, online symptom assessment, online doctor consultation, unexplained fatigue, persistent pain, dizziness causes, virtual healthcare services, telehealth consultation, medical symptom evaluation"
+        url="https://humancareconnect.co/undiagnosed-symptoms"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -432,5 +440,6 @@ export default function UndiagnosedSymptoms() {
         </div>
       </section>
     </div>
+    </>
   );
 }

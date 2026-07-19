@@ -1,7 +1,8 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
@@ -127,6 +128,13 @@ export default function ErectileDysfunction() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+                <SEO
+        title="Erectile Dysfunction Treatment Online | Discreet ED Care"
+        description="Get confidential erectile dysfunction treatment online with licensed providers. Book a secure online consultation for ED evaluation, personalized treatment, and prescriptions when appropriate."
+        keywords="Erectile dysfunction treatment, ED treatment online, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/erectile-dysfunction"
+      />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -430,5 +438,6 @@ export default function ErectileDysfunction() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import SEO from "../../components/Seo";
 import {
   Calendar,
   Star,
@@ -1218,6 +1219,12 @@ function FaqSection() {
 export default function Vomiting() {
   return (
     <>
+                  <SEO
+        title="Vomiting Treatment Online | Nausea & Digestive Care"
+        description="Get fast care for vomiting symptoms, nausea, dehydration, and stomach discomfort. Connect with an online provider for treatment guidance and recovery support."
+        keywords="Vomiting symptoms, vomiting treatment, nausea, dehydration, stomach discomfort, weakness, dizziness, digestive issues, food poisoning, stomach illnesses, vomiting relief, hydration guidance, telemedicine services, online doctor appointment, telemedicine platform, online provider"
+        url="https://humancareconnect.co/vomiting"
+      />
       <style>{STYLES}</style>
 
       <div

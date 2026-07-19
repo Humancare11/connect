@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import {
@@ -74,6 +74,7 @@ import heroImage from "../../../assets/SpecialitiesImage/urology-specialist-urin
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-urology-specialist-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
+import SEO from "../../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -565,16 +566,12 @@ export default function Urology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <HelmetProvider>
-        <title>
-          Men's Health Specialists | Sexual Wellness, Hormone Health &
-          Preventive Care
-        </title>
-        <meta
-          name="description"
-          content="Connect with experienced men's health specialists for erectile dysfunction, low testosterone, low libido, prostate health, hair loss, fertility concerns, and preventive wellness care."
-        />
-      </HelmetProvider>
+                  <SEO
+        title="Urology Specialists | Urinary & Kidney Health Care"
+        description="Connect with experienced urology specialists for bladder problems, kidney stones, blood in urine, urinary incontinence, UTIs, and comprehensive urinary health care."
+        keywords="Urology care, urinary health care, kidney health, bladder problems, kidney stones, blood in urine, urinary incontinence, urinary tract infection (UTI), recurrent UTIs, frequent urination, painful urination, urinary urgency, bladder health, male urinary health, preventive urology care, urology specialist online, telehealth urology appointments"
+        url="https://humancareconnect.co/urology"
+      />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
