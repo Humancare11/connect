@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 
+import arthritisImage from "./arthritis.jpeg";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Arthritis.webp";
 import SEO from "../../components/Seo";
 
