@@ -47,11 +47,11 @@ const cat = {
       desc: "Personalized nutrition support for diabetic diets, cholesterol management, weight loss, pregnancy nutrition, sports nutrition, food intolerance planning, healthy eating habits, and long-term wellness goals.",
       path: "/weight-and-nurtrition/nutrition-and-dietetics ",
     },
-    {
-      name: "Weight and Nutrition ",
-      desc: " Personalized nutrition support for weight management, healthy eating habits, nutritional deficiencies, digestive wellness, chronic disease management, meal planning, and long-term health goals.",
-      path: "/weight-and-nutrition",
-    },
+    // {
+    //   name: "Weight and Nutrition ",
+    //   desc: " Personalized nutrition support for weight management, healthy eating habits, nutritional deficiencies, digestive wellness, chronic disease management, meal planning, and long-term health goals.",
+    //   path: "/weight-and-nutrition",
+    // },
     {
       name: " Weight Management",
       desc: " Personalized support for weight loss, obesity management, binge eating concerns, GLP-1 eligibility assessments, nutrition planning, appetite control, and sustainable long-term weight management.",
@@ -390,8 +390,13 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
       </Link>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
-        <a href="/terms-of-service" className="hcc-booking-link">Terms of Service</a> and{" "}
-        <a href="/privacy-policy" className="hcc-booking-link">Privacy Policy</a>
+        <a href="/terms-of-service" className="hcc-booking-link">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="/privacy-policy" className="hcc-booking-link">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );
@@ -587,7 +592,7 @@ export default function WeightNutrition() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Weight & Nutrition Care | Virtual Diet & Wellness Consultation | Humancare Connect"
         description="Access online weight and nutrition care with trusted healthcare professionals. Get virtual consultations for weight management, healthy eating, personalized nutrition plans, and wellness support."
         keywords="Weight and nutrition care, online weight management, weight loss consultation, weight gain concerns, personalized nutrition advice, healthy eating guidance, nutrition support, personalized nutrition plans, healthy weight management, weight maintenance, balanced eating habits, meal planning, obesity care, overweight concerns, nutritional deficiencies, digestive health, diet consultation, virtual nutrition consultation, wellness support, online doctor consultation, virtual healthcare services"

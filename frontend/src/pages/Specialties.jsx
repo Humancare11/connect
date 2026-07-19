@@ -154,6 +154,7 @@ const specialties = [
     description:
       "Everyday care, preventive guidance, medication support, and follow-up consultations.",
     tags: ["Cold & Flu", "Fever", "Fatigue", "Headache"],
+    link: "/general-and-everyday-care/general-physician",
   },
   {
     name: "Internal Medicine",
@@ -161,6 +162,7 @@ const specialties = [
     description:
       "Diagnosis and management of complex or overlapping adult health conditions.",
     tags: ["Diagnosis", "Lab Review", "Check-ups"],
+    link: "/general-and-everyday-care/internal-medicine",
   },
   {
     name: "Family Medicine",
@@ -168,6 +170,7 @@ const specialties = [
     description:
       "Continuing care for every age and stage, from infants to grandparents.",
     tags: ["All Ages", "Preventive", "Check-ups"],
+    link: "/general-and-everyday-care/family-medicine",
   },
   {
     name: "Psychiatry",
@@ -175,6 +178,7 @@ const specialties = [
     description:
       "Clinical assessment and medication management for mental health conditions.",
     tags: ["Anxiety", "Depression", "Medication"],
+    link: "/mental-health/psychiatry",
   },
   {
     name: "Psychology / Counselling",
@@ -182,6 +186,7 @@ const specialties = [
     description:
       "Talk therapy and coping strategies for stress, mood, and life transitions.",
     tags: ["Therapy", "Stress", "Coping Skills"],
+    link: "/mental-health/psychology-counseling",
   },
   {
     name: "Behavioral Health",
@@ -189,6 +194,7 @@ const specialties = [
     description:
       "Support for habits, routines, and behavior patterns affecting wellbeing.",
     tags: ["Habits", "Burnout", "Routine"],
+    link: "/mental-health/behavioral-health",
   },
   {
     name: "Dermatology",
@@ -196,6 +202,7 @@ const specialties = [
     description:
       "Skin, hair, and nail concerns reviewed and treated by a specialist.",
     tags: ["Acne", "Rash", "Hair Loss"],
+    link: "/skin-and-hair-care/dermatology",
   },
   {
     name: "Obstetrics & Gynaecology (OB-GYN)",
@@ -203,6 +210,7 @@ const specialties = [
     description:
       "Reproductive health, pregnancy guidance, and gynaecological care.",
     tags: ["Pregnancy", "Cycle Health", "PCOS"],
+    link: "/women-health/obstetrics-and-gynaecology",
   },
   {
     name: "Menopause Care",
@@ -210,6 +218,7 @@ const specialties = [
     description:
       "Hormonal symptom management and guidance through perimenopause and beyond.",
     tags: ["Hot Flashes", "Hormones", "Sleep"],
+    link: "/women-health/menopause-care",
   },
   {
     name: "Women's Mental Health",
@@ -217,6 +226,7 @@ const specialties = [
     description:
       "Mental health support tailored to hormonal and life-stage changes.",
     tags: ["Postpartum", "Mood", "Anxiety"],
+    link: "/women-health/women-mental-health",
   },
   {
     name: "Lactation Consulting",
@@ -224,6 +234,7 @@ const specialties = [
     description:
       "Breastfeeding guidance and support for new and expecting parents.",
     tags: ["Breastfeeding", "Latching", "Newborn"],
+    link: "/women-health/lactation-consulting",
   },
   {
     name: "Men's Health",
@@ -231,6 +242,7 @@ const specialties = [
     description:
       "Preventive and condition-specific care focused on men's wellbeing.",
     tags: ["Hormones", "Fitness", "Screening"],
+    link: "/mens-health/men-health",
   },
   {
     name: "Urology",
@@ -238,6 +250,7 @@ const specialties = [
     description:
       "Diagnosis and treatment of urinary tract and reproductive system issues.",
     tags: ["UTI", "Kidney Stones", "Prostate"],
+    link: "/mens-health/urology",
   },
   {
     name: "Pediatrics",
@@ -245,6 +258,7 @@ const specialties = [
     description:
       "Growth, development, and illness care for infants, children, and teens.",
     tags: ["Growth", "Vaccines", "Fever"],
+    link: "/child-and-family-care/pediatrics",
   },
   {
     name: "Adolescent Medicine",
@@ -252,6 +266,7 @@ const specialties = [
     description:
       "Health guidance focused on the unique needs of teenage patients.",
     tags: ["Teen Health", "Puberty", "Mental Health"],
+    link: "/child-and-family-care/adolescent-medicine",
   },
   {
     name: "Weight Management",
@@ -259,6 +274,7 @@ const specialties = [
     description:
       "Personalized plans and medical guidance for sustainable weight goals.",
     tags: ["Nutrition", "Metabolism", "Coaching"],
+    link: "/weight-and-nurtrition/weight-management",
   },
   {
     name: "Nutrition & Dietetics",
@@ -266,6 +282,7 @@ const specialties = [
     description:
       "Dietary guidance from licensed professionals for health and recovery goals.",
     tags: ["Meal Plans", "Allergies", "Wellness"],
+    link: "/weight-and-nurtrition/nutrition-and-dietetics",
   },
   {
     name: "Lifestyle Medicine",
@@ -273,6 +290,7 @@ const specialties = [
     description:
       "Evidence-based habit changes to prevent and manage chronic disease.",
     tags: ["Sleep", "Stress", "Exercise"],
+    link: "/weight-and-nurtrition/lifestyle-medicine",
   },
   {
     name: "Cardiology",
@@ -280,6 +298,7 @@ const specialties = [
     description:
       "Heart health evaluation, monitoring, and chronic condition management.",
     tags: ["Hypertension", "Cholesterol", "Heart Rate"],
+    link: "/chronic-care/cardiology",
   },
   {
     name: "Endocrinology",
@@ -287,6 +306,7 @@ const specialties = [
     description:
       "Hormone-related conditions including thyroid and metabolic disorders.",
     tags: ["Diabetes", "Thyroid", "Hormones"],
+    link: "/chronic-care/endocrinology",
   },
   {
     name: "Gastroenterology",
@@ -294,6 +314,7 @@ const specialties = [
     description:
       "Digestive system care, from everyday symptoms to chronic GI conditions.",
     tags: ["IBS", "Acid Reflux", "Bloating"],
+    link: "/chronic-care/gastroenterology",
   },
   {
     name: "Neurology",
@@ -301,6 +322,7 @@ const specialties = [
     description:
       "Evaluation and care for conditions affecting the brain and nervous system.",
     tags: ["Migraine", "Dizziness", "Numbness"],
+    link: "/chronic-care/neurology",
   },
   {
     name: "Pulmonology",
@@ -308,6 +330,7 @@ const specialties = [
     description:
       "Respiratory and lung condition diagnosis, treatment, and monitoring.",
     tags: ["Asthma", "Cough", "Breathing"],
+    link: "/chronic-care/pulmonology",
   },
   {
     name: "Expert Medical Opinion",
@@ -315,6 +338,7 @@ const specialties = [
     description:
       "A second specialist review of your diagnosis, records, or treatment plan.",
     tags: ["Second Opinion", "Records Review"],
+    link: "/export-medical-opinion",
   },
   {
     name: "Ophthalmology",
@@ -322,6 +346,7 @@ const specialties = [
     description:
       "Eye health consultations covering vision changes and common conditions.",
     tags: ["Vision", "Eye Strain", "Irritation"],
+    link: "/eye-ear-bone/ophthalmology",
   },
   {
     name: "ENT (Ear, Nose & Throat)",
@@ -329,6 +354,7 @@ const specialties = [
     description:
       "Care for ear, nose, sinus, and throat symptoms and conditions.",
     tags: ["Sinusitis", "Sore Throat", "Hearing"],
+    link: "/eye-ear-bone/ear-nose-throat",
   },
   {
     name: "Orthopedics",
@@ -336,6 +362,7 @@ const specialties = [
     description:
       "Bone, joint, and muscle care for pain, injury, and mobility issues.",
     tags: ["Joint Pain", "Sports Injury", "Mobility"],
+    link: "/eye-ear-bone/orthopedics",
   },
   {
     name: "Sexual Health",
@@ -343,6 +370,7 @@ const specialties = [
     description:
       "Confidential consultations for sexual health concerns and screening.",
     tags: ["STI Screening", "Confidential"],
+    link: "/sexual-health/sexual-health-and-wellness",
   },
   {
     name: "Travel Medicine",
@@ -350,6 +378,7 @@ const specialties = [
     description:
       "Pre-trip vaccinations and care for illness while traveling abroad.",
     tags: ["Vaccinations", "Travel Illness"],
+    link: "/travel-and-global-care/travel-medicine",
   },
   {
     name: "Global / Cross-Border Care",
@@ -357,6 +386,7 @@ const specialties = [
     description:
       "Coordinated medical access and continuity of care across countries.",
     tags: ["Cross-Border", "Continuity of Care"],
+    link: "/travel-and-global-care/global-cross-border-care",
   },
 ];
 
@@ -744,7 +774,7 @@ export default function Specialties() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
         description="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
         keywords="online specialist doctor, specialist doctor consultation, virtual specialist consultation, online medical specialist, telehealth specialist services, second opinion online, specialist healthcare, chronic disease specialist, expert medical consultation, online healthcare provider, virtual doctor appointment, specialist care online"
@@ -875,8 +905,9 @@ export default function Specialties() {
             {filteredSpecialties.map((s, i) => {
               const Icon = s.icon;
               return (
-                <article
+                <a
                   key={s.name}
+                  href={s.link}
                   className="specialties__card"
                   style={{ "--delay": `${(i % 10) * 30}ms` }}
                 >
@@ -897,7 +928,7 @@ export default function Specialties() {
                       </span>
                     ))}
                   </div>
-                </article>
+                </a>
               );
             })}
           </div>

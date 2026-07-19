@@ -117,7 +117,7 @@ const GeneralEverydayCare = lazy(
 const MenHealth = lazy(() => import("./pages/Categories/MenHealth"));
 const MentalHealth = lazy(() => import("./pages/Categories/MentalHealth"));
 // import Sexualhealth from "./pages/Categories/SexualHealth";
-const Sexual_Health = lazy(() => import("./pages/Categories/Sexual-Health"));
+const CategorySexualHealth = lazy(() => import("./pages/Categories/Sexual-Health"));
 const SkinHair = lazy(() => import("./pages/Categories/SkinHair"));
 const TravelGlobalCare = lazy(
   () => import("./pages/Categories/TravelGlobalCare"),
@@ -1589,7 +1589,7 @@ function AppLayout() {
           />
           <Route path="/mens-health" element={<MenHealth />} />
           <Route path="/mental-health" element={<MentalHealth />} />
-          <Route path="/sexual-health" element={<Sexual_Health />} />
+          <Route path="/sexual-health" element={<CategorySexualHealth />} />
           <Route path="/skin-and-hair-care" element={<SkinHair />} />
           <Route
             path="/travel-and-global-care"

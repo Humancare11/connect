@@ -50,7 +50,7 @@ const cat = {
     {
       name: "Obstetrics & Gynaecology (OB-GYN)  ",
       desc: " Comprehensive women's healthcare for PCOS, fertility concerns, pregnancy support, birth control consultations, menstrual health, pelvic pain, vaginal infections, hormonal balance, and reproductive wellness.",
-      path: "/obstetrics-and-gynaecology",
+      path: "/women-health/obstetrics-and-gynaecology",
     },
     {
       name: " Women's Health ",
@@ -624,7 +624,7 @@ export default function WomenHealth() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Women�s Health Care | Virtual Doctor Consultation | Humancare Connect"
         description="Access online women�s health care with trusted healthcare professionals. Get virtual consultations for menstrual health, hormonal concerns, pregnancy guidance, menopause support, and personalized medical care."
         keywords="Women�s health care, online women�s health care, women�s health consultation, virtual doctor consultation, reproductive health, menstrual health, period problems, irregular periods, painful periods, hormonal concerns, hormonal changes, birth control, contraception options, pregnancy guidance, prenatal wellness, menopause support, menopause symptoms, fertility concerns, sexual health, vaginal infections, preventive women�s healthcare, reproductive wellness"
