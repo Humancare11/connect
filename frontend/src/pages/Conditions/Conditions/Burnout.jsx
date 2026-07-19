@@ -40,6 +40,7 @@ import {
     MessageCircle,
     X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Burnout.webp";
 
 
@@ -127,6 +128,8 @@ export default function AdhdEvaluation() {
     const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
     return (
+        <>
+        <SEO title="Burnout Recovery Support Online | Mental Health & Stress Care" description="Get online support for burnout symptoms." keywords="Burnout" url="https://humancareconnect.co/burnout" />
         <div className="condition-root">
             {/* ══════════════════════ HERO ══════════════════════ */}
             <section
@@ -421,5 +424,6 @@ export default function AdhdEvaluation() {
                 </div>
             </section>
         </div>
+        </>
     );
 }

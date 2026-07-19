@@ -5,6 +5,7 @@ import doctorConsultation from "../../assets/BlogImages/doctor-consultation.webp
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
+import SEO from "../../components/Seo";
 const PAGE_TITLE =
   " Online Doctor Consultation: Benefits, Process & When to Choose It";
 const PAGE_DESCRIPTION =
@@ -248,6 +249,7 @@ export default function OnlineDoctorConsultation() {
 
   return (
     <>
+      <SEO title="Online Doctor Consultation Guide | Virtual Healthcare Benefits" description="Learn about online doctor consultation and virtual healthcare benefits." keywords="Online doctor consultation guide" url="https://humancareconnect.co/online-doctor-consultation-guide" />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />

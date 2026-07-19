@@ -5,6 +5,7 @@ import telemedicineCost from "../../assets/BlogImages/telemedicine-cost.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
+import SEO from "../../components/Seo";
 const PAGE_TITLE =
   "How Much Does Telemedicine Cost in the USA? Insurance, Pricing & Cost Factors";
 const PAGE_DESCRIPTION =
@@ -218,6 +219,7 @@ export default function TelemedicineCost() {
 
   return (
     <>
+      <SEO title="Telemedicine Cost USA | Virtual Doctor Visit Prices" description="Learn about telemedicine costs and pricing in the USA." keywords="Telemedicine cost" url="https://humancareconnect.co/telemedicine-cost-usa" />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />

@@ -40,6 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/OCD.webp";
 
 
@@ -127,6 +128,8 @@ export default function Ocd() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
+    <>
+    <SEO title="OCD Treatment Online | Virtual Mental Health Support" description="Get expert online care for OCD symptoms." keywords="OCD" url="https://humancareconnect.co/ocd" />
     <div className="condition-root">
       {/* ══════════════════════ HERO ══════════════════════ */}
       <section
@@ -431,5 +434,6 @@ export default function Ocd() {
         </div>
       </section>
     </div>
+    </>
   );
 }

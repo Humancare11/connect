@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import SEO from "../../components/Seo";
@@ -615,10 +615,10 @@ function SectionLabel({ children, variant = "light" }) {
 function HeroSection({ data }) {
   return (
     <>
-      <SEO
+                  <SEO
         title="Online Acne Treatment | Virtual Dermatology & Acne Care"
         description="Get online acne treatment for pimples, blackheads, whiteheads, and skin irritation. Connect with a licensed provider for personalized acne care and skincare guidance."
-        keywords="acne, acne treatment, acne care, pimples, blackheads, whiteheads, skin irritation, virtual dermatology, online dermatologist, skincare guidance, telemedicine services, online doctor appointment, virtual healthcare services, online provider, licensed providers"
+        keywords="Acne, Acne care, Telemedicine services, Online doctor appointment"
         url="https://humancareconnect.co/acne"
       />
 

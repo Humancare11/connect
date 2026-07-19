@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -40,6 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Irritable-Bowel-Syndrome.webp";
+import SEO from "../../components/Seo";
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -1221,6 +1222,12 @@ function FaqSection() {
 export default function IrritableBowelSyndrome() {
   return (
     <>
+                  <SEO
+        title="IBS Treatment Online | Gastroenterologist for IBS Symptoms"
+        description="Struggling with IBS symptoms? Consult an online gastroenterologist for abdominal pain, bloating, diarrhea, constipation, and personalized irritable bowel syndrome treatment and digestive care."
+        keywords="Irritable Bowel Syndrome (IBS), IBS treatment online, Online gastroenterologist, Digestive health consultation"
+        url="https://humancareconnect.co/irritable-bowel-syndrome"
+      />
       <style>{STYLES}</style>
 
       <div

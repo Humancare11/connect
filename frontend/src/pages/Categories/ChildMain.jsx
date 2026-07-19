@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -550,6 +551,7 @@ export default function ChildFamilyCare() {
         minHeight: "100vh",
       }}
     >
+      <SEO title="Children's Healthcare Online | Pediatric Virtual Care" description="Access children's healthcare online." keywords="Children healthcare" url="https://humancareconnect.co/child-main" />
       <Helmet>
         <title>
           Online Children &amp; Family Care | Virtual Doctor Consultation |

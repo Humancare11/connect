@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import SEO from "../../components/Seo";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -533,6 +534,12 @@ export default function SexualHealth() {
         minHeight: "100vh",
       }}
     >
+                              <SEO
+        title="Sexual Health Specialists | STI Care, HIV Prevention & Sexual Wellness"
+        description="Connect with experienced sexual health specialists for STI consultations, HIV prevention, herpes, chlamydia, gonorrhea, partner exposure concerns, and confidential sexual wellness care."
+        keywords=""
+        url="https://humancareconnect.co/speciality-sexual-health"
+      />
       <Helmet>
         <title>
           Online Sexual Health Care | Confidential Doctor Consultation |

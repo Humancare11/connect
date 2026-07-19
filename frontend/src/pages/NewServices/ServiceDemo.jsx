@@ -10,6 +10,7 @@ import {
   FiCpu, FiAlertCircle, FiThumbsUp, FiVideo, FiPieChart,
   FiBookOpen, FiNavigation, FiWifi, FiHeadphones, FiUser,
 } from "react-icons/fi";
+import SEO from "../components/Seo";
 
 /* ──────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS — light theme
@@ -762,13 +763,15 @@ export default function ServiceDemo() {
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
 
   return (
-    <div
-      // style={{
-      //   backgroundColor: BG_BASE,
-      //   minHeight: "700px",
-      //   width: "100%",
-      // }}
-    >
+    <>
+      <SEO title="Online Doctor Service Demo | Humancare Connect" description="Explore our healthcare service demo." keywords="Service demo" url="https://humancareconnect.co/ServiceDemo" />
+      <div
+        // style={{
+        //   backgroundColor: BG_BASE,
+        //   minHeight: "700px",
+        //   width: "100%",
+        // }}
+      >
       <AnimatePresence mode="wait">
         <motion.div key={slug}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -783,5 +786,6 @@ export default function ServiceDemo() {
         </motion.div>
       </AnimatePresence>
     </div>
+    </>
   );
 }

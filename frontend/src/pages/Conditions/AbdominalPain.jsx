@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
@@ -1221,12 +1221,12 @@ export default function AbdominalPain() {
   return (
     <>
 
-    <SEO
-  title="Abdominal Pain Treatment Online | Virtual Digestive Care"
-  description="Get online care for abdominal pain, stomach pain, cramping, bloating, and digestive discomfort. Connect with a licensed provider for evaluation and treatment guidance."
-  keywords="abdominal pain, abdominal pain symptoms, stomach pain, stomach cramps, bloating, digestive discomfort, digestive issues, abdominal pain treatment, virtual digestive care, telemedicine services, online doctor appointment, virtual healthcare services, online provider, licensed providers"
-  url="https://humancareconnect.co/abdominal-pain"
-/>
+                <SEO
+        title="Abdominal Pain Treatment Online | Virtual Digestive Care"
+        description="Get online care for abdominal pain, stomach pain, cramping, bloating, and digestive discomfort. Connect with a licensed provider for evaluation and treatment guidance."
+        keywords="Abdominal pain, Abdominal pain symptoms, Telemedicine services, Online doctor appointment, Virtual healthcare services"
+        url="https://humancareconnect.co/abdominal-pain"
+      />
       <style>{STYLES}</style>
 
       <div
