@@ -52,7 +52,7 @@ import {
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
-import SEO from "../../components/SEO";
+import SEO from "../../components/Seo";
 import heroBanner from "../../assets/MedicalServices/fit-to-fly-medical-certificate.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
 import "../Specialty/SpecialtyPage.css";

@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
-import SEO from "../../../components/SEO";
+import SEO from "../../../components/Seo";
 import {
   Calendar,
   Star,
