@@ -1,0 +1,406 @@
+:root {
+  --navy: #12296b;
+  --navy-soft: #1d3a8a;
+  --accent: #4a9fe0;
+  --ink: #1c2230;
+  --muted: #667085;
+  --line: #dde2ea;
+  --line-strong: #c7ceda;
+  --panel: #f7f9fc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.rx-slip-wrapper {
+  margin: 0;
+  padding: 5px;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.rx-slip {
+  width: 800px;
+  max-width: 100%;
+  background: #ffffff;
+  color: var(--ink);
+  margin: 0 auto;
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(18, 41, 107, 0.06),
+    0 12px 32px rgba(18, 41, 107, 0.08);
+  overflow: hidden;
+}
+
+/* Header */
+.rx-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 28px 44px 16px;
+}
+.rx-logo {
+  display: block;
+  max-height: 150px;
+  width: 150px;
+}
+
+.rx-divider-row {
+  display: flex;
+  align-items: center;
+}
+.rx-divider-thick {
+  height: 4px;
+  background: var(--navy);
+  width: 58%;
+  border-radius: 0 3px 3px 0;
+}
+.rx-divider-thin {
+  height: 2px;
+  background: var(--accent);
+  flex: 1;
+}
+
+/* Title row */
+.rx-title-row {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  position: relative;
+  padding: 22px 44px 18px;
+}
+.rx-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.2px;
+}
+.rx-date-inline {
+  position: absolute;
+  right: 44px;
+  top: 24px;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Patient panel — CSS grid, not a mismatched table, so columns always align */
+.rx-patient-panel {
+  margin: 0 44px 26px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.rx-patient-row {
+  display: grid;
+  border-bottom: 1.5px solid var(--line);
+}
+.rx-patient-row:last-child {
+  border-bottom: none;
+}
+.rx-patient-row-full {
+  grid-template-columns: 1fr;
+}
+.rx-patient-row-triple {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.rx-patient-cell {
+  padding: 12px 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  border-right: 1.5px solid var(--line);
+}
+.rx-patient-row-triple .rx-patient-cell:last-child {
+  border-right: none;
+}
+
+.rx-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.rx-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* Medications */
+.rx-med-heading {
+  margin: 0 44px 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.rx-symbol {
+  margin: 0 44px 10px;
+  font-size: 22px;
+  font-style: italic;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+table.rx-med-table {
+  width: calc(100% - 88px);
+  margin: 0 44px 26px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+table.rx-med-table th {
+  background: var(--navy);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 11px 10px;
+  text-align: center;
+  border: none;
+}
+table.rx-med-table td {
+  padding: 11px 10px;
+  text-align: center;
+  vertical-align: middle;
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+table.rx-med-table td:last-child {
+  border-right: none;
+}
+table.rx-med-table td.rx-med-name-cell {
+  text-align: left;
+  font-weight: 500;
+}
+table.rx-med-table tbody tr:nth-child(even) {
+  background: var(--panel);
+}
+table.rx-med-table tbody tr {
+  min-height: 46px;
+}
+
+/* Advice / Allergy */
+.rx-field-row {
+  margin: 0 44px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.rx-field-row .value {
+  font-weight: 400;
+  color: var(--ink);
+}
+
+/* Physician ribbon */
+.rx-ribbon-wrap {
+  margin: 22px 44px 0;
+}
+.rx-ribbon {
+  display: inline-block;
+  background: var(--navy);
+  color: #ffffff;
+  padding: 8px 40px 8px 22px;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  clip-path: polygon(0 0, 100% 0, 90% 100%, 0 100%);
+}
+.rx-ribbon-underline {
+  height: 2px;
+  background: var(--accent);
+  margin: 0 44px 0;
+}
+
+.rx-physician-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+  margin: 20px 44px 0;
+  font-size: 13px;
+  padding-bottom: 6px;
+}
+.rx-physician-grid .rx-label {
+  display: block;
+  margin-bottom: 2px;
+}
+.rx-physician-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Footer */
+.rx-footer-dividers {
+  margin-top: 26px;
+}
+.rx-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 30px 10px;
+  gap: 20px;
+  background: var(--panel);
+}
+.rx-qr {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px;
+  background: #fff;
+}
+.rx-qr-placeholder {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--panel),
+    var(--panel) 6px,
+    #eef1f6 6px,
+    #eef1f6 12px
+  );
+}
+.rx-contact-lines {
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+.rx-contact-lines div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.rx-footer-logo {
+  max-height: 100px;
+  width: auto;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* ───────────────────────────────────────────────
+   Doctor Prescription Preview Modal
+   Scoped to this component only (rx-* prefixed)
+   so it never clashes with any other prescription
+   modal elsewhere in the app.
+   ─────────────────────────────────────────────── */
+
+/* The overlay is what scrolls (like a normal page),
+   NOT the modal box — this avoids the nested nested
+   scrollbar-inside-a-box problem entirely. */
+.rx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 1000;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+}
+
+/* The box itself grows with its content — no fixed
+   max-height, no overflow, so it can never trap a
+   scrollbar of its own. */
+.rx-modal-box {
+  background: #ffffff;
+  width: 860px;
+  max-width: 100%;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.rx-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1.5px solid var(--line);
+  background: #ffffff;
+  border-radius: 14px 14px 0 0;
+}
+.rx-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.rx-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rx-modal-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rx-modal-btn-primary {
+  background: var(--navy);
+  color: #ffffff;
+}
+.rx-modal-btn-primary:hover {
+  background: var(--navy-soft);
+}
+.rx-modal-btn-secondary {
+  background: #ffffff;
+  color: var(--ink);
+  border: 1.5px solid var(--line-strong);
+}
+.rx-modal-btn-secondary:hover {
+  background: var(--panel);
+}
+
+.rx-modal-body {
+  padding: 24px;
+  overflow: visible; /* no inner scrollbar — box just grows */
+}
+
+@media (max-width: 640px) {
+  .rx-modal-overlay {
+    padding: 16px;
+  }
+  .rx-modal-header {
+    padding: 14px 16px;
+  }
+  .rx-modal-body {
+    padding: 16px;
+  }
+}
+
+.rx-med-timing-cell {
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-word;
+  text-align: left;
+}
