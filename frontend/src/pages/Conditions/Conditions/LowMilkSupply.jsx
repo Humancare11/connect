@@ -41,7 +41,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-import ConditionBannerImage from "../../../assets/ConditionImages/WomensHealth/low-milk-supplys.webp";
+import ConditionBannerImage from "../../../assets/ConditionImages/WomensHealth/low-milk-supply.webp";
 
 
 // ─────────────────────────────────────────────────────────────────

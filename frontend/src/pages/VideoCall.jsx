@@ -8,7 +8,6 @@ import { useDoctorAuth } from "../context/DoctorAuthContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import {
   FiAlertTriangle,
-  FiCalendar,
   FiCheckCircle,
   FiClock,
   FiMaximize,
@@ -29,7 +28,6 @@ import {
   FiVideoOff,
   FiX,
 } from "react-icons/fi";
-import { FaCapsules } from "react-icons/fa";
 
 // ── In-call prescription modal (doctor only) ──────────────────────────────────
 const EMPTY_MED = { name: "", dosage: "", frequency: "", duration: "" };
@@ -85,7 +83,11 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
         <div className="hc-vc__rx-modal-head">
           <span className="hc-vc__rx-modal-icon">💊</span>
           <h3>Issue Prescription</h3>
-          <button className="hc-vc__rx-modal-close" onClick={onClose}>
+          <button
+            className="hc-vc__rx-modal-close"
+            onClick={onClose}
+            aria-label="Close prescription form"
+          >
             ✕
           </button>
         </div>
@@ -136,6 +138,7 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
                   onClick={() =>
                     setMedicines((p) => p.filter((_, idx) => idx !== i))
                   }
+                  aria-label={`Remove medicine ${i + 1}`}
                 >
                   ✕
                 </button>
@@ -418,6 +421,30 @@ const playVideoElement = async (videoEl) => {
   }
 };
 
+// Tracks a <video> element's intrinsic frame shape so the UI can switch
+// object-fit from cover to contain for portrait streams (e.g. a mobile
+// patient held upright). Cover-fitting a portrait stream into this app's
+// landscape stage forces a large scale-up to span the width, which crops
+// most of the frame's height and reads as an excessive zoom. "resize"
+// fires on the video element whenever the underlying track's dimensions
+// change (device rotation, camera renegotiation), not just on first load.
+const watchVideoOrientation = (videoEl, onOrientationChange) => {
+  if (!videoEl) return () => {};
+  const update = () => {
+    const { videoWidth, videoHeight } = videoEl;
+    if (videoWidth && videoHeight) {
+      onOrientationChange(videoHeight > videoWidth);
+    }
+  };
+  update();
+  videoEl.addEventListener("loadedmetadata", update);
+  videoEl.addEventListener("resize", update);
+  return () => {
+    videoEl.removeEventListener("loadedmetadata", update);
+    videoEl.removeEventListener("resize", update);
+  };
+};
+
 const setTrackHint = (track, hint) => {
   if (!track || !("contentHint" in track)) return;
   try {
@@ -562,6 +589,8 @@ export default function VideoCall() {
   const pipVideoRef = useRef(null);
   const remoteAudioRef = useRef(null);
   const pageRef = useRef(null);
+  const mainVideoOrientationCleanupRef = useRef(null);
+  const pipVideoOrientationCleanupRef = useRef(null);
 
   // ── Stream refs ───────────────────────────────────────────────────
   const localStreamRef = useRef(null);
@@ -598,6 +627,13 @@ export default function VideoCall() {
   const socketAuthRefreshedRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
   const reconnectStallTimerRef = useRef(null);
+  // Set just before a manual forceReconnect() tears the peer connection
+  // down and rebuilds it. Lets the effect cleanup below tell "I'm
+  // intentionally rebuilding my own connection" apart from "I'm actually
+  // leaving the room" — otherwise the leave-room emit on teardown looks
+  // identical to a real hangup and can flash "peer left" for the other party.
+  const manualReconnectRef = useRef(false);
+  const inlineErrorTimerRef = useRef(null);
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
@@ -611,6 +647,8 @@ export default function VideoCall() {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isSwapped, setIsSwapped] = useState(false);
   const [isSelfViewMinimized, setIsSelfViewMinimized] = useState(false);
+  const [isMainVideoPortrait, setIsMainVideoPortrait] = useState(false);
+  const [isPipVideoPortrait, setIsPipVideoPortrait] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [camError, setCamError] = useState(false);
   const [camErrorReason, setCamErrorReason] = useState("");
@@ -687,6 +725,27 @@ export default function VideoCall() {
   useEffect(() => {
     screenSharingRef.current = isScreenSharing;
   }, [isScreenSharing]);
+
+  // Callback refs (rather than a mount-only effect) so the orientation
+  // watcher attaches exactly when each <video> node appears — these
+  // elements don't exist yet while the gate screens (loading/pending/
+  // error) are showing, so a one-time effect on mainVideoRef/pipVideoRef
+  // would miss them.
+  const setMainVideoRef = useCallback((node) => {
+    mainVideoRef.current = node;
+    mainVideoOrientationCleanupRef.current?.();
+    mainVideoOrientationCleanupRef.current = node
+      ? watchVideoOrientation(node, setIsMainVideoPortrait)
+      : null;
+  }, []);
+
+  const setPipVideoRef = useCallback((node) => {
+    pipVideoRef.current = node;
+    pipVideoOrientationCleanupRef.current?.();
+    pipVideoOrientationCleanupRef.current = node
+      ? watchVideoOrientation(node, setIsPipVideoPortrait)
+      : null;
+  }, []);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -880,6 +939,8 @@ export default function VideoCall() {
     clearTimeout(iceRestartTimerRef.current);
     clearTimeout(connectionFailTimerRef.current);
     clearTimeout(ignoreOfferResetTimerRef.current);
+    clearTimeout(reconnectStallTimerRef.current);
+    reconnectStallTimerRef.current = null;
     clearInterval(statsTimerRef.current);
     statsTimerRef.current = null;
     socket.emit("leave-appointment-room", { appointmentId });
@@ -906,9 +967,17 @@ export default function VideoCall() {
   }, [appt]);
 
   const showInlineMessage = useCallback((message, duration = 4000) => {
+    // Cancel any pending clear from a previous toast so an older timer
+    // can't wipe out a newer message before its own duration elapses.
+    window.clearTimeout(inlineErrorTimerRef.current);
     setInlineError(message);
-    window.setTimeout(() => setInlineError(""), duration);
+    inlineErrorTimerRef.current = window.setTimeout(() => {
+      inlineErrorTimerRef.current = null;
+      setInlineError("");
+    }, duration);
   }, []);
+
+  useEffect(() => () => window.clearTimeout(inlineErrorTimerRef.current), []);
 
   const logVideoEvent = useCallback(
     (event, details = {}) => {
@@ -1048,7 +1117,7 @@ export default function VideoCall() {
     const handlePopstate = () => {
       window.history.pushState(null, "", window.location.href);
       pendingLeaveRef.current = isDoctor
-        ? "/doctor-dashboard"
+        ? "/doctor-dashboard/patients"
         : "/user/dashboard";
       setLeaveConfirm(true);
     };
@@ -1776,14 +1845,12 @@ export default function VideoCall() {
 
     const handleDuplicateSession = ({ msg } = {}) => {
       if (!mounted) return;
-      // Close the local PC so the other peer detects disconnection and
-      // re-establishes signaling with the new session instead of staying
-      // connected to this stale peer connection.
-      if (pcRef.current && pcRef.current.signalingState !== "closed") {
-        pcRef.current.close();
-      }
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
-      localStreamRef.current = null;
+      // A newer session for this appointment has taken over. Tear this
+      // stale session all the way down — tracks, timers, socket room,
+      // peer connection — instead of only closing the PC, so nothing
+      // (call timer, stats polling, socket listeners) keeps running
+      // behind the "Access Denied" gate screen this triggers below.
+      performCleanup();
       setApptError(
         msg || "Another consultation session was started elsewhere.",
       );
@@ -1878,10 +1945,16 @@ export default function VideoCall() {
       ignoreOfferResetTimerRef.current = null;
       reconnectStallTimerRef.current = null;
       restartRequestInFlightRef.current = false;
+      // A manual forceReconnect() also tears this effect down and re-runs
+      // it (via reconnectNonce), but that's not a real departure — skip the
+      // leave-room emit so the peer doesn't see a spurious "left the call".
+      const isManualReconnect = manualReconnectRef.current;
+      manualReconnectRef.current = false;
       if (
         joinedSocketIdRef.current &&
         socket.connected &&
-        !pageUnloadingRef.current
+        !pageUnloadingRef.current &&
+        !isManualReconnect
       ) {
         socket.emit("leave-appointment-room", { appointmentId });
       }
@@ -1932,6 +2005,7 @@ export default function VideoCall() {
     emitOnlineAndJoinRoom,
     logVideoEvent,
     stopStatsCollection,
+    performCleanup,
     reconnectNonce,
     iceConfig,
     iceConfigError,
@@ -2227,11 +2301,11 @@ export default function VideoCall() {
       navigate("/doctor-dashboard/patients", { replace: true });
     } catch (err) {
       setCompleting(false);
-      setInlineError(
+      showInlineMessage(
         err.response?.data?.msg ||
         "Failed to complete appointment. Please try again.",
+        5000,
       );
-      setTimeout(() => setInlineError(""), 5000);
     }
   }, [
     completing,
@@ -2240,12 +2314,14 @@ export default function VideoCall() {
     appointmentId,
     performCleanup,
     navigate,
+    showInlineMessage,
   ]);
 
   // Manual escape hatch when automatic recovery is taking too long: forces
   // the main effect to tear down and rebuild the RTCPeerConnection + rejoin
   // the room from scratch, on either role.
   const forceReconnect = useCallback(() => {
+    manualReconnectRef.current = true;
     setReconnectStalled(false);
     setReconnectNonce((n) => n + 1);
   }, []);
@@ -2437,8 +2513,7 @@ export default function VideoCall() {
       if (!file) return;
       e.target.value = "";
       if (file.size > 10 * 1024 * 1024) {
-        setInlineError("File too large. Max 10 MB.");
-        setTimeout(() => setInlineError(""), 4000);
+        showInlineMessage("File too large. Max 10 MB.");
         return;
       }
       setUploadingFile(true);
@@ -2454,15 +2529,14 @@ export default function VideoCall() {
           fileType: uploaded.type ?? file.type,
         });
       } catch (err) {
-        setInlineError(
+        showInlineMessage(
           err.response?.data?.msg || err.message || "File upload failed.",
         );
-        setTimeout(() => setInlineError(""), 4000);
       } finally {
         setUploadingFile(false);
       }
     },
-    [appointmentId, currentUser],
+    [appointmentId, currentUser, showInlineMessage],
   );
 
   // ── Other party info ──────────────────────────────────────────────
@@ -2472,16 +2546,10 @@ export default function VideoCall() {
       return {
         label: "Patient",
         name: appt.patientId?.name || "Unknown Patient",
-        sub: appt.problem || "",
-        initial: appt.patientId?.name?.[0]?.toUpperCase() || "P",
-        color: "#3b82f6",
       };
     return {
       label: "Doctor",
       name: `Dr. ${appt.doctorId?.name || "Unknown"}`,
-      sub: appt.doctorId?.email || "",
-      initial: appt.doctorId?.name?.[0]?.toUpperCase() || "D",
-      color: "#19c9a3",
     };
   }, [appt, isDoctor]);
 
@@ -2508,10 +2576,6 @@ export default function VideoCall() {
         </button>
       </div>
     );
-
-
-
-
   }
 
   if (
@@ -2902,11 +2966,11 @@ export default function VideoCall() {
           {/* Main video */}
           <div className="hc-vc__main-wrap">
             <video
-              ref={mainVideoRef}
+              ref={setMainVideoRef}
               autoPlay
               playsInline
               muted
-              className={`hc-vc__main-video${isSwapped ? " hc-vc__video--local" : ""}`}
+              className={`hc-vc__main-video${isSwapped ? " hc-vc__video--local" : ""}${isMainVideoPortrait ? " hc-vc__main-video--portrait" : ""}`}
             />
 
             {/* Waiting overlay — only when remote isn't connected and remote is in main */}
@@ -2987,11 +3051,11 @@ export default function VideoCall() {
               onPointerUp={handlePipPointerUp}
             >
               <video
-                ref={pipVideoRef}
+                ref={setPipVideoRef}
                 autoPlay
                 playsInline
                 muted
-                className={`hc-vc__pip-video${!isSwapped ? " hc-vc__video--local" : ""}`}
+                className={`hc-vc__pip-video${!isSwapped ? " hc-vc__video--local" : ""}${isPipVideoPortrait ? " hc-vc__pip-video--portrait" : ""}`}
               />
 
               {isCamOff && !isSwapped && (
@@ -3001,16 +3065,11 @@ export default function VideoCall() {
                   </span>
                 </div>
               )}
-              <audio
-                ref={remoteAudioRef}
-                autoPlay
-                playsInline
-                style={{ display: "none" }}
-              />
               <button
                 className="hc-vc__pip-min-btn"
                 onClick={toggleSelfView}
                 title="Minimize self view"
+                aria-label="Minimize self view"
               >
                 <FiMinimize2 />
               </button>
@@ -3020,6 +3079,7 @@ export default function VideoCall() {
                 className="hc-vc__pip-swap-btn"
                 onClick={toggleSwap}
                 title="Swap view"
+                aria-label="Swap view"
               >
                 <FiRefreshCw />
               </button>
@@ -3031,11 +3091,24 @@ export default function VideoCall() {
               className="hc-vc__pip-restore-btn"
               onClick={toggleSelfView}
               title="Show self view"
+              aria-label="Show self view"
             >
               <FiMaximize2 />
               <span>Self View</span>
             </button>
           )}
+
+          {/* Remote audio output — kept mounted independent of self-view
+              visibility. It must never live inside a conditionally-rendered
+              block: the main video is always muted (audio plays only
+              through this element), so unmounting it would silently cut
+              the remote party's audio while self-view is minimized. */}
+          <audio
+            ref={remoteAudioRef}
+            autoPlay
+            playsInline
+            style={{ display: "none" }}
+          />
 
           {/* Peer joined toast */}
           {peerJoined && !isRemoteConnected && (
@@ -3056,7 +3129,12 @@ export default function VideoCall() {
                 </span>
                 <span className="hc-vc__chat-title">In-call Chat</span>
               </div>
-              <button className="hc-vc__chat-close-btn" onClick={toggleChat}>
+              <button
+                className="hc-vc__chat-close-btn"
+                onClick={toggleChat}
+                title="Close chat"
+                aria-label="Close chat"
+              >
                 <FiX />
               </button>
             </div>
@@ -3153,6 +3231,7 @@ export default function VideoCall() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingFile}
                 title="Attach file"
+                aria-label="Attach file"
               >
                 {uploadingFile ? (
                   <span className="hc-vc__attach-spin" />
@@ -3175,6 +3254,7 @@ export default function VideoCall() {
                 onClick={sendMessage}
                 disabled={!chatInput.trim()}
                 title="Send"
+                aria-label="Send message"
               >
                 <FiSend />
               </button>
@@ -3192,7 +3272,12 @@ export default function VideoCall() {
                 </span>
                 <span className="hc-vc__notes-title">Consultation Notes</span>
               </div>
-              <button className="hc-vc__notes-close-btn" onClick={toggleNotes}>
+              <button
+                className="hc-vc__notes-close-btn"
+                onClick={toggleNotes}
+                title="Close notes"
+                aria-label="Close notes"
+              >
                 <FiX />
               </button>
             </div>

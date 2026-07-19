@@ -1,6 +1,7 @@
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 
 const registrationStore = new Map();
+const contactStore = new Map();
 
 function getEntry(store, key) {
   return store.get(key) || { count: 0, firstAttemptAt: Date.now() };
@@ -61,4 +62,11 @@ const registrationLimiter = buildEmailLimiter({
   message:  "Too many registration attempts. Please wait {min} minutes and try again.",
 });
 
-module.exports = { registrationLimiter };
+const contactLimiter = buildEmailLimiter({
+  store:    contactStore,
+  windowMs: 15 * 60 * 1000,
+  max:      5,
+  message:  "Too many messages sent. Please wait {min} minutes and try again.",
+});
+
+module.exports = { registrationLimiter, contactLimiter };

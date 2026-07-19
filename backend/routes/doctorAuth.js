@@ -77,6 +77,8 @@ const PROFILE_CHANGE_LABELS = {
     medicalRegistrationNumber: "Medical Registration Number",
     medicalLicense: "Medical License Number",
     consultationMode: "Consultation Mode",
+    consultantFees: "Consultation Fee",
+    feeCurrency: "Fee Currency",
     aboutDoctor: "Professional Bio",
     clinicName: "Clinic Name",
     clinicAddress: "Clinic Address",
@@ -454,9 +456,9 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
         let responseMessage = "Enrollment submitted successfully";
 
         if (enrollment) {
-            const wasApprovedOrRejected =
-                enrollment.approvalStatus === "approved" || enrollment.approvalStatus === "rejected";
-            const pendingProfileChanges = wasApprovedOrRejected
+            const wasApproved = enrollment.approvalStatus === "approved";
+            const wasRejected = enrollment.approvalStatus === "rejected";
+            const pendingProfileChanges = wasApproved
                 ? buildPendingProfileChanges(enrollment, enrollmentData)
                 : [];
             const profileUpdateSnapshot = pendingProfileChanges.reduce((snapshot, change) => {
@@ -464,16 +466,18 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
                 return snapshot;
             }, {});
 
-            if (wasApprovedOrRejected && pendingProfileChanges.length === 0) {
+            if (wasApproved && pendingProfileChanges.length === 0) {
                 return res.status(200).json({
                     message: "No profile changes detected.",
                     enrollment,
                 });
             }
 
-            // New enrollments update the live record immediately. Approved doctors'
-            // profile edits are staged below and applied only after admin approval.
-            if (!wasApprovedOrRejected) {
+            // New enrollments and resubmissions after rejection update the live
+            // record immediately and go back through full admin review. Approved
+            // doctors' profile edits are staged below and applied only after admin
+            // approval — their live profile must stay "approved" while pending.
+            if (!wasApproved) {
                 enrollment.set(enrollmentData);
                 enrollment.markModified("availability");
                 enrollment.markModified("languagesKnown");
@@ -482,7 +486,7 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
             enrollment.completedSteps = 5;
             enrollment.currentStep = 5;
             enrollment.currentStepLabel = STEP_LABELS[4];
-            if (wasApprovedOrRejected) {
+            if (wasApproved) {
                 enrollment.approvalStatus = "approved";
                 enrollment.verified = true;
                 enrollment.pendingRequestType = "profile_update";
@@ -494,6 +498,20 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
                 enrollment.markModified("pendingProfileChanges");
                 enrollment.markModified("profileUpdateSnapshot");
                 responseMessage = "Update request submitted and pending admin approval.";
+            } else if (wasRejected) {
+                // A rejected doctor resubmitting must go back through full review —
+                // never silently flip straight to "approved".
+                enrollment.approvalStatus = "pending";
+                enrollment.verified = false;
+                enrollment.pendingRequestType = "new_enrollment";
+                enrollment.profileUpdateRequestedAt = undefined;
+                enrollment.profileUpdateReviewedAt = undefined;
+                enrollment.profileUpdateRequestStatus = "none";
+                enrollment.pendingProfileChanges = [];
+                enrollment.profileUpdateSnapshot = undefined;
+                enrollment.markModified("pendingProfileChanges");
+                enrollment.markModified("profileUpdateSnapshot");
+                responseMessage = "Application resubmitted and pending admin review.";
             } else {
                 enrollment.pendingRequestType = enrollment.pendingRequestType || "new_enrollment";
             }

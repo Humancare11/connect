@@ -6,7 +6,7 @@ import socket from "../../socket";
 import { useAuth } from "../../context/AuthContext";
 
 const PrescriptionSlip = lazy(() =>
-  import("../../components/PrescriptionSlip").then((module) => ({
+  import("../../components/RxSlip").then((module) => ({
     default: module.PrescriptionSlip,
   })),
 );
@@ -36,7 +36,7 @@ function PrescriptionCard({ rx, patient }) {
     if (!slipRef.current) return;
     setDownloading(true);
     try {
-      const { downloadPrescriptionPDF } = await import("../../components/PrescriptionSlip");
+      const { downloadPrescriptionPDF } = await import("../../components/RxSlip");
       const name = patient?.name?.replace(/\s+/g, "_") || "patient";
       const date = rx.createdAt ? new Date(rx.createdAt).toISOString().split("T")[0] : "rx";
       await downloadPrescriptionPDF(slipRef.current, `prescription_${name}_${date}.pdf`);

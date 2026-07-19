@@ -377,6 +377,14 @@
   image-rendering: high-quality;
 }
 
+/* Portrait streams (e.g. a mobile patient holding their phone upright)
+   would otherwise get scaled way up by object-fit: cover to span this
+   landscape stage, cropping most of the frame into a tight "zoomed in"
+   view. Switch to contain so the full frame stays visible, letterboxed. */
+.hc-vc__main-video--portrait {
+  object-fit: contain;
+}
+
 /* Force non-mirrored orientation for local/self video */
 .hc-vc__video--local {
   transform: scaleX(-1);
@@ -570,6 +578,11 @@
   display: block;
   transition: opacity .2s;
   image-rendering: high-quality;
+  background: #081422;
+}
+
+.hc-vc__pip-video--portrait {
+  object-fit: contain;
 }
 
 /* Camera off overlay inside pip */
