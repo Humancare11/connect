@@ -42,7 +42,6 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Muscle-Strain.webp";
 import SEO from "../../components/Seo";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Muscle Strain",
   description: "Pulled muscles causing pain and stiffness",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -855,7 +854,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Muscle%20Strain")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=eeb&condition=Muscle%20Strain",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1212,7 +1220,7 @@ function FaqSection() {
 export default function MuscleStrain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Muscle Strain Treatment Online | Sprain, Pain & Recovery Support"
         description="Get expert care for muscle strains online. Consult a licensed provider for pulled muscles, pain, stiffness, swelling, sports injuries, and personalized recovery guidance from home."
         keywords="Muscle strain treatment, Pulled muscle care, Sports injury consultation, Online doctor consultation"

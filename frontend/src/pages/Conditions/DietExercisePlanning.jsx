@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Diet & Exercise Planning",
   description: "Personalized plans for healthier living",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -1226,7 +1226,7 @@ function FaqSection() {
 export default function DieExercisePlanning() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Diet & Exercise Planning Online | Telemedicine Wellness Care"
         description="Get personalized diet and exercise planning online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and achieve your health and wellness goals."
         keywords="Diet & exercise planning, Telemedicine services, Online doctor appointment, Virtual healthcare services"

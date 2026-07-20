@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Chronic Care",
   heading: "Bloating",
   description: "Fullness, pressure, and stomach discomfort",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -1218,7 +1218,7 @@ function FaqSection() {
 export default function Bloating() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Bloating Relief Online | Digestive Health & Stomach Discomfort Care"
         description="Feeling full, gassy, or uncomfortable after eating? Get personalized support for bloating symptoms with digestive health guidance and treatment recommendations online."
         keywords="Bloating, Bloating symptoms, Stomach fullness, Digestive discomfort, Digestive health guidance, Online doctor appointment"

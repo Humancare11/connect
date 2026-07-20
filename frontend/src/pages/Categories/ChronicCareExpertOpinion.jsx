@@ -214,7 +214,7 @@ const cat = {
     {
       name: "Post-COVID concerns",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "post-covid-concerns",
+      path: "/chronic-care/pulmonology/post-covid-concerns",
     },
   ],
 
@@ -712,7 +712,7 @@ export default function ChronicCareExpertOpinion() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Chronic Care Management & Expert Medical Opinions | Humancare Connect"
         description="Get expert online chronic care management and medical opinions from trusted healthcare professionals. Receive personalized treatment guidance, ongoing support, and virtual consultations from home."
         keywords="Chronic care management, Expert medical opinions, Chronic condition management, Online doctor consultations, Virtual chronic care, Virtual healthcare"

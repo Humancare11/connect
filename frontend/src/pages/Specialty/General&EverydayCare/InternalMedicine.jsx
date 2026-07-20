@@ -72,7 +72,7 @@ import SEO from "../../../components/Seo";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "internal-medicine",
+  slug: "/general-and-everyday-care/internal-medicine",
   name: "Internal Medicine",
   categoryId: "general",
 
@@ -164,81 +164,26 @@ const SPECIALTY_DATA = {
     {
       Icon: FiTool,
       name: "Medication Review",
-      path: "/medication-review",
-      description:
-        "Comprehensive evaluation of medications to ensure safe use, identify interactions, and optimize treatment effectiveness.",
+      path: "/general-and-everyday-care/internal-medicine/medication-review",
+      // description: "Reviewing medications for safe use",
     },
     {
       Icon: FiCrosshair,
       name: "Multi-System Complaints",
       path: "/general-and-everyday-care/internal-medicine/multi-system-complaints",
-      description:
-        "Assessment of symptoms affecting multiple organs or body systems that require a coordinated medical evaluation.",
+      // description: "Multiple symptoms affecting overall health",
     },
     {
       Icon: FiSearch,
       name: "Preventive Screening",
       path: "/general-and-everyday-care/internal-medicine/preventive-screening",
-      description:
-        "Routine screenings and risk assessments to detect disease early and support long-term health.",
+      // description: "Proactive care for better health",
     },
     {
       Icon: FiAlertCircle,
       name: "Undiagnosed Symptoms",
       path: "/general-and-everyday-care/internal-medicine/undiagnosed-symptoms",
-      description:
-        "Investigation of persistent symptoms that have not yet received a clear diagnosis.",
-    },
-    {
-      Icon: FiHeart,
-      name: "Hypertension",
-      description:
-        "Management of high blood pressure to reduce cardiovascular risks and support overall health.",
-    },
-    {
-      Icon: MdOutlineBloodtype,
-      name: "Type 2 Diabetes",
-      path: "/chronic-care/endocrinology/type-2-diabetes",
-      description:
-        "Long-term monitoring and treatment to maintain healthy blood sugar levels and prevent complications.",
-    },
-    {
-      Icon: FiTrendingUp,
-      name: "High Cholesterol",
-      path: "/chronic-care/cardiology/high-cholesterol",
-      description:
-        "Evaluation and treatment of cholesterol disorders to support heart and vascular health.",
-    },
-    {
-      Icon: MdOutlineBiotech,
-      name: "Thyroid Disorders",
-      path: "/chronic-care/endocrinology/thyroid-disorders",
-      description:
-        "Diagnosis and management of thyroid-related conditions affecting metabolism, energy levels, and overall wellness.",
-    },
-    {
-      Icon: FiBatteryCharging,
-      name: "Chronic Fatigue",
-      description:
-        "Assessment of persistent tiredness, low energy, and underlying medical causes.",
-    },
-    {
-      Icon: FiActivity,
-      name: "Unexplained Weight Changes",
-      description:
-        "Evaluation of unexpected weight gain or loss and associated medical concerns.",
-    },
-    {
-      Icon: FiUsers,
-      name: "Multiple Chronic Conditions",
-      description:
-        "Coordinated care for patients managing several health conditions simultaneously.",
-    },
-    {
-      Icon: FiHeart,
-      name: "General Adult Health Concerns",
-      description:
-        "Comprehensive care for non-emergency medical issues affecting adults across all stages of life.",
+      // description: "Answers for unexplained health concerns",
     },
   ],
 
@@ -639,12 +584,14 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
               <div
                 className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
               >
-                <span className="sp-hero__badge">HumanCare Connect</span>
+                <span className="sp-hero__badge">
+                  General and Everyday Care
+                </span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
                 <p className="sp-hero__description">{data.heroDescription}</p>
 
-                <div className="sp-hero__actions">
+                {/* <div className="sp-hero__actions">
                   <a href="/Specialties" className="sp-btn sp-btn--primary">
                     <FiSearch size={17} />
                     Find Specialists
@@ -656,7 +603,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
                     <FiCalendar size={17} />
                     Book Appointment
                   </a>
-                </div>
+                </div> */}
               </div>
 
               <Reveal className="sp-hero__sidebar">

@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Binge Eating",
   description: "Support for healthier eating habits",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function BingeEating() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Binge Eating Support Online | Healthier Eating & Emotional Care"
         description="Struggling with loss of control, emotional eating, or guilt around food? Get personalized binge eating support, coping strategies, and emotional wellness guidance online."
         keywords="Binge eating, Eating behaviors, Emotional distress, Emotional wellness support, Telemedicine services, Virtual healthcare services"

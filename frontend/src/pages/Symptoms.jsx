@@ -291,7 +291,10 @@ const conditionCategories = [
         name: "Preventive Screening",
         path: "/general-and-everyday-care/internal-medicine/preventive-screening",
       },
-      { name: "Medication Review", path: "/medication-review" },
+      {
+        name: "Medication Review",
+        path: "/general-and-everyday-care/internal-medicine/medication-review",
+      },
       {
         name: "Fever",
         path: "/general-and-everyday-care/general-physician/fever",
@@ -880,7 +883,7 @@ export default function Symptoms() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare Connect"
         description="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
         keywords="Consult a doctor online for symptoms, online doctor consultation, symptom-based online care, virtual healthcare services, symptom evaluation, medical advice online"

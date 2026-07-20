@@ -4,7 +4,6 @@ import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
 
-
 import {
   Calendar,
   Star,
@@ -45,12 +44,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/ADHD.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "ADHD Evaluation",
   description: "Attention, focus, and hyperactivity concerns",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -130,10 +128,8 @@ export default function AdhdEvaluation() {
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
-
     <>
-
-                    <SEO
+      <SEO
         title="ADHD Evaluation Online | Virtual ADHD Care & Support"
         description="Get an ADHD evaluation online with licensed providers. Schedule an online doctor appointment for symptom evaluation, personalized guidance, and ongoing ADHD care."
         keywords="ADHD evaluation, ADHD support, ADHD symptoms, attention problems, difficulty focusing, hyperactivity, impulsive behavior, mental health guidance, telemedicine services, online doctor appointment, online provider"
@@ -252,22 +248,22 @@ export default function AdhdEvaluation() {
                       <p className="condition-block-body">
                         ADHD can cause difficulty focusing, impulsive behavior,
                         restlessness, forgetfulness, disorganization, trouble
-                        completing tasks, and attention challenges that may affect
-                        work, school, and daily life.
+                        completing tasks, and attention challenges that may
+                        affect work, school, and daily life.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
-                        Get professional ADHD support with Humancare Connect from
-                        the comfort of home. Our telemedicine services make it
-                        easy to schedule an online doctor appointment and connect
-                        with a licensed provider. Through our secure telemedicine
-                        platform, you can receive symptom evaluation, mental
-                        health guidance, treatment recommendations, and ongoing
-                        care support without the need for an in-person clinic
-                        visit.
+                        Get professional ADHD support with Humancare Connect
+                        from the comfort of home. Our telemedicine services make
+                        it easy to schedule an online doctor appointment and
+                        connect with a licensed provider. Through our secure
+                        telemedicine platform, you can receive symptom
+                        evaluation, mental health guidance, treatment
+                        recommendations, and ongoing care support without the
+                        need for an in-person clinic visit.
                       </p>
                     </div>
 
@@ -342,7 +338,14 @@ export default function AdhdEvaluation() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=ADHD%20Evaluation")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=ADHD%20Evaluation",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

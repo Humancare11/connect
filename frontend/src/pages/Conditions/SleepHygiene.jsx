@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Sleep Hygiene",
   description: "Better habits for better sleep",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function SleepHygiene() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Sleep Hygiene Support Online | Virtual Consultation for Better Sleep"
         description="Improve your sleep with online sleep hygiene support. Get expert guidance for healthy sleep habits, insomnia, poor sleep quality, and lasting wellness."
         keywords="sleep hygiene, sleep hygiene tips, improve sleep quality, healthy sleep habits, online sleep consultation, insomnia support, better sleep routine, virtual sleep health, sleep wellness, telehealth sleep care"

@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Vision-Changes.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Vision Changes",
   description: "Evaluation for changes in eyesight",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -859,7 +858,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Vision%20Changes")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=eeb&condition=Vision%20Changes",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1216,7 +1224,7 @@ function FaqSection() {
 export default function VisionChanges() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Vision Changes Care Online | Eye Health & Vision Evaluation"
         description="Get support for vision changes, blurry vision, double vision, floaters, and light sensitivity. Connect with an online provider for eye health guidance and care."
         keywords="Blurry vision, double vision, difficulty focusing, reduced visual clarity, sensitivity to light, floaters, eyesight changes, eye health, vision evaluation, eye health guidance, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"

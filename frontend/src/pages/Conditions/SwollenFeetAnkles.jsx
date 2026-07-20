@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Swollen-Feet-or-Ankles.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Swollen Feet or Ankles",
   description: "Swelling and fluid buildup in feet",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -856,7 +855,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Swollen%20Feet%20or%20Ankles")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=eeb&condition=Swollen%20Feet%20or%20Ankles",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1213,7 +1221,7 @@ function FaqSection() {
 export default function SwollenFeetAnkles() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Swollen Feet & Ankles Treatment Online | Virtual Doctor Consultation"
         description="Get online care for swollen feet or ankles. Consult a licensed provider for swelling, fluid retention, discomfort, and personalized treatment guidance."
         keywords="swollen feet treatment, swollen ankles treatment, ankle swelling, foot swelling, edema treatment online, fluid retention, online doctor consultation, virtual healthcare services, telehealth swelling care, swollen feet and ankles causes"

@@ -876,14 +876,6 @@ function scoreCategory(category, query) {
 export default function Categories() {
   const [query, setQuery] = useState("");
 
-  /* FIX: previously used `.includes()`, a raw substring match, which
-     matched "men" inside unrelated words like "treatment" and
-     "management" (false positives), and had no way to prioritize a
-     direct name match over an incidental tagline mention. This now
-     matches on word boundaries (so "men" only matches text where a
-     word actually starts with "men") and checks category-specific
-     keywords too (so "derma"/"dermatology" correctly finds Skin &
-     Hair Care), then sorts by how relevant the match is. */
   const filtered = query.trim()
     ? CATEGORIES.map((c) => ({
         category: c,
@@ -896,7 +888,7 @@ export default function Categories() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Online Doctor Consultation | Virtual Healthcare Services | Humancare Connect"
         description="Book secure online doctor consultations with experienced healthcare professionals. Get personalized virtual healthcare services for everyday health, specialist care, mental wellness, and more with Humancare Connect."
         keywords="Online doctor consultation, Online doctor consultation services, Virtual healthcare services, Online doctor consultations, Virtual healthcare experience, Healthcare professionals"

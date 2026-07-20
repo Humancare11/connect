@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Numbness-and-Tingling.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Numbness and Tingling",
   description: "Pins, needles, or loss of sensation",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -857,7 +856,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Numbness%20and%20Tingling")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=eeb&condition=Numbness%20and%20Tingling",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1214,7 +1222,7 @@ function FaqSection() {
 export default function NumbersAndTingling() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Numbness & Tingling Treatment Online | Nerve Pain & Sensation Care"
         description="Get expert care for numbness and tingling online. Consult a licensed provider for pins and needles, nerve pain, loss of sensation, weakness, and personalized treatment guidance."
         keywords="Numbness and tingling, Nerve pain treatment, Online neurology consultation, Peripheral neuropathy care"

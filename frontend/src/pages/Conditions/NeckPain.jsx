@@ -42,7 +42,6 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Neck-Pain.webp";
 import SEO from "../../components/Seo";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Neck Pain",
   description: "Stiffness, soreness, and neck discomfort",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -856,7 +855,14 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Neck%20Pain")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate("/category-consultant?category=eeb&condition=Neck%20Pain")
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1213,7 +1219,7 @@ function FaqSection() {
 export default function NeckPain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Neck Pain Treatment Online | Stiff Neck & Pain Relief Consultation"
         description="Get expert treatment for neck pain online. Consult a licensed provider for neck stiffness, muscle strain, soreness, headaches, posture-related pain, and personalized recovery guidance."
         keywords="Neck pain treatment, Stiff neck relief, Muscle strain consultation, Online doctor consultation"

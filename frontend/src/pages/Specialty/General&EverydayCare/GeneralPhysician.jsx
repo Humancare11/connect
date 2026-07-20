@@ -73,7 +73,7 @@ import SEO from "../../../components/Seo";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "generalphysician",
+  slug: "/general-and-everyday-care/general-physician",
   name: "General Physician (GP)",
   categoryId: "general",
   tagline: "Your First Point of Contact for Everyday Healthcare.",
@@ -164,61 +164,61 @@ const SPECIALTY_DATA = {
     {
       Icon: FiActivity,
       name: "Pink eye",
-      desc: "Fever and illness in children",
+      // desc: "Fever and illness in children",
       path: "/general-and-everyday-care/general-physician/pink-eye",
     },
     {
       Icon: FiThermometer,
       name: "Nausea & Vomiting",
-      desc: "Spinning sensation and balance issues",
+      // desc: "Spinning sensation and balance issues",
       path: "/general-and-everyday-care/general-physician/nausea-and-vomiting",
     },
     {
       Icon: FiWind,
       name: "Fatigue",
-      desc: "Relief for sore throat and swollen tonsils",
+      // desc: "Relief for sore throat and swollen tonsils",
       path: "/general-and-everyday-care/general-physician/fatigue",
     },
     {
       Icon: FiBatteryCharging,
       name: "Minor Infections",
-      desc: "Pain, irritation, or a scratchy throat",
+      // desc: "Pain, irritation, or a scratchy throat",
       path: "/general-and-everyday-care/general-physician/minor-infections",
     },
     {
       Icon: FiAlertCircle,
       name: "Sinus Infection",
-      desc: "Red, itchy, irritated skin in kids",
+      // desc: "Red, itchy, irritated skin in kids",
       path: "/general-and-everyday-care/general-physician/sinus-infection",
     },
     {
       Icon: FiTarget,
       name: "Headache",
-      desc: "Fever and illness in children",
+      // desc: "Fever and illness in children",
       path: "/general-and-everyday-care/general-physician/headache",
     },
     {
       Icon: FiShield,
       name: "Body aches",
-      desc: "Spinning sensation and balance issues",
+      // desc: "Spinning sensation and balance issues",
       path: "/general-and-everyday-care/general-physician/body-aches",
     },
     {
       Icon: FiDroplet,
       name: "Cough",
-      desc: "Relief for sore throat and swollen tonsils",
+      // desc: "Relief for sore throat and swollen tonsils",
       path: "/general-and-everyday-care/general-physician/cough",
     },
     {
       Icon: FiEye,
       name: "Cold & flu",
-      desc: "Pain, irritation, or a scratchy throat",
+      // desc: "Pain, irritation, or a scratchy throat",
       path: "/general-and-everyday-care/general-physician/cold-and-flu",
     },
     {
       Icon: FiCloud,
       name: "Fever",
-      desc: "Relief for a blocked nose",
+      // desc: "Relief for a blocked nose",
       path: "/general-and-everyday-care/general-physician/fever",
     },
   ],
@@ -621,7 +621,9 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
                   heroLoaded ? " sp-hero__content-inner--loaded" : ""
                 }`}
               >
-                <span className="sp-hero__badge">Child & Family Care</span>
+                <span className="sp-hero__badge">
+                  General and Everyday Care
+                </span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
                 <p className="sp-hero__description">{data.heroDescription}</p>

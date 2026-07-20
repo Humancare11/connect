@@ -42,7 +42,6 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Cholesterol-Lowering-Diet.webp";
 import SEO from "../../components/Seo";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Cholesterol-Lowering Diet",
   description: "Heart healthy nutrition guidance",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -861,7 +860,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Cholesterol-Lowering%20Diet")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=general&condition=Cholesterol-Lowering%20Diet",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1218,7 +1226,7 @@ function FaqSection() {
 export default function CholesterolLoweringDiet() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Cholesterol-Lowering Diet | Heart-Healthy Nutrition Guidance"
         description="Make smarter food choices to support healthy cholesterol levels and heart health. Get personalized nutrition planning, dietary guidance, and cholesterol management support online."
         keywords="Cholesterol lowering diet, Heart healthy nutrition, Cholesterol management, Telemedicine services, Virtual healthcare services, Telehealth services"

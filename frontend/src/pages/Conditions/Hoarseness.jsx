@@ -405,7 +405,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Hoarseness",
   description: "Relief for voice and throat changes",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],

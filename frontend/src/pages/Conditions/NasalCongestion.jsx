@@ -42,7 +42,6 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Nasal-Congestion.webp";
 import SEO from "../../components/Seo";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Nasal Congestion",
   description: "Relief for a blocked nose",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -860,7 +859,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Nasal%20Congestion")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=eeb&condition=Nasal%20Congestion",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1217,7 +1225,7 @@ function FaqSection() {
 export default function NasalCongestion() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Nasal Congestion Treatment Online | Blocked Nose & Sinus Relief"
         description="Get expert treatment for nasal congestion online. Consult a licensed provider for a blocked nose, sinus pressure, runny nose, allergies, breathing difficulties, and personalized care."
         keywords="Nasal congestion treatment, Blocked nose relief, Sinus congestion care, Online doctor consultation"

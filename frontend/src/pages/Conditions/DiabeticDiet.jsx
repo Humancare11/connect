@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Diabetic Diet",
   description: "Nutrition guidance for diabetes management",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function DiabeticDiet() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Diabetic Diet Consultation Online | Telemedicine Nutrition Care"
         description="Get personalized diabetic diet guidance online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive expert nutrition support for diabetes management."
         keywords="Diabetic diet consultation, Telemedicine services, Online doctor appointment, Virtual healthcare services"

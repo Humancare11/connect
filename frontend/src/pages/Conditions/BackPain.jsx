@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Back Pain",
   description: "Pain, stiffness, and back discomfort",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],

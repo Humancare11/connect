@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Food Intolerance Planning",
   description: "Personalized guidance for food sensitivities",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -1226,7 +1226,7 @@ function FaqSection() {
 export default function FoodIntolerancePlanning() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Food Intolerance Planning Online | Personalized Nutrition Support"
         description="Identify food sensitivities with expert food intolerance planning online. Connect with a licensed provider for dietary guidance, nutrition advice, and personalized digestive health support."
         keywords="Food intolerance planning, Food sensitivity support, Online doctor appointment, Telemedicine services"

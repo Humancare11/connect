@@ -42,7 +42,6 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Dry-Eyes.webp";
 import SEO from "../../components/Seo";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Dry Eyes",
   description: "Relief for irritated and uncomfortable eyes",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -859,7 +858,14 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Dry%20Eyes")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate("/category-consultant?category=eeb&condition=Dry%20Eyes")
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1216,7 +1222,7 @@ function FaqSection() {
 export default function DryEyes() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Dry Eyes Treatment Online | Telemedicine Eye Care"
         description="Get expert dry eyes treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized eye care from home."
         keywords="Dry eyes treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"

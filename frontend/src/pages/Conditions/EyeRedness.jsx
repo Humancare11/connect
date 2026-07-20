@@ -42,7 +42,6 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Eye-Redness.webp";
 import SEO from "../../components/Seo";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Eye Redness",
   description: "Red, irritated, or bloodshot eyes",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -853,7 +852,14 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Eye%20Redness")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate("/category-consultant?category=eeb&condition=Eye%20Redness")
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1210,7 +1216,7 @@ function FaqSection() {
 export default function EyeRedness() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Eye Redness Treatment Online | Virtual Eye Care Consultation"
         description="Get expert treatment for eye redness online. Connect with a licensed provider for redness, irritation, burning, itching, or bloodshot eyes through secure telemedicine services."
         keywords="Eye redness treatment, Virtual eye care, Online doctor appointment, Telemedicine services"

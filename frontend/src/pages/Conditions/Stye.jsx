@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Stye.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Stye",
   description: "Relief for painful eyelid bumps",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -857,7 +856,14 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Stye")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate("/category-consultant?category=eeb&condition=Stye")
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1214,7 +1220,7 @@ function FaqSection() {
 export default function Stye() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Stye Treatment Online | Virtual Eye Care Consultation"
         description="Get online treatment for a stye. Consult a licensed provider for painful eyelid bumps, swelling, redness, eye irritation, and personalized care guidance."
         keywords="stye treatment online, eyelid stye treatment, painful eyelid bump, eye infection consultation, online eye doctor, swollen eyelid treatment, virtual eye care, telehealth eye consultation, hordeolum treatment, online ophthalmology consultation"

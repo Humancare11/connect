@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Sports-Nutrition.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Sports Nutrition",
   description: "Fueling performance and recovery",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -859,7 +858,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Sports%20Nutrition")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=general&condition=Sports%20Nutrition",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1216,7 +1224,7 @@ function FaqSection() {
 export default function SportsNutrition() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Sports Nutrition Consultation Online | Virtual Nutrition & Performance Support"
         description="Get personalized online sports nutrition guidance to improve performance, recovery, endurance, muscle health, and achieve your fitness goals."
         keywords="sports nutrition consultation, online sports nutrition, sports dietitian online, athletic nutrition, performance nutrition, muscle recovery nutrition, fitness nutrition consultation, virtual nutrition coaching, sports diet plan, telehealth nutrition services"

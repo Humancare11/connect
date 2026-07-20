@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Tonsillitis.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Tonsillitis",
   description: "Relief for sore throat and swollen tonsils",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -859,7 +858,14 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Tonsillitis")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate("/category-consultant?category=eeb&condition=Tonsillitis")
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1216,7 +1222,7 @@ function FaqSection() {
 export default function Tonsillitis() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Tonsillitis Treatment Online | Virtual Care for Swollen Tonsils"
         description="Get online care for tonsillitis. Consult a licensed provider for sore throat, swollen tonsils, fever, painful swallowing, and personalized treatment."
         keywords="tonsillitis treatment online, swollen tonsils treatment, sore throat treatment, tonsillitis symptoms, online doctor for tonsillitis, painful swallowing, virtual doctor consultation, telehealth tonsillitis care, throat infection treatment, online ENT consultation"

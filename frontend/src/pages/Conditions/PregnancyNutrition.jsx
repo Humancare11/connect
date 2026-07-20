@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Pregnancy Nutrition",
   description: "Healthy eating for a healthy pregnancy",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function PregnancyNutrition() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Pregnancy Nutrition Online | Prenatal Diet & Nutrition Support"
         description="Get expert pregnancy nutrition guidance online. Connect with a licensed provider for prenatal nutrition, healthy eating, dietary planning, fetal development support, and personalized pregnancy care."
         keywords="Pregnancy nutrition, Prenatal nutrition, Online pregnancy nutrition consultation, Healthy pregnancy diet, Prenatal wellness support"

@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Ear-Infection.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -405,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Ear Infection",
   description: "Pain, pressure, and ear discomfort",
   trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
@@ -856,7 +855,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=eeb&condition=Ear%20Infection")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=eeb&condition=Ear%20Infection",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1213,7 +1221,7 @@ function FaqSection() {
 export default function EarInfection() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Ear Infection Treatment Online | Telemedicine Ear Care"
         description="Get expert ear infection treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized ear care from home."
         keywords="Ear infection treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
