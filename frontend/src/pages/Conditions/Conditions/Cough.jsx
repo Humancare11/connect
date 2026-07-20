@@ -50,7 +50,7 @@ const pageData = {
   badge: "General & Everyday Care",
   heading: "Cough",
   description: "Persistent coughing and throat irritation",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

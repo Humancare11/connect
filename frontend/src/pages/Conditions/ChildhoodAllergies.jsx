@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Childhood Allergies",
   description: "Allergic reactions affecting children",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function ChildhoodAllergies() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Childhood Allergies | Relief for Rashes, Sneezing & Congestion"
         description="Pollen, dust, pet dander, or food may trigger allergy symptoms in children. Access personalized allergy management guidance and treatment recommendations from home."
         keywords="Childhood allergies, Allergy symptoms, Allergy care, Telemedicine services, Online doctor appointment, Virtual healthcare services"

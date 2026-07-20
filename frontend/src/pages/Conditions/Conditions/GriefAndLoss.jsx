@@ -50,7 +50,7 @@ const pageData = {
   badge: "Mental Healthg",
   heading: "Grief and Loss",
   description: "Emotional pain after a loss",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

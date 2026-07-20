@@ -50,7 +50,7 @@ const pageData = {
   badge: "General & Everyday Care",
   heading: "Cold & Flu",
   description: "Common viral respiratory infections",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

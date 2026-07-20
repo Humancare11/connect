@@ -408,7 +408,7 @@ const pageData = {
   badge: "Respiratory Health",
   heading: "Pneumonia Follow-Up",
   description: "Recovery care after pneumonia treatment",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function PneumoniaFollowUp() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Pneumonia Follow-Up Online | Recovery & Respiratory Care"
         description="Get expert pneumonia follow-up care online. Connect with a licensed provider for recovery monitoring, lingering cough, fatigue, breathing concerns, chest discomfort, and personalized treatment guidance."
         keywords="Pneumonia follow-up, Pneumonia recovery care, Online pneumonia consultation, Respiratory follow-up, Virtual respiratory care"

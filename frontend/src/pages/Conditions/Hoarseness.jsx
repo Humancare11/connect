@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Bone Care",
   heading: "Hoarseness",
   description: "Relief for voice and throat changes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1217,7 +1217,7 @@ function FaqSection() {
 export default function Hoarseness() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Hoarseness Treatment Online | Expert Voice & Throat Care"
         description="Get expert care for hoarseness online. Connect with a licensed provider for voice changes, sore throat, vocal strain, and personalized treatment through secure telemedicine services."
         keywords="Hoarseness treatment, Voice and throat care, Online doctor appointment, Telemedicine services"

@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Bone Care",
   heading: "Eye Strain",
   description: "Relief for tired and overworked eyes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1216,7 +1216,7 @@ function FaqSection() {
 export default function EyeStrain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Eye Strain Treatment Online | Digital Eye Fatigue Relief"
         description="Experiencing tired or strained eyes? Connect with a licensed provider online for expert eye strain treatment, digital eye fatigue relief, and personalized eye care through telemedicine services."
         keywords="Eye strain treatment, Digital eye fatigue, Online doctor appointment, Telemedicine services"

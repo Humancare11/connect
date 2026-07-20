@@ -50,7 +50,7 @@ const pageData = {
   badge: "Support through life changesMental Health",
   heading: "Adjustment Difficulties",
   description: "Support through life changes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

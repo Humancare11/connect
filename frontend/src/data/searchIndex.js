@@ -523,7 +523,7 @@ export const conditions = [
     keywords: ["puberty", "puberty concerns"]
   },
   {
-    id: "skin-rash-children", title: "Skin Rash in Children", type: "condition", category: "child-and-family-care", specialty: "pediatrics", route: "/skin-rash-children",
+    id: "skin-rash-children", title: "Skin Rash in Children", type: "condition", category: "child-and-family-care", specialty: "pediatrics", route: "/child-and-family-care/pediatrics/skin-rash-in-children",
     keywords: ["child skin rash", "kids rash", "baby rash"]
   },
   {
@@ -727,7 +727,7 @@ export const conditions = [
     keywords: ["jet lag"]
   },
   {
-    id: "medication-refills-traveling", title: "Medication Refills While Traveling", type: "condition", category: "travel-global-care", specialty: "travel-medicine", route: "/medication-refills-traveling",
+    id: "medication-refills-traveling", title: "Medication Refills While Traveling", type: "condition", category: "travel-global-care", specialty: "travel-medicine", route: "/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
     keywords: ["travel medication refill"]
   },
   {

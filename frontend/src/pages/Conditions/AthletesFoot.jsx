@@ -408,7 +408,7 @@ const pageData = {
   badge: "Skin Conditions",
   heading: "Athlete’s Foot",
   description: "Itchy, burning fungal skin infection",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1044,7 +1044,7 @@ function FaqSection() {
 export default function AthletesFoot() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Athlete�s Foot Treatment Online | Fungal Skin Infection Care"
         description="Itchy, burning, or peeling skin between your toes? Get athlete�s foot treatment guidance, skincare support, and prescription care when appropriate from a licensed provider online."
         keywords="Athlete�s foot, Athlete�s foot treatment, Fungal skin infection, Peeling skin, Skincare guidance, Online doctor appointment"

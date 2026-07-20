@@ -596,7 +596,7 @@ export default function ChildFamilyCare() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Children & Family Care | Virtual Doctor Consultation | Humancare Connect"
         description="Access online children and family care with trusted healthcare professionals. Get virtual doctor consultations, pediatric guidance, family healthcare support, and personalized medical advice from home."
         keywords="Children and family care, Family healthcare, Pediatric support, Virtual doctor consultations, Virtual healthcare services, Online doctor consultation"
@@ -666,7 +666,7 @@ export default function ChildFamilyCare() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

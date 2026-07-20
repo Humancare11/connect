@@ -408,7 +408,7 @@ const pageData = {
   badge: "Respiratory Health",
   heading: "Shortness of Breath",
   description: "Difficulty breathing or catching breath",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function ShortnessOfBreath() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Shortness of Breath Treatment Online | Virtual Respiratory Care"
         description="Talk to a licensed provider online for shortness of breath, wheezing, chest tightness, breathing difficulties, and personalized treatment guidance."
         keywords="shortness of breath treatment, breathing difficulty, online pulmonologist, wheezing treatment, respiratory consultation online, chest tightness, virtual respiratory care, telehealth breathing support"

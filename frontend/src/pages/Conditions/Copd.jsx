@@ -408,7 +408,7 @@ const pageData = {
   badge: "Respiratory Health",
   heading: "COPD",
   description: "Chronic lung disease affecting breathing",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function Copd() {
   return (
     <>
-                  <SEO
+      <SEO
         title="COPD Treatment Online | Telemedicine Services for COPD Care"
         description="Get expert COPD treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized breathing care from home."
         keywords="COPD treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"

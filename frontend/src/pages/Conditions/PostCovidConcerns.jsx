@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Post-COVID Concerns",
   description: "Support for lingering COVID symptoms",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

@@ -139,7 +139,7 @@ const conditionCategories = [
         name: "Pediatrics Fever",
         path: "/child-and-family-care/pediatrics/pediatric-fever",
       },
-      { name: "Skin Rash Children", path: "/skin-rash-children" },
+      { name: "Skin Rash Children", path: "/child-and-family-care/pediatrics/skin-rash-in-children" },
       {
         name: "Mood & Anxiety in Teens",
         path: "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
@@ -173,7 +173,7 @@ const conditionCategories = [
       },
       {
         name: "Heart Disease Follow-Up",
-        path: "/chronic-care/pulmonology/heart-disease-follow-up",
+        path: "/chronic-care/cardiology/heart-disease-follow-up",
       },
       {
         name: "Pre-Op Cardiac Clearance",
@@ -353,7 +353,7 @@ const conditionCategories = [
       },
       { name: "Stye", path: "/eye-ear-bone/ophthalmology/stye" },
       { name: "Eye-Strain", path: "/eye-ear-bone/ophthalmology/eye-strain" },
-      { name: "Back Pain", path: "//eye-ear-bone/orthopedics/back-pain" },
+      { name: "Back Pain", path: "/eye-ear-bone/orthopedics/back-pain" },
       { name: "Neck Pain", path: "/eye-ear-bone/orthopedics/neck-pain" },
       { name: "Knee Pain", path: "/eye-ear-bone/orthopedics/knee-pain" },
       {
@@ -591,7 +591,7 @@ const conditionCategories = [
       },
       {
         name: "Medication Refill While Traveling",
-        path: "/medication-refills-traveling",
+        path: "travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
       },
       {
         name: "Referral Coordination Overseas",

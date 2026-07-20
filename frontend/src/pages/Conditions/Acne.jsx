@@ -408,7 +408,7 @@ const pageData = {
   badge: "Skin Conditions",
   heading: "Acne",
   description: "Clogged pores causing breakouts",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -616,7 +616,7 @@ function SectionLabel({ children, variant = "light" }) {
 function HeroSection({ data }) {
   return (
     <>
-                  <SEO
+      <SEO
         title="Online Acne Treatment | Virtual Dermatology & Acne Care"
         description="Get online acne treatment for pimples, blackheads, whiteheads, and skin irritation. Connect with a licensed provider for personalized acne care and skincare guidance."
         keywords="Acne, Acne care, Telemedicine services, Online doctor appointment"
@@ -712,374 +712,374 @@ function HeroSection({ data }) {
           </div>
         </div>
       </section>
-      </>
-      );
+    </>
+  );
 }
 
-      // ─────────────────────────────────────────────────────────────────
-      // ABOUT SPECIALTY
-      // ─────────────────────────────────────────────────────────────────
-      function AboutSpecialty() {
+// ─────────────────────────────────────────────────────────────────
+// ABOUT SPECIALTY
+// ─────────────────────────────────────────────────────────────────
+function AboutSpecialty() {
   return (
-      <div className="sp-glass-card">
-        <div className="sp-glass-shine" />
-        <div className="sp-about-grid">
-          {/* LEFT */}
-          <div className="sp-about-left">
-            <SectionLabel>About This Specialty</SectionLabel>
-            <h2 className="sp-about-h2">
-              Your Health,
-              <br />
-              Our Priority
-            </h2>
+    <div className="sp-glass-card">
+      <div className="sp-glass-shine" />
+      <div className="sp-about-grid">
+        {/* LEFT */}
+        <div className="sp-about-left">
+          <SectionLabel>About This Specialty</SectionLabel>
+          <h2 className="sp-about-h2">
+            Your Health,
+            <br />
+            Our Priority
+          </h2>
 
-            <div className="sp-nav-card">
-              <p className="sp-nav-label">Quick Access</p>
-              <div className="sp-nav-list">
-                {[
-                  "Routine Wellness",
-                  "Acute Illness",
-                  "Chronic Conditions",
-                  "Mental Wellbeing",
-                ].map((item) => (
-                  <div key={item} className="sp-nav-item">
-                    <ChevronRight size={13} className="sp-nav-chevron" />
-                    <span className="sp-nav-text">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="sp-stat-row">
-              <div className="sp-stat-pill">
-                <HeartPulse size={13} />
-                <span>15 K+ Patients</span>
-              </div>
-              <div className="sp-stat-pill">
-                <ShieldCheck size={13} />
-                <span>98% Satisfaction</span>
-              </div>
+          <div className="sp-nav-card">
+            <p className="sp-nav-label">Quick Access</p>
+            <div className="sp-nav-list">
+              {[
+                "Routine Wellness",
+                "Acute Illness",
+                "Chronic Conditions",
+                "Mental Wellbeing",
+              ].map((item) => (
+                <div key={item} className="sp-nav-item">
+                  <ChevronRight size={13} className="sp-nav-chevron" />
+                  <span className="sp-nav-text">{item}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="sp-about-right">
-            <div>
-              <h3 className="sp-block-title">What is Acne?</h3>
-              <p className="sp-block-body">
-                Acne can cause pimples, blackheads, whiteheads, redness,
-                inflammation, and skin irritation often triggered by hormones,
-                stress, bacteria, or clogged pores.
-              </p>
+          <div className="sp-stat-row">
+            <div className="sp-stat-pill">
+              <HeartPulse size={13} />
+              <span>15 K+ Patients</span>
             </div>
-
-            <div>
-              <h3 className="sp-block-title">How?</h3>
-              <p className="sp-block-body">
-                Get personalized acne care with Humancare Connect from the comfort
-                of home. Our telemedicine services make it easy to book an online
-                doctor appointment and connect with a licensed provider for
-                treatment plans, skincare guidance, and prescriptions when
-                appropriate through our secure telemedicine platform.
-              </p>
+            <div className="sp-stat-pill">
+              <ShieldCheck size={13} />
+              <span>98% Satisfaction</span>
             </div>
+          </div>
+        </div>
 
-            <div>
-              <h3 className="sp-block-title">
-                Clear your skin in 4 simple steps.
-              </h3>
-              <div className="sp-benefits-grid">
-                {[
-                  "Choose Acne care",
-                  "Share your skin concerns and symptoms",
-                  "Connect with an online provider",
-                  "Receive treatment guidance and personalized skincare recommendations",
-                ].map((b) => (
-                  <div key={b} className="sp-benefit-item">
-                    <CheckCircle size={14} className="sp-benefit-check" />
-                    <span>{b}</span>
-                  </div>
-                ))}
-              </div>
+        {/* RIGHT */}
+        <div className="sp-about-right">
+          <div>
+            <h3 className="sp-block-title">What is Acne?</h3>
+            <p className="sp-block-body">
+              Acne can cause pimples, blackheads, whiteheads, redness,
+              inflammation, and skin irritation often triggered by hormones,
+              stress, bacteria, or clogged pores.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="sp-block-title">How?</h3>
+            <p className="sp-block-body">
+              Get personalized acne care with Humancare Connect from the comfort
+              of home. Our telemedicine services make it easy to book an online
+              doctor appointment and connect with a licensed provider for
+              treatment plans, skincare guidance, and prescriptions when
+              appropriate through our secure telemedicine platform.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="sp-block-title">
+              Clear your skin in 4 simple steps.
+            </h3>
+            <div className="sp-benefits-grid">
+              {[
+                "Choose Acne care",
+                "Share your skin concerns and symptoms",
+                "Connect with an online provider",
+                "Receive treatment guidance and personalized skincare recommendations",
+              ].map((b) => (
+                <div key={b} className="sp-benefit-item">
+                  <CheckCircle size={14} className="sp-benefit-check" />
+                  <span>{b}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
-      );
+    </div>
+  );
 }
 
-      // ─────────────────────────────────────────────────────────────────
-      // STICKY BOOKING CARD
-      // ─────────────────────────────────────────────────────────────────
-      function StickyBookingCard() {
+// ─────────────────────────────────────────────────────────────────
+// STICKY BOOKING CARD
+// ─────────────────────────────────────────────────────────────────
+function StickyBookingCard() {
   const navigate = useNavigate();
-      const price = useCategoryPrice();
-      return (
-      <div className="sp-sbc">
-        <div className="sp-sbc-badge">
-          <span className="sp-sbc-dot" />
-          Doctors Available Now
-        </div>
+  const price = useCategoryPrice();
+  return (
+    <div className="sp-sbc">
+      <div className="sp-sbc-badge">
+        <span className="sp-sbc-dot" />
+        Doctors Available Now
+      </div>
 
+      <div
+        style={{
+          marginBottom: 16,
+          animation: "sp-sbcFadeUp .6s .10s cubic-bezier(.22,.68,0,1.2) both",
+        }}
+      >
+        <div className="sp-sbc-price">${price ?? 49}</div>
+        <p className="sp-sbc-price-sub">
+          One-time consultation fee · No subscription required
+        </p>
+      </div>
+
+      <div className="sp-sbc-info">
+        <Shield size={15} className="sp-sbc-info-icon" />
+        <p className="sp-sbc-info-text">
+          No extra fee for doctor notes, prescriptions, or specialist referrals.{" "}
+          <strong style={{ color: "#0A1F44", fontWeight: 700 }}>
+            Everything is included.
+          </strong>
+        </p>
+      </div>
+
+      <div className="sp-sbc-features">
+        {[
+          "Board-certified physician",
+          "Rx to your pharmacy",
+          "Doctor's note included",
+          "24hr follow-up support",
+          "HIPAA secure session",
+        ].map((item, i) => (
+          <div
+            key={item}
+            className="sp-sbc-row"
+            style={{ animationDelay: `${0.35 + i * 0.07}s` }}
+          >
+            <CheckCircle size={15} className="sp-sbc-check" />
+            <span className="sp-sbc-feat-text">{item}</span>
+          </div>
+        ))}
+      </div>
+
+      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=skin&condition=Acne")}>Start Consultation →</button>
+      <p className="sp-sbc-terms">
+        By continuing, you agree to our{" "}
+        <a href="#" className="sp-sbc-link">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="#" className="sp-sbc-link">
+          Privacy Policy
+        </a>
+      </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// WHY CHOOSE US
+// ─────────────────────────────────────────────────────────────────
+function WhyChooseUs() {
+  return (
+    <section style={{ background: "#0A1F44", padding: "80px 0" }}>
+      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
+        <div style={{ textAlign: "center", marginBottom: 52 }}>
+          <SectionLabel variant="dark">Why HumanCare Connect</SectionLabel>
+          <h2
+            style={{
+              fontSize: 36,
+              fontWeight: 800,
+              color: "#fff",
+              fontFamily: "'Georgia',serif",
+              marginTop: 8,
+            }}
+          >
+            The Standard of Modern Healthcare
+          </h2>
+          <p style={{ color: "#7CB7FF", fontSize: 16, marginTop: 12 }}>
+            Built for patients who deserve better.
+          </p>
+        </div>
         <div
           style={{
-            marginBottom: 16,
-            animation: "sp-sbcFadeUp .6s .10s cubic-bezier(.22,.68,0,1.2) both",
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fill,minmax(min(100%,300px),1fr))",
+            gap: 20,
           }}
         >
-          <div className="sp-sbc-price">${price ?? 49}</div>
-          <p className="sp-sbc-price-sub">
-            One-time consultation fee · No subscription required
-          </p>
-        </div>
-
-        <div className="sp-sbc-info">
-          <Shield size={15} className="sp-sbc-info-icon" />
-          <p className="sp-sbc-info-text">
-            No extra fee for doctor notes, prescriptions, or specialist referrals.{" "}
-            <strong style={{ color: "#0A1F44", fontWeight: 700 }}>
-              Everything is included.
-            </strong>
-          </p>
-        </div>
-
-        <div className="sp-sbc-features">
-          {[
-            "Board-certified physician",
-            "Rx to your pharmacy",
-            "Doctor's note included",
-            "24hr follow-up support",
-            "HIPAA secure session",
-          ].map((item, i) => (
+          {whyUs.map((w) => (
             <div
-              key={item}
-              className="sp-sbc-row"
-              style={{ animationDelay: `${0.35 + i * 0.07}s` }}
+              key={w.title}
+              style={{
+                background: "rgba(255,255,255,.06)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,.12)",
+                borderRadius: 16,
+                padding: "28px 24px",
+                transition: "all .25s",
+                cursor: "default",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,.12)";
+                e.currentTarget.style.transform = "translateY(-4px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,.06)";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
             >
-              <CheckCircle size={15} className="sp-sbc-check" />
-              <span className="sp-sbc-feat-text">{item}</span>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: "rgba(11,87,232,.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 16,
+                }}
+              >
+                <w.icon size={20} style={{ color: "#7CB7FF" }} />
+              </div>
+              <p
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "#fff",
+                  marginBottom: 8,
+                }}
+              >
+                {w.title}
+              </p>
+              <p style={{ fontSize: 13, color: "#7CB7FF", lineHeight: 1.65 }}>
+                {w.desc}
+              </p>
             </div>
           ))}
         </div>
-
-        <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=skin&condition=Acne")}>Start Consultation →</button>
-        <p className="sp-sbc-terms">
-          By continuing, you agree to our{" "}
-          <a href="#" className="sp-sbc-link">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a href="#" className="sp-sbc-link">
-            Privacy Policy
-          </a>
-        </p>
       </div>
-      );
+    </section>
+  );
 }
 
-      // ─────────────────────────────────────────────────────────────────
-      // WHY CHOOSE US
-      // ─────────────────────────────────────────────────────────────────
-      function WhyChooseUs() {
-  return (
-      <section style={{ background: "#0A1F44", padding: "80px 0" }}>
-        <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ textAlign: "center", marginBottom: 52 }}>
-            <SectionLabel variant="dark">Why HumanCare Connect</SectionLabel>
-            <h2
-              style={{
-                fontSize: 36,
-                fontWeight: 800,
-                color: "#fff",
-                fontFamily: "'Georgia',serif",
-                marginTop: 8,
-              }}
-            >
-              The Standard of Modern Healthcare
-            </h2>
-            <p style={{ color: "#7CB7FF", fontSize: 16, marginTop: 12 }}>
-              Built for patients who deserve better.
-            </p>
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill,minmax(min(100%,300px),1fr))",
-              gap: 20,
-            }}
-          >
-            {whyUs.map((w) => (
-              <div
-                key={w.title}
-                style={{
-                  background: "rgba(255,255,255,.06)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(255,255,255,.12)",
-                  borderRadius: 16,
-                  padding: "28px 24px",
-                  transition: "all .25s",
-                  cursor: "default",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,.12)";
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,.06)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 10,
-                    background: "rgba(11,87,232,.3)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 16,
-                  }}
-                >
-                  <w.icon size={20} style={{ color: "#7CB7FF" }} />
-                </div>
-                <p
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: "#fff",
-                    marginBottom: 8,
-                  }}
-                >
-                  {w.title}
-                </p>
-                <p style={{ fontSize: 13, color: "#7CB7FF", lineHeight: 1.65 }}>
-                  {w.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      );
-}
-
-      // ─────────────────────────────────────────────────────────────────
-      // FAQ
-      // ─────────────────────────────────────────────────────────────────
-      function FaqSection() {
+// ─────────────────────────────────────────────────────────────────
+// FAQ
+// ─────────────────────────────────────────────────────────────────
+function FaqSection() {
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
-      return (
-      <section style={{ background: "#F7FAFF", padding: "90px 0" }}>
-        <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
-          <div className="sp-faq-layout">
-            {/* Sidebar */}
-            <div className="sp-faq-sidebar">
-              <SectionLabel>FAQ</SectionLabel>
-              <h2 className="sp-faq-title">
-                Frequently Asked
-                <br />
-                Questions
-              </h2>
-              <p className="sp-faq-desc">
-                Everything you need to know about primary care at HumanCare
-                Connect. Can't find an answer?
-              </p>
-              <button className="sp-faq-chat">
-                <MessageCircle size={18} /> Chat with our team
-              </button>
-              <div className="sp-faq-stat">⚡ Avg. response in 2 min</div>
-              <div className="sp-faq-stat">🔒 HIPAA secure &amp; private</div>
-              <div className="sp-faq-stat">🌍 Available in all 50 states</div>
-            </div>
+  return (
+    <section style={{ background: "#F7FAFF", padding: "90px 0" }}>
+      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
+        <div className="sp-faq-layout">
+          {/* Sidebar */}
+          <div className="sp-faq-sidebar">
+            <SectionLabel>FAQ</SectionLabel>
+            <h2 className="sp-faq-title">
+              Frequently Asked
+              <br />
+              Questions
+            </h2>
+            <p className="sp-faq-desc">
+              Everything you need to know about primary care at HumanCare
+              Connect. Can't find an answer?
+            </p>
+            <button className="sp-faq-chat">
+              <MessageCircle size={18} /> Chat with our team
+            </button>
+            <div className="sp-faq-stat">⚡ Avg. response in 2 min</div>
+            <div className="sp-faq-stat">🔒 HIPAA secure &amp; private</div>
+            <div className="sp-faq-stat">🌍 Available in all 50 states</div>
+          </div>
 
-            {/* Content */}
-            <div className="sp-faq-content">
-              {faqData.map((cat, ci) => (
-                <div key={cat.category} className="sp-faq-card">
-                  <div className="sp-faq-cat">
-                    <span className="sp-faq-dot" />
-                    {cat.category}
-                  </div>
-                  {cat.items.map((item, ii) => {
-                    const id = `${ci}-${ii}`;
-                    return (
-                      <div key={id} className="sp-faq-item">
-                        <button className="sp-faq-q" onClick={() => toggle(id)}>
-                          <span>{item.q}</span>
-                          <div
-                            className={`sp-faq-icon ${openId === id ? "sp-active" : ""}`}
-                          >
-                            +
-                          </div>
-                        </button>
+          {/* Content */}
+          <div className="sp-faq-content">
+            {faqData.map((cat, ci) => (
+              <div key={cat.category} className="sp-faq-card">
+                <div className="sp-faq-cat">
+                  <span className="sp-faq-dot" />
+                  {cat.category}
+                </div>
+                {cat.items.map((item, ii) => {
+                  const id = `${ci}-${ii}`;
+                  return (
+                    <div key={id} className="sp-faq-item">
+                      <button className="sp-faq-q" onClick={() => toggle(id)}>
+                        <span>{item.q}</span>
                         <div
-                          className={`sp-faq-ans ${openId === id ? "sp-open" : ""}`}
+                          className={`sp-faq-icon ${openId === id ? "sp-active" : ""}`}
                         >
-                          <p>{item.a}</p>
+                          +
                         </div>
+                      </button>
+                      <div
+                        className={`sp-faq-ans ${openId === id ? "sp-open" : ""}`}
+                      >
+                        <p>{item.a}</p>
                       </div>
-                    );
-                  })}
-                </div>
-              ))}
-
-              <div className="sp-faq-bottom-cta">
-                <div>
-                  <h3>Still have questions?</h3>
-                  <p>Our care team is available every day, 8 AM – 10 PM.</p>
-                </div>
-                <a href="/appointment-booking">
-                  <button>
-                    Book a Call <ArrowRight size={18} />
-                  </button>
-                </a>
+                    </div>
+                  );
+                })}
               </div>
+            ))}
+
+            <div className="sp-faq-bottom-cta">
+              <div>
+                <h3>Still have questions?</h3>
+                <p>Our care team is available every day, 8 AM – 10 PM.</p>
+              </div>
+              <a href="/appointment-booking">
+                <button>
+                  Book a Call <ArrowRight size={18} />
+                </button>
+              </a>
             </div>
           </div>
         </div>
-      </section>
-      );
+      </div>
+    </section>
+  );
 }
 
-      // ─────────────────────────────────────────────────────────────────
-      // ROOT EXPORT  — drop-in replacement for any sub-page
-      // ─────────────────────────────────────────────────────────────────
-      export default function Acne() {
+// ─────────────────────────────────────────────────────────────────
+// ROOT EXPORT  — drop-in replacement for any sub-page
+// ─────────────────────────────────────────────────────────────────
+export default function Acne() {
   return (
-      <>
-        <style>{STYLES}</style>
+    <>
+      <style>{STYLES}</style>
+
+      <div
+        style={{
+          fontFamily: "Satoshi, sans-serif",
+          color: "#0A1F44",
+          background: "#fff",
+        }}
+      >
+        <HeroSection data={pageData} />
 
         <div
           style={{
-            fontFamily: "Satoshi, sans-serif",
-            color: "#0A1F44",
-            background: "#fff",
+            background:
+              "linear-gradient(180deg,#EEF4FF 0%,#F6F9FF 60%,#ffffff 100%)",
           }}
         >
-          <HeroSection data={pageData} />
-
-          <div
-            style={{
-              background:
-                "linear-gradient(180deg,#EEF4FF 0%,#F6F9FF 60%,#ffffff 100%)",
-            }}
-          >
-            <div className="sp-page-layout" style={{ padding: "72px 24px" }}>
-              <main>
-                <AboutSpecialty />
-              </main>
-              <aside>
-                <StickyBookingCard />
-              </aside>
-            </div>
+          <div className="sp-page-layout" style={{ padding: "72px 24px" }}>
+            <main>
+              <AboutSpecialty />
+            </main>
+            <aside>
+              <StickyBookingCard />
+            </aside>
           </div>
-          <FaqSection />
         </div>
-      </>
+        <FaqSection />
+      </div>
+    </>
 
-      );
+  );
 }

@@ -407,7 +407,7 @@ const pageData = {
   badge: "Weigtht & Nutrition Support",
   heading: "Binge Eating",
   description: "Support for healthier eating habits",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

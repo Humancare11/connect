@@ -377,7 +377,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "High Blood Pressure",
   description: "Elevated blood pressure affecting circulation",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -906,7 +906,7 @@ function FaqSection() {
 export default function HighBloodPressure() {
   return (
     <>
-                  <SEO
+      <SEO
         title="High Blood Pressure Treatment Online | Hypertension Care"
         description="Take control of high blood pressure with expert online care. Connect with a licensed provider for hypertension management, medication reviews, lifestyle guidance, and ongoing support through telemedicine services."
         keywords="High blood pressure treatment, Hypertension care, Online doctor appointment, Telemedicine services"

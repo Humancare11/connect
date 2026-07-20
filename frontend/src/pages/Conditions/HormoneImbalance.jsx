@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Hormone Imbalance",
   description: "Restoring balance for better health",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function HormoneImbalance() {
   return (
     <>
-                  <SEO
+      <SEO
         title="�Hormone Imbalance Treatment Online | Expert Hormone Health Care"
         description="Get expert care for hormone imbalance online. Connect with a licensed provider for hormone health evaluations, symptom assessment, personalized treatment, and ongoing support through secure telemedicine services."
         keywords="Hormone imbalance treatment, Hormone health care, Online doctor appointment, Telemedicine services"

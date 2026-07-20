@@ -50,7 +50,7 @@ const pageData = {
   badge: " Chronic Care",
   heading: "Constipation",
   description: "Difficulty passing regular stools",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

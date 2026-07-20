@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Sore Throat in Children",
   description: "Throat pain and irritation in kids",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function SoreThroatChildren() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Sore Throat in Children Treatment Online | Virtual Pediatric Care"
         description="Get online care for your child's sore throat. Consult a licensed provider for throat pain, fever, swallowing difficulty, cough, and personalized treatment."
         keywords="sore throat in children, pediatric sore throat treatment, child throat pain, online pediatric consultation, strep throat in children, fever and sore throat, virtual pediatric care, throat infection in kids, telehealth pediatric doctor, sore throat treatment online"

@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "Genital Rash",
   description: "Rash, itching, or skin irritation",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1045,7 +1045,7 @@ function FaqSection() {
 export default function GenitalRash() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Genital Rash Treatment Online | Confidential Virtual Care"
         description="Get expert care for genital rash online. Connect with a licensed provider for redness, itching, burning, skin irritation, and personalized treatment through secure telemedicine services."
         keywords="Genital rash treatment, Confidential online care, Online doctor appointment, Telemedicine services"

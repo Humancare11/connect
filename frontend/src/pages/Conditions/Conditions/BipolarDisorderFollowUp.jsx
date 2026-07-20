@@ -50,7 +50,7 @@ const pageData = {
   badge: "Mental Health",
   heading: "Bipolar Disorder Follow-Up",
   description: "Ongoing support for mood stability",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

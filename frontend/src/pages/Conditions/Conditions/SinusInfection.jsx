@@ -51,7 +51,7 @@ const pageData = {
   badge: "General & Everyday Care",
   heading: "Sinus Infection",
   description: "Sinus pressure and nasal congestion",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

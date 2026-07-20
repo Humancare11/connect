@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Osteoarthritis",
   description: "Joint pain and stiffness over time",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1220,7 +1220,7 @@ function FaqSection() {
 export default function Osteoarthritis() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Osteoarthritis Treatment Online | Joint Pain & Arthritis Care"
         description="Get expert osteoarthritis treatment online. Connect with a licensed provider for joint pain, stiffness, reduced mobility, arthritis management, and personalized care from home."
         keywords="Osteoarthritis treatment, Joint pain relief, Arthritis care online, Online orthopedic consultation"

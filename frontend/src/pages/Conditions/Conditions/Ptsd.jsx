@@ -50,7 +50,7 @@ const pageData = {
   badge: "Mental Health",
   heading: "Post-Traumatic Stress Disorder (PTSD)",
   description: "Trauma-related stress and anxiety",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

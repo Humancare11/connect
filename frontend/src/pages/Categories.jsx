@@ -504,14 +504,14 @@ const CATEGORIES = [
 const SPECIALTIES = [
   {
     slug: "general-physician",
-    path: "/general-physician",
+    path: "/general-and-everyday-care/general-physician",
     icon: "stethoscope",
     name: "General Physician (GP)",
     featured: true,
   },
   {
     slug: "internal-medicine",
-    path: "/internal-medicine",
+    path: "/general-and-everyday-care/internal-medicine",
     icon: "activity",
     name: "Internal Medicine",
     featured: false,
@@ -605,7 +605,7 @@ const CONDITIONS = [
   },
   {
     slug: "heart-disease",
-    path: "/heart-disease",
+    path: "/chronic-care/cardiology/heart-disease-follow-up",
     icon: "heart",
     name: "Heart Disease",
   },
@@ -878,12 +878,12 @@ export default function Categories() {
 
   const filtered = query.trim()
     ? CATEGORIES.map((c) => ({
-        category: c,
-        score: scoreCategory(c, query.trim()),
-      }))
-        .filter((r) => r.score !== null)
-        .sort((a, b) => b.score - a.score)
-        .map((r) => r.category)
+      category: c,
+      score: scoreCategory(c, query.trim()),
+    }))
+      .filter((r) => r.score !== null)
+      .sort((a, b) => b.score - a.score)
+      .map((r) => r.category)
     : CATEGORIES;
 
   return (

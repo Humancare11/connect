@@ -51,7 +51,7 @@ const pageData = {
   badge: "General & Everyday Caree",
   heading: "Pink Eye",
   description: "Red, itchy, irritated eyes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

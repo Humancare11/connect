@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Puberty Concerns",
   description: "Guidance through developmental changes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1216,7 +1216,7 @@ function FaqSection() {
 export default function PubertyConcerns() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Puberty Concerns Consultation Online | Adolescent Growth & Development Care"
         description="Talk to a licensed provider online about puberty concerns, growth, hormonal changes, delayed or early puberty, menstrual health, and adolescent development."
         keywords="puberty concerns, online puberty consultation, adolescent health, delayed puberty, early puberty, hormonal changes, teen development, pediatric telehealth, puberty doctor online"

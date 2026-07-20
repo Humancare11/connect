@@ -51,7 +51,7 @@ const pageData = {
   badge: "Women's Health",
   heading: "Perinatal Anxiety",
   description: "Support during pregnancy and beyond",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -129,318 +129,318 @@ export default function PerinatalAnxiety() {
 
   return (
     <>
-                <SEO
+      <SEO
         title="Perinatal Anxiety Treatment Online | Pregnancy & Postpartum Mental Health"
         description="Get compassionate support for perinatal anxiety online. Connect with a licensed provider for pregnancy and postpartum anxiety, emotional wellness, symptom evaluation, and personalized mental health care."
         keywords="Perinatal anxiety, Pregnancy anxiety treatment, Postpartum anxiety support, Online mental health consultation"
         url="https://humancareconnect.co/perinatal-anxiety"
       />
-    <div className="condition-root">
-      {/* ══════════════════════ HERO ══════════════════════ */}
-      <section
-        className="condition-hero"
-        style={{
-          backgroundImage: `
+      <div className="condition-root">
+        {/* ══════════════════════ HERO ══════════════════════ */}
+        <section
+          className="condition-hero"
+          style={{
+            backgroundImage: `
               linear-gradient(105deg, rgb(6 19 51 / 68%) 0%, rgba(10, 31, 68, 0.6) 30%, rgba(10, 31, 68, 0.57) 62%, rgba(10, 31, 68, 0.48) 100%),
               url(${pageData.bgImage})
               `,
-          backgroundSize: "cover",
-          backgroundPosition: "center top",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        <div className="condition-hero-wrap">
-          <div className="condition-hero-inner">
-            <span className="condition-badge-hero condition-hero-anim-badge">
-              ✦ Trusted {pageData.badge}
-            </span>
+            backgroundSize: "cover",
+            backgroundPosition: "center top",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <div className="condition-hero-wrap">
+            <div className="condition-hero-inner">
+              <span className="condition-badge-hero condition-hero-anim-badge">
+                ✦ Trusted {pageData.badge}
+              </span>
 
-            <h1 className="condition-h1 condition-hero-anim-h1">
-              {pageData.heading}
-            </h1>
+              <h1 className="condition-h1 condition-hero-anim-h1">
+                {pageData.heading}
+              </h1>
 
-            <p className="condition-desc-hero condition-hero-anim-desc">
-              {pageData.description}
-            </p>
+              <p className="condition-desc-hero condition-hero-anim-desc">
+                {pageData.description}
+              </p>
 
-            <div className="condition-btns condition-hero-anim-btns">
-              <a
-                href="/appointment-booking"
-                className="condition-btn condition-btn--primary"
-              >
-                <Calendar size={15} /> Book Appointment
-              </a>
-              <a href="#" className="condition-btn condition-btn--ghost">
-                <Users size={15} /> Know More
-              </a>
-            </div>
-
-            <div className="condition-trust condition-hero-anim-trust">
-              {pageData.trustItems.map((item) => (
-                <div key={item} className="condition-trust-item">
-                  <CheckCircle size={13} className="condition-trust-check" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════ ABOUT + STICKY BOOKING ══════════════════════ */}
-      <div className="condition-mid-section">
-        <div className="condition-page-layout">
-          <main>
-            {/* ---- About Specialty ---- */}
-            <div className="condition-glass-card">
-              <div className="condition-glass-shine" />
-              <div className="condition-about-grid">
-                {/* LEFT */}
-                <div className="condition-about-left">
-                  <span className="condition-section-label condition-section-label--light">
-                    About This Specialty
-                  </span>
-                  <h2 className="condition-about-h2">
-                    Your Health,
-                    <br />
-                    Our Priority
-                  </h2>
-
-                  <div className="condition-nav-card">
-                    <p className="condition-nav-label">Quick Access</p>
-                    <div className="condition-nav-list">
-                      {[
-                        "Routine Wellness",
-                        "Acute Illness",
-                        "Chronic Conditions",
-                        "Mental Wellbeing",
-                      ].map((item) => (
-                        <div key={item} className="condition-nav-item">
-                          <ChevronRight
-                            size={13}
-                            className="condition-nav-chevron"
-                          />
-                          <span className="condition-nav-text">{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="condition-stat-row">
-                    <div className="condition-stat-pill">
-                      <HeartPulse size={13} />
-                      <span>15 K+ Patients</span>
-                    </div>
-                    <div className="condition-stat-pill">
-                      <ShieldCheck size={13} />
-                      <span>98% Satisfaction</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* RIGHT */}
-                <div className="condition-about-right">
-                  <div>
-                    <h3 className="condition-block-title">
-                      What is Perinatal Anxiety?
-                    </h3>
-                    <p className="condition-block-body">
-                      Perinatal anxiety can occur during pregnancy or after
-                      childbirth and may cause excessive worry, nervousness,
-                      restlessness, racing thoughts, difficulty sleeping, or
-                      feelings of being overwhelmed that affect daily
-                      functioning and emotional well being.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="condition-block-title">How?</h3>
-                    <p className="condition-block-body">
-                      Get compassionate support for perinatal anxiety with
-                      Humancare Connect. Our telemedicine services make it easy
-                      to schedule an online doctor appointment and connect with
-                      a licensed provider from home. Through our secure
-                      telemedicine platform, you can access virtual healthcare
-                      services for mental health support, symptom evaluation,
-                      coping strategies, and personalized care recommendations.
-                      Telehealth services provide convenient access to an
-                      experienced online provider who can help you manage
-                      anxiety symptoms, support emotional wellness, and promote
-                      a healthier pregnancy and postpartum experience.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="condition-block-title">
-                      Get Perinatal Anxiety care in 4 simple steps.
-                    </h3>
-                    <div className="condition-benefits-grid">
-                      {[
-                        "Choose Perinatal Anxiety care",
-                        "Share your symptoms and concerns",
-                        "Connect with an online provider",
-                        "Receive treatment guidance and personalized care recommendations",
-                      ].map((b) => (
-                        <div key={b} className="condition-benefit-item">
-                          <CheckCircle
-                            size={14}
-                            className="condition-benefit-check"
-                          />
-                          <span>{b}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
-
-          <aside>
-            {/* ---- Sticky Booking Card ---- */}
-            <div className="condition-sbc">
-              <div className="condition-sbc-badge">
-                <span className="condition-sbc-dot" />
-                Doctors Available Now
+              <div className="condition-btns condition-hero-anim-btns">
+                <a
+                  href="/appointment-booking"
+                  className="condition-btn condition-btn--primary"
+                >
+                  <Calendar size={15} /> Book Appointment
+                </a>
+                <a href="#" className="condition-btn condition-btn--ghost">
+                  <Users size={15} /> Know More
+                </a>
               </div>
 
-              <div className="condition-sbc-price-block">
-                <div className="condition-sbc-price">${price ?? 49}</div>
-                <p className="condition-sbc-price-sub">
-                  One-time consultation fee · No subscription required
-                </p>
-              </div>
-
-              <div className="condition-sbc-info">
-                <Shield size={15} className="condition-sbc-info-icon" />
-                <p className="condition-sbc-info-text">
-                  No extra fee for doctor notes, prescriptions, or specialist
-                  referrals.{" "}
-                  <strong className="condition-sbc-info-strong">
-                    Everything is included.
-                  </strong>
-                </p>
-              </div>
-
-              <div className="condition-sbc-features">
-                {[
-                  "Board-certified physician",
-                  "Rx to your pharmacy",
-                  "Doctor's note included",
-                  "24hr follow-up support",
-                  "HIPAA secure session",
-                ].map((item, i) => (
-                  <div
-                    key={item}
-                    className="condition-sbc-row"
-                    style={{ animationDelay: `${0.35 + i * 0.07}s` }}
-                  >
-                    <CheckCircle size={15} className="condition-sbc-check" />
-                    <span className="condition-sbc-feat-text">{item}</span>
+              <div className="condition-trust condition-hero-anim-trust">
+                {pageData.trustItems.map((item) => (
+                  <div key={item} className="condition-trust-item">
+                    <CheckCircle size={13} className="condition-trust-check" />
+                    <span>{item}</span>
                   </div>
                 ))}
               </div>
-
-              <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=women&condition=Perinatal%20Anxiety")}>
-                Start Consultation →
-              </button>
-              <p className="condition-sbc-terms">
-                By continuing, you agree to our{" "}
-                <a href="#" className="condition-sbc-link">
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a href="#" className="condition-sbc-link">
-                  Privacy Policy
-                </a>
-              </p>
             </div>
-          </aside>
-        </div>
-      </div>
+          </div>
+        </section>
 
-      {/* ══════════════════════ FAQ ══════════════════════ */}
-      <section className="condition-section--faq">
-        <div className="condition-container">
-          <div className="condition-faq-layout">
-            {/* Sidebar */}
-            <div className="condition-faq-sidebar">
-              <span className="condition-section-label condition-section-label--light">
-                FAQ
-              </span>
-              <h2 className="condition-faq-title">
-                Frequently Asked
-                <br />
-                Questions
-              </h2>
-              <p className="condition-faq-desc">
-                Everything you need to know about primary care at HumanCare
-                Connect. Can't find an answer?
-              </p>
-              <button className="condition-faq-chat">
-                <MessageCircle size={18} /> Chat with our team
-              </button>
-              <div className="condition-faq-stat">
-                ⚡ Avg. response in 2 min
-              </div>
-              <div className="condition-faq-stat">
-                🔒 HIPAA secure &amp; private
-              </div>
-              <div className="condition-faq-stat">
-                🌍 Available in all 50 states
-              </div>
-            </div>
+        {/* ══════════════════════ ABOUT + STICKY BOOKING ══════════════════════ */}
+        <div className="condition-mid-section">
+          <div className="condition-page-layout">
+            <main>
+              {/* ---- About Specialty ---- */}
+              <div className="condition-glass-card">
+                <div className="condition-glass-shine" />
+                <div className="condition-about-grid">
+                  {/* LEFT */}
+                  <div className="condition-about-left">
+                    <span className="condition-section-label condition-section-label--light">
+                      About This Specialty
+                    </span>
+                    <h2 className="condition-about-h2">
+                      Your Health,
+                      <br />
+                      Our Priority
+                    </h2>
 
-            {/* Content */}
-            <div className="condition-faq-content">
-              {faqData.map((cat, ci) => (
-                <div key={cat.category} className="condition-faq-card">
-                  <div className="condition-faq-cat">
-                    <span className="condition-faq-dot" />
-                    {cat.category}
-                  </div>
-                  {cat.items.map((item, ii) => {
-                    const id = `${ci}-${ii}`;
-                    return (
-                      <div key={id} className="condition-faq-item">
-                        <button
-                          className="condition-faq-q"
-                          onClick={() => toggle(id)}
-                        >
-                          <span>{item.q}</span>
-                          <div
-                            className={`condition-faq-icon ${openId === id ? "condition-active" : ""}`}
-                          >
-                            +
+                    <div className="condition-nav-card">
+                      <p className="condition-nav-label">Quick Access</p>
+                      <div className="condition-nav-list">
+                        {[
+                          "Routine Wellness",
+                          "Acute Illness",
+                          "Chronic Conditions",
+                          "Mental Wellbeing",
+                        ].map((item) => (
+                          <div key={item} className="condition-nav-item">
+                            <ChevronRight
+                              size={13}
+                              className="condition-nav-chevron"
+                            />
+                            <span className="condition-nav-text">{item}</span>
                           </div>
-                        </button>
-                        <div
-                          className={`condition-faq-ans ${openId === id ? "condition-open" : ""}`}
-                        >
-                          <p>{item.a}</p>
-                        </div>
+                        ))}
                       </div>
-                    );
-                  })}
-                </div>
-              ))}
+                    </div>
 
-              <div className="condition-faq-bottom-cta">
-                <div>
-                  <h3>Still have questions?</h3>
-                  <p>Our care team is available every day, 8 AM – 10 PM.</p>
+                    <div className="condition-stat-row">
+                      <div className="condition-stat-pill">
+                        <HeartPulse size={13} />
+                        <span>15 K+ Patients</span>
+                      </div>
+                      <div className="condition-stat-pill">
+                        <ShieldCheck size={13} />
+                        <span>98% Satisfaction</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RIGHT */}
+                  <div className="condition-about-right">
+                    <div>
+                      <h3 className="condition-block-title">
+                        What is Perinatal Anxiety?
+                      </h3>
+                      <p className="condition-block-body">
+                        Perinatal anxiety can occur during pregnancy or after
+                        childbirth and may cause excessive worry, nervousness,
+                        restlessness, racing thoughts, difficulty sleeping, or
+                        feelings of being overwhelmed that affect daily
+                        functioning and emotional well being.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="condition-block-title">How?</h3>
+                      <p className="condition-block-body">
+                        Get compassionate support for perinatal anxiety with
+                        Humancare Connect. Our telemedicine services make it easy
+                        to schedule an online doctor appointment and connect with
+                        a licensed provider from home. Through our secure
+                        telemedicine platform, you can access virtual healthcare
+                        services for mental health support, symptom evaluation,
+                        coping strategies, and personalized care recommendations.
+                        Telehealth services provide convenient access to an
+                        experienced online provider who can help you manage
+                        anxiety symptoms, support emotional wellness, and promote
+                        a healthier pregnancy and postpartum experience.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="condition-block-title">
+                        Get Perinatal Anxiety care in 4 simple steps.
+                      </h3>
+                      <div className="condition-benefits-grid">
+                        {[
+                          "Choose Perinatal Anxiety care",
+                          "Share your symptoms and concerns",
+                          "Connect with an online provider",
+                          "Receive treatment guidance and personalized care recommendations",
+                        ].map((b) => (
+                          <div key={b} className="condition-benefit-item">
+                            <CheckCircle
+                              size={14}
+                              className="condition-benefit-check"
+                            />
+                            <span>{b}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <a href="/appointment-booking">
-                  <button>
-                    Book a Call <ArrowRight size={18} />
-                  </button>
-                </a>
+              </div>
+            </main>
+
+            <aside>
+              {/* ---- Sticky Booking Card ---- */}
+              <div className="condition-sbc">
+                <div className="condition-sbc-badge">
+                  <span className="condition-sbc-dot" />
+                  Doctors Available Now
+                </div>
+
+                <div className="condition-sbc-price-block">
+                  <div className="condition-sbc-price">${price ?? 49}</div>
+                  <p className="condition-sbc-price-sub">
+                    One-time consultation fee · No subscription required
+                  </p>
+                </div>
+
+                <div className="condition-sbc-info">
+                  <Shield size={15} className="condition-sbc-info-icon" />
+                  <p className="condition-sbc-info-text">
+                    No extra fee for doctor notes, prescriptions, or specialist
+                    referrals.{" "}
+                    <strong className="condition-sbc-info-strong">
+                      Everything is included.
+                    </strong>
+                  </p>
+                </div>
+
+                <div className="condition-sbc-features">
+                  {[
+                    "Board-certified physician",
+                    "Rx to your pharmacy",
+                    "Doctor's note included",
+                    "24hr follow-up support",
+                    "HIPAA secure session",
+                  ].map((item, i) => (
+                    <div
+                      key={item}
+                      className="condition-sbc-row"
+                      style={{ animationDelay: `${0.35 + i * 0.07}s` }}
+                    >
+                      <CheckCircle size={15} className="condition-sbc-check" />
+                      <span className="condition-sbc-feat-text">{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=women&condition=Perinatal%20Anxiety")}>
+                  Start Consultation →
+                </button>
+                <p className="condition-sbc-terms">
+                  By continuing, you agree to our{" "}
+                  <a href="#" className="condition-sbc-link">
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a href="#" className="condition-sbc-link">
+                    Privacy Policy
+                  </a>
+                </p>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        {/* ══════════════════════ FAQ ══════════════════════ */}
+        <section className="condition-section--faq">
+          <div className="condition-container">
+            <div className="condition-faq-layout">
+              {/* Sidebar */}
+              <div className="condition-faq-sidebar">
+                <span className="condition-section-label condition-section-label--light">
+                  FAQ
+                </span>
+                <h2 className="condition-faq-title">
+                  Frequently Asked
+                  <br />
+                  Questions
+                </h2>
+                <p className="condition-faq-desc">
+                  Everything you need to know about primary care at HumanCare
+                  Connect. Can't find an answer?
+                </p>
+                <button className="condition-faq-chat">
+                  <MessageCircle size={18} /> Chat with our team
+                </button>
+                <div className="condition-faq-stat">
+                  ⚡ Avg. response in 2 min
+                </div>
+                <div className="condition-faq-stat">
+                  🔒 HIPAA secure &amp; private
+                </div>
+                <div className="condition-faq-stat">
+                  🌍 Available in all 50 states
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="condition-faq-content">
+                {faqData.map((cat, ci) => (
+                  <div key={cat.category} className="condition-faq-card">
+                    <div className="condition-faq-cat">
+                      <span className="condition-faq-dot" />
+                      {cat.category}
+                    </div>
+                    {cat.items.map((item, ii) => {
+                      const id = `${ci}-${ii}`;
+                      return (
+                        <div key={id} className="condition-faq-item">
+                          <button
+                            className="condition-faq-q"
+                            onClick={() => toggle(id)}
+                          >
+                            <span>{item.q}</span>
+                            <div
+                              className={`condition-faq-icon ${openId === id ? "condition-active" : ""}`}
+                            >
+                              +
+                            </div>
+                          </button>
+                          <div
+                            className={`condition-faq-ans ${openId === id ? "condition-open" : ""}`}
+                          >
+                            <p>{item.a}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+
+                <div className="condition-faq-bottom-cta">
+                  <div>
+                    <h3>Still have questions?</h3>
+                    <p>Our care team is available every day, 8 AM – 10 PM.</p>
+                  </div>
+                  <a href="/appointment-booking">
+                    <button>
+                      Book a Call <ArrowRight size={18} />
+                    </button>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
     </>
   );
 }

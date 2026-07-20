@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "STI Consultation",
   description: "Testing, treatment, and sexual health support",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1044,7 +1044,7 @@ function FaqSection() {
 export default function StiConsultation() {
   return (
     <>
-                  <SEO
+      <SEO
         title="STI Consultation Online | Confidential Sexual Health Care"
         description="Get confidential online STI consultation for symptoms, testing guidance, treatment options, prescriptions, and expert sexual health support."
         keywords="STI consultation online, sexually transmitted infection treatment, online STI doctor, STD consultation, confidential sexual health care, STI testing guidance, STD symptoms, virtual sexual health consultation, telehealth STI treatment, online doctor for STI"

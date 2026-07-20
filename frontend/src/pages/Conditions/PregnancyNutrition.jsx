@@ -407,7 +407,7 @@ const pageData = {
   badge: "Weigtht & Nutrition Support",
   heading: "Pregnancy Nutrition",
   description: "Healthy eating for a healthy pregnancy",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

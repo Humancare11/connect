@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Pediatric Fever",
   description: "Fever and illness in children",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function PediatricFever() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Pediatric Fever Treatment Online | Children's Fever Care"
         description="Get expert pediatric fever care online. Connect with a licensed provider for fever evaluation, viral illnesses, flu symptoms, treatment guidance, and personalized care for your child."
         keywords="Pediatric fever, Children's fever treatment, Online pediatric consultation, Virtual pediatric care"

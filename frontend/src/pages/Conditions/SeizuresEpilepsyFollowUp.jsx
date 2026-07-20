@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Seizures / Epilepsy Follow-Up",
   description: "Ongoing support for seizure management",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function SeizuresEpilepsyFollowUp() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Seizure & Epilepsy Follow-Up Online | Ongoing Neurology Care"
         description="Book an online epilepsy follow-up to review seizure symptoms, medications, treatment progress, and ongoing neurological care with a licensed provider."
         keywords="epilepsy follow-up, seizure management, online neurologist, epilepsy treatment online, seizure medication review, neurology follow-up, virtual epilepsy care, seizure disorder consultation"

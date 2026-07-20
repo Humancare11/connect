@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Memory Concerns",
   description: "Support for cognitive health changes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function MemoryConcerns() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Memory Concerns Evaluation Online | Cognitive Health Consultation"
         description="Concerned about memory changes or forgetfulness? Connect with a licensed provider online for cognitive health evaluation, memory support, symptom assessment, and personalized care guidance."
         keywords="Memory concerns, Cognitive health evaluation, Memory loss consultation, Online doctor consultation"

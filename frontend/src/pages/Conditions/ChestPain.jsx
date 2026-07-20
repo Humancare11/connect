@@ -378,7 +378,7 @@ const pageData = {
   heading: "Chest Pain (Non-Emergency)",
   description:
     "Evaluation for ongoing chest discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -906,7 +906,7 @@ function FaqSection() {
 export default function ChestPain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Non-Emergency Chest Pain | Understand Ongoing Chest Discomfort"
         description="Experiencing mild chest pressure, tightness, or ongoing discomfort? Discuss your symptoms and possible causes with a licensed provider and get personalized next-step guidance."
         keywords="Non emergency chest pain, Chest discomfort, Chest pressure, Online doctor appointment, Virtual healthcare services, Telehealth services"

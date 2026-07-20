@@ -1726,7 +1726,7 @@ function AppLayout() {
             element={<FattyLiver />}
           />
           <Route
-            path="/chronic-care/pulmonology/heart-disease-follow-up"
+            path="/chronic-care/cardiology/heart-disease-follow-up"
             element={<HeartDisease />}
           />
           <Route

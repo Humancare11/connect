@@ -50,7 +50,7 @@ const pageData = {
   badge: "Mental Health",
   heading: "Relationship Stress",
   description: "Emotional strain affecting relationships",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

@@ -408,7 +408,7 @@ const pageData = {
   badge: "Respiratory Health",
   heading: "Persistent Cough",
   description: "Long-lasting cough and throat irritation",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function PersistentCough() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Persistent Cough Treatment Online | Expert Respiratory Care"
         description="Get expert care for a persistent cough online. Connect with a licensed provider for cough, throat irritation, wheezing, mucus, respiratory symptoms, and personalized treatment guidance."
         keywords="Persistent cough, Chronic cough treatment, Online cough consultation, Respiratory care, Telemedicine cough treatment"

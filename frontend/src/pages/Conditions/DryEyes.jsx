@@ -407,7 +407,7 @@ const pageData = {
   badge: "Eye, Ear & Bone Care",
   heading: "Dry Eyes",
   description: "Relief for irritated and uncomfortable eyes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

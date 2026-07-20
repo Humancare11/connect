@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Palpitations",
   description: "Evaluation for irregular heart sensations",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage:
     ConditionBannerImage,
 };
@@ -1217,7 +1217,7 @@ function FaqSection() {
 export default function Palpitations() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Palpitations Evaluation Online | Irregular Heartbeat Consultation"
         description="Get expert care for heart palpitations online. Connect with a licensed provider for racing heartbeat, fluttering sensations, irregular heart rhythm evaluation, and personalized heart health guidance."
         keywords="Heart palpitations, Irregular heartbeat, Online heart consultation, Palpitations evaluation"

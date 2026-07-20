@@ -50,7 +50,7 @@ const pageData = {
   badge: "General & Everyday Care",
   heading: "Headache",
   description: "Head pain and pressure discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

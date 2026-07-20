@@ -50,7 +50,7 @@ const pageData = {
   badge: "Mental Health",
   heading: "Stress",
   description: "Mental and physical tension overload",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

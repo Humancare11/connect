@@ -408,7 +408,7 @@ const pageData = {
   badge: "Prescription & Continuity Care",
   heading: "Follow-Up Consultation",
   description: "Continued care after your visit",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1214,7 +1214,7 @@ function FaqSection() {
 export default function FollowUpConsultation() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Follow-Up Consultation Online | Ongoing Virtual Medical Care"
         description="Continue your care with an online follow-up consultation. Review treatment progress, discuss lab results, adjust medications, and receive ongoing support from licensed providers."
         keywords="Follow-up consultation, Ongoing medical care, Online doctor appointment, Telemedicine services"

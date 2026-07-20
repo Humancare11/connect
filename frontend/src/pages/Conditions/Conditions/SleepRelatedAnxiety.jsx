@@ -50,7 +50,7 @@ const pageData = {
   badge: "Mental Health",
   heading: "Sleep-Related Anxiety",
   description: "Calmer nights and better sleep",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

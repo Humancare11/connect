@@ -125,7 +125,6 @@ const SERVICES = {
       "Missing or delaying medication can affect your health and treatment outcomes. Online prescription refills help patients maintain continuity of care, stay on track with prescribed treatment plans, and access healthcare support when they need it most.",
     whoBenefits: [
       "Patients managing chronic health conditions",
-      "Individuals taking long term maintenance medications",
       "Busy professionals seeking convenient healthcare access",
       "Travelers who need continued access to prescribed medications",
       "Adults looking for secure and reliable telehealth services",
@@ -190,12 +189,12 @@ const SERVICES = {
         desc: "Consultations available in 14+ languages with live interpreter access.",
       },
     ],
-    stats: [
-      { value: 120000, suffix: "+", label: "Patients Served" },
-      { value: 2800, suffix: "+", label: "Verified Providers" },
-      { value: 98, suffix: "%", label: "Satisfaction Rate" },
-      { value: 14, suffix: " min", label: "Avg. Wait Time" },
-    ],
+    // stats: [
+    //   { value: 120000, suffix: "+", label: "Patients Served" },
+    //   { value: 2800, suffix: "+", label: "Verified Providers" },
+    //   { value: 98, suffix: "%", label: "Satisfaction Rate" },
+    //   { value: 14, suffix: " min", label: "Avg. Wait Time" },
+    // ],
     faqs: [
       {
         q: "What is an online prescription refill?",
@@ -1232,7 +1231,7 @@ const HowItWorks = ({ s, bp }) => {
                   [FiLock, "Secure & Private"],
                   [FiZap, "Fast Response"],
                   [FiUserCheck, "Verified Providers"],
-                  [FiFileText, "Insurance Accepted"],
+                  [FiFileText, "No Insurance Required"],
                 ].map(([Icon, lb], i) => (
                   <div
                     key={i}
@@ -1493,7 +1492,7 @@ const WhyUs = ({ s, bp }) => {
             marginBottom: 44,
           }}
         >
-          {s.stats.map((st, i) => (
+          {/* {s.stats.map((st, i) => (
             <StatCard
               key={i}
               value={st.value}
@@ -1502,7 +1501,7 @@ const WhyUs = ({ s, bp }) => {
               ac={s.accentColor}
               go={inView}
             />
-          ))}
+          ))} */}
         </motion.div>
 
         <div
@@ -1837,7 +1836,7 @@ const FinalCTA = ({ s, bp }) => (
             [FiLock, "HIPAA Compliant"],
             [FiStar, "4.9/5 Rated"],
             [FiShield, "Verified Providers"],
-            [FiFileText, "All Insurances"],
+            [FiFileText, "No Insurance Required"],
             [FiClock, "24/7 Access"],
           ].map(([Icon, lb], i) => (
             <div
@@ -1872,7 +1871,7 @@ export default function OnlinePrescriptionRefills() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Online Prescription Refills | Renew Medications Online | Humancare Connect"
         description="Need a prescription refill? Connect with licensed healthcare providers through secure telemedicine services and renew eligible medications online."
         keywords="Online prescription refills, Medication refill online, Prescription renewal, Telemedicine prescription services"

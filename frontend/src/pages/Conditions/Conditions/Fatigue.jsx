@@ -50,7 +50,7 @@ const pageData = {
   badge: "General & Everyday Care",
   heading: "Fatigue",
   description: "Persistent tiredness affecting daily life",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -250,45 +250,79 @@ export default function Fatigue() {
                         being.
                       </p>
                     </div>
+                    {/* RIGHT */}
+                    <div className="condition-about-right">
+                      <div>
+                        <h3 className="condition-block-title">
+                          What is fatigue?
+                        </h3>
+                        <p className="condition-block-body">
+                          Fatigue is a common symptom characterized by ongoing
+                          tiredness, low energy, or a lack of motivation that
+                          can interfere with work, daily activities, and overall
+                          well being.
+                        </p>
+                      </div>
 
-                    <div>
-                      <h3 className="condition-block-title">How?</h3>
-                      <p className="condition-block-body">
-                        Managing fatigue starts with understanding its
-                        underlying cause. Through telemedicine services,
-                        individuals can discuss their symptoms with a licensed
-                        healthcare professional from the comfort of home. An
-                        online doctor appointment makes it easier to evaluate
-                        potential factors contributing to fatigue, including
-                        lifestyle habits, stress, sleep concerns, or medical
-                        conditions. Virtual healthcare services and telehealth
-                        services provide convenient access to care through a
-                        trusted telemedicine platform. An experienced online
-                        provider can assess your symptoms and recommend
-                        appropriate next steps, treatment options, and lifestyle
-                        modifications to help improve your energy levels.
-                      </p>
-                    </div>
+                      <div>
+                        <h3 className="condition-block-title">How?</h3>
+                        <p className="condition-block-body">
+                          Managing fatigue starts with understanding its
+                          underlying cause. Through telemedicine services,
+                          individuals can discuss their symptoms with a licensed
+                          healthcare professional from the comfort of home. An
+                          online doctor appointment makes it easier to evaluate
+                          potential factors contributing to fatigue, including
+                          lifestyle habits, stress, sleep concerns, or medical
+                          conditions. Virtual healthcare services and telehealth
+                          services provide convenient access to care through a
+                          trusted telemedicine platform. An experienced online
+                          provider can assess your symptoms and recommend
+                          appropriate next steps, treatment options, and
+                          lifestyle modifications to help improve your energy
+                          levels.
+                        </p>
+                      </div>
+                      <div>
+                        <h3 className="condition-block-title">How?</h3>
+                        <p className="condition-block-body">
+                          Managing fatigue starts with understanding its
+                          underlying cause. Through telemedicine services,
+                          individuals can discuss their symptoms with a licensed
+                          healthcare professional from the comfort of home. An
+                          online doctor appointment makes it easier to evaluate
+                          potential factors contributing to fatigue, including
+                          lifestyle habits, stress, sleep concerns, or medical
+                          conditions. Virtual healthcare services and telehealth
+                          services provide convenient access to care through a
+                          trusted telemedicine platform. An experienced online
+                          provider can assess your symptoms and recommend
+                          appropriate next steps, treatment options, and
+                          lifestyle modifications to help improve your energy
+                          levels.
+                        </p>
+                      </div>
 
-                    <div>
-                      <h3 className="condition-block-title">
-                        Get support in 4 simple steps
-                      </h3>
-                      <div className="condition-benefits-grid">
-                        {[
-                          "Choose Fatigue care",
-                          "Share your symptoms and concerns",
-                          "Connect with an online provider",
-                          "Receive treatment guidance and personalized care recommendations",
-                        ].map((b) => (
-                          <div key={b} className="condition-benefit-item">
-                            <CheckCircle
-                              size={14}
-                              className="condition-benefit-check"
-                            />
-                            <span>{b}</span>
-                          </div>
-                        ))}
+                      <div>
+                        <h3 className="condition-block-title">
+                          Get support in 4 simple steps
+                        </h3>
+                        <div className="condition-benefits-grid">
+                          {[
+                            "Choose Fatigue care",
+                            "Share your symptoms and concerns",
+                            "Connect with an online provider",
+                            "Receive treatment guidance and personalized care recommendations",
+                          ].map((b) => (
+                            <div key={b} className="condition-benefit-item">
+                              <CheckCircle
+                                size={14}
+                                className="condition-benefit-check"
+                              />
+                              <span>{b}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>

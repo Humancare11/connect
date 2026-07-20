@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Mild Asthma Symptoms",
   description: "Mild breathing issues and wheezing",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function MildAsthmaSymptoms() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Mild Asthma Treatment Online | Virtual Asthma Care & Breathing Support"
         description="Manage mild asthma symptoms with expert online care. Consult a licensed provider for wheezing, coughing, chest tightness, shortness of breath, asthma treatment, and personalized breathing support."
         keywords="Mild asthma treatment, Online asthma consultation, Breathing support, Virtual asthma care"

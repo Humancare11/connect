@@ -408,7 +408,7 @@ const pageData = {
   badge: "Prescription & Continuity Care",
   heading: "Second Medical Opinion",
   description: "Expert review of your diagnosis",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1215,7 +1215,7 @@ function FaqSection() {
 export default function SecondMedicalOpinion() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Second Medical Opinion Online | Expert Diagnosis & Treatment Review"
         description="Get a trusted second medical opinion online. Review your diagnosis, treatment plan, lab results, medications, or surgery recommendations with a licensed provider."
         keywords="second medical opinion, online second opinion doctor, diagnosis review, treatment plan review, medical consultation online, expert medical advice, virtual second opinion, healthcare consultation"

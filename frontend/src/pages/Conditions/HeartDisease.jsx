@@ -378,7 +378,7 @@ const pageData = {
     heading: "Heart Disease Follow-Up",
     description:
         "Ongoing care after heart treatment",
-    trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+    trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
     bgImage: ConditionBannerImage,
 };
 
@@ -907,12 +907,12 @@ function FaqSection() {
 export default function HeartDisease() {
     return (
         <>
-                        <SEO
-        title="Heart Disease Follow-Up Online | Ongoing Cardiac Care"
-        description="Manage your heart health with online follow-up care. Connect with a licensed provider for heart disease monitoring, treatment guidance, medication reviews, and ongoing cardiac support through telemedicine services."
-        keywords="Heart disease follow-up, Cardiac care online, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/heart-disease-follow-up"
-      />
+            <SEO
+                title="Heart Disease Follow-Up Online | Ongoing Cardiac Care"
+                description="Manage your heart health with online follow-up care. Connect with a licensed provider for heart disease monitoring, treatment guidance, medication reviews, and ongoing cardiac support through telemedicine services."
+                keywords="Heart disease follow-up, Cardiac care online, Online doctor appointment, Telemedicine services"
+                url="https://humancareconnect.co/heart-disease-follow-up"
+            />
 
             <style>{STYLES}</style>
 

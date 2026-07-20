@@ -408,7 +408,7 @@ const pageData = {
   badge: "Respiratory Health",
   heading: "Asthma Flare-Up",
   description: "Sudden worsening of asthma symptoms",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function AsthmaFlareUp() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Asthma Flare-Up Care Online | Breathing Symptom Support"
         description="Wheezing, chest tightness, or sudden breathing problems? Get online support for asthma flare-up symptoms, with evaluation and treatment guidance from a licensed provider."
         keywords="Asthma flare-up, Asthma flare-up symptoms, Wheezing, Chest tightness, Breathing care guidance, Online doctor appointment"

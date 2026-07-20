@@ -63,6 +63,7 @@ import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 import SEO from "../../../components/Seo";
 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────

@@ -153,12 +153,12 @@ const SERVICES = {
       },
     ],
 
-    stats: [
-      { value: 120000, suffix: "+", label: "Patients Served" },
-      { value: 2800, suffix: "+", label: "Verified Providers" },
-      { value: 98, suffix: "%", label: "Satisfaction Rate" },
-      { value: 14, suffix: " min", label: "Avg. Wait Time" },
-    ],
+    // stats: [
+    //   { value: 120000, suffix: "+", label: "Patients Served" },
+    //   { value: 2800, suffix: "+", label: "Verified Providers" },
+    //   { value: 98, suffix: "%", label: "Satisfaction Rate" },
+    //   { value: 14, suffix: " min", label: "Avg. Wait Time" },
+    // ],
     faqs: [
       {
         q: "What is mental health support?",
@@ -897,7 +897,7 @@ const HowItWorks = ({ s }) => (
                 [FiLock, "Secure & Private"],
                 [FiZap, "Fast Response"],
                 [FiUserCheck, "Verified Providers"],
-                [FiFileText, "Insurance Accepted"],
+                [FiFileText, "No Insurance Required"],
               ].map(([Icon, lb], i) => (
                 <div
                   key={i}
@@ -1076,7 +1076,7 @@ const whyUsItems = [
     "Verified Providers",
     "Every clinician is credentialed, licensed, and continuously reviewed.",
   ],
-[
+  [
     FiHeart,
     "Patient-Centered Care",
     "Clinical decisions are made in partnership with you — never without your input.",
@@ -1118,7 +1118,7 @@ const WhyUs = ({ s }) => {
           variants={fadeUp}
           style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
         >
-        <SLabel text="Why Choose Us" ac={s.accentColor} center />
+          <SLabel text="Why Choose Us" ac={s.accentColor} center />
           <h2
             style={{
               fontSize: "clamp(26px, 3.5vw, 36px)",
@@ -1144,7 +1144,7 @@ const WhyUs = ({ s }) => {
             marginBottom: 44,
           }}
         >
-          {s.stats.map((st, i) => (
+          {/* {s.stats.map((st, i) => (
             <StatCard
               key={i}
               value={st.value}
@@ -1153,7 +1153,7 @@ const WhyUs = ({ s }) => {
               ac={s.accentColor}
               go={inView}
             />
-          ))}
+          ))} */}
         </div>
 
         <div
@@ -1466,7 +1466,7 @@ const FinalCTA = ({ s }) => (
             [FiLock, "HIPAA Compliant"],
             [FiStar, "4.9/5 Rated"],
             [FiShield, "Verified Providers"],
-            [FiFileText, "All Insurances"],
+            [FiFileText, "No Insurance Required"],
             [FiClock, "24/7 Access"],
           ].map(([Icon, lb], i) => (
             <div
@@ -1501,7 +1501,7 @@ export default function MentalHealthSupport() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Mental Health Support Online | Virtual Mental Health Care | Humancare Connect"
         description="Access confidential mental health support through secure telemedicine services. Connect with licensed healthcare providers for anxiety, stress, depression, and emotional wellness care."
         keywords="Mental health support, Online therapy, Virtual counseling, Emotional wellness care"

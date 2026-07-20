@@ -50,7 +50,7 @@ const pageData = {
   badge: "Mental Health",
   heading: "Low Self-Esteem",
   description: "Building confidence and self worth",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

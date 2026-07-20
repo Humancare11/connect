@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Irritable Bowel Syndrome (IBS)",
   description: "Chronic digestive discomfort and cramping",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

@@ -407,7 +407,7 @@ const pageData = {
   badge: "Eye, Ear & Bone Care",
   heading: "Ear Infection",
   description: "Pain, pressure, and ear discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

@@ -407,7 +407,7 @@ const pageData = {
   badge: "Eye, Ear & Bone Care",
   heading: "Swollen Feet or Ankles",
   description: "Swelling and fluid buildup in feet",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

@@ -50,7 +50,7 @@ const pageData = {
   badge: "Mental Health",
   heading: "Substance Use Support",
   description: "Support for substance use challenges",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

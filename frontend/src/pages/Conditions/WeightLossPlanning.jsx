@@ -407,7 +407,7 @@ const pageData = {
   badge: "Weigtht & Nutrition Support",
   heading: "Weight-Loss Planning",
   description: "Personalized strategies for lasting results",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

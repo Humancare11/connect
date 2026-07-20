@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "Safe Sex Counseling",
   description: "Guidance for healthier intimate relationships",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1051,7 +1051,7 @@ function FaqSection() {
 export default function SafeSexCounseling() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Safe Sex Counseling Online | Confidential Sexual Health Consultation"
         description="Talk to a licensed provider online about safe sex, contraception, STI prevention, sexual wellness, and healthy relationships in a confidential consultation."
         keywords="safe sex counseling, online sexual health consultation, STI prevention, contraception counseling, sexual wellness, reproductive health consultation, confidential sex counseling, telehealth sexual health"

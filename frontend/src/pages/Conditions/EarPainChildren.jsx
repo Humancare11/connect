@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Ear Pain in Children",
   description: "Ear discomfort and irritation in kids",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function EarPainChildren() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Ear Pain in Children Treatment Online | Pediatric Telemedicine Care"
         description="Get expert ear pain treatment for children online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized pediatric care from home."
         keywords="Ear pain in children, Telemedicine services, Online doctor appointment, Virtual healthcare services"

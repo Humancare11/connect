@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Osteoporosis",
   description: "Protecting and strengthening bone health",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function Osteoporosis() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Osteoporosis Treatment Online | Bone Health & Fracture Prevention"
         description="Connect with a licensed provider online for osteoporosis care. Get expert guidance on bone health, fracture prevention, osteoporosis treatment, risk assessment, and personalized management."
         keywords="Osteoporosis treatment, Bone health, Fracture prevention, Online osteoporosis consultation"
