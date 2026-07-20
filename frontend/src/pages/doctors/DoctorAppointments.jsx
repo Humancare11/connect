@@ -1,5 +1,5 @@
 import { useState, useEffect, Fragment } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./DoctorAppointments.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
@@ -34,6 +34,7 @@ function getGreeting() {
 export default function DoctorAppointments() {
   const { doctor } = useDoctorAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const doctorName = doctor?.name || "Doctor";
 
   const [appointments, setAppointments] = useState([]);
@@ -111,6 +112,7 @@ export default function DoctorAppointments() {
         prev.map((a) => (a._id === id ? { ...a, status: "complete" } : a)),
       );
       showToast("Consultation marked as completed.");
+      navigate("/doctor-dashboard/patients");
     } catch {
       showToast("Could not complete appointment.", false);
     } finally {
