@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Mood & Anxiety in Teens",
   description: "Support for teen emotional wellness",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1216,7 +1216,7 @@ function FaqSection() {
 export default function MoodAnxietyTeens() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Teen Mood & Anxiety Support Online | Adolescent Mental Health Care"
         description="Get compassionate online support for teen mood and anxiety concerns. Connect with licensed providers for stress, sadness, emotional wellness, behavioral changes, and personalized adolescent mental health care."
         keywords="Teen anxiety support, Teen mental health, Adolescent counseling, Online mental health consultation"

@@ -504,14 +504,14 @@ const CATEGORIES = [
 const SPECIALTIES = [
   {
     slug: "general-physician",
-    path: "/general-physician",
+    path: "/general-and-everyday-care/general-physician",
     icon: "stethoscope",
     name: "General Physician (GP)",
     featured: true,
   },
   {
     slug: "internal-medicine",
-    path: "/internal-medicine",
+    path: "/general-and-everyday-care/internal-medicine",
     icon: "activity",
     name: "Internal Medicine",
     featured: false,
@@ -605,7 +605,7 @@ const CONDITIONS = [
   },
   {
     slug: "heart-disease",
-    path: "/heart-disease",
+    path: "/chronic-care/cardiology/heart-disease-follow-up",
     icon: "heart",
     name: "Heart Disease",
   },
@@ -886,17 +886,17 @@ export default function Categories() {
      Hair Care), then sorts by how relevant the match is. */
   const filtered = query.trim()
     ? CATEGORIES.map((c) => ({
-        category: c,
-        score: scoreCategory(c, query.trim()),
-      }))
-        .filter((r) => r.score !== null)
-        .sort((a, b) => b.score - a.score)
-        .map((r) => r.category)
+      category: c,
+      score: scoreCategory(c, query.trim()),
+    }))
+      .filter((r) => r.score !== null)
+      .sort((a, b) => b.score - a.score)
+      .map((r) => r.category)
     : CATEGORIES;
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Online Doctor Consultation | Virtual Healthcare Services | Humancare Connect"
         description="Book secure online doctor consultations with experienced healthcare professionals. Get personalized virtual healthcare services for everyday health, specialist care, mental wellness, and more with Humancare Connect."
         keywords="Online doctor consultation, Online doctor consultation services, Virtual healthcare services, Online doctor consultations, Virtual healthcare experience, Healthcare professionals"

@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Sleep Apnea",
   description: "Interrupted breathing during sleep",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1220,7 +1220,7 @@ function FaqSection() {
 export default function SleepApneas() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Sleep Apnea Treatment Online | Virtual Sleep Health Consultation"
         description="Consult a licensed provider online for sleep apnea, loud snoring, interrupted breathing, daytime fatigue, and personalized sleep health guidance."
         keywords="sleep apnea treatment online, online sleep consultation, sleep apnea symptoms, loud snoring treatment, sleep disorder specialist, virtual sleep doctor, breathing problems during sleep, telehealth sleep care, obstructive sleep apnea, sleep health consultation"

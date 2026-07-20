@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Tonsillitis",
   description: "Relief for sore throat and swollen tonsils",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1216,7 +1216,7 @@ function FaqSection() {
 export default function Tonsillitis() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Tonsillitis Treatment Online | Virtual Care for Swollen Tonsils"
         description="Get online care for tonsillitis. Consult a licensed provider for sore throat, swollen tonsils, fever, painful swallowing, and personalized treatment."
         keywords="tonsillitis treatment online, swollen tonsils treatment, sore throat treatment, tonsillitis symptoms, online doctor for tonsillitis, painful swallowing, virtual doctor consultation, telehealth tonsillitis care, throat infection treatment, online ENT consultation"

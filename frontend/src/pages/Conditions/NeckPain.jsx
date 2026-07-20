@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Neck Pain",
   description: "Stiffness, soreness, and neck discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function NeckPain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Neck Pain Treatment Online | Stiff Neck & Pain Relief Consultation"
         description="Get expert treatment for neck pain online. Consult a licensed provider for neck stiffness, muscle strain, soreness, headaches, posture-related pain, and personalized recovery guidance."
         keywords="Neck pain treatment, Stiff neck relief, Muscle strain consultation, Online doctor consultation"

@@ -407,7 +407,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Knee Pain",
   description: "Relief for joint pain and discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1222,7 +1222,7 @@ function FaqSection() {
 export default function KneePain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Knee Pain Treatment Online | Orthopedic Knee Specialist"
         description="Get expert care for knee pain online. Consult a licensed provider for knee injuries, arthritis, swelling, stiffness, reduced mobility, and personalized treatment through secure telemedicine services."
         keywords="Knee pain treatment, Online orthopedic specialist, Online doctor appointment, Knee pain relief"

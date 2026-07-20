@@ -664,7 +664,7 @@ export default function MentalHealth() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Mental Health Support | Virtual Therapy & Counseling | Humancare Connect"
         description="Access online mental health support with trusted professionals. Get virtual therapy, counseling, and guidance for anxiety, depression, stress, emotional wellness, and overall mental well-being."
         keywords="Online mental health care, Virtual therapy, Online counseling, Emotional wellness support"
@@ -734,7 +734,7 @@ export default function MentalHealth() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

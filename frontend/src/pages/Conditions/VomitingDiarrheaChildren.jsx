@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Vomiting and Diarrhea in Children",
   description: "Digestive illness causing dehydration risk",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1215,7 +1215,7 @@ function FaqSection() {
 export default function VomitingDiarrheaChildren() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Vomiting and Diarrhea in Children | Pediatric Care Online"
         description="Get trusted pediatric care for vomiting and diarrhea in children. Connect with an online provider for symptom evaluation, hydration guidance, and treatment recommendations."
         keywords="Vomiting and diarrhea in children, pediatric care, child vomiting, diarrhea in children, dehydration in children, stomach cramps, fever, nausea, digestive discomfort, viral infections, food poisoning, stomach bugs, hydration guidance, telemedicine services, online doctor appointment, virtual healthcare services, online provider"

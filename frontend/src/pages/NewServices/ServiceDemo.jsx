@@ -59,12 +59,12 @@ const SERVICES = {
       { Icon: FiGlobe, title: "Multilingual Support", desc: "Consultations available in 14+ languages with live interpreter access." },
     ],
 
-    stats: [
-      { value: 120000, suffix: "+", label: "Patients Served" },
-      { value: 2800, suffix: "+", label: "Verified Providers" },
-      { value: 98, suffix: "%", label: "Satisfaction Rate" },
-      { value: 14, suffix: " min", label: "Avg. Wait Time" },
-    ],
+    // stats: [
+    //   { value: 120000, suffix: "+", label: "Patients Served" },
+    //   { value: 2800, suffix: "+", label: "Verified Providers" },
+    //   { value: 98, suffix: "%", label: "Satisfaction Rate" },
+    //   { value: 14, suffix: " min", label: "Avg. Wait Time" },
+    // ],
 
     faqs: [
       { q: "What conditions can be treated via telehealth?", a: "Most non-emergency conditions including colds, infections, skin issues, mental health consultations, chronic disease management, and prescription renewals." },
@@ -373,7 +373,7 @@ const HowItWorks = ({ s }) => (
             <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {[
                 [FiLock, "Secure & Private"], [FiZap, "Fast Response"],
-                [FiUserCheck, "Verified Providers"], [FiFileText, "Insurance Accepted"],
+                [FiUserCheck, "Verified Providers"], [FiFileText, "No Insurance Required"],
               ].map(([Icon, lb], i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, color: TEXT_DIM, fontSize: 12 }}>
                   <Icon style={{ fontSize: 13, color: s.accentColor }} />{lb}
@@ -461,8 +461,8 @@ const StatCard = ({ value, suffix, label, ac, go }) => {
 
 const whyUsItems = [
   [FiAward, "Verified Providers", "Every clinician is credentialed, licensed, and continuously reviewed."],
-  [FiHeart,"Patient-Centered Care","Clinical decisions are made in partnership with you — never without your input.",],
-  [FiGlobe,"Nationwide Access","Care without geographic limits — from metro centers to remote districts.",],
+  [FiHeart, "Patient-Centered Care", "Clinical decisions are made in partnership with you — never without your input.",],
+  [FiGlobe, "Nationwide Access", "Care without geographic limits — from metro centers to remote districts.",],
   [FiZap, "Fast Scheduling", "From first contact to first appointment in hours, not weeks."],
   [FiLock, "Secure Platform", "Enterprise-grade encryption protects every record and transaction."],
   [FiBarChart2, "Outcome Accountability", "We track results and publicly report our care quality standards."],
@@ -488,9 +488,9 @@ const WhyUs = ({ s }) => {
           <p style={{ color: TEXT_DIM, fontSize: 15 }}>Numbers that represent real patients, real outcomes.</p>
         </motion.div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 44 }}>
+        {/* <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 44 }}>
           {s.stats.map((st, i) => <StatCard key={i} value={st.value} suffix={st.suffix} label={st.label} ac={s.accentColor} go={inView} />)}
-        </div>
+        </div> */}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
           {whyUsItems.map(([Icon, title, desc], i) => (
@@ -621,7 +621,7 @@ const FinalCTA = ({ s }) => (
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 28 }}>
           {[
             [FiLock, "HIPAA Compliant"], [FiStar, "4.9/5 Rated"],
-            [FiShield, "Verified Providers"], [FiFileText, "All Insurances"], [FiClock, "24/7 Access"],
+            [FiShield, "Verified Providers"], [FiFileText, "No Insurance Required"], [FiClock, "24/7 Access"],
           ].map(([Icon, lb], i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, color: TEXT_DIM, fontSize: 13 }}>
               <Icon style={{ fontSize: 15 }} />{lb}
@@ -648,26 +648,26 @@ export default function ServiceDemo() {
     <>
       <SEO title="Online Doctor Service Demo | Humancare Connect" description="Explore our healthcare service demo." keywords="Service demo" url="https://humancareconnect.co/ServiceDemo" />
       <div
-        // style={{
-        //   backgroundColor: BG_BASE,
-        //   minHeight: "700px",
-        //   width: "100%",
-        // }}
+      // style={{
+      //   backgroundColor: BG_BASE,
+      //   minHeight: "700px",
+      //   width: "100%",
+      // }}
       >
-      <AnimatePresence mode="wait">
-        <motion.div key={slug}
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          transition={{ duration: 0.22 }}>
-          <Hero s={s} />
-          <Overview s={s} />
-          <HowItWorks s={s} />
-          <Features s={s} />
-          <WhyUs s={s} />
-          <FAQ s={s} />
-          <FinalCTA s={s} />
-        </motion.div>
-      </AnimatePresence>
-    </div>
+        <AnimatePresence mode="wait">
+          <motion.div key={slug}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}>
+            <Hero s={s} />
+            <Overview s={s} />
+            <HowItWorks s={s} />
+            <Features s={s} />
+            <WhyUs s={s} />
+            <FAQ s={s} />
+            <FinalCTA s={s} />
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </>
   );
 }

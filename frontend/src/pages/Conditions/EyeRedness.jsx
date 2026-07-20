@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Eye Redness",
   description: "Red, irritated, or bloodshot eyes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1210,7 +1210,7 @@ function FaqSection() {
 export default function EyeRedness() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Eye Redness Treatment Online | Virtual Eye Care Consultation"
         description="Get expert treatment for eye redness online. Connect with a licensed provider for redness, irritation, burning, itching, or bloodshot eyes through secure telemedicine services."
         keywords="Eye redness treatment, Virtual eye care, Online doctor appointment, Telemedicine services"

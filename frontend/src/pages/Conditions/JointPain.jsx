@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Joint Pain",
   description: "Pain, stiffness, and joint discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function JointPain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Joint Pain Treatment Online | Orthopedic Consultation from Home"
         description="Get expert care for joint pain online. Consult a licensed provider for knee, shoulder, hip, back, or hand pain, stiffness, swelling, and personalized treatment through secure telemedicine services."
         keywords="Joint pain treatment, Online orthopedic consultation, Online doctor appointment, Pain management care"

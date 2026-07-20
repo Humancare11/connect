@@ -185,12 +185,12 @@ const SERVICES = {
       },
     ],
 
-    stats: [
-      { value: 120000, suffix: "+", label: "Patients Served" },
-      { value: 2800, suffix: "+", label: "Verified Providers" },
-      { value: 98, suffix: "%", label: "Satisfaction Rate" },
-      { value: 14, suffix: " min", label: "Avg. Wait Time" },
-    ],
+    // stats: [
+    //   { value: 120000, suffix: "+", label: "Patients Served" },
+    //   { value: 2800, suffix: "+", label: "Verified Providers" },
+    //   { value: 98, suffix: "%", label: "Satisfaction Rate" },
+    //   { value: 14, suffix: " min", label: "Avg. Wait Time" },
+    // ],
     faqs: [
       {
         q: "What is a Lab Requisition?",
@@ -992,7 +992,7 @@ const HowItWorks = ({ s }) => (
                 [FiLock, "Secure & Private"],
                 [FiZap, "Fast Response"],
                 [FiUserCheck, "Verified Providers"],
-                [FiFileText, "Insurance Accepted"],
+                [FiFileText, "No Insurance Required"],
               ].map(([Icon, lb], i) => (
                 <div
                   key={i}
@@ -1239,7 +1239,7 @@ const WhyUs = ({ s }) => {
             marginBottom: 44,
           }}
         >
-          {s.stats.map((st, i) => (
+          {/* {s.stats.map((st, i) => (
             <StatCard
               key={i}
               value={st.value}
@@ -1248,7 +1248,7 @@ const WhyUs = ({ s }) => {
               ac={s.accentColor}
               go={inView}
             />
-          ))}
+          ))} */}
         </motion.div>
 
         <div
@@ -1573,7 +1573,7 @@ const FinalCTA = ({ s }) => (
             [FiLock, "HIPAA Compliant"],
             [FiStar, "4.9/5 Rated"],
             [FiShield, "Verified Providers"],
-            [FiFileText, "All Insurances"],
+            [FiFileText, "No Insurance Required"],
             [FiClock, "24/7 Access"],
           ].map(([Icon, lb], i) => (
             <div
@@ -1609,7 +1609,7 @@ export default function LABREQUISITIONS() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Lab Requisitions Online | Laboratory Testing Orders | Humancare Connect"
         description="Need a lab requisition? Connect with licensed healthcare providers online and receive laboratory testing orders when clinically appropriate through secure telemedicine services."
         keywords="Lab requisitions online, Doctor ordered lab tests, Preventive health screening, Online doctor appointment"

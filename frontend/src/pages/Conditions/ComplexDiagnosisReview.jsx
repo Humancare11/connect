@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Complex Diagnosis Review",
   description: "Expert insight for challenging conditions",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1226,7 +1226,7 @@ function FaqSection() {
 export default function ComplexDiagnosisReview() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Complex Diagnosis Review | Clarity for Difficult Health Conditions"
         description="Unclear symptoms or multiple medical conditions can make care decisions difficult. Get a detailed review of your health history, test results, and treatment journey for clearer next steps."
         keywords="Complex diagnosis review, Complex health concerns, Medical record reviews, Telemedicine services, Virtual healthcare services, Telehealth services"

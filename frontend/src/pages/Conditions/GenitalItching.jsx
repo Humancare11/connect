@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "Genital Itching",
   description: "Itching, irritation, and discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1045,7 +1045,7 @@ function FaqSection() {
 export default function GenitalItching() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Genital Itching Treatment Online | Private Virtual Consultation"
         description="Get confidential treatment for genital itching online. Connect with a licensed provider for symptom evaluation, treatment recommendations, and prescription support through secure telemedicine services."
         keywords="Genital itching treatment, Private online consultation, Online doctor appointment, Telemedicine services"

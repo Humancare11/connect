@@ -379,7 +379,7 @@ const pageData = {
   heading: "Chronic Kidney Disease",
   description:
     "Personalized healthcare focused on prevention, diagnosis, treatment and long-term wellness. Connect with experienced physicians dedicated to keeping you and your family healthy.",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -908,7 +908,7 @@ function FaqSection() {
 export default function ChronicKidneyDisease() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Chronic Kidney Disease Management | Long-Term Kidney Health Support"
         description="Protect your kidney health with ongoing symptom monitoring, lifestyle guidance, and personalized support for chronic kidney disease and long-term care needs."
         keywords="Chronic kidney disease, Kidney function, Kidney health, Telemedicine services, Online doctor appointment, Virtual healthcare services"

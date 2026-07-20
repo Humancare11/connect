@@ -408,7 +408,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Sports Nutrition",
   description: "Fueling performance and recovery",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1216,7 +1216,7 @@ function FaqSection() {
 export default function SportsNutrition() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Sports Nutrition Consultation Online | Virtual Nutrition & Performance Support"
         description="Get personalized online sports nutrition guidance to improve performance, recovery, endurance, muscle health, and achieve your fitness goals."
         keywords="sports nutrition consultation, online sports nutrition, sports dietitian online, athletic nutrition, performance nutrition, muscle recovery nutrition, fitness nutrition consultation, virtual nutrition coaching, sports diet plan, telehealth nutrition services"

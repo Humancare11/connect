@@ -712,7 +712,7 @@ export default function ChronicCareExpertOpinion() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Chronic Care Management & Expert Medical Opinions | Humancare Connect"
         description="Get expert online chronic care management and medical opinions from trusted healthcare professionals. Receive personalized treatment guidance, ongoing support, and virtual consultations from home."
         keywords="Chronic care management, Expert medical opinions, Chronic condition management, Online doctor consultations, Virtual chronic care, Virtual healthcare"
@@ -782,7 +782,7 @@ export default function ChronicCareExpertOpinion() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

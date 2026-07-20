@@ -408,7 +408,7 @@ const pageData = {
   badge: "Respiratory Health",
   heading: "Wheezing",
   description: "Whistling sound while breathing",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function Wheezing() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Wheezing Treatment Online | Breathing & Respiratory Care"
         description="Get fast care for wheezing symptoms, chest tightness, coughing, and shortness of breath. Connect with an online provider for breathing care and treatment guidance."
         keywords="Wheezing, wheezing symptoms, wheezing treatment, noisy breathing, chest tightness, coughing, shortness of breath, airway irritation, asthma, allergies, respiratory infections, breathing conditions, breathing care guidance, respiratory care, symptom evaluation, treatment recommendations, telemedicine services, online doctor appointment, telemedicine platform, online provider"

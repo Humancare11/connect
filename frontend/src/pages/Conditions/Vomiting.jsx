@@ -407,7 +407,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Vomiting",
   description: "Nausea and frequent throwing up",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1219,7 +1219,7 @@ function FaqSection() {
 export default function Vomiting() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Vomiting Treatment Online | Nausea & Digestive Care"
         description="Get fast care for vomiting symptoms, nausea, dehydration, and stomach discomfort. Connect with an online provider for treatment guidance and recovery support."
         keywords="Vomiting symptoms, vomiting treatment, nausea, dehydration, stomach discomfort, weakness, dizziness, digestive issues, food poisoning, stomach illnesses, vomiting relief, hydration guidance, telemedicine services, online doctor appointment, telemedicine platform, online provider"

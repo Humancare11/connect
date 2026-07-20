@@ -6,6 +6,8 @@
   useMemo,
 } from "react";
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
+
 import {
   Globe2,
   ArrowRight,
@@ -46,6 +48,16 @@ import {
 import "./Specialties.css";
 import SEO from "../components/Seo";
 
+
+const conditionIcons = {
+  bone: Bone,
+  check: ShieldCheck,
+  heart: Heart,
+  activity: Activity,
+  brain: Brain,
+  stethoscope: Stethoscope,
+  pill: Pill,
+};
 // ── Carousel slides ──────────────────────────────────────────────────────────
 const carouselSlides = [
   {
@@ -425,15 +437,66 @@ const audiences = [
 ];
 
 // ── Browse-by-condition list ────────────────────────────────────────────────
-const conditions = [
-  { name: "Arthritis", icon: Bone },
-  { name: "Cancer Second Opinion", icon: ShieldCheck },
-  { name: "Chest Pain", icon: Heart },
-  { name: "Chronic Kidney Disease", icon: Activity },
-  { name: "Chronic Migraine", icon: Brain },
-  { name: "Complex Diagnosis", icon: FileSearch },
-  { name: "Fatty Liver", icon: Soup },
-  { name: "Heart Disease", icon: Heart },
+// const conditions = [
+//   { name: "Arthritis", icon: Bone },
+//   { name: "Cancer Second Opinion", icon: ShieldCheck },
+//   { name: "Chest Pain", icon: Heart },
+//   { name: "Chronic Kidney Disease", icon: Activity },
+//   { name: "Chronic Migraine", icon: Brain },
+//   { name: "Complex Diagnosis", icon: FileSearch },
+//   { name: "Fatty Liver", icon: Soup },
+//   { name: "Heart Disease", icon: Heart },
+// ];
+
+const CONDITIONS = [
+  {
+    slug: "arthritis",
+    path: "/eye-ear-bone/orthopedics/arthritis",
+    icon: "bone",
+    name: "Arthritis",
+  },
+  {
+    slug: "cancer-second-opinion",
+    path: "/cancer-second-opinion",
+    icon: "check",
+    name: "Cancer Second Opinion",
+  },
+  {
+    slug: "chest-pain",
+    path: "/chronic-care/cardiology/chest-pain",
+    icon: "heart",
+    name: "Chest Pain",
+  },
+  {
+    slug: "chronic-kidney-disease",
+    path: "/chronic-kidney-disease",
+    icon: "activity",
+    name: "Chronic Kidney Disease",
+  },
+  {
+    slug: "chronic-migraine",
+    path: "/chronic-care/neurology/chronic-migraine",
+    icon: "brain",
+    name: "Chronic Migraine",
+  },
+  {
+    slug: "complex-diagnosis",
+    path: "/complex-diagnosis",
+    icon: "stethoscope",
+    name: "Complex Diagnosis",
+  },
+  {
+    slug: "fatty-liver",
+    path: "/chronic-care/gastroenterology/fatty-liver",
+    icon: "pill",
+    name: "Fatty Liver",
+  },
+  {
+    slug: "heart-disease",
+    path: "/chronic-care/cardiology/heart-disease-follow-up",
+    icon: "heart",
+    name: "Heart Disease",
+  },
 ];
 
 // ── FAQ data ──────────────────────────────────────────────────────────────
@@ -949,7 +1012,7 @@ export default function Specialties() {
             </p>
           </div>
 
-          <div className="sp-conditions__grid">
+          {/* <div className="sp-conditions__grid">
             {conditions.map((c, i) => {
               const Icon = c.icon;
               return (
@@ -968,6 +1031,33 @@ export default function Specialties() {
                     className="sp-conditions__card-arrow"
                   />
                 </a>
+              );
+            })}
+          </div> */}
+          <div className="cat-spec-grid">
+            {CONDITIONS.map((sp) => {
+              const ConditionIcon = conditionIcons[sp.icon];
+
+              return (
+                <Link
+                  key={sp.slug}
+                  to={sp.path}
+                  className={`cat-spec-item${sp.featured ? " cat-spec-item--featured" : ""}`}
+                >
+                  <div className="cat-spec-item__icon">
+                    {ConditionIcon && <ConditionIcon size={18} />}
+                  </div>
+
+                  <div className="cat-spec-item__text">
+                    <div className="cat-spec-item__row">
+                      <span className="cat-spec-item__name">{sp.name}</span>
+                    </div>
+                  </div>
+
+                  <span className="cat-spec-item__chevron">
+                    <ChevronRight size={14} />
+                  </span>
+                </Link>
               );
             })}
           </div>

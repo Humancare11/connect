@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Numbness and Tingling",
   description: "Pins, needles, or loss of sensation",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1214,7 +1214,7 @@ function FaqSection() {
 export default function NumbersAndTingling() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Numbness & Tingling Treatment Online | Nerve Pain & Sensation Care"
         description="Get expert care for numbness and tingling online. Consult a licensed provider for pins and needles, nerve pain, loss of sensation, weakness, and personalized treatment guidance."
         keywords="Numbness and tingling, Nerve pain treatment, Online neurology consultation, Peripheral neuropathy care"

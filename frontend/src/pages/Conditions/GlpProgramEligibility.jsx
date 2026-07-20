@@ -407,7 +407,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "GLP-1 Program Eligibility",
   description: "Personalized weight management assessment",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function GlpProgramEligibility() {
   return (
     <>
-                  <SEO
+      <SEO
         title="GLP-1 Weight Loss Program | Online Eligibility Assessment"
         description="Find out if you're eligible for a GLP-1 weight loss program. Connect with a licensed provider online for a personalized assessment, treatment guidance, and weight management support."
         keywords="GLP-1 weight loss program, GLP-1 eligibility assessment, Online doctor appointment, Telemedicine services"

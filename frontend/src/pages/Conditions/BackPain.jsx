@@ -407,7 +407,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Back Pain",
   description: "Pain, stiffness, and back discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1218,7 +1218,7 @@ function FaqSection() {
 export default function BackPain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Back Pain Relief Online | Care for Stiffness & Muscle Pain"
         description="Back stiffness, soreness, or sharp pain affecting daily movement? Get personalized back pain care, pain management guidance, and treatment recommendations online."
         keywords="Back pain, Back pain care, Muscle tension, Back stiffness, Pain management guidance, Online doctor appointment"

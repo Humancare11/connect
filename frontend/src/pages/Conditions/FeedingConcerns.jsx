@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Feeding Concerns",
   description: "Support for healthy infant feeding",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1216,7 +1216,7 @@ function FaqSection() {
 export default function FeedingConcerns() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Infant Feeding Support Online | Expert Feeding Guidance"
         description="Get expert support for infant feeding concerns online. Connect with a licensed provider for breastfeeding, bottle feeding, nutrition guidance, and personalized feeding recommendations through telemedicine services."
         keywords="Infant feeding support, Feeding concerns, Telemedicine services, Online doctor appointment"

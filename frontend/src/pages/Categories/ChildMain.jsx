@@ -616,7 +616,7 @@ export default function ChildFamilyCare() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

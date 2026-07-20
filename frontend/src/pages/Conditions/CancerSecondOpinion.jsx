@@ -379,7 +379,7 @@ const pageData = {
   heading: "Cancer Second Opinion",
   description:
     "Expert guidance for treatment decisions",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -908,7 +908,7 @@ function FaqSection() {
 export default function CancerSecondOpinion() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Cancer Second Opinion | Expert Review of Your Diagnosis & Treatment"
         description="Need more clarity about a cancer diagnosis or treatment plan? Get an expert second opinion to review your medical records, explore treatment options, and make informed care decisions."
         keywords="Cancer second opinion, Cancer diagnosis, Treatment options, Diagnosis reviews, Cancer care, Treatment discussions"

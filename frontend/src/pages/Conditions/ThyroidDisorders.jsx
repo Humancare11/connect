@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Thyroid Disorders",
   description: "Hormone imbalance affecting body functions",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1221,7 +1221,7 @@ function FaqSection() {
 export default function ThyroidDisorders() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Thyroid Disorder Treatment Online | Virtual Thyroid Care"
         description="Get online care for thyroid disorders. Consult a licensed provider for fatigue, weight changes, hormone imbalances, and personalized thyroid treatment."
         keywords="thyroid disorder treatment, thyroid treatment online, hypothyroidism treatment, hyperthyroidism treatment, thyroid symptoms, online thyroid doctor, thyroid hormone management, virtual thyroid care, telehealth endocrinology, thyroid consultation online"

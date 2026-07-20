@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Treatment Plan Review",
   description: "Ensuring the right care approach",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function TreatmentPlanReview() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Treatment Plan Review Online | Expert Medical Care Evaluation"
         description="Get your treatment plan reviewed online. Consult a licensed provider to evaluate medications, therapies, symptoms, and personalized care options."
         keywords="treatment plan review, medical treatment review, online treatment evaluation, medication review, second medical opinion, care plan review, virtual doctor consultation, treatment assessment, telehealth consultation, personalized healthcare recommendations"

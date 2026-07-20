@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "Partner Exposure Concerns",
   description: "Concerns after sexual exposure",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1047,7 +1047,7 @@ function FaqSection() {
 export default function PartnerExposureConcerns() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Partner Exposure Concerns | Online STI Exposure Consultation"
         description="Get confidential care for partner exposure concerns. Connect with a licensed provider online for STI exposure assessment, testing guidance, prevention options, treatment recommendations, and sexual health support."
         keywords="Partner exposure concerns, STI exposure consultation, Sexual health consultation, Online STI assessment"

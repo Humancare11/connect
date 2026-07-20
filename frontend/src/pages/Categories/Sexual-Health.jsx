@@ -534,7 +534,7 @@ export default function SexualHealth() {
         minHeight: "100vh",
       }}
     >
-                              <SEO
+      <SEO
         title="Sexual Health Specialists | STI Care, HIV Prevention & Sexual Wellness"
         description="Connect with experienced sexual health specialists for STI consultations, HIV prevention, herpes, chlamydia, gonorrhea, partner exposure concerns, and confidential sexual wellness care."
         keywords=""
@@ -604,7 +604,7 @@ export default function SexualHealth() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

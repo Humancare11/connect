@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Pediatric Cold & Flu",
   description: "Cold and flu symptoms in children",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function PediatricColdFlu() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Pediatric Cold & Flu Treatment Online | Children's Virtual Care"
         description="Get expert pediatric cold and flu care online. Connect with a licensed provider for fever, cough, congestion, sore throat, flu symptoms, and personalized treatment for your child."
         keywords="Pediatric cold and flu, Children's cold treatment, Online pediatric consultation, Virtual pediatric care"

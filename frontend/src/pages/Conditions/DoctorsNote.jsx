@@ -408,7 +408,7 @@ const pageData = {
   badge: "Prescription & Continuity Care",
   heading: "Doctor’s Note",
   description: "Medical documentation for work or school",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1211,7 +1211,7 @@ function FaqSection() {
 export default function DoctorsNote() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Doctor�s Note Online | Telemedicine Medical Documentation"
         description="Get a doctor�s note online through trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive medical documentation when clinically appropriate."
         keywords="Doctor�s note online, Telemedicine services, Online doctor appointment, Virtual healthcare services"

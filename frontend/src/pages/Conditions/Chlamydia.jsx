@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "Chlamydia",
   description: "Common sexually transmitted bacterial infection",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1045,7 +1045,7 @@ function FaqSection() {
 export default function Chlamydia() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Chlamydia Care | Confidential STI Guidance & Treatment Support"
         description="Chlamydia may cause burning urination, unusual discharge, or pelvic discomfort, while some people have no symptoms. Access private sexual health guidance and appropriate care online."
         keywords="Chlamydia, Chlamydia care, Sexually transmitted bacterial infection, Sexual health guidance, Telemedicine services, Online doctor appointment"

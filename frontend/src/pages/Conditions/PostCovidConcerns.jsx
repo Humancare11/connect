@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Post-COVID Concerns",
   description: "Support for lingering COVID symptoms",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function PostCovidConcerns() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Post-COVID Care Online | Long COVID Recovery Support"
         description="Get expert online care for post-COVID concerns. Connect with a licensed provider for lingering fatigue, brain fog, shortness of breath, headaches, loss of smell or taste, and personalized recovery support."
         keywords="Post-COVID care, Long COVID treatment, Online post-COVID consultation, Long COVID recovery, Virtual healthcare services"

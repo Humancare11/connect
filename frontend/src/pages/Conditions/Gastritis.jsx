@@ -407,7 +407,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Gastritis",
   description: "Stomach lining inflammation and discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1219,7 +1219,7 @@ function FaqSection() {
 export default function Gastritis() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Gastritis Treatment Online | Stomach Pain & Acid Relief"
         description="Get expert gastritis treatment online for stomach pain, nausea, bloating, indigestion, and acid-related discomfort. Connect with a licensed provider through secure telemedicine services."
         keywords="Gastritis treatment online, Stomach pain relief, Online doctor appointment, Telemedicine services"

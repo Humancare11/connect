@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Skin Rash in Children",
   description: "Red, itchy, irritated skin in kids",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,11 +1212,11 @@ function FaqSection() {
 export default function SkinRashChildren() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Skin Rash in Children Treatment Online | Virtual Pediatric Skin Care"
         description="Get online care for your child's skin rash. Consult a licensed provider for redness, itching, eczema, heat rash, allergies, and personalized treatment guidance."
         keywords="skin rash in children, pediatric skin rash treatment, child rash treatment online, online pediatric consultation, eczema in children, heat rash treatment, itchy rash in kids, virtual pediatric care, children's skin allergies, telehealth pediatric dermatologist"
-        url="https://humancareconnect.co/skin-rash-children"
+        url="https://humancareconnect.co/child-and-family-care/pediatrics/skin-rash-in-children"
       />
       <style>{STYLES}</style>
 

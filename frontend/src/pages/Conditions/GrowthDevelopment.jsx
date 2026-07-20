@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Growth & Development",
   description: "Supporting healthy childhood milestones",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1218,7 +1218,7 @@ function FaqSection() {
 export default function GrowthDevelopment() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Child Growth & Development Support | Pediatric Care Online"
         description="Get expert guidance for your child's growth and development. Connect with licensed providers online for milestone assessments, developmental support, and personalized pediatric care through telemedicine services."
         keywords="Child growth and development, Pediatric developmental assessment, Online doctor appointment, Telemedicine services"

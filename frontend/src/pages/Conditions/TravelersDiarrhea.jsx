@@ -407,7 +407,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Traveler’s Diarrhea",
   description: "Digestive illness during travel",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 

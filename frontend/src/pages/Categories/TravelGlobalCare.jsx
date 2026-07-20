@@ -573,7 +573,7 @@ export default function TravelGlobalCare() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Travel & Global Healthcare | Virtual Doctor Consultation | Humancare Connect"
         description="Access online travel and global healthcare with trusted healthcare professionals. Get virtual doctor consultations, travel health advice, international medical guidance, and personalized care anywhere."
         keywords="travel healthcare online, travel health consultation, online travel doctor, global healthcare services, international healthcare support, virtual doctor consultation, pre-travel health advice, post-travel symptoms, healthcare while traveling, telehealth for travelers, medical care abroad, virtual global healthcare"
@@ -643,7 +643,7 @@ export default function TravelGlobalCare() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

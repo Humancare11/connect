@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Swollen Feet or Ankles",
   description: "Swelling and fluid buildup in feet",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function SwollenFeetAnkles() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Swollen Feet & Ankles Treatment Online | Virtual Doctor Consultation"
         description="Get online care for swollen feet or ankles. Consult a licensed provider for swelling, fluid retention, discomfort, and personalized treatment guidance."
         keywords="swollen feet treatment, swollen ankles treatment, ankle swelling, foot swelling, edema treatment online, fluid retention, online doctor consultation, virtual healthcare services, telehealth swelling care, swollen feet and ankles causes"

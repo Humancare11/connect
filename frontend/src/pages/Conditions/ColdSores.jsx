@@ -408,7 +408,7 @@ const pageData = {
   badge: "Skin Conditions",
   heading: "Cold Sores",
   description: "Painful blisters around the mouth",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1043,7 +1043,7 @@ function FaqSection() {
 export default function ColdSores() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Cold Sores & HSV-1 | Care for Painful Lip Blisters"
         description="Tingling, burning, or painful blisters around the lips may signal a cold sore. Receive symptom evaluation, treatment guidance, and prescription support when appropriate."
         keywords="Cold sores, Cold sore symptoms, Herpes simplex virus (HSV-1), Telemedicine services, Online doctor appointment, Virtual healthcare services"

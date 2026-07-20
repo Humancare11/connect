@@ -409,7 +409,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Arthritis",
   description: "Joint pain, swelling, and stiffness",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function Arthritis() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Arthritis Pain Relief Online | Joint Pain & Stiffness Care"
         description="Joint pain, swelling, or stiffness making daily life harder? Get personalized arthritis care, pain management guidance, and treatment recommendations from a licensed provider online."
         keywords="Arthritis, Arthritis symptoms, Joint pain, Joint stiffness, Pain management guidance, Telemedicine services"
