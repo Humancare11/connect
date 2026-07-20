@@ -408,7 +408,7 @@ const pageData = {
   badge: "Skin Conditions",
   heading: "Contact Dermatitis",
   description: "Skin irritation from direct contact",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1044,7 +1044,7 @@ function FaqSection() {
 export default function ContactDermatitis() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Contact Dermatitis Treatment Online | Telemedicine Services"
         description="Get expert contact dermatitis treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized skin care from home."
         keywords="Contact dermatitis treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"

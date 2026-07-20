@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Fatty Liver Follow-Up",
   description: "Ongoing care for liver health",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1223,7 +1223,7 @@ function FaqSection() {
 export default function FattyLiver() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Fatty Liver Follow-Up Online | Ongoing Liver Health Care"
         description="Manage fatty liver disease with expert online follow-up care. Connect with a licensed provider for liver health monitoring, lifestyle guidance, and personalized treatment through telemedicine services."
         keywords="Fatty liver follow-up, Liver health monitoring, Telemedicine services, Online doctor appointment"

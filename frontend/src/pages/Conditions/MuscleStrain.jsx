@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Muscle Strain",
   description: "Pulled muscles causing pain and stiffness",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function MuscleStrain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Muscle Strain Treatment Online | Sprain, Pain & Recovery Support"
         description="Get expert care for muscle strains online. Consult a licensed provider for pulled muscles, pain, stiffness, swelling, sports injuries, and personalized recovery guidance from home."
         keywords="Muscle strain treatment, Pulled muscle care, Sports injury consultation, Online doctor consultation"

@@ -408,7 +408,7 @@ const pageData = {
   badge: "Respiratory Health",
   heading: "Asthma",
   description: "Sneezing, congestion, and nasal irritation",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -712,99 +712,99 @@ function HeroSection({ data }) {
 // ─────────────────────────────────────────────────────────────────
 function AboutSpecialty() {
   return (
-<>
-            <SEO
+    <>
+      <SEO
         title="Asthma Treatment Online | Breathing & Respiratory Care"
         description="Get convenient asthma care online for wheezing, shortness of breath, chest tightness, and coughing. Connect with a licensed provider for personalized treatment guidance."
         keywords="Asthma, asthma treatment, asthma symptoms, asthma care, wheezing, shortness of breath, chest tightness, breathing difficulties, respiratory care, telemedicine services, online doctor appointment, online provider"
         url="https://humancareconnect.co/asthma"
       />
 
-    <div className="sp-glass-card">
-      <div className="sp-glass-shine" />
-      <div className="sp-about-grid">
-        {/* LEFT */}
-        <div className="sp-about-left">
-          <SectionLabel>About This Specialty</SectionLabel>
-          <h2 className="sp-about-h2">
-            Your Health,
-            <br />
-            Our Priority
-          </h2>
+      <div className="sp-glass-card">
+        <div className="sp-glass-shine" />
+        <div className="sp-about-grid">
+          {/* LEFT */}
+          <div className="sp-about-left">
+            <SectionLabel>About This Specialty</SectionLabel>
+            <h2 className="sp-about-h2">
+              Your Health,
+              <br />
+              Our Priority
+            </h2>
 
-          <div className="sp-nav-card">
-            <p className="sp-nav-label">Quick Access</p>
-            <div className="sp-nav-list">
-              {[
-                "Routine Wellness",
-                "Acute Illness",
-                "Chronic Conditions",
-                "Mental Wellbeing",
-              ].map((item) => (
-                <div key={item} className="sp-nav-item">
-                  <ChevronRight size={13} className="sp-nav-chevron" />
-                  <span className="sp-nav-text">{item}</span>
-                </div>
-              ))}
+            <div className="sp-nav-card">
+              <p className="sp-nav-label">Quick Access</p>
+              <div className="sp-nav-list">
+                {[
+                  "Routine Wellness",
+                  "Acute Illness",
+                  "Chronic Conditions",
+                  "Mental Wellbeing",
+                ].map((item) => (
+                  <div key={item} className="sp-nav-item">
+                    <ChevronRight size={13} className="sp-nav-chevron" />
+                    <span className="sp-nav-text">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="sp-stat-row">
+              <div className="sp-stat-pill">
+                <HeartPulse size={13} />
+                <span>15 K+ Patients</span>
+              </div>
+              <div className="sp-stat-pill">
+                <ShieldCheck size={13} />
+                <span>98% Satisfaction</span>
+              </div>
             </div>
           </div>
 
-          <div className="sp-stat-row">
-            <div className="sp-stat-pill">
-              <HeartPulse size={13} />
-              <span>15 K+ Patients</span>
+          {/* RIGHT */}
+          <div className="sp-about-right">
+            <div>
+              <h3 className="sp-block-title">What is Allergic Rhinitis?</h3>
+              <p className="sp-block-body">
+                Allergic rhinitis can cause sneezing, runny nose, congestion,
+                itchy eyes, sinus pressure, and nasal irritation triggered by
+                pollen, dust, pet dander, mold, and other allergens.
+              </p>
             </div>
-            <div className="sp-stat-pill">
-              <ShieldCheck size={13} />
-              <span>98% Satisfaction</span>
+
+            <div>
+              <h3 className="sp-block-title">How?</h3>
+              <p className="sp-block-body">
+                Get relief from allergic rhinitis symptoms with Humancare Connect.
+                Our telemedicine services make it easy to schedule an online
+                doctor appointment and connect with a licensed provider from home.
+                Through our secure telemedicine platform, you can receive symptom
+                evaluation, allergy treatment guidance, and prescriptions when
+                appropriate without the need for an in-person clinic visit.
+              </p>
             </div>
-          </div>
-        </div>
 
-        {/* RIGHT */}
-        <div className="sp-about-right">
-          <div>
-            <h3 className="sp-block-title">What is Allergic Rhinitis?</h3>
-            <p className="sp-block-body">
-              Allergic rhinitis can cause sneezing, runny nose, congestion,
-              itchy eyes, sinus pressure, and nasal irritation triggered by
-              pollen, dust, pet dander, mold, and other allergens.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="sp-block-title">How?</h3>
-            <p className="sp-block-body">
-              Get relief from allergic rhinitis symptoms with Humancare Connect.
-              Our telemedicine services make it easy to schedule an online
-              doctor appointment and connect with a licensed provider from home.
-              Through our secure telemedicine platform, you can receive symptom
-              evaluation, allergy treatment guidance, and prescriptions when
-              appropriate without the need for an in-person clinic visit.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="sp-block-title">
-              Breathe easier in 4 simple steps.
-            </h3>
-            <div className="sp-benefits-grid">
-              {[
-                "Choose Allergic Rhinitis care",
-                "Share your symptoms and allergy concerns",
-                "Connect with an online provider",
-                "Receive treatment guidance and allergy care recommendations",
-              ].map((b) => (
-                <div key={b} className="sp-benefit-item">
-                  <CheckCircle size={14} className="sp-benefit-check" />
-                  <span>{b}</span>
-                </div>
-              ))}
+            <div>
+              <h3 className="sp-block-title">
+                Breathe easier in 4 simple steps.
+              </h3>
+              <div className="sp-benefits-grid">
+                {[
+                  "Choose Allergic Rhinitis care",
+                  "Share your symptoms and allergy concerns",
+                  "Connect with an online provider",
+                  "Receive treatment guidance and allergy care recommendations",
+                ].map((b) => (
+                  <div key={b} className="sp-benefit-item">
+                    <CheckCircle size={14} className="sp-benefit-check" />
+                    <span>{b}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
@@ -1211,7 +1211,7 @@ function FaqSection() {
         </div>
       </div>
     </section>
-    
+
   );
 }
 
@@ -1254,7 +1254,7 @@ export default function Asthma() {
         <FaqSection />
       </div>
     </>
-    
+
 
   );
 }

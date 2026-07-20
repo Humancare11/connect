@@ -407,7 +407,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Healthy Habit Coaching",
   description: "Building sustainable wellness routines",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function HealthyHabitCoaching() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Healthy Habit Coaching Online | Build Better Lifestyle Habits"
         description="Build healthier routines with expert healthy habit coaching online. Connect with a licensed provider for wellness coaching, nutrition, exercise, sleep, and stress management through telemedicine services."
         keywords="Healthy habit coaching, Lifestyle wellness coaching, Online doctor appointment, Telemedicine services"

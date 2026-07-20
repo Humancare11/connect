@@ -156,12 +156,12 @@ const SERVICES = {
       },
     ],
 
-    stats: [
-      { value: 120000, suffix: "+", label: "Patients Served" },
-      { value: 2800, suffix: "+", label: "Verified Providers" },
-      { value: 98, suffix: "%", label: "Satisfaction Rate" },
-      { value: 14, suffix: " min", label: "Avg. Wait Time" },
-    ],
+    // stats: [
+    //   { value: 120000, suffix: "+", label: "Patients Served" },
+    //   { value: 2800, suffix: "+", label: "Verified Providers" },
+    //   { value: 98, suffix: "%", label: "Satisfaction Rate" },
+    //   { value: 14, suffix: " min", label: "Avg. Wait Time" },
+    // ],
     faqs: [
       {
         q: "What are sexual health services?",
@@ -892,7 +892,7 @@ const HowItWorks = ({ s }) => (
                 [FiLock, "Secure & Private"],
                 [FiZap, "Fast Response"],
                 [FiUserCheck, "Verified Providers"],
-                [FiFileText, "Insurance Accepted"],
+                [FiFileText, "No Insurance Required"],
               ].map(([Icon, lb], i) => (
                 <div
                   key={i}
@@ -1073,7 +1073,7 @@ const whyUsItems = [
     "Verified Providers",
     "Every clinician is credentialed, licensed, and continuously reviewed.",
   ],
- [
+  [
     FiHeart,
     "Patient-Centered Care",
     "Clinical decisions are made in partnership with you — never without your input.",
@@ -1141,7 +1141,7 @@ const WhyUs = ({ s }) => {
             marginBottom: 44,
           }}
         >
-          {s.stats.map((st, i) => (
+          {/* {s.stats.map((st, i) => (
             <StatCard
               key={i}
               value={st.value}
@@ -1150,7 +1150,7 @@ const WhyUs = ({ s }) => {
               ac={s.accentColor}
               go={inView}
             />
-          ))}
+          ))} */}
         </div>
 
         <div
@@ -1463,7 +1463,7 @@ const FinalCTA = ({ s }) => (
             [FiLock, "HIPAA Compliant"],
             [FiStar, "4.9/5 Rated"],
             [FiShield, "Verified Providers"],
-            [FiFileText, "All Insurances"],
+            [FiFileText, "No Insurance Required"],
             [FiClock, "24/7 Access"],
           ].map(([Icon, lb], i) => (
             <div
@@ -1498,7 +1498,7 @@ export default function SexualHealth() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Sexual Health Services Online | Confidential Virtual Care | Humancare Connect"
         description="Access confidential sexual health services online. Connect with licensed healthcare providers for sexual wellness support, preventive care, and personalized guidance through telemedicine."
         keywords="online sexual health services, confidential sexual health care, STI consultation online, sexual wellness consultation, PrEP consultation, HIV prevention, reproductive health consultation, online STI care, virtual sexual health clinic, telehealth sexual health, safe sex counseling, online healthcare provider"

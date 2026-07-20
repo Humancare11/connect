@@ -130,7 +130,7 @@ export default function Footer() {
             },
             {
               key: "agrement",
-              label: "Terms & Agreements",
+              label: "Agreements",
               children: [
                 {
                   label: "Provider Agreement",

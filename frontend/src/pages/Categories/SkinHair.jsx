@@ -577,7 +577,7 @@ export default function SkinHair() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Skin & Hair Care | Virtual Dermatology Consultation | Humancare Connect"
         description="Access online skin and hair care with trusted healthcare professionals. Get virtual dermatology consultations for acne, hair loss, scalp concerns, skin conditions, and personalized treatment guidance."
         keywords="online skin and hair care, virtual dermatologist, online dermatology consultation, hair loss treatment online, scalp treatment, acne treatment online, eczema treatment, skin rash consultation, mole check online, telehealth dermatology, skin specialist online, hair care consultation"
@@ -648,7 +648,7 @@ export default function SkinHair() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

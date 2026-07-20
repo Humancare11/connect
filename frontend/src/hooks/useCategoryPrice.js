@@ -20,7 +20,7 @@ const URL_CATEGORY_MAP = {
   "/child-and-family-care/pediatrics/pediatric-fever": "family",
   "/pink-eye-children": "family",
   "/child-and-family-care/adolescent-medicine/puberty-concerns": "family",
-  "/skin-rash-children": "family",
+  "/child-and-family-care/pediatrics/skin-rash-in-children": "family",
   "/sore-throat-children": "family",
   "/stomach-pain-children": "family",
   "/vomiting-diarrhea-children": "family",

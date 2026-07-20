@@ -574,7 +574,7 @@ export default function MenHealth() {
         minHeight: "100vh",
       }}
     >
-            <SEO
+      <SEO
         title="Online Men's Health Care | Virtual Doctor Consultation | Humancare Connect"
         description="Access online men's health care with trusted healthcare professionals. Get virtual doctor consultations for sexual wellness, hormonal health, hair loss, preventive care, and personalized medical guidance."
         keywords="Men's health care, Online men's health consultation, Sexual wellness, Hormone health"
@@ -647,7 +647,7 @@ export default function MenHealth() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

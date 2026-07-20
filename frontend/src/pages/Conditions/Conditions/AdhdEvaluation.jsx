@@ -53,7 +53,7 @@ const pageData = {
   badge: "Psychiatric Care",
   heading: "ADHD Evaluation",
   description: "Attention, focus, and hyperactivity concerns",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -133,7 +133,7 @@ export default function AdhdEvaluation() {
 
     <>
 
-                    <SEO
+      <SEO
         title="ADHD Evaluation Online | Virtual ADHD Care & Support"
         description="Get an ADHD evaluation online with licensed providers. Schedule an online doctor appointment for symptom evaluation, personalized guidance, and ongoing ADHD care."
         keywords="ADHD evaluation, ADHD support, ADHD symptoms, attention problems, difficulty focusing, hyperactivity, impulsive behavior, mental health guidance, telemedicine services, online doctor appointment, online provider"

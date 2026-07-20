@@ -184,12 +184,12 @@ const SERVICES = {
       },
     ],
 
-    stats: [
-      { value: 120000, suffix: "+", label: "Patients Served" },
-      { value: 2800, suffix: "+", label: "Verified Providers" },
-      { value: 98, suffix: "%", label: "Satisfaction Rate" },
-      { value: 14, suffix: " min", label: "Avg. Wait Time" },
-    ],
+    // stats: [
+    //   { value: 120000, suffix: "+", label: "Patients Served" },
+    //   { value: 2800, suffix: "+", label: "Verified Providers" },
+    //   { value: 98, suffix: "%", label: "Satisfaction Rate" },
+    //   { value: 14, suffix: " min", label: "Avg. Wait Time" },
+    // ],
     faqs: [
       {
         q: "What is a Fit to Fly Certificate?",
@@ -992,7 +992,7 @@ const HowItWorks = ({ s }) => (
                 [FiLock, "Secure & Private"],
                 [FiZap, "Fast Response"],
                 [FiUserCheck, "Verified Providers"],
-                [FiFileText, "Insurance Accepted"],
+                [FiFileText, "No Insurance Required"],
               ].map(([Icon, lb], i) => (
                 <div
                   key={i}
@@ -1242,7 +1242,7 @@ const WhyUs = ({ s }) => {
             marginBottom: 44,
           }}
         >
-          {s.stats.map((st, i) => (
+          {/* {s.stats.map((st, i) => (
             <StatCard
               key={i}
               value={st.value}
@@ -1251,7 +1251,7 @@ const WhyUs = ({ s }) => {
               ac={s.accentColor}
               go={inView}
             />
-          ))}
+          ))} */}
         </motion.div>
 
         <div
@@ -1579,7 +1579,7 @@ const FinalCTA = ({ s }) => (
             [FiLock, "HIPAA Compliant"],
             [FiStar, "4.9/5 Rated"],
             [FiShield, "Verified Providers"],
-            [FiFileText, "All Insurances"],
+            [FiFileText, "No Insurance Required"],
             [FiClock, "24/7 Access"],
           ].map(([Icon, lb], i) => (
             <div
@@ -1616,7 +1616,7 @@ export default function FitToFly() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Fit to Fly Certificate Online | Medical Clearance for Air Travel | Humancare Connect"
         description="Need a Fit to Fly Certificate? Connect with a licensed healthcare provider online for travel health assessments and medical clearance documentation when clinically appropriate."
         keywords="Fit to Fly Certificate, Travel medical clearance, Online doctor appointment, Telemedicine services"

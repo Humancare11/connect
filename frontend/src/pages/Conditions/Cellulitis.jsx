@@ -408,7 +408,7 @@ const pageData = {
   badge: "Skin Conditions",
   heading: "Cellulitis",
   description: "Bacterial skin infection causing swelling",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1043,7 +1043,7 @@ function FaqSection() {
 export default function Cellulitis() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Cellulitis Symptoms & Skin Infection Care | Get Help Online"
         description="Red, swollen, warm, or tender skin may be signs of cellulitis. Share your symptoms and photos with a licensed provider for evaluation and treatment guidance online."
         keywords="Cellulitis, Cellulitis symptoms, Bacterial skin infection, Skin inflammation, Telemedicine services, Virtual healthcare services"

@@ -408,7 +408,7 @@ const pageData = {
   badge: "Respiratory Health",
   heading: "Upper Respiratory Infection",
   description: "Common infection affecting airways",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1215,7 +1215,7 @@ function FaqSection() {
 export default function UpperRespiratoryInfection() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Upper Respiratory Infection Treatment Online | Virtual Care"
         description="Get online care for an upper respiratory infection. Consult a licensed provider for cough, congestion, sore throat, fever, and personalized treatment."
         keywords="upper respiratory infection treatment, URI treatment online, respiratory infection, online doctor consultation, cough and congestion treatment, sore throat and fever, virtual urgent care, telehealth respiratory care, viral respiratory infection, upper respiratory infection symptoms"

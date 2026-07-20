@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "Herpes",
   description: "Viral infection causing painful sores",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1045,7 +1045,7 @@ function FaqSection() {
 export default function Herpes() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Herpes Treatment Online | Confidential HSV Care"
         description="Get confidential herpes treatment online for oral or genital HSV symptoms. Connect with a licensed provider for outbreak management, treatment guidance, and prescription support through telemedicine services."
         keywords="Herpes treatment online, HSV care, Online doctor appointment, Telemedicine services"

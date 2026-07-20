@@ -407,7 +407,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Hemorrhoids",
   description: "Swollen veins causing rectal discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1220,7 +1220,7 @@ function FaqSection() {
 export default function Hemorrhoids() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Hemorrhoid Treatment Online | Private Relief for Piles"
         description="Get confidential hemorrhoid treatment online for pain, itching, swelling, bleeding, and rectal discomfort. Connect with a licensed provider through secure telemedicine services."
         keywords="Hemorrhoid treatment online, Piles treatment, Online doctor appointment, Telemedicine services"

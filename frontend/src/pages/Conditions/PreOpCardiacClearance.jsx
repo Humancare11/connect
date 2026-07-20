@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Pre-Op Cardiac Clearance",
   description: "Heart health evaluation before surgery",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage:
     ConditionBannerImage,
 };
@@ -1219,7 +1219,7 @@ function FaqSection() {
 export default function PreOpCardiacClearance() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Pre-Op Cardiac Clearance Online | Pre-Surgery Heart Evaluation"
         description="Get expert pre-op cardiac clearance online. Connect with a licensed provider for heart health evaluation, surgical risk assessment, cardiovascular review, and personalized pre-surgery guidance."
         keywords="Pre-op cardiac clearance, Pre-surgery heart evaluation, Cardiac clearance online, Cardiovascular risk assessment, Virtual preoperative consultation"

@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "HIV Prevention / PrEP Guidance",
   description: "Preventive care for HIV protection",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1047,7 +1047,7 @@ function FaqSection() {
 export default function HivPreventionGuidance() {
   return (
     <>
-                  <SEO
+      <SEO
         title="HIV Prevention & PrEP Online | Confidential Sexual Health Care"
         description="Get confidential HIV prevention and PrEP guidance online. Connect with a licensed provider for HIV risk assessment, sexual health support, PrEP information, and personalized care through telemedicine services."
         keywords="HIV prevention, PrEP guidance, Online doctor appointment, Telemedicine services"

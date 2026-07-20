@@ -408,7 +408,7 @@ const pageData = {
   badge: "Sexual Health",
   heading: "Gonorrhea",
   description: "Common bacterial sexually transmitted infection",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1045,7 +1045,7 @@ function FaqSection() {
 export default function Gonorrhea() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Gonorrhea Treatment Online | Confidential STI Care"
         description="Get confidential gonorrhea treatment online from licensed providers. Receive STI evaluation, sexual health guidance, treatment recommendations, and prescriptions when appropriate through telemedicine services."
         keywords="Gonorrhea treatment online, Confidential STI care, Online doctor appointment, Telemedicine services"

@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Nasal Congestion",
   description: "Relief for a blocked nose",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1217,7 +1217,7 @@ function FaqSection() {
 export default function NasalCongestion() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Nasal Congestion Treatment Online | Blocked Nose & Sinus Relief"
         description="Get expert treatment for nasal congestion online. Consult a licensed provider for a blocked nose, sinus pressure, runny nose, allergies, breathing difficulties, and personalized care."
         keywords="Nasal congestion treatment, Blocked nose relief, Sinus congestion care, Online doctor consultation"

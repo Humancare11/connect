@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Stye",
   description: "Relief for painful eyelid bumps",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1214,7 +1214,7 @@ function FaqSection() {
 export default function Stye() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Stye Treatment Online | Virtual Eye Care Consultation"
         description="Get online treatment for a stye. Consult a licensed provider for painful eyelid bumps, swelling, redness, eye irritation, and personalized care guidance."
         keywords="stye treatment online, eyelid stye treatment, painful eyelid bump, eye infection consultation, online eye doctor, swollen eyelid treatment, virtual eye care, telehealth eye consultation, hordeolum treatment, online ophthalmology consultation"

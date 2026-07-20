@@ -231,12 +231,12 @@ const services = [
   {
     tier: "Super-specialist tier",
     title: "Advanced Care & Second Opinions",
-    body: "Access expert medical opinions for complex health conditions, helping you make confident and informed decisions about your treatment journey.",
+    body: "Access expert medical opinions for complex health conditions, helping you make informed, confident decisions about your treatment journey.",
   },
   {
     tier: "Flagship",
     title: "Healthcare for Travelers & Global Communities",
-    body: "Stay connected to trusted medical support wherever life takes you with accessible virtual healthcare designed for modern lifestyles.",
+    body: "Stay connected to trusted medical support wherever your travels take you with accessible virtual healthcare designed for modern lifestyles.",
   },
   {
     tier: "Corporates",
@@ -274,22 +274,17 @@ export default function AboutPage() {
             <div className="about-hero__text is-visible">
               <Eyebrow>About Humancare Connect</Eyebrow>
               <h1 className="about-hero__title">
-                One Global Connection{" "}
+                Your Global Connection to Better Healthcare{" "}
                 <span className="about-hero__title-accent">
-                  to Better Healthcare
-                </span>
+Connecting You to Better Healthcare Worldwide                </span>
               </h1>
               <p className="about-hero__lead">
                 At Humancare Connect, we make quality healthcare accessible
-                beyond borders. Through secure online doctor consultations and
-                virtual healthcare services, we connect individuals, travelers,
-                and organizations with trusted medical care anytime, anywhere.
+                beyond borders.Through secure online doctor consultations and virtual healthcare services, we connect individuals, travelers, and organizations with trusted healthcare professionals anytime, anywhere.
               </p>
               <div className="about-hero__actions">
                 <Btn href="#how">See how it works</Btn>
-                <Btn href="#why" ghost>
-                  Why we started
-                </Btn>
+                
               </div>
 
               <div className="trust-strip">
@@ -354,8 +349,7 @@ export default function AboutPage() {
                   trusted healthcare professionals.
                 </p>
                 <blockquote className="quote">
-                  That's why we created Humancare Connect: A secure virtual
-                  healthcare platform designed to deliver online doctor
+                 That's why we created Humancare Connect: a secure virtual healthcare platform designed to deliver online doctor
                   consultations and personalized medical support whenever you
                   need it.
                 </blockquote>
@@ -451,8 +445,7 @@ export default function AboutPage() {
               </h2>
               <p className="section-head__lead">
                 Quality healthcare starts with the right connection. At
-                Humancare Connect, we have built a trusted network of licensed
-                healthcare professionals across multiple specialties, ensuring
+                Humancare Connect, We have built a network of trusted, licensed healthcare professionals across multiple specialties, ensuring
                 patients receive the right care from the right medical expert.
                 <br />
                 <br />

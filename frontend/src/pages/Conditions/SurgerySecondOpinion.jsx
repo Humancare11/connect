@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Surgery Second Opinion",
   description: "Confidence before your procedure",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1224,7 +1224,7 @@ function FaqSection() {
 export default function SurgerySecondOpinion() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Surgery Second Opinion Online | Expert Surgical Review"
         description="Get an online second opinion before surgery. Review your diagnosis, recommended procedure, risks, benefits, and treatment alternatives with a licensed provider."
         keywords="surgery second opinion, surgical second opinion online, second opinion before surgery, online medical second opinion, surgery consultation online, surgical procedure review, alternative treatment options, expert surgical review, virtual second opinion, telehealth consultation"

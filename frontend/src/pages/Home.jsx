@@ -582,12 +582,8 @@ export default function HomePage() {
           </h1>
 
           <p>
-            Get rapid, reliable telemedicine services from expert doctors on our
-            secure virtual healthcare platform. Book an online doctor
-            appointment. Contact A Telemedicine Doctor for Expert Medical
-            Advice, Personalized Treatment Plans & Prescriptions From Licensed
-            Healthcare Providers At Your Home. Our HIPAA compliant telemedicine
-            and secure healthcare platform makes it easy, convenient, and
+            Access fast, reliable telemedicine services from licensed healthcare professionals in minutes from expert doctors on our
+            secure virtual healthcare platform. Book an online doctor's appointment in minutes. Connect with a licensed telemedicine doctor for expert medical advice, personalized treatment plans, and prescriptions from the comfort of your home. Our HIPAA-compliant telemedicine platform makes accessing quality digital healthcare easy, convenient, secure, and available worldwide. makes it easy, convenient, and
             available worldwide to access quality digital healthcare.
           </p>
           <div className="trust" ref={btnRef}>

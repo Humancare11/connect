@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Ear Infection",
   description: "Pain, pressure, and ear discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function EarInfection() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Ear Infection Treatment Online | Telemedicine Ear Care"
         description="Get expert ear infection treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized ear care from home."
         keywords="Ear infection treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"

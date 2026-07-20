@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Ear Pain",
   description: "Pain, pressure, and ear discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function EarPain() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Ear Pain Treatment Online | Telemedicine Ear Care"
         description="Get expert ear pain treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized ear care from home."
         keywords="Ear pain treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"

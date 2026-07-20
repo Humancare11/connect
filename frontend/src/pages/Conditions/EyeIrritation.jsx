@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Eye Irritation",
   description: "",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function EyeIrritation() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Eye Irritation Treatment Online | Fast Virtual Eye Care"
         description="Get expert eye irritation treatment online for redness, itching, burning, dryness, and eye discomfort. Connect with a licensed provider through secure telemedicine services from home."
         keywords="Eye irritation treatment, Online eye doctor, Telemedicine services, Virtual healthcare services"

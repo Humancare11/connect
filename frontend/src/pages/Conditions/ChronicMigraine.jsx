@@ -379,7 +379,7 @@ const pageData = {
   heading: "Chronic Migraine",
   description:
     "Recurring severe headaches and pain",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -907,7 +907,7 @@ function FaqSection() {
 export default function ChronicMigraine() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Chronic Migraine Management | Support for Recurring Headaches"
         description="Recurring migraines can disrupt work, sleep, and daily life. Access personalized migraine management, symptom evaluation, and ongoing treatment guidance from home."
         keywords="Chronic migraine, Chronic migraines, Migraine management support, Telemedicine services, Online doctor appointment, Telemedicine platform"

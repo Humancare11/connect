@@ -406,7 +406,7 @@ const pageData = {
   badge: "Prescription & Continuity Care",
   heading: "Medical Certificate",
   description: "Official medical documentation and clearance",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage:
     "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
 };
@@ -1210,7 +1210,7 @@ function FaqSection() {
 export default function MedicalCertificate() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Medical Certificate Online | Doctor's Note & Medical Clearance"
         description="Request a medical certificate online through a licensed healthcare provider. Get doctor's notes, sick leave certificates, fitness clearance, and medical documentation when clinically appropriate."
         keywords="Medical certificate online, Doctor's note, Sick leave certificate, Medical clearance"

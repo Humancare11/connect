@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Obesity",
   description: "Excess body weight affecting health",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1219,7 +1219,7 @@ function FaqSection() {
 export default function Obesity() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Obesity Treatment Online | Weight Management & Medical Support"
         description="Get expert obesity treatment online. Connect with a licensed provider for weight management, healthy weight loss, lifestyle guidance, GLP-1 eligibility assessment, and personalized care."
         keywords="Obesity treatment, Weight management, Healthy weight loss, Online weight loss consultation"

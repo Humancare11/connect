@@ -408,7 +408,7 @@ const pageData = {
   badge: "Eye, Ear & Musculoskeletal",
   heading: "Dry Eyes",
   description: "Relief for irritated and uncomfortable eyes",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1216,7 +1216,7 @@ function FaqSection() {
 export default function DryEyes() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Dry Eyes Treatment Online | Telemedicine Eye Care"
         description="Get expert dry eyes treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized eye care from home."
         keywords="Dry eyes treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"

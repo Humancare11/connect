@@ -76,7 +76,7 @@ export default function Contact() {
       <section className="page-hero">
         <div className="page-hero__inner">
           <p className="page-hero__eyebrow">Contact Us</p>
-          <h1 className="page-hero__title">Let's start a conversation</h1>
+          <h1 className="page-hero__title">Let's Start the Conversation</h1>
           <p className="page-hero__desc">
             Whether you're looking to onboard your team or just want to learn
             more, we're ready to help.

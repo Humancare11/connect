@@ -408,7 +408,7 @@ const pageData = {
   badge: "Prescription & Continuity Care",
   heading: "Prescription Refill",
   description: "Refill medications without clinic visits",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function PrescriptionRefill() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Online Prescription Refill Service | Fast Medication Renewal by Licensed Doctors"
         description="Need a prescription refill? Connect with a licensed provider online to renew eligible medications, review your treatment plan, manage ongoing conditions, and receive prescription support without an unnecessary clinic visit."
         keywords="online prescription refill, prescription renewal online, medication refill service, refill prescription without doctor visit, online medication renewal, telehealth prescription refill, virtual prescription service, online doctor for prescription refill"

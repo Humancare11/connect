@@ -408,7 +408,7 @@ const pageData = {
   badge: "Prescription & Continuity Care",
   heading: "Specialist Referral",
   description: "Referral support for specialized care",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function SpecialistReferral() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Specialist Referral Online | Virtual Referral & Care Coordination"
         description="Get an online specialist referral for ongoing symptoms, chronic conditions, advanced evaluations, and expert care coordination from licensed providers."
         keywords="specialist referral online, online specialist referral, virtual referral service, specialist consultation, care coordination, chronic condition management, online doctor referral, telehealth specialist referral, medical referral support, virtual healthcare services"

@@ -407,7 +407,7 @@ const pageData = {
   badge: "Chronic Care",
   heading: "Tremor",
   description: "Evaluation for shaking and movement concerns",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1223,7 +1223,7 @@ function FaqSection() {
 export default function Tremor() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Tremor Treatment Online | Virtual Neurology Consultation"
         description="Get online care for tremors and involuntary shaking. Consult a licensed provider for symptom evaluation, neurological guidance, and personalized care."
         keywords="tremor treatment online, hand tremor, involuntary shaking, tremor symptoms, online neurologist, neurological consultation, movement disorder, virtual neurology care, telehealth neurology, shaking hands treatment"

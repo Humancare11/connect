@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Sports Injuries",
   description: "Care for active lifestyles",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1216,7 +1216,7 @@ function FaqSection() {
 export default function SportsInjuries() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Sports Injury Treatment Online | Virtual Care for Sprains & Strains"
         description="Get online care for sports injuries. Consult a licensed provider for sprains, strains, joint pain, swelling, muscle injuries, and personalized recovery guidance."
         keywords="sports injury treatment online, sports injury consultation, sprain treatment, muscle strain treatment, joint injury care, online orthopedic consultation, sports medicine online, virtual injury assessment, telehealth sports injuries, sports injury recovery"

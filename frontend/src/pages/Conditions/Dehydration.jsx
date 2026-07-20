@@ -407,7 +407,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Dehydration",
   description: "Low body fluids and weakness",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1220,7 +1220,7 @@ function FaqSection() {
 export default function Dehydration() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Dehydration Treatment Online | Telemedicine Services for Fast Care"
         description="Get expert dehydration treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized hydration care from home."
         keywords="Dehydration treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"

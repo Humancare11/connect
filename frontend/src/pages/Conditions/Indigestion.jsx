@@ -408,7 +408,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Indigestion",
   description: "Burning stomach and digestive discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage:
     "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
 };
@@ -1213,7 +1213,7 @@ function FaqSection() {
 export default function Indigestion() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Indigestion Treatment Online | Fast Digestive Health Care"
         description="Get expert indigestion treatment online for heartburn, bloating, stomach pain, nausea, and digestive discomfort. Connect with a licensed provider through secure telemedicine services."
         keywords="Indigestion treatment online, Digestive health care, Online doctor appointment, Telemedicine services"

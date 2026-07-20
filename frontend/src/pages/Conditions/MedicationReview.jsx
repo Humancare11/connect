@@ -408,7 +408,7 @@ const pageData = {
   badge: "Prescription & Continuity Care",
   heading: "Medication Review",
   description: "Reviewing medications for safe use",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1212,7 +1212,7 @@ function FaqSection() {
 export default function MedicationReview() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Medication Review Online | Safe Prescription & Drug Management"
         description="Review your medications with a licensed provider online. Get expert guidance on side effects, drug interactions, dosage adjustments, prescription management, and treatment effectiveness."
         keywords="Medication review, Prescription management, Drug interaction check, Online medication consultation"

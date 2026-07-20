@@ -40,7 +40,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/DigestiveCare/Abdominal-Pain.webp";
-import Seo from "../../components/Seo";
+import SEO from "../../components/Seo";
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -406,7 +406,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Abdominal Pain",
   description: "Stomach pain and digestive discomfort",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1221,7 +1221,7 @@ export default function AbdominalPain() {
   return (
     <>
 
-                <SEO
+      <SEO
         title="Abdominal Pain Treatment Online | Virtual Digestive Care"
         description="Get online care for abdominal pain, stomach pain, cramping, bloating, and digestive discomfort. Connect with a licensed provider for evaluation and treatment guidance."
         keywords="Abdominal pain, Abdominal pain symptoms, Telemedicine services, Online doctor appointment, Virtual healthcare services"
@@ -1259,7 +1259,7 @@ export default function AbdominalPain() {
 
         <FaqSection />
       </div>
-   
+
     </>
   );
 }

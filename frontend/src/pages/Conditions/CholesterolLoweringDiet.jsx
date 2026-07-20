@@ -408,7 +408,7 @@ const pageData = {
   badge: "Digestive Health",
   heading: "Cholesterol-Lowering Diet",
   description: "Heart healthy nutrition guidance",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1218,7 +1218,7 @@ function FaqSection() {
 export default function CholesterolLoweringDiet() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Cholesterol-Lowering Diet | Heart-Healthy Nutrition Guidance"
         description="Make smarter food choices to support healthy cholesterol levels and heart health. Get personalized nutrition planning, dietary guidance, and cholesterol management support online."
         keywords="Cholesterol lowering diet, Heart healthy nutrition, Cholesterol management, Telemedicine services, Virtual healthcare services, Telehealth services"

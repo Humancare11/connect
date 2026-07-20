@@ -380,6 +380,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
   }
 
   return (
+    
     <div className="hcc-booking-card">
       <div className="hcc-booking-badge">
         <span className="hcc-booking-badge-dot" />
@@ -650,7 +651,7 @@ export default function EyeEarBone() {
         minHeight: "100vh",
       }}
     >
-                  <SEO
+      <SEO
         title="Online Eye, Ear & Bone Care | Virtual Doctor Consultation | Humancare Connect"
         description="Get expert online eye, ear & bone care with trusted healthcare professionals. Receive virtual consultations for vision, hearing, joint, and musculoskeletal concerns from home"
         keywords="Eye, ear & bone care, Virtual specialist consultation, Online doctor appointment, Telemedicine services"
@@ -720,7 +721,7 @@ export default function EyeEarBone() {
                 <FiCheckCircle size={14} /> Same Day Visits
               </div>
               <div className="hcc-trust-item">
-                <FiShield size={14} /> Insurance Accepted
+                <FiShield size={14} /> No Insurance Required
               </div>
               <div className="hcc-trust-item">
                 <FiVideo size={14} /> Virtual Care

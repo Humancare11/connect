@@ -130,7 +130,7 @@ export default function SpecialtiesSection() {
       name: "Men's Health",
       specialties: "2 Specialties",
       conditions: "10 Conditions",
-      path: "/men-health",
+      path: "/mens-health",
     },
     {
       img: cat6,

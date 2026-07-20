@@ -408,7 +408,7 @@ const pageData = {
   badge: "Pediatric Care",
   heading: "Stomach Pain in Children",
   description: "Stomach aches and digestive discomfort in kids",
-  trustItems: ["Same Day Visits", "Insurance Accepted", "Virtual Care"],
+  trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
 
@@ -1215,7 +1215,7 @@ function FaqSection() {
 export default function StomachPainChildren() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Stomach Pain in Children Treatment Online | Virtual Pediatric Care"
         description="Get online care for your child's stomach pain. Consult a licensed provider for abdominal pain, cramps, nausea, constipation, diarrhea, and digestive concerns."
         keywords="stomach pain in children, pediatric stomach pain, child abdominal pain, online pediatric consultation, stomach ache in kids, pediatric digestive care, constipation in children, diarrhea in children, virtual pediatric doctor, telehealth pediatric care"
