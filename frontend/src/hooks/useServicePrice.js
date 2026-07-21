@@ -16,5 +16,5 @@ export function useServicePrice(slug) {
         return () => { cancelled = true; };
     }, [slug]);
 
-    return { price, priceLoading: loading };
+    return { price: loading ? null : (price || 49), priceLoading: loading };
 }
