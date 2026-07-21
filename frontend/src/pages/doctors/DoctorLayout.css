@@ -464,13 +464,39 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 450px) {
+  .dl-topbar {
+    padding: 0 10px;
+    height: 52px;
+  }
+
+  .dl-topbar-right {
+    gap: 6px;
+  }
+
+  .dl-topbar-status-text {
+    font-size: 11px !important;
+  }
+
   .dl-topbar-book span {
     display: none;
   }
 
   .dl-topbar-book {
-    padding: 8px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .dl-topbar-title {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+  }
+
+  .dl-main {
+    padding: 6px;
   }
 }
 

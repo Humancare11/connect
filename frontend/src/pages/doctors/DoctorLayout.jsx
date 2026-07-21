@@ -438,6 +438,7 @@ export default function DoctorLayout({ children }) {
             </button>
 
             <span
+              className="dl-topbar-status-text"
               style={{
                 fontWeight: 600,
                 fontSize: "14px",

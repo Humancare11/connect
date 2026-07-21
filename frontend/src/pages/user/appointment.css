@@ -728,70 +728,99 @@
 /* ═══════════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .appt-page {
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 450px) {
   .appt-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     border-radius: 18px;
-    padding: 18px 18px;
+    padding: 16px 14px;
+    gap: 12px;
+  }
+
+  .appt-title {
+    font-size: 20px;
+  }
+
+  .appt-subtitle {
+    font-size: 12px;
   }
 
   .appt-book-btn {
     align-self: stretch;
     justify-content: center;
+    padding: 10px;
   }
 
   .appt-stats {
-    padding: 14px 16px;
+    padding: 12px 10px;
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .appt-stat-num {
-    font-size: 22px;
+    font-size: 20px;
+  }
+
+  .appt-stat-label {
+    font-size: 9px;
   }
 
   .appt-tabs {
     gap: 4px;
     padding: 4px;
+    flex-wrap: wrap;
   }
 
   .appt-tab {
-    padding: 8px 10px;
-    font-size: 12px;
+    padding: 7px 8px;
+    font-size: 11px;
+    flex: 1 1 auto;
   }
 
   .appt-card {
     border-radius: 16px;
+    flex-direction: column;
   }
 
   .appt-card-left {
-    padding: 16px 0 16px 14px;
+    padding: 12px;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
 
   .appt-card-body {
-    padding: 16px 14px 16px 12px;
+    padding: 14px 12px;
   }
 
   .appt-avatar {
-    width: 38px;
-    height: 38px;
-    font-size: 15px;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
   }
 
   .appt-card-actions {
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
   }
 
   .appt-btn {
-    font-size: 12px;
-    padding: 7px 12px;
+    font-size: 11px;
+    padding: 6px 10px;
+    width: 100%;
+    justify-content: center;
   }
 
   .appt-modal-overlay {
-    padding: 12px;
+    padding: 8px;
   }
 
   .appt-modal {
-    border-radius: 20px;
-    max-height: 90vh;
+    border-radius: 18px;
+    max-height: 94vh;
   }
 }
