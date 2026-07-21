@@ -71,7 +71,7 @@ function PrescriptionCard({ rx, patient }) {
       {/* Slip — always in DOM so ref is valid for PDF download */}
       <div className={open ? "mr-slip-wrap" : "mr-slip-offscreen"}>
         <Suspense fallback={null}>
-          <PrescriptionSlip rx={rx} patient={patient} slipRef={slipRef} />
+          <PrescriptionSlip rx={rx} patient={patient} doctorEnrollment={rx.doctorEnrollment} slipRef={slipRef} />
         </Suspense>
       </div>
     </div>
@@ -214,7 +214,7 @@ export default function MyRecords() {
       <header className="mr-header">
         <span className="mr-eyebrow">Humancare Connect</span>
         <h1 className="mr-title">My Medical Records</h1>
-        <p className="mr-sub">Prescriptions and certificates from your consultations</p>
+        <p className="mr-sub">  </p>
       </header>
 
       <div className="mr-summary">

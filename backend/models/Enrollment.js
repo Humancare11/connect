@@ -10,9 +10,13 @@ const normalizeApplicationStatus = (value) => {
 
 const enrollmentSchema = new mongoose.Schema({
   doctorId: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true, unique: true },
-  
+
   // Section 1 - Personal Details
-  email: String,
+  // email: String,
+  email: {
+    type: String,
+    immutable: true, // once set (from the verified Doctor account), can never be overwritten
+  },
   countryCode: String,
   phoneNumber: String,
   firstName: String,
@@ -46,7 +50,14 @@ const enrollmentSchema = new mongoose.Schema({
   medicalLicenseFile: String,
   malpracticeInsuranceFile: String,
   medicalCouncilName: String,
-  registrationYear: String,
+  // registrationYear: String,
+  registrationYear: {
+    type: String,
+    validate: {
+      validator: (v) => !v || /^\d{4}$/.test(v),
+      message: "Graduation year must be exactly 4 digits",
+    },
+  },
   idProofType: String,
   payoutEmail: String,
   paypalId: String,
