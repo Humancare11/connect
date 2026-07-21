@@ -28,19 +28,19 @@ const CATEGORY_ALIASES = {
   "dermatology": "Skin Conditions",
 
   // Joint & Muscle
-  "joint": "Eye, Ear & Musculoskeletal",
-  "knee": "Eye, Ear & Musculoskeletal",
-  "kni": "Eye, Ear & Musculoskeletal",   // ← partial "knee"
-  "kne": "Eye, Ear & Musculoskeletal",   // ← partial "knee"
-  "back": "Eye, Ear & Musculoskeletal",
-  "neck": "Eye, Ear & Musculoskeletal",
-  "muscle": "Eye, Ear & Musculoskeletal",
-  "pain": "Eye, Ear & Musculoskeletal",
-  "bone": "Eye, Ear & Musculoskeletal",
-  "spine": "Eye, Ear & Musculoskeletal",
-  "ear pain": "Eye, Ear & Musculoskeletal",
-  "eye pain": "Eye, Ear & Musculoskeletal",
-  "musculoskeletal": "Eye, Ear & Musculoskeletal",
+  "joint": "Eye, Ear & Bone Care",
+  "knee": "Eye, Ear & Bone Care",
+  "kni": "Eye, Ear & Bone Care",   // ← partial "knee"
+  "kne": "Eye, Ear & Bone Care",   // ← partial "knee"
+  "back": "Eye, Ear & Bone Care",
+  "neck": "Eye, Ear & Bone Care",
+  "muscle": "Eye, Ear & Bone Care",
+  "pain": "Eye, Ear & Bone Care",
+  "bone": "Eye, Ear & Bone Care",
+  "spine": "Eye, Ear & Bone Care",
+  "ear pain": "Eye, Ear & Bone Care",
+  "eye pain": "Eye, Ear & Bone Care",
+  "musculoskeletal": "Eye, Ear & Bone Care",
 
   // Women's Health
   "women": "Women's Health",

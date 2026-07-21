@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Knee Pain",
   description: "Relief for joint pain and discomfort",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

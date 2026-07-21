@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Stress.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychology Counseling",
+  badge: "Mental Health",
   heading: "Stress",
   description: "Mental and physical tension overload",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -240,18 +239,26 @@ export default function Stress() {
                   {/* RIGHT */}
                   <div className="condition-about-right">
                     <div>
-                      <h3 className="condition-block-title">
-                        What is Stress?
-                      </h3>
+                      <h3 className="condition-block-title">What is Stress?</h3>
                       <p className="condition-block-body">
-                        Stress can cause headaches, fatigue, irritability, anxiety, trouble sleeping, muscle tension, difficulty concentrating, and emotional exhaustion that may affect daily life and overall well-being.
+                        Stress can cause headaches, fatigue, irritability,
+                        anxiety, trouble sleeping, muscle tension, difficulty
+                        concentrating, and emotional exhaustion that may affect
+                        daily life and overall well-being.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
-                        Get support for stress management with Humancare Connect. Our telemedicine services make it easy to schedule an online doctor appointment and connect with a licensed provider from home. Through our secure virtual healthcare services, you can receive mental health support, stress management guidance, treatment recommendations, and personalized care without the pressure of an in-person visit.
+                        Get support for stress management with Humancare
+                        Connect. Our telemedicine services make it easy to
+                        schedule an online doctor appointment and connect with a
+                        licensed provider from home. Through our secure virtual
+                        healthcare services, you can receive mental health
+                        support, stress management guidance, treatment
+                        recommendations, and personalized care without the
+                        pressure of an in-person visit.
                       </p>
                     </div>
 
@@ -326,7 +333,14 @@ export default function Stress() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Stress")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Stress",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

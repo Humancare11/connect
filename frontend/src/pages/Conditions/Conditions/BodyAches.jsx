@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Body-Aches.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Care",
   heading: "Body Aches",
   description: "Muscle soreness and body discomfort",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -246,8 +245,8 @@ export default function BodyAches() {
                       </h3>
                       <p className="condition-block-body">
                         Body aches can cause soreness, stiffness, tenderness,
-                        fatigue, and discomfort throughout the body, often linked
-                        to viral illnesses, physical exertion, stress,
+                        fatigue, and discomfort throughout the body, often
+                        linked to viral illnesses, physical exertion, stress,
                         dehydration, or underlying health conditions.
                       </p>
                     </div>
@@ -258,11 +257,11 @@ export default function BodyAches() {
                         Get relief from body aches with Humancare Connect. Our
                         telemedicine services make it easy to schedule an online
                         doctor appointment and connect with a licensed provider
-                        from home. Through our secure virtual healthcare services,
-                        you can receive symptom evaluation, treatment guidance,
-                        pain management recommendations, and prescriptions when
-                        appropriate without the hassle of an in-person clinic
-                        visit.
+                        from home. Through our secure virtual healthcare
+                        services, you can receive symptom evaluation, treatment
+                        guidance, pain management recommendations, and
+                        prescriptions when appropriate without the hassle of an
+                        in-person clinic visit.
                       </p>
                     </div>
 
@@ -337,7 +336,14 @@ export default function BodyAches() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Body%20Aches")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Body%20Aches",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

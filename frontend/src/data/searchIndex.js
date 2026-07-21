@@ -565,7 +565,7 @@ export const conditions = [
     keywords: ["medical certificate"]
   },
   {
-    id: "medication-review", title: "Medication Review", type: "condition", category: "general-and-everyday-care", route: "/medication-review",
+    id: "medication-review", title: "Medication Review", type: "condition", category: "general-and-everyday-care", route: "/general-and-everyday-care/internal-medicine/medication-review",
     keywords: ["medication review", "medicine review"]
   },
   {

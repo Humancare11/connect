@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Sleep-Related-Anxiety.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Behavioral Health",
+  badge: "Mental Health",
   heading: "Sleep-Related Anxiety",
   description: "Calmer nights and better sleep",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -263,9 +262,9 @@ export default function SleepRelatedAnxiety() {
                         services for anxiety management, sleep support, coping
                         strategies, and personalized care recommendations.
                         Telehealth services provide convenient access to an
-                        experienced online provider who can help identify factors
-                        affecting your sleep and develop a plan to improve both
-                        sleep quality and emotional well being.
+                        experienced online provider who can help identify
+                        factors affecting your sleep and develop a plan to
+                        improve both sleep quality and emotional well being.
                       </p>
                     </div>
 
@@ -340,7 +339,14 @@ export default function SleepRelatedAnxiety() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Sleep-Related%20Anxiety")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Sleep-Related%20Anxiety",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

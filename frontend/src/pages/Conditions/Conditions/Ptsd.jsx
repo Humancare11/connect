@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/PTSD.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "Post-Traumatic Stress Disorder (PTSD)",
   description: "Trauma-related stress and anxiety",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -245,24 +244,24 @@ export default function Ptsd() {
                         What is Post-Traumatic Stress Disorder (PTSD)?
                       </h3>
                       <p className="condition-block-body">
-                        PTSD can cause flashbacks, nightmares, anxiety, emotional
-                        distress, trouble sleeping, mood changes, and heightened
-                        stress responses after experiencing or witnessing a
-                        traumatic event.
+                        PTSD can cause flashbacks, nightmares, anxiety,
+                        emotional distress, trouble sleeping, mood changes, and
+                        heightened stress responses after experiencing or
+                        witnessing a traumatic event.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
-                        Get compassionate support for PTSD with Humancare Connect.
-                        Our telemedicine services make it easy to schedule an
-                        online doctor appointment and connect with a licensed
-                        provider from home. Through our secure virtual healthcare
-                        services, you can receive mental health support, symptom
-                        evaluation, therapy recommendations, treatment guidance,
-                        and prescriptions when appropriate without the pressure of
-                        an in-person visit.
+                        Get compassionate support for PTSD with Humancare
+                        Connect. Our telemedicine services make it easy to
+                        schedule an online doctor appointment and connect with a
+                        licensed provider from home. Through our secure virtual
+                        healthcare services, you can receive mental health
+                        support, symptom evaluation, therapy recommendations,
+                        treatment guidance, and prescriptions when appropriate
+                        without the pressure of an in-person visit.
                       </p>
                     </div>
 
@@ -337,7 +336,14 @@ export default function Ptsd() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Post-Traumatic%20Stress%20Disorder%20%28PTSD%29")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Post-Traumatic%20Stress%20Disorder%20%28PTSD%29",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/PrescriptionsAndContinuityCare/Medication-Review.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
 // ─────────────────────────────────────────────────────────────────
@@ -855,7 +854,16 @@ function StickyBookingCard() {
         ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Medication%20Review")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=general&condition=Medication%20Review",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
         <a href="#" className="sp-sbc-link">
@@ -1216,7 +1224,7 @@ export default function MedicationReview() {
         title="Medication Review Online | Safe Prescription & Drug Management"
         description="Review your medications with a licensed provider online. Get expert guidance on side effects, drug interactions, dosage adjustments, prescription management, and treatment effectiveness."
         keywords="Medication review, Prescription management, Drug interaction check, Online medication consultation"
-        url="https://humancareconnect.co/medication-review"
+        url="https://humancareconnect.co/general-and-everyday-care/internal-medicine/medication-revieww"
       />
       <style>{STYLES}</style>
 

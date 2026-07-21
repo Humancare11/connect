@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Headache.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Care",
   heading: "Headache",
   description: "Head pain and pressure discomfort",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -241,11 +240,14 @@ export default function Headache() {
                   {/* RIGHT */}
                   <div className="condition-about-right">
                     <div>
-                      <h3 className="condition-block-title">What is headache?</h3>
+                      <h3 className="condition-block-title">
+                        What is headache?
+                      </h3>
                       <p className="condition-block-body">
-                        Headaches can cause pressure, throbbing pain, sensitivity
-                        to light or sound, tension, and discomfort that may
-                        interfere with daily activities and concentration.
+                        Headaches can cause pressure, throbbing pain,
+                        sensitivity to light or sound, tension, and discomfort
+                        that may interfere with daily activities and
+                        concentration.
                       </p>
                     </div>
 
@@ -256,9 +258,9 @@ export default function Headache() {
                         Connect. Our telemedicine services make it easy to
                         schedule an online doctor appointment and connect with a
                         licensed provider from home. Through our secure
-                        telemedicine platform, you can receive symptom evaluation,
-                        treatment guidance, and prescriptions when appropriate
-                        without waiting at urgent care.
+                        telemedicine platform, you can receive symptom
+                        evaluation, treatment guidance, and prescriptions when
+                        appropriate without waiting at urgent care.
                       </p>
                     </div>
 
@@ -333,7 +335,14 @@ export default function Headache() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Headache")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Headache",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Chronic Care",
   heading: "Bloating",
   description: "Fullness, pressure, and stomach discomfort",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

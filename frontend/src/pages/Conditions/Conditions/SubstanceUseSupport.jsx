@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Substance-Use-Support.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Behavioral Health",
+  badge: "Mental Health",
   heading: "Substance Use Support",
   description: "Support for substance use challenges",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -247,9 +246,9 @@ export default function SubstanceUseSupport() {
                       <p className="condition-block-body">
                         Substance use challenges can affect mental health,
                         physical health, relationships, sleep, mood, daily
-                        functioning, and overall well-being. Symptoms may include
-                        cravings, stress, anxiety, emotional struggles, or
-                        difficulty managing substance use habits.
+                        functioning, and overall well-being. Symptoms may
+                        include cravings, stress, anxiety, emotional struggles,
+                        or difficulty managing substance use habits.
                       </p>
                     </div>
 
@@ -257,13 +256,13 @@ export default function SubstanceUseSupport() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Get confidential and compassionate support through
-                        Humancare Connect. Our telemedicine services make it easy
-                        to schedule an online doctor appointment and connect with
-                        a licensed provider from home. Through our secure virtual
-                        healthcare services, you can receive mental health
-                        support, treatment guidance, recovery resources, and
-                        personalized care recommendations without the pressure of
-                        an in-person visit.
+                        Humancare Connect. Our telemedicine services make it
+                        easy to schedule an online doctor appointment and
+                        connect with a licensed provider from home. Through our
+                        secure virtual healthcare services, you can receive
+                        mental health support, treatment guidance, recovery
+                        resources, and personalized care recommendations without
+                        the pressure of an in-person visit.
                       </p>
                     </div>
 
@@ -338,7 +337,14 @@ export default function SubstanceUseSupport() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Substance%20Use%20Support")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Substance%20Use%20Support",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

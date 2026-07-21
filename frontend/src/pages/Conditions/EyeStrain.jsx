@@ -405,7 +405,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Eye, Ear & Musculoskeletal",
+  badge: "Eye, Ear & Bone Care",
   heading: "Eye Strain",
   description: "Relief for tired and overworked eyes",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

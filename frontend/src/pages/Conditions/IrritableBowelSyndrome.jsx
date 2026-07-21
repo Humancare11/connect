@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Chronic Care",
   heading: "Irritable Bowel Syndrome (IBS)",
   description: "Chronic digestive discomfort and cramping",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

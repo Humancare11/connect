@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Depression.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "Depression",
   description: "Persistent sadness and low mood",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -247,8 +246,8 @@ export default function Depression() {
                       <p className="condition-block-body">
                         Depression can cause ongoing sadness, loss of interest,
                         fatigue, sleep problems, low energy, hopelessness,
-                        difficulty concentrating, and emotional struggles that may
-                        affect daily life and overall well-being.
+                        difficulty concentrating, and emotional struggles that
+                        may affect daily life and overall well-being.
                       </p>
                     </div>
 
@@ -337,7 +336,14 @@ export default function Depression() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Depression")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Depression",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

@@ -158,38 +158,38 @@ const SPECIALTY_DATA = {
     {
       Icon: GiHeartOrgan,
       name: "Asthma",
-      // desc: "Support for healthy infant feeding",
+      desc: "Support for healthy infant feeding",
       path: "/chronic-care/pulmonology/asthma",
     },
     {
       Icon: FiHeart,
       name: "COPD",
-      // desc: "Cold and flu symptoms in children",
+      desc: "Cold and flu symptoms in children",
       path: "/chronic-care/pulmonology/copd",
     },
     {
       Icon: FiZap,
       name: "Persistent cough",
-      // desc: "Fever and illness in children",
+      desc: "Fever and illness in children",
       path: "/chronic-care/pulmonology/persistent-cough",
     },
     {
       Icon: MdOutlineBloodtype,
       name: "Shortness of breath",
-      // desc: "Red, itchy, irritated skin in kids",
+      desc: "Red, itchy, irritated skin in kids",
       path: "/chronic-care/pulmonology/shortness-of-breath",
     },
     {
       Icon: FiTrendingUp,
       name: "Sleep apnea screening",
-      // desc: "Red, itchy, irritated skin in kids",
+      desc: "Red, itchy, irritated skin in kids",
       path: "/chronic-care/pulmonology/sleep-apnea-screening",
     },
     {
       Icon: FiTarget,
       name: "Post-COVID concerns",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "post-covid-concerns",
+      path: "/chronic-care/pulmonology/post-covid-concerns",
     },
   ],
 
@@ -592,7 +592,7 @@ export default function Pulmonology({ data = SPECIALTY_DATA }) {
                   heroLoaded ? " sp-hero__content-inner--loaded" : ""
                 }`}
               >
-                <span className="sp-hero__badge">Child & Family Care</span>
+                <span className="sp-hero__badge">Chronic Care</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
                 <p className="sp-hero__description">{data.heroDescription}</p>

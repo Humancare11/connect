@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Anxiety.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "Anxiety",
   description: "Excessive worry, stress, and nervousness",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -241,12 +240,14 @@ export default function Anxiety() {
                   {/* RIGHT */}
                   <div className="condition-about-right">
                     <div>
-                      <h3 className="condition-block-title">What is Anxiety?</h3>
+                      <h3 className="condition-block-title">
+                        What is Anxiety?
+                      </h3>
                       <p className="condition-block-body">
                         Anxiety can cause constant worry, racing thoughts,
                         restlessness, rapid heartbeat, trouble sleeping,
-                        difficulty concentrating, and feelings of stress that may
-                        interfere with daily life and emotional well-being.
+                        difficulty concentrating, and feelings of stress that
+                        may interfere with daily life and emotional well-being.
                       </p>
                     </div>
 
@@ -335,7 +336,14 @@ export default function Anxiety() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Anxiety")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Anxiety",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

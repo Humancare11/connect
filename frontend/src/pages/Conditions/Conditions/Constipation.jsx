@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Constipation.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: " Chronic Care",
   heading: "Constipation",
   description: "Difficulty passing regular stools",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -245,9 +244,9 @@ export default function Constipation() {
                         What is Constipation?
                       </h3>
                       <p className="condition-block-body">
-                        Constipation can cause bloating, stomach discomfort, hard
-                        stools, abdominal pain, and infrequent bowel movements
-                        that affect your daily routine.
+                        Constipation can cause bloating, stomach discomfort,
+                        hard stools, abdominal pain, and infrequent bowel
+                        movements that affect your daily routine.
                       </p>
                     </div>
 
@@ -255,11 +254,12 @@ export default function Constipation() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Humancare Connect makes it simple to get care for
-                        constipation symptoms from home. Our telemedicine services
-                        let you schedule an online doctor appointment with a
-                        licensed provider who can help identify possible causes,
-                        recommend treatment options, and provide prescriptions
-                        when appropriate through our secure telemedicine platform.
+                        constipation symptoms from home. Our telemedicine
+                        services let you schedule an online doctor appointment
+                        with a licensed provider who can help identify possible
+                        causes, recommend treatment options, and provide
+                        prescriptions when appropriate through our secure
+                        telemedicine platform.
                       </p>
                     </div>
 
@@ -334,7 +334,14 @@ export default function Constipation() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Constipation")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Constipation",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

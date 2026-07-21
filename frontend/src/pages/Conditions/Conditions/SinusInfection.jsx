@@ -48,7 +48,7 @@ import SEO from "../../../components/Seo";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Care",
   heading: "Sinus Infection",
   description: "Sinus pressure and nasal congestion",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -256,12 +256,12 @@ export default function SinusInfection() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Get fast relief for sinus infection symptoms with
-                        Humancare Connect. Our telemedicine services make it easy
-                        to book an online doctor appointment and connect with a
-                        licensed provider from home. Through our secure
-                        telemedicine platform, you can receive symptom evaluation,
-                        treatment guidance, and prescriptions when appropriate
-                        without waiting at urgent care.
+                        Humancare Connect. Our telemedicine services make it
+                        easy to book an online doctor appointment and connect
+                        with a licensed provider from home. Through our secure
+                        telemedicine platform, you can receive symptom
+                        evaluation, treatment guidance, and prescriptions when
+                        appropriate without waiting at urgent care.
                       </p>
                     </div>
 
@@ -336,7 +336,14 @@ export default function SinusInfection() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Sinus%20Infection")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Sinus%20Infection",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/nausea-&-vomiting.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: " General & Everyday Care",
   heading: "Nausea & Vomiting",
   description: "Stomach discomfort and sickness",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -246,8 +245,8 @@ export default function NauseaAndVomiting() {
                       </h3>
                       <p className="condition-block-body">
                         Nausea and vomiting can be caused by infections, food
-                        poisoning, migraines, motion sickness, stomach viruses, or
-                        other underlying health conditions.
+                        poisoning, migraines, motion sickness, stomach viruses,
+                        or other underlying health conditions.
                       </p>
                     </div>
 
@@ -335,7 +334,14 @@ export default function NauseaAndVomiting() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Nausea%20%26%20Vomiting")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Nausea%20%26%20Vomiting",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

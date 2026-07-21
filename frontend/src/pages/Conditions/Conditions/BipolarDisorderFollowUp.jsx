@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Bipolar-Disorder-Follow-Up.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "Bipolar Disorder Follow-Up",
   description: "Ongoing support for mood stability",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -245,10 +244,10 @@ export default function BipolarDisorderFollowUp() {
                         What is Bipolar Disorder Follow-Up?
                       </h3>
                       <p className="condition-block-body">
-                        Bipolar disorder follow up appointments help monitor mood
-                        changes, evaluate treatment progress, manage medications,
-                        and provide ongoing support for maintaining emotional and
-                        mental well being.
+                        Bipolar disorder follow up appointments help monitor
+                        mood changes, evaluate treatment progress, manage
+                        medications, and provide ongoing support for maintaining
+                        emotional and mental well being.
                       </p>
                     </div>
 
@@ -260,11 +259,12 @@ export default function BipolarDisorderFollowUp() {
                         schedule an online doctor appointment and connect with a
                         licensed provider from home. Through our secure
                         telemedicine platform, you can access virtual healthcare
-                        services for treatment monitoring, medication management,
-                        symptom review, and personalized care recommendations.
-                        Telehealth services provide convenient access to an
-                        experienced online provider who can help support long term
-                        mood stability and overall mental wellness.
+                        services for treatment monitoring, medication
+                        management, symptom review, and personalized care
+                        recommendations. Telehealth services provide convenient
+                        access to an experienced online provider who can help
+                        support long term mood stability and overall mental
+                        wellness.
                       </p>
                     </div>
 
@@ -339,7 +339,14 @@ export default function BipolarDisorderFollowUp() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Bipolar%20Disorder%20Follow-Up")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Bipolar%20Disorder%20Follow-Up",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

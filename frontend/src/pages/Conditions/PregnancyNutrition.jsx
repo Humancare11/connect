@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Pregnancy Nutrition",
   description: "Healthy eating for a healthy pregnancy",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

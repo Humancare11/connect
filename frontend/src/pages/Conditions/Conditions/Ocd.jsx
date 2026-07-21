@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/OCD.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "Obsessive-Compulsive Disorder (OCD)",
   description: "Support for obsessive compulsive disorder",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -129,7 +128,12 @@ export default function Ocd() {
 
   return (
     <>
-      <SEO title="OCD Treatment Online | Virtual Mental Health Support" description="Get expert online care for OCD symptoms." keywords="OCD" url="https://humancareconnect.co/ocd" />
+      <SEO
+        title="OCD Treatment Online | Virtual Mental Health Support"
+        description="Get expert online care for OCD symptoms."
+        keywords="OCD"
+        url="https://humancareconnect.co/ocd"
+      />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section
@@ -242,8 +246,8 @@ export default function Ocd() {
                       <p className="condition-block-body">
                         Obsessive compulsive disorder (OCD) is a mental health
                         condition that can involve unwanted recurring thoughts,
-                        urges, or fears along with repetitive behaviors or rituals
-                        that may interfere with daily life.
+                        urges, or fears along with repetitive behaviors or
+                        rituals that may interfere with daily life.
                       </p>
                     </div>
 
@@ -255,11 +259,11 @@ export default function Ocd() {
                         doctor appointment and connect with a licensed provider
                         from home. Through our secure telemedicine platform, you
                         can access virtual healthcare services for symptom
-                        management, treatment monitoring, medication support, and
-                        personalized care recommendations. Telehealth services
-                        provide convenient access to an experienced online
-                        provider who can help you manage OCD symptoms and improve
-                        your overall mental well being.
+                        management, treatment monitoring, medication support,
+                        and personalized care recommendations. Telehealth
+                        services provide convenient access to an experienced
+                        online provider who can help you manage OCD symptoms and
+                        improve your overall mental well being.
                       </p>
                     </div>
 
@@ -334,7 +338,14 @@ export default function Ocd() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Obsessive-Compulsive%20Disorder%20%28OCD%29")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Obsessive-Compulsive%20Disorder%20%28OCD%29",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

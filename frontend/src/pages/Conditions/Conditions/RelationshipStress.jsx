@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Relationship-Stress.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychology Counseling",
+  badge: "Mental Health",
   heading: "Relationship Stress",
   description: "Emotional strain affecting relationships",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -246,23 +245,23 @@ export default function RelationshipStress() {
                       </h3>
                       <p className="condition-block-body">
                         Relationship stress can cause anxiety, communication
-                        problems, emotional exhaustion, frustration, sleep issues,
-                        mood changes, and tension that may affect personal
-                        well-being and daily life.
+                        problems, emotional exhaustion, frustration, sleep
+                        issues, mood changes, and tension that may affect
+                        personal well-being and daily life.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
-                        Get supportive care for relationship stress with Humancare
-                        Connect. Our telemedicine services make it easy to
-                        schedule an online doctor appointment and connect with a
-                        licensed provider from home. Through our secure virtual
-                        healthcare services, you can receive emotional support,
-                        stress management guidance, mental health care
-                        recommendations, and personalized support without the
-                        pressure of an in-person visit.
+                        Get supportive care for relationship stress with
+                        Humancare Connect. Our telemedicine services make it
+                        easy to schedule an online doctor appointment and
+                        connect with a licensed provider from home. Through our
+                        secure virtual healthcare services, you can receive
+                        emotional support, stress management guidance, mental
+                        health care recommendations, and personalized support
+                        without the pressure of an in-person visit.
                       </p>
                     </div>
 
@@ -337,7 +336,14 @@ export default function RelationshipStress() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Relationship%20Stress")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Relationship%20Stress",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

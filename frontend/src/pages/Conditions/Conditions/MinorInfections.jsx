@@ -48,7 +48,7 @@ import SEO from "../../../components/Seo";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Care",
   heading: "Minor Infections",
   description: "Convenient care for common infections",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -261,10 +261,10 @@ export default function MinorInfections() {
                         provider from the comfort of home. Through our secure
                         telemedicine platform, you can access virtual healthcare
                         services for symptom evaluation, treatment
-                        recommendations, recovery guidance, and prescriptions when
-                        appropriate. Telehealth services make it easier to receive
-                        quality care from an experienced online provider without
-                        the need for an in person clinic visit.
+                        recommendations, recovery guidance, and prescriptions
+                        when appropriate. Telehealth services make it easier to
+                        receive quality care from an experienced online provider
+                        without the need for an in person clinic visit.
                       </p>
                     </div>
 
@@ -339,7 +339,14 @@ export default function MinorInfections() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Minor%20Infections")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Minor%20Infections",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

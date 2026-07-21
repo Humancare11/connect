@@ -1981,7 +1981,7 @@ function AppLayout() {
           />
           <Route path="/lab-results-review" element={<LabResultsReview />} />
           <Route path="/medical-certificate" element={<MedicalCertificate />} />
-          <Route path="/medication-review" element={<MedicationReview />} />
+          <Route path="/general-and-everyday-care/internal-medicine/medication-review" element={<MedicationReview />} />
           <Route path="/prescription-refill" element={<PrescriptionRefill />} />
           <Route
             path="/return-to-work-clearance"

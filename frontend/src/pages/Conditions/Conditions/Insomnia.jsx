@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Insomnia.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "Insomnia",
   description: "Trouble falling or staying asleep",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -248,20 +247,22 @@ export default function Insomnia() {
                         Insomnia can cause difficulty falling asleep, staying
                         asleep, waking up too early, daytime fatigue,
                         irritability, trouble concentrating, and poor sleep
-                        quality that may affect daily life and overall well-being.
+                        quality that may affect daily life and overall
+                        well-being.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
-                        Get support for insomnia symptoms with Humancare Connect.
-                        Our telemedicine services make it easy to schedule an
-                        online doctor appointment and connect with a licensed
-                        provider from home. Through our secure virtual healthcare
-                        services, you can receive sleep health guidance, symptom
-                        evaluation, treatment recommendations, and personalized
-                        care support without the need for an in-person visit.
+                        Get support for insomnia symptoms with Humancare
+                        Connect. Our telemedicine services make it easy to
+                        schedule an online doctor appointment and connect with a
+                        licensed provider from home. Through our secure virtual
+                        healthcare services, you can receive sleep health
+                        guidance, symptom evaluation, treatment recommendations,
+                        and personalized care support without the need for an
+                        in-person visit.
                       </p>
                     </div>
 
@@ -336,7 +337,14 @@ export default function Insomnia() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Insomnia")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Insomnia",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

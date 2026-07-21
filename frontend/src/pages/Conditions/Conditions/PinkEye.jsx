@@ -48,7 +48,7 @@ import SEO from "../../../components/Seo";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Caree",
   heading: "Pink Eye",
   description: "Red, itchy, irritated eyes",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -241,11 +241,13 @@ export default function PinkEye() {
                   {/* RIGHT */}
                   <div className="condition-about-right">
                     <div>
-                      <h3 className="condition-block-title">What is pink eye?</h3>
+                      <h3 className="condition-block-title">
+                        What is pink eye?
+                      </h3>
                       <p className="condition-block-body">
-                        Pink eye can cause redness, itching, burning, watery eyes,
-                        discharge, and irritation, often caused by viral or
-                        bacterial infections, allergies, or environmental
+                        Pink eye can cause redness, itching, burning, watery
+                        eyes, discharge, and irritation, often caused by viral
+                        or bacterial infections, allergies, or environmental
                         irritants.
                       </p>
                     </div>
@@ -254,8 +256,8 @@ export default function PinkEye() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Get fast care for pink eye symptoms with Humancare
-                        Connect. Our telemedicine services make it easy to book an
-                        online doctor appointment and connect with a licensed
+                        Connect. Our telemedicine services make it easy to book
+                        an online doctor appointment and connect with a licensed
                         provider from home. Through our secure telemedicine
                         platform, you can receive symptom evaluation, treatment
                         recommendations, and prescriptions when appropriate
@@ -334,7 +336,14 @@ export default function PinkEye() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Pink%20Eye")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Pink%20Eye",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

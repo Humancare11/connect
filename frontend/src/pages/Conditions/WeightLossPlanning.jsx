@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Weight-Loss Planning",
   description: "Personalized strategies for lasting results",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

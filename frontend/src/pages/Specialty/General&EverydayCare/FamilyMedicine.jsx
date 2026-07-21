@@ -67,7 +67,7 @@ import SEO from "../../../components/Seo";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "familymedicine",
+  slug: "/general-and-everyday-care/family-medicine",
   name: "Family Medicine",
   categoryId: "general",
   tagline: "Comprehensive Healthcare for Every Stage of Life.",
@@ -158,17 +158,17 @@ const SPECIALTY_DATA = {
     {
       Icon: FiCalendar,
       name: "Routine Check-Ups",
-      desc: "Ongoing care for everyday health",
+      // desc: "Ongoing care for everyday health",
       path: "/general-and-everyday-care/family-medicine/routine-check-ups",
     },
     {
       name: "Whole-Family Illnesses",
-      desc: "Care for illnesses affecting families",
+      // desc: "Care for illnesses affecting families",
       path: "/general-and-everyday-care/family-medicine/whole-family-illnesses",
     },
     {
       name: "Vaccination Advice",
-      desc: "Guidance for recommended immunizations",
+      // desc: "Guidance for recommended immunizations",
       path: "/general-and-everyday-care/family-medicine/vaccination-advice",
     },
   ],
@@ -572,7 +572,9 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
                   heroLoaded ? " sp-hero__content-inner--loaded" : ""
                 }`}
               >
-                <span className="sp-hero__badge">Child & Family Care</span>
+                <span className="sp-hero__badge">
+                  General and Everyday Care
+                </span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
                 <p className="sp-hero__description">{data.heroDescription}</p>

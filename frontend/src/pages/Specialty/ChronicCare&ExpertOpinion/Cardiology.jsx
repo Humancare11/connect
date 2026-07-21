@@ -182,7 +182,7 @@ const SPECIALTY_DATA = {
     {
       Icon: FiZap,
       name: "Palpitations",
-      name: "Palpitations",
+
       desc: "Evaluation for irregular heart sensations.",
       path: "/chronic-care/cardiology/palpitations",
     },

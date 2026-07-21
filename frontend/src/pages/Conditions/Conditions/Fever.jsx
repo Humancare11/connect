@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Fever.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Care",
   heading: "Fever",
   description: "High body temperature and chills",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -244,43 +243,71 @@ export default function Fever() {
                       <h3 className="condition-block-title">What is fever?</h3>
                       <p className="condition-block-body">
                         Fever can cause chills, sweating, body aches, headaches,
-                        fatigue, and weakness often linked to infections, viruses,
-                        flu, or other underlying health conditions.
+                        fatigue, and weakness often linked to infections,
+                        viruses, flu, or other underlying health conditions.
                       </p>
                     </div>
+                    {/* RIGHT */}
+                    <div className="condition-about-right">
+                      <div>
+                        <h3 className="condition-block-title">
+                          What is fever?
+                        </h3>
+                        <p className="condition-block-body">
+                          Fever can cause chills, sweating, body aches,
+                          headaches, fatigue, and weakness often linked to
+                          infections, viruses, flu, or other underlying health
+                          conditions.
+                        </p>
+                      </div>
 
-                    <div>
-                      <h3 className="condition-block-title">How?</h3>
-                      <p className="condition-block-body">
-                        Get fast care for fever symptoms with Humancare Connect.
-                        Our telemedicine services let you schedule an online
-                        doctor appointment and connect with a licensed provider
-                        from home. Through our secure virtual healthcare services,
-                        you can receive symptom evaluation, treatment guidance,
-                        and prescriptions when appropriate without the hassle of
-                        visiting urgent care.
-                      </p>
-                    </div>
+                      <div>
+                        <h3 className="condition-block-title">How?</h3>
+                        <p className="condition-block-body">
+                          Get fast care for fever symptoms with Humancare
+                          Connect. Our telemedicine services let you schedule an
+                          online doctor appointment and connect with a licensed
+                          provider from home. Through our secure virtual
+                          healthcare services, you can receive symptom
+                          evaluation, treatment guidance, and prescriptions when
+                          appropriate without the hassle of visiting urgent
+                          care.
+                        </p>
+                      </div>
+                      <div>
+                        <h3 className="condition-block-title">How?</h3>
+                        <p className="condition-block-body">
+                          Get fast care for fever symptoms with Humancare
+                          Connect. Our telemedicine services let you schedule an
+                          online doctor appointment and connect with a licensed
+                          provider from home. Through our secure virtual
+                          healthcare services, you can receive symptom
+                          evaluation, treatment guidance, and prescriptions when
+                          appropriate without the hassle of visiting urgent
+                          care.
+                        </p>
+                      </div>
 
-                    <div>
-                      <h3 className="condition-block-title">
-                        Get fever care in 4 simple steps.
-                      </h3>
-                      <div className="condition-benefits-grid">
-                        {[
-                          "Choose Fever care",
-                          "Share your symptoms and temperature details",
-                          "Connect with an online provider",
-                          "Receive treatment guidance and care recommendations",
-                        ].map((b) => (
-                          <div key={b} className="condition-benefit-item">
-                            <CheckCircle
-                              size={14}
-                              className="condition-benefit-check"
-                            />
-                            <span>{b}</span>
-                          </div>
-                        ))}
+                      <div>
+                        <h3 className="condition-block-title">
+                          Get fever care in 4 simple steps.
+                        </h3>
+                        <div className="condition-benefits-grid">
+                          {[
+                            "Choose Fever care",
+                            "Share your symptoms and temperature details",
+                            "Connect with an online provider",
+                            "Receive treatment guidance and care recommendations",
+                          ].map((b) => (
+                            <div key={b} className="condition-benefit-item">
+                              <CheckCircle
+                                size={14}
+                                className="condition-benefit-check"
+                              />
+                              <span>{b}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -333,7 +360,14 @@ export default function Fever() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Fever")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Fever",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

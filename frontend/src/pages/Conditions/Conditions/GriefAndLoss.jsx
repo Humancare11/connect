@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Grief-and-Loss.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychology Counseling",
+  badge: "Mental Healthg",
   heading: "Grief and Loss",
   description: "Emotional pain after a loss",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -247,8 +246,9 @@ export default function GriefAndLoss() {
                       <p className="condition-block-body">
                         Grief and loss can cause sadness, emotional distress,
                         anxiety, trouble sleeping, loneliness, mood changes,
-                        difficulty concentrating, and overwhelming emotions after
-                        losing a loved one or experiencing a major life change.
+                        difficulty concentrating, and overwhelming emotions
+                        after losing a loved one or experiencing a major life
+                        change.
                       </p>
                     </div>
 
@@ -337,7 +337,14 @@ export default function GriefAndLoss() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Grief%20and%20Loss")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Grief%20and%20Loss",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

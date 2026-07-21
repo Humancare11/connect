@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Cold-&-Flu.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Care",
   heading: "Cold & Flu",
   description: "Common viral respiratory infections",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -245,8 +244,8 @@ export default function ColdAndFlu() {
                         What is Cold & Flu?
                       </h3>
                       <p className="condition-block-body">
-                        Fever, chills, cough, congestion, body aches, and fatigue
-                        caused by common viral infections.
+                        Fever, chills, cough, congestion, body aches, and
+                        fatigue caused by common viral infections.
                       </p>
                     </div>
 
@@ -254,12 +253,12 @@ export default function ColdAndFlu() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Get fast relief for cold and flu symptoms with Humancare
-                        Connect. Our telemedicine services let you book an online
-                        doctor appointment and connect with a licensed provider
-                        from home. Through our secure telemedicine platform, you
-                        can receive treatment guidance, symptom relief, and
-                        prescriptions when appropriate without a trip to urgent
-                        care.
+                        Connect. Our telemedicine services let you book an
+                        online doctor appointment and connect with a licensed
+                        provider from home. Through our secure telemedicine
+                        platform, you can receive treatment guidance, symptom
+                        relief, and prescriptions when appropriate without a
+                        trip to urgent care.
                       </p>
                     </div>
 
@@ -334,7 +333,14 @@ export default function ColdAndFlu() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Cold%20%26%20Flu")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Cold%20%26%20Flu",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

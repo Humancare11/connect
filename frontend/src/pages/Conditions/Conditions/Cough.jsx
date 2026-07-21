@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Cough.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Care",
   heading: "Cough",
   description: "Persistent coughing and throat irritation",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -256,10 +255,10 @@ export default function Cough() {
                         Get fast care for cough symptoms with Humancare Connect.
                         Our telemedicine services let you book an online doctor
                         appointment and connect with a licensed provider from
-                        home. Through our secure virtual healthcare services, you
-                        can receive symptom evaluation, treatment guidance, and
-                        prescriptions when appropriate without the need for an
-                        in-person clinic visit.
+                        home. Through our secure virtual healthcare services,
+                        you can receive symptom evaluation, treatment guidance,
+                        and prescriptions when appropriate without the need for
+                        an in-person clinic visit.
                       </p>
                     </div>
 
@@ -334,7 +333,14 @@ export default function Cough() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Cough")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Cough",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

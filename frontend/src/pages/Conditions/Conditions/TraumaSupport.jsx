@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Trauma-Support.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychology Counseling",
+  badge: "Mental Health",
   heading: "Trauma Support",
   description: "Compassionate care after difficult experiences",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -246,10 +245,10 @@ export default function TraumaSupport() {
                       </h3>
                       <p className="condition-block-body">
                         Trauma can affect emotional, mental, and physical well
-                        being following a distressing or overwhelming experience.
-                        Common symptoms may include anxiety, sadness,
-                        irritability, difficulty sleeping, emotional distress, or
-                        challenges with daily functioning.
+                        being following a distressing or overwhelming
+                        experience. Common symptoms may include anxiety,
+                        sadness, irritability, difficulty sleeping, emotional
+                        distress, or challenges with daily functioning.
                       </p>
                     </div>
 
@@ -257,16 +256,16 @@ export default function TraumaSupport() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Get supportive care for trauma related concerns with
-                        Humancare Connect. Our telemedicine services make it easy
-                        to schedule an online doctor appointment and connect with
-                        a licensed provider from home. Through our secure
-                        telemedicine platform, you can access virtual healthcare
-                        services for emotional support, symptom management, mental
-                        wellness guidance, and personalized care recommendations.
-                        Telehealth services provide convenient access to an
-                        experienced online provider who can help you navigate the
-                        effects of trauma and support your ongoing recovery and
-                        well being.
+                        Humancare Connect. Our telemedicine services make it
+                        easy to schedule an online doctor appointment and
+                        connect with a licensed provider from home. Through our
+                        secure telemedicine platform, you can access virtual
+                        healthcare services for emotional support, symptom
+                        management, mental wellness guidance, and personalized
+                        care recommendations. Telehealth services provide
+                        convenient access to an experienced online provider who
+                        can help you navigate the effects of trauma and support
+                        your ongoing recovery and well being.
                       </p>
                     </div>
 
@@ -341,7 +340,14 @@ export default function TraumaSupport() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Trauma%20Support")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Trauma%20Support",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

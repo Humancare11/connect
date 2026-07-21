@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Panic-Attacks.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "Panic Attacks",
   description: "Sudden episodes of intense fear",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -245,24 +244,25 @@ export default function PanicAttacks() {
                         What are Panic Attacks?
                       </h3>
                       <p className="condition-block-body">
-                        Panic attacks can cause rapid heartbeat, chest tightness,
-                        shortness of breath, dizziness, sweating, shaking, and
-                        overwhelming fear that may appear suddenly and disrupt
-                        daily life.
+                        Panic attacks can cause rapid heartbeat, chest
+                        tightness, shortness of breath, dizziness, sweating,
+                        shaking, and overwhelming fear that may appear suddenly
+                        and disrupt daily life.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
-                        Get calm, supportive care for panic attacks with Humancare
-                        Connect. Our telemedicine services make it easy to
-                        schedule an online doctor appointment and connect with a
-                        licensed provider from home. Through our secure virtual
-                        healthcare services, you can receive mental health
-                        support, symptom evaluation, treatment guidance, therapy
-                        recommendations, and prescriptions when appropriate
-                        without the stress of an in-person visit.
+                        Get calm, supportive care for panic attacks with
+                        Humancare Connect. Our telemedicine services make it
+                        easy to schedule an online doctor appointment and
+                        connect with a licensed provider from home. Through our
+                        secure virtual healthcare services, you can receive
+                        mental health support, symptom evaluation, treatment
+                        guidance, therapy recommendations, and prescriptions
+                        when appropriate without the stress of an in-person
+                        visit.
                       </p>
                     </div>
 
@@ -337,7 +337,14 @@ export default function PanicAttacks() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Panic%20Attacks")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Panic%20Attacks",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

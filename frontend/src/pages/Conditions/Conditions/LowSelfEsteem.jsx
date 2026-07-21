@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Low-Self-Esteem.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychology Counseling",
+  badge: "Mental Health",
   heading: "Low Self-Esteem",
   description: "Building confidence and self worth",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -247,8 +246,8 @@ export default function LowSelfEsteem() {
                       <p className="condition-block-body">
                         Low self esteem can affect how you view yourself, your
                         abilities, and your relationships. It may contribute to
-                        self doubt, negative self perception, reduced confidence,
-                        and challenges in daily life.
+                        self doubt, negative self perception, reduced
+                        confidence, and challenges in daily life.
                       </p>
                     </div>
 
@@ -263,9 +262,9 @@ export default function LowSelfEsteem() {
                         emotional support, coping strategies, mental wellness
                         guidance, and personalized care recommendations.
                         Telehealth services provide convenient access to an
-                        experienced online provider who can help you address self
-                        esteem concerns and work toward improved confidence and
-                        overall well being.
+                        experienced online provider who can help you address
+                        self esteem concerns and work toward improved confidence
+                        and overall well being.
                       </p>
                     </div>
 
@@ -340,7 +339,14 @@ export default function LowSelfEsteem() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Low%20Self-Esteem")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Low%20Self-Esteem",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

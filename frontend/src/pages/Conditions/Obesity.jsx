@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Chronic Care",
+  badge: "Weigtht & Nutrition Support",
   heading: "Obesity",
   description: "Excess body weight affecting health",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

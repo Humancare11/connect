@@ -214,7 +214,7 @@ const cat = {
     {
       name: "Post-COVID concerns",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "post-covid-concerns",
+      path: "/chronic-care/pulmonology/post-covid-concerns",
     },
   ],
 

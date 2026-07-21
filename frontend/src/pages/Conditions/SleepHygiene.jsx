@@ -404,7 +404,7 @@ const STYLES = `
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Digestive Health",
+  badge: "Weigtht & Nutrition Support",
   heading: "Sleep Hygiene",
   description: "Better habits for better sleep",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

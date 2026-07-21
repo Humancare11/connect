@@ -44,12 +44,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Anger-Management.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Behavioral Health",
+  badge: "Mental Health",
   heading: "Anger Management",
   description: "Healthy strategies for emotional control",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -265,9 +264,9 @@ export default function AngerManagement() {
                         emotional wellness support, coping strategies, stress
                         management guidance, and personalized care
                         recommendations. Telehealth services provide convenient
-                        access to an experienced online provider who can help you
-                        better understand emotional triggers and develop healthier
-                        ways to manage anger and frustration.
+                        access to an experienced online provider who can help
+                        you better understand emotional triggers and develop
+                        healthier ways to manage anger and frustration.
                       </p>
                     </div>
 
@@ -342,7 +341,14 @@ export default function AngerManagement() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Anger%20Management")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Anger%20Management",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">
