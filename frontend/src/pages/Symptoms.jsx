@@ -1210,7 +1210,7 @@ export default function Symptoms() {
             <div className="sy-faq__meta">
               <div className="sy-faq__meta-item">
                 <Clock size={14} />
-                <span>Avg. response in 2 min</span>
+                <span>Avg. response in 10 min</span>
               </div>
               <div className="sy-faq__meta-item">
                 <Lock size={14} />
@@ -1218,7 +1218,7 @@ export default function Symptoms() {
               </div>
               <div className="sy-faq__meta-item">
                 <Globe2 size={14} />
-                <span>Available in all 50 states</span>
+                <span>Available Globally</span>
               </div>
             </div>
           </div>

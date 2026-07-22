@@ -364,13 +364,13 @@ export default function AdhdEvaluation() {
                                     <MessageCircle size={18} /> Chat with our team
                                 </button>
                                 <div className="condition-faq-stat">
-                                    ⚡ Avg. response in 2 min
+                                    ⚡ Avg. response in 10 min
                                 </div>
                                 <div className="condition-faq-stat">
                                     🔒 HIPAA secure &amp; private
                                 </div>
                                 <div className="condition-faq-stat">
-                                    🌍 Available in all 50 states
+                                    🌍 Available Globally
                                 </div>
                             </div>
 

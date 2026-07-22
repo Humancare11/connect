@@ -787,7 +787,7 @@ function FaqSection() {
             <div className="cat-faq__info-list">
               <div className="cat-faq__info-item">
                 <Icon name="clock" size={14} />
-                <span>Avg. response in 2 min</span>
+                <span>Avg. response in 10 min</span>
               </div>
               <div className="cat-faq__info-item">
                 <Icon name="shield" size={14} />
@@ -795,7 +795,7 @@ function FaqSection() {
               </div>
               <div className="cat-faq__info-item">
                 <Icon name="globe" size={14} />
-                <span>Available in all 50 states</span>
+                <span>Available Globally</span>
               </div>
             </div>
           </div>
