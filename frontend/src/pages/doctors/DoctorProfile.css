@@ -785,31 +785,31 @@
   }
 }
 
-@media (max-width: 540px) {
+@media (max-width: 450px) {
   .dpfu-wrapper {
-    padding: 20px 12px 40px;
+    padding: 16px 10px 32px;
   }
 
   .dpfu-hero-info h1 {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .dpfu-avatar {
-    width: 72px;
-    height: 72px;
-    font-size: 21px;
-    border-radius: 14px;
+    width: 64px;
+    height: 64px;
+    font-size: 19px;
+    border-radius: 12px;
   }
 
   .dpfu-avail-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
 
   .dpfu-card {
-    padding: 18px 16px;
+    padding: 14px 12px;
   }
 
   .dpfu-rating-value {
-    font-size: 18px;
+    font-size: 16px;
   }
 }

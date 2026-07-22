@@ -219,8 +219,24 @@
 .dq-modal-submit:hover:not(:disabled) { background: var(--dq-blue-mid); box-shadow: var(--dq-shadow-md); }
 .dq-modal-submit:disabled { opacity: .5; cursor: not-allowed; }
 
-@media (max-width: 600px) {
-  .dq-root { padding: 16px; }
-  .dq-stats { flex-direction: column; }
-  .dq-tabs  { flex-direction: column; }
+@media (max-width: 768px) {
+  .dq-root { padding: 20px 16px; }
+  .dq-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .dq-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+}
+
+@media (max-width: 450px) {
+  .dq-root { padding: 14px 12px; }
+  .dq-title { font-size: 22px; }
+  .dq-sub { font-size: 13px; margin-bottom: 18px; }
+  .dq-stats { grid-template-columns: 1fr; gap: 8px; }
+  .dq-stat { padding: 12px 14px; }
+  .dq-stat-value { font-size: 24px; }
+  .dq-tab { width: 100%; justify-content: space-between; padding: 10px 14px; }
+  .dq-card { padding: 14px; }
+  .dq-date { margin-left: 0; width: 100%; margin-top: 4px; }
+  .dq-card-footer { width: 100%; }
+  .dq-answer-btn { width: 100%; text-align: center; justify-content: center; }
+  .dq-modal { max-height: 94vh; margin: 10px; }
+  .dq-modal-header, .dq-modal-body { padding: 16px; }
 }

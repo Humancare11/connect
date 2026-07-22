@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
+import "./AdminDashboard.css";
 
 export default function AdminOverview() {
   const navigate = useNavigate();

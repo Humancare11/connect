@@ -69,24 +69,24 @@ const PrivacyConcerns = lazy(
 const PatientPrivacyNotice = lazy(
   () => import("./pages/PrivacyPolicies/PatientPrivacyNotice"),
 );
-const PrivacyPolicy = lazy(
-  () => import("./pages/PrivacyPolicies/PrivacyPolicy"),
-);
-const ProviderTermsofService = lazy(
-  () => import("./pages/PrivacyPolicies/ProviderTermsofService"),
-);
+// const PrivacyPolicy = lazy(
+//   () => import("./pages/PrivacyPolicies/PrivacyPolicy"),
+// );
+// const ProviderTermsofService = lazy(
+//   () => import("./pages/PrivacyPolicies/ProviderTermsofService"),
+// );
 const RefundCancellation = lazy(
   () => import("./pages/PrivacyPolicies/RefundCancellation"),
 );
 const TeleHealthConsent = lazy(
   () => import("./pages/PrivacyPolicies/TeleHealthConsent"),
 );
-const TermsService = lazy(() => import("./pages/PrivacyPolicies/TermsService"));
-const AccessibilityStatement = lazy(
-  () => import("./pages/PrivacyPolicies/AccessibilityStatement"),
-);
+// const TermsService = lazy(() => import("./pages/PrivacyPolicies/TermsService"));
+// const AccessibilityStatement = lazy(
+//   () => import("./pages/PrivacyPolicies/AccessibilityStatement"),
+// );
 const CCPA = lazy(() => import("./pages/PrivacyPolicies/CCPA"));
-const CookiePolicy = lazy(() => import("./pages/PrivacyPolicies/CookiePolicy"));
+// const CookiePolicy = lazy(() => import("./pages/PrivacyPolicies/CookiePolicy"));
 const PatientInformedConsentForm = lazy(
   () => import("./pages/PrivacyPolicies/PatientInformedConsentForm"),
 );
@@ -794,9 +794,9 @@ const DoctorEnrollments = lazy(
   () => import("./pages/doctors/DoctorEnrollments"),
 );
 import { useDoctorAuth } from "./context/DoctorAuthContext";
-const NoticePrivacy = lazy(
-  () => import("./pages/PrivacyPolicies/NoticePrivacy"),
-);
+// const NoticePrivacy = lazy(
+//   () => import("./pages/PrivacyPolicies/NoticePrivacy"),
+// );
 const DoctorProfile = lazy(() => import("./pages/doctors/DoctorProfile"));
 // import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
 const DoctorAppointments = lazy(
@@ -883,6 +883,37 @@ const Categories = lazy(() => import("./pages/Categories"));
 const AppointmentBookingForm = lazy(
   () => import("./pages/AppointmentBookingForm"),
 );
+
+// New Privcay Policy Pages Start 
+const Refundcancellationpolicy = lazy(() =>
+  import("./pages/PrivacyPolicies/Refundcancellationpolicy"),
+);
+
+const ProviderTermsOfService1 = lazy(() =>
+  import("./pages/PrivacyPolicies/ProviderTermsOfService1"),
+);
+
+const PrivacyPolicy1 = lazy(() =>
+  import("./pages/PrivacyPolicies/PrivacyPolicy1"),
+);
+const TermsOfService1 = lazy(() =>
+  import("./pages/PrivacyPolicies/TermsOfService1"),
+);
+const HippaNoticeOfPrivacyPractices1 = lazy(() =>
+  import("./pages/PrivacyPolicies/HippaNoticeOfPrivacyPractices1"),
+);
+const CaliforniaPrivacyRightsNotice1 = lazy(() =>
+  import("./pages/PrivacyPolicies/CaliforniaPrivacyRightsNotice1"),
+);
+const CookiePolicy1 = lazy(() =>
+  import("./pages/PrivacyPolicies/CookiePolicy1"),
+);
+const AccessibilityStatement1 = lazy(() =>
+  import("./pages/PrivacyPolicies/AccessibilityStatement1"),
+);
+
+
+// New Privcay Policy Pages End 
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -984,7 +1015,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -1058,7 +1089,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -2546,11 +2577,11 @@ function AppLayout() {
             path="/patient-privacy-notice"
             element={<PatientPrivacyNotice />}
           />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route
+          {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
+          {/* <Route
             path="/provider-terms-of-service"
             element={<ProviderTermsofService />}
-          />
+          /> */}
           <Route
             path="/refund-and-cancellation-policy"
             element={<RefundCancellation />}
@@ -2559,17 +2590,17 @@ function AppLayout() {
             path="/tele-health-informed-consent"
             element={<TeleHealthConsent />}
           />
-          <Route path="/terms-of-service" element={<TermsService />} />
-          <Route
+          {/* <Route path="/terms-of-service" element={<TermsService />} /> */}
+          {/* <Route
             path="/accessibility-statement"
             element={<AccessibilityStatement />}
-          />
+          /> */}
           <Route path="/CCPA" element={<CCPA />} />
-          <Route path="/cookie-policy" element={<CookiePolicy />} />
-          <Route
+          {/* <Route path="/cookie-policy" element={<CookiePolicy />} /> */}
+          {/* <Route
             path="/notice-of-privacy-practices"
             element={<NoticePrivacy />}
-          />
+          /> */}
           <Route
             path="/patient-informed-consent-form"
             element={<PatientInformedConsentForm />}
@@ -2683,10 +2714,21 @@ function AppLayout() {
           />
           <Route path="/category-consultant" element={<CategoryConsultant />} />
           <Route path="/service-consultant" element={<CategoryConsultant />} />
+          {/* New Privcay Policy Pages Start */}
+          <Route path="/refund-cancellation-policy" element={<Refundcancellationpolicy />} />
+          <Route path="/provider-terms-of-service" element={<ProviderTermsOfService1 />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy1 />} />
+          <Route path="/terms-of-service" element={<TermsOfService1 />} />
+          <Route path="/hippa-notice-of-privacy-practices" element={<HippaNoticeOfPrivacyPractices1 />} />
+          <Route path="/california-privacy-rights-notice" element={<CaliforniaPrivacyRightsNotice1 />} />
+          <Route path="/cookie-policy" element={<CookiePolicy1 />} />
+          <Route path="/accessibility-statement" element={<AccessibilityStatement1 />} />
+          {/* New Privcay Policy Pages End */}
           <Route
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}
           />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
 

@@ -932,10 +932,10 @@ export default function SubPage() {
           </div>
         </div>
 
-        <SymptomsChips />
-        <RelatedSpecialties />
 
-        <FaqSection />
+
+
+
       </div>
     </>
   );

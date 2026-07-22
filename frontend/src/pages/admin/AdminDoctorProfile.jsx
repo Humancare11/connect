@@ -2906,10 +2906,13 @@ export default function AdminDoctorProfile() {
   const hasPendingProfileUpdate =
     requestType === "profile_update" &&
     (e.profileUpdateRequestStatus || "pending") === "pending";
+  // const canApprove =
+  //   hasPendingProfileUpdate ||
+  //   (e.approvalStatus !== "approved" &&
+  //     (progress.completedSteps >= 4 || e.approvalStatus === "rejected"));
   const canApprove =
     hasPendingProfileUpdate ||
-    (e.approvalStatus !== "approved" &&
-      (progress.completedSteps >= 4 || e.approvalStatus === "rejected"));
+    (e.approvalStatus !== "approved" && progress.completedSteps >= 5);
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", paddingBottom: 40 }}>
@@ -3786,8 +3789,8 @@ export default function AdminDoctorProfile() {
             >
               <Field label="Bank Name" value={e.bankName} />
               {/* <Field label="Account Holder" value={e.accountHolderName} /> */}
-              
-                            <Field label="Account Number" value={e.accountNumber} />
+
+              <Field label="Account Number" value={e.accountNumber} />
 
               {/* <Field
                 label="Account Number"

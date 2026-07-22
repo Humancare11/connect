@@ -412,15 +412,26 @@ const CSS = `
   .drprofile__grid-read { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width:760px) {
-  .drprofile__topnav, .drprofile__hero { align-items:stretch; }
-  .drprofile__chipbox { align-items:flex-start; }
+  .drprofile__topnav { flex-direction:column; align-items:flex-start; gap:10px; }
+  .drprofile__actions { width:100%; justify-content:flex-start; }
+  .drprofile__hero { align-items:stretch; }
+  .drprofile__chipbox { align-items:flex-start; flex-direction:row; flex-wrap:wrap; margin-top:10px; width:100%; }
   .drprofile__grid-wide, .drprofile__change-cols { grid-template-columns:1fr; }
   .drprofile__change-col + .drprofile__change-col { border-left:0; border-top:1px solid #f1f5f9; }
   .drprofile__card-body, .drprofile__edit-card-body { padding:18px; }
   .drprofile__grid-read { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width:480px) {
-  .drprofile__grid-read { grid-template-columns: 1fr 1fr; }
+@media (max-width:450px) {
+  .drprofile__wrap { padding-bottom:24px; }
+  .drprofile__title { font-size:18px; line-height:1.3; }
+  .drprofile__kicker { font-size:11px; }
+  .drprofile__grid-read { grid-template-columns: 1fr; gap:14px; }
+  .drprofile__grid { grid-template-columns: 1fr; }
+  .drprofile__card-body, .drprofile__edit-card-body { padding:14px; }
+  .drprofile__read span { overflow-wrap:anywhere; word-break:break-word; }
+  .drprofile__hero { padding:18px 16px; gap:14px; }
+  .drprofile__hero-name { font-size:18px; }
+  .drprofile__hero-meta { font-size:13px; }
 }
 
 /* MultiSelect */
@@ -808,164 +819,164 @@ function MultiSelect({
 
   const dropdown = open
     ? createPortal(
+      <div
+        ref={dropdownRef}
+        style={{
+          position: "fixed",
+          top: `${position.top - window.scrollY}px`,
+          left: `${position.left}px`,
+          width: `${position.width}px`,
+          background: "#fff",
+          border: "1.5px solid #e2e8f0",
+          borderRadius: 12,
+          boxShadow:
+            "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
+          zIndex: 9999,
+          overflow: "hidden",
+        }}
+      >
         <div
-          ref={dropdownRef}
           style={{
-            position: "fixed",
-            top: `${position.top - window.scrollY}px`,
-            left: `${position.left}px`,
-            width: `${position.width}px`,
-            background: "#fff",
-            border: "1.5px solid #e2e8f0",
-            borderRadius: 12,
-            boxShadow:
-              "0 16px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06)",
-            zIndex: 9999,
-            overflow: "hidden",
+            padding: "10px 10px 6px",
+            borderBottom: "1px solid #f1f5f9",
           }}
         >
           <div
             style={{
-              padding: "10px 10px 6px",
-              borderBottom: "1px solid #f1f5f9",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              background: "#f8fafc",
+              border: "1.5px solid #e8edf2",
+              borderRadius: 10,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 12px",
-                background: "#f8fafc",
-                border: "1.5px solid #e8edf2",
-                borderRadius: 10,
-              }}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#94a3b8"
+              strokeWidth="2"
+              style={{ flexShrink: 0 }}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#94a3b8"
-                strokeWidth="2"
-                style={{ flexShrink: 0 }}
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={searchPlaceholder || "Search..."}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder={searchPlaceholder || "Search..."}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                flex: 1,
+                border: "none",
+                background: "transparent",
+                fontSize: 13,
+                fontFamily: "inherit",
+                color: "#1e293b",
+                outline: "none",
+              }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
                 style={{
-                  flex: 1,
+                  background: "none",
                   border: "none",
-                  background: "transparent",
-                  fontSize: 13,
-                  fontFamily: "inherit",
-                  color: "#1e293b",
-                  outline: "none",
-                }}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#cbd5e1",
-                    fontSize: 14,
-                    lineHeight: 1,
-                  }}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
-          <div style={{ maxHeight: 260, overflowY: "auto" }}>
-            {filtered.length === 0 ? (
-              <div
-                style={{
-                  padding: "18px 16px",
-                  textAlign: "center",
-                  color: "#94a3b8",
-                  fontSize: 13,
+                  cursor: "pointer",
+                  padding: 0,
+                  color: "#cbd5e1",
+                  fontSize: 14,
+                  lineHeight: 1,
                 }}
               >
-                No results found
-              </div>
-            ) : (
-              filtered.map((item) => {
-                const isSelected = selected.includes(item);
-                return (
-                  <div
-                    key={item}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "9px 14px",
-                      background: isSelected ? "#f0fdf4" : "transparent",
-                      cursor: "pointer",
-                      transition: "background 0.1s",
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      toggle(item);
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected)
-                        e.currentTarget.style.background = "#f8fafc";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = isSelected
-                        ? "#f0fdf4"
-                        : "transparent";
-                    }}
-                  >
-                    <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
-                      {item}
-                    </span>
-                    <div
-                      style={{
-                        width: 16,
-                        height: 16,
-                        border: "1.5px solid #cbd5e1",
-                        borderRadius: 3,
-                        background: isSelected ? "#10b981" : "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {isSelected && (
-                        <span
-                          style={{
-                            color: "#fff",
-                            fontSize: 12,
-                            fontWeight: "bold",
-                          }}
-                        >
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
+                ✕
+              </button>
             )}
           </div>
-        </div>,
-        document.body,
-      )
+        </div>
+        <div style={{ maxHeight: 260, overflowY: "auto" }}>
+          {filtered.length === 0 ? (
+            <div
+              style={{
+                padding: "18px 16px",
+                textAlign: "center",
+                color: "#94a3b8",
+                fontSize: 13,
+              }}
+            >
+              No results found
+            </div>
+          ) : (
+            filtered.map((item) => {
+              const isSelected = selected.includes(item);
+              return (
+                <div
+                  key={item}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "9px 14px",
+                    background: isSelected ? "#f0fdf4" : "transparent",
+                    cursor: "pointer",
+                    transition: "background 0.1s",
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggle(item);
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected)
+                      e.currentTarget.style.background = "#f8fafc";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = isSelected
+                      ? "#f0fdf4"
+                      : "transparent";
+                  }}
+                >
+                  <span style={{ fontSize: 13, color: "#334155", flex: 1 }}>
+                    {item}
+                  </span>
+                  <div
+                    style={{
+                      width: 16,
+                      height: 16,
+                      border: "1.5px solid #cbd5e1",
+                      borderRadius: 3,
+                      background: isSelected ? "#10b981" : "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isSelected && (
+                      <span
+                        style={{
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>,
+      document.body,
+    )
     : null;
 
   return (
@@ -1552,9 +1563,9 @@ export default function DoctorProfile() {
             : form.specialization,
         languagesKnown: form.languagesKnown
           ? form.languagesKnown
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
           : [],
         licensedStates: Array.isArray(form.licensedStates)
           ? form.licensedStates
@@ -1846,33 +1857,33 @@ export default function DoctorProfile() {
             {/* Dismiss button — only for approved / rejected, not pending */}
             {(e.profileUpdateRequestStatus === "approved" ||
               e.profileUpdateRequestStatus === "rejected") && (
-              <button
-                type="button"
-                onClick={markStatusSeen}
-                aria-label="Dismiss notification"
-                title="Dismiss"
-                style={{
-                  position: "absolute",
-                  // Sits inside the top-right corner of the notice banner.
-                  // The banner has 14px top padding + 1px border, so 15px
-                  // from the wrapper top lands visually centred in the header row.
-                  top: 15,
-                  right: 18,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 20,
-                  lineHeight: 1,
-                  color: "#94a3b8",
-                  padding: "2px 4px",
-                  borderRadius: 4,
-                  // Lift above the notice content so clicks always register
-                  zIndex: 1,
-                }}
-              >
-                ×
-              </button>
-            )}
+                <button
+                  type="button"
+                  onClick={markStatusSeen}
+                  aria-label="Dismiss notification"
+                  title="Dismiss"
+                  style={{
+                    position: "absolute",
+                    // Sits inside the top-right corner of the notice banner.
+                    // The banner has 14px top padding + 1px border, so 15px
+                    // from the wrapper top lands visually centred in the header row.
+                    top: 15,
+                    right: 18,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 20,
+                    lineHeight: 1,
+                    color: "#94a3b8",
+                    padding: "2px 4px",
+                    borderRadius: 4,
+                    // Lift above the notice content so clicks always register
+                    zIndex: 1,
+                  }}
+                >
+                  ×
+                </button>
+              )}
           </div>
         )}
 
@@ -1954,7 +1965,7 @@ export default function DoctorProfile() {
             <EditSection icon="📍" title="Location">
               <div className="drprofile__grid-wide">
                 <InputField label="Country">
-                  
+
                   <select
                     value={form.country || ""}
                     onChange={(e) => {
@@ -2020,10 +2031,10 @@ export default function DoctorProfile() {
                 {(form.specialization === "Other" ||
                   (form.specialization &&
                     !SPECIALTIES.includes(form.specialization))) && (
-                  <InputField label="Custom Specialty">
-                    {inp("customSpecialty", "e.g. Sports Medicine")}
-                  </InputField>
-                )}
+                    <InputField label="Custom Specialty">
+                      {inp("customSpecialty", "e.g. Sports Medicine")}
+                    </InputField>
+                  )}
                 <InputField label="Sub-Specialization">
                   {inp("subSpecialization", "Sub-specialization")}
                 </InputField>
@@ -2438,52 +2449,52 @@ export default function DoctorProfile() {
                   ? [e.state]
                   : []
               ).length > 0 && (
-                <div style={{ marginTop: 6, marginBottom: 16 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 800,
-                      color: "#64748b",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      marginBottom: 8,
-                    }}
-                  >
-                    State/Territory Licensing
+                  <div style={{ marginTop: 6, marginBottom: 16 }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: "#64748b",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        marginBottom: 8,
+                      }}
+                    >
+                      State/Territory Licensing
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                      }}
+                    >
+                      {(Array.isArray(e.licensedStates)
+                        ? e.licensedStates
+                        : e.state
+                          ? [e.state]
+                          : []
+                      ).map((stateName) => (
+                        <span
+                          key={stateName}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "4px 12px",
+                            background: "#f8fafc",
+                            border: "1px solid #cbd5e1",
+                            borderRadius: 20,
+                            fontSize: 13,
+                            color: "#334155",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {stateName}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 8,
-                    }}
-                  >
-                    {(Array.isArray(e.licensedStates)
-                      ? e.licensedStates
-                      : e.state
-                        ? [e.state]
-                        : []
-                    ).map((stateName) => (
-                      <span
-                        key={stateName}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          padding: "4px 12px",
-                          background: "#f8fafc",
-                          border: "1px solid #cbd5e1",
-                          borderRadius: 20,
-                          fontSize: 13,
-                          color: "#334155",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {stateName}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+                )}
               {Array.isArray(e.internationalLicenses) &&
                 e.internationalLicenses.length > 0 && (
                   <div style={{ marginTop: 6, marginBottom: 16 }}>
@@ -2597,8 +2608,8 @@ export default function DoctorProfile() {
                 </div>
               )}
               {e.availability &&
-              typeof e.availability === "object" &&
-              Object.keys(e.availability).length > 0 ? (
+                typeof e.availability === "object" &&
+                Object.keys(e.availability).length > 0 ? (
                 <div className="drprofile__grid">
                   {DAYS.map((day) => {
                     const d = e.availability?.[day];
@@ -2659,10 +2670,10 @@ export default function DoctorProfile() {
               <div className="drprofile__grid-read">
                 <ReadField label="Bank Name" value={e.bankName} />
                 {/* <ReadField label="Account Holder" value={e.accountHolderName} /> */}
-                
-                                <ReadField label="Account Number" value={e.accountNumber} />
 
-{/* <ReadField
+                <ReadField label="Account Number" value={e.accountNumber} />
+
+                {/* <ReadField
                   label="Account Number"
                   value={
                     e.accountNumber

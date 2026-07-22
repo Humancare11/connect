@@ -918,14 +918,27 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 450px) {
+  .hc-dash__page {
+    padding: 12px 8px;
+  }
+
   .hc-dash__header {
-    padding: 20px 16px;
-    gap: 14px;
+    padding: 18px 14px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .hc-dash__title {
-    font-size: 20px;
+    font-size: 18px;
+    word-break: break-word;
+  }
+
+  .hc-dash__book-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
   }
 
   .hc-dash__eyebrow {
@@ -933,24 +946,29 @@
     letter-spacing: 2px;
   }
 
+  .hc-dash__overview {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
   .hc-dash__ov-card {
-    padding: 16px 14px;
-    gap: 12px;
+    padding: 14px 12px;
+    gap: 10px;
   }
 
   .hc-dash__ov-num {
-    font-size: 26px;
+    font-size: 22px;
   }
 
   .hc-dash__ov-label {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .hc-dash__ov-icon {
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    border-radius: 10px;
   }
 
   .hc-dash__activity-item {

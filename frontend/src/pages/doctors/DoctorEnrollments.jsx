@@ -2183,7 +2183,13 @@ export default function DoctorOnboardingWizard({
       e.customSpecialty = "Required";
     if (!s2.qualification) e.qualification = "Required";
     if (!s2.school.trim()) e.school = "Required";
+    // if (!s2.gradYear.trim()) e.gradYear = "Required";
+    const gradYearNum = Number(s2.gradYear.trim());
     if (!s2.gradYear.trim()) e.gradYear = "Required";
+    else if (!/^\d{4}$/.test(s2.gradYear.trim()))
+      e.gradYear = "Enter a valid 4-digit year";
+    else if (gradYearNum < 1950 || gradYearNum > new Date().getFullYear())
+      e.gradYear = `Year must be between 1950 and ${new Date().getFullYear()}`;
     if (!String(s2.experience).trim()) e.experience = "Required";
     if (!s2.consultantFees || Number(s2.consultantFees) <= 0)
       e.consultantFees = "Required";
@@ -2590,7 +2596,7 @@ export default function DoctorOnboardingWizard({
               <div className="field-error">{s1Errors.phone}</div>
             )}
           </div>
-          <div className="field-group">
+          {/* <div className="field-group">
             <label className="field-label">
               Email Address <span className="req">*</span>
             </label>
@@ -2604,6 +2610,22 @@ export default function DoctorOnboardingWizard({
             {s1Errors.email && (
               <div className="field-error">{s1Errors.email}</div>
             )}
+          </div> */}
+          <div className="field-group">
+            <label className="field-label">
+              Email Address <span className="req">*</span>
+            </label>
+            <input
+              className="field-input"
+              type="email"
+              value={s1.email}
+              disabled
+              readOnly
+              title="This is your verified account email and cannot be changed here."
+            />
+            <div style={{ fontSize: 12, color: "var(--gray-500)", marginTop: 4 }}>
+              🔒 Verified via OTP — contact support to change your account email.
+            </div>
           </div>
           <div className="field-group">
             <label className="field-label">
@@ -3509,81 +3531,81 @@ export default function DoctorOnboardingWizard({
   );
 
   // ─── STEP 4 ───
- // ─── STEP 4 ───
-const renderStep4 = () => (
-  <div className="animate-in">
-    <div className="de-card-header">
-      <h2>Payout Setup</h2>
-      <p>Configure how and when you'd like to receive payments.</p>
-    </div>
+  // ─── STEP 4 ───
+  const renderStep4 = () => (
+    <div className="animate-in">
+      <div className="de-card-header">
+        <h2>Payout Setup</h2>
+        <p>Configure how and when you'd like to receive payments.</p>
+      </div>
 
-    <div className="de-card-body">
-      <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-        {["weekly", "monthly"].map((f) => (
-          <button
-            key={f}
-            className={`btn ${payoutFreq === f ? "btn-primary" : "btn-outline"} btn-sm`}
-            onClick={() => setPayoutFreq(f)}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)} Payout
+      <div className="de-card-body">
+        <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+          {["weekly", "monthly"].map((f) => (
+            <button
+              key={f}
+              className={`btn ${payoutFreq === f ? "btn-primary" : "btn-outline"} btn-sm`}
+              onClick={() => setPayoutFreq(f)}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)} Payout
+            </button>
+          ))}
+        </div>
+
+        <div className="form-grid">
+          <div className="field-group">
+            <label className="field-label">Bank Name</label>
+            <input
+              className="field-input"
+              placeholder="Bank name"
+              value={s4.bankName}
+              onChange={(e) => setS4({ ...s4, bankName: e.target.value })}
+            />
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">Account Number</label>
+            <input
+              className="field-input"
+              placeholder="Account number"
+              value={s4.accountNum}
+              onChange={(e) => setS4({ ...s4, accountNum: e.target.value })}
+            />
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">SWIFT / BIC Code</label>
+            <input
+              className="field-input"
+              placeholder="SWIFT / BIC Code"
+              value={s4.swift}
+              onChange={(e) => setS4({ ...s4, swift: e.target.value })}
+            />
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">PayPal ID</label>
+            <input
+              className="field-input"
+              placeholder="PayPal email or username"
+              value={s4.paypalId}
+              onChange={(e) => setS4({ ...s4, paypalId: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="btn-row">
+          <button className="btn btn-secondary" onClick={handleBack}>
+            ← Back
           </button>
-        ))}
-      </div>
 
-      <div className="form-grid">
-        <div className="field-group">
-          <label className="field-label">Bank Name</label>
-          <input
-            className="field-input"
-            placeholder="Bank name"
-            value={s4.bankName}
-            onChange={(e) => setS4({ ...s4, bankName: e.target.value })}
-          />
+          <button className="btn btn-primary" onClick={handleNext}>
+            Submit Application →
+          </button>
         </div>
-
-        <div className="field-group">
-          <label className="field-label">Account Number</label>
-          <input
-            className="field-input"
-            placeholder="Account number"
-            value={s4.accountNum}
-            onChange={(e) => setS4({ ...s4, accountNum: e.target.value })}
-          />
-        </div>
-
-        <div className="field-group">
-          <label className="field-label">SWIFT / BIC Code</label>
-          <input
-            className="field-input"
-            placeholder="SWIFT / BIC Code"
-            value={s4.swift}
-            onChange={(e) => setS4({ ...s4, swift: e.target.value })}
-          />
-        </div>
-
-        <div className="field-group">
-          <label className="field-label">PayPal ID</label>
-          <input
-            className="field-input"
-            placeholder="PayPal email or username"
-            value={s4.paypalId}
-            onChange={(e) => setS4({ ...s4, paypalId: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className="btn-row">
-        <button className="btn btn-secondary" onClick={handleBack}>
-          ← Back
-        </button>
-
-        <button className="btn btn-primary" onClick={handleNext}>
-          Submit Application →
-        </button>
       </div>
     </div>
-  </div>
-);
+  );
 
   // ─── STEP 5 ───
   const approvalPipeline = [
@@ -3713,12 +3735,6 @@ const renderStep4 = () => (
                 onClick={handleEditResubmit}
               >
                 Edit &amp; Resubmit
-              </button>
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={() => navigate("/doctor-dashboard/enrollments")}
-              >
-                View Status
               </button>
             </div>
           )}

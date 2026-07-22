@@ -546,12 +546,7 @@ function HeroSection({ data }) {
           </p>
 
           <div className="sp-btns" style={{ animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both" }}>
-            <a href="/appointment-booking" className="sp-btn sp-btn--primary">
-              <Calendar size={15} /> Book Appointment
-            </a>
-            <a href="#" className="sp-btn sp-btn--ghost">
-              <Users size={15} /> Know More
-            </a>
+
           </div>
 
           <div className="sp-trust" style={{ animation: "sp-fadeUp .85s .34s cubic-bezier(.22,.68,0,1.2) both" }}>
@@ -929,10 +924,10 @@ export default function ChronicMigraine() {
           </div>
         </div>
 
-        <SymptomsChips />
-        <RelatedSpecialties />
 
-        <FaqSection />
+
+
+
       </div>
     </>
   );

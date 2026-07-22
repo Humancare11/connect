@@ -1,0 +1,144 @@
+/* Refund & Cancellation Policy — plain, minimal legal-page layout */
+
+.rcp-page {
+    font-family: "Satoshi", Inter, sans-serif;
+    color: #111827;
+    background-color: #ffffff;
+    line-height: 1.8;
+    font-size: 16px;
+}
+
+/* Header / nav */
+.rcp-header {
+    padding: 14px 24px;
+}
+
+.rcp-header__inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.rcp-logo {
+    font-weight: 700;
+    font-size: 18px;
+    color: #000000;
+}
+
+.rcp-nav {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.rcp-nav__link,
+.rcp-login {
+    font-size: 13px;
+    color: #000000;
+    text-decoration: none;
+}
+
+.rcp-nav__link:hover,
+.rcp-login:hover {
+    text-decoration: underline;
+}
+
+/* Main content */
+.rcp-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 125px 24px 88px;
+}
+
+.rcp-hero {
+    margin-bottom: 32px;
+}
+
+.rcp-title {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin: 0 0 16px;
+}
+
+.rcp-meta {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0 0 12px;
+}
+
+.rcp-intro {
+    margin-top: 20px;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.rcp-section {
+    /* border-top: 1px solid #E5E7EB; */
+    margin-top: 32px;
+}
+
+.rcp-heading {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 20px;
+}
+
+.rcp-section p {
+    margin: 0 0 10px;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.rcp-list {
+    margin: 0 0 12px;
+    /* padding-left: 24px; */
+}
+
+.rcp-list li {
+    margin-bottom: 10px;
+}
+
+.rcp-address {
+    margin: 0 0 12px;
+}
+
+.rcp-link {
+    color: #2563EB;
+    text-decoration: none;
+}
+
+.rcp-link:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .rcp-header__inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .rcp-content {
+        padding: 80px 20px 64px;
+    }
+
+    .rcp-title {
+        font-size: 28px;
+    }
+
+    .rcp-heading {
+        font-size: 22px;
+    }
+
+    .rcp-page,
+    .rcp-intro,
+    .rcp-section p {
+        font-size: 15px;
+    }
+}

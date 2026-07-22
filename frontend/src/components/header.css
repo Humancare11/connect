@@ -875,19 +875,20 @@
   }
 }
 
-/* ── 480px: very small screens ── */
-@media (max-width: 480px) {
+/* ── 450px: small screens ── */
+@media (max-width: 450px) {
   .glass-header {
     width: calc(100% - 16px);
+    top: 8px;
   }
 
   .logo {
-    max-width: 110px;
+    max-width: 105px;
   }
 
   .glass-header.shrink .help-slider {
-    min-width: 170px;
-    max-width: calc(100vw - 140px);
+    min-width: 150px;
+    max-width: calc(100vw - 120px);
     height: 34px;
     padding: 0 10px;
   }
@@ -904,7 +905,7 @@
   }
 
   .help-dropdown {
-    top: 66px;
+    top: 64px;
     left: 8px;
     right: 8px;
     padding: 12px 8px 8px;
