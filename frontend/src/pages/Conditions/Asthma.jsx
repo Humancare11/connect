@@ -997,9 +997,9 @@ function FaqSection() {
             <button className="sp-faq-chat">
               <MessageCircle size={18} /> Chat with our team
             </button>
-            <div className="sp-faq-stat">⚡ Avg. response in 2 min</div>
+            <div className="sp-faq-stat">⚡ Avg. response in 10 min</div>
             <div className="sp-faq-stat">🔒 HIPAA secure &amp; private</div>
-            <div className="sp-faq-stat">🌍 Available in all 50 states</div>
+            <div className="sp-faq-stat">🌍 Available Globally</div>
           </div>
 
           {/* Content */}
