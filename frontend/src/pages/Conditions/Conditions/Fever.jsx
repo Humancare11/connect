@@ -250,31 +250,6 @@ export default function Fever() {
                     {/* RIGHT */}
                     <div className="condition-about-right">
                       <div>
-                        <h3 className="condition-block-title">
-                          What is fever?
-                        </h3>
-                        <p className="condition-block-body">
-                          Fever can cause chills, sweating, body aches,
-                          headaches, fatigue, and weakness often linked to
-                          infections, viruses, flu, or other underlying health
-                          conditions.
-                        </p>
-                      </div>
-
-                      <div>
-                        <h3 className="condition-block-title">How?</h3>
-                        <p className="condition-block-body">
-                          Get fast care for fever symptoms with Humancare
-                          Connect. Our telemedicine services let you schedule an
-                          online doctor appointment and connect with a licensed
-                          provider from home. Through our secure virtual
-                          healthcare services, you can receive symptom
-                          evaluation, treatment guidance, and prescriptions when
-                          appropriate without the hassle of visiting urgent
-                          care.
-                        </p>
-                      </div>
-                      <div>
                         <h3 className="condition-block-title">How?</h3>
                         <p className="condition-block-body">
                           Get fast care for fever symptoms with Humancare
