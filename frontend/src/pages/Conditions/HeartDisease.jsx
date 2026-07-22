@@ -930,10 +930,10 @@ export default function HeartDisease() {
                     </div>
                 </div>
 
-                <SymptomsChips />
-                <RelatedSpecialties />
 
-                <FaqSection />
+
+
+
             </div>
         </>
     );

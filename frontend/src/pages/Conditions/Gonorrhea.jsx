@@ -680,12 +680,7 @@ function HeroSection({ data }) {
               animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
             }}
           >
-            <a href="/appointment-booking" className="sp-btn sp-btn--primary">
-              <Calendar size={15} /> Book Appointment
-            </a>
-            <a href="#" className="sp-btn sp-btn--ghost">
-              <Users size={15} /> Know More
-            </a>
+
           </div>
 
           <div
@@ -962,82 +957,6 @@ function WhyChooseUs() {
 // ─────────────────────────────────────────────────────────────────
 // FAQ
 // ─────────────────────────────────────────────────────────────────
-function FaqSection() {
-  const [openId, setOpenId] = useState("0-0");
-  const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
-
-  return (
-    <section style={{ background: "#F7FAFF", padding: "90px 0" }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
-        <div className="sp-faq-layout">
-          {/* Sidebar */}
-          <div className="sp-faq-sidebar">
-            <SectionLabel>FAQ</SectionLabel>
-            <h2 className="sp-faq-title">
-              Frequently Asked
-              <br />
-              Questions
-            </h2>
-            <p className="sp-faq-desc">
-              Everything you need to know about primary care at HumanCare
-              Connect. Can't find an answer?
-            </p>
-            <button className="sp-faq-chat">
-              <MessageCircle size={18} /> Chat with our team
-            </button>
-            <div className="sp-faq-stat">⚡ Avg. response in 2 min</div>
-            <div className="sp-faq-stat">🔒 HIPAA secure &amp; private</div>
-            <div className="sp-faq-stat">🌍 Available in all 50 states</div>
-          </div>
-
-          {/* Content */}
-          <div className="sp-faq-content">
-            {faqData.map((cat, ci) => (
-              <div key={cat.category} className="sp-faq-card">
-                <div className="sp-faq-cat">
-                  <span className="sp-faq-dot" />
-                  {cat.category}
-                </div>
-                {cat.items.map((item, ii) => {
-                  const id = `${ci}-${ii}`;
-                  return (
-                    <div key={id} className="sp-faq-item">
-                      <button className="sp-faq-q" onClick={() => toggle(id)}>
-                        <span>{item.q}</span>
-                        <div
-                          className={`sp-faq-icon ${openId === id ? "sp-active" : ""}`}
-                        >
-                          +
-                        </div>
-                      </button>
-                      <div
-                        className={`sp-faq-ans ${openId === id ? "sp-open" : ""}`}
-                      >
-                        <p>{item.a}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-
-            <div className="sp-faq-bottom-cta">
-              <div>
-                <h3>Still have questions?</h3>
-                <p>Our care team is available every day, 8 AM – 10 PM.</p>
-              </div>
-              <a href="/appointment-booking">
-                <button>
-                  Book a Call <ArrowRight size={18} />
-                </button>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT  — drop-in replacement for any sub-page
@@ -1077,7 +996,7 @@ export default function Gonorrhea() {
             </aside>
           </div>
         </div>
-        <FaqSection />
+
       </div>
     </>
   );
