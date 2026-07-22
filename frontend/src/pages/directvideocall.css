@@ -169,6 +169,24 @@
   z-index: 5;
 }
 
+.dvcall-offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #7c2d12;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
 .dvcall-badge {
   background: rgba(99, 102, 241, 0.16);
   color: #a5b4fc;
