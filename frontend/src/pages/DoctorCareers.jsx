@@ -39,7 +39,8 @@ import {
 } from "react-icons/fa6";
 import "./DoctorCareers.css";
 import SEO from "../components/Seo";
-
+import CareeerImg from "../assets/Career/Careers-for-Physicians.webp";
+import NetworkImg from "../assets/Career/Network-Trusted-by-Doctors.webp";
 /* -------------------------------------------------------------------- */
 /*  Static content                                                      */
 /* -------------------------------------------------------------------- */
@@ -129,13 +130,13 @@ const SPECIALTIES = [
 ];
 
 const REQUIREMENTS = [
-  "Passionate about improving patient access to quality healthcare.",
-  "Committed to delivering exceptional virtual care.",
-  "Ready to expand your professional reach.",
-  "Comfortable using secure digital healthcare solutions.",
-  "Dedicated to patient-first, ethical medical practice.",
-  "Looking for flexibility without compromising quality.",
-  "Excited to be part of a trusted global healthcare network.",
+  "Passionate about improving patient access to quality healthcare",
+  "Committed to delivering exceptional virtual care",
+  "Ready to expand your professional reach",
+  "Comfortable using secure digital healthcare solutions",
+  "Dedicated to patient-first, ethical medical practice",
+  "Looking for flexibility without compromising quality",
+  "Excited to be part of a trusted global healthcare network",
 ];
 const PROCESS_STEPS = [
   {
@@ -161,17 +162,15 @@ const PROCESS_STEPS = [
   {
     icon: <FaRocket />,
     title: "Start Delivering Virtual Care",
-    desc: "Set your availability, manage your schedule, and begin providing secure, HIPAA-compliant virtual consultations while making a meaningful impact on patients' lives.",
+    desc: "Set your availability, manage your schedule, and begin providing secure, HIPAA-compliant virtual consultations while making a meaningful impact on patients lives.",
   },
 ];
 
 const BENEFITS_FEATURES = [
   {
-    name: "Dr. Anjali Rao",
-    specialty: "Family Medicine",
-    photo: "/images/careers/provider-1.jpg",
-    quote:
-      "Joining Humancare Connect let me build a schedule around my family without stepping away from clinical work I love.",
+    icon: <FaClock />,
+    title: "Flexible Scheduling",
+    desc: "Set your own availability and provide virtual consultations at times that fit your professional and personal commitments.",
   },
   {
     icon: <FaGlobe />,
@@ -616,450 +615,420 @@ export default function DoctorCareers() {
 
   const toggleFAQ = (idx) => setOpenFAQ(openFAQ === idx ? -1 : idx);
 
-  const nextSlide = () =>
-    setActiveSlide((prev) => (prev + 1) % TESTIMONIALS.length);
-  const prevSlide = () =>
-    setActiveSlide(
-      (prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length,
-    );
-
   return (
     <>
-                  <SEO
-        title="Doctor Careers | Join Humancare Connect's Global Network"
+      <SEO
+        title=" Doctor Careers | Join Humancare Connect's Global Network"
         description="Join Humancare Connect's global network of licensed healthcare professionals. Deliver secure, HIPAA-compliant virtual care, expand your professional reach, and shape the future of healthcare."
         keywords="Licensed healthcare professionals, Global healthcare network, Telemedicine platform, Virtual consultations, Virtual care, HIPAA-compliant telemedicine platform"
         url="https://humancareconnect.co/career"
       />
       <main className="doctor-careers-page">
-      {/* ---------------------------------------------------------- */}
-      {/* 1. Hero                                                     */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-hero">
-        <div className="dc-hero-bg" aria-hidden="true">
-          <span className="dc-blob dc-blob--1" />
-          <span className="dc-blob dc-blob--2" />
-        </div>
+        {/* ---------------------------------------------------------- */}
+        {/* 1. Hero                                                     */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-hero">
+          <div className="dc-hero-bg" aria-hidden="true">
+            <span className="dc-blob dc-blob--1" />
+            <span className="dc-blob dc-blob--2" />
+          </div>
 
-        <div className="dc-container dc-hero-grid">
-          <motion.div
-            className="dc-hero-content"
-            initial="hidden"
-            animate="show"
-            variants={staggerContainer}
-          >
-            <motion.span className="dc-eyebrow" variants={fadeUp}>
-              Careers for Physicians
-            </motion.span>
-            <motion.h1 variants={fadeUp}>
-              The Future of Healthcare{" "}
-              <span className="dc-text-accent">Needs Doctors Like You. </span>
-            </motion.h1>
-            <motion.p className="dc-hero-sub" variants={fadeUp}>
-              Join a trusted global telemedicine platform built for licensed
-              healthcare professionals who want to make a greater impact.
-              Humancare Connect helps doctors connect with patients through
-              secure virtual consultations, giving you the flexibility to
-              practice from anywhere while delivering timely, high-quality care.
-              Whether you're growing your practice, supporting underserved
-              communities, or embracing the future of healthcare, you'll have
-              the technology, support, and professional network to succeed
-            </motion.p>
-            {/* <motion.div className="dc-hero-actions" variants={fadeUp}> */}
-            {/* <a href="#apply" className="dc-btn dc-btn--primary">
+          <div className="dc-container dc-hero-grid">
+            <motion.div
+              className="dc-hero-content"
+              initial="hidden"
+              animate="show"
+              variants={staggerContainer}
+            >
+              <motion.span className="dc-eyebrow" variants={fadeUp}>
+                Careers for Physicians
+              </motion.span>
+              <motion.h1 variants={fadeUp}>
+                The Future of Healthcare{" "}
+                <span className="dc-text-accent">Needs Doctors Like You. </span>
+              </motion.h1>
+              <motion.p className="dc-hero-sub" variants={fadeUp}>
+                Join a trusted global telemedicine platform built for licensed
+                healthcare professionals who want to make a greater impact.
+                Humancare Connect helps doctors connect with patients through
+                secure virtual consultations, giving you the flexibility to
+                practice from anywhere while delivering timely, high-quality
+                care. Whether you're growing your practice, supporting
+                underserved communities, or embracing the future of healthcare,
+                you'll have the technology, support, and professional network to
+                succeed
+              </motion.p>
+              {/* <motion.div className="dc-hero-actions" variants={fadeUp}> */}
+              {/* <a href="#apply" className="dc-btn dc-btn--primary">
                 Apply Now <FaArrowRight aria-hidden="true" />
               </a> */}
-            {/* <a href="#why-join" className="dc-btn dc-btn--secondary">
+              {/* <a href="#why-join" className="dc-btn dc-btn--secondary">
                 Learn More
               </a> */}
-            {/* </motion.div> */}
-            <motion.p className="dc-hero-trust" variants={fadeUp}>
-              Join a growing community of licensed healthcare professionals
-              delivering trusted virtual care worldwide.
-            </motion.p>
-          </motion.div>
+              {/* </motion.div> */}
+              <motion.p className="dc-hero-trust" variants={fadeUp}>
+                Join a growing community of licensed healthcare professionals
+                delivering trusted virtual care worldwide.
+              </motion.p>
+            </motion.div>
 
-          <motion.div
-            className="dc-hero-media"
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-          >
-            <div className="dc-hero-image-frame">
-              <img
-                src="/images/careers/hero-doctor-consult.jpg"
-                alt="Physician conducting a virtual consultation on a laptop"
-                loading="eager"
-              />
-            </div>
-            <div className="dc-hero-floating-card">
-              <FaVideo aria-hidden="true" />
-              <div>
-                <strong>1,200+</strong>
-                <span>Active Providers</span>
+            <motion.div
+              className="dc-hero-media"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              <div className="dc-hero-image-frame">
+                <img
+                  src={CareeerImg}
+                  alt="The Future of Healthcare Needs Doctors."
+                  loading="eager"
+                />
               </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+              {/* <div className="dc-hero-floating-card">
+                <FaVideo aria-hidden="true" />
+                <div>
+                  <strong>1,200+</strong>
+                  <span>Active Providers</span>
+                </div>
+              </div> */}
+            </motion.div>
+          </div>
+        </section>
 
-      {/* ---------------------------------------------------------- */}
-      {/* 2. Why Join                                                 */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-section" id="why-join">
-        <div className="dc-container">
-          <motion.div
-            className="dc-section-header"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-          >
-            <span className="dc-eyebrow">Why Join Humancare Connect</span>
-            <h2>Everything you need to practice, minus the overhead</h2>
-            <p>
-              Healthcare is evolving, and so is the way doctors connect with
-              patients. Humancare Connect combines flexible virtual care, secure
-              technology, and dedicated support to help you deliver exceptional
-              healthcare wherever your expertise is needed.
-            </p>
-          </motion.div>
+        {/* ---------------------------------------------------------- */}
+        {/* 2. Why Join                                                 */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-section" id="why-join">
+          <div className="dc-container">
+            <motion.div
+              className="dc-section-header"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeUp}
+            >
+              <span className="dc-eyebrow">
+                WHY DOCTORS CHOOSE HUMANCARE CONNECT
+              </span>
+              <h2>Built Around the Way Modern Doctors Practice</h2>
+              <p>
+                Healthcare is evolving, and so is the way doctors connect with
+                patients. Humancare Connect combines flexible virtual care,
+                secure technology, and dedicated support to help you deliver
+                exceptional healthcare wherever your expertise is needed.
+              </p>
+            </motion.div>
 
-          <motion.div
-            className="dc-grid dc-grid--3"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.15 }}
-            variants={staggerContainer}
-          >
-            {WHY_JOIN.map((item) => (
-              <FeatureCard key={item.title} {...item} />
-            ))}
-          </motion.div>
-        </div>
-      </section>
+            <motion.div
+              className="dc-grid dc-grid--3"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.15 }}
+              variants={staggerContainer}
+            >
+              {WHY_JOIN.map((item) => (
+                <FeatureCard key={item.title} {...item} />
+              ))}
+            </motion.div>
+          </div>
+        </section>
 
-      {/* ---------------------------------------------------------- */}
-      {/* 3. About Working With HCC                                   */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-section dc-section--muted">
-        <div className="dc-container dc-about-grid">
-          <motion.div
-            className="dc-about-image"
-            initial={{ opacity: 0, x: -24 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <img
-              src="/images/careers/about-collaboration.jpg"
-              alt="Healthcare professionals collaborating in a modern clinical setting"
-              loading="lazy"
-            />
-          </motion.div>
+        {/* ---------------------------------------------------------- */}
+        {/* 3. About Working With HCC                                   */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-section dc-section--muted">
+          <div className="dc-container dc-about-grid">
+            <motion.div
+              className="dc-about-image"
+              initial={{ opacity: 0, x: -24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <img
+                src={NetworkImg}
+                alt="Network Trusted by Doctors"
+                loading="lazy"
+              />
+            </motion.div>
 
-          <motion.div
-            className="dc-about-content"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={staggerContainer}
-          >
-            <motion.span className="dc-eyebrow" variants={fadeUp}>
-              ABOUT WORKING WITH HUMANCARE CONNECT
-            </motion.span>
-            <motion.h2 variants={fadeUp}>
-              Join the Network Trusted by Doctors Who Want to Make a Bigger
-              Impact.
-            </motion.h2>
-            <motion.p variants={fadeUp}>
-              Your expertise deserves a platform that respects your profession.
-              Humancare Connect combines secure HIPAA-compliant technology, a
-              patient-first approach, and dedicated physician support to help
-              you deliver exceptional virtual care with confidence. Whether
-              you're expanding your practice or embracing the future of
-              healthcare, you'll be joining a community committed to clinical
-              excellence, professional independence, and better patient
-              outcomes.
-              <br />
-              <br />
-              What You'll Experience
-            </motion.p>
-            <motion.ul className="dc-checklist" variants={fadeUp}>
-              {BENEFITS_CHECKLIST.map((text) => (
+            <motion.div
+              className="dc-about-content"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={staggerContainer}
+            >
+              <motion.span className="dc-eyebrow" variants={fadeUp}>
+                ABOUT WORKING WITH HUMANCARE CONNECT
+              </motion.span>
+              <motion.h2 variants={fadeUp}>
+                Join the Network Trusted by Doctors Who Want to Make a Bigger
+                Impact.
+              </motion.h2>
+              <motion.p variants={fadeUp}>
+                Your expertise deserves a platform that respects your
+                profession. Humancare Connect combines secure HIPAA-compliant
+                technology, a patient-first approach, and dedicated physician
+                support to help you deliver exceptional virtual care with
+                confidence. Whether you're expanding your practice or embracing
+                the future of healthcare, you'll be joining a community
+                committed to clinical excellence, professional independence, and
+                better patient outcomes.
+                <br />
+                <br />
+                What You'll Experience
+              </motion.p>
+              <motion.ul className="dc-checklist" variants={fadeUp}>
+                {BENEFITS_CHECKLIST.map((text) => (
+                  <ChecklistItem key={text} text={text} />
+                ))}
+              </motion.ul>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* 4. Application Form                                         */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-section" id="apply">
+          <div className="dc-container dc-application-container">
+            <motion.div
+              className="dc-section-header"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeUp}
+            >
+              <span className="dc-eyebrow">JOIN OUR DOCTOR NETWORK</span>
+              <h2>Start Your Application</h2>
+              <p>
+                Take the first step toward joining Humancare Connect's global
+                network of licensed healthcare professionals. Submit your
+                application below, and our team will be in touch to guide you
+                through the next steps.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="dc-application-form-wrap"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <ApplicationForm />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* 6. What We're Looking For                                   */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-section dc-section--muted">
+          <div className="dc-container dc-requirements-grid">
+            <motion.div
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={staggerContainer}
+            >
+              <motion.span className="dc-eyebrow" variants={fadeUp}>
+                JOIN OUR DOCTOR COMMUNITY
+              </motion.span>
+              <motion.h2 variants={fadeUp}>
+                If This Sounds Like You, Let's Build the Future of Healthcare
+                Together.
+              </motion.h2>
+              <motion.p variants={fadeUp}>
+                We're looking for healthcare professionals who believe great
+                care shouldn't be limited by location. If you're committed to
+                clinical excellence, compassionate care, and embracing the
+                future of medicine, Humancare Connect is the right place for
+                you.
+              </motion.p>
+            </motion.div>
+
+            <motion.ul
+              className="dc-checklist dc-checklist--card"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.15 }}
+              variants={staggerContainer}
+            >
+              {REQUIREMENTS.map((text) => (
                 <ChecklistItem key={text} text={text} />
               ))}
             </motion.ul>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* ---------------------------------------------------------- */}
-      {/* 4. Application Form                                         */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-section" id="apply">
-        <div className="dc-container dc-application-container">
-          <motion.div
-            className="dc-section-header"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-          >
-            <span className="dc-eyebrow">JOIN OUR DOCTOR NETWORK</span>
-            <h2>Start Your Application</h2>
-            <p>
-              Take the first step toward joining Humancare Connect's global
-              network of licensed healthcare professionals. Submit your
-              application below, and our team will be in touch to guide you
-              through the next steps.
-            </p>
-          </motion.div>
+        {/* ---------------------------------------------------------- */}
+        {/* 7. Recruitment Process                                      */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-section">
+          <div className="dc-container">
+            <motion.div
+              className="dc-section-header"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeUp}
+            >
+              <span className="dc-eyebrow">HOW IT WORKS</span>
+              <h2>Your Journey to Becoming a Partner Doctor</h2>
+              <p>
+                Joining Humancare Connect is straightforward. From the
+                onboarding application, our team supports you every step of the
+                way so you can start delivering exceptional virtual care with
+                confidence.
+              </p>
+            </motion.div>
 
-          <motion.div
-            className="dc-application-form-wrap"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          >
-            <ApplicationForm />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------- */}
-      {/* 5. Specialties                                              */}
-      {/* ---------------------------------------------------------- */}
-      {/* <section className="dc-section">
-        <div className="dc-container">
-          <motion.div
-            className="dc-section-header"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-          >
-            <span className="dc-eyebrow">Specialties We're Looking For</span>
-            <h2>Currently recruiting across these specialties</h2>
-            <p>Don't see yours listed? We're always expanding our network.</p>
-          </motion.div>
-
-          <motion.div
-            className="dc-grid dc-grid--4"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={staggerContainer}
-          >
-            {SPECIALTIES.map((item) => (
-              <SpecialtyCard key={item.name} {...item} />
-            ))}
-          </motion.div>
-        </div>
-      </section> */}
-
-      {/* ---------------------------------------------------------- */}
-      {/* 6. What We're Looking For                                   */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-section dc-section--muted">
-        <div className="dc-container dc-requirements-grid">
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={staggerContainer}
-          >
-            <motion.span className="dc-eyebrow" variants={fadeUp}>
-              JOIN OUR DOCTOR COMMUNITY
-            </motion.span>
-            <motion.h2 variants={fadeUp}>
-              If This Sounds Like You, Let's Build the Future of Healthcare
-              Together.
-            </motion.h2>
-            <motion.p variants={fadeUp}>
-              We're looking for healthcare professionals who believe great care
-              shouldn't be limited by location. If you're committed to clinical
-              excellence, compassionate care, and embracing the future of
-              medicine, Humancare Connect is the right place for you.
-            </motion.p>
-          </motion.div>
-
-          <motion.ul
-            className="dc-checklist dc-checklist--card"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.15 }}
-            variants={staggerContainer}
-          >
-            {REQUIREMENTS.map((text) => (
-              <ChecklistItem key={text} text={text} />
-            ))}
-          </motion.ul>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------- */}
-      {/* 7. Recruitment Process                                      */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-section">
-        <div className="dc-container">
-          <motion.div
-            className="dc-section-header"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-          >
-            <span className="dc-eyebrow">HOW IT WORKS</span>
-            <h2>Your Journey to Becoming a Partner Doctor</h2>
-            <p>
-              Joining Humancare Connect is straightforward. From the onboarding
-              application, our team supports you every step of the way so you
-              can start delivering exceptional virtual care with confidence.
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="dc-timeline"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={staggerContainer}
-          >
-            {PROCESS_STEPS.map((step, idx) => (
-              <TimelineStep
-                key={step.title}
-                step={step}
-                index={idx}
-                total={PROCESS_STEPS.length}
-              />
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------- */}
-      {/* 8. Benefits of Joining                                      */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-section dc-section--muted">
-        <div className="dc-container">
-          <motion.div
-            className="dc-section-header"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-          >
-            <span className="dc-eyebrow">BENEFITS OF JOINING</span>
-            <h2>Everything You Need to Deliver Exceptional Virtual Care</h2>
-            <p>
-              Join a platform designed to help you focus on what matters most:
-              your patients. From secure technology to dedicated support,
-              Humancare Connect empowers you to practice with confidence.{" "}
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="dc-benefit-list"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={staggerContainer}
-          >
-            {BENEFITS_FEATURES.map((item) => (
-              <BenefitTile key={item.title} {...item} />
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------- */}
-      {/* 10. FAQ                                                      */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-section dc-section--muted">
-        <div className="dc-container dc-faq-container">
-          <motion.div
-            className="dc-section-header"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-          >
-            <span className="dc-eyebrow">Frequently Asked Questions</span>
-            <h2>Common questions from physicians</h2>
-          </motion.div>
-
-          <motion.div
-            className="dc-faq-list"
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={staggerContainer}
-          >
-            {FAQS.map((item, idx) => (
-              <motion.div key={item.q} variants={fadeUp}>
-                <FAQItem
-                  item={item}
-                  isOpen={openFAQ === idx}
-                  onToggle={() => toggleFAQ(idx)}
+            <motion.div
+              className="dc-timeline"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1 }}
+              variants={staggerContainer}
+            >
+              {PROCESS_STEPS.map((step, idx) => (
+                <TimelineStep
+                  key={step.title}
+                  step={step}
+                  index={idx}
+                  total={PROCESS_STEPS.length}
                 />
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+              ))}
+            </motion.div>
+          </div>
+        </section>
 
-      {/* ---------------------------------------------------------- */}
-      {/* 11. Final CTA                                               */}
-      {/* ---------------------------------------------------------- */}
-      <section className="dc-section dc-final-cta-section" id="get-started">
-        <div className="dc-container">
-          <motion.div
-            className="dc-final-cta-card"
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <div className="dc-final-cta-glow" aria-hidden="true" />
-            <div className="dc-final-cta-inner">
-              <motion.h2
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.4 }}
-                variants={fadeUp}
-              >
-                Ready to bring your practice to more patients?
-              </motion.h2>
-              <motion.p
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.4 }}
-                variants={fadeUp}
-              >
-                Join a trusted telemedicine network built to support licensed
-                physicians every step of the way.
-              </motion.p>
-              <motion.div
-                className="dc-final-cta-actions"
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.4 }}
-                variants={fadeUp}
-              >
-                <a href="#apply" className="dc-btn dc-btn--primary dc-btn--lg">
-                  Apply Now <FaArrowRight aria-hidden="true" />
-                </a>
-                <Link to="/contact" className="dc-btn dc-btn--ghost dc-btn--lg">
-                  Contact Recruitment
-                </Link>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-    </main>
+        {/* ---------------------------------------------------------- */}
+        {/* 8. Benefits of Joining                                      */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-section dc-section--muted">
+          <div className="dc-container">
+            <motion.div
+              className="dc-section-header"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeUp}
+            >
+              <span className="dc-eyebrow">BENEFITS OF JOINING</span>
+              <h2>Everything You Need to Deliver Exceptional Virtual Care</h2>
+              <p>
+                Join a platform designed to help you focus on what matters most:
+                your patients. From secure technology to dedicated support,
+                Humancare Connect empowers you to practice with confidence.{" "}
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="dc-benefit-list"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1 }}
+              variants={staggerContainer}
+            >
+              {BENEFITS_FEATURES.map((item) => (
+                <BenefitTile key={item.title} {...item} />
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* 10. FAQ                                                      */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-section dc-section--muted">
+          <div className="dc-container dc-faq-container">
+            <motion.div
+              className="dc-section-header"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeUp}
+            >
+              <span className="dc-eyebrow">FREQUENTLY ASKED QUESTIONS</span>
+              <h2>Common questions from physicians</h2>
+            </motion.div>
+
+            <motion.div
+              className="dc-faq-list"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1 }}
+              variants={staggerContainer}
+            >
+              {FAQS.map((item, idx) => (
+                <motion.div key={item.q} variants={fadeUp}>
+                  <FAQItem
+                    item={item}
+                    isOpen={openFAQ === idx}
+                    onToggle={() => toggleFAQ(idx)}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* 11. Final CTA                                               */}
+        {/* ---------------------------------------------------------- */}
+        <section className="dc-section dc-final-cta-section" id="get-started">
+          <div className="dc-container">
+            <motion.div
+              className="dc-final-cta-card"
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+              <div className="dc-final-cta-glow" aria-hidden="true" />
+              <div className="dc-final-cta-inner">
+                <motion.h2
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.4 }}
+                  variants={fadeUp}
+                >
+                  The Future of Patient Care Starts With Doctors Like You.
+                </motion.h2>
+                <motion.p
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.4 }}
+                  variants={fadeUp}
+                >
+                  Join Humancare Connect's trusted global network of healthcare
+                  professionals and help redefine how quality healthcare is
+                  delivered. Practice with confidence through a secure,
+                  HIPAA-compliant telemedicine platform built for modern
+                  medicine
+                </motion.p>
+                <motion.div
+                  className="dc-final-cta-actions"
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, amount: 0.4 }}
+                  variants={fadeUp}
+                >
+                  <Link
+                    to="/contact-us"
+                    className="dc-btn dc-btn--ghost dc-btn--lg"
+                  >
+                    Contact Recruitment
+                  </Link>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      </main>
     </>
   );
 }

@@ -58,13 +58,14 @@ h1, h2, h3, h4 {
 }
 
 .blog-hero {
-  background: var(--section);
+  background:
+    
+    url("../../assets/BlogImages/hero-bg.webp") center / cover no-repeat;
   padding-top: 120px;
   padding-bottom: 72px;
   position: relative;
   overflow: hidden;
 }
-
 /* Removed the broken ::after wave that used --section on --section bg */
 .blog-hero::after {
   content: "";

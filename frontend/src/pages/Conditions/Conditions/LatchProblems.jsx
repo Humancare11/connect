@@ -43,7 +43,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/WomensHealth/latch-problems.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
@@ -246,27 +245,28 @@ export default function LatchProblems() {
                       </h3>
                       <p className="condition-block-body">
                         Latch problems can occur when a baby has difficulty
-                        attaching properly during breastfeeding, which may lead to
-                        feeding challenges, nipple discomfort, inadequate milk
-                        transfer, or concerns about infant nutrition and growth.
+                        attaching properly during breastfeeding, which may lead
+                        to feeding challenges, nipple discomfort, inadequate
+                        milk transfer, or concerns about infant nutrition and
+                        growth.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
-                        Get support for latch problems with Humancare Connect. Our
-                        telemedicine services make it easy to schedule an online
-                        doctor appointment and connect with a licensed provider
-                        from home. Through our secure telemedicine platform, you
-                        can access virtual healthcare services for breastfeeding
-                        guidance, lactation support, feeding assessments, and
-                        personalized care recommendations. Telehealth services
-                        provide convenient access to an experienced online
-                        provider who can help identify breastfeeding challenges,
-                        improve latching techniques, and support a more
-                        comfortable and effective feeding experience for both
-                        parent and baby.
+                        Get support for latch problems with Humancare Connect.
+                        Our telemedicine services make it easy to schedule an
+                        online doctor appointment and connect with a licensed
+                        provider from home. Through our secure telemedicine
+                        platform, you can access virtual healthcare services for
+                        breastfeeding guidance, lactation support, feeding
+                        assessments, and personalized care recommendations.
+                        Telehealth services provide convenient access to an
+                        experienced online provider who can help identify
+                        breastfeeding challenges, improve latching techniques,
+                        and support a more comfortable and effective feeding
+                        experience for both parent and baby.
                       </p>
                     </div>
 
@@ -341,7 +341,14 @@ export default function LatchProblems() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=women&condition=Latch%20Problems")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=women&condition=Latch%20Problems",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

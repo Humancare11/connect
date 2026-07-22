@@ -416,16 +416,6 @@ export default function NoticePrivacy() {
                     Privacy Officer
                   </p>
 
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "#334155",
-                      margin: 0,
-                    }}
-                  >
-                    Nethaji Nallathambi
-                  </p>
-
                   <a
                     href="mailto:support@humancareconnect.co"
                     style={{
@@ -493,7 +483,7 @@ export default function NoticePrivacy() {
                   >
                     4 Peddlers Row, 1091
                     <br />
-                   Newark, DE 19702, USA
+                    Newark, DE 19702, USA
                   </p>
                 </div>
               </div>

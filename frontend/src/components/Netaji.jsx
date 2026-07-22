@@ -19,93 +19,93 @@ import IncreaseEmployeeRetentionProductivity from "../assets/MedicalPartnerOrgan
 
 const CARDS = [
   {
-  id: 1,
-  size: "sm",
-  delay: "0s",
-  tag: "COST EFFICIENCY",
-  title: "Lower Healthcare Expenses Across Your Workforce",
-  short: "Smarter healthcare. Better outcomes.",
-  body: "Healthcare costs continue to rise for organizations of every size. Humancare Connect helps businesses control spending by improving access to preventive care, reducing unnecessary urgent care visits, and enabling employees to receive timely medical support through secure telemedicine services. By addressing health concerns earlier and minimizing avoidable healthcare expenses, organizations can strengthen workforce wellness while achieving measurable cost savings and long term value.",
-  photo: ReduceInsuranceHealthcareCosts,
-  alt: "Organizations reducing healthcare expenses through preventive care and corporate telemedicine services",
-},
-{
-  id: 2,
-  size: "md",
-  delay: "0.5s",
-  tag: "EMPLOYEE WELLBEING",
-  title: "Support a Healthier, More Engaged Workforce",
-  short: "Healthy people. Stronger organizations.",
-  body: "Employee wellbeing directly impacts productivity, retention, engagement, and workplace culture. Humancare Connect helps organizations support physical health, mental wellness, preventive care, and ongoing healthcare needs through secure telemedicine services. By making healthcare more accessible, businesses can create a healthier work environment, improve employee satisfaction, and build a workforce that is better equipped to perform at its best.",
-  photo: ImproveEmployeeClientWellbeing,
-  alt: "Employees accessing telemedicine services that support physical health, mental wellness, and preventive care",
-},
-{
-  id: 3,
-  size: "sm",
-  delay: "1.0s",
-  tag: "COMPETITIVE ADVANTAGE",
-  title: "Enhance Employee Benefits With Integrated Healthcare",
-  short: "Deliver more value. Strengthen your employer brand.",
-  body: "Modern employees expect healthcare benefits that are accessible, convenient, and designed around their needs. Humancare Connect helps organizations differentiate themselves by offering corporate telemedicine services that support employee wellness, improve healthcare access, and enhance the overall benefits experience. By integrating virtual healthcare services into your employee benefits strategy, your organization can attract top talent, improve retention, and demonstrate a stronger commitment to workforce well being.",
-  photo: AddMedicalSupportValueAddedService,
-  alt: "Integrated healthcare benefits enhancing employee experience and employer brand",
-},
-{
-  id: 4,
-  size: "lg",
-  delay: "0.2s",
-  tag: "GLOBAL PROVIDER NETWORK",
-  title: "Connect Your Workforce to Trusted Medical Experts",
-  short: "Care without boundaries. Support without delays.",
-  body: "Give employees access to a broad network of licensed healthcare providers across multiple specialties through a secure telemedicine platform. Humancare Connect helps organizations improve healthcare accessibility by connecting teams with qualified medical professionals for online doctor appointments, virtual healthcare services, and ongoing clinical support. Whether employees are working remotely, traveling, or located across different regions, expert care is always within reach.",
-  photo: AccessGlobalLicensedDoctorNetwork,
-  alt: "Global network of licensed healthcare providers delivering secure virtual medical care",
-},
-{
-  id: 5,
-  size: "md",
-  delay: "0.75s",
-  tag: "24/7 ACCESSIBILITY",
-  title: "Healthcare Support Whenever Employees Need It",
-  short: "Always available. Always connected.",
-  body: "Healthcare needs can arise at any time, regardless of location or work schedule. Humancare Connect provides round the clock access to telemedicine services, allowing employees to connect with licensed healthcare providers through secure online consultations whenever care is needed. With multilingual support and global accessibility, organizations can ensure their workforce receives timely healthcare guidance, whether employees are working remotely, traveling, or located across different regions.",
-  photo: MultilingualSupport247,
-  alt: "24/7 multilingual telemedicine support for employees across different regions",
-},
-{
-  id: 6,
-  size: "sm",
-  delay: "0.3s",
-  tag: "HIPAA & GDPR READY",
-  title: "Protect Employee Health Data With Confidence",
-  short: "Enterprise grade privacy. Trusted security.",
-  body: "Humancare Connect is built on a secure telemedicine infrastructure designed to support both HIPAA and GDPR compliance requirements, helping organizations protect sensitive employee health information while maintaining the highest standards of privacy and security. From encrypted communications and secure data storage to controlled system access and ongoing security monitoring, our platform helps businesses confidently deliver virtual healthcare services while meeting modern regulatory and data protection expectations.",
-  photo: HIPAAGDPRCompliantInfrastructure,
-  alt: "Secure HIPAA and GDPR aligned telemedicine platform protecting employee health data",
-},
-{
-  id: 7,
-  size: "md",
-  delay: "1.2s",
-  tag: "RAPID DEPLOYMENT",
-  title: "Launch Employee Healthcare Benefits Faster",
-  short: "From onboarding to care in days.",
-  body: "Implementing corporate telemedicine should be simple. Humancare Connect offers a streamlined onboarding process that allows organizations to quickly activate virtual healthcare services for their workforce. From employee enrollment and platform setup to provider access and support, our team ensures a smooth rollout that minimizes administrative burden and helps employees start benefiting from telemedicine services as quickly as possible.",
-  photo: FastImplementationUnder2Weeks,
-  alt: "Rapid onboarding and deployment of corporate telemedicine services",
-},
-{
-  id: 8,
-  size: "lg",
-  delay: "0.08s",
-  tag: "WORKFORCE PRODUCTIVITY",
-  title: "Build a Healthier, More Productive Team",
-  short: "Invest in wellbeing. Strengthen performance.",
-  body: "Employee health and productivity go hand in hand. Humancare Connect helps organizations reduce healthcare related disruptions by providing fast access to virtual healthcare services, online doctor appointments, and preventive care support. When employees can address health concerns quickly and conveniently, they are better positioned to stay engaged, maintain performance, and contribute to long term business success. The result is a healthier workforce, improved retention, and a stronger workplace culture.",
-  photo: IncreaseEmployeeRetentionProductivity,
-  alt: "Healthy workforce improving productivity through accessible telemedicine services",
-},
+    id: 1,
+    size: "sm",
+    delay: "0s",
+    tag: "COST EFFICIENCY",
+    title: "Lower Healthcare Expenses Across Your Workforce",
+    short: "Smarter healthcare. Better outcomes.",
+    body: "Healthcare costs continue to rise for organizations of every size. Humancare Connect helps businesses control spending by improving access to preventive care, reducing unnecessary urgent care visits, and enabling employees to receive timely medical support through secure telemedicine services. By addressing health concerns earlier and minimizing avoidable healthcare expenses, organizations can strengthen workforce wellness while achieving measurable cost savings and long term value.",
+    photo: ReduceInsuranceHealthcareCosts,
+    alt: "Organizations reducing healthcare expenses through preventive care and corporate telemedicine services",
+  },
+  {
+    id: 2,
+    size: "md",
+    delay: "0.5s",
+    tag: "EMPLOYEE WELLBEING",
+    title: "Support a Healthier, More Engaged Workforce",
+    short: "Healthy people. Stronger organizations.",
+    body: "Employee wellbeing directly impacts productivity, retention, engagement, and workplace culture. Humancare Connect helps organizations support physical health, mental wellness, preventive care, and ongoing healthcare needs through secure telemedicine services. By making healthcare more accessible, businesses can create a healthier work environment, improve employee satisfaction, and build a workforce that is better equipped to perform at its best.",
+    photo: ImproveEmployeeClientWellbeing,
+    alt: "Employees accessing telemedicine services that support physical health, mental wellness, and preventive care",
+  },
+  {
+    id: 3,
+    size: "sm",
+    delay: "1.0s",
+    tag: "COMPETITIVE ADVANTAGE",
+    title: "Enhance Employee Benefits With Integrated Healthcare",
+    short: "Deliver more value. Strengthen your employer brand.",
+    body: "Modern employees expect healthcare benefits that are accessible, convenient, and designed around their needs. Humancare Connect helps organizations differentiate themselves by offering corporate telemedicine services that support employee wellness, improve healthcare access, and enhance the overall benefits experience. By integrating virtual healthcare services into your employee benefits strategy, your organization can attract top talent, improve retention, and demonstrate a stronger commitment to workforce well being.",
+    photo: AddMedicalSupportValueAddedService,
+    alt: "Integrated healthcare benefits enhancing employee experience and employer brand",
+  },
+  {
+    id: 4,
+    size: "lg",
+    delay: "0.2s",
+    tag: "GLOBAL PROVIDER NETWORK",
+    title: "Connect Your Workforce to Trusted Medical Experts",
+    short: "Care without boundaries. Support without delays.",
+    body: "Give employees access to a broad network of licensed healthcare providers across multiple specialties through a secure telemedicine platform. Humancare Connect helps organizations improve healthcare accessibility by connecting teams with qualified medical professionals for online doctor appointments, virtual healthcare services, and ongoing clinical support. Whether employees are working remotely, traveling, or located across different regions, expert care is always within reach.",
+    photo: AccessGlobalLicensedDoctorNetwork,
+    alt: "Global network of licensed healthcare providers delivering secure virtual medical care",
+  },
+  {
+    id: 5,
+    size: "md",
+    delay: "0.75s",
+    tag: "24/7 ACCESSIBILITY",
+    title: "Healthcare Support Whenever Employees Need It",
+    short: "Always available. Always connected.",
+    body: "Healthcare needs can arise at any time, regardless of location or work schedule. Humancare Connect provides round the clock access to telemedicine services, allowing employees to connect with licensed healthcare providers through secure online consultations whenever care is needed. With multilingual support and global accessibility, organizations can ensure their workforce receives timely healthcare guidance, whether employees are working remotely, traveling, or located across different regions.",
+    photo: MultilingualSupport247,
+    alt: "24/7 multilingual telemedicine support for employees across different regions",
+  },
+  {
+    id: 6,
+    size: "sm",
+    delay: "0.3s",
+    tag: "HIPAA & GDPR READY",
+    title: "Protect Employee Health Data With Confidence",
+    short: "Enterprise grade privacy. Trusted security.",
+    body: "Humancare Connect is built on a secure telemedicine infrastructure designed to support both HIPAA and GDPR compliance requirements, helping organizations protect sensitive employee health information while maintaining the highest standards of privacy and security. From encrypted communications and secure data storage to controlled system access and ongoing security monitoring, our platform helps businesses confidently deliver virtual healthcare services while meeting modern regulatory and data protection expectations.",
+    photo: HIPAAGDPRCompliantInfrastructure,
+    alt: "Secure HIPAA and GDPR aligned telemedicine platform protecting employee health data",
+  },
+  {
+    id: 7,
+    size: "md",
+    delay: "1.2s",
+    tag: "RAPID DEPLOYMENT",
+    title: "Launch Employee Healthcare Benefits Faster",
+    short: "From onboarding to care in days.",
+    body: "Implementing corporate telemedicine should be simple. Humancare Connect offers a streamlined onboarding process that allows organizations to quickly activate virtual healthcare services for their workforce. From employee enrollment and platform setup to provider access and support, our team ensures a smooth rollout that minimizes administrative burden and helps employees start benefiting from telemedicine services as quickly as possible.",
+    photo: FastImplementationUnder2Weeks,
+    alt: "Rapid onboarding and deployment of corporate telemedicine services",
+  },
+  {
+    id: 8,
+    size: "lg",
+    delay: "0.08s",
+    tag: "WORKFORCE PRODUCTIVITY",
+    title: "Build a Healthier, More Productive Team",
+    short: "Invest in wellbeing. Strengthen performance.",
+    body: "Employee health and productivity go hand in hand. Humancare Connect helps organizations reduce healthcare related disruptions by providing fast access to virtual healthcare services, online doctor appointments, and preventive care support. When employees can address health concerns quickly and conveniently, they are better positioned to stay engaged, maintain performance, and contribute to long term business success. The result is a healthier workforce, improved retention, and a stronger workplace culture.",
+    photo: IncreaseEmployeeRetentionProductivity,
+    alt: "Healthy workforce improving productivity through accessible telemedicine services",
+  },
 ];
 
 function Card({ card, onOpen }) {
@@ -135,7 +135,7 @@ function Card({ card, onOpen }) {
           />
         </div>
         <div className="wcu-card__glass" />
-        <div className="wcu-card__shine" /> 
+        <div className="wcu-card__shine" />
         <div className="wcu-card__body">
           <div className="wcu-card__tag">
             <span className="wcu-card__tag-dot" />
@@ -220,27 +220,31 @@ export default function WhyChooseUs() {
           <div className="wcu-eyebrow">
             {/* <span className="wcu-eyebrow__line" /> */}
             <span className="wcu-eyebrow__text">
-             WHY ORGANIZATIONS CHOOSE US
+              WHY ORGANIZATIONS CHOOSE US
             </span>
             {/* <span className="wcu-eyebrow__line" /> */}
           </div>
 
           <h2 className="wcu-heading">
-           The corporate telemedicine partner 
+            The corporate telemedicine partner
             <em className="wcu-heading__em">modern organizations trust.</em>
           </h2>
 
           <p className="wcu-desc">
-            From startups to enterprise teams, businesses choose Humancare Connect for reliable corporate telemedicine services, scalable virtual healthcare solutions, and faster employee access to care. Our secure telemedicine platform helps organizations improve workforce wellness, reduce healthcare delays, and support healthier, more productive teams.
+            From startups to enterprise teams, businesses choose Humancare
+            Connect for reliable corporate telemedicine services, scalable
+            virtual healthcare solutions, and faster employee access to care.
+            Our secure telemedicine platform helps organizations improve
+            workforce wellness, reduce healthcare delays, and support healthier,
+            more productive teams.
           </p>
 
-          <div className="wcu-metrics">
+          {/* <div className="wcu-metrics">
             <div className="wcu-metric">
               <span className="wcu-metric__num">
                 2.4M<sup>+</sup>
               </span>
-              <span className="wcu-metric__lbl"> patients supported
-</span>
+              <span className="wcu-metric__lbl"> patients supported</span>
             </div>
             <div className="wcu-metric__sep" />
             <div className="wcu-metric">
@@ -254,10 +258,9 @@ export default function WhyChooseUs() {
               <span className="wcu-metric__num">
                 98<sup>%</sup>
               </span>
-              <span className="wcu-metric__lbl"> patient satisfaction
-</span>
+              <span className="wcu-metric__lbl"> patient satisfaction</span>
             </div>
-          </div>
+          </div> */}
 
           {/* <button className="wcu-cta">
             <span>Learn More</span>

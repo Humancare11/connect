@@ -433,16 +433,16 @@ const CATEGORIES = [
 export default function FAQPage() {
   return (
     <>
-                  <SEO
+      <SEO
         title="Telemedicine & Online Doctor Support | Humancare Connect"
         description="Find answers about online doctor appointments, telemedicine services, virtual healthcare, prescriptions, privacy, security, billing, and patient support."
         keywords="Telemedicine help center, Online doctor support, Virtual healthcare services, Online doctor appointment"
         url="https://humancareconnect.co/faq"
       />
       <div className="faq-page">
-      <Hero />
-      <FAQContent />
-    </div>
+        <Hero />
+        <FAQContent />
+      </div>
     </>
   );
 }
@@ -508,7 +508,8 @@ function CTACard() {
       </p>
 
       <button className="cta-card__button" type="button">
-        Speak with Our Team
+        <a href="/contact-us">Speak with Our Team</a>
+
         <ArrowIcon />
       </button>
 

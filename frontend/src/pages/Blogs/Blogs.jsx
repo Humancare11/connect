@@ -15,6 +15,8 @@ import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import SEO from "../../components/Seo";
 
+import heroBg from "../../assets/BannerImages/blog-banner.webp";
+
 const blogs = [
   {
     id: 1,
@@ -130,60 +132,6 @@ const blogs = [
     path: "/future-of-telemedicine",
     readTime: 7,
   },
-  // {
-  //   id: 13,
-  //   title: "What Is Telemedicine? A Refresher on the Basics",
-  //   description:
-  //     "A quick refresher on how telemedicine works, who it's for, and why more patients are choosing virtual care every year.",
-  //   image: telemedicine,
-  //   path: "/what-is-telemedicine",
-  //   readTime: 4,
-  // },
-  // {
-  //   id: 14,
-  //   title: "Telemedicine Services Explained for First-Time Users",
-  //   description:
-  //     "New to virtual healthcare? Here's a plain-language walkthrough of what telemedicine services include and how to get started.",
-  //   image: telemedicineServices,
-  //   path: "/top-telemedicine-platforms-providers",
-  //   readTime: 5,
-  // },
-  // {
-  //   id: 15,
-  //   title: "How a Telemedicine Appointment Actually Works",
-  //   description:
-  //     "From booking to follow-up, here is exactly what happens during a typical telemedicine appointment, step by step.",
-  //   image: telemedicineAppointment,
-  //   path: "/future-of-telemedicine",
-  //   readTime: 5,
-  // },
-  // {
-  //   id: 16,
-  //   title: "Choosing Between Virtual Care and an In-Person Doctor Visit",
-  //   description:
-  //     "Not every health concern is right for a video call. Here's how to decide whether telemedicine or an in-person visit is the better choice.",
-  //   image: telemedicineVsInPersonDoctorVisits,
-  //   path: "/telemedicine-vs-in-person-doctor-visits",
-  //   readTime: 6,
-  // },
-  // {
-  //   id: 17,
-  //   title: "10 Factors That Make a Great Telemedicine Provider",
-  //   description:
-  //     "Qualified professionals, transparent pricing, and secure technology are just the start. Here's the full checklist for choosing a provider.",
-  //   image: bestTelemedicineProvider,
-  //   path: "/top-telemedicine-platforms-providers",
-  //   readTime: 5,
-  // },
-  // {
-  //   id: 18,
-  //   title: "Privacy & Security in Telemedicine: What Patients Should Ask",
-  //   description:
-  //     "Questions to ask any telemedicine provider about how your health data is stored, shared, and protected.",
-  //   image: telemedicineSafe,
-  //   path: "/is-telemedicine-safe",
-  //   readTime: 6,
-  // },
 ];
 
 const CARDS_PER_PAGE = 9;
@@ -242,77 +190,84 @@ export default function BlogPage() {
 
   return (
     <>
-                  <SEO
-        title="Healthcare & Wellness | Telemedicine Insights"
+      <SEO
+        title=" Healthcare & Wellness | Telemedicine Insights"
         description="Explore trusted healthcare insights, telemedicine guidance, wellness tips, and expert information to help you make informed decisions about your health."
         keywords="Healthcare insights, Telemedicine guidance, Wellness tips, Healthcare information, Expert guidance, Health and wellness"
         url="https://humancareconnect.co/blogs"
       />
       <div className="blog-page">
-      {/* ── HERO ── */}
-      <section className="blog-hero">
-        <div className="blog-hero-inner">
-          <span className="hero-eyebrow">Trusted Health Insights</span>
-          <h1>Health & Medical Blogs</h1>
-          <p>
-            Stay informed with expert insights, health tips, and the latest
-            medical updates — curated by professionals you can trust.
-          </p>
+        {/* ── HERO ── */}
+        <section
+          className="blog-hero"
+          style={{
+            backgroundImage: `linear-gradient(135deg, rgba(220,230,242,0.92) 0%, rgba(244,247,251,0.88) 100%), url(${heroBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="blog-hero-inner">
+            <span className="hero-eyebrow">HEALTH & WELLNESS INSIGHTS</span>
+            <h1>Stay Informed. Stay Healthy.</h1>
+            <p>
+              Explore expert guidance, practical wellness tips, and trusted
+              healthcare information tailored to your everyday needs.
+            </p>
 
-          {/* Search bar */}
-          <div className="hero-search">
-            <svg
-              className="search-icon"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search articles…"
-              value={searchQuery}
-              onChange={handleSearch}
-              className="hero-search-input"
-              aria-label="Search articles"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="search-clear"
-                onClick={() => {
-                  setSearchQuery("");
-                  setCurrentPage(1);
-                }}
-                aria-label="Clear search"
+            {/* Search bar */}
+            <div className="hero-search">
+              <svg
+                className="search-icon"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search articles…"
+                value={searchQuery}
+                onChange={handleSearch}
+                className="hero-search-input"
+                aria-label="Search articles"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="search-clear"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCurrentPage(1);
+                  }}
+                  aria-label="Clear search"
                 >
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                </svg>
-              </button>
-            )}
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Decorative blobs */}
-        <div className="hero-blob hero-blob--1" aria-hidden="true" />
-        <div className="hero-blob hero-blob--2" aria-hidden="true" />
-      </section>
+          {/* Decorative blobs */}
+          <div className="hero-blob hero-blob--1" aria-hidden="true" />
+          <div className="hero-blob hero-blob--2" aria-hidden="true" />
+        </section>
 
-      {/* ── CATEGORY FILTER (only "All" shown for now — ALL_CATEGORIES limits this) ── */}
-      {/* <div className="filter-bar">
+        {/* ── CATEGORY FILTER (only "All" shown for now — ALL_CATEGORIES limits this) ── */}
+        {/* <div className="filter-bar">
         <div className="filter-bar-inner">
           {ALL_CATEGORIES.map((cat) => (
             <button
@@ -336,52 +291,76 @@ export default function BlogPage() {
         </div>
       </div> */}
 
-      {/* ── GRID SECTION ── */}
-      <section className="blog-grid-section" id="blog-grid">
-        <div className="section-header">
-          <h2 className="section-title">Latest Articles</h2>
-          <p className="section-sub">
-            {filtered.length === blogs.length
-              ? "Stay informed with our most recent health guides"
-              : `${filtered.length} article${filtered.length !== 1 ? "s" : ""} found`}
-          </p>
-        </div>
+        {/* ── GRID SECTION ── */}
+        <section className="blog-grid-section" id="blog-grid">
+          <div className="section-header">
+            <h2 className="section-title">Latest Articles</h2>
+            <p className="section-sub">
+              {filtered.length === blogs.length
+                ? "Stay informed with our most recent health guides"
+                : `${filtered.length} article${filtered.length !== 1 ? "s" : ""} found`}
+            </p>
+          </div>
 
-        {visibleBlogs.length > 0 ? (
-          <div className="blog-grid">
-            {visibleBlogs.map((blog) => {
-              const color = categoryColors[blog.category] || {
-                bg: "#F4F7FB",
-                text: "#223A5E",
-              };
-              return (
-                <Link
-                  to={blog.path}
-                  className="blog-card"
-                  key={blog.id}
-                  aria-label={blog.title}
-                >
-                  <article>
-                    <div className="card-img-wrap">
-                      <img
-                        src={blog.image}
-                        alt={blog.title}
-                        className="card-img"
-                        loading="lazy"
-                      />
-                      {blog.category && (
-                        <span
-                          className="card-category"
-                          style={{ background: color.bg, color: color.text }}
-                        >
-                          {blog.category}
-                        </span>
-                      )}
-                    </div>
-                    <div className="card-body">
-                      <div className="card-meta">
-                        {blog.date && (
-                          <span className="meta-date">
+          {visibleBlogs.length > 0 ? (
+            <div className="blog-grid">
+              {visibleBlogs.map((blog) => {
+                const color = categoryColors[blog.category] || {
+                  bg: "#F4F7FB",
+                  text: "#223A5E",
+                };
+                return (
+                  <Link
+                    to={blog.path}
+                    className="blog-card"
+                    key={blog.id}
+                    aria-label={blog.title}
+                  >
+                    <article>
+                      <div className="card-img-wrap">
+                        <img
+                          src={blog.image}
+                          alt={blog.title}
+                          className="card-img"
+                          loading="lazy"
+                        />
+                        {blog.category && (
+                          <span
+                            className="card-category"
+                            style={{ background: color.bg, color: color.text }}
+                          >
+                            {blog.category}
+                          </span>
+                        )}
+                      </div>
+                      <div className="card-body">
+                        <div className="card-meta">
+                          {blog.date && (
+                            <span className="meta-date">
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                              >
+                                <rect
+                                  x="3"
+                                  y="4"
+                                  width="18"
+                                  height="18"
+                                  rx="2"
+                                />
+                                <path
+                                  d="M16 2v4M8 2v4M3 10h18"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              {blog.date}
+                            </span>
+                          )}
+                          <span className="meta-read">
                             <svg
                               width="12"
                               height="12"
@@ -390,136 +369,118 @@ export default function BlogPage() {
                               stroke="currentColor"
                               strokeWidth="2.2"
                             >
-                              <rect x="3" y="4" width="18" height="18" rx="2" />
-                              <path
-                                d="M16 2v4M8 2v4M3 10h18"
-                                strokeLinecap="round"
-                              />
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 6v6l4 2" strokeLinecap="round" />
                             </svg>
-                            {blog.date}
+                            {blog.readTime} min read
                           </span>
-                        )}
-                        <span className="meta-read">
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.2"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 6v6l4 2" strokeLinecap="round" />
-                          </svg>
-                          {blog.readTime} min read
-                        </span>
+                        </div>
+                        <h3 className="card-title">{blog.title}</h3>
+                        <p className="card-desc">{blog.description}</p>
                       </div>
-                      <h3 className="card-title">{blog.title}</h3>
-                      <p className="card-desc">{blog.description}</p>
-                    </div>
-                  </article>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <div className="empty-icon">
+                    </article>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+                </svg>
+              </div>
+              <h3>No articles found</h3>
+              <p>Try a different search term or category.</p>
+              <button
+                type="button"
+                className="card-btn"
+                onClick={() => {
+                  setSearchQuery("");
+                }}
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
+
+          {/* Pagination — Prev / page numbers / Next, always visible at the bottom */}
+          <div
+            className="pagination"
+            role="navigation"
+            aria-label="Article pagination"
+          >
+            <button
+              type="button"
+              className="page-btn nav-btn"
+              onClick={() => goTo(currentPage - 1)}
+              disabled={currentPage === 1}
+              aria-label="Previous page"
+            >
               <svg
-                width="48"
-                height="48"
+                width="15"
+                height="15"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.5"
+                strokeWidth="2.5"
               >
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
+                <path
+                  d="M15 18l-6-6 6-6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
-            </div>
-            <h3>No articles found</h3>
-            <p>Try a different search term or category.</p>
+              Prev
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                type="button"
+                className={`page-btn num-btn${currentPage === page ? " active" : ""}`}
+                onClick={() => goTo(page)}
+                aria-label={`Page ${page}`}
+                aria-current={currentPage === page ? "page" : undefined}
+              >
+                {page}
+              </button>
+            ))}
+
             <button
               type="button"
-              className="card-btn"
-              onClick={() => {
-                setSearchQuery("");
-              }}
+              className="page-btn nav-btn"
+              onClick={() => goTo(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              aria-label="Next page"
             >
-              Clear filters
+              Next
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path
+                  d="M9 18l6-6-6-6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           </div>
-        )}
-
-        {/* Pagination — Prev / page numbers / Next, always visible at the bottom */}
-        <div
-          className="pagination"
-          role="navigation"
-          aria-label="Article pagination"
-        >
-          <button
-            type="button"
-            className="page-btn nav-btn"
-            onClick={() => goTo(currentPage - 1)}
-            disabled={currentPage === 1}
-            aria-label="Previous page"
-          >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <path
-                d="M15 18l-6-6 6-6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Prev
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              type="button"
-              className={`page-btn num-btn${currentPage === page ? " active" : ""}`}
-              onClick={() => goTo(page)}
-              aria-label={`Page ${page}`}
-              aria-current={currentPage === page ? "page" : undefined}
-            >
-              {page}
-            </button>
-          ))}
-
-          <button
-            type="button"
-            className="page-btn nav-btn"
-            onClick={() => goTo(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            aria-label="Next page"
-          >
-            Next
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <path
-                d="M9 18l6-6-6-6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
     </>
   );
 }

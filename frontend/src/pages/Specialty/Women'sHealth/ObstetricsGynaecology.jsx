@@ -214,9 +214,16 @@ const SPECIALTY_DATA = {
       path: "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
     },
     {
+      Icon: FiHeart,
       name: "Fertility Concerns",
       desc: "Consultation for fertility and conception",
       path: "/women-health/obstetrics-and-gynaecology/fertility-concerns",
+    },
+    {
+      Icon: FiActivity,
+      name: "Vaginal Yeast Infection",
+      desc: "Itching, irritation, and vaginal discomfort",
+      path: "/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection",
     },
   ],
 

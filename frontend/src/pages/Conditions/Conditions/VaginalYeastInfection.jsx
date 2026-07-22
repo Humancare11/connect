@@ -132,7 +132,7 @@ export default function VaginalYeastInfection() {
         title="Vaginal Yeast Infection Treatment Online | Symptom Care"
         description="Get fast, discreet care for vaginal yeast infection symptoms. Connect with an online provider for symptom evaluation, treatment guidance, and prescriptions when appropriate."
         keywords="Vaginal yeast infection, Yeast infection treatment, vaginal yeast infection symptoms, vaginal itching, vaginal burning, vaginal irritation, unusual vaginal discharge, vaginal discomfort, yeast overgrowth, telemedicine services, online doctor appointment, telemedicine platform, online provider, prescription support"
-        url="https://humancareconnect.co/vaginal-yeast-infection"
+        url="https://humancareconnect.co/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection"
       />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
@@ -254,13 +254,13 @@ export default function VaginalYeastInfection() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Get fast and discreet care for vaginal yeast infection
-                        symptoms with Humancare Connect. Our telemedicine services
-                        make it easy to schedule an online doctor appointment and
-                        connect with a licensed provider from home. Through our
-                        secure telemedicine platform, you can receive symptom
-                        evaluation, treatment guidance, and prescriptions when
-                        appropriate without the discomfort of an in-person clinic
-                        visit.
+                        symptoms with Humancare Connect. Our telemedicine
+                        services make it easy to schedule an online doctor
+                        appointment and connect with a licensed provider from
+                        home. Through our secure telemedicine platform, you can
+                        receive symptom evaluation, treatment guidance, and
+                        prescriptions when appropriate without the discomfort of
+                        an in-person clinic visit.
                       </p>
                     </div>
 
@@ -335,7 +335,14 @@ export default function VaginalYeastInfection() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=women&condition=Vaginal%20Yeast%20Infection")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=women&condition=Vaginal%20Yeast%20Infection",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">

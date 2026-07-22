@@ -117,7 +117,9 @@ const GeneralEverydayCare = lazy(
 const MenHealth = lazy(() => import("./pages/Categories/MenHealth"));
 const MentalHealth = lazy(() => import("./pages/Categories/MentalHealth"));
 // import Sexualhealth from "./pages/Categories/SexualHealth";
-const CategorySexualHealth = lazy(() => import("./pages/Categories/Sexual-Health"));
+const CategorySexualHealth = lazy(
+  () => import("./pages/Categories/Sexual-Health"),
+);
 const SkinHair = lazy(() => import("./pages/Categories/SkinHair"));
 const TravelGlobalCare = lazy(
   () => import("./pages/Categories/TravelGlobalCare"),
@@ -1981,7 +1983,10 @@ function AppLayout() {
           />
           <Route path="/lab-results-review" element={<LabResultsReview />} />
           <Route path="/medical-certificate" element={<MedicalCertificate />} />
-          <Route path="/general-and-everyday-care/internal-medicine/medication-review" element={<MedicationReview />} />
+          <Route
+            path="/general-and-everyday-care/internal-medicine/medication-review"
+            element={<MedicationReview />}
+          />
           <Route path="/prescription-refill" element={<PrescriptionRefill />} />
           <Route
             path="/return-to-work-clearance"
@@ -2334,7 +2339,7 @@ function AppLayout() {
             element={<PrenatalConsultation />}
           />
           <Route
-            path="/vaginal-yeast-infection"
+            path="/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection"
             element={<VaginalYeastInfection />}
           />
           <Route

@@ -981,7 +981,7 @@ export const conditions = [
     keywords: ["prenatal consultation"]
   },
   {
-    id: "vaginal-yeast-infection", title: "Vaginal Yeast Infection", type: "condition", category: "women-health", specialty: "obstetrics-and-gynaecology", route: "/vaginal-yeast-infection",
+    id: "vaginal-yeast-infection", title: "Vaginal Yeast Infection", type: "condition", category: "women-health", specialty: "obstetrics-and-gynaecology", route: "/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection",
     keywords: ["yeast infection", "vaginal itch", "candida", "thrush"]
   },
   {
