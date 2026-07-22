@@ -12,6 +12,7 @@ import "./App.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import CallErrorBoundary from "./components/CallErrorBoundary";
 
 const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
@@ -1603,10 +1604,21 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route path="/video-call/:appointmentId" element={<VideoCall />} />
+          <Route
+            path="/video-call/:appointmentId"
+            element={
+              <CallErrorBoundary>
+                <VideoCall />
+              </CallErrorBoundary>
+            }
+          />
           <Route
             path="/direct-video-call/:roomId"
-            element={<DirectVideoCall />}
+            element={
+              <CallErrorBoundary>
+                <DirectVideoCall />
+              </CallErrorBoundary>
+            }
           />
           {/* ALL*/}
           <Route path="/categories" element={<Categories />} />

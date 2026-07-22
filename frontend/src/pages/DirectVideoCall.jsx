@@ -120,6 +120,19 @@ const fmtDuration = (secs) => {
   return `${m}:${s}`;
 };
 
+// Chat messages here have no server-issued id — array-index keys were being
+// used for the message list, fine only while messages are strictly appended.
+// Tag each message with a stable client-side key at the moment it enters state.
+const makeMessageKey = () =>
+  typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `msg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+// First line of defense against a stuck Enter key / paste-loop flooding
+// chat — the server has its own rate limit (see backend/utils/socketRateLimit.js),
+// this just keeps the UI itself from firing faster than a human can type.
+const CHAT_SEND_COOLDOWN_MS = 300;
+
 export default function DirectVideoCall() {
   const { roomId } = useParams();
   const guestIdRef = useRef(getOrCreateGuestId(roomId));
@@ -149,6 +162,10 @@ export default function DirectVideoCall() {
   const [messages, setMessages] = useState([]);
   const [chatText, setChatText] = useState("");
   const [duration, setDuration] = useState(0);
+  const [chatSendCoolingDown, setChatSendCoolingDown] = useState(false);
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== "undefined" ? !navigator.onLine : false,
+  );
 
   const previewVideoRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -165,6 +182,7 @@ export default function DirectVideoCall() {
   const joinedRef = useRef(false);
   const timerRef = useRef(null);
   const chatEndRef = useRef(null);
+  const chatSendCooldownTimerRef = useRef(null);
 
   useEffect(() => {
     if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -174,6 +192,20 @@ export default function DirectVideoCall() {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+    };
+  }, []);
+
+  // A fully offline device previously only surfaced indirectly, once the
+  // socket/ICE timeouts eventually fired. Report it immediately via the
+  // browser's own connectivity signal instead.
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => setIsOffline(false);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
     };
   }, []);
 
@@ -276,6 +308,20 @@ export default function DirectVideoCall() {
   useEffect(() => {
     if (stage !== "call") return;
     if (startedRef.current) return;
+
+    // Capability check: everything below assumes RTCPeerConnection and
+    // getUserMedia exist. Fail into the same "error" stage already used
+    // for invalid/expired/full rooms, instead of letting `new
+    // RTCPeerConnection` throw uncaught further down.
+    if (!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) {
+      setStage("error");
+      setErrorInfo({
+        code: "unsupported_browser",
+        msg: "Your browser doesn't support video calls. Please use a recent version of Chrome, Edge, Firefox, or Safari.",
+      });
+      return;
+    }
+
     startedRef.current = true;
 
     const flushPendingCandidates = async () => {
@@ -388,11 +434,24 @@ export default function DirectVideoCall() {
 
     const handleChatMessage = ({ senderName, text, createdAt } = {}) => {
       if (!mountedRef.current || !text) return;
-      setMessages((prev) => [...prev, { senderName, text, createdAt, mine: false }]);
+      setMessages((prev) => [
+        ...prev,
+        { senderName, text, createdAt, mine: false, _localKey: makeMessageKey() },
+      ]);
     };
 
     const setupPeerConnection = () => {
-      const pc = new RTCPeerConnection(RTC_CONFIG);
+      let pc;
+      try {
+        pc = new RTCPeerConnection(RTC_CONFIG);
+      } catch (err) {
+        console.error("[direct-video-call] RTCPeerConnection construction failed:", err);
+        handleRoomError({
+          code: "server_error",
+          msg: "Could not start the video call on this browser or device.",
+        });
+        return;
+      }
       pcRef.current = pc;
 
       pc.onicecandidate = (event) => {
@@ -482,6 +541,11 @@ export default function DirectVideoCall() {
     else socket.connect();
 
     return () => {
+      // Allow this effect's setup to run again if `stage` ever re-enters
+      // "call" later (e.g. a future rejoin-after-error flow) — everything
+      // below already tears down cleanly, so there's nothing unsafe about
+      // running setup again after this cleanup completes.
+      startedRef.current = false;
       socket.off("connect", joinRoom);
       socket.off("direct-room-joined", handleRoomJoined);
       socket.off("direct-room-error", handleRoomError);
@@ -579,17 +643,31 @@ export default function DirectVideoCall() {
   const sendChatMessage = useCallback(
     (event) => {
       event.preventDefault();
+      if (chatSendCooldownTimerRef.current) return;
       const text = chatText.trim();
       if (!text) return;
       socket.emit("direct-room-message", { roomId, text });
       setMessages((prev) => [
         ...prev,
-        { senderName: guestName || "You", text, createdAt: new Date().toISOString(), mine: true },
+        {
+          senderName: guestName || "You",
+          text,
+          createdAt: new Date().toISOString(),
+          mine: true,
+          _localKey: makeMessageKey(),
+        },
       ]);
       setChatText("");
+      setChatSendCoolingDown(true);
+      chatSendCooldownTimerRef.current = window.setTimeout(() => {
+        chatSendCooldownTimerRef.current = null;
+        setChatSendCoolingDown(false);
+      }, CHAT_SEND_COOLDOWN_MS);
     },
     [chatText, roomId, guestName],
   );
+
+  useEffect(() => () => window.clearTimeout(chatSendCooldownTimerRef.current), []);
 
   // ── Render: terminal / setup states ────────────────────────────────────────
   if (stage === "checking") {
@@ -692,6 +770,11 @@ export default function DirectVideoCall() {
 
   return (
     <div className="dvcall-page">
+      {isOffline && (
+        <div className="dvcall-offline-banner">
+          <FiAlertTriangle /> You're offline. Reconnecting once your internet is back.
+        </div>
+      )}
       <div className="dvcall-topbar">
         <span className="dvcall-badge">Direct Video Consultation</span>
         {connected && <span className="dvcall-duration">{fmtDuration(duration)}</span>}
@@ -742,7 +825,7 @@ export default function DirectVideoCall() {
           <div className="dvcall-chat__body">
             {messages.length === 0 && <p className="dvcall-chat__empty">No messages yet.</p>}
             {messages.map((msg, idx) => (
-              <div key={idx} className={`dvcall-chat__msg ${msg.mine ? "dvcall-chat__msg--mine" : ""}`}>
+              <div key={msg._localKey ?? idx} className={`dvcall-chat__msg ${msg.mine ? "dvcall-chat__msg--mine" : ""}`}>
                 <span className="dvcall-chat__sender">{msg.senderName}</span>
                 <p>{msg.text}</p>
               </div>
@@ -757,7 +840,7 @@ export default function DirectVideoCall() {
               placeholder="Type a message…"
               onChange={(e) => setChatText(e.target.value)}
             />
-            <button type="submit">
+            <button type="submit" disabled={!chatText.trim() || chatSendCoolingDown}>
               <FiSend />
             </button>
           </form>
