@@ -146,6 +146,39 @@ function validateRuntimeConfig() {
     console.warn(`[config] Missing required environment variable(s): ${missing.join(", ")}`);
   }
 
+  // TURN is required (not just STUN) because STUN alone cannot relay media
+  // for peers behind symmetric/restrictive NAT — see backend/routes/rtc.js
+  // and backend/utils/turnCredentials.js for how these are consumed. Unlike
+  // JWT_SECRET/MONGO_URI above, missing TURN config doesn't crash on its own
+  // request path (it silently degrades to STUN-only ICE servers, logged once
+  // as a console.warn deep in routes/rtc.js), so a misconfiguration here
+  // would otherwise stay invisible until a real user's call fails on a
+  // restrictive network. Fail fast at boot instead.
+  const requiredTurn = ["RTC_TURN_URLS", "TURN_STATIC_AUTH_SECRET"];
+  const missingTurn = requiredTurn.filter((key) => !process.env[key]);
+  if (missingTurn.length) {
+    console.error(
+      `[config] Missing required TURN environment variable(s): ${missingTurn.join(", ")}. ` +
+        "The primary TURN region needs both RTC_TURN_URLS (relay URL(s), comma-separated) and " +
+        "TURN_STATIC_AUTH_SECRET (must match the coturn server's static-auth-secret) to mint " +
+        "working ICE credentials. Set them in the environment (see backend/.env) before starting."
+    );
+    process.exit(1);
+  }
+
+  // The optional 2nd TURN region (see backend/.env.production) is only
+  // useful if both of its vars are set together — one without the other is
+  // almost certainly a partial/forgotten config rather than an intentional
+  // single-var setup, so warn (not fail) to surface it without blocking boot.
+  const turnRegion2Urls = Boolean(process.env.RTC_TURN_URLS_2);
+  const turnRegion2Secret = Boolean(process.env.TURN_STATIC_AUTH_SECRET_2);
+  if (turnRegion2Urls !== turnRegion2Secret) {
+    console.warn(
+      "[config] RTC_TURN_URLS_2 and TURN_STATIC_AUTH_SECRET_2 must both be set to enable the " +
+        "secondary TURN region; only one is set, so it will be ignored."
+    );
+  }
+
   if (process.env.NODE_ENV === "uat" && !process.env.HTTPS) {
     console.warn("[config] UAT should set HTTPS=true so auth cookies use SameSite=None; Secure.");
   }
