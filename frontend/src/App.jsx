@@ -803,6 +803,9 @@ const DoctorAppointments = lazy(
   () => import("./pages/doctors/DoctorAppointments"),
 );
 const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
+const WritePrescription = lazy(
+  () => import("./pages/doctors/WritePrescription"),
+);
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
 const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
@@ -1278,6 +1281,14 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <DoctorPatients />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/patients/:patientId/prescription"
+            element={
+              <DoctorLayout>
+                <WritePrescription />
               </DoctorLayout>
             }
           />

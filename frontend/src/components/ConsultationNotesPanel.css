@@ -1,0 +1,91 @@
+.cnp-root {
+  font-family: "Outfit", "DM Sans", sans-serif;
+}
+
+.cnp-loading {
+  display: flex;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.cnp-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #01164a;
+  border-radius: 50%;
+  animation: cnp-spin 0.7s linear infinite;
+}
+
+@keyframes cnp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cnp-error {
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.cnp-empty {
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 4px 0;
+}
+
+.cnp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cnp-item {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.cnp-item-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.cnp-item-caret {
+  color: #94a3b8;
+  flex-shrink: 0;
+  width: 10px;
+}
+
+.cnp-item-date {
+  font-weight: 600;
+  color: #1e293b;
+  flex: 1;
+}
+
+.cnp-item-updated {
+  font-size: 11px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.cnp-item-content {
+  margin: 0;
+  padding: 0 14px 14px 34px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475569;
+  white-space: pre-wrap;
+}
