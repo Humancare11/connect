@@ -478,7 +478,8 @@ export default function AuthPage() {
           return prev;
         }
         const existingCountry = findCountryByName(prev.country);
-        const canReplaceCountry = !prev.country || existingCountry?.code === "IN";
+        const canReplaceCountry =
+          !prev.country || existingCountry?.code === "IN";
 
         if (!canReplaceCountry) return prev;
 
@@ -895,7 +896,10 @@ export default function AuthPage() {
             </div>
             <div className="hc-row hc-reg-row hc-country-mobile-row">
               <div className="hc-field-wrap">
-                <label htmlFor="google-profile-country" className="hc-reg-label">
+                <label
+                  htmlFor="google-profile-country"
+                  className="hc-reg-label"
+                >
                   Country
                 </label>
                 <select
@@ -1260,7 +1264,10 @@ export default function AuthPage() {
             </button>
           </div>
           <div className="hc-pw-wrapper">
-            <label htmlFor="patient-confirm-new-password" style={VISUALLY_HIDDEN}>
+            <label
+              htmlFor="patient-confirm-new-password"
+              style={VISUALLY_HIDDEN}
+            >
               Confirm New Password
             </label>
             <input
@@ -1390,7 +1397,10 @@ export default function AuthPage() {
                 />
               </div>
               <div className="hc-field-wrap">
-                <label htmlFor="patient-register-gender" style={VISUALLY_HIDDEN}>
+                <label
+                  htmlFor="patient-register-gender"
+                  style={VISUALLY_HIDDEN}
+                >
                   Gender
                 </label>
                 <div className="hc-gender-wrap">
@@ -1572,7 +1582,10 @@ export default function AuthPage() {
                 </div>
               </div>
               <div className="hc-field-wrap">
-                <label htmlFor="patient-register-mobile" style={VISUALLY_HIDDEN}>
+                <label
+                  htmlFor="patient-register-mobile"
+                  style={VISUALLY_HIDDEN}
+                >
                   Mobile Number
                 </label>
                 <PhoneInputField
@@ -1665,7 +1678,10 @@ export default function AuthPage() {
             </div>
 
             <div className="hc-pw-wrapper">
-              <label htmlFor="patient-register-password" style={VISUALLY_HIDDEN}>
+              <label
+                htmlFor="patient-register-password"
+                style={VISUALLY_HIDDEN}
+              >
                 Password
               </label>
               <input
@@ -1758,7 +1774,7 @@ export default function AuthPage() {
                   required
                 />
                 <a
-                  href="/notice-of-privacy-practices"
+                  href="/hippa-notice-of-privacy-practices"
                   target="_blank"
                   rel="noreferrer"
                 >

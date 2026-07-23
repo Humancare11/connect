@@ -38,8 +38,12 @@ export default function CategoryAppointmentConfirm() {
 
   const [selection, setSelection] = useState(pending?.selection || null);
   const [livePrice, setLivePrice] = useState(pending?.selection?.cost ?? null);
-  const [notes] = useState(pending?.formData?.notes || pending?.formData?.concern || "");
-  const [time] = useState(pending?.formData?.time || pending?.formData?.slot || "");
+  const [notes] = useState(
+    pending?.formData?.notes || pending?.formData?.concern || "",
+  );
+  const [time] = useState(
+    pending?.formData?.time || pending?.formData?.slot || "",
+  );
   const [date, setDate] = useState(pending?.formData?.date || "");
   const [stage, setStage] = useState("form"); // form | payment | confirming | success
   const [reports, setReports] = useState([]);
@@ -209,7 +213,7 @@ export default function CategoryAppointmentConfirm() {
     } catch (err) {
       setConfirmErr(
         err?.response?.data?.msg ||
-        "Appointment creation failed after payment. Please contact support.",
+          "Appointment creation failed after payment. Please contact support.",
       );
       setStage("payment");
     }
@@ -233,7 +237,9 @@ export default function CategoryAppointmentConfirm() {
           </div>
           <div className="ap-hero-body">
             <span className="ap-hero-eyebrow">{selection.catLabel}</span>
-            <h2 className="ap-hero-name">{selection.specName || selection.catLabel}</h2>
+            <h2 className="ap-hero-name">
+              {selection.specName || selection.catLabel}
+            </h2>
             {selection.condName && (
               <span className="ap-hero-spec">
                 <HealthcareIcon name={selection.condIco} size={16} />{" "}
@@ -485,7 +491,7 @@ export default function CategoryAppointmentConfirm() {
                       key: "hipaa",
                       label: "I have read the ",
                       linkText: "HIPAA Notice of Privacy Practices",
-                      href: "/notice-of-privacy-practices",
+                      href: "/hippa-notice-of-privacy-practices",
                     },
                     { key: "age", label: "I am 18 years of age or older" },
                   ].map(

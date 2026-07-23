@@ -2,16 +2,45 @@
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import {
-  Calendar, Star, Shield, ShieldCheck, Clock, Video, Pill, Heart, Activity,
-  ChevronDown, ChevronRight, Phone, CheckCircle, AlertTriangle,
-  Stethoscope, Brain, Zap, Users, Award, ArrowRight, MapPin,
-  FileText, FlaskConical, Scan, Microscope, Thermometer, Wind,
-  HeartPulse, Syringe, Eye, Bone, CircleDot, Smile, TrendingUp,
-  MessageCircle, X
+  Calendar,
+  Star,
+  Shield,
+  ShieldCheck,
+  Clock,
+  Video,
+  Pill,
+  Heart,
+  Activity,
+  ChevronDown,
+  ChevronRight,
+  Phone,
+  CheckCircle,
+  AlertTriangle,
+  Stethoscope,
+  Brain,
+  Zap,
+  Users,
+  Award,
+  ArrowRight,
+  MapPin,
+  FileText,
+  FlaskConical,
+  Scan,
+  Microscope,
+  Thermometer,
+  Wind,
+  HeartPulse,
+  Syringe,
+  Eye,
+  Bone,
+  CircleDot,
+  Smile,
+  TrendingUp,
+  MessageCircle,
+  X,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Cancer-Second-Opinion.webp";
 import SEO from "../../components/Seo";
-
 
 // ─────────────────────────────────────────────────────────────────
 // EMBEDDED STYLES  (scoped with "sp-" prefix so nothing clashes)
@@ -377,8 +406,7 @@ const STYLES = `
 const pageData = {
   badge: "Chronic Care",
   heading: "Cancer Second Opinion",
-  description:
-    "Expert guidance for treatment decisions",
+  description: "Expert guidance for treatment decisions",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
@@ -395,30 +423,99 @@ const relatedSpecialties = [
 ];
 
 const symptomData = [
-  { title: "Fever", desc: "Elevated body temperature often signals infection. See a doctor if it exceeds 103°F or lasts more than 3 days." },
-  { title: "Headache", desc: "Can range from tension headaches to migraines. Sudden, severe headaches need immediate evaluation." },
-  { title: "Fatigue", desc: "Persistent tiredness may indicate anaemia, thyroid issues, or other conditions. Don't dismiss chronic fatigue." },
-  { title: "Nausea", desc: "Often tied to GI issues, medications, or infections. Prolonged nausea warrants a medical review." },
-  { title: "Dizziness", desc: "Vertigo or lightheadedness can stem from inner ear, blood pressure, or neurological causes." },
-  { title: "Cough", desc: "A cough lasting more than 3 weeks, or producing blood or thick mucus, should be evaluated promptly." },
-  { title: "Anxiety", desc: "Persistent worry, racing thoughts, or panic attacks benefit from professional mental health support." },
-  { title: "Back Pain", desc: "Acute or chronic back pain can affect posture and mobility. Early treatment prevents long-term damage." },
-  { title: "Shortness of Breath", desc: "Difficulty breathing can signal respiratory or cardiac conditions. Seek urgent care if sudden or severe." },
-  { title: "Sore Throat", desc: "Often viral, but strep throat requires antibiotics. Difficulty swallowing needs prompt attention." },
-  { title: "Chest Pain", desc: "Always take chest pain seriously. It may indicate cardiac, muscular, or gastrointestinal causes." },
-  { title: "Joint Pain", desc: "Swollen or stiff joints may indicate arthritis or injury. Early diagnosis preserves joint function." },
-  { title: "Loss of Appetite", desc: "Unexplained appetite loss can be linked to digestive, mental, or systemic health conditions." },
-  { title: "Insomnia", desc: "Chronic sleep difficulty affects mood, cognition, and immunity. CBT and medical review can help." },
-  { title: "Skin Rash", desc: "Rashes can signal allergies, infections, or autoimmune conditions. Sudden rashes need evaluation." },
+  {
+    title: "Fever",
+    desc: "Elevated body temperature often signals infection. See a doctor if it exceeds 103°F or lasts more than 3 days.",
+  },
+  {
+    title: "Headache",
+    desc: "Can range from tension headaches to migraines. Sudden, severe headaches need immediate evaluation.",
+  },
+  {
+    title: "Fatigue",
+    desc: "Persistent tiredness may indicate anaemia, thyroid issues, or other conditions. Don't dismiss chronic fatigue.",
+  },
+  {
+    title: "Nausea",
+    desc: "Often tied to GI issues, medications, or infections. Prolonged nausea warrants a medical review.",
+  },
+  {
+    title: "Dizziness",
+    desc: "Vertigo or lightheadedness can stem from inner ear, blood pressure, or neurological causes.",
+  },
+  {
+    title: "Cough",
+    desc: "A cough lasting more than 3 weeks, or producing blood or thick mucus, should be evaluated promptly.",
+  },
+  {
+    title: "Anxiety",
+    desc: "Persistent worry, racing thoughts, or panic attacks benefit from professional mental health support.",
+  },
+  {
+    title: "Back Pain",
+    desc: "Acute or chronic back pain can affect posture and mobility. Early treatment prevents long-term damage.",
+  },
+  {
+    title: "Shortness of Breath",
+    desc: "Difficulty breathing can signal respiratory or cardiac conditions. Seek urgent care if sudden or severe.",
+  },
+  {
+    title: "Sore Throat",
+    desc: "Often viral, but strep throat requires antibiotics. Difficulty swallowing needs prompt attention.",
+  },
+  {
+    title: "Chest Pain",
+    desc: "Always take chest pain seriously. It may indicate cardiac, muscular, or gastrointestinal causes.",
+  },
+  {
+    title: "Joint Pain",
+    desc: "Swollen or stiff joints may indicate arthritis or injury. Early diagnosis preserves joint function.",
+  },
+  {
+    title: "Loss of Appetite",
+    desc: "Unexplained appetite loss can be linked to digestive, mental, or systemic health conditions.",
+  },
+  {
+    title: "Insomnia",
+    desc: "Chronic sleep difficulty affects mood, cognition, and immunity. CBT and medical review can help.",
+  },
+  {
+    title: "Skin Rash",
+    desc: "Rashes can signal allergies, infections, or autoimmune conditions. Sudden rashes need evaluation.",
+  },
 ];
 
 const whyUs = [
-  { icon: Award, title: "Board Certified Doctors", desc: "Every physician is credentialed and continuously trained." },
-  { icon: Clock, title: "Fast Scheduling", desc: "Book an appointment in under 60 seconds." },
-  { icon: Video, title: "Online Consultations", desc: "See a doctor from anywhere, anytime." },
-  { icon: Shield, title: "Insurance Support", desc: "Dedicated team to help navigate your coverage." },
-  { icon: FileText, title: "Personalised Plans", desc: "Care designed around your unique health profile." },
-  { icon: Pill, title: "Digital Prescriptions", desc: "Sent directly to your pharmacy — no paper needed." },
+  {
+    icon: Award,
+    title: "Board Certified Doctors",
+    desc: "Every physician is credentialed and continuously trained.",
+  },
+  {
+    icon: Clock,
+    title: "Fast Scheduling",
+    desc: "Book an appointment in under 60 seconds.",
+  },
+  {
+    icon: Video,
+    title: "Online Consultations",
+    desc: "See a doctor from anywhere, anytime.",
+  },
+  {
+    icon: Shield,
+    title: "Insurance Support",
+    desc: "Dedicated team to help navigate your coverage.",
+  },
+  {
+    icon: FileText,
+    title: "Personalised Plans",
+    desc: "Care designed around your unique health profile.",
+  },
+  {
+    icon: Pill,
+    title: "Digital Prescriptions",
+    desc: "Sent directly to your pharmacy — no paper needed.",
+  },
 ];
 
 const faqData = [
@@ -427,15 +524,15 @@ const faqData = [
     items: [
       {
         q: "How do I book a primary care appointment?",
-        a: "You can book online in under 60 seconds — just click \"Book Appointment\" at the top of the page, choose a date and time that works for you, and confirm. Same-day slots are often available."
+        a: 'You can book online in under 60 seconds — just click "Book Appointment" at the top of the page, choose a date and time that works for you, and confirm. Same-day slots are often available.',
       },
       {
         q: "Can I see a doctor the same day?",
-        a: "Yes. We reserve same-day slots every morning for acute concerns. If you log in before 10 AM, you'll typically find availability for that day."
+        a: "Yes. We reserve same-day slots every morning for acute concerns. If you log in before 10 AM, you'll typically find availability for that day.",
       },
       {
         q: "What should I bring to my first visit?",
-        a: "Bring a valid photo ID, your insurance card, a list of any current medications, and any recent lab results or specialist notes if you have them."
+        a: "Bring a valid photo ID, your insurance card, a list of any current medications, and any recent lab results or specialist notes if you have them.",
       },
     ],
   },
@@ -444,11 +541,11 @@ const faqData = [
     items: [
       {
         q: "How does an online consultation work?",
-        a: "After booking, you'll receive a secure video link by email and SMS. At your appointment time, click the link — no app download required."
+        a: "After booking, you'll receive a secure video link by email and SMS. At your appointment time, click the link — no app download required.",
       },
       {
         q: "What conditions can be treated virtually?",
-        a: "Most common illnesses and follow-ups are well-suited to video care — colds, infections, skin concerns, mental health check-ins, and prescription renewals."
+        a: "Most common illnesses and follow-ups are well-suited to video care — colds, infections, skin concerns, mental health check-ins, and prescription renewals.",
       },
     ],
   },
@@ -457,15 +554,15 @@ const faqData = [
     items: [
       {
         q: "Do you accept my insurance?",
-        a: "We work with most major insurance plans including Aetna, Cigna, UnitedHealth, BlueCross BlueShield, Humana, and Medicare."
+        a: "We work with most major insurance plans including Aetna, Cigna, UnitedHealth, BlueCross BlueShield, Humana, and Medicare.",
       },
       {
         q: "What is the consultation fee if I'm uninsured?",
-        a: "Our self-pay consultation fee is $49 for a standard visit — this covers the appointment, any prescriptions written, a doctor's note if needed, and 24-hour follow-up support."
+        a: "Our self-pay consultation fee is $49 for a standard visit — this covers the appointment, any prescriptions written, a doctor's note if needed, and 24-hour follow-up support.",
       },
       {
         q: "Are referrals and lab orders included in the fee?",
-        a: "Yes. Specialist referrals and lab test orders issued during your visit are included at no extra charge."
+        a: "Yes. Specialist referrals and lab test orders issued during your visit are included at no extra charge.",
       },
     ],
   },
@@ -474,11 +571,11 @@ const faqData = [
     items: [
       {
         q: "How do I access my medical records?",
-        a: "All visit notes, lab results, and prescription history are available in your secure patient portal within 24 hours of your appointment."
+        a: "All visit notes, lab results, and prescription history are available in your secure patient portal within 24 hours of your appointment.",
       },
       {
         q: "Can my primary care doctor manage chronic conditions?",
-        a: "Absolutely. Chronic disease management is one of our core services. Your physician will create a personalised care plan and coordinate with any specialists you see."
+        a: "Absolutely. Chronic disease management is one of our core services. Your physician will create a personalised care plan and coordinate with any specialists you see.",
       },
     ],
   },
@@ -489,14 +586,24 @@ const faqData = [
 // ─────────────────────────────────────────────────────────────────
 function SectionLabel({ children, variant = "light" }) {
   return (
-    <span style={{
-      display: "inline-block", fontSize: 12, fontWeight: 700,
-      letterSpacing: "0.1em", textTransform: "uppercase",
-      color: variant === "dark" ? "#7CB7FF" : "#0B57E8",
-      background: variant === "dark" ? "rgba(124,183,255,.12)" : "#EEF4FF",
-      border: variant === "dark" ? "1px solid rgba(124,183,255,.22)" : "1px solid transparent",
-      padding: "4px 12px", borderRadius: 20, marginBottom: 12,
-    }}>
+    <span
+      style={{
+        display: "inline-block",
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        color: variant === "dark" ? "#7CB7FF" : "#0B57E8",
+        background: variant === "dark" ? "rgba(124,183,255,.12)" : "#EEF4FF",
+        border:
+          variant === "dark"
+            ? "1px solid rgba(124,183,255,.22)"
+            : "1px solid transparent",
+        padding: "4px 12px",
+        borderRadius: 20,
+        marginBottom: 12,
+      }}
+    >
       {children}
     </span>
   );
@@ -527,30 +634,59 @@ function HeroSection({ data }) {
       <div className="sp-glow sp-glow--tr" />
       <div className="sp-glow sp-glow--bl" />
 
-      <div className="sp-fi sp-fi--1"><HeartPulse size={44} color="#ffffff" /></div>
-      <div className="sp-fi sp-fi--2"><ShieldCheck size={52} color="#ffffff" /></div>
-      <div className="sp-fi sp-fi--3"><Stethoscope size={40} color="#ffffff" /></div>
+      <div className="sp-fi sp-fi--1">
+        <HeartPulse size={44} color="#ffffff" />
+      </div>
+      <div className="sp-fi sp-fi--2">
+        <ShieldCheck size={52} color="#ffffff" />
+      </div>
+      <div className="sp-fi sp-fi--3">
+        <Stethoscope size={40} color="#ffffff" />
+      </div>
 
       <div className="sp-hero-wrap">
         <div className="sp-hero-inner">
-          <span className="sp-badge-hero" style={{ animation: "sp-fadeUp .75s .00s cubic-bezier(.22,.68,0,1.2) both" }}>
+          <span
+            className="sp-badge-hero"
+            style={{
+              animation: "sp-fadeUp .75s .00s cubic-bezier(.22,.68,0,1.2) both",
+            }}
+          >
             ✦ Trusted {data.badge}
           </span>
 
-          <h1 className="sp-h1" style={{ animation: "sp-fadeUp .85s .10s cubic-bezier(.22,.68,0,1.2) both" }}>
+          <h1
+            className="sp-h1"
+            style={{
+              animation: "sp-fadeUp .85s .10s cubic-bezier(.22,.68,0,1.2) both",
+            }}
+          >
             {data.heading}
           </h1>
 
-          <p className="sp-desc-hero" style={{ animation: "sp-fadeUp .85s .18s cubic-bezier(.22,.68,0,1.2) both" }}>
+          <p
+            className="sp-desc-hero"
+            style={{
+              animation: "sp-fadeUp .85s .18s cubic-bezier(.22,.68,0,1.2) both",
+            }}
+          >
             {data.description}
           </p>
 
-          <div className="sp-btns" style={{ animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both" }}>
+          <div
+            className="sp-btns"
+            style={{
+              animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
+            }}
+          ></div>
 
-          </div>
-
-          <div className="sp-trust" style={{ animation: "sp-fadeUp .85s .34s cubic-bezier(.22,.68,0,1.2) both" }}>
-            {data.trustItems.map(item => (
+          <div
+            className="sp-trust"
+            style={{
+              animation: "sp-fadeUp .85s .34s cubic-bezier(.22,.68,0,1.2) both",
+            }}
+          >
+            {data.trustItems.map((item) => (
               <div key={item} className="sp-trust-item">
                 <CheckCircle size={13} className="sp-trust-check" />
                 <span>{item}</span>
@@ -571,16 +707,24 @@ function AboutSpecialty() {
     <div className="sp-glass-card">
       <div className="sp-glass-shine" />
       <div className="sp-about-grid">
-
         {/* LEFT */}
         <div className="sp-about-left">
           <SectionLabel>About This Condition </SectionLabel>
-          <h2 className="sp-about-h2">Your Health,<br />Our Priority</h2>
+          <h2 className="sp-about-h2">
+            Your Health,
+            <br />
+            Our Priority
+          </h2>
 
           <div className="sp-nav-card">
             <p className="sp-nav-label">Quick Access</p>
             <div className="sp-nav-list">
-              {["Routine Wellness", "Acute Illness", "Chronic Conditions", "Mental Wellbeing"].map(item => (
+              {[
+                "Routine Wellness",
+                "Acute Illness",
+                "Chronic Conditions",
+                "Mental Wellbeing",
+              ].map((item) => (
                 <div key={item} className="sp-nav-item">
                   <ChevronRight size={13} className="sp-nav-chevron" />
                   <span className="sp-nav-text">{item}</span>
@@ -590,8 +734,14 @@ function AboutSpecialty() {
           </div>
 
           <div className="sp-stat-row">
-            <div className="sp-stat-pill"><HeartPulse size={13} /><span>15 K+ Patients</span></div>
-            <div className="sp-stat-pill"><ShieldCheck size={13} /><span>98% Satisfaction</span></div>
+            <div className="sp-stat-pill">
+              <HeartPulse size={13} />
+              <span>15 K+ Patients</span>
+            </div>
+            <div className="sp-stat-pill">
+              <ShieldCheck size={13} />
+              <span>98% Satisfaction</span>
+            </div>
           </div>
         </div>
 
@@ -600,26 +750,40 @@ function AboutSpecialty() {
           <div>
             <h3 className="sp-block-title">What Is Cancer Second Opinion</h3>
             <p className="sp-block-body">
-              A cancer second opinion can help patients better understand a diagnosis, review treatment options, confirm recommendations, and make informed decisions about their cancer care with greater confidence and clarity.
-
+              A cancer second opinion can help patients better understand a
+              diagnosis, review treatment options, confirm recommendations, and
+              make informed decisions about their cancer care with greater
+              confidence and clarity.
             </p>
           </div>
 
           <div>
             <h3 className="sp-block-title">How ?</h3>
             <p className="sp-block-body">
-              Get additional support for your cancer care journey with Humancare Connect. Our telemedicine services make it easy to schedule an online doctor appointment and connect with a licensed provider from home. Through our secure telemedicine platform, you can access virtual healthcare services for diagnosis reviews, treatment discussions, care planning, and personalized recommendations. Telehealth services provide convenient access to an experienced online provider who can help evaluate your current treatment approach, answer questions, and provide valuable insights to support informed healthcare decisions.
-
+              Get additional support for your cancer care journey with Humancare
+              Connect. Our telemedicine services make it easy to schedule an
+              online doctor appointment and connect with a licensed provider
+              from home. Through our secure telemedicine platform, you can
+              access virtual healthcare services for diagnosis reviews,
+              treatment discussions, care planning, and personalized
+              recommendations. Telehealth services provide convenient access to
+              an experienced online provider who can help evaluate your current
+              treatment approach, answer questions, and provide valuable
+              insights to support informed healthcare decisions.
             </p>
           </div>
 
           <div>
-            <h3 className="sp-block-title">Get Cancer Second Opinion care in 4 simple steps.</h3>
+            <h3 className="sp-block-title">
+              Get Cancer Second Opinion care in 4 simple steps.
+            </h3>
             <div className="sp-benefits-grid">
               {[
-                "Choose Cancer Second Opinion care", "Share your diagnosis, medical records, and concerns",
-                "Connect with an online provider", "Receive treatment guidance and personalized care recommendations",
-              ].map(b => (
+                "Choose Cancer Second Opinion care",
+                "Share your diagnosis, medical records, and concerns",
+                "Connect with an online provider",
+                "Receive treatment guidance and personalized care recommendations",
+              ].map((b) => (
                 <div key={b} className="sp-benefit-item">
                   <CheckCircle size={14} className="sp-benefit-check" />
                   <span>{b}</span>
@@ -628,7 +792,6 @@ function AboutSpecialty() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -647,34 +810,66 @@ function StickyBookingCard() {
         Doctors Available Now
       </div>
 
-      <div style={{ marginBottom: 16, animation: "sp-sbcFadeUp .6s .10s cubic-bezier(.22,.68,0,1.2) both" }}>
+      <div
+        style={{
+          marginBottom: 16,
+          animation: "sp-sbcFadeUp .6s .10s cubic-bezier(.22,.68,0,1.2) both",
+        }}
+      >
         <div className="sp-sbc-price">${price ?? 49}</div>
-        <p className="sp-sbc-price-sub">One-time consultation fee · No subscription required</p>
+        <p className="sp-sbc-price-sub">
+          One-time consultation fee · No subscription required
+        </p>
       </div>
 
       <div className="sp-sbc-info">
         <Shield size={15} className="sp-sbc-info-icon" />
         <p className="sp-sbc-info-text">
           No extra fee for doctor notes, prescriptions, or specialist referrals.{" "}
-          <strong style={{ color: "#0A1F44", fontWeight: 700 }}>Everything is included.</strong>
+          <strong style={{ color: "#0A1F44", fontWeight: 700 }}>
+            Everything is included.
+          </strong>
         </p>
       </div>
 
       <div className="sp-sbc-features">
-        {["Board-certified physician", "Rx to your pharmacy", "Doctor's note included", "24hr follow-up support", "HIPAA secure session"]
-          .map((item, i) => (
-            <div key={item} className="sp-sbc-row" style={{ animationDelay: `${0.35 + i * 0.07}s` }}>
-              <CheckCircle size={15} className="sp-sbc-check" />
-              <span className="sp-sbc-feat-text">{item}</span>
-            </div>
-          ))}
+        {[
+          "Board-certified physician",
+          "Rx to your pharmacy",
+          "Doctor's note included",
+          "24hr follow-up support",
+          "HIPAA secure session",
+        ].map((item, i) => (
+          <div
+            key={item}
+            className="sp-sbc-row"
+            style={{ animationDelay: `${0.35 + i * 0.07}s` }}
+          >
+            <CheckCircle size={15} className="sp-sbc-check" />
+            <span className="sp-sbc-feat-text">{item}</span>
+          </div>
+        ))}
       </div>
 
-      <button className="sp-sbc-cta" onClick={() => navigate("/category-consultant?category=chronic&condition=Cancer%20Second%20Opinion")}>Start Consultation →</button>
+      <button
+        className="sp-sbc-cta"
+        onClick={() =>
+          navigate(
+            "/category-consultant?category=chronic&condition=Cancer%20Second%20Opinion",
+          )
+        }
+      >
+        Start Consultation →
+      </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
-        <a href="#" className="sp-sbc-link">Terms of Service</a> and{" "}
-        <a href="#" className="sp-sbc-link">Privacy Policy</a>
+        <a href="#" className="sp-sbc-link">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="#" className="sp-sbc-link">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );
@@ -685,8 +880,8 @@ function StickyBookingCard() {
 // ─────────────────────────────────────────────────────────────────
 function SymptomsChips() {
   const [activeIdx, setActiveIdx] = useState(null);
-  const [goLeft, setGoLeft] = useState({});   // { [i]: bool }
-  const wrapRefs = {};              // populated by ref callbacks
+  const [goLeft, setGoLeft] = useState({}); // { [i]: bool }
+  const wrapRefs = {}; // populated by ref callbacks
 
   const EXPANDED_W = 300;
 
@@ -696,7 +891,7 @@ function SymptomsChips() {
     if (node) {
       const rect = node.getBoundingClientRect();
       const spaceRight = window.innerWidth - rect.right;
-      setGoLeft(prev => ({ ...prev, [i]: spaceRight < EXPANDED_W + 16 }));
+      setGoLeft((prev) => ({ ...prev, [i]: spaceRight < EXPANDED_W + 16 }));
     }
     setActiveIdx(i);
   };
@@ -709,7 +904,9 @@ function SymptomsChips() {
         <div className="sp-sym-header">
           <SectionLabel>Common Symptoms</SectionLabel>
           <h2 className="sp-sym-h2">Recognise Your Symptoms</h2>
-          <p className="sp-sym-sub">Hover a symptom card to learn more and find the right care.</p>
+          <p className="sp-sym-sub">
+            Hover a symptom card to learn more and find the right care.
+          </p>
         </div>
 
         <div className="sp-sym-grid">
@@ -720,7 +917,9 @@ function SymptomsChips() {
             return (
               <div
                 key={item.title}
-                ref={node => { wrapRefs[i] = node; }}
+                ref={(node) => {
+                  wrapRefs[i] = node;
+                }}
                 className={`sp-sym-card-wrap${isActive ? " sp-wrap-active" : ""}`}
                 style={{ animationDelay: `${i * 0.04}s` }}
               >
@@ -756,27 +955,83 @@ function RelatedSpecialties() {
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
         <div style={{ marginBottom: 36 }}>
           <SectionLabel>Related Specialties</SectionLabel>
-          <h2 style={{ fontSize: 30, fontWeight: 800, color: "#0A1F44", fontFamily: "'Georgia',serif", marginTop: 8 }}>
+          <h2
+            style={{
+              fontSize: 30,
+              fontWeight: 800,
+              color: "#0A1F44",
+              fontFamily: "'Georgia',serif",
+              marginTop: 8,
+            }}
+          >
             Explore Other Specialties
           </h2>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,280px),1fr))", gap: 16 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fill,minmax(min(100%,280px),1fr))",
+            gap: 16,
+          }}
+        >
           {relatedSpecialties.map((s, idx) => (
             <div
               key={idx}
               style={{
-                background: s.color, borderRadius: 16, padding: "24px 20px", cursor: "pointer",
-                transition: "all .25s", display: "flex", flexDirection: "column", gap: 14
+                background: s.color,
+                borderRadius: 16,
+                padding: "24px 20px",
+                cursor: "pointer",
+                transition: "all .25s",
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
               }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 40px -10px rgba(11,40,100,.15)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow =
+                  "0 12px 40px -10px rgba(11,40,100,.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             >
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: "rgba(255,255,255,0.7)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <s.icon size={20} style={{ color: s.accent }} />
               </div>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "#0A1F44", marginBottom: 4 }}>{s.name}</p>
-                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#5C7099", fontWeight: 500 }}>
+                <p
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#0A1F44",
+                    marginBottom: 4,
+                  }}
+                >
+                  {s.name}
+                </p>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    fontSize: 12,
+                    color: "#5C7099",
+                    fontWeight: 500,
+                  }}
+                >
                   Learn More <ArrowRight size={12} />
                 </span>
               </div>
@@ -797,31 +1052,77 @@ function WhyChooseUs() {
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
           <SectionLabel variant="dark">Why HumanCare Connect</SectionLabel>
-          <h2 style={{ fontSize: 36, fontWeight: 800, color: "#fff", fontFamily: "'Georgia',serif", marginTop: 8 }}>
+          <h2
+            style={{
+              fontSize: 36,
+              fontWeight: 800,
+              color: "#fff",
+              fontFamily: "'Georgia',serif",
+              marginTop: 8,
+            }}
+          >
             The Standard of Modern Healthcare
           </h2>
-          <p style={{ color: "#7CB7FF", fontSize: 16, marginTop: 12 }}>Built for patients who deserve better.</p>
+          <p style={{ color: "#7CB7FF", fontSize: 16, marginTop: 12 }}>
+            Built for patients who deserve better.
+          </p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,300px),1fr))", gap: 20 }}>
-          {whyUs.map(w => (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fill,minmax(min(100%,300px),1fr))",
+            gap: 20,
+          }}
+        >
+          {whyUs.map((w) => (
             <div
               key={w.title}
               style={{
-                background: "rgba(255,255,255,.06)", backdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,.12)", borderRadius: 16, padding: "28px 24px",
-                transition: "all .25s", cursor: "default"
+                background: "rgba(255,255,255,.06)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,.12)",
+                borderRadius: 16,
+                padding: "28px 24px",
+                transition: "all .25s",
+                cursor: "default",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.12)"; e.currentTarget.style.transform = "translateY(-4px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.06)"; e.currentTarget.style.transform = "translateY(0)"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,.12)";
+                e.currentTarget.style.transform = "translateY(-4px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,.06)";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
             >
-              <div style={{
-                width: 44, height: 44, borderRadius: 10, background: "rgba(11,87,232,.3)",
-                display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16
-              }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: "rgba(11,87,232,.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 16,
+                }}
+              >
                 <w.icon size={20} style={{ color: "#7CB7FF" }} />
               </div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 8 }}>{w.title}</p>
-              <p style={{ fontSize: 13, color: "#7CB7FF", lineHeight: 1.65 }}>{w.desc}</p>
+              <p
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "#fff",
+                  marginBottom: 8,
+                }}
+              >
+                {w.title}
+              </p>
+              <p style={{ fontSize: 13, color: "#7CB7FF", lineHeight: 1.65 }}>
+                {w.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -835,19 +1136,23 @@ function WhyChooseUs() {
 // ─────────────────────────────────────────────────────────────────
 function FaqSection() {
   const [openId, setOpenId] = useState("0-0");
-  const toggle = id => setOpenId(prev => prev === id ? null : id);
+  const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
     <section style={{ background: "#F7FAFF", padding: "90px 0" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
         <div className="sp-faq-layout">
-
           {/* Sidebar */}
           <div className="sp-faq-sidebar">
             <SectionLabel>FAQ</SectionLabel>
-            <h2 className="sp-faq-title">Frequently Asked<br />Questions</h2>
+            <h2 className="sp-faq-title">
+              Frequently Asked
+              <br />
+              Questions
+            </h2>
             <p className="sp-faq-desc">
-              Everything you need to know about primary care at HumanCare Connect. Can't find an answer?
+              Everything you need to know about primary care at HumanCare
+              Connect. Can't find an answer?
             </p>
             <button className="sp-faq-chat">
               <MessageCircle size={18} /> Chat with our team
@@ -871,9 +1176,15 @@ function FaqSection() {
                     <div key={id} className="sp-faq-item">
                       <button className="sp-faq-q" onClick={() => toggle(id)}>
                         <span>{item.q}</span>
-                        <div className={`sp-faq-icon ${openId === id ? "sp-active" : ""}`}>+</div>
+                        <div
+                          className={`sp-faq-icon ${openId === id ? "sp-active" : ""}`}
+                        >
+                          +
+                        </div>
                       </button>
-                      <div className={`sp-faq-ans ${openId === id ? "sp-open" : ""}`}>
+                      <div
+                        className={`sp-faq-ans ${openId === id ? "sp-open" : ""}`}
+                      >
                         <p>{item.a}</p>
                       </div>
                     </div>
@@ -887,10 +1198,13 @@ function FaqSection() {
                 <h3>Still have questions?</h3>
                 <p>Our care team is available every day, 8 AM – 10 PM.</p>
               </div>
-              <a href="/appointment-booking"><button>Book a Call <ArrowRight size={18} /></button></a>
+              <a href="/appointment-booking">
+                <button>
+                  Book a Call <ArrowRight size={18} />
+                </button>
+              </a>
             </div>
           </div>
-
         </div>
       </div>
     </section>
@@ -907,14 +1221,25 @@ export default function CancerSecondOpinion() {
         title="Cancer Second Opinion | Expert Review of Your Diagnosis & Treatment"
         description="Need more clarity about a cancer diagnosis or treatment plan? Get an expert second opinion to review your medical records, explore treatment options, and make informed care decisions."
         keywords="Cancer second opinion, Cancer diagnosis, Treatment options, Diagnosis reviews, Cancer care, Treatment discussions"
-        url="https://humancareconnect.co/cancer-second-opinion"
+        url="https://humancareconnect.co/online-second-medical-opinion/cancer-second-opinion"
       />
       <style>{STYLES}</style>
 
-      <div style={{ fontFamily: "Satoshi, sans-serif", color: "#0A1F44", background: "#fff" }}>
+      <div
+        style={{
+          fontFamily: "Satoshi, sans-serif",
+          color: "#0A1F44",
+          background: "#fff",
+        }}
+      >
         <HeroSection data={pageData} />
 
-        <div style={{ background: "linear-gradient(180deg,#EEF4FF 0%,#F6F9FF 60%,#ffffff 100%)" }}>
+        <div
+          style={{
+            background:
+              "linear-gradient(180deg,#EEF4FF 0%,#F6F9FF 60%,#ffffff 100%)",
+          }}
+        >
           <div className="sp-page-layout" style={{ padding: "72px 24px" }}>
             <main>
               <AboutSpecialty />
@@ -924,11 +1249,6 @@ export default function CancerSecondOpinion() {
             </aside>
           </div>
         </div>
-
-
-
-
-
       </div>
     </>
   );

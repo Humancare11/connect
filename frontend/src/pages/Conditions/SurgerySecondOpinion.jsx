@@ -678,9 +678,7 @@ function HeroSection({ data }) {
             style={{
               animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
             }}
-          >
-
-          </div>
+          ></div>
 
           <div
             className="sp-trust"
@@ -881,11 +879,9 @@ function StickyBookingCard() {
 // SYMPTOMS CHIPS — direction-aware, JS-driven active state
 // ─────────────────────────────────────────────────────────────────
 
-
 // ─────────────────────────────────────────────────────────────────
 // RELATED SPECIALTIES
 // ─────────────────────────────────────────────────────────────────
-
 
 // ─────────────────────────────────────────────────────────────────
 // WHY CHOOSE US
@@ -989,7 +985,7 @@ export default function SurgerySecondOpinion() {
         title="Surgery Second Opinion Online | Expert Surgical Review"
         description="Get an online second opinion before surgery. Review your diagnosis, recommended procedure, risks, benefits, and treatment alternatives with a licensed provider."
         keywords="surgery second opinion, surgical second opinion online, second opinion before surgery, online medical second opinion, surgery consultation online, surgical procedure review, alternative treatment options, expert surgical review, virtual second opinion, telehealth consultation"
-        url="https://humancareconnect.co/surgery-second-opinion"
+        url="https://humancareconnect.co/online-second-medical-opinion/surgery-second-opinion"
       />
       <style>{STYLES}</style>
 
@@ -1017,11 +1013,6 @@ export default function SurgerySecondOpinion() {
             </aside>
           </div>
         </div>
-
-
-
-
-
       </div>
     </>
   );

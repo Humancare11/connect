@@ -73,7 +73,7 @@
 .services-main-heading,
 .services-heading-highlight {
   font-family: var(--font-primary);
-  font-weight: 300;
+  font-weight: 700;
   font-size: clamp(40px, 6vw, 64px);
   color: white;
   letter-spacing: -1px;

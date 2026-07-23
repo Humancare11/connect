@@ -678,9 +678,7 @@ function HeroSection({ data }) {
             style={{
               animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
             }}
-          >
-
-          </div>
+          ></div>
 
           <div
             className="sp-trust"
@@ -881,11 +879,9 @@ function StickyBookingCard() {
 // SYMPTOMS CHIPS — direction-aware, JS-driven active state
 // ─────────────────────────────────────────────────────────────────
 
-
 // ─────────────────────────────────────────────────────────────────
 // RELATED SPECIALTIES
 // ─────────────────────────────────────────────────────────────────
-
 
 // ─────────────────────────────────────────────────────────────────
 // WHY CHOOSE US
@@ -989,7 +985,7 @@ export default function TreatmentPlanReview() {
         title="Treatment Plan Review Online | Expert Medical Care Evaluation"
         description="Get your treatment plan reviewed online. Consult a licensed provider to evaluate medications, therapies, symptoms, and personalized care options."
         keywords="treatment plan review, medical treatment review, online treatment evaluation, medication review, second medical opinion, care plan review, virtual doctor consultation, treatment assessment, telehealth consultation, personalized healthcare recommendations"
-        url="https://humancareconnect.co/treatment-plan-review"
+        url="https://humancareconnect.co/online-second-medical-opinion/treatment-plan-review"
       />
       <style>{STYLES}</style>
 
@@ -1017,11 +1013,6 @@ export default function TreatmentPlanReview() {
             </aside>
           </div>
         </div>
-
-
-
-
-
       </div>
     </>
   );

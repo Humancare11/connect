@@ -678,9 +678,7 @@ function HeroSection({ data }) {
             style={{
               animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
             }}
-          >
-
-          </div>
+          ></div>
 
           <div
             className="sp-trust"
@@ -883,11 +881,9 @@ function StickyBookingCard() {
 // SYMPTOMS CHIPS — direction-aware, JS-driven active state
 // ─────────────────────────────────────────────────────────────────
 
-
 // ─────────────────────────────────────────────────────────────────
 // RELATED SPECIALTIES
 // ─────────────────────────────────────────────────────────────────
-
 
 // ─────────────────────────────────────────────────────────────────
 // WHY CHOOSE US
@@ -991,7 +987,7 @@ export default function ComplexDiagnosisReview() {
         title="Complex Diagnosis Review | Clarity for Difficult Health Conditions"
         description="Unclear symptoms or multiple medical conditions can make care decisions difficult. Get a detailed review of your health history, test results, and treatment journey for clearer next steps."
         keywords="Complex diagnosis review, Complex health concerns, Medical record reviews, Telemedicine services, Virtual healthcare services, Telehealth services"
-        url="https://humancareconnect.co/complex-diagnosis"
+        url="https://humancareconnect.co/online-second-medical-opinion/complex-diagnosis-review"
       />
       <style>{STYLES}</style>
 
@@ -1019,11 +1015,6 @@ export default function ComplexDiagnosisReview() {
             </aside>
           </div>
         </div>
-
-
-
-
-
       </div>
     </>
   );

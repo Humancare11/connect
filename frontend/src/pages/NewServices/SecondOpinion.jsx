@@ -51,6 +51,7 @@ import {
   FiWifi,
   FiHeadphones,
   FiUser,
+  FiClipboard,
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
@@ -61,8 +62,6 @@ import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
 import "../Specialty/SpecialtyPage.css";
 import "../Categories/categoriesGlobal.css";
 import { useServicePrice } from "../../hooks/useServicePrice";
-
-
 
 const HERO_IMAGE = {
   src: heroBanner,
@@ -109,26 +108,28 @@ const useBreakpoint = () => {
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
-    slug: "chronic-care-management",
-    name: "CHRONIC CARE MANAGEMENT",
-    serviceName: "Chronic Care Management", // must exactly match ServicePrice.name in admin
-    tagline: "Ongoing support for long term health conditions.",
+    slug: "online-second-medical-opinion",
+    name: "ONLINE SECOND MEDICAL OPINION",
+    serviceName: "Online Second Medical Opinion", // must exactly match ServicePrice.name in admin
+    tagline:
+      "Get trusted guidance before making important healthcare decisions.",
     intro:
-      "Manage chronic health conditions with personalized telemedicine services designed to support your long term health and well being. Connect with licensed healthcare providers who can help monitor symptoms, review treatment plans, manage medications, and provide ongoing healthcare guidance from the comfort of home.",
+      "Connect with qualified specialists through secure telemedicine services for a comprehensive second medical opinion. Whether you've received a new diagnosis, are considering surgery, reviewing a cancer treatment plan, or managing a complex medical condition, our specialists carefully evaluate your medical records and provide personalized recommendations to help you move forward with confidence.",
     accentColor: "#2563EB",
     accentGlow: "#2563EB20",
     heroIcon: FiMonitor,
     heroEmoji: "🖥️",
     description:
-      "Chronic care management focuses on helping patients effectively manage ongoing medical conditions through regular monitoring, personalized treatment plans, and continuous healthcare support. Through Humancare Connect, patients can access convenient virtual healthcare services that promote better health outcomes and improved quality of life.",
+      "An online second medical opinion gives you the opportunity to have your diagnosis, treatment plan, or recommended procedure reviewed by a qualified specialist through secure telemedicine services. At Humancare Connect, our Second Medical Opinion Service helps you gain greater clarity about your health by providing an independent evaluation of your medical records, diagnostic reports, imaging, pathology findings, and treatment recommendations. Whether you're facing a new diagnosis, considering surgery, managing a complex medical condition, or exploring cancer treatment options, our specialists help you make informed healthcare decisions with confidence from wherever you are.",
     whyItMatters:
-      "Chronic conditions often require ongoing medical attention and long term management. Regular follow up care, medication management, and professional guidance can help reduce complications, improve symptom control, and support overall wellness. Consistent care plays an important role in helping patients stay healthy and maintain their daily activities.",
+      "Making important healthcare decisions can feel overwhelming, especially when you're diagnosed with a serious or complex medical condition. A second medical opinion can help confirm your diagnosis, identify additional treatment options, and provide reassurance before moving forward with surgery, ongoing treatment, or long-term care. Having expert guidance gives you the confidence to choose the care that's right for you.",
     whoBenefits: [
-      "Individuals living with chronic health conditions",
-      "Patients managing diabetes or high blood pressure",
-      "Adults with asthma, COPD, or respiratory conditions",
-      "Individuals with heart disease or high cholesterol",
-      "Patients seeking ongoing healthcare support and monitoring",
+      " Patients who want to confirm a diagnosis before starting treatment",
+      " Individuals considering surgery or other major medical procedures",
+      "Patients seeking a second opinion for cancer diagnosis or treatment plans",
+      "People managing complex, rare, or chronic medical conditions",
+      "Individuals looking for additional treatment options before making healthcare decisions",
+      " Anyone who wants greater confidence and clarity about their medical care",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
@@ -199,80 +200,64 @@ const SERVICES = {
     // ],
     faqs: [
       {
-        q: "What is chronic care management?",
-        a: "Chronic care management is an ongoing healthcare service designed to help patients manage long term medical conditions through regular monitoring, treatment planning, and professional support.",
+        q: "What is a second medical opinion?",
+        a: "A second medical opinion is an independent evaluation of your diagnosis, treatment plan, or recommended procedure by another qualified specialist. It helps you better understand your condition and make informed healthcare decisions.",
       },
       {
-        q: "What conditions can be managed through chronic care services?",
-        a: "Common conditions include diabetes, high blood pressure, asthma, COPD, heart disease, arthritis, high cholesterol, and other long term health concerns.",
+        q: "When should I get a second medical opinion?",
+        a: "You may benefit from a second medical opinion if you've received a new diagnosis, are considering surgery, have a complex medical condition, or want to explore additional treatment options.",
       },
       {
-        q: "Can chronic care management be provided through telehealth?",
-        a: "Yes. Telemedicine services allow patients to connect with healthcare providers remotely for ongoing support and monitoring.",
+        q: "What conditions can be reviewed through this service?",
+        a: "Our Second Medical Opinion Service supports patients with cancer diagnoses, chronic illnesses, neurological disorders, cardiovascular conditions, orthopedic concerns, gastrointestinal conditions, rare diseases, and other complex medical cases.",
       },
       {
-        q: "Why is chronic care management important?",
-        a: "Regular care and monitoring can help improve symptom control, reduce complications, and support better long term health outcomes.",
+        q: "Can I get a second medical opinion online?",
+        a: "Yes. Humancare Connect offers secure telemedicine services, allowing you to connect with qualified specialists through virtual consultations from wherever you are.",
       },
       {
-        q: "How often should I schedule follow up visits?",
-        a: "The frequency of follow up appointments depends on your condition, treatment plan, and healthcare provider's recommendations.",
+        q: "What medical records do I need to provide?",
+        a: "You may be asked to upload medical records, diagnostic reports, imaging studies, pathology reports, laboratory results, physician notes, and your current treatment plan for review.",
       },
       {
-        q: "Can chronic care management help prevent complications?",
-        a: "Yes. Ongoing monitoring and professional guidance can help identify potential issues early and support preventive care.",
+        q: "Will the specialist review my treatment plan?",
+        a: "Yes. Your specialist will review your diagnosis, current treatment recommendations, and available treatment options to provide personalized guidance based on your medical information.",
       },
       {
-        q: "What are the benefits of virtual chronic care management?",
-        a: "Virtual care offers convenient access to healthcare providers, flexible scheduling, and ongoing support from home.",
+        q: "Can I request a second opinion before surgery?",
+        a: "Absolutely. Many patients seek a second medical opinion before elective or major surgery to better understand the procedure, potential benefits, risks, and available alternatives.",
       },
       {
-        q: "Can healthcare providers monitor my progress remotely?",
-        a: "Yes. Providers can review symptoms, treatment progress, medication adherence, and health goals during follow up visits.",
+        q: "Is a second medical opinion helpful for cancer treatment?",
+        a: "Yes. A second medical opinion can help confirm a cancer diagnosis, review pathology findings, evaluate treatment options, and provide additional guidance before beginning treatment.",
       },
       {
-        q: "Is chronic care management suitable for diabetes?",
-        a: "Yes. Diabetes management is one of the most common conditions supported through chronic care services.",
+        q: "How long does the second medical opinion process take?",
+        a: "The timeline depends on the complexity of your case and how quickly your medical records are available. Our team works to connect you with a qualified specialist as promptly as possible.",
       },
       {
-        q: "Can telehealth help manage high blood pressure?",
-        a: "Yes. Healthcare providers can review blood pressure readings, discuss treatment plans, and provide ongoing support.",
+        q: "Will I have a virtual consultation with the specialist?",
+        a: "Yes. If appropriate, you'll meet with your specialist through a secure virtual consultation to discuss your diagnosis, review findings, and answer your questions.",
       },
       {
-        q: "What role does medication management play in chronic care?",
-        a: "Medication management helps ensure treatments remain effective, safe, and aligned with your healthcare needs.",
+        q: "Is my personal health information secure?",
+        a: "Yes. Your medical information is handled through secure telemedicine services and protected using industry-standard privacy and security practices.",
       },
       {
-        q: "Can chronic care services improve quality of life?",
-        a: "Yes. Consistent healthcare support can help patients manage symptoms and maintain greater independence in daily life.",
+        q: "Can a second medical opinion confirm or change my diagnosis?",
+        a: "A second medical opinion may confirm your current diagnosis or provide additional insights that help clarify your condition or identify other treatment options.",
       },
       {
-        q: "What happens during a chronic care consultation?",
-        a: "A healthcare provider reviews your symptoms, treatment plan, medications, health goals, and overall condition management.",
+        q: "Do I need a referral to request a second medical opinion?",
+        a: "Requirements may vary depending on your insurance plan or healthcare provider. Many patients can request a second medical opinion directly through Humancare Connect.",
       },
       {
-        q: "Can lifestyle changes help manage chronic conditions?",
-        a: "Yes. Nutrition, physical activity, sleep habits, and stress management can play an important role in overall health.",
+        q: "Will my current doctor know that I requested a second opinion?",
+        a: "You decide whether to share your second medical opinion with your current healthcare provider. Many physicians support patients seeking additional guidance before making important healthcare decisions.",
       },
       {
-        q: "Is chronic care management only for older adults?",
-        a: "No. Adults of all ages living with chronic health conditions may benefit from ongoing healthcare support.",
-      },
-      {
-        q: "Can I discuss multiple chronic conditions during one appointment?",
-        a: "Yes. Healthcare providers can review and manage multiple health concerns during a consultation.",
-      },
-      {
-        q: "Are virtual chronic care appointments secure?",
-        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient information and privacy.",
-      },
-      {
-        q: "How do I get started with chronic care management?",
-        a: "Schedule an appointment, discuss your condition with a healthcare provider, and receive a personalized care plan.",
-      },
-      {
-        q: "Why choose Humancare Connect for chronic care management?",
-        a: "Humancare Connect provides secure telemedicine services, licensed healthcare providers, personalized care plans, and convenient access to ongoing healthcare support.",
+        q: "How do I schedule a second medical opinion with Humancare Connect?",
+        a: "Simply book an appointment online, securely upload your medical records, and we'll connect you with a qualified specialist for a personalized second medical opinion.",
       },
     ],
   },
@@ -317,13 +302,6 @@ const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 /* ──────────────────────────────────────────────────────────────────────────
    MICRO COMPONENTS
 ────────────────────────────────────────────────────────────────────────── */
-// Fix 1 (labels off-center): SLabel is a flex row (divider line + text). A
-// flex container is block-level by default, so it stretches to the full
-// width of its parent and its children sit at the start of that row —
-// `text-align: center` on an ancestor has no effect on it. Sections that
-// want a centered eyebrow label (Features, WhyUs) now pass `center`, which
-// switches `justifyContent` so the divider+text pair is actually centered
-// instead of hugging the left edge of the centered text block.
 const SLabel = ({ text, ac, center = false }) => (
   <div
     style={{
@@ -454,7 +432,7 @@ const GhostBtn = ({ children, onClick }) => (
    HERO
   
 ────────────────────────────────────────────────────────────────────────── */
-const Hero = ({ s, price, priceLoading, bp }) => {
+const Hero = ({ s, price, priceLoading }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -516,15 +494,16 @@ const Hero = ({ s, price, priceLoading, bp }) => {
           zIndex: 10,
           maxWidth: 1381,
           margin: "0 auto",
-          padding: bp.isMobile ? "100px 16px 40px" : "90px 50px 15px",
+          padding: "90px 50px 15px",
           width: "100%",
           opacity: op,
           display: "grid",
-          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 450px",
-          gap: bp.isMobile ? 24 : 48,
+          gridTemplateColumns: "1fr 450px",
+          gap: 48,
           alignItems: "center",
         }}
-      ><div>
+      >
+        <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -596,16 +575,7 @@ const Hero = ({ s, price, priceLoading, bp }) => {
               gap: 12,
               flexWrap: "wrap",
             }}
-          >
-            <PrimaryBtn ac={s.accentColor}>
-              <a
-                href="/appointment-booking"
-                style={{ color: "#fff", textDecoration: "none" }}
-              >
-                Book Appointment
-              </a>
-            </PrimaryBtn>
-          </motion.div>
+          ></motion.div>
         </div>
 
         <motion.div
@@ -620,15 +590,15 @@ const Hero = ({ s, price, priceLoading, bp }) => {
             slug={s.slug}
           />
         </motion.div>
-      </motion.div >
-    </section >
+      </motion.div>
+    </section>
   );
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
    OVERVIEW
 ────────────────────────────────────────────────────────────────────────── */
-const Overview = ({ s, bp }) => (
+const Overview = ({ s }) => (
   <section
     style={{
       background: BG_BASE,
@@ -639,7 +609,7 @@ const Overview = ({ s, bp }) => (
       style={{
         maxWidth: 1200,
         margin: "0 auto",
-        padding: bp.isMobile ? "48px 16px" : "88px 24px",
+        padding: "88px 24px",
       }}
     >
       <motion.div
@@ -649,8 +619,8 @@ const Overview = ({ s, bp }) => (
         viewport={{ once: true, margin: "-60px" }}
         style={{
           display: "grid",
-          gridTemplateColumns: bp.isMobile ? "1fr" : "1.1fr 0.9fr",
-          gap: bp.isMobile ? 32 : 64,
+          gridTemplateColumns: "1.1fr 0.9fr",
+          gap: 64,
           alignItems: "start",
         }}
       >
@@ -667,7 +637,7 @@ const Overview = ({ s, bp }) => (
                 marginBottom: 20,
               }}
             >
-              Comprehensive Care for Long Term Health Conditions
+              What Is an Online Second Medical Opinion?
             </h2>
           </motion.div>
           <motion.p
@@ -766,7 +736,7 @@ const Overview = ({ s, bp }) => (
         viewport={{ once: true }}
         style={{
           display: "grid",
-          gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(4, 1fr)",
           gap: 12,
           marginTop: 52,
         }}
@@ -816,16 +786,16 @@ const Overview = ({ s, bp }) => (
 /* ──────────────────────────────────────────────────────────────────────────
    OUR SERVICES
 ────────────────────────────────────────────────────────────────────────── */
-const HowItWorks = ({ s, bp }) => (
+const HowItWorks = ({ s }) => (
   <section
     style={{
-      padding: bp.isMobile ? "48px 0" : "88px 0",
+      padding: "88px 0",
       background: BG_SURFACE,
       borderTop: `1px solid ${BORDER}`,
       borderBottom: `1px solid ${BORDER}`,
     }}
   >
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "0 16px" : "0 24px" }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -833,8 +803,8 @@ const HowItWorks = ({ s, bp }) => (
         viewport={{ once: true, margin: "-60px" }}
         style={{
           display: "grid",
-          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
-          gap: bp.isMobile ? 32 : 64,
+          gridTemplateColumns: "1fr 1fr",
+          gap: 64,
           alignItems: "start",
         }}
       >
@@ -850,7 +820,7 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 8,
               }}
             >
-              Getting started is{" "}
+              Getting a second medical opinion is{" "}
               <span style={{ color: s.accentColor }}>simple.</span>
             </h2>
             <p
@@ -861,8 +831,9 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 36,
               }}
             >
-              Accessing chronic care management through Humancare Connect is
-              convenient, secure, and designed around your healthcare needs.
+              Connect with a qualified specialist through Humancare Connect for
+              a secure, convenient, and personalized second medical opinion from
+              wherever you are.
             </p>
           </motion.div>
 
@@ -969,7 +940,7 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 8,
               }}
             >
-              Ready to begin?
+              Ready for a second opinion?
             </h3>
             <p
               style={{
@@ -979,9 +950,10 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 24,
               }}
             >
-              Get convenient access to chronic care management through trusted
-              telemedicine services and receive ongoing support from licensed
-              healthcare providers.
+              Get trusted guidance from qualified specialists through secure
+              telemedicine services. Whether you're reviewing a diagnosis,
+              considering surgery, or exploring treatment options, we're here to
+              help you make informed healthcare decisions with confidence.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
               <a href="/login">Get Started Today</a>
@@ -1025,8 +997,8 @@ const HowItWorks = ({ s, bp }) => (
 /* ──────────────────────────────────────────────────────────────────────────
    FEATURES & BENEFITS
 ────────────────────────────────────────────────────────────────────────── */
-const Features = ({ s, bp }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
+const Features = ({ s }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
     <motion.div
       variants={stagger}
       initial="hidden"
@@ -1050,14 +1022,12 @@ const Features = ({ s, bp }) => (
             marginBottom: 10,
           }}
         >
-          Managing Chronic Conditions
+          Understanding Online
           <br />
-          <span style={{ color: s.accentColor }}>
-            Through Virtual Healthcare
-          </span>
+          <span style={{ color: s.accentColor }}>Second Medical Opinions</span>
         </h2>
         <p style={{ color: TEXT_DIM, fontSize: 15 }}>
-          Every feature is designed around one goal: better outcomes for you.
+          Get trusted guidance before making important healthcare decisions.
         </p>
       </motion.div>
 
@@ -1079,13 +1049,13 @@ const Features = ({ s, bp }) => (
               margin: "0 0 18px 0",
             }}
           >
-            Chronic conditions are long term health concerns that often require
-            continuous medical attention, lifestyle adjustments, and regular
-            monitoring. Conditions such as diabetes, high blood pressure, heart
-            disease, asthma, arthritis, and chronic respiratory disorders can
-            significantly impact daily life if not properly managed. Consistent
-            healthcare support helps patients maintain better control of their
-            symptoms and overall health.
+            A second medical opinion gives you the opportunity to have your
+            diagnosis, treatment plan, or recommended procedure independently
+            reviewed by a qualified specialist through secure telemedicine
+            services. At Humancare Connect, our Second Medical Opinion Service
+            helps patients better understand their health by providing expert
+            guidance before moving forward with treatment, surgery, or long-term
+            care.
           </p>
           <p
             style={{
@@ -1095,14 +1065,14 @@ const Features = ({ s, bp }) => (
               margin: "0 0 18px 0",
             }}
           >
-            At Humancare Connect, our chronic care management services provide
-            patients with convenient access to licensed healthcare providers
-            through secure telehealth services. Providers work closely with
-            patients to review treatment plans, monitor symptoms, discuss
-            medication management, and identify opportunities to improve health
-            outcomes. Virtual healthcare services make it easier to stay
-            connected with professional care while reducing the need for
-            frequent in person visits.
+            Whether you've recently been diagnosed with a serious medical
+            condition, are evaluating cancer treatment options, managing a
+            chronic illness, or considering surgery, a second medical opinion
+            can provide valuable insight and reassurance. Our specialists
+            carefully review your medical records, diagnostic reports, imaging
+            studies, pathology findings, and current treatment recommendations
+            to offer personalized guidance based on your individual healthcare
+            needs.
           </p>
           <p
             style={{
@@ -1112,12 +1082,13 @@ const Features = ({ s, bp }) => (
               margin: 0,
             }}
           >
-            Effective chronic care management goes beyond treating symptoms. It
-            focuses on helping patients understand their conditions, make
-            informed healthcare decisions, maintain healthy lifestyle habits,
-            and prevent complications. Through personalized care and ongoing
-            support, telemedicine services help patients take a proactive
-            approach to managing their long term health.
+            Many patients seek a second medical opinion to confirm a diagnosis,
+            explore alternative treatment options, or gain greater confidence
+            before making significant healthcare decisions. Through secure
+            virtual consultations, Humancare Connect makes it convenient to
+            connect with qualified specialists from wherever you are, helping
+            you make informed decisions with clarity, confidence, and peace of
+            mind.
           </p>
         </div>
       </motion.div>
@@ -1174,44 +1145,43 @@ const StatCard = ({ value, suffix, label, ac, go }) => {
 
 const whyUsItems = [
   [
-    FiAward,
-    "Verified Providers",
-    "Every clinician is credentialed, licensed, and continuously reviewed.",
+    FiUserCheck,
+    "Qualified Specialists",
+    "Connect with qualified specialists who carefully review your diagnosis, medical records, treatment recommendations, and healthcare concerns to provide trusted, personalized guidance.",
   ],
   [
-    FiHeart,
-    "Patient-Centered Care",
-    "Clinical decisions are made in partnership with you — never without your input.",
+    FiFileText,
+    "Personalized Second Opinions",
+    "Every second medical opinion is tailored to your medical history, current condition, diagnostic findings, and treatment goals, helping you make informed healthcare decisions.",
   ],
   [
-    FiGlobe,
-    "Nationwide Access",
-    "Care without geographic limits — from metro centers to remote districts.",
+    FiShield,
+    "Secure Virtual Consultations",
+    "Receive expert guidance through secure, HIPAA-compliant telemedicine services, allowing you to connect with specialists from the comfort of your home.",
   ],
   [
     FiZap,
-    "Fast Scheduling",
-    "From first contact to first appointment in hours, not weeks.",
+    "Fast Appointment Scheduling",
+    "Get timely access to second medical opinions when important healthcare decisions can't wait, helping you move forward with greater confidence.",
   ],
   [
-    FiLock,
-    "Secure Platform",
-    "Enterprise-grade encryption protects every record and transaction.",
+    FiClipboard,
+    "Comprehensive Medical Record Review",
+    "Our specialists review diagnostic reports, imaging studies, pathology results, laboratory findings, and treatment plans to provide a thorough and independent evaluation.",
   ],
   [
-    FiBarChart2,
-    "Outcome Accountability",
-    "We track results and publicly report our care quality standards.",
+    FiGlobe,
+    "Convenient Access to Care",
+    "Whether you're seeking a second opinion before surgery, reviewing a cancer diagnosis, or exploring treatment options for a complex medical condition, you can access expert guidance from anywhere through Humancare Connect.",
   ],
 ];
 
-const WhyUs = ({ s, bp }) => {
-
+const WhyUs = ({ s }) => {
   // numbers are actually visible.
   const [inView, setInView] = useState(false);
 
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -1233,11 +1203,14 @@ const WhyUs = ({ s, bp }) => {
               marginBottom: 10,
             }}
           >
-            Results you can{" "}
-            <span style={{ color: s.accentColor }}>measure.</span>
+            Healthcare decisions{" "}
+            <span style={{ color: s.accentColor }}>
+              deserve expert guidance.
+            </span>
           </h2>
           <p style={{ color: TEXT_DIM, fontSize: 15 }}>
-            Numbers that represent real patients, real outcomes.
+            Trusted second medical opinions from qualified specialists,
+            delivered with confidence.{" "}
           </p>
         </motion.div>
 
@@ -1246,7 +1219,7 @@ const WhyUs = ({ s, bp }) => {
           viewport={{ once: true, amount: 0.3 }}
           style={{
             display: "grid",
-            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 12,
             marginBottom: 44,
           }}
@@ -1266,7 +1239,7 @@ const WhyUs = ({ s, bp }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(3, 1fr)",
             gap: 12,
           }}
         >
@@ -1323,18 +1296,194 @@ const WhyUs = ({ s, bp }) => {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   FAQ
+   RELATED SERVICES
 ────────────────────────────────────────────────────────────────────────── */
-const FAQ = ({ s, bp }) => {
-  const [open, setOpen] = useState(null);
+const relatedServicesItems = [
+  {
+    Icon: FiActivity,
+    title: "Cancer Second Opinion",
+    desc: "Receive an independent review of your cancer diagnosis, pathology reports, treatment recommendations, and care plan to help you make informed decisions about your cancer treatment.",
+    href: "/online-second-medical-opinion/cancer-second-opinion",
+    linkLabel: "Explore More",
+  },
+  {
+    Icon: FiSearch,
+    title: "Complex Diagnosis Review",
+    desc: "Get expert evaluation for difficult-to-diagnose conditions, unresolved symptoms, or rare medical disorders when you need additional clinical insight.",
+    href: "/online-second-medical-opinion/complex-diagnosis-review",
+    linkLabel: "Explore More",
+  },
+  {
+    Icon: FiUserCheck,
+    title: "Surgery Second Opinion",
+    desc: "Understand your surgical options with an independent review of recommended procedures, potential risks, expected outcomes, and alternative treatment approaches.",
+    href: "/online-second-medical-opinion/surgery-second-opinion",
+    linkLabel: "Explore More",
+  },
+  {
+    Icon: FiFileText,
+    title: "Treatment Plan Review",
+    desc: "Have your current treatment plan reviewed by a qualified specialist to ensure you understand your available options and next steps.",
+    href: "/online-second-medical-opinion/treatment-plan-review",
+    linkLabel: "Explore More",
+  },
+];
+
+const RelatedServices = ({ s, bp }) => {
+  // Responsive column count: 1 col on phones, 2 on tablets, 4 on desktop.
+  const cols = bp?.isMobile ? 1 : bp?.isTablet ? 2 : 4;
+
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
+    <section
+      style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: bp?.isMobile ? "56px 20px" : "88px 24px",
+      }}
+    >
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        style={{ display: "grid", gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr", gap: bp.isMobile ? 32 : 64 }}
+      >
+        <motion.div
+          variants={fadeUp}
+          style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 44px" }}
+        >
+          <SLabel text="Related Services" ac={s.accentColor} center />
+          <h2
+            style={{
+              fontSize: "clamp(26px, 3.5vw, 36px)",
+              fontWeight: 900,
+              color: TEXT_PRIMARY,
+              lineHeight: 1.15,
+              marginBottom: 10,
+            }}
+          >
+            Explore More{" "}
+            <span style={{ color: s.accentColor }}>
+              Second Opinion Services
+            </span>
+          </h2>
+          <p style={{ color: TEXT_DIM, fontSize: 15, lineHeight: 1.7 }}>
+            Every healthcare decision is unique. In addition to our Second
+            Medical Opinion Service, Humancare Connect offers specialized second
+            opinion services for complex diagnoses, cancer care, surgery
+            recommendations, and treatment plan reviews. Connect with qualified
+            specialists to gain expert guidance tailored to your healthcare
+            needs.
+          </p>
+        </motion.div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+            gap: bp?.isMobile ? 14 : 16,
+          }}
+        >
+          {relatedServicesItems.map(
+            ({ Icon, title, desc, href, linkLabel }, i) => (
+              <motion.a
+                key={i}
+                href={href}
+                variants={fadeUp}
+                custom={i}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: bp?.isMobile ? 20 : 24,
+                  borderRadius: 18,
+                  background: "#fff",
+                  border: `1px solid ${BORDER}`,
+                  transition:
+                    "border-color 0.2s, box-shadow 0.2s, transform 0.2s",
+                  textDecoration: "none",
+                  color: "inherit",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = `${s.accentColor}55`;
+                  e.currentTarget.style.boxShadow = `0 8px 24px ${s.accentColor}18`;
+                  e.currentTarget.style.transform = "translateY(-3px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = BORDER;
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: `${s.accentColor}12`,
+                    marginBottom: 16,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon style={{ fontSize: 18, color: s.accentColor }} />
+                </div>
+                <div
+                  style={{
+                    color: TEXT_PRIMARY,
+                    fontWeight: 700,
+                    fontSize: 15,
+                    marginBottom: 8,
+                  }}
+                >
+                  {title}
+                </div>
+                <p
+                  style={{
+                    color: TEXT_DIM,
+                    fontSize: 13,
+                    lineHeight: 1.65,
+                    marginBottom: 18,
+                    flex: 1,
+                  }}
+                >
+                  {desc}
+                </p>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    color: s.accentColor,
+                    fontWeight: 700,
+                    fontSize: 13,
+                  }}
+                >
+                  {linkLabel} <FiArrowRight style={{ fontSize: 14 }} />
+                </span>
+              </motion.a>
+            ),
+          )}
+        </div>
+      </motion.div>
+    </section>
+  );
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
+   FAQ
+────────────────────────────────────────────────────────────────────────── */
+const FAQ = ({ s }) => {
+  const [open, setOpen] = useState(null);
+  return (
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-60px" }}
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}
       >
         <motion.div variants={fadeUp}>
           <SLabel text="FAQ" ac={s.accentColor} />
@@ -1461,8 +1610,8 @@ const FAQ = ({ s, bp }) => {
 /* ──────────────────────────────────────────────────────────────────────────
    FINAL CTA
 ────────────────────────────────────────────────────────────────────────── */
-const FinalCTA = ({ s, bp }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
+const FinalCTA = ({ s }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -1471,26 +1620,26 @@ const FinalCTA = ({ s, bp }) => (
       style={{
         position: "relative",
         borderRadius: 28,
-        padding: bp.isMobile ? "40px 16px" : "72px 48px",
+        padding: "72px 48px",
         textAlign: "center",
         background: `${s.accentColor}08`,
         border: `1px solid ${s.accentColor}25`,
       }}
     >
       <div>
-        <Pill ac={s.accentColor}>Start Today</Pill>
+        <Pill ac={s.accentColor}>Get Started Today</Pill>
         <h2
           style={{
-            fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(32px, 5vw, 52px)",
+            fontSize: "clamp(32px, 5vw, 52px)",
             fontWeight: 900,
             color: TEXT_PRIMARY,
             lineHeight: 1.1,
             marginBottom: 14,
           }}
         >
-          Ready to Take Control of
+          Ready for a Trusted
           <br />
-          <span style={{ color: s.accentColor }}>Your Long Term Health?</span>
+          <span style={{ color: s.accentColor }}>Second Medical Opinion?</span>
         </h2>
         <p
           style={{
@@ -1501,10 +1650,11 @@ const FinalCTA = ({ s, bp }) => (
             fontSize: 16,
           }}
         >
-          Connect with a licensed healthcare provider through secure
-          telemedicine services and receive personalized chronic care management
-          designed to support your health goals and improve your quality of
-          life.
+          When it comes to your health, confidence matters. Connect with a
+          qualified specialist through Humancare Connect to review your
+          diagnosis, treatment plan, or recommended procedure. Get expert
+          guidance, personalized recommendations, and the clarity you need to
+          make informed healthcare decisions from the comfort of your home.
         </p>
         <div
           style={{
@@ -1514,14 +1664,13 @@ const FinalCTA = ({ s, bp }) => (
             gap: 12,
             marginBottom: 36,
             flexWrap: "wrap",
-            flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
-          <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
+          <PrimaryBtn ac={s.accentColor}>
             <a href="/login">Get Started</a>
           </PrimaryBtn>
           <GhostBtn>
-            <a href="/appointment-booking">Book Appointment</a>
+            <a href="/appointment-booking">Book Your Second Medical Opinion</a>
           </GhostBtn>
         </div>
         <div
@@ -1563,7 +1712,7 @@ const FinalCTA = ({ s, bp }) => (
 /* ──────────────────────────────────────────────────────────────────────────
    ROOT APP
 ────────────────────────────────────────────────────────────────────────── */
-export default function ChronicCareManagement() {
+export default function SecondOpinion() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
@@ -1573,10 +1722,10 @@ export default function ChronicCareManagement() {
   return (
     <>
       <SEO
-        title="Chronic Care Management Online | Ongoing Healthcare Support | Humancare Connect"
-        description="Manage chronic health conditions through secure telemedicine services. Connect with licensed healthcare providers for ongoing care, monitoring, and personalized support."
-        keywords="Chronic care management, Chronic health conditions, Telemedicine services, Virtual healthcare services, Telehealth services, Virtual chronic care management"
-        url="https://humancareconnect.co/chronic-care-management"
+        title="Online Second Medical Opinion | Qualified Specialists"
+        description="Get a trusted online second medical opinion from qualified specialists. Review your diagnosis, treatment plan, surgery recommendations, and cancer care securely."
+        // keywords="Chronic care management, Chronic health conditions, Telemedicine services, Virtual healthcare services, Telehealth services, Virtual chronic care management"
+        url="https://humancareconnect.co/online-second-medical-opinion"
       />
       <Helmet>
         <title>
@@ -1597,13 +1746,14 @@ export default function ChronicCareManagement() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} price={price} priceLoading={priceLoading} bp={bp} />
-            <Overview s={s} bp={bp} />
-            <HowItWorks s={s} bp={bp} />
-            <Features s={s} bp={bp} />
-            <WhyUs s={s} bp={bp} />
-            <FAQ s={s} bp={bp} />
-            <FinalCTA s={s} bp={bp} />
+            <Hero s={s} price={price} priceLoading={priceLoading} />
+            <Overview s={s} />
+            <HowItWorks s={s} />
+            <Features s={s} />
+            <WhyUs s={s} />
+            <RelatedServices s={s} bp={bp} />
+            <FAQ s={s} />
+            <FinalCTA s={s} />
           </motion.div>
         </AnimatePresence>
       </div>

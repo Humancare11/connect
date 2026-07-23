@@ -48,7 +48,6 @@ import {
 import "./Specialties.css";
 import SEO from "../components/Seo";
 
-
 const conditionIcons = {
   bone: Bone,
   check: ShieldCheck,
@@ -457,7 +456,7 @@ const CONDITIONS = [
   },
   {
     slug: "cancer-second-opinion",
-    path: "/cancer-second-opinion",
+    path: "/online-second-medical-opinion/cancer-second-opinion",
     icon: "check",
     name: "Cancer Second Opinion",
   },
@@ -481,7 +480,7 @@ const CONDITIONS = [
   },
   {
     slug: "complex-diagnosis",
-    path: "/complex-diagnosis",
+    path: "/online-second-medical-opinion/complex-diagnosis-review",
     icon: "stethoscope",
     name: "Complex Diagnosis",
   },

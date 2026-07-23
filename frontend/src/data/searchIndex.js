@@ -191,7 +191,7 @@ export const conditions = [
     keywords: ["arthritis", "joint inflammation"]
   },
   {
-    id: "cancer-second-opinion", title: "Cancer Second Opinion", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/cancer-second-opinion",
+    id: "cancer-second-opinion", title: "Cancer Second Opinion", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/online-second-medical-opinion/cancer-second-opinion",
     keywords: ["cancer", "oncology", "second opinion"]
   },
   {
@@ -207,7 +207,7 @@ export const conditions = [
     keywords: ["chronic migraine", "migraine", "severe headache"]
   },
   {
-    id: "complex-diagnosis", title: "Complex Diagnosis Review", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/complex-diagnosis",
+    id: "complex-diagnosis", title: "Complex Diagnosis Review", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/online-second-medical-opinion/complex-diagnosis-review",
     keywords: ["complex diagnosis", "diagnosis review"]
   },
   {
@@ -271,7 +271,7 @@ export const conditions = [
     keywords: ["sleep apnea", "snoring", "breathing during sleep"]
   },
   {
-    id: "surgery-second-opinion", title: "Surgery Second Opinion", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/surgery-second-opinion",
+    id: "surgery-second-opinion", title: "Surgery Second Opinion", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/online-second-medical-opinion/surgery-second-opinion",
     keywords: ["surgery second opinion", "surgical opinion"]
   },
   {
@@ -279,7 +279,7 @@ export const conditions = [
     keywords: ["thyroid", "hypothyroid", "hyperthyroid"]
   },
   {
-    id: "treatment-plan-review", title: "Treatment Plan Review", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/treatment-plan-review",
+    id: "treatment-plan-review", title: "Treatment Plan Review", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/online-second-medical-opinion/treatment-plan-review",
     keywords: ["treatment plan review"]
   },
   {
