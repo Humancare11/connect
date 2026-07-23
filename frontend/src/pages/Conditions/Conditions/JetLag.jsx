@@ -43,7 +43,6 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/Jet-Lag.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
@@ -54,69 +53,6 @@ const pageData = {
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
   bgImage: ConditionBannerImage,
 };
-
-const faqData = [
-  {
-    category: "Appointments",
-    items: [
-      {
-        q: "How do I book a primary care appointment?",
-        a: 'You can book online in under 60 seconds — just click "Book Appointment" at the top of the page, choose a date and time that works for you, and confirm. Same-day slots are often available.',
-      },
-      {
-        q: "Can I see a doctor the same day?",
-        a: "Yes. We reserve same-day slots every morning for acute concerns. If you log in before 10 AM, you'll typically find availability for that day.",
-      },
-      {
-        q: "What should I bring to my first visit?",
-        a: "Bring a valid photo ID, your insurance card, a list of any current medications, and any recent lab results or specialist notes if you have them.",
-      },
-    ],
-  },
-  {
-    category: "Virtual Care",
-    items: [
-      {
-        q: "How does an online consultation work?",
-        a: "After booking, you'll receive a secure video link by email and SMS. At your appointment time, click the link — no app download required.",
-      },
-      {
-        q: "What conditions can be treated virtually?",
-        a: "Most common illnesses and follow-ups are well-suited to video care — colds, infections, skin concerns, mental health check-ins, and prescription renewals.",
-      },
-    ],
-  },
-  {
-    category: "Costs & Insurance",
-    items: [
-      {
-        q: "Do you accept my insurance?",
-        a: "We work with most major insurance plans including Aetna, Cigna, UnitedHealth, BlueCross BlueShield, Humana, and Medicare.",
-      },
-      {
-        q: "What is the consultation fee if I'm uninsured?",
-        a: "Our self-pay consultation fee is $49 for a standard visit — this covers the appointment, any prescriptions written, a doctor's note if needed, and 24-hour follow-up support.",
-      },
-      {
-        q: "Are referrals and lab orders included in the fee?",
-        a: "Yes. Specialist referrals and lab test orders issued during your visit are included at no extra charge.",
-      },
-    ],
-  },
-  {
-    category: "Your Health & Records",
-    items: [
-      {
-        q: "How do I access my medical records?",
-        a: "All visit notes, lab results, and prescription history are available in your secure patient portal within 24 hours of your appointment.",
-      },
-      {
-        q: "Can my primary care doctor manage chronic conditions?",
-        a: "Absolutely. Chronic disease management is one of our core services. Your physician will create a personalised care plan and coordinate with any specialists you see.",
-      },
-    ],
-  },
-];
 
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT — everything inlined into one component, no sub-components
@@ -162,18 +98,6 @@ export default function JetLag() {
               <p className="condition-desc-hero condition-hero-anim-desc">
                 {pageData.description}
               </p>
-
-              <div className="condition-btns condition-hero-anim-btns">
-                <a
-                  href="/appointment-booking"
-                  className="condition-btn condition-btn--primary"
-                >
-                  <Calendar size={15} /> Book Appointment
-                </a>
-                <a href="#" className="condition-btn condition-btn--ghost">
-                  <Users size={15} /> Know More
-                </a>
-              </div>
 
               <div className="condition-trust condition-hero-anim-trust">
                 {pageData.trustItems.map((item) => (
@@ -241,12 +165,14 @@ export default function JetLag() {
                   {/* RIGHT */}
                   <div className="condition-about-right">
                     <div>
-                      <h3 className="condition-block-title">What is Jet Lag?</h3>
+                      <h3 className="condition-block-title">
+                        What is Jet Lag?
+                      </h3>
                       <p className="condition-block-body">
                         Jet lag can cause fatigue, trouble sleeping, daytime
                         drowsiness, difficulty concentrating, irritability,
-                        headaches, and low energy after traveling across different
-                        time zones.
+                        headaches, and low energy after traveling across
+                        different time zones.
                       </p>
                     </div>
 
@@ -257,10 +183,10 @@ export default function JetLag() {
                         Connect. Our telemedicine services make it easy to
                         schedule an online doctor appointment and connect with a
                         licensed provider from anywhere. Through our secure
-                        virtual healthcare services, you can receive sleep health
-                        guidance, treatment recommendations, recovery support, and
-                        prescriptions when appropriate without the hassle of
-                        finding care while traveling.
+                        virtual healthcare services, you can receive sleep
+                        health guidance, treatment recommendations, recovery
+                        support, and prescriptions when appropriate without the
+                        hassle of finding care while traveling.
                       </p>
                     </div>
 
@@ -335,16 +261,23 @@ export default function JetLag() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=travel&condition=Jet%20Lag%20")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=travel&condition=Jet%20Lag%20",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">
                   By continuing, you agree to our{" "}
-                  <a href="#" className="condition-sbc-link">
+                  <a href="/terms-of-service" className="condition-sbc-link">
                     Terms of Service
                   </a>{" "}
                   and{" "}
-                  <a href="#" className="condition-sbc-link">
+                  <a href="/privacy-policy" className="condition-sbc-link">
                     Privacy Policy
                   </a>
                 </p>
@@ -354,7 +287,6 @@ export default function JetLag() {
         </div>
 
         {/* ══════════════════════ FAQ ══════════════════════ */}
-
       </div>
     </>
   );
