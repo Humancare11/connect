@@ -1,6 +1,6 @@
 /* AdminDashboard.css — Humancare Admin  |  prefix: ad- / adp- / ado-
    Glassmorphism theme — matches User & Doctor dashboards             */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
 
 *,
 *::before,
@@ -16,7 +16,7 @@
   max-width: 100vw;
   background: linear-gradient(145deg, #e8eaf0 0%, #eef0f5 50%, #e4e8ef 100%);
   background-attachment: fixed;
-  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   color: #0b0443;
   position: relative;
   overflow-x: hidden;

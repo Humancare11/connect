@@ -34,7 +34,7 @@ body {
   --border-s: rgba(34, 58, 94, 0.18);
   --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-snap: cubic-bezier(0.34, 1.06, 0.64, 1);
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-secondary);
   color: var(--ink);
 }
 .hce-root *,
@@ -46,7 +46,7 @@ body {
 .hce-root h2,
 .hce-root h3,
 .hce-root h4 {
-  font-family: "Satoshi", "Manrope", sans-serif;
+  font-family: var(--font-primary);
 }
 .hce-root button {
   font-family: inherit;
@@ -97,7 +97,7 @@ body {
     0 2px 8px rgba(34, 58, 94, 0.04);
 }
 .hce-logo {
-  font-family: "Satoshi", "Manrope", sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   font-size: 20px;
   background: linear-gradient(135deg, #223a5e, #0c8b7a);
@@ -410,7 +410,7 @@ body {
   margin-bottom: 22px;
 }
 .hce-card-title {
-  font-family: "Satoshi", "Manrope", sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   font-size: 17px;
   color: #0f1827;
@@ -469,7 +469,7 @@ body {
   box-shadow: 0 1px 6px rgba(34, 58, 94, 0.1);
 }
 .hce-card-stat {
-  font-family: "Satoshi", "Manrope", sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   font-size: 28px;
   color: #0f1827;

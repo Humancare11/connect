@@ -24,7 +24,6 @@ const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const Corporates = lazy(() => import("./pages/Corporates"));
 const Contact = lazy(() => import("./pages/Contact"));
 const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
-const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
@@ -765,6 +764,9 @@ const DoctorAppointments = lazy(
   () => import("./pages/doctors/DoctorAppointments"),
 );
 const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
+const WritePrescription = lazy(
+  () => import("./pages/doctors/WritePrescription"),
+);
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
 const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
@@ -1104,7 +1106,6 @@ function AppLayout() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/corporates" element={<Corporates />} />
           <Route path="/contact-us" element={<Contact />} />
-          <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           {/* <Route path="/register" element={<Register />} /> */}
@@ -1240,6 +1241,14 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <DoctorPatients />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/patients/:patientId/prescription"
+            element={
+              <DoctorLayout>
+                <WritePrescription />
               </DoctorLayout>
             }
           />
@@ -2555,45 +2564,45 @@ function AppLayout() {
             path="/provider-terms-of-service"
             element={<ProviderTermsofService />}
           /> */}
-          <Route
+          {/* <Route
             path="/refund-and-cancellation-policy"
             element={<RefundCancellation />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/tele-health-informed-consent"
             element={<TeleHealthConsent />}
-          />
+          /> */}
           {/* <Route path="/terms-of-service" element={<TermsService />} /> */}
           {/* <Route
             path="/accessibility-statement"
             element={<AccessibilityStatement />}
           /> */}
-          <Route path="/CCPA" element={<CCPA />} />
+          {/* <Route path="/CCPA" element={<CCPA />} /> */}
           {/* <Route path="/cookie-policy" element={<CookiePolicy />} /> */}
           {/* <Route
             path="/notice-of-privacy-practices"
             element={<NoticePrivacy />}
           /> */}
-          <Route
+          {/* <Route
             path="/patient-informed-consent-form"
             element={<PatientInformedConsentForm />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/physician-credentialing-policy"
             element={<PhysicianCredentialingPolicy />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/teleconsultation-workflow-policy"
             element={<TeleconsultationWorkflowPolicy />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/prescription-handling-policy"
             element={<PrescriptionHandlingPolicy />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/tele-health-provider-agreement"
             element={<TelehealthProviderAgreement />}
-          />
+          /> */}
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/career" element={<DoctorCareers />} />
           <Route path="/support-center" element={<FAQ />} />

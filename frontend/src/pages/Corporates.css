@@ -22,7 +22,7 @@
   --shadow-2: 0 30px 80px -30px rgba(11, 40, 100, 0.3);
   --shadow-3: 0 50px 120px -40px rgba(11, 40, 100, 0.4);
   --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --display: "Satoshi", sans-serif, system-ui, sans-serif;
+  --display: var(--font-primary);
 }
 
 body {
@@ -152,7 +152,7 @@ body {
   padding: 100px 0;
   position: relative;
   overflow: hidden;
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-primary);
 }
 
 .corp-accordion-header {
@@ -460,7 +460,7 @@ body {
 }
 
 .ac-title {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-primary);
   font-size: clamp(22px, 2.4vw, 34px);
   font-weight: 700;
   margin-bottom: 16px;
@@ -497,7 +497,7 @@ body {
 }
 
 .ac-stat-main .val {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-primary);
   font-size: clamp(28px, 3vw, 40px);
   font-weight: 700;
   color: #ffffff;

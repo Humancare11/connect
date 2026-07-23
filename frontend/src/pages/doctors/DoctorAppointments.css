@@ -2,7 +2,7 @@
    DoctorAppointments.css  —  Humancare Light Theme
    ================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap");
+
 
 :root {
   --blue: #01164a;
@@ -32,7 +32,7 @@
 
 /* ── Root ── */
 .da-root {
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-primary);
   color: var(--text);
   padding: 4px 0 24px;
 }
@@ -237,7 +237,7 @@
   border: none;
   background: transparent;
   color: var(--text-2);
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -421,7 +421,7 @@
   gap: 6px;
   padding: 7px 16px;
   border-radius: var(--radius-sm);
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;

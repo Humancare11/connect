@@ -35,8 +35,8 @@
   --slow: 520ms;
 
   /* Type */
-  --font-heading: "Satoshi", Inter, sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-primary);
+  --font-body: var(--font-secondary);
 
   /* A light blue tint for icon chips / selected states — keeps every
      "selected" moment reading as brand-blue rather than teal or gold */
@@ -64,7 +64,7 @@
       #ffffff 0%,
       var(--bg) 45%,
       var(--section) 100%);
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   box-sizing: border-box;
 }
 
@@ -94,7 +94,7 @@
   border: none;
   background: transparent;
   padding: 0;
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--primary);
@@ -129,7 +129,7 @@
   border: 1.5px solid var(--border);
   background: var(--card);
   color: var(--text-light);
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
   font-size: 0.85rem;
   font-weight: 700;
   transition:
@@ -180,7 +180,7 @@
   padding: 14px 16px;
   border-radius: var(--radius);
   cursor: pointer;
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   border: 1.5px solid transparent;
   background: var(--card);
   box-shadow: var(--shadow-pop);
@@ -219,7 +219,7 @@
   font-weight: 600;
   font-size: 0.94rem;
   line-height: 1.3;
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
   color: var(--text);
 }
 
@@ -303,7 +303,7 @@
 }
 
 .hc-concern-step__title {
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
   font-size: 1.7rem;
   font-weight: 800;
   color: var(--primary);
@@ -332,7 +332,7 @@
   font-size: 0.92rem;
   color: var(--text);
   margin-bottom: 10px;
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
 }
 
 /* ---- Textarea — pops in solid white against the glass card ---- */
@@ -346,7 +346,7 @@
   border: 1.5px solid transparent;
   border-radius: var(--radius);
   padding: 16px 16px 30px;
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   font-size: 0.95rem;
   color: var(--text);
   background: var(--card);
@@ -401,7 +401,7 @@
   border: 1.5px solid transparent;
   border-radius: var(--radius);
   padding: 14px 40px 14px 16px;
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   font-size: 0.95rem;
   color: var(--text);
   background: var(--card);
@@ -468,7 +468,7 @@
   font-size: 0.92rem;
   padding: 12px 22px;
   cursor: pointer;
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
   transition:
     transform var(--fast) var(--ease),
     box-shadow var(--fast) var(--ease),
@@ -544,7 +544,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -558,7 +558,7 @@
 }
 
 .hc-timing-step__title {
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
   font-size: 1.7rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -581,7 +581,7 @@
 }
 
 .hc-timing-col__heading {
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -627,7 +627,7 @@
   background: transparent;
   cursor: pointer;
   padding: 13px 16px;
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   text-align: left;
 }
 
@@ -655,7 +655,7 @@
   font-weight: 600;
   font-size: 0.92rem;
   color: var(--text);
-  font-family: var(--font-heading);
+  font-family: var(--font-primary);
 }
 
 .hc-accordion-item__range {
@@ -709,7 +709,7 @@
   border-radius: var(--radius-sm);
   background: var(--bg);
   color: var(--text-light);
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   font-size: 0.8rem;
   font-weight: 500;
   padding: 9px 6px;

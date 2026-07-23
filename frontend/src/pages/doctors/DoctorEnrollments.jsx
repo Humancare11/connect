@@ -493,7 +493,7 @@ const getCountryName = (countryCode) => {
 
 // ─── Styles ───
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@400;500;600;700;800&display=swap');
+
 
 :root {
   --navy: #223A5E;
@@ -525,13 +525,13 @@ const css = `
 
 * { margin:0; padding:0; box-sizing:border-box; }
 body, html {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-secondary);
   background: var(--bg);
   color: var(--navy);
   -webkit-font-smoothing: antialiased;
 }
 h1,h2,h3,h4,h5,h6 {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -550,7 +550,7 @@ h1,h2,h3,h4,h5,h6 {
   position: sticky; top: 0; z-index: 100;
 }
 .top-bar-logo {
-  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-family: var(--font-primary); font-weight: 800;
   font-size: 18px; color: var(--white); letter-spacing: -0.03em;
 }
 // .top-bar-logo span { color: var(--teal); }
@@ -575,7 +575,7 @@ h1,h2,h3,h4,h5,h6 {
 .progress-circle {
   width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 14px;
+  font-family: var(--font-primary); font-weight: 700; font-size: 14px;
   transition: var(--transition); border: 2.5px solid var(--gray-300);
   background: var(--white); color: var(--gray-400);
 }
@@ -641,7 +641,7 @@ h1,h2,h3,h4,h5,h6 {
 .field-label .req { color: var(--red); font-size: 14px; }
 .field-input, .field-select, .field-textarea {
   padding: 11px 14px; border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+  border-radius: var(--radius-sm); font-family: var(--font-secondary);
   font-size: 14px; color: var(--navy); background: var(--white);
   transition: var(--transition); outline: none; width: 100%;
   box-sizing: border-box; min-width: 0;
@@ -665,7 +665,7 @@ h1,h2,h3,h4,h5,h6 {
 
 /* ─── Buttons ─── */
 .btn {
-  padding: 12px 28px; border-radius: 50px; font-family: 'DM Sans', sans-serif;
+  padding: 12px 28px; border-radius: 50px; font-family: var(--font-secondary);
   font-size: 14px; font-weight: 600; cursor: pointer; border: none;
   transition: var(--transition); display: inline-flex; align-items: center; gap: 8px;
 }
@@ -752,7 +752,7 @@ h1,h2,h3,h4,h5,h6 {
 }
 .ms-search {
   padding: 10px 12px; border: none; border-bottom: 1px solid var(--gray-100);
-  font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+  font-family: var(--font-secondary); font-size: 13px; outline: none;
   background: var(--gray-50); flex-shrink: 0;
 }
 .ms-list { overflow-y: auto; flex: 1; padding: 4px 0; }
@@ -799,7 +799,7 @@ h1,h2,h3,h4,h5,h6 {
   padding: 16px; margin-bottom: 12px; border: 1px solid var(--gray-100);
 }
 .avail-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.avail-day-name { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; }
+.avail-day-name { font-family: var(--font-primary); font-weight: 600; font-size: 14px; }
 .avail-toggle {
   position: relative; width: 40px; height: 22px;
   background: var(--gray-300); border-radius: 11px;
@@ -815,7 +815,7 @@ h1,h2,h3,h4,h5,h6 {
 .time-block { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .time-input {
   padding: 8px 12px; border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-xs); font-family: 'DM Sans', sans-serif;
+  border-radius: var(--radius-xs); font-family: var(--font-secondary);
   font-size: 13px; outline: none; transition: var(--transition); width: 120px;
 }
 .time-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }

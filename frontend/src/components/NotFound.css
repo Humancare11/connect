@@ -8,8 +8,7 @@
 }
 
 .nf-page {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
-    sans-serif;
+  font-family: var(--font-secondary);
   color: #1e293b;
   /* background: #ffffff; */
 }

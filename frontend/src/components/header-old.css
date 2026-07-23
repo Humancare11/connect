@@ -46,7 +46,7 @@
 
 /* Logo */
 .logo {
-  font-family: 'Satoshi', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   font-size: 20px;
 }

@@ -323,9 +323,20 @@ export default function DoctorLayout({ children }) {
     return item.path;
   };
 
-  const currentPage = menuItems.find(
-    (m) => pathForItem(m) === location.pathname,
-  );
+  // Exact match for leaf routes; prefix match for nested sub-routes (e.g.
+  // "/doctor-dashboard/patients/:id/prescription") so their parent nav item
+  // still highlights. The bare dashboard root is excluded from the prefix
+  // rule since every other route also starts with "/doctor-dashboard".
+  const isActiveLink = (linkPath) => {
+    if (!linkPath) return false;
+    if (location.pathname === linkPath) return true;
+    return (
+      linkPath !== "/doctor-dashboard" &&
+      location.pathname.startsWith(`${linkPath}/`)
+    );
+  };
+
+  const currentPage = menuItems.find((m) => isActiveLink(pathForItem(m)));
 
   return (
     <div className="dl-page">
@@ -361,11 +372,11 @@ export default function DoctorLayout({ children }) {
               <Link
                 key={item.key || item.path}
                 to={linkPath}
-                className={`dl-nav-item${location.pathname === linkPath ? " dl-nav-item--active" : ""}`}
+                className={`dl-nav-item${isActiveLink(linkPath) ? " dl-nav-item--active" : ""}`}
               >
                 <span className="dl-nav-icon">{item.icon}</span>
                 <span className="dl-nav-label">{item.label}</span>
-                {location.pathname === linkPath && (
+                {isActiveLink(linkPath) && (
                   <span className="dl-nav-active-dot" />
                 )}
               </Link>

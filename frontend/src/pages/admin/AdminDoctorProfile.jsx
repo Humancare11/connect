@@ -686,7 +686,7 @@ function SignedDocumentButton({ enrollmentId, field, label, style }) {
     if (opened) {
       opened.opener = null;
       opened.document.write(
-        '<!doctype html><title>Opening document</title><body style="font-family:system-ui;padding:24px;color:#334155">Opening document...</body>',
+        '<!doctype html><title>Opening document</title><body style="font-family: var(--font-secondary);padding:24px;color:#334155">Opening document...</body>',
       );
     }
     try {
@@ -701,7 +701,7 @@ function SignedDocumentButton({ enrollmentId, field, label, style }) {
       if (opened) {
         opened.document.open();
         opened.document.write(
-          `<!doctype html><title>Document error</title><body style="font-family:system-ui;padding:24px;color:#991b1b">${message}</body>`,
+          `<!doctype html><title>Document error</title><body style="font-family: var(--font-secondary);padding:24px;color:#991b1b">${message}</body>`,
         );
         opened.document.close();
       }

@@ -551,7 +551,7 @@ export default function PhoneInputField({
           from { opacity:0; transform:translateY(-6px) scale(0.98); }
           to   { opacity:1; transform:translateY(0)   scale(1);    }
         }
-        .pif-item { display:flex; align-items:center; gap:10px; width:100%; padding:9px 14px; border:none; background:transparent; cursor:pointer; text-align:left; font-family:inherit; transition:background 0.1s; }
+        .pif-item { display:flex; align-items:center; gap:10px; width:100%; padding:9px 14px; border:none; background:transparent; cursor:pointer; text-align:left; font-family: inherit; transition:background 0.1s; }
         .pif-item:hover { background:#f8fafc; }
         .pif-item.sel   { background:#f0fdf4; }
         .pif-control {
