@@ -41,9 +41,9 @@ const SCENES = [
     step: 1,
     badge: "Create Account",
     title: " Create your account",
-    desc: " Sign up in under a minute. Registration is frictionless and seamless.",
-    metricValue: "< 60s",
-    metricLabel: " Sign-up time",
+    desc: "Sign up in under two minutes. Registration is quick, secure, and hassle-free..",
+    metricValue: "< 2 Min",
+    metricLabel: "Sign-up time",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -53,10 +53,10 @@ const SCENES = [
   {
     step: 2,
     badge: "Choose Service",
-    title: "Choose the service you need",
-    desc: "Browse by category, specialty, or condition, or describe your concern. From general care to travel medicine, pick the right service in a few taps.",
-    metricValue: "30+",
-    metricLabel: "Specialties available",
+    title: "Choose the care you need",
+    desc: "Browse 10+ categories, 30+ specialties, and 150+ conditions to find the right care fast.",
+    metricValue: "10+ Categories · 30+ Specialties · 150+ Conditions",
+    // metricLabel: "Specialties available",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -68,7 +68,7 @@ const SCENES = [
     step: 3,
     badge: "Book Appointment",
     title: "Book your appointment",
-    desc: "We match you with a verified doctor and confirm a time that works. No waiting rooms, no phone tag, just a slot that fits your day.",
+    desc: "We'll match you with a board-certified doctor and schedule a time that works for you. No waiting rooms. No phone tag.",
     metricValue: " 24/7",
     metricLabel: "Booking availability",
     metricIcon: (
@@ -81,10 +81,10 @@ const SCENES = [
   {
     step: 4,
     badge: "Consult",
-    title: "Consult your doctor",
-    desc: " Connect by secure video from anywhere. Discuss your symptoms, get a diagnosis, and ask everything you need, face to face.",
-    metricValue: "100% ",
-    metricLabel: "Verified physicians",
+    title: "Consult with your doctor",
+    desc: "Meet securely by video, discuss your symptoms, receive a diagnosis, and get a personalized treatment plan.",
+    metricValue: "HIPAA",
+    metricLabel: "Secure connection",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -93,30 +93,17 @@ const SCENES = [
   },
   {
     step: 5,
-    badge: " Rx & Complete",
-    title: "Get your Rx and complete",
-    desc: "Receive your prescription and visit summary right in your dashboard. Care is documented, secure, and ready when you need it.",
-    metricValue: "< 30s ",
-    metricLabel: "Total to prescription",
+    badge: "Complete Care",
+    title: "Complete Care: Your care, all in one place",
+    desc: "Access your consultation summary, personalized care plan, and follow-up guidance anytime through your secure patient dashboard.",
+    metricValue: "Anytime",
+    metricLabel: "Access Your Care",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
         <polyline points="20 6 9 17 4 12" />
       </svg>
     ),
   },
-  // {
-  //   step: 6,
-  //   badge: "Done",
-  //   title: "Visit Complete!",
-  //   desc: "Rate your experience, schedule follow ups, and access visit notes, all from one dashboard.",
-  //   metricValue: "4.9 ★",
-  //   metricLabel: "Avg rating",
-  //   metricIcon: (
-  //     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-  //       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
-  //     </svg>
-  //   ),
-  // },
 ];
 
 const STEP_ICONS = [
@@ -132,12 +119,13 @@ const DOT_LABELS = [
   "Choose Service",
   "Book Appointment",
   "Consult",
-  " Rx & Complete",
+  "Complete Care",
 ];
 const TOTAL_STEPS = 5;
 const STEP_DURATION = 4000;
 const CIRCUMFERENCE = 2 * Math.PI * 10;
-const STEP_CIRCUMFERENCE = 2 * Math.PI * 20;
+// NOTE: must match RADIUS (18) used inside StepProgress.jsx's <circle r={...}>
+const STEP_CIRCUMFERENCE = 2 * Math.PI * 18;
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -161,6 +149,7 @@ export default function HomePage() {
       });
     }
   }, [activeIndex]);
+
   // Video lazy loading with Intersection Observer
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   useEffect(() => {
@@ -342,33 +331,38 @@ export default function HomePage() {
       const isActive = i === currentIdx;
       const isCompleted = i < currentIdx;
       const progress = isActive
-        ? timerOffset / CIRCUMFERENCE
+        ? 1 - timerOffset / CIRCUMFERENCE // fraction filled (0 → 1) for the active ring
         : isCompleted
-          ? 0
-          : 1;
-      const progressOffset = progress * STEP_CIRCUMFERENCE;
+          ? 1
+          : 0;
+      const progressOffset = STEP_CIRCUMFERENCE * (1 - progress);
       el.style.strokeDashoffset = String(progressOffset);
     });
   }, []);
 
-  // ── handleProgress passed to StepProgress child ───────────────────────────
-  const handleProgress = useCallback(
-    (progress) => {
-      const frac = Math.min(Math.max(progress, 0), 1);
-      const total = frac * TOTAL_STEPS;
-      const idx = Math.min(Math.floor(total), TOTAL_STEPS - 1);
-      const inStep = total - idx;
-
-      if (currentRef.current !== idx) {
-        setCurrent(idx);
-        currentRef.current = idx;
-      }
-      elapsedRef.current = inStep * STEP_DURATION;
-      timerOffsetRef.current = CIRCUMFERENCE * (1 - inStep);
+  // ── Jump to a specific step (dot click) ────────────────────────────────────
+  const handleStepClick = useCallback(
+    (i) => {
+      setCurrent(i);
+      currentRef.current = i;
+      elapsedRef.current = 0;
+      timerOffsetRef.current = CIRCUMFERENCE; // clicked step's ring starts empty
+      lastTickRef.current = 0; // rebase so the next tick doesn't count stale elapsed time
       updateVisuals();
     },
     [updateVisuals],
   );
+
+  // ── Pause/resume the single timer on dot hover ─────────────────────────────
+  const handleHoverChange = useCallback((hovering) => {
+    pausedRef.current = hovering;
+    if (hovering) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    } else {
+      lastTickRef.current = 0;
+      rafRef.current = requestAnimationFrame(() => tickRef.current?.());
+    }
+  }, []);
 
   // ── Animation tick ────────────────────────────────────────────────────────
   // Declared with useRef so it can reference itself without circular deps
@@ -379,7 +373,7 @@ export default function HomePage() {
 
     const now = performance.now();
     if (lastTickRef.current === 0) {
-      // First tick after mount / resume — set baseline without adding delta
+      // First tick after mount / resume / jump — set baseline without adding delta
       lastTickRef.current = now;
     } else {
       elapsedRef.current += now - lastTickRef.current;
@@ -553,10 +547,7 @@ export default function HomePage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-    
-
-
-            <SEO
+      <SEO
         title="Telemedicine Services | Online Doctor Appointments | Humancare Connect"
         description="Telemedicine services with fast online doctor appointments, virtual healthcare services, prescription refills, mental health support, chronic care, and secure telehealth services through Humancare Connect."
         keywords="Telemedicine services, online doctor appointments, virtual healthcare services, telehealth services, telemedicine platform, online doctor consultation, licensed healthcare providers, prescription refills online, chronic care, mental health support, same-day online medical care, secure telemedicine platform"
@@ -582,8 +573,12 @@ export default function HomePage() {
           </h1>
 
           <p>
-            Access fast, reliable telemedicine services from licensed healthcare professionals in minutes from expert doctors on our
-            secure virtual healthcare platform. Book an online doctor's appointment in minutes. Connect with a licensed telemedicine doctor for expert medical advice, personalized treatment plans, and prescriptions from the comfort of your home. Our HIPAA-compliant telemedicine platform makes accessing quality digital healthcare easy, convenient, secure, and available worldwide. makes it easy, convenient, and
+            Get rapid, reliable telemedicine services from expert doctors on our
+            secure virtual healthcare platform. Book an online doctor
+            appointment. Contact a telemedicine doctor for expert medical
+            advice, personalized treatment plans & prescriptions from licensed
+            healthcare providers at your home. Our HIPAA compliant telemedicine
+            and secure healthcare platform makes it easy, convenient, and
             available worldwide to access quality digital healthcare.
           </p>
           <div className="trust" ref={btnRef}>
@@ -777,15 +772,16 @@ export default function HomePage() {
 
             <div className="timeline-header">
               <div className="eyebrow-hero">
-                The Humancare Connect Experience
+                THE HUMANCARE CONNECT EXPERIENCE
               </div>
               <h3>
-                Your Visit in <span>30 Seconds</span>
+                Your Care Journey, <span> Simplified</span>
               </h3>
               <p>
                 {" "}
-                From sign-up to prescription, five simple steps to care anywhere
-                in the world.
+                Five simple steps to connect with trusted healthcare
+                <br />
+                professionals from anywhere, anytime.
               </p>
             </div>
 
@@ -803,8 +799,12 @@ export default function HomePage() {
                   label,
                   icon: STEP_ICONS[i],
                 }))}
-                duration={3000}
-                onProgress={handleProgress}
+                current={current}
+                onStepClick={handleStepClick}
+                onHoverChange={handleHoverChange}
+                registerRing={(el, i) => {
+                  ringFillRefs.current[i] = el;
+                }}
               />
             </div>
 

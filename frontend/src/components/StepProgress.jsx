@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React from "react";
 import "./StepProgress.css";
 import {
   FiSmartphone,
@@ -6,128 +6,50 @@ import {
   FiClock,
   FiVideo,
   FiFileText,
- 
 } from "react-icons/fi";
 
-const RADIUS = 18;
+const RADIUS = 18; // must match the <circle r={...}> below and STEP_CIRCUMFERENCE in home.jsx
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-const DURATION = 3000; // 3 seconds per step
 
 const DEFAULT_STEPS = [
   { label: "Create Account", icon: <FiSmartphone /> },
   { label: "Choose Service", icon: <FiUserCheck /> },
   { label: "Book Appointment", icon: <FiClock /> },
   { label: "Consult", icon: <FiVideo /> },
-  { label: "Rx & Complete", icon: <FiFileText /> },
+  { label: "Complete Care", icon: <FiFileText /> },
 ];
 
+/**
+ * Presentational / fully controlled component.
+ *
+ * home.jsx owns the single source-of-truth timer + `current` step index.
+ * This component only:
+ *   - renders the dots/rings for the given `current` step
+ *   - exposes `registerRing(el, i)` so the parent can drive each ring's
+ *     stroke-dashoffset directly on every animation frame (no re-renders needed)
+ *   - calls `onStepClick(i)` so the parent can jump both the ring AND the
+ *     scene card together, then resume autoplay from there
+ *   - calls `onHoverChange(bool)` so the parent can pause/resume its timer
+ */
 export default function StepProgress({
   steps = DEFAULT_STEPS,
-  duration = DURATION,
-  onProgress,
+  current = 0,
+  onStepClick,
+  onHoverChange,
+  registerRing,
 }) {
-  const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  const circleRefs = useRef([]);
-  const rafRef = useRef(null);
-  const startRef = useRef(null);
-  const progressRef = useRef(0);
-
   const setCircleRef = (el, i) => {
-    circleRefs.current[i] = el;
-  };
-
-  const updateCircles = useCallback(() => {
-    const len = steps.length;
-    for (let i = 0; i < len; i++) {
-      const el = circleRefs.current[i];
-      if (!el) continue;
-
-      let progress;
-      if (i < current)
-        progress = 1; // completed
-      else if (i > current)
-        progress = 0; // upcoming
-      else progress = progressRef.current; // active
-
-      const offset = CIRCUMFERENCE * (1 - progress);
-      el.style.strokeDasharray = String(CIRCUMFERENCE);
-      el.style.strokeDashoffset = String(offset);
-      el.style.transition = "stroke-dashoffset 120ms linear"; // small smoothing
+    if (el) {
+      el.style.transition = "stroke-dashoffset 120ms linear";
     }
-  }, [current, steps.length]);
-
-  const tick = useCallback(
-    (timestamp) => {
-      if (paused) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      if (!startRef.current) startRef.current = timestamp;
-
-      const elapsed = timestamp - startRef.current;
-      const pct = Math.min(elapsed / duration, 1);
-
-      progressRef.current = pct;
-
-      // ✅ Update circle UI
-      updateCircles();
-
-      // ✅ Sync progress line (TOTAL progress across all steps)
-      if (onProgress) {
-        const totalProgress = (current + pct) / steps.length;
-        onProgress(totalProgress);
-      }
-
-      if (pct >= 1) {
-        startRef.current = timestamp;
-
-        setCurrent((prev) => {
-          const next = (prev + 1) % steps.length;
-
-          // ✅ Reset progress line when loop restarts
-          if (next === 0 && onProgress) {
-            onProgress(0);
-          }
-
-          return next;
-        });
-
-        progressRef.current = 0;
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    },
-    [duration, paused, steps.length, updateCircles, current, onProgress],
-  );
-
-  useEffect(() => {
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [tick]);
-
-  // update visuals when current changes (immediate)
-  useEffect(() => {
-    progressRef.current = 0;
-    startRef.current = null;
-    updateCircles();
-  }, [current, updateCircles]);
-
-  const jumpTo = (i) => {
-    setCurrent(i);
-    progressRef.current = 0;
-    startRef.current = null;
+    registerRing?.(el, i);
   };
 
   return (
     <div
       className="step-progress"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
     >
       {steps.map((s, i) => {
         const isActive = i === current;
@@ -136,8 +58,9 @@ export default function StepProgress({
         return (
           <button
             key={s.label}
+            type="button"
             className={`step ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
-            onClick={() => jumpTo(i)}
+            onClick={() => onStepClick?.(i)}
             aria-current={isActive}
           >
             <div className="ring">
@@ -151,15 +74,17 @@ export default function StepProgress({
                   className="ring-bg"
                   cx="22"
                   cy="22"
-                  r={18}
+                  r={RADIUS}
                   fill="none"
                 />
                 <circle
                   className="ring-fill"
                   cx="22"
                   cy="22"
-                  r={18}
+                  r={RADIUS}
                   fill="none"
+                  strokeDasharray={CIRCUMFERENCE}
+                  strokeDashoffset={CIRCUMFERENCE}
                   ref={(el) => setCircleRef(el, i)}
                 />
               </svg>

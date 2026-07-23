@@ -67,6 +67,24 @@ const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
 const BORDER = "#E2E8F0";
 const BORDER_HOVER = "#CBD5E1";
 
+const useBreakpoint = () => {
+  const getBreakpoint = () => {
+    const w = typeof window !== "undefined" ? window.innerWidth : 1200;
+    return {
+      isMobile: w < 640,
+      isTablet: w >= 640 && w < 1024,
+      isDesktop: w >= 1024,
+    };
+  };
+  const [bp, setBp] = useState(getBreakpoint);
+  useEffect(() => {
+    const handler = () => setBp(getBreakpoint());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return bp;
+};
+
 /* ──────────────────────────────────────────────────────────────────────────
    DATA
 ────────────────────────────────────────────────────────────────────────── */
@@ -401,7 +419,7 @@ const GhostBtn = ({ children, onClick }) => (
    HERO
   
 ────────────────────────────────────────────────────────────────────────── */
-const Hero = ({ s }) => {
+const Hero = ({ s, bp }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -502,7 +520,7 @@ const Hero = ({ s }) => {
           transition={{ duration: 0.4, delay: 0.38 }}
           style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
         >
-          <PrimaryBtn ac={s.accentColor}>
+          <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
             <a href="/login">Get Started</a>
           </PrimaryBtn>
           <GhostBtn>
@@ -523,7 +541,7 @@ const Hero = ({ s }) => {
    previously held the icon visual panel — now holds the consultation form.
    The outcomes strip at the bottom is unchanged in structure.
 ────────────────────────────────────────────────────────────────────────── */
-const Overview = ({ s }) => (
+const Overview = ({ s, bp }) => (
   <section
     style={{
       background: BG_BASE,
@@ -534,7 +552,7 @@ const Overview = ({ s }) => (
       style={{
         maxWidth: 1200,
         margin: "0 auto",
-        padding: "88px 24px",
+        padding: bp.isMobile ? "48px 16px" : "88px 24px",
       }}
     >
       <motion.div
@@ -544,8 +562,8 @@ const Overview = ({ s }) => (
         viewport={{ once: true, margin: "-60px" }}
         style={{
           display: "grid",
-          gridTemplateColumns: "1.1fr 0.9fr",
-          gap: 64,
+          gridTemplateColumns: bp.isMobile ? "1fr" : "1.1fr 0.9fr",
+          gap: bp.isMobile ? 32 : 64,
           alignItems: "start",
         }}
       >
@@ -661,7 +679,7 @@ const Overview = ({ s }) => (
         viewport={{ once: true }}
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
           gap: 12,
           marginTop: 52,
         }}
@@ -715,16 +733,16 @@ const Overview = ({ s }) => (
    Fix 5: sticky card glass effect removed — flat surface, no backdrop-filter,
    no glow blob.
 ────────────────────────────────────────────────────────────────────────── */
-const HowItWorks = ({ s }) => (
+const HowItWorks = ({ s, bp }) => (
   <section
     style={{
-      padding: "88px 0",
+      padding: bp.isMobile ? "48px 0" : "88px 0",
       background: BG_SURFACE,
       borderTop: `1px solid ${BORDER}`,
       borderBottom: `1px solid ${BORDER}`,
     }}
   >
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "0 16px" : "0 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -732,8 +750,8 @@ const HowItWorks = ({ s }) => (
         viewport={{ once: true, margin: "-60px" }}
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 64,
+          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
+          gap: bp.isMobile ? 32 : 64,
           alignItems: "start",
         }}
       >
@@ -889,7 +907,7 @@ const HowItWorks = ({ s }) => (
               style={{
                 marginTop: 20,
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
                 gap: 8,
               }}
             >
@@ -928,8 +946,8 @@ const HowItWorks = ({ s }) => (
    its own tile, so it reads as one consolidated "service details" panel.
    Fix 5: no glass effect, no hover glow-shadow — flat row dividers instead.
 ────────────────────────────────────────────────────────────────────────── */
-const Features = ({ s }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+const Features = ({ s, bp }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
     <motion.div
       variants={stagger}
       initial="hidden"
@@ -1103,11 +1121,11 @@ const whyUsItems = [
   ],
 ];
 
-const WhyUs = ({ s }) => {
+const WhyUs = ({ s, bp }) => {
   const [inView, setInView] = useState(false);
 
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -1139,7 +1157,7 @@ const WhyUs = ({ s }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
             gap: 12,
             marginBottom: 44,
           }}
@@ -1159,7 +1177,7 @@ const WhyUs = ({ s }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
             gap: 12,
           }}
         >
@@ -1219,16 +1237,16 @@ const WhyUs = ({ s }) => {
    FAQ
    Fix 5: container is a flat bordered surface, no backdrop blur.
 ────────────────────────────────────────────────────────────────────────── */
-const FAQ = ({ s }) => {
+const FAQ = ({ s, bp }) => {
   const [open, setOpen] = useState(null);
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}
+        style={{ display: "grid", gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr", gap: bp.isMobile ? 32 : 64 }}
       >
         <motion.div variants={fadeUp}>
           <SLabel text="FAQ" ac={s.accentColor} />
@@ -1381,8 +1399,8 @@ const FAQ = ({ s }) => {
    Fix 5: glow blobs and translucent layered gradient removed — flat tinted
    surface instead.
 ────────────────────────────────────────────────────────────────────────── */
-const FinalCTA = ({ s }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+const FinalCTA = ({ s, bp }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -1391,7 +1409,7 @@ const FinalCTA = ({ s }) => (
       style={{
         position: "relative",
         borderRadius: 28,
-        padding: "72px 48px",
+        padding: bp.isMobile ? "40px 16px" : "72px 48px",
         textAlign: "center",
         background: `${s.accentColor}08`,
         border: `1px solid ${s.accentColor}25`,
@@ -1401,7 +1419,7 @@ const FinalCTA = ({ s }) => (
         <Pill ac={s.accentColor}>Start Today</Pill>
         <h2
           style={{
-            fontSize: "clamp(32px, 5vw, 52px)",
+            fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(32px, 5vw, 52px)",
             fontWeight: 900,
             color: TEXT_PRIMARY,
             lineHeight: 1.1,
@@ -1430,13 +1448,10 @@ const FinalCTA = ({ s }) => (
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 36,
-            flexWrap: "wrap",
+            justifyContent: "center", gap: 12, marginBottom: 36, flexWrap: "wrap", flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}>Get Started</PrimaryBtn>
+          <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>Get Started</PrimaryBtn>
           <GhostBtn>Book Appointment</GhostBtn>
           <button
             style={{
@@ -1495,6 +1510,7 @@ const FinalCTA = ({ s }) => (
    every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
 export default function MentalHealthSupport() {
+  const bp = useBreakpoint();
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
@@ -1532,13 +1548,13 @@ export default function MentalHealthSupport() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} />
-            <Overview s={s} />
-            <HowItWorks s={s} />
-            <Features s={s} />
-            <WhyUs s={s} />
-            <FAQ s={s} />
-            <FinalCTA s={s} />
+            <Hero s={s}  bp={bp} />
+            <Overview s={s}  bp={bp} />
+            <HowItWorks s={s}  bp={bp} />
+            <Features s={s}  bp={bp} />
+            <WhyUs s={s}  bp={bp} />
+            <FAQ s={s}  bp={bp} />
+            <FinalCTA s={s}  bp={bp} />
           </motion.div>
         </AnimatePresence>
       </div>

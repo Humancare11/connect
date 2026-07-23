@@ -139,7 +139,10 @@ const conditionCategories = [
         name: "Pediatrics Fever",
         path: "/child-and-family-care/pediatrics/pediatric-fever",
       },
-      { name: "Skin Rash Children", path: "/child-and-family-care/pediatrics/skin-rash-in-children" },
+      {
+        name: "Skin Rash Children",
+        path: "/child-and-family-care/pediatrics/skin-rash-in-children",
+      },
       {
         name: "Mood & Anxiety in Teens",
         path: "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
@@ -195,10 +198,22 @@ const conditionCategories = [
         name: "Osteoporosis",
         path: "/chronic-care/endocrinology/osteoporosis",
       },
-      { name: "Cancer Second Opinion", path: "/cancer-second-opinion" },
-      { name: "Surgery Second Opinion", path: "/surgery-second-opinion" },
-      { name: "Complex-Diagnosis Review", path: "/complex-diagnosis" },
-      { name: "Treatment-Plan Review", path: "/treatment-plan-review" },
+      {
+        name: "Cancer Second Opinion",
+        path: "/online-second-medical-opinion/cancer-second-opinion",
+      },
+      {
+        name: "Surgery Second Opinion",
+        path: "/online-second-medical-opinion/surgery-second-opinion",
+      },
+      {
+        name: "Complex-Diagnosis Review",
+        path: "/online-second-medical-opinion/complex-diagnosis-review",
+      },
+      {
+        name: "Treatment-Plan Review",
+        path: "/online-second-medical-opinion/treatment-plan-review",
+      },
       { name: "Second Medical Opinion", path: "/second-medical-opinion" },
       {
         name: "Acid Reflux / GERD",

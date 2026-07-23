@@ -511,12 +511,12 @@ const Hero = ({ s, bp, price, priceLoading }) => {
           zIndex: 10,
           maxWidth: 1381,
           margin: "0 auto",
-          padding: "90px 50px 15px",
+          padding: bp.isMobile ? "100px 16px 40px" : "90px 50px 15px",
           width: "100%",
           opacity: op,
           display: "grid",
-          gridTemplateColumns: "1fr 450px",
-          gap: 48,
+          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 450px",
+          gap: bp.isMobile ? 24 : 48,
           alignItems: "center",
         }}
       ><div>
@@ -592,7 +592,7 @@ const Hero = ({ s, bp, price, priceLoading }) => {
               flexWrap: "wrap",
             }}
           >
-            <PrimaryBtn ac={s.accentColor}>
+            <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
               <a
                 href="/appointment-booking"
                 style={{ color: "#fff", textDecoration: "none" }}
@@ -1001,7 +1001,7 @@ const HowItWorks = ({ s, bp }) => (
               style={{
                 marginTop: 20,
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
                 gap: 8,
               }}
             >
@@ -1261,7 +1261,7 @@ const WhyUs = ({ s, bp }) => {
           viewport={{ once: true, amount: 0.3 }}
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
             gap: 12,
             marginBottom: 44,
           }}
@@ -1562,10 +1562,7 @@ const FinalCTA = ({ s, bp }) => (
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 36,
-            flexWrap: "wrap",
+            justifyContent: "center", gap: 12, marginBottom: 36, flexWrap: "wrap", flexDirection: bp.isMobile ? "column" : "row",
             flexDirection: bp.isMobile ? "column" : "row",
           }}
         >

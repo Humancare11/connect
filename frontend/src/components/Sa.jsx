@@ -177,24 +177,6 @@ export default function Sa() {
             </div>
           </RevealCard>
 
-          {/* ── Mental Health (2-col tall) ── */}
-          {/* <RevealCard
-            className="services-card-item services-bento-smal-1"
-            delay={D[2]}
-            to="/mental-health-support"
-          >
-            <div className="services-icon-box">
-              <FaBrain />
-            </div>
-            <h3 className="services-card-title">Mental Health</h3>
-            <p className="services-card-description">
-              Get compassionate mental health support through secure online therapy consultations for anxiety, stress, burnout, depression, and emotional wellness from experienced online providers.
-            </p>
-            <span className="services-card-cta-link">
-              Get support <span className="cta-arrow">→</span>
-            </span>
-          </RevealCard> */}
-
           {/* Fit to Fly  */}
           <RevealCard
             className="services-card-item services-bento-smal-1"
@@ -239,23 +221,6 @@ export default function Sa() {
             </span>
           </RevealCard>
 
-          {/* ── Sexual Health (2-col) ── */}
-          {/* <RevealCard
-            className="services-card-item services-bento-small-0"
-            delay={D[4]}
-            to="/service-sexual-health"
-          >
-            <div className="services-icon-box">
-              <FaHeart />
-            </div>
-            <h3 className="services-card-title">Sexual Health</h3>
-            <p className="services-card-description">
-              Confidential online sexual health consultations for STI concerns, ED treatment, birth control guidance, prescriptions, and preventive virtual healthcare services with licensed providers.
-            </p>
-            <span className="services-card-cta-link">
-              Learn more <span className="cta-arrow">→</span>
-            </span>
-          </RevealCard> */}
           <RevealCard
             className="services-card-item services-bento-small-0"
             delay={D[4]}

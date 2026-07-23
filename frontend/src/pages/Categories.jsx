@@ -569,7 +569,7 @@ const CONDITIONS = [
   },
   {
     slug: "cancer-second-opinion",
-    path: "/cancer-second-opinion",
+    path: "/online-second-medical-opinion/cancer-second-opinion",
     icon: "check",
     name: "Cancer Second Opinion",
   },
@@ -593,7 +593,7 @@ const CONDITIONS = [
   },
   {
     slug: "complex-diagnosis",
-    path: "/complex-diagnosis",
+    path: "/online-second-medical-opinion/complex-diagnosis-review",
     icon: "stethoscope",
     name: "Complex Diagnosis",
   },
@@ -878,12 +878,12 @@ export default function Categories() {
 
   const filtered = query.trim()
     ? CATEGORIES.map((c) => ({
-      category: c,
-      score: scoreCategory(c, query.trim()),
-    }))
-      .filter((r) => r.score !== null)
-      .sort((a, b) => b.score - a.score)
-      .map((r) => r.category)
+        category: c,
+        score: scoreCategory(c, query.trim()),
+      }))
+        .filter((r) => r.score !== null)
+        .sort((a, b) => b.score - a.score)
+        .map((r) => r.category)
     : CATEGORIES;
 
   return (

@@ -730,8 +730,9 @@ const LABREQUISITIONS = lazy(
   () => import("./pages/NewServices/LABREQUISITIONS"),
 );
 const ChronicMedicationManagement = lazy(
-  () => import("./pages/Conditions/ChronicMedicationManagement"),
+  () => import("./pages/NewServices/ChronicCareManagment"),
 );
+const SecondOpinion = lazy(() => import("./pages/NewServices/SecondOpinion"));
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
 const ServiceDemo = lazy(() => import("./pages/NewServices/ServiceDemo"));
@@ -844,36 +845,35 @@ const AppointmentBookingForm = lazy(
   () => import("./pages/AppointmentBookingForm"),
 );
 
-// New Privcay Policy Pages Start 
-const Refundcancellationpolicy = lazy(() =>
-  import("./pages/PrivacyPolicies/Refundcancellationpolicy"),
+// New Privcay Policy Pages Start
+const Refundcancellationpolicy = lazy(
+  () => import("./pages/PrivacyPolicies/Refundcancellationpolicy"),
 );
 
-const ProviderTermsOfService1 = lazy(() =>
-  import("./pages/PrivacyPolicies/ProviderTermsOfService1"),
+const ProviderTermsOfService1 = lazy(
+  () => import("./pages/PrivacyPolicies/ProviderTermsOfService1"),
 );
 
-const PrivacyPolicy1 = lazy(() =>
-  import("./pages/PrivacyPolicies/PrivacyPolicy1"),
+const PrivacyPolicy1 = lazy(
+  () => import("./pages/PrivacyPolicies/PrivacyPolicy1"),
 );
-const TermsOfService1 = lazy(() =>
-  import("./pages/PrivacyPolicies/TermsOfService1"),
+const TermsOfService1 = lazy(
+  () => import("./pages/PrivacyPolicies/TermsOfService1"),
 );
-const HippaNoticeOfPrivacyPractices1 = lazy(() =>
-  import("./pages/PrivacyPolicies/HippaNoticeOfPrivacyPractices1"),
+const HippaNoticeOfPrivacyPractices1 = lazy(
+  () => import("./pages/PrivacyPolicies/HippaNoticeOfPrivacyPractices1"),
 );
-const CaliforniaPrivacyRightsNotice1 = lazy(() =>
-  import("./pages/PrivacyPolicies/CaliforniaPrivacyRightsNotice1"),
+const CaliforniaPrivacyRightsNotice1 = lazy(
+  () => import("./pages/PrivacyPolicies/CaliforniaPrivacyRightsNotice1"),
 );
-const CookiePolicy1 = lazy(() =>
-  import("./pages/PrivacyPolicies/CookiePolicy1"),
+const CookiePolicy1 = lazy(
+  () => import("./pages/PrivacyPolicies/CookiePolicy1"),
 );
-const AccessibilityStatement1 = lazy(() =>
-  import("./pages/PrivacyPolicies/AccessibilityStatement1"),
+const AccessibilityStatement1 = lazy(
+  () => import("./pages/PrivacyPolicies/AccessibilityStatement1"),
 );
 
-
-// New Privcay Policy Pages End 
+// New Privcay Policy Pages End
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -975,7 +975,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
       },
       10 * 60 * 1000,
     );
@@ -1049,7 +1049,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -1721,7 +1721,10 @@ function AppLayout() {
             path="/eye-ear-bone/orthopedics/arthritis"
             element={<Arthritis />}
           />
-          <Route path="/cancer-second-opinion" element={<CancerSecond />} />
+          <Route
+            path="/online-second-medical-opinion/cancer-second-opinion"
+            element={<CancerSecond />}
+          />
           <Route
             path="/chronic-care/cardiology/chest-pain"
             element={<ChestPain />}
@@ -1731,7 +1734,10 @@ function AppLayout() {
             path="/chronic-care/neurology/chronic-migraine"
             element={<ChronicMigraine />}
           />
-          <Route path="/complex-diagnosis" element={<ComplexDiagnosis />} />
+          <Route
+            path="/online-second-medical-opinion/complex-diagnosis-review"
+            element={<ComplexDiagnosis />}
+          />
           <Route
             path="/chronic-care/gastroenterology/fatty-liver"
             element={<FattyLiver />}
@@ -1793,7 +1799,7 @@ function AppLayout() {
             element={<SleepApnea />}
           />
           <Route
-            path="/surgery-second-opinion"
+            path="/online-second-medical-opinion/surgery-second-opinion"
             element={<SurgerySecondOpinion />}
           />
           <Route
@@ -1801,7 +1807,7 @@ function AppLayout() {
             element={<ThyroidDisorders />}
           />
           <Route
-            path="/treatment-plan-review"
+            path="/online-second-medical-opinion/treatment-plan-review"
             element={<TreatmentPlanReview />}
           />
           <Route path="/chronic-care/neurology/tremor" element={<Tremor />} />
@@ -2618,7 +2624,11 @@ function AppLayout() {
             element={<WeightLossPrograms />}
           />
           <Route
-            path="/export-medical-opinion"
+            path="/online-second-medical-opinion"
+            element={<SecondOpinion />}
+          />
+          <Route
+            path="/expert-medical-opinion"
             element={<ExpertMedicalOpinion />}
           />
           <Route
@@ -2685,20 +2695,34 @@ function AppLayout() {
           <Route path="/category-consultant" element={<CategoryConsultant />} />
           <Route path="/service-consultant" element={<CategoryConsultant />} />
           {/* New Privcay Policy Pages Start */}
-          <Route path="/refund-cancellation-policy" element={<Refundcancellationpolicy />} />
-          <Route path="/provider-terms-of-service" element={<ProviderTermsOfService1 />} />
+          <Route
+            path="/refund-cancellation-policy"
+            element={<Refundcancellationpolicy />}
+          />
+          <Route
+            path="/provider-terms-of-service"
+            element={<ProviderTermsOfService1 />}
+          />
           <Route path="/privacy-policy" element={<PrivacyPolicy1 />} />
           <Route path="/terms-of-service" element={<TermsOfService1 />} />
-          <Route path="/hippa-notice-of-privacy-practices" element={<HippaNoticeOfPrivacyPractices1 />} />
-          <Route path="/california-privacy-rights-notice" element={<CaliforniaPrivacyRightsNotice1 />} />
+          <Route
+            path="/hippa-notice-of-privacy-practices"
+            element={<HippaNoticeOfPrivacyPractices1 />}
+          />
+          <Route
+            path="/california-privacy-rights-notice"
+            element={<CaliforniaPrivacyRightsNotice1 />}
+          />
           <Route path="/cookie-policy" element={<CookiePolicy1 />} />
-          <Route path="/accessibility-statement" element={<AccessibilityStatement1 />} />
+          <Route
+            path="/accessibility-statement"
+            element={<AccessibilityStatement1 />}
+          />
           {/* New Privcay Policy Pages End */}
           <Route
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}
           />
-
           <Route path="*" element={<NotFound />} />
         </Routes>
 

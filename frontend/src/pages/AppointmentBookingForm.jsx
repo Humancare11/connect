@@ -1343,7 +1343,7 @@ export default function AppointmentBookingForm() {
                       key: "hipaa",
                       label: "I have read the ",
                       linkText: "HIPAA Notice of Privacy Practices",
-                      href: "/notice-of-privacy-practices",
+                      href: "/hippa-notice-of-privacy-practices",
                     },
                     { key: "age", label: "I am 18 years of age or older" },
                   ].map(

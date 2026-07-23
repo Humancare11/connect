@@ -158,14 +158,14 @@ const SPECIALTY_DATA = {
     {
       Icon: FiAlertCircle,
       name: "Cancer Second Opinion",
-      path: "/cancer-second-opinion",
+      path: "/online-second-medical-opinion/cancer-second-opinion",
       description:
         "Independent review of cancer diagnoses, pathology reports, treatment recommendations, and care plans.",
     },
     {
       Icon: FiDroplet,
       name: "Complex Diagnosis Review",
-      path: "/complex-diagnosis",
+      path: "/online-second-medical-opinion/complex-diagnosis-review",
       description:
         "Expert evaluation of difficult-to-diagnose conditions, unresolved symptoms, and rare medical disorders.",
     },
@@ -179,14 +179,14 @@ const SPECIALTY_DATA = {
     {
       Icon: FiThermometer,
       name: "Surgery Second Opinion",
-      path: "/surgery-second-opinion",
+      path: "/online-second-medical-opinion/surgery-second-opinion",
       description:
         "Independent review of proposed surgical procedures, treatment options, and expected outcomes.",
     },
     {
       Icon: MdOutlineSpa,
       name: "Treatment Plan Review",
-      path: "/treatment-plan-review",
+      path: "/online-second-medical-opinion/treatment-plan-review",
       description:
         "Evaluation of current treatment strategies to ensure patients understand all available options.",
     },
@@ -609,7 +609,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Expert Medical Opinion Services | Trusted Healthcare Guidance"
         description="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
         keywords="Expert medical opinion, Second medical opinion, Online specialist consultation, Telemedicine services"

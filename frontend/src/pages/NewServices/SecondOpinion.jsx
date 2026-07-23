@@ -1,10 +1,12 @@
-﻿import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
   useTransform,
   AnimatePresence,
 } from "framer-motion";
+import ServiceContact from "./ServiceContact";
+
 import {
   FiMonitor,
   FiHome,
@@ -49,20 +51,21 @@ import {
   FiWifi,
   FiHeadphones,
   FiUser,
+  FiClipboard,
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
-import heroBanner from "../../assets/MedicalServices/general-consultation-online.webp";
+
+import heroBanner from "../../assets/MedicalServices/chronic-care-management-telemedicine.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
 import "../Specialty/SpecialtyPage.css";
 import "../Categories/categoriesGlobal.css";
 import { useServicePrice } from "../../hooks/useServicePrice";
-import ServiceContact from "./ServiceContact";
 
 const HERO_IMAGE = {
   src: heroBanner,
-  alt: "Licensed healthcare provider conducting an online general consultation with a patient through secure telemedicine services",
+  alt: "Licensed healthcare provider conducting a virtual chronic care management consultation with a patient through telemedicine.",
   width: 1920,
   height: 700,
 };
@@ -105,26 +108,28 @@ const useBreakpoint = () => {
 ────────────────────────────────────────────────────────────────────────── */
 const SERVICES = {
   "telehealth-services": {
-    slug: "general-consultations",
-    name: "GENERAL CONSULTATION",
-    serviceName: "General Consultation",
-    tagline: "Trusted healthcare guidance for everyday health concerns.",
+    slug: "online-second-medical-opinion",
+    name: "ONLINE SECOND MEDICAL OPINION",
+    serviceName: "Online Second Medical Opinion", // must exactly match ServicePrice.name in admin
+    tagline:
+      "Get trusted guidance before making important healthcare decisions.",
     intro:
-      "Connect with a licensed healthcare provider through secure telemedicine services for personalized medical advice, symptom evaluation, and treatment recommendations. General consultations offer a convenient way to discuss non emergency health concerns and receive professional care from the comfort of home.",
+      "Connect with qualified specialists through secure telemedicine services for a comprehensive second medical opinion. Whether you've received a new diagnosis, are considering surgery, reviewing a cancer treatment plan, or managing a complex medical condition, our specialists carefully evaluate your medical records and provide personalized recommendations to help you move forward with confidence.",
     accentColor: "#2563EB",
     accentGlow: "#2563EB20",
     heroIcon: FiMonitor,
     heroEmoji: "🖥️",
     description:
-      "General consultations provide patients with convenient access to healthcare providers for a wide range of everyday medical concerns. Through Humancare Connect, patients can discuss symptoms, receive medical guidance, review treatment options, and get recommendations for appropriate next steps through secure virtual healthcare services.",
+      "An online second medical opinion gives you the opportunity to have your diagnosis, treatment plan, or recommended procedure reviewed by a qualified specialist through secure telemedicine services. At Humancare Connect, our Second Medical Opinion Service helps you gain greater clarity about your health by providing an independent evaluation of your medical records, diagnostic reports, imaging, pathology findings, and treatment recommendations. Whether you're facing a new diagnosis, considering surgery, managing a complex medical condition, or exploring cancer treatment options, our specialists help you make informed healthcare decisions with confidence from wherever you are.",
     whyItMatters:
-      "Many health concerns can be addressed early through timely medical advice and evaluation. General consultations help patients better understand their symptoms, make informed healthcare decisions, and access professional support without the need for unnecessary clinic visits.",
+      "Making important healthcare decisions can feel overwhelming, especially when you're diagnosed with a serious or complex medical condition. A second medical opinion can help confirm your diagnosis, identify additional treatment options, and provide reassurance before moving forward with surgery, ongoing treatment, or long-term care. Having expert guidance gives you the confidence to choose the care that's right for you.",
     whoBenefits: [
-      "Adults experiencing new or ongoing health concerns",
-      "Patients managing common illnesses or minor conditions",
-      "Busy professionals looking for convenient healthcare access",
-      "Individuals with heart disease or high cholesterol",
-      " Anyone seeking trusted healthcare guidance from licensed providers",
+      " Patients who want to confirm a diagnosis before starting treatment",
+      " Individuals considering surgery or other major medical procedures",
+      "Patients seeking a second opinion for cancer diagnosis or treatment plans",
+      "People managing complex, rare, or chronic medical conditions",
+      "Individuals looking for additional treatment options before making healthcare decisions",
+      " Anyone who wants greater confidence and clarity about their medical care",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",
@@ -135,23 +140,23 @@ const SERVICES = {
     steps: [
       {
         Icon: FiSearch,
-        title: "Share Your Health Concerns",
-        body: "Tell us about your symptoms, medical history, current medications, and healthcare questions through our secure intake process.",
+        title: "Share Your Health Information",
+        body: "Tell us about your condition, medical history, medications, symptoms, and healthcare goals through our secure intake process.",
       },
       {
         Icon: FiFileText,
         title: "Connect With a Healthcare Provider",
-        body: "Meet with a licensed healthcare provider who will review your concerns and discuss your symptoms.",
+        body: "Meet with a licensed healthcare provider who will review your health status and discuss your ongoing care needs.",
       },
       {
         Icon: FiVideo,
-        title: "Receive Personalized Medical Guidance",
-        body: "Your provider will offer recommendations, discuss treatment options, and help determine the most appropriate next steps for your care.",
+        title: "Develop a Personalized Care Plan",
+        body: "Receive recommendations for symptom management, medication adherence, lifestyle adjustments, and ongoing monitoring.",
       },
       {
         Icon: FiPackage,
-        title: "Follow Your Care Plan",
-        body: "Receive guidance for ongoing care, symptom management, follow up recommendations, or referrals when needed.",
+        title: "Stay Connected With Ongoing Support",
+        body: "Schedule follow up appointments to review progress, address concerns, and make adjustments to your care plan when needed.",
       },
     ],
     features: [
@@ -195,76 +200,64 @@ const SERVICES = {
     // ],
     faqs: [
       {
-        q: "What is a general consultation?",
-        a: "A general consultation is a virtual appointment with a licensed healthcare provider to discuss symptoms, health concerns, treatment options, and medical questions.",
+        q: "What is a second medical opinion?",
+        a: "A second medical opinion is an independent evaluation of your diagnosis, treatment plan, or recommended procedure by another qualified specialist. It helps you better understand your condition and make informed healthcare decisions.",
       },
       {
-        q: "What health concerns can be discussed during a general consultation?",
-        a: "Patients can discuss common illnesses, minor injuries, allergies, digestive concerns, headaches, fatigue, skin conditions, medication questions, and other non emergency health issues.",
+        q: "When should I get a second medical opinion?",
+        a: "You may benefit from a second medical opinion if you've received a new diagnosis, are considering surgery, have a complex medical condition, or want to explore additional treatment options.",
       },
       {
-        q: "Can I speak with a healthcare provider online?",
-        a: "Yes. Humancare Connect offers secure telemedicine services that allow patients to connect with licensed healthcare providers remotely.",
+        q: "What conditions can be reviewed through this service?",
+        a: "Our Second Medical Opinion Service supports patients with cancer diagnoses, chronic illnesses, neurological disorders, cardiovascular conditions, orthopedic concerns, gastrointestinal conditions, rare diseases, and other complex medical cases.",
       },
       {
-        q: "Are virtual general consultations effective?",
-        a: "Yes. Many common health concerns can be evaluated and managed through telehealth services when clinically appropriate.",
+        q: "Can I get a second medical opinion online?",
+        a: "Yes. Humancare Connect offers secure telemedicine services, allowing you to connect with qualified specialists through virtual consultations from wherever you are.",
       },
       {
-        q: "Do I need an appointment for a general consultation?",
-        a: "Yes. Patients can schedule an online appointment at a convenient time.",
+        q: "What medical records do I need to provide?",
+        a: "You may be asked to upload medical records, diagnostic reports, imaging studies, pathology reports, laboratory results, physician notes, and your current treatment plan for review.",
       },
       {
-        q: "Can a provider diagnose my condition during a virtual visit?",
-        a: "Healthcare providers can assess symptoms, discuss concerns, and provide recommendations based on the information available during the consultation.",
+        q: "Will the specialist review my treatment plan?",
+        a: "Yes. Your specialist will review your diagnosis, current treatment recommendations, and available treatment options to provide personalized guidance based on your medical information.",
       },
       {
-        q: "What happens during a general consultation?",
-        a: "Your provider will review your symptoms, medical history, medications, and healthcare concerns before discussing appropriate recommendations.",
+        q: "Can I request a second opinion before surgery?",
+        a: "Absolutely. Many patients seek a second medical opinion before elective or major surgery to better understand the procedure, potential benefits, risks, and available alternatives.",
       },
       {
-        q: "Can I ask questions about my medications?",
-        a: "Yes. General consultations are a convenient opportunity to discuss medications, side effects, and treatment plans.",
+        q: "Is a second medical opinion helpful for cancer treatment?",
+        a: "Yes. A second medical opinion can help confirm a cancer diagnosis, review pathology findings, evaluate treatment options, and provide additional guidance before beginning treatment.",
       },
       {
-        q: "Is a general consultation confidential?",
-        a: "Yes. Humancare Connect uses secure telemedicine technology designed to protect patient privacy and confidentiality.",
+        q: "How long does the second medical opinion process take?",
+        a: "The timeline depends on the complexity of your case and how quickly your medical records are available. Our team works to connect you with a qualified specialist as promptly as possible.",
       },
       {
-        q: "Can I receive treatment recommendations during a consultation?",
-        a: "Yes. Healthcare providers can discuss treatment options, symptom management strategies, and next steps for care.",
+        q: "Will I have a virtual consultation with the specialist?",
+        a: "Yes. If appropriate, you'll meet with your specialist through a secure virtual consultation to discuss your diagnosis, review findings, and answer your questions.",
       },
       {
-        q: "Are general consultations suitable for preventive care?",
-        a: "Yes. Patients can discuss wellness goals, preventive healthcare measures, and healthy lifestyle recommendations.",
+        q: "Is my personal health information secure?",
+        a: "Yes. Your medical information is handled through secure telemedicine services and protected using industry-standard privacy and security practices.",
       },
       {
-        q: "Can I get a referral during a general consultation?",
-        a: "When appropriate, healthcare providers may recommend referrals for additional evaluation or specialty care.",
+        q: "Can a second medical opinion confirm or change my diagnosis?",
+        a: "A second medical opinion may confirm your current diagnosis or provide additional insights that help clarify your condition or identify other treatment options.",
       },
       {
-        q: "What are the benefits of telemedicine consultations?",
-        a: "Telemedicine services provide convenient access to healthcare providers, flexible scheduling, and care from the comfort of home.",
+        q: "Do I need a referral to request a second medical opinion?",
+        a: "Requirements may vary depending on your insurance plan or healthcare provider. Many patients can request a second medical opinion directly through Humancare Connect.",
       },
       {
-        q: "Can I discuss multiple health concerns in one appointment?",
-        a: "Yes. Patients may discuss multiple non emergency healthcare concerns during a consultation.",
+        q: "Will my current doctor know that I requested a second opinion?",
+        a: "You decide whether to share your second medical opinion with your current healthcare provider. Many physicians support patients seeking additional guidance before making important healthcare decisions.",
       },
       {
-        q: "Who can benefit from a general consultation?",
-        a: "Anyone seeking medical advice, symptom evaluation, treatment guidance, or healthcare support may benefit from a general consultation.",
-      },
-      {
-        q: "Can virtual consultations help save time?",
-        a: "Yes. Telehealth services eliminate travel time and provide convenient access to healthcare providers.",
-      },
-      {
-        q: "What should I prepare before my appointment?",
-        a: "Patients should be prepared to discuss symptoms, medications, medical history, and any questions they would like addressed.",
-      },
-      {
-        q: "When should I seek emergency medical care instead?",
-        a: "Emergency symptoms such as chest pain, severe breathing difficulties, stroke symptoms, or serious injuries require immediate emergency medical attention.",
+        q: "How do I schedule a second medical opinion with Humancare Connect?",
+        a: "Simply book an appointment online, securely upload your medical records, and we'll connect you with a qualified specialist for a personalized second medical opinion.",
       },
     ],
   },
@@ -357,7 +350,7 @@ const Pill = ({ children, ac }) => {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 100,
-        background: "#fff",
+        background: "#FFFFFF",
         color: textColor,
         border: `1px solid ${ac}30`,
         fontSize: 11,
@@ -483,13 +476,13 @@ const Hero = ({ s, price, priceLoading, bp }) => {
           position: "absolute",
           inset: 0,
           background: `
-            linear-gradient(
-              to bottom,
-              rgba(15, 23, 42, 0.35) 0%,
-              rgba(15, 23, 42, 0.65) 50%,
-              rgba(15, 23, 42, 0.95) 100%
-            )
-          `,
+        linear-gradient(
+          to bottom,
+          rgba(15, 23, 42, 0.35) 0%,
+          rgba(15, 23, 42, 0.65) 50%,
+          rgba(15, 23, 42, 0.95) 100%
+        )
+      `,
           zIndex: 1,
         }}
       />
@@ -509,7 +502,8 @@ const Hero = ({ s, price, priceLoading, bp }) => {
           gap: bp.isMobile ? 24 : 48,
           alignItems: "center",
         }}
-      ><div>
+      >
+        <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -581,16 +575,7 @@ const Hero = ({ s, price, priceLoading, bp }) => {
               gap: 12,
               flexWrap: "wrap",
             }}
-          >
-            <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
-              <a
-                href="/appointment-booking"
-                style={{ color: "#fff", textDecoration: "none" }}
-              >
-                Book Appointment
-              </a>
-            </PrimaryBtn>
-          </motion.div>
+          ></motion.div>
         </div>
 
         <motion.div
@@ -605,16 +590,13 @@ const Hero = ({ s, price, priceLoading, bp }) => {
             slug={s.slug}
           />
         </motion.div>
-      </motion.div >
+      </motion.div>
     </section>
   );
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
    OVERVIEW
-   Fix 2: text block now sits left (was right), and the right column — which
-   previously held the icon visual panel — now holds the consultation form.
-   The outcomes strip at the bottom is unchanged in structure.
 ────────────────────────────────────────────────────────────────────────── */
 const Overview = ({ s, bp }) => (
   <section
@@ -642,7 +624,7 @@ const Overview = ({ s, bp }) => (
           alignItems: "start",
         }}
       >
-        {/* Text — now the left column */}
+        {/* Text — left column */}
         <div>
           <motion.div variants={fadeUp}>
             <SLabel text="Service Overview" ac={s.accentColor} />
@@ -655,7 +637,7 @@ const Overview = ({ s, bp }) => (
                 marginBottom: 20,
               }}
             >
-              Your First Step Toward Better Health
+              What Is an Online Second Medical Opinion?
             </h2>
           </motion.div>
           <motion.p
@@ -740,13 +722,13 @@ const Overview = ({ s, bp }) => (
           </motion.div>
         </div>
 
-        {/* Form — now the right column, replacing the old icon visual panel */}
+        {/* Form — right column */}
         <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
           <ServiceContact s={s} />
         </motion.div>
       </motion.div>
 
-      {/* Outcomes strip — unchanged */}
+      {/* Outcomes strip */}
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -802,11 +784,7 @@ const Overview = ({ s, bp }) => (
 );
 
 /* ──────────────────────────────────────────────────────────────────────────
-   OUR SERVICES (was "How It Works")
-   Fix 3: heading text changed only — content (the 4-step process) is
-   unchanged since it's still accurate underneath the new label.
-   Fix 5: sticky card glass effect removed — flat surface, no backdrop-filter,
-   no glow blob.
+   OUR SERVICES
 ────────────────────────────────────────────────────────────────────────── */
 const HowItWorks = ({ s, bp }) => (
   <section
@@ -842,7 +820,7 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 8,
               }}
             >
-              Getting started is{" "}
+              Getting a second medical opinion is{" "}
               <span style={{ color: s.accentColor }}>simple.</span>
             </h2>
             <p
@@ -853,8 +831,9 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 36,
               }}
             >
-              Accessing a general consultation through Humancare Connect is
-              quick, secure, and designed around your healthcare needs.
+              Connect with a qualified specialist through Humancare Connect for
+              a secure, convenient, and personalized second medical opinion from
+              wherever you are.
             </p>
           </motion.div>
 
@@ -940,7 +919,7 @@ const HowItWorks = ({ s, bp }) => (
           </motion.div>
         </div>
 
-        {/* Sticky card — flat surface, no blur, no glow blob */}
+        {/* Sticky card */}
         <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
           <div
             style={{
@@ -961,7 +940,7 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 8,
               }}
             >
-              Ready to begin?
+              Ready for a second opinion?
             </h3>
             <p
               style={{
@@ -971,9 +950,10 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 24,
               }}
             >
-              Get convenient access to professional healthcare guidance through
-              trusted telemedicine services. Receive personalized support
-              without leaving home.
+              Get trusted guidance from qualified specialists through secure
+              telemedicine services. Whether you're reviewing a diagnosis,
+              considering surgery, or exploring treatment options, we're here to
+              help you make informed healthcare decisions with confidence.
             </p>
             <PrimaryBtn ac={s.accentColor} fullWidth>
               <a href="/login">Get Started Today</a>
@@ -1016,7 +996,6 @@ const HowItWorks = ({ s, bp }) => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    FEATURES & BENEFITS
- 
 ────────────────────────────────────────────────────────────────────────── */
 const Features = ({ s, bp }) => (
   <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
@@ -1030,6 +1009,9 @@ const Features = ({ s, bp }) => (
         variants={fadeUp}
         style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
       >
+        {/* Fix: pass center so the divider+label row is actually centered
+            under this centered heading block, instead of hugging the left
+            edge of the 560px box (see SLabel comment above). */}
         <SLabel text="Features & Benefits" ac={s.accentColor} center />
         <h2
           style={{
@@ -1040,12 +1022,12 @@ const Features = ({ s, bp }) => (
             marginBottom: 10,
           }}
         >
-          Comprehensive Care for
+          Understanding Online
           <br />
-          <span style={{ color: s.accentColor }}>Everyday Health Concerns</span>
+          <span style={{ color: s.accentColor }}>Second Medical Opinions</span>
         </h2>
         <p style={{ color: TEXT_DIM, fontSize: 15 }}>
-          Every feature is designed around one goal: better outcomes for you.
+          Get trusted guidance before making important healthcare decisions.
         </p>
       </motion.div>
 
@@ -1067,12 +1049,13 @@ const Features = ({ s, bp }) => (
               margin: "0 0 18px 0",
             }}
           >
-            General consultations are one of the most common ways patients
-            access healthcare services. Whether you are experiencing new
-            symptoms, managing an ongoing condition, seeking preventive health
-            advice, or looking for professional medical guidance, a general
-            consultation provides an opportunity to discuss your concerns with a
-            licensed healthcare provider.
+            A second medical opinion gives you the opportunity to have your
+            diagnosis, treatment plan, or recommended procedure independently
+            reviewed by a qualified specialist through secure telemedicine
+            services. At Humancare Connect, our Second Medical Opinion Service
+            helps patients better understand their health by providing expert
+            guidance before moving forward with treatment, surgery, or long-term
+            care.
           </p>
           <p
             style={{
@@ -1082,12 +1065,14 @@ const Features = ({ s, bp }) => (
               margin: "0 0 18px 0",
             }}
           >
-            At Humancare Connect, our virtual healthcare services make it easier
-            for patients to access quality care from virtually anywhere.
-            Healthcare providers can evaluate symptoms, review health history,
-            discuss treatment options, and recommend appropriate next steps
-            based on individual needs. This convenient approach helps patients
-            receive timely support while avoiding unnecessary delays in care.
+            Whether you've recently been diagnosed with a serious medical
+            condition, are evaluating cancer treatment options, managing a
+            chronic illness, or considering surgery, a second medical opinion
+            can provide valuable insight and reassurance. Our specialists
+            carefully review your medical records, diagnostic reports, imaging
+            studies, pathology findings, and current treatment recommendations
+            to offer personalized guidance based on your individual healthcare
+            needs.
           </p>
           <p
             style={{
@@ -1097,12 +1082,13 @@ const Features = ({ s, bp }) => (
               margin: 0,
             }}
           >
-            General consultations may address a wide range of concerns,
-            including cold and flu symptoms, allergies, minor infections,
-            digestive issues, headaches, fatigue, skin concerns, medication
-            questions, and overall wellness discussions. Through secure
-            telehealth services, patients can access professional healthcare
-            support when they need it most.
+            Many patients seek a second medical opinion to confirm a diagnosis,
+            explore alternative treatment options, or gain greater confidence
+            before making significant healthcare decisions. Through secure
+            virtual consultations, Humancare Connect makes it convenient to
+            connect with qualified specialists from wherever you are, helping
+            you make informed decisions with clarity, confidence, and peace of
+            mind.
           </p>
         </div>
       </motion.div>
@@ -1112,7 +1098,6 @@ const Features = ({ s, bp }) => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    STATS / WHY US
-   Fix 5: no glass effect on stat or info cards — flat bordered surfaces.
 ────────────────────────────────────────────────────────────────────────── */
 const StatCard = ({ value, suffix, label, ac, go }) => {
   const c = useCountUp(value, 2200, go);
@@ -1160,38 +1145,39 @@ const StatCard = ({ value, suffix, label, ac, go }) => {
 
 const whyUsItems = [
   [
-    FiAward,
-    "Verified Providers",
-    "Every clinician is credentialed, licensed, and continuously reviewed.",
+    FiUserCheck,
+    "Qualified Specialists",
+    "Connect with qualified specialists who carefully review your diagnosis, medical records, treatment recommendations, and healthcare concerns to provide trusted, personalized guidance.",
   ],
   [
-    FiHeart,
-    "Patient-Centered Care",
-    "Clinical decisions are made in partnership with you — never without your input.",
+    FiFileText,
+    "Personalized Second Opinions",
+    "Every second medical opinion is tailored to your medical history, current condition, diagnostic findings, and treatment goals, helping you make informed healthcare decisions.",
   ],
   [
-    FiGlobe,
-    "Nationwide Access",
-    "Care without geographic limits — from metro centers to remote districts.",
+    FiShield,
+    "Secure Virtual Consultations",
+    "Receive expert guidance through secure, HIPAA-compliant telemedicine services, allowing you to connect with specialists from the comfort of your home.",
   ],
   [
     FiZap,
-    "Fast Scheduling",
-    "From first contact to first appointment in hours, not weeks.",
+    "Fast Appointment Scheduling",
+    "Get timely access to second medical opinions when important healthcare decisions can't wait, helping you move forward with greater confidence.",
   ],
   [
-    FiLock,
-    "Secure Platform",
-    "Enterprise-grade encryption protects every record and transaction.",
+    FiClipboard,
+    "Comprehensive Medical Record Review",
+    "Our specialists review diagnostic reports, imaging studies, pathology results, laboratory findings, and treatment plans to provide a thorough and independent evaluation.",
   ],
   [
-    FiBarChart2,
-    "Outcome Accountability",
-    "We track results and publicly report our care quality standards.",
+    FiGlobe,
+    "Convenient Access to Care",
+    "Whether you're seeking a second opinion before surgery, reviewing a cancer diagnosis, or exploring treatment options for a complex medical condition, you can access expert guidance from anywhere through Humancare Connect.",
   ],
 ];
 
 const WhyUs = ({ s, bp }) => {
+  // numbers are actually visible.
   const [inView, setInView] = useState(false);
 
   return (
@@ -1206,6 +1192,7 @@ const WhyUs = ({ s, bp }) => {
           variants={fadeUp}
           style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
         >
+          {/* Fix: centered label row (see SLabel + Features fix above). */}
           <SLabel text="Why Choose Us" ac={s.accentColor} center />
           <h2
             style={{
@@ -1216,11 +1203,14 @@ const WhyUs = ({ s, bp }) => {
               marginBottom: 10,
             }}
           >
-            Results you can{" "}
-            <span style={{ color: s.accentColor }}>measure.</span>
+            Healthcare decisions{" "}
+            <span style={{ color: s.accentColor }}>
+              deserve expert guidance.
+            </span>
           </h2>
           <p style={{ color: TEXT_DIM, fontSize: 15 }}>
-            Numbers that represent real patients, real outcomes.
+            Trusted second medical opinions from qualified specialists,
+            delivered with confidence.{" "}
           </p>
         </motion.div>
 
@@ -1306,8 +1296,183 @@ const WhyUs = ({ s, bp }) => {
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
+   RELATED SERVICES
+────────────────────────────────────────────────────────────────────────── */
+const relatedServicesItems = [
+  {
+    Icon: FiActivity,
+    title: "Cancer Second Opinion",
+    desc: "Receive an independent review of your cancer diagnosis, pathology reports, treatment recommendations, and care plan to help you make informed decisions about your cancer treatment.",
+    href: "/online-second-medical-opinion/cancer-second-opinion",
+    linkLabel: "Explore More",
+  },
+  {
+    Icon: FiSearch,
+    title: "Complex Diagnosis Review",
+    desc: "Get expert evaluation for difficult-to-diagnose conditions, unresolved symptoms, or rare medical disorders when you need additional clinical insight.",
+    href: "/online-second-medical-opinion/complex-diagnosis-review",
+    linkLabel: "Explore More",
+  },
+  {
+    Icon: FiUserCheck,
+    title: "Surgery Second Opinion",
+    desc: "Understand your surgical options with an independent review of recommended procedures, potential risks, expected outcomes, and alternative treatment approaches.",
+    href: "/online-second-medical-opinion/surgery-second-opinion",
+    linkLabel: "Explore More",
+  },
+  {
+    Icon: FiFileText,
+    title: "Treatment Plan Review",
+    desc: "Have your current treatment plan reviewed by a qualified specialist to ensure you understand your available options and next steps.",
+    href: "/online-second-medical-opinion/treatment-plan-review",
+    linkLabel: "Explore More",
+  },
+];
+
+const RelatedServices = ({ s, bp }) => {
+  // Responsive column count: 1 col on phones, 2 on tablets, 4 on desktop.
+  const cols = bp?.isMobile ? 1 : bp?.isTablet ? 2 : 4;
+
+  return (
+    <section
+      style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: bp?.isMobile ? "56px 20px" : "88px 24px",
+      }}
+    >
+      <motion.div
+        variants={stagger}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-60px" }}
+      >
+        <motion.div
+          variants={fadeUp}
+          style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 44px" }}
+        >
+          <SLabel text="Related Services" ac={s.accentColor} center />
+          <h2
+            style={{
+              fontSize: "clamp(26px, 3.5vw, 36px)",
+              fontWeight: 900,
+              color: TEXT_PRIMARY,
+              lineHeight: 1.15,
+              marginBottom: 10,
+            }}
+          >
+            Explore More{" "}
+            <span style={{ color: s.accentColor }}>
+              Second Opinion Services
+            </span>
+          </h2>
+          <p style={{ color: TEXT_DIM, fontSize: 15, lineHeight: 1.7 }}>
+            Every healthcare decision is unique. In addition to our Second
+            Medical Opinion Service, Humancare Connect offers specialized second
+            opinion services for complex diagnoses, cancer care, surgery
+            recommendations, and treatment plan reviews. Connect with qualified
+            specialists to gain expert guidance tailored to your healthcare
+            needs.
+          </p>
+        </motion.div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+            gap: bp?.isMobile ? 14 : 16,
+          }}
+        >
+          {relatedServicesItems.map(
+            ({ Icon, title, desc, href, linkLabel }, i) => (
+              <motion.a
+                key={i}
+                href={href}
+                variants={fadeUp}
+                custom={i}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: bp?.isMobile ? 20 : 24,
+                  borderRadius: 18,
+                  background: "#fff",
+                  border: `1px solid ${BORDER}`,
+                  transition:
+                    "border-color 0.2s, box-shadow 0.2s, transform 0.2s",
+                  textDecoration: "none",
+                  color: "inherit",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = `${s.accentColor}55`;
+                  e.currentTarget.style.boxShadow = `0 8px 24px ${s.accentColor}18`;
+                  e.currentTarget.style.transform = "translateY(-3px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = BORDER;
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: `${s.accentColor}12`,
+                    marginBottom: 16,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon style={{ fontSize: 18, color: s.accentColor }} />
+                </div>
+                <div
+                  style={{
+                    color: TEXT_PRIMARY,
+                    fontWeight: 700,
+                    fontSize: 15,
+                    marginBottom: 8,
+                  }}
+                >
+                  {title}
+                </div>
+                <p
+                  style={{
+                    color: TEXT_DIM,
+                    fontSize: 13,
+                    lineHeight: 1.65,
+                    marginBottom: 18,
+                    flex: 1,
+                  }}
+                >
+                  {desc}
+                </p>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    color: s.accentColor,
+                    fontWeight: 700,
+                    fontSize: 13,
+                  }}
+                >
+                  {linkLabel} <FiArrowRight style={{ fontSize: 14 }} />
+                </span>
+              </motion.a>
+            ),
+          )}
+        </div>
+      </motion.div>
+    </section>
+  );
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
    FAQ
-   Fix 5: container is a flat bordered surface, no backdrop blur.
 ────────────────────────────────────────────────────────────────────────── */
 const FAQ = ({ s, bp }) => {
   const [open, setOpen] = useState(null);
@@ -1346,30 +1511,6 @@ const FAQ = ({ s, bp }) => {
             We've answered the most common questions below. Our care team is one
             message away if yours isn't listed.
           </p>
-          {/* <button
-            style={{
-              padding: "11px 20px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              background: `${s.accentColor}10`,
-              color: s.accentColor,
-              border: `1px solid ${s.accentColor}30`,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}1A`)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}10`)
-            }
-          >
-            <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button> */}
         </motion.div>
 
         <motion.div
@@ -1468,8 +1609,6 @@ const FAQ = ({ s, bp }) => {
 
 /* ──────────────────────────────────────────────────────────────────────────
    FINAL CTA
-   Fix 5: glow blobs and translucent layered gradient removed — flat tinted
-   surface instead.
 ────────────────────────────────────────────────────────────────────────── */
 const FinalCTA = ({ s, bp }) => (
   <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
@@ -1488,7 +1627,7 @@ const FinalCTA = ({ s, bp }) => (
       }}
     >
       <div>
-        <Pill ac={s.accentColor}>Start Today</Pill>
+        <Pill ac={s.accentColor}>Get Started Today</Pill>
         <h2
           style={{
             fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(32px, 5vw, 52px)",
@@ -1498,9 +1637,9 @@ const FinalCTA = ({ s, bp }) => (
             marginBottom: 14,
           }}
         >
-          Ready to Speak With a
+          Ready for a Trusted
           <br />
-          <span style={{ color: s.accentColor }}>Healthcare Provider?</span>
+          <span style={{ color: s.accentColor }}>Second Medical Opinion?</span>
         </h2>
         <p
           style={{
@@ -1511,10 +1650,11 @@ const FinalCTA = ({ s, bp }) => (
             fontSize: 16,
           }}
         >
-          Connect with a licensed healthcare provider through secure
-          telemedicine services and receive personalized medical guidance for
-          your health concerns. Get the care and answers you need from the
-          comfort of home.
+          When it comes to your health, confidence matters. Connect with a
+          qualified specialist through Humancare Connect to review your
+          diagnosis, treatment plan, or recommended procedure. Get expert
+          guidance, personalized recommendations, and the clarity you need to
+          make informed healthcare decisions from the comfort of your home.
         </p>
         <div
           style={{
@@ -1527,22 +1667,8 @@ const FinalCTA = ({ s, bp }) => (
             <a href="/login">Get Started</a>
           </PrimaryBtn>
           <GhostBtn>
-            <a href="/appointment-booking">Book Appointment</a>
+            <a href="/appointment-booking">Book Your Second Medical Opinion</a>
           </GhostBtn>
-          {/* <button
-            style={{
-              padding: "13px 24px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              background: "transparent",
-              color: TEXT_DIM,
-              border: `1px solid ${BORDER_HOVER}`,
-              cursor: "pointer",
-            }}
-          >
-            Contact Us
-          </button> */}
         </div>
         <div
           style={{
@@ -1582,10 +1708,8 @@ const FinalCTA = ({ s, bp }) => (
 
 /* ──────────────────────────────────────────────────────────────────────────
    ROOT APP
-   Fix 6: wrapper background now matches the token system used throughout
-   every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
-export default function GeneralConsultation() {
+export default function SecondOpinion() {
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
@@ -1595,28 +1719,22 @@ export default function GeneralConsultation() {
   return (
     <>
       <SEO
-        title="General Consultation Online | Virtual Doctor Consultation | Humancare Connect"
-        description="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
-        keywords="General consultation online, Virtual healthcare consultation, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/general-consultation"
+        title="Online Second Medical Opinion | Qualified Specialists"
+        description="Get a trusted online second medical opinion from qualified specialists. Review your diagnosis, treatment plan, surgery recommendations, and cancer care securely."
+        // keywords="Chronic care management, Chronic health conditions, Telemedicine services, Virtual healthcare services, Telehealth services, Virtual chronic care management"
+        url="https://humancareconnect.co/online-second-medical-opinion"
       />
       <Helmet>
         <title>
-          General Consultation Online | Virtual Doctor Consultation | Humancare
-          Connect
+          Chronic Care Management Online | Ongoing Healthcare Support |
+          Humancare Connect
         </title>
         <meta
           name="description"
-          content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
+          content="Manage chronic health conditions through secure telemedicine services. Connect with licensed healthcare providers for ongoing care, monitoring, and personalized support."
         />
       </Helmet>
-      <div
-      // style={{
-      //   backgroundColor: BG_BASE,
-      //   minHeight: "700px",
-      //   width: "100%",
-      // }}
-      >
+      <div>
         <AnimatePresence mode="wait">
           <motion.div
             key={slug}
@@ -1630,6 +1748,7 @@ export default function GeneralConsultation() {
             <HowItWorks s={s}  bp={bp} />
             <Features s={s}  bp={bp} />
             <WhyUs s={s}  bp={bp} />
+            <RelatedServices s={s} bp={bp} />
             <FAQ s={s}  bp={bp} />
             <FinalCTA s={s}  bp={bp} />
           </motion.div>
