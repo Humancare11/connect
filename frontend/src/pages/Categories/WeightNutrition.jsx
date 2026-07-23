@@ -352,7 +352,8 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
           )}
         </div>
         <p className="hcc-booking-price-sub">
-          One-time consultation fee · No subscription required
+          <span>One-time consultation fee</span>
+          <span>No subscription required</span>
         </p>
       </div>
 
@@ -369,9 +370,8 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
       <div className="hcc-booking-features">
         {[
           "Board-certified physician",
-          "Rx to your pharmacy",
+          "Prescription Refills",
           "Doctor's note included",
-          "24hr follow-up support",
           "HIPAA secure session",
         ].map((item, i) => (
           <div

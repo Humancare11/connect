@@ -299,11 +299,6 @@ function BookingForm({ specialtyPlaceholder }) {
 
   return (
     <div className="hcc-booking-card">
-      <div className="hcc-booking-badge">
-        <span className="hcc-booking-badge-dot" />
-        Doctors Available Now
-      </div>
-
       <div className="hcc-booking-price-block">
         <div className="hcc-booking-price">
           {priceLoading ? (
@@ -313,7 +308,8 @@ function BookingForm({ specialtyPlaceholder }) {
           )}
         </div>
         <p className="hcc-booking-price-sub">
-          One-time consultation fee · No subscription required
+          <span>One-time consultation fee</span>
+          <span>No subscription required</span>
         </p>
       </div>
 
@@ -330,9 +326,8 @@ function BookingForm({ specialtyPlaceholder }) {
       <div className="hcc-booking-features">
         {[
           "Board-certified physician",
-          "Rx to your pharmacy",
+          "Prescription Refills",
           "Doctor's note included",
-          "24hr follow-up support",
           "HIPAA secure session",
         ].map((item, i) => (
           <div
@@ -349,8 +344,13 @@ function BookingForm({ specialtyPlaceholder }) {
       <button className="hcc-booking-cta">Start Consultation →</button>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
-        <a href="/terms-of-service" className="hcc-booking-link">Terms of Service</a> and{" "}
-        <a href="/privacy-policy" className="hcc-booking-link">Privacy Policy</a>
+        <a href="/terms-of-service" className="hcc-booking-link">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="/privacy-policy" className="hcc-booking-link">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );
@@ -551,7 +551,12 @@ export default function ChildFamilyCare() {
         minHeight: "100vh",
       }}
     >
-      <SEO title="Children's Healthcare Online | Pediatric Virtual Care" description="Access children's healthcare online." keywords="Children healthcare" url="https://humancareconnect.co/child-main" />
+      <SEO
+        title="Children's Healthcare Online | Pediatric Virtual Care"
+        description="Access children's healthcare online."
+        keywords="Children healthcare"
+        url="https://humancareconnect.co/child-main"
+      />
       <Helmet>
         <title>
           Online Children &amp; Family Care | Virtual Doctor Consultation |

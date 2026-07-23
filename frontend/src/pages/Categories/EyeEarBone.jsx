@@ -380,13 +380,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
   }
 
   return (
-
     <div className="hcc-booking-card">
-      <div className="hcc-booking-badge">
-        <span className="hcc-booking-badge-dot" />
-        Doctors Available Now
-      </div>
-
       <div className="hcc-booking-price-block">
         <div className="hcc-booking-price">
           {priceLoading ? (
@@ -396,7 +390,8 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
           )}
         </div>
         <p className="hcc-booking-price-sub">
-          One-time consultation fee · No subscription required
+          <span>One-time consultation fee</span>
+          <span>No subscription required</span>
         </p>
       </div>
 
@@ -413,9 +408,8 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
       <div className="hcc-booking-features">
         {[
           "Board-certified physician",
-          "Rx to your pharmacy",
+          "Prescription Refills",
           "Doctor's note included",
-          "24hr follow-up support",
           "HIPAA secure session",
         ].map((item, i) => (
           <div
@@ -434,8 +428,13 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
       </Link>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
-        <a href="/terms-of-service" className="hcc-booking-link">Terms of Service</a> and{" "}
-        <a href="/privacy-policy" className="hcc-booking-link">Privacy Policy</a>
+        <a href="/terms-of-service" className="hcc-booking-link">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="/privacy-policy" className="hcc-booking-link">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );

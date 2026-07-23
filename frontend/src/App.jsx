@@ -180,9 +180,6 @@ const PregnancyNutrition = lazy(
 );
 const SleepHygiene = lazy(() => import("./pages/Conditions/SleepHygiene"));
 const SportNutrition = lazy(() => import("./pages/Conditions/SportsNutrition"));
-const TravelersDiarrhea = lazy(
-  () => import("./pages/Conditions/TravelersDiarrhea"),
-);
 const MetabolicSyndrome = lazy(
   () => import("./pages/Conditions/MetabolicSyndrome"),
 );
@@ -192,7 +189,6 @@ const WeightLossPlanning = lazy(
 );
 const BackPain = lazy(() => import("./pages/Conditions/BackPain"));
 const DryEyes = lazy(() => import("./pages/Conditions/DryEyes"));
-const EarInfection = lazy(() => import("./pages/Conditions/EarInfection"));
 const EarPain = lazy(() => import("./pages/Conditions/EarPain"));
 const EyeRedness = lazy(() => import("./pages/Conditions/EyeRedness"));
 const EyeStrain = lazy(() => import("./pages/Conditions/EyeStrain"));
@@ -1869,10 +1865,6 @@ function AppLayout() {
             path="/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition"
             element={<SportNutrition />}
           />
-          <Route
-            path="/travel-and-global-care/travel-medicine/travelers-diarrhea"
-            element={<TravelersDiarrhea />}
-          />
           <Route path="/metabolic-syndrome" element={<MetabolicSyndrome />} />
           <Route path="/vomiting" element={<Vomiting />} />
           <Route
@@ -1886,10 +1878,6 @@ function AppLayout() {
           <Route
             path="/eye-ear-bone/ophthalmology/dry-eyes"
             element={<DryEyes />}
-          />
-          <Route
-            path="/eye-ear-bone/ear-nose-throat/ear-infection"
-            element={<EarInfection />}
           />
           <Route
             path="/eye-ear-bone/ear-nose-throat/ear-pain"
