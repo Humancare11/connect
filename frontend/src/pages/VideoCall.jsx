@@ -610,6 +610,14 @@ const makeMessageKey = () =>
     ? crypto.randomUUID()
     : `msg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
+// Unique per created offer, echoed back in its answer — lets handleAnswer
+// tell a genuine fresh answer apart from a stale/replayed one (see
+// pendingOfferIdRef).
+const makeOfferId = () =>
+  typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `offer-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
 const fmtTime = (iso) => {
   if (!iso) return "";
   return new Date(iso).toLocaleTimeString([], {
@@ -709,6 +717,18 @@ export default function VideoCall() {
   const ignoreOfferRef = useRef(false);
   const ignoreOfferResetTimerRef = useRef(null);
   const settingRemoteAnswerPendingRef = useRef(false);
+  // The offerId of the most recent remote offer we accepted — echoed back
+  // in our video-answer so the offerer can correlate it (see below).
+  const lastReceivedOfferIdRef = useRef(null);
+  // Correlates a video-answer back to the specific video-offer it's meant to
+  // answer. Socket.IO's connectionStateRecovery (server.js) replays buffered
+  // room events across a brief reconnect — under some timings that can
+  // redeliver an already-consumed answer from an earlier negotiation. The
+  // old guard (signalingState === "have-local-offer") can't tell that
+  // apart from a genuine fresh answer, since a replayed answer arrives
+  // while we're legitimately waiting on one. Tracking the id of the offer
+  // we're actually waiting on closes that gap.
+  const pendingOfferIdRef = useRef(null);
   const restartRequestInFlightRef = useRef(false);
   const iceRecoveryAttemptsRef = useRef(0);
   const lastIceRecoveryAtRef = useRef(0);
@@ -1077,6 +1097,8 @@ export default function VideoCall() {
     joinedSocketIdRef.current = "";
     peerJoinedRef.current = false;
     ignoreOfferRef.current = false;
+    pendingOfferIdRef.current = null;
+    lastReceivedOfferIdRef.current = null;
     restartRequestInFlightRef.current = false;
     screenSharingRef.current = false;
     screenShareStartInProgressRef.current = false;
@@ -1406,6 +1428,8 @@ export default function VideoCall() {
     pendingRemoteCandidatesRef.current = [];
     ignoreOfferRef.current = false;
     settingRemoteAnswerPendingRef.current = false;
+    pendingOfferIdRef.current = null;
+    lastReceivedOfferIdRef.current = null;
     clearTimeout(iceRestartTimerRef.current);
     clearTimeout(ignoreOfferResetTimerRef.current);
     clearTimeout(reconnectStallTimerRef.current);
@@ -1491,9 +1515,12 @@ export default function VideoCall() {
         });
         if (!mounted || pc.signalingState === "closed") return false;
         await pc.setLocalDescription(offer);
+        const offerId = makeOfferId();
+        pendingOfferIdRef.current = offerId;
         socket.emit("video-offer", {
           appointmentId,
           offer: pc.localDescription,
+          offerId,
         });
         if (iceRestart)
           logVideoEvent("ice_restart_offer_sent", {
@@ -1805,7 +1832,7 @@ export default function VideoCall() {
     };
 
     // Socket handlers
-    const handleOffer = async ({ offer }) => {
+    const handleOffer = async ({ offer, offerId: incomingOfferId }) => {
       if (!offer || !mounted) return;
       try {
         setConnectionState("connecting");
@@ -1829,6 +1856,9 @@ export default function VideoCall() {
         if (offerCollision && pc.signalingState === "have-local-offer") {
           console.info("Rolling back local offer to accept peer offer.");
           await pc.setLocalDescription({ type: "rollback" });
+          // Our own outstanding offer was just discarded — any answer that
+          // still shows up for it later is stale and must be rejected.
+          pendingOfferIdRef.current = null;
         } else if (offerCollision) {
           console.info(
             "Ignoring offer while negotiation is already in progress.",
@@ -1837,6 +1867,11 @@ export default function VideoCall() {
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        // Record which offer we just accepted as soon as it's applied, not
+        // only once we get around to answering it — if local media isn't
+        // ready yet, retryMediaPermissions() answers this same remote
+        // description later, and needs the right id to echo back then too.
+        lastReceivedOfferIdRef.current = incomingOfferId || null;
         resetIgnoredOffer();
         await flushPendingIceCandidates();
         // Now wait for local tracks so the answer includes our video/audio.
@@ -1854,6 +1889,7 @@ export default function VideoCall() {
         socket.emit("video-answer", {
           appointmentId,
           answer: pc.localDescription,
+          offerId: incomingOfferId,
         });
         if (!inCallRef.current) {
           setInCall(true);
@@ -1864,7 +1900,7 @@ export default function VideoCall() {
       }
     };
 
-    const handleAnswer = async ({ answer }) => {
+    const handleAnswer = async ({ answer, offerId: receivedOfferId }) => {
       if (!answer || !mounted) return;
       try {
         if (pc.signalingState !== "have-local-offer") {
@@ -1874,8 +1910,35 @@ export default function VideoCall() {
           );
           return;
         }
+        // Guards against a stale/replayed video-answer being applied to a
+        // newer offer — e.g. connectionStateRecovery redelivering an
+        // already-consumed answer across a reconnect. signalingState alone
+        // can't tell a genuine fresh answer apart from that, since a
+        // replayed one arrives while we're legitimately in have-local-offer
+        // waiting for a real one.
+        const expectedOfferId = pendingOfferIdRef.current;
+        if (!expectedOfferId || receivedOfferId !== expectedOfferId) {
+          logVideoEvent("answer_rejected_stale", {
+            expectedOfferId: expectedOfferId || null,
+            receivedOfferId: receivedOfferId || null,
+            signalingState: pc.signalingState,
+            timestamp: new Date().toISOString(),
+          });
+          console.warn(
+            "Rejecting answer: offerId mismatch (expected %s, got %s) — not applying to current RTCPeerConnection state.",
+            expectedOfferId || "none",
+            receivedOfferId || "none",
+          );
+          return;
+        }
         settingRemoteAnswerPendingRef.current = true;
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        pendingOfferIdRef.current = null;
+        logVideoEvent("answer_accepted", {
+          offerId: receivedOfferId,
+          signalingState: pc.signalingState,
+          timestamp: new Date().toISOString(),
+        });
         resetIgnoredOffer();
         await flushPendingIceCandidates();
         if (!inCallRef.current) {
@@ -2192,6 +2255,8 @@ export default function VideoCall() {
       joinedSocketIdRef.current = "";
       peerJoinedRef.current = false;
       ignoreOfferRef.current = false;
+      pendingOfferIdRef.current = null;
+      lastReceivedOfferIdRef.current = null;
       screenSharingRef.current = false;
       screenShareStartInProgressRef.current = false;
       screenShareStopInProgressRef.current = false;
@@ -2573,6 +2638,7 @@ export default function VideoCall() {
         socket.emit("video-answer", {
           appointmentId,
           answer: pc.localDescription,
+          offerId: lastReceivedOfferIdRef.current,
         });
       }
     } catch (err) {
