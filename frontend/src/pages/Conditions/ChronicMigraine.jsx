@@ -117,7 +117,7 @@ const STYLES = `
     gap:clamp(28px,4vw,56px);align-items:stretch;flex:1;
   }
   .sp-about-left { display:flex;flex-direction:column;gap:0;justify-content:space-between; }
-  .sp-about-h2 { font-size:clamp(20px,2.2vw,26px);font-weight:800;color:#0A1F44;line-height:1.2;font-family:'Georgia',serif;margin:0 0 18px; }
+  .sp-about-h2 { font-size:clamp(20px,2.2vw,26px);font-weight:800;color:#0A1F44;line-height:1.2;font-family: var(--font-secondary);margin:0 0 18px; }
   .sp-nav-card {
     background:rgba(11,87,232,.10);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
     border-radius:16px;padding:20px 18px;margin-bottom:14px;border:1px solid rgba(11,87,232,.22);
@@ -172,7 +172,7 @@ const STYLES = `
     width:7px;height:7px;border-radius:50%;background:#0B57E8;
     box-shadow:0 0 12px rgba(11,87,232,.5);animation:sp-sbcPulse 2s ease-in-out infinite;flex-shrink:0;
   }
-  .sp-sbc-price { font-size:clamp(32px,7vw,42px);font-weight:900;color:#0A1F44;line-height:1;letter-spacing:-1.5px;font-family:'Georgia',serif; }
+  .sp-sbc-price { font-size:clamp(32px,7vw,42px);font-weight:900;color:#0A1F44;line-height:1;letter-spacing:-1.5px;font-family: var(--font-secondary); }
   .sp-sbc-price-sub { font-size:12.5px;color:#7A90B8;margin:8px 0 0;line-height:1.5; }
   .sp-sbc-info {
     display:flex;align-items:flex-start;gap:10px;background:#EEF6FF;border:1px solid #C5DEFF;
@@ -206,7 +206,7 @@ const STYLES = `
   .sp-sym-section { background:#fff; padding:80px 0 100px; }
   .sp-sym-wrap { max-width:1240px; margin:0 auto; padding:0 24px; }
   .sp-sym-header { margin-bottom:40px; }
-  .sp-sym-h2 { font-size:clamp(24px,3vw,32px); font-weight:800; color:#0A1F44; font-family:'Georgia',serif; margin:6px 0 8px; line-height:1.15; }
+  .sp-sym-h2 { font-size:clamp(24px,3vw,32px); font-weight:800; color:#0A1F44; font-family: var(--font-secondary); margin:6px 0 8px; line-height:1.15; }
   .sp-sym-sub { color:#5C7099; font-size:15px; margin:0; }
 
   .sp-sym-grid {
@@ -263,7 +263,7 @@ const STYLES = `
   /* ══ FAQ ══ */
   .sp-faq-layout { display:grid;grid-template-columns:320px minmax(0,1fr);gap:48px;align-items:start; }
   .sp-faq-sidebar { position:sticky;top:110px; }
-  .sp-faq-title { font-size:52px;line-height:1.05;font-weight:800;color:#0a1f44;margin:14px 0;font-family:Georgia,serif; }
+  .sp-faq-title { font-size:52px;line-height:1.05;font-weight:800;color:#0a1f44;margin:14px 0;font-family: var(--font-secondary); }
   .sp-faq-desc { color:#5c7099;line-height:1.8;margin-bottom:28px; }
   .sp-faq-chat {
     height:52px;border-radius:14px;padding:0 24px;border:1px solid #0b57e8;background:white;

@@ -17,13 +17,13 @@ import logoIcon from "../assets/single-logo.png";
 
 /* ── Shared design tokens (identical to PrescriptionSlip) ─────────────────── */
 const PRIMARY = "#0d47a1";
-const ACCENT  = "#1565c0";
-const LIGHT   = "#e8f0fe";
+const ACCENT = "#1565c0";
+const LIGHT = "#e8f0fe";
 
 const COMPANY = {
   tagline: "Global Health Passport",
-  phone:   "+1 (302) 303-9993",
-  email:   "support@humancareconnect.co",
+  phone: "+1 (302) 303-9993",
+  email: "support@humancareconnect.co",
   address: "4 Peddlers Row #1091 Newark, DE 19702, United States",
 };
 
@@ -68,23 +68,23 @@ function QRCode() {
   const D = PRIMARY;
   return (
     <svg width="64" height="64" viewBox="0 0 64 64" style={{ display: "block", flexShrink: 0 }}>
-      <rect width="64" height="64" fill="#fff" rx="4"/>
-      <rect x="2"  y="2"  width="22" height="22" rx="2" fill="none" stroke={D} strokeWidth="2.5"/>
-      <rect x="8"  y="8"  width="10" height="10" rx="1" fill={D}/>
-      <rect x="40" y="2"  width="22" height="22" rx="2" fill="none" stroke={D} strokeWidth="2.5"/>
-      <rect x="46" y="8"  width="10" height="10" rx="1" fill={D}/>
-      <rect x="2"  y="40" width="22" height="22" rx="2" fill="none" stroke={D} strokeWidth="2.5"/>
-      <rect x="8"  y="46" width="10" height="10" rx="1" fill={D}/>
+      <rect width="64" height="64" fill="#fff" rx="4" />
+      <rect x="2" y="2" width="22" height="22" rx="2" fill="none" stroke={D} strokeWidth="2.5" />
+      <rect x="8" y="8" width="10" height="10" rx="1" fill={D} />
+      <rect x="40" y="2" width="22" height="22" rx="2" fill="none" stroke={D} strokeWidth="2.5" />
+      <rect x="46" y="8" width="10" height="10" rx="1" fill={D} />
+      <rect x="2" y="40" width="22" height="22" rx="2" fill="none" stroke={D} strokeWidth="2.5" />
+      <rect x="8" y="46" width="10" height="10" rx="1" fill={D} />
       {[
-        [28,4],[32,4],[36,4],[28,8],[36,8],[32,12],[28,16],[36,16],[32,20],
-        [4,28],[8,28],[12,28],[4,32],[12,32],[8,36],[4,36],[12,36],[8,40],
-        [28,28],[32,28],[36,28],[40,28],[44,28],[48,28],[52,28],[56,28],
-        [28,32],[36,32],[44,32],[52,32],[28,36],[32,36],[40,36],[48,36],[56,36],
-        [28,40],[36,40],[44,40],[52,40],[28,44],[32,44],[40,44],[48,44],[56,44],
-        [28,48],[36,48],[44,48],[52,48],[28,52],[32,52],[40,52],[48,52],[56,52],
-        [28,56],[36,56],[44,56],[52,56],[28,60],[36,60],[44,60],[52,60],
+        [28, 4], [32, 4], [36, 4], [28, 8], [36, 8], [32, 12], [28, 16], [36, 16], [32, 20],
+        [4, 28], [8, 28], [12, 28], [4, 32], [12, 32], [8, 36], [4, 36], [12, 36], [8, 40],
+        [28, 28], [32, 28], [36, 28], [40, 28], [44, 28], [48, 28], [52, 28], [56, 28],
+        [28, 32], [36, 32], [44, 32], [52, 32], [28, 36], [32, 36], [40, 36], [48, 36], [56, 36],
+        [28, 40], [36, 40], [44, 40], [52, 40], [28, 44], [32, 44], [40, 44], [48, 44], [56, 44],
+        [28, 48], [36, 48], [44, 48], [52, 48], [28, 52], [32, 52], [40, 52], [48, 52], [56, 52],
+        [28, 56], [36, 56], [44, 56], [52, 56], [28, 60], [36, 60], [44, 60], [52, 60],
       ].map(([x, y], i) => (
-        <rect key={i} x={x} y={y} width="3.5" height="3.5" rx="0.5" fill={D}/>
+        <rect key={i} x={x} y={y} width="3.5" height="3.5" rx="0.5" fill={D} />
       ))}
     </svg>
   );
@@ -105,18 +105,18 @@ function SectionLabel({ children }) {
 
 /* ── Main Component ──────────────────────────────────────────────────────── */
 export function MedicalCertificateSlip({ cert, patient, doctor, doctorEnrollment, slipRef }) {
-  const age    = calcAge(patient?.dob);
+  const age = calcAge(patient?.dob);
   const ageSex = [age ? `${age} yrs` : "", patient?.gender].filter(Boolean).join(" / ");
   const certId = cert?._id ? `HC-CERT-${String(cert._id).slice(-8).toUpperCase()}` : "—";
 
   /* Resolve doctor info — prefer passed prop, fall back to embedded cert data */
-  const doctorName    = doctor?.name || cert?.doctorId?.name || "—";
-  const enrollment    = doctorEnrollment || cert?.doctorEnrollment || {};
-  const specialty     = enrollment.specialization || "";
-  const qualification = enrollment.qualification  || "";
-  const regNumber     = enrollment.medicalRegistrationNumber || "";
-  const councilName   = enrollment.medicalCouncilName || "";
-  const clinicName    = enrollment.clinicName    || "Humancare Connect";
+  const doctorName = doctor?.name || cert?.doctorId?.name || "—";
+  const enrollment = doctorEnrollment || cert?.doctorEnrollment || {};
+  const specialty = enrollment.specialization || "";
+  const qualification = enrollment.qualification || "";
+  const regNumber = enrollment.medicalRegistrationNumber || "";
+  const councilName = enrollment.medicalCouncilName || "";
+  const clinicName = enrollment.clinicName || "Humancare Connect";
   const clinicAddress = enrollment.clinicAddress || COMPANY.address;
 
   const hasRestPeriod = cert?.restFromDate || cert?.restToDate;
@@ -192,7 +192,7 @@ export function MedicalCertificateSlip({ cert, patient, doctor, doctorEnrollment
         }}>
           <InfoField label="Patient Name" value={patient?.name} />
           <InfoField label="Date of Issue" value={fmtDate(cert?.issuedDate || cert?.createdAt)} />
-          <InfoField label="Age / Sex"    value={ageSex} />
+          <InfoField label="Age / Sex" value={ageSex} />
           {patient?.dob && (
             <InfoField label="Date of Birth" value={fmtDate(patient.dob)} />
           )}
@@ -402,7 +402,7 @@ export function MedicalCertificateSlip({ cert, patient, doctor, doctorEnrollment
         }}>
           {[
             { icon: "📞", text: COMPANY.phone },
-            { icon: "✉",  text: COMPANY.email },
+            { icon: "✉", text: COMPANY.email },
             { icon: "📍", text: COMPANY.address },
           ].map(({ icon, text }) => (
             <div key={text} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -438,9 +438,9 @@ export async function downloadCertificatePDF(element, filename = "medical-certif
     logging: false,
   });
 
-  const pdf     = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const pdfW    = pdf.internal.pageSize.getWidth();
-  const pdfH    = (canvas.height * pdfW) / canvas.width;
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pdfW = pdf.internal.pageSize.getWidth();
+  const pdfH = (canvas.height * pdfW) / canvas.width;
   const imgData = canvas.toDataURL("image/jpeg", 0.97);
 
   pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);

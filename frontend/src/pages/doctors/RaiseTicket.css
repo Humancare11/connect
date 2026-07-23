@@ -19,7 +19,7 @@
    ROOT
 ════════════════════════════════════════ */
 .rt-root {
-  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   color: var(--rt-text);
   padding: 32px;
   position: relative;

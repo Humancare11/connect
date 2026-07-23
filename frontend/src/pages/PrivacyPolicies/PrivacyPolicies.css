@@ -1,7 +1,7 @@
 /* Refund & Cancellation Policy — plain, minimal legal-page layout */
 
 .rcp-page {
-    font-family: "Satoshi", Inter, sans-serif;
+    font-family: var(--font-primary);
     color: #111827;
     background-color: #ffffff;
     line-height: 1.8;

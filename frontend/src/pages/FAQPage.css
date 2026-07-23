@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap");
+
 
 /* ---------------------- Tokens ---------------------- */
 .faq-page {
@@ -14,12 +14,12 @@
   --mist: #eff3f8;
 
   --font-display: "Fraunces", Georgia, serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-body: var(--font-secondary);
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   background: var(--cream);
   color: var(--ink);
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -28,7 +28,7 @@
 }
 
 .eyebrow {
-  font-family: var(--font-mono);
+  font-family: var(--font-secondary);
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -65,7 +65,7 @@
 }
 
 .hero__title {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-weight: 600;
   font-size: clamp(2.3rem, 4vw, 3.4rem);
   line-height: 1.1;
@@ -104,7 +104,7 @@
 }
 
 .hero__stat-value {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 1.4rem;
   font-weight: 600;
 }
@@ -173,7 +173,7 @@
 }
 
 .cta-card__title {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 1.4rem;
   font-weight: 600;
   margin: 0 0 10px;
@@ -197,7 +197,7 @@
   border: none;
   border-radius: 12px;
   padding: 14px 18px;
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -281,7 +281,7 @@
   border: none;
   background: transparent;
   color: var(--ink-soft);
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -317,7 +317,7 @@
 }
 
 .faq-section__heading h2 {
-  font-family: var(--font-display);
+  font-family: var(--font-primary);
   font-size: 1.6rem;
   font-weight: 600;
   margin: 0;
@@ -356,7 +356,7 @@
   background: none;
   border: none;
   text-align: left;
-  font-family: var(--font-body);
+  font-family: var(--font-secondary);
   font-size: 1rem;
   font-weight: 600;
   color: var(--ink);

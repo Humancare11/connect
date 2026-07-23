@@ -193,7 +193,7 @@ export default function DatePickerField({
         .dp-cell {
           width:40px; height:40px; border:1.5px solid #e2e8f0;
           background:#fff; cursor:pointer; font-size:13px;
-          font-family:inherit; color:#334155; border-radius:8px;
+          font-family: inherit; color:#334155; border-radius:8px;
           display:flex; align-items:center; justify-content:center;
           transition:all 0.12s; font-weight:500;
         }
@@ -213,7 +213,7 @@ export default function DatePickerField({
         .dp-hdr-sel {
           height:34px; border:1.5px solid #e2e8f0; border-radius:8px;
           padding:0 28px 0 10px; font-size:13px; font-weight:600;
-          font-family:inherit; color:#0f172a; background:#f8fafc;
+          font-family: inherit; color:#0f172a; background:#f8fafc;
           cursor:pointer; outline:none; appearance:none;
           background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
           background-repeat:no-repeat; background-position:right 8px center;
