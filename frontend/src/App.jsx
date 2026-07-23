@@ -64,45 +64,6 @@ const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
 // privacy concerns
-const PrivacyConcerns = lazy(
-  () => import("./pages/PrivacyPolicies/PrivacyConcerns"),
-);
-const PatientPrivacyNotice = lazy(
-  () => import("./pages/PrivacyPolicies/PatientPrivacyNotice"),
-);
-// const PrivacyPolicy = lazy(
-//   () => import("./pages/PrivacyPolicies/PrivacyPolicy"),
-// );
-// const ProviderTermsofService = lazy(
-//   () => import("./pages/PrivacyPolicies/ProviderTermsofService"),
-// );
-const RefundCancellation = lazy(
-  () => import("./pages/PrivacyPolicies/RefundCancellation"),
-);
-const TeleHealthConsent = lazy(
-  () => import("./pages/PrivacyPolicies/TeleHealthConsent"),
-);
-// const TermsService = lazy(() => import("./pages/PrivacyPolicies/TermsService"));
-// const AccessibilityStatement = lazy(
-//   () => import("./pages/PrivacyPolicies/AccessibilityStatement"),
-// );
-const CCPA = lazy(() => import("./pages/PrivacyPolicies/CCPA"));
-// const CookiePolicy = lazy(() => import("./pages/PrivacyPolicies/CookiePolicy"));
-const PatientInformedConsentForm = lazy(
-  () => import("./pages/PrivacyPolicies/PatientInformedConsentForm"),
-);
-const PhysicianCredentialingPolicy = lazy(
-  () => import("./pages/PrivacyPolicies/PhysicianCredentialingPolicy"),
-);
-const TeleconsultationWorkflowPolicy = lazy(
-  () => import("./pages/PrivacyPolicies/TeleconsultationWorkflowPolicy"),
-);
-const PrescriptionHandlingPolicy = lazy(
-  () => import("./pages/PrivacyPolicies/PrescriptionHandlingPolicy"),
-);
-const TelehealthProviderAgreement = lazy(
-  () => import("./pages/PrivacyPolicies/TelehealthProviderAgreement"),
-);
 const Images = lazy(() => import("./components/Images"));
 // category pages
 const ChildFamilyCare = lazy(
@@ -2583,12 +2544,12 @@ function AppLayout() {
             element={<FutureofTelemedicine />}
           />
           {/* PRIVACY  */}
-          <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
+          {/* <Route path="/privacy-concerns" element={<PrivacyConcerns />} /> */}
           {/* demo */}
-          <Route
+          {/* <Route
             path="/patient-privacy-notice"
             element={<PatientPrivacyNotice />}
-          />
+          /> */}
           {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
           {/* <Route
             path="/provider-terms-of-service"
