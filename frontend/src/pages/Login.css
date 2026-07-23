@@ -247,7 +247,7 @@
   font-family: var(--font-primary);
   font-size: 13.5px;
   font-weight: 600;
-  padding: 0 44px;
+  padding: 15px 44px;
   height: 50px;
   letter-spacing: 0.6px;
   text-transform: uppercase;
@@ -1075,7 +1075,7 @@
     width: 100%;
     max-width: 100%;
     border-radius: 18px;
-    margin: 0 12px;
+    margin: 70px 12px;
   }
 
   .hc-form-box,
@@ -1107,7 +1107,7 @@
   }
 
   .hc-form {
-    padding: 28px 22px 32px;
+    padding: 60px 22px 32px;
     height: auto;
   }
   .hc-form-box--login .hc-form {

@@ -12,6 +12,7 @@ import "./App.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import CallErrorBoundary from "./components/CallErrorBoundary";
 
 const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
@@ -803,6 +804,9 @@ const DoctorAppointments = lazy(
   () => import("./pages/doctors/DoctorAppointments"),
 );
 const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
+const WritePrescription = lazy(
+  () => import("./pages/doctors/WritePrescription"),
+);
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
 const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
@@ -1282,6 +1286,14 @@ function AppLayout() {
             }
           />
           <Route
+            path="/doctor-dashboard/patients/:patientId/prescription"
+            element={
+              <DoctorLayout>
+                <WritePrescription />
+              </DoctorLayout>
+            }
+          />
+          <Route
             path="/doctor-dashboard/messages"
             element={
               <DoctorLayout>
@@ -1603,10 +1615,21 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route path="/video-call/:appointmentId" element={<VideoCall />} />
+          <Route
+            path="/video-call/:appointmentId"
+            element={
+              <CallErrorBoundary>
+                <VideoCall />
+              </CallErrorBoundary>
+            }
+          />
           <Route
             path="/direct-video-call/:roomId"
-            element={<DirectVideoCall />}
+            element={
+              <CallErrorBoundary>
+                <DirectVideoCall />
+              </CallErrorBoundary>
+            }
           />
           {/* ALL*/}
           <Route path="/categories" element={<Categories />} />

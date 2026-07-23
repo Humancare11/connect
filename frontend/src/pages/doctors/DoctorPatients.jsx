@@ -1,14 +1,10 @@
-import {
-  lazy,
-  Suspense,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./DoctorPatients.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import ConsultationNotesPanel from "../../components/ConsultationNotesPanel";
+import { formatShortDate as formatDate } from "../../utils/prescriptionForm";
 
 const PrescriptionSlip = lazy(() =>
   import("../../components/RxSlip").then((module) => ({
@@ -22,32 +18,6 @@ const MedicalCertificateSlip = lazy(() =>
   })),
 );
 
-function formatDate(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-const EMPTY_MEDICINE = {
-  name: "",
-  dosage: "",
-  frequency: "",
-  duration: "",
-  notes: "",
-  timeMorning: "0",
-  timeAfternoon: "0",
-  timeNight: "0",
-  foodTiming: "After Food",
-};
-const EMPTY_RX = {
-  diagnosis: "",
-  medicines: [{ ...EMPTY_MEDICINE }],
-  instructions: "",
-  followUpDate: "",
-};
 const EMPTY_CERT = {
   diagnosis: "",
   recommendation: "",
@@ -56,19 +26,6 @@ const EMPTY_CERT = {
   notes: "",
 };
 
-// Turns { timeMorning:"1", timeAfternoon:"0", timeNight:"1", foodTiming:"After Food" }
-// into "Morning (1), Night (1) - After Food" — simple for the doctor to set,
-// plain-English for the patient to read.
-function buildFrequencyText(med) {
-  const parts = [];
-  if (Number(med.timeMorning) > 0) parts.push(`Morning (${med.timeMorning})`);
-  if (Number(med.timeAfternoon) > 0)
-    parts.push(`Afternoon (${med.timeAfternoon})`);
-  if (Number(med.timeNight) > 0) parts.push(`Night (${med.timeNight})`);
-  const timesText = parts.join(", ");
-  if (!timesText) return "";
-  return med.foodTiming ? `${timesText} - ${med.foodTiming}` : timesText;
-}
 // ── Small reusable components ─────────────────────────────────────────────────
 
 function Avatar({ name, size = 40 }) {
@@ -90,231 +47,32 @@ function Avatar({ name, size = 40 }) {
   );
 }
 
-// ── Prescription Modal ────────────────────────────────────────────────────────
+// ── Consultation Notes viewer (read-only) ─────────────────────────────────────
+// Lets a doctor look up previously saved consultation notes for a patient —
+// surfaced next to "Write Prescription" so notes can be referenced while
+// preparing an accurate prescription, without leaving the current flow.
 
-function PrescriptionModal({ patient, appointments, onClose, onSaved }) {
-  const [form, setForm] = useState({
-    ...EMPTY_RX,
-    appointmentId: appointments[0]?._id || "",
-  });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  const setField = (k, v) => setForm((p) => ({ ...p, [k]: v }));
-
-  const setMed = (i, k, v) =>
-    setForm((p) => {
-      const meds = [...p.medicines];
-      const updated = { ...meds[i], [k]: v };
-      // Keep the human-readable frequency text in sync automatically
-      // whenever a timing/food field changes.
-      if (
-        ["timeMorning", "timeAfternoon", "timeNight", "foodTiming"].includes(k)
-      ) {
-        updated.frequency = buildFrequencyText(updated);
-      }
-      meds[i] = updated;
-      return { ...p, medicines: meds };
-    });
-
-  const addMed = () =>
-    setForm((p) => ({
-      ...p,
-      medicines: [...p.medicines, { ...EMPTY_MEDICINE }],
-    }));
-  const removeMed = (i) =>
-    setForm((p) => ({
-      ...p,
-      medicines: p.medicines.filter((_, idx) => idx !== i),
-    }));
-
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!form.diagnosis.trim()) {
-      setError("Diagnosis is required.");
-      return;
-    }
-    if (!form.appointmentId) {
-      setError("Select an appointment.");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    try {
-      await api.post("/api/medical/prescriptions", {
-        ...form,
-        patientId: patient._id,
-      });
-      onSaved("prescription");
-    } catch (err) {
-      setError(err.response?.data?.msg || "Failed to save prescription.");
-      setSaving(false);
-    }
-  };
-
+function ConsultationNotesModal({ patient, onClose }) {
   return (
-    <div className="dp-modal-overlay" onClick={onClose}>
-      <div className="dp-modal" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="dp-modal-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Consultation notes for ${patient.name}`}
+    >
+      <div className="dp-modal dp-notes-modal" onClick={(e) => e.stopPropagation()}>
         <div className="dp-modal-header">
-          <h2>New Prescription</h2>
+          <h2>Consultation Notes</h2>
           <span className="dp-modal-patient">for {patient.name}</span>
-          <button className="dp-modal-close" onClick={onClose}>
+          <button className="dp-modal-close" onClick={onClose} type="button">
             ✕
           </button>
         </div>
 
-        <form className="dp-modal-body" onSubmit={submit}>
-          {error && <div className="dp-modal-error">{error}</div>}
-
-          <label className="dp-label">Appointment</label>
-          <select
-            className="dp-input"
-            value={form.appointmentId}
-            onChange={(e) => setField("appointmentId", e.target.value)}
-          >
-            {appointments.map((a) => (
-              <option key={a._id} value={a._id}>
-                {formatDate(a.date)} — {a.time} ({a.status})
-              </option>
-            ))}
-          </select>
-
-          <label className="dp-label">Diagnosis *</label>
-          <input
-            className="dp-input"
-            value={form.diagnosis}
-            onChange={(e) => setField("diagnosis", e.target.value)}
-            placeholder="e.g. Acute viral pharyngitis"
-          />
-
-          <label className="dp-label">Medicines</label>
-          {form.medicines.map((med, i) => (
-            <div key={i} className="dp-med-card">
-              <div className="dp-med-row">
-                <input
-                  className="dp-input dp-med-name"
-                  value={med.name}
-                  onChange={(e) => setMed(i, "name", e.target.value)}
-                  placeholder="Medicine name"
-                />
-                <input
-                  className="dp-input dp-med-sm"
-                  value={med.dosage}
-                  onChange={(e) => setMed(i, "dosage", e.target.value)}
-                  placeholder="Dosage e.g. 500mg"
-                />
-                <input
-                  className="dp-input dp-med-sm"
-                  value={med.duration}
-                  onChange={(e) => setMed(i, "duration", e.target.value)}
-                  placeholder="Duration e.g. 5 days"
-                />
-                <button
-                  type="button"
-                  className="dp-med-remove"
-                  onClick={() => removeMed(i)}
-                  title="Remove"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Simple timing picker — builds the readable frequency text
-                  automatically, no free typing needed. */}
-              <div className="dp-timing-row">
-                <div className="dp-timing-slot">
-                  <span className="dp-timing-label">🌅 Morning</span>
-                  <select
-                    className="dp-input dp-timing-select"
-                    value={med.timeMorning}
-                    onChange={(e) => setMed(i, "timeMorning", e.target.value)}
-                  >
-                    <option value="0">—</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                  </select>
-                </div>
-                <div className="dp-timing-slot">
-                  <span className="dp-timing-label">🌤 Afternoon</span>
-                  <select
-                    className="dp-input dp-timing-select"
-                    value={med.timeAfternoon}
-                    onChange={(e) => setMed(i, "timeAfternoon", e.target.value)}
-                  >
-                    <option value="0">—</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                  </select>
-                </div>
-                <div className="dp-timing-slot">
-                  <span className="dp-timing-label">🌙 Night</span>
-                  <select
-                    className="dp-input dp-timing-select"
-                    value={med.timeNight}
-                    onChange={(e) => setMed(i, "timeNight", e.target.value)}
-                  >
-                    <option value="0">—</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                  </select>
-                </div>
-                <div className="dp-timing-slot dp-timing-slot--food">
-                  <span className="dp-timing-label">🍽 Food</span>
-                  <select
-                    className="dp-input dp-timing-select"
-                    value={med.foodTiming}
-                    onChange={(e) => setMed(i, "foodTiming", e.target.value)}
-                  >
-                    <option value="Before Food">Before Food</option>
-                    <option value="After Food">After Food</option>
-                    <option value="With Food">With Food</option>
-                  </select>
-                </div>
-              </div>
-
-              {med.frequency && (
-                <div className="dp-timing-preview">📋 {med.frequency}</div>
-              )}
-            </div>
-          ))}
-          <button type="button" className="dp-add-med-btn" onClick={addMed}>
-            + Add Medicine
-          </button>
-
-          <label className="dp-label">Instructions</label>
-          <textarea
-            className="dp-input dp-textarea"
-            value={form.instructions}
-            onChange={(e) => setField("instructions", e.target.value)}
-            placeholder="Special instructions, diet, rest..."
-            rows={3}
-          />
-
-          <label className="dp-label">Follow-up Date</label>
-          <input
-            className="dp-input"
-            type="date"
-            value={form.followUpDate}
-            onChange={(e) => setField("followUpDate", e.target.value)}
-          />
-
-          <div className="dp-modal-footer">
-            <button
-              type="button"
-              className="dp-btn dp-btn--ghost"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="dp-btn dp-btn--primary"
-              disabled={saving}
-            >
-              {saving ? "Saving…" : "Save Prescription"}
-            </button>
-          </div>
-        </form>
+        <div className="dp-modal-body">
+          <ConsultationNotesPanel patientId={patient._id} />
+        </div>
       </div>
     </div>
   );
@@ -595,11 +353,13 @@ function CertSlipModal({ cert, patient, doctor, doctorEnrollment, onClose }) {
 function PatientPanel({ entry, onClose }) {
   const { patient } = entry;
   const { doctor } = useDoctorAuth();
+  const navigate = useNavigate();
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // "rx" | "cert"
+  const [certModalOpen, setCertModalOpen] = useState(false);
   const [previewRx, setPreviewRx] = useState(null); // rx object to preview
   const [previewCert, setPreviewCert] = useState(null); // cert object to preview
+  const [notesOpen, setNotesOpen] = useState(false);
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -614,9 +374,9 @@ function PatientPanel({ entry, onClose }) {
       .finally(() => setLoading(false));
   }, [patient._id]);
 
-  const handleSaved = (type) => {
-    setModal(null);
-    setToast(type === "rx" ? "Prescription saved!" : "Certificate issued!");
+  const handleCertSaved = () => {
+    setCertModalOpen(false);
+    setToast("Certificate issued!");
     setTimeout(() => setToast(""), 3000);
     setLoading(true);
     api
@@ -652,17 +412,27 @@ function PatientPanel({ entry, onClose }) {
         <div className="dp-panel-actions">
           <button
             className="dp-btn dp-btn--primary"
-            onClick={() => setModal("rx")}
+            onClick={() =>
+              navigate(`/doctor-dashboard/patients/${patient._id}/prescription`)
+            }
             disabled={completedAppts.length === 0}
           >
             💊 Write Prescription
           </button>
           <button
             className="dp-btn dp-btn--secondary"
-            onClick={() => setModal("cert")}
+            onClick={() => setCertModalOpen(true)}
             disabled={completedAppts.length === 0}
           >
             📄 Issue Certificate
+          </button>
+          <button
+            className="dp-btn dp-btn--ghost"
+            onClick={() => setNotesOpen(true)}
+            type="button"
+            title="View consultation notes for this patient"
+          >
+            📝 View Notes
           </button>
           {completedAppts.length === 0 && (
             <span className="dp-panel-note">
@@ -804,20 +574,12 @@ function PatientPanel({ entry, onClose }) {
         )}
       </div>
 
-      {modal === "rx" && (
-        <PrescriptionModal
-          patient={patient}
-          appointments={completedAppts}
-          onClose={() => setModal(null)}
-          onSaved={() => handleSaved("rx")}
-        />
-      )}
-      {modal === "cert" && (
+      {certModalOpen && (
         <CertificateModal
           patient={patient}
           appointments={completedAppts}
-          onClose={() => setModal(null)}
-          onSaved={() => handleSaved("cert")}
+          onClose={() => setCertModalOpen(false)}
+          onSaved={handleCertSaved}
         />
       )}
       {previewRx && (
@@ -836,6 +598,12 @@ function PatientPanel({ entry, onClose }) {
           doctor={doctor}
           doctorEnrollment={history?.doctorEnrollment}
           onClose={() => setPreviewCert(null)}
+        />
+      )}
+      {notesOpen && (
+        <ConsultationNotesModal
+          patient={patient}
+          onClose={() => setNotesOpen(false)}
         />
       )}
     </div>

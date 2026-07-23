@@ -106,7 +106,7 @@ export default function RxSlip({
 
         {/* Title */}
         <div className="rx-title-row">
-          <div className="rx-title">E - prescription</div>
+          <div className="rx-title">prescription</div>
           <div className="rx-date-inline">Date : {formattedDate}</div>
         </div>
 
