@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap");
+
 
 :root {
   --ink: #0A1F44;
@@ -38,7 +38,6 @@
   background: var(--glass-edge);
   padding: 100px 56px 110px;
   overflow: hidden;
-  /* Prevent overflow-x issues */
   width: 100%;
   box-sizing: border-box;
 }
@@ -156,13 +155,13 @@
 .wcu-metrics {
   display: flex;
   align-items: stretch;
-  background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 100%);
   border: 1px solid rgba(124, 183, 255, 0.28);
   border-radius: 18px;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   overflow: hidden;
-  box-shadow: 0 18px 50px rgba(8, 48, 142, 0.22), inset 0 1px 0 rgba(255,255,255,0.10);
+  box-shadow: 0 18px 50px rgba(8, 48, 142, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 .wcu-metric {
@@ -199,14 +198,12 @@
 .wcu-metric__sep {
   width: 1px;
   flex-shrink: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(124,183,255,0.04) 0%,
-    rgba(124,183,255,0.35) 20%,
-    rgba(124,183,255,0.45) 50%,
-    rgba(124,183,255,0.35) 80%,
-    rgba(124,183,255,0.04) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(124, 183, 255, 0.04) 0%,
+      rgba(124, 183, 255, 0.35) 20%,
+      rgba(124, 183, 255, 0.45) 50%,
+      rgba(124, 183, 255, 0.35) 80%,
+      rgba(124, 183, 255, 0.04) 100%);
 }
 
 .wcu-cta {
@@ -233,11 +230,19 @@
   filter: brightness(1.1);
 }
 
-.wcu-cta svg { transition: transform 0.3s var(--ease-spring); }
-.wcu-cta:hover svg { transform: translateX(4px); }
+.wcu-cta svg {
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.wcu-cta:hover svg {
+  transform: translateX(4px);
+}
 
 /* ── Right column ── */
-.wcu-right { width: 100%; min-width: 0; }
+.wcu-right {
+  width: 100%;
+  min-width: 0;
+}
 
 .wcu-masonry {
   column-count: 3;
@@ -255,16 +260,39 @@
 ================================================================ */
 
 @keyframes wcu-float-a {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-7px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
 }
+
 @keyframes wcu-float-b {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-11px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-11px);
+  }
 }
+
 @keyframes wcu-float-c {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .wcu-card {
@@ -278,8 +306,14 @@
   animation-delay: var(--delay, 0s);
   transition: transform 0.4s var(--ease-spring), box-shadow 0.4s ease, border-color 0.3s ease;
 }
-.wcu-card:nth-child(2n) { animation-name: wcu-float-b; }
-.wcu-card:nth-child(3n) { animation-name: wcu-float-c; }
+
+.wcu-card:nth-child(2n) {
+  animation-name: wcu-float-b;
+}
+
+.wcu-card:nth-child(3n) {
+  animation-name: wcu-float-c;
+}
 
 .wcu-card:hover {
   transform: scale(1.03) translateY(-5px);
@@ -287,9 +321,17 @@
   border-color: var(--glass-border-bright);
 }
 
-.wcu-card--sm { min-height: 158px; }
-.wcu-card--md { min-height: 210px; }
-.wcu-card--lg { min-height: 258px; }
+.wcu-card--sm {
+  height: 200px;
+}
+
+.wcu-card--md {
+  height: 270px;
+}
+
+.wcu-card--lg {
+  height: 320px;
+}
 
 .wcu-card__photo {
   position: absolute;
@@ -298,45 +340,61 @@
 }
 
 .wcu-card__photo img {
- width: 100%;
+  width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
   transition: transform 0.65s var(--ease-out), filter 0.4s ease;
-  filter: saturate(1.15) brightness(0.95) contrast(1.03);
+  filter: saturate(1.1) brightness(0.92) contrast(1.02);
 }
 
 .wcu-card:hover .wcu-card__photo img {
-  transform: scale(1);
-  filter: saturate(1.05) brightness(0.72) contrast(1.05);
+  transform: scale(1.04);
+  filter: saturate(1.05) brightness(0.82) contrast(1.03);
+}
+
+/* Full-card scrim removed to make background bright and clean */
+.wcu-card::before {
+  display: none;
+}
+
+/* Dedicated frosted plate directly behind the text block */
+.wcu-card__body {
+  position: relative;
+  z-index: 3;
+}
+
+.wcu-card__body::before {
+  display: none;
 }
 
 .wcu-card__shine {
-position: absolute;
+  position: absolute;
   inset: 0;
   z-index: 2;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0) 32%,
-    transparent 60%,
-    rgba(124, 183, 255, 0.12) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0) 32%,
+      transparent 60%,
+      rgba(124, 183, 255, 0.10) 100%);
   mix-blend-mode: overlay;
   pointer-events: none;
 }
 
 .wcu-card__body {
-  position: relative;
-  z-index: 3;
   padding: 20px 18px 22px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.wcu-card--sm .wcu-card__body { padding: 16px 15px 18px; }
-.wcu-card--lg .wcu-card__body { padding: 24px 20px 26px; }
+.wcu-card--sm .wcu-card__body {
+  padding: 16px 15px 18px;
+}
+
+.wcu-card--lg .wcu-card__body {
+  padding: 24px 20px 26px;
+}
 
 .wcu-card__tag {
   display: inline-flex;
@@ -349,9 +407,9 @@ position: absolute;
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--blue-2);
+  background: var(--blue-3);
   flex-shrink: 0;
-  box-shadow: 0 0 7px var(--blue-3);
+  box-shadow: 0 0 8px var(--blue-3);
 }
 
 .wcu-card__tag-text {
@@ -360,6 +418,7 @@ position: absolute;
   letter-spacing: 1.8px;
   text-transform: uppercase;
   color: var(--blue-3);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
 }
 
 .wcu-card__title {
@@ -367,18 +426,20 @@ position: absolute;
   font-weight: 700;
   line-height: 1.35;
   color: #ffffff;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.6);
   letter-spacing: -0.2px;
 }
 
 .wcu-card--md .wcu-card__title,
-.wcu-card--lg .wcu-card__title { font-size: 14.5px; }
+.wcu-card--lg .wcu-card__title {
+  font-size: 14.5px;
+}
 
 .wcu-card__short {
   font-size: 11px;
   font-weight: 400;
-  color: rgba(255,255,255,0.82);
-  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   line-height: 1.5;
 }
 
@@ -388,7 +449,7 @@ position: absolute;
   gap: 2px;
   margin-top: 12px;
   padding-top: 11px;
-  border-top: 1px solid rgba(124,183,255,0.18);
+  border-top: 1px solid rgba(124, 183, 255, 0.18);
 }
 
 .wcu-card__stat-num {
@@ -396,17 +457,20 @@ position: absolute;
   font-weight: 800;
   letter-spacing: -1px;
   line-height: 1;
-  color: var(--blue-2);
+  color: var(--blue-3);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
-.wcu-card--sm .wcu-card__stat-num { font-size: 22px; }
+.wcu-card--sm .wcu-card__stat-num {
+  font-size: 22px;
+}
 
 .wcu-card__stat-lbl {
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.72);
+  color: rgba(255, 255, 255, 0.78);
   margin-top: 2px;
 }
 
@@ -415,13 +479,17 @@ position: absolute;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.3px;
-  color: var(--blue-2);
+  color: var(--blue-3);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
   opacity: 0;
   transform: translateY(5px);
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-.wcu-card:hover .wcu-card__hint { opacity: 1; transform: translateY(0); }
+.wcu-card:hover .wcu-card__hint {
+  opacity: 1;
+  transform: translateY(0);
+}
 
 /* ================================================================
    POPUP OVERLAY
@@ -435,35 +503,48 @@ position: absolute;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(4, 12, 20, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(4, 12, 20, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.38s var(--ease-out);
 }
 
-.wcu-overlay--visible { opacity: 1; pointer-events: all; }
-.wcu-overlay--hiding { opacity: 0; pointer-events: none; }
+.wcu-overlay--visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.wcu-overlay--hiding {
+  opacity: 0;
+  pointer-events: none;
+}
 
 .wcu-popup {
   position: relative;
   width: 100%;
-  max-width: 530px;
-  border-radius: 26px;
+  max-width: 500px;
+  max-height: 90vh;
   overflow: hidden;
-  border: 1px solid rgba(124, 183, 255, 0.2);
+  overscroll-behavior: contain;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 60%, #f4f8ff 100%);
+  border: 1px solid rgba(11, 40, 100, 0.06);
   box-shadow:
-    0 40px 100px rgba(0,0,0,0.6),
-    0 0 0 1px rgba(255,255,255,0.055),
-    inset 0 1px 0 rgba(255,255,255,0.1);
+    0 30px 80px rgba(11, 40, 100, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
   transform: scale(0.7) translateY(40px);
   opacity: 0;
   transition: transform 0.46s var(--ease-spring), opacity 0.4s var(--ease-out);
   transform-origin: center center;
 }
 
-.wcu-popup--visible { transform: scale(1) translateY(0); opacity: 1; }
+.wcu-popup--visible {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
 
 .wcu-popup--hiding {
   transform: scale(0.75) translateY(30px);
@@ -471,57 +552,54 @@ position: absolute;
   transition: transform 0.34s var(--ease-out), opacity 0.3s var(--ease-out);
 }
 
+/* ── Photo banner (fixed height, top of card only) ── */
 .wcu-popup__photo {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
   z-index: 0;
 }
+
 .wcu-popup__photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(1.1) brightness(0.8) contrast(1.02);
+  filter: saturate(1.08) brightness(0.97) contrast(1.02);
 }
 
-.wcu-popup__glass {
+/* Soft fade at the bottom edge of the photo so it blends into the lighter
+   card body instead of a hard cut line */
+.wcu-popup__photo::after {
+  content: "";
   position: absolute;
   inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    165deg,
-    rgba(11, 40, 100, 0.22) 0%,
-    rgba(9, 25, 64, 0.58) 55%,
-    rgba(6, 19, 51, 0.86) 100%
-  );
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-}
-
-.wcu-popup__shine {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 45%);
-  mix-blend-mode: overlay;
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0) 78%,
+      rgba(249, 251, 255, 0.9) 100%);
   pointer-events: none;
 }
 
+.wcu-popup__glass,
+.wcu-popup__shine {
+  display: none;
+}
 
 .wcu-popup__close {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 14px;
+  right: 14px;
   z-index: 10;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(124,183,255,0.2);
+  background: rgba(6, 19, 51, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: rgba(255,255,255,0.7);
+  color: #ffffff;
   transition: background 0.22s ease, transform 0.25s ease, color 0.22s ease;
   backdrop-filter: blur(8px);
 }
@@ -532,102 +610,459 @@ position: absolute;
   transform: scale(1.1) rotate(90deg);
 }
 
+/* ── Text content: flows below the photo on the lighter background ── */
 .wcu-popup__inner {
   position: relative;
   z-index: 3;
-  padding: 40px 36px 36px;
+  padding: 22px 30px 30px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: transparent;
 }
 
-.wcu-popup__tag { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 2px; }
-.wcu-popup__tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue-2); box-shadow: 0 0 10px var(--blue-3); flex-shrink: 0; }
-.wcu-popup__tag-text { font-size: 9px; font-weight: 700; letter-spacing: 2.2px; text-transform: uppercase; color: var(--blue-2); }
+.wcu-popup__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
 
-.wcu-popup__stat-block { display: flex; flex-direction: column; gap: 2px; margin-bottom: 2px; }
-.wcu-popup__stat-num { font-size: 44px; font-weight: 800; letter-spacing: -2px; line-height: 1; color: var(--blue-2); }
-.wcu-popup__stat-lbl { font-size: 9.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+.wcu-popup__tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue-2);
+  box-shadow: 0 0 10px var(--blue-3);
+  flex-shrink: 0;
+}
 
-.wcu-popup__title { font-size: 23px; font-weight: 800; letter-spacing: -0.8px; line-height: 1.18; color: #ffffff; margin: 0; }
-.wcu-popup__short { font-size: 13.5px; font-weight: 500; color: var(--blue-2); margin: 0; opacity: 0.88; }
-.wcu-popup__divider { height: 1px; background: linear-gradient(90deg, rgba(30,107,255,0.22), transparent); margin: 4px 0; }
-.wcu-popup__body { font-size: 14px; line-height: 1.82; color: rgba(255,255,255,0.72); margin: 0; }
+.wcu-popup__tag-text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.wcu-popup__stat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.wcu-popup__stat-num {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  color: var(--blue);
+}
+
+.wcu-popup__stat-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.wcu-popup__title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0;
+}
+
+.wcu-popup__short {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--blue);
+  margin: 0;
+  opacity: 0.95;
+}
+
+.wcu-popup__divider {
+  height: 1px;
+  background: rgba(11, 40, 100, 0.1);
+  margin: 6px 0;
+}
+
+.wcu-popup__body {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  margin: 0;
+}
 
 /* ================================================================
    RESPONSIVE
 ================================================================ */
 
+/* ── Small laptops / tablets landscape ── */
 @media (max-width: 1080px) {
-  .wcu-section { padding: 90px 40px 100px; }
-  .wcu-layout { grid-template-columns: 300px 1fr; gap: 48px; }
+  .wcu-section {
+    padding: 90px 40px 100px;
+  }
+
+  .wcu-layout {
+    grid-template-columns: 300px 1fr;
+    gap: 48px;
+  }
 }
 
+/* ── Tablets: stack columns, 2-col masonry ── */
 @media (max-width: 860px) {
-  .wcu-section { padding: 72px 32px 80px; }
-  .wcu-layout { grid-template-columns: 1fr; gap: 48px; }
+  .wcu-section {
+    padding: 72px 32px 80px;
+  }
 
-  .wcu-left { position: static; align-items: center; text-align: center; gap: 22px; }
-  .wcu-heading__em { display: inline; }
-  .wcu-eyebrow { justify-content: center; }
-  .wcu-desc { max-width: 560px; font-size: 13.5px; }
-  .wcu-metrics { max-width: 500px; }
+  .wcu-layout {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
 
-  .wcu-masonry { column-count: 2; column-gap: 12px; }
-  .wcu-card-wrap { margin-bottom: 12px; }
+  .wcu-left {
+    position: static;
+    align-items: center;
+    text-align: center;
+    gap: 22px;
+  }
+
+  .wcu-heading__em {
+    display: inline;
+  }
+
+  .wcu-eyebrow {
+    justify-content: center;
+  }
+
+  .wcu-desc {
+    max-width: 560px;
+    font-size: 13.5px;
+  }
+
+  .wcu-metrics {
+    max-width: 500px;
+  }
+
+  .wcu-masonry {
+    column-count: 2;
+    column-gap: 12px;
+  }
+
+  .wcu-card-wrap {
+    margin-bottom: 12px;
+  }
 }
 
+/* ── Large phones / small tablets portrait ── */
 @media (max-width: 640px) {
-  .wcu-section { padding: 60px 20px 68px; }
-  .wcu-masonry { column-count: 2; column-gap: 10px; }
-  .wcu-card { border-radius: 16px; }
-  .wcu-card--sm { min-height: 140px; }
-  .wcu-card--md { min-height: 185px; }
-  .wcu-card--lg { min-height: 220px; }
-  .wcu-card__title { font-size: 12px; }
-  .wcu-card--md .wcu-card__title, .wcu-card--lg .wcu-card__title { font-size: 13.5px; }
+  .wcu-section {
+    padding: 60px 20px 68px;
+  }
 
-  .wcu-popup { max-width: 100%; border-radius: 20px; }
-  .wcu-popup__inner { padding: 32px 24px 28px; }
-  .wcu-popup__stat-num { font-size: 36px; }
-  .wcu-popup__title { font-size: 20px; }
+  .wcu-layout {
+    gap: 36px;
+  }
+
+  .wcu-heading {
+    font-size: clamp(28px, 7vw, 36px);
+  }
+
+  .wcu-desc {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .wcu-masonry {
+    column-count: 2;
+    column-gap: 10px;
+  }
+
+  .wcu-card {
+    border-radius: 16px;
+  }
+
+  .wcu-card--sm {
+    min-height: 140px;
+  }
+
+  .wcu-card--md {
+    min-height: 185px;
+  }
+
+  .wcu-card--lg {
+    min-height: 220px;
+  }
+
+  .wcu-card__body {
+    padding: 14px 13px 16px;
+  }
+
+  .wcu-card--sm .wcu-card__body {
+    padding: 12px 12px 14px;
+  }
+
+  .wcu-card--lg .wcu-card__body {
+    padding: 18px 15px 20px;
+  }
+
+  .wcu-card__title {
+    font-size: 12px;
+  }
+
+  .wcu-card--md .wcu-card__title,
+  .wcu-card--lg .wcu-card__title {
+    font-size: 13.5px;
+  }
+
+  .wcu-card__short {
+    font-size: 10.5px;
+  }
+
+  .wcu-card__hint {
+    font-size: 9.5px;
+  }
+
+  /* Popup */
+  .wcu-overlay {
+    padding: 18px;
+  }
+
+  .wcu-popup {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 20px;
+  }
+
+  .wcu-popup__photo,
+  .wcu-popup__glass,
+  .wcu-popup__shine {
+    height: 210px;
+  }
+
+  .wcu-popup__close {
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .wcu-popup__inner {
+    padding: 26px 28px 32px;
+  }
+
+  .wcu-popup__tag-text {
+    font-size: 10px;
+  }
+
+  .wcu-popup__stat-num {
+    font-size: 40px;
+  }
+
+  .wcu-popup__title {
+    font-size: 23px;
+  }
+
+  .wcu-popup__short {
+    font-size: 14px;
+  }
+
+  .wcu-popup__body {
+    font-size: 14.5px;
+    line-height: 1.78;
+  }
 }
 
+/* ── Standard phones ── */
 @media (max-width: 480px) {
-  .wcu-section { padding: 52px 16px 60px; }
+  .wcu-section {
+    padding: 52px 16px 60px;
+  }
+
+  .wcu-eyebrow__text {
+    font-size: 9px;
+    letter-spacing: 2.4px;
+  }
+
+  .wcu-heading {
+    font-size: clamp(26px, 8vw, 32px);
+    letter-spacing: -1px;
+  }
+
+  .wcu-desc {
+    font-size: 12.5px;
+  }
 
   /* Single column masonry on small phones */
-  .wcu-masonry { column-count: 1; }
-  .wcu-card-wrap { margin-bottom: 12px; }
-  .wcu-card { border-radius: 14px; }
-  .wcu-card--sm { min-height: 150px; }
-  .wcu-card--md { min-height: 190px; }
-  .wcu-card--lg { min-height: 230px; }
-  .wcu-card__title { font-size: 13px; }
-  .wcu-card--md .wcu-card__title, .wcu-card--lg .wcu-card__title { font-size: 14px; }
+  .wcu-masonry {
+    column-count: 1;
+    column-gap: 0;
+  }
 
-  .wcu-metrics { flex-direction: row; flex-wrap: wrap; }
-  .wcu-metric__sep { display: none; }
+  .wcu-card-wrap {
+    margin-bottom: 12px;
+  }
 
-  .wcu-cta { width: 100%; justify-content: center; }
+  .wcu-card {
+    border-radius: 14px;
+  }
 
-  .wcu-overlay { padding: 16px; }
-  .wcu-popup__inner { padding: 28px 20px 24px; }
-  .wcu-popup__title { font-size: 18px; }
-  .wcu-popup__body { font-size: 13px; }
+  .wcu-card--sm {
+    min-height: 130px;
+  }
+
+  .wcu-card--md {
+    min-height: 165px;
+  }
+
+  .wcu-card--lg {
+    min-height: 195px;
+  }
+
+  .wcu-card__title {
+    font-size: 13px;
+  }
+
+  .wcu-card--md .wcu-card__title,
+  .wcu-card--lg .wcu-card__title {
+    font-size: 14px;
+  }
+
+  .wcu-metrics {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .wcu-metric {
+    flex: 1 1 45%;
+  }
+
+  .wcu-metric__sep {
+    display: none;
+  }
+
+  .wcu-cta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Popup */
+  .wcu-overlay {
+    padding: 12px;
+  }
+
+  .wcu-popup {
+    max-height: 92vh;
+    border-radius: 18px;
+  }
+
+  .wcu-popup__photo,
+  .wcu-popup__glass,
+  .wcu-popup__shine {
+    height: 180px;
+  }
+
+  .wcu-popup__inner {
+    padding: 20px 22px 26px;
+    gap: 10px;
+  }
+
+  .wcu-popup__stat-num {
+    font-size: 36px;
+  }
+
+  .wcu-popup__title {
+    font-size: 21px;
+  }
+
+  .wcu-popup__short {
+    font-size: 13.5px;
+  }
+
+  .wcu-popup__body {
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .wcu-popup__tag-text {
+    font-size: 9.5px;
+    letter-spacing: 1.8px;
+  }
+}
+
+/* ── Very small phones ── */
+@media (max-width: 375px) {
+  .wcu-section {
+    padding: 44px 12px 52px;
+  }
+
+  .wcu-card--sm {
+    min-height: 120px;
+  }
+
+  .wcu-card--md {
+    min-height: 150px;
+  }
+
+  .wcu-card--lg {
+    min-height: 178px;
+  }
+
+  .wcu-card__body {
+    padding: 12px 11px 14px;
+  }
+
+  .wcu-popup__photo,
+  .wcu-popup__glass,
+  .wcu-popup__shine {
+    height: 130px;
+  }
+
+  .wcu-popup__inner {
+    padding: 16px 16px 20px;
+  }
+
+  .wcu-popup__title {
+    font-size: 17px;
+  }
 }
 
 /* Touch devices */
 @media (hover: none) and (pointer: coarse) {
-  .wcu-card:hover { transform: none; }
-  .wcu-card:active { transform: scale(0.98); }
-  .wcu-card__hint { opacity: 0.7; transform: translateY(0); }
-  .wcu-cta:hover { transform: none; }
-  .wcu-cta:active { transform: scale(0.97); }
+  .wcu-card:hover {
+    transform: none;
+  }
+
+  .wcu-card:active {
+    transform: scale(0.98);
+  }
+
+  .wcu-card__hint {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+
+  .wcu-cta:hover {
+    transform: none;
+  }
+
+  .wcu-cta:active {
+    transform: scale(0.97);
+  }
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .wcu-card { animation: none; }
-  .wcu-card:hover { transform: none; }
+  .wcu-card {
+    animation: none;
+  }
+
+  .wcu-card:hover {
+    transform: none;
+  }
 }

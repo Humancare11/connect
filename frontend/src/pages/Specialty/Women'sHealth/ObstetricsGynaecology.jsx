@@ -214,9 +214,16 @@ const SPECIALTY_DATA = {
       path: "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
     },
     {
+      Icon: FiHeart,
       name: "Fertility Concerns",
       desc: "Consultation for fertility and conception",
       path: "/women-health/obstetrics-and-gynaecology/fertility-concerns",
+    },
+    {
+      Icon: FiActivity,
+      name: "Vaginal Yeast Infection",
+      desc: "Itching, irritation, and vaginal discomfort",
+      path: "/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection",
     },
   ],
 
@@ -627,7 +634,7 @@ export default function ObstetricsGynaecology({ data = SPECIALTY_DATA }) {
                   heroLoaded ? " sp-hero__content-inner--loaded" : ""
                 }`}
               >
-                <span className="sp-hero__badge">Child & Family Care</span>
+                <span className="sp-hero__badge">Women's Health</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
                 <p className="sp-hero__description">{data.heroDescription}</p>

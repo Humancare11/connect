@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/OCD.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychiatric Care",
+  badge: "Mental Health",
   heading: "Obsessive-Compulsive Disorder (OCD)",
   description: "Support for obsessive compulsive disorder",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -129,7 +128,12 @@ export default function Ocd() {
 
   return (
     <>
-      <SEO title="OCD Treatment Online | Virtual Mental Health Support" description="Get expert online care for OCD symptoms." keywords="OCD" url="https://humancareconnect.co/ocd" />
+      <SEO
+        title="OCD Treatment Online | Virtual Mental Health Support"
+        description="Get expert online care for OCD symptoms."
+        keywords="OCD"
+        url="https://humancareconnect.co/ocd"
+      />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section
@@ -242,8 +246,8 @@ export default function Ocd() {
                       <p className="condition-block-body">
                         Obsessive compulsive disorder (OCD) is a mental health
                         condition that can involve unwanted recurring thoughts,
-                        urges, or fears along with repetitive behaviors or rituals
-                        that may interfere with daily life.
+                        urges, or fears along with repetitive behaviors or
+                        rituals that may interfere with daily life.
                       </p>
                     </div>
 
@@ -255,11 +259,11 @@ export default function Ocd() {
                         doctor appointment and connect with a licensed provider
                         from home. Through our secure telemedicine platform, you
                         can access virtual healthcare services for symptom
-                        management, treatment monitoring, medication support, and
-                        personalized care recommendations. Telehealth services
-                        provide convenient access to an experienced online
-                        provider who can help you manage OCD symptoms and improve
-                        your overall mental well being.
+                        management, treatment monitoring, medication support,
+                        and personalized care recommendations. Telehealth
+                        services provide convenient access to an experienced
+                        online provider who can help you manage OCD symptoms and
+                        improve your overall mental well being.
                       </p>
                     </div>
 
@@ -334,7 +338,14 @@ export default function Ocd() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Obsessive-Compulsive%20Disorder%20%28OCD%29")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Obsessive-Compulsive%20Disorder%20%28OCD%29",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">
@@ -353,86 +364,7 @@ export default function Ocd() {
         </div>
 
         {/* ══════════════════════ FAQ ══════════════════════ */}
-        <section className="condition-section--faq">
-          <div className="condition-container">
-            <div className="condition-faq-layout">
-              {/* Sidebar */}
-              <div className="condition-faq-sidebar">
-                <span className="condition-section-label condition-section-label--light">
-                  FAQ
-                </span>
-                <h2 className="condition-faq-title">
-                  Frequently Asked
-                  <br />
-                  Questions
-                </h2>
-                <p className="condition-faq-desc">
-                  Everything you need to know about primary care at HumanCare
-                  Connect. Can't find an answer?
-                </p>
-                <button className="condition-faq-chat">
-                  <MessageCircle size={18} /> Chat with our team
-                </button>
-                <div className="condition-faq-stat">
-                  ⚡ Avg. response in 2 min
-                </div>
-                <div className="condition-faq-stat">
-                  🔒 HIPAA secure &amp; private
-                </div>
-                <div className="condition-faq-stat">
-                  🌍 Available in all 50 states
-                </div>
-              </div>
 
-              {/* Content */}
-              <div className="condition-faq-content">
-                {faqData.map((cat, ci) => (
-                  <div key={cat.category} className="condition-faq-card">
-                    <div className="condition-faq-cat">
-                      <span className="condition-faq-dot" />
-                      {cat.category}
-                    </div>
-                    {cat.items.map((item, ii) => {
-                      const id = `${ci}-${ii}`;
-                      return (
-                        <div key={id} className="condition-faq-item">
-                          <button
-                            className="condition-faq-q"
-                            onClick={() => toggle(id)}
-                          >
-                            <span>{item.q}</span>
-                            <div
-                              className={`condition-faq-icon ${openId === id ? "condition-active" : ""}`}
-                            >
-                              +
-                            </div>
-                          </button>
-                          <div
-                            className={`condition-faq-ans ${openId === id ? "condition-open" : ""}`}
-                          >
-                            <p>{item.a}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-
-                <div className="condition-faq-bottom-cta">
-                  <div>
-                    <h3>Still have questions?</h3>
-                    <p>Our care team is available every day, 8 AM – 10 PM.</p>
-                  </div>
-                  <a href="/appointment-booking">
-                    <button>
-                      Book a Call <ArrowRight size={18} />
-                    </button>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

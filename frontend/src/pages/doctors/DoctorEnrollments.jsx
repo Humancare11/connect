@@ -493,7 +493,7 @@ const getCountryName = (countryCode) => {
 
 // ─── Styles ───
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@400;500;600;700;800&display=swap');
+
 
 :root {
   --navy: #223A5E;
@@ -525,13 +525,13 @@ const css = `
 
 * { margin:0; padding:0; box-sizing:border-box; }
 body, html {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-secondary);
   background: var(--bg);
   color: var(--navy);
   -webkit-font-smoothing: antialiased;
 }
 h1,h2,h3,h4,h5,h6 {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -550,7 +550,7 @@ h1,h2,h3,h4,h5,h6 {
   position: sticky; top: 0; z-index: 100;
 }
 .top-bar-logo {
-  font-family: 'Outfit', sans-serif; font-weight: 800;
+  font-family: var(--font-primary); font-weight: 800;
   font-size: 18px; color: var(--white); letter-spacing: -0.03em;
 }
 // .top-bar-logo span { color: var(--teal); }
@@ -575,7 +575,7 @@ h1,h2,h3,h4,h5,h6 {
 .progress-circle {
   width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 14px;
+  font-family: var(--font-primary); font-weight: 700; font-size: 14px;
   transition: var(--transition); border: 2.5px solid var(--gray-300);
   background: var(--white); color: var(--gray-400);
 }
@@ -641,7 +641,7 @@ h1,h2,h3,h4,h5,h6 {
 .field-label .req { color: var(--red); font-size: 14px; }
 .field-input, .field-select, .field-textarea {
   padding: 11px 14px; border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+  border-radius: var(--radius-sm); font-family: var(--font-secondary);
   font-size: 14px; color: var(--navy); background: var(--white);
   transition: var(--transition); outline: none; width: 100%;
   box-sizing: border-box; min-width: 0;
@@ -665,7 +665,7 @@ h1,h2,h3,h4,h5,h6 {
 
 /* ─── Buttons ─── */
 .btn {
-  padding: 12px 28px; border-radius: 50px; font-family: 'DM Sans', sans-serif;
+  padding: 12px 28px; border-radius: 50px; font-family: var(--font-secondary);
   font-size: 14px; font-weight: 600; cursor: pointer; border: none;
   transition: var(--transition); display: inline-flex; align-items: center; gap: 8px;
 }
@@ -752,7 +752,7 @@ h1,h2,h3,h4,h5,h6 {
 }
 .ms-search {
   padding: 10px 12px; border: none; border-bottom: 1px solid var(--gray-100);
-  font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+  font-family: var(--font-secondary); font-size: 13px; outline: none;
   background: var(--gray-50); flex-shrink: 0;
 }
 .ms-list { overflow-y: auto; flex: 1; padding: 4px 0; }
@@ -799,7 +799,7 @@ h1,h2,h3,h4,h5,h6 {
   padding: 16px; margin-bottom: 12px; border: 1px solid var(--gray-100);
 }
 .avail-day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.avail-day-name { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; }
+.avail-day-name { font-family: var(--font-primary); font-weight: 600; font-size: 14px; }
 .avail-toggle {
   position: relative; width: 40px; height: 22px;
   background: var(--gray-300); border-radius: 11px;
@@ -815,7 +815,7 @@ h1,h2,h3,h4,h5,h6 {
 .time-block { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .time-input {
   padding: 8px 12px; border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-xs); font-family: 'DM Sans', sans-serif;
+  border-radius: var(--radius-xs); font-family: var(--font-secondary);
   font-size: 13px; outline: none; transition: var(--transition); width: 120px;
 }
 .time-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
@@ -2183,7 +2183,13 @@ export default function DoctorOnboardingWizard({
       e.customSpecialty = "Required";
     if (!s2.qualification) e.qualification = "Required";
     if (!s2.school.trim()) e.school = "Required";
+    // if (!s2.gradYear.trim()) e.gradYear = "Required";
+    const gradYearNum = Number(s2.gradYear.trim());
     if (!s2.gradYear.trim()) e.gradYear = "Required";
+    else if (!/^\d{4}$/.test(s2.gradYear.trim()))
+      e.gradYear = "Enter a valid 4-digit year";
+    else if (gradYearNum < 1950 || gradYearNum > new Date().getFullYear())
+      e.gradYear = `Year must be between 1950 and ${new Date().getFullYear()}`;
     if (!String(s2.experience).trim()) e.experience = "Required";
     if (!s2.consultantFees || Number(s2.consultantFees) <= 0)
       e.consultantFees = "Required";
@@ -2590,7 +2596,7 @@ export default function DoctorOnboardingWizard({
               <div className="field-error">{s1Errors.phone}</div>
             )}
           </div>
-          <div className="field-group">
+          {/* <div className="field-group">
             <label className="field-label">
               Email Address <span className="req">*</span>
             </label>
@@ -2604,6 +2610,22 @@ export default function DoctorOnboardingWizard({
             {s1Errors.email && (
               <div className="field-error">{s1Errors.email}</div>
             )}
+          </div> */}
+          <div className="field-group">
+            <label className="field-label">
+              Email Address <span className="req">*</span>
+            </label>
+            <input
+              className="field-input"
+              type="email"
+              value={s1.email}
+              disabled
+              readOnly
+              title="This is your verified account email and cannot be changed here."
+            />
+            <div style={{ fontSize: 12, color: "var(--gray-500)", marginTop: 4 }}>
+              🔒 Verified via OTP — contact support to change your account email.
+            </div>
           </div>
           <div className="field-group">
             <label className="field-label">
@@ -3509,81 +3531,81 @@ export default function DoctorOnboardingWizard({
   );
 
   // ─── STEP 4 ───
- // ─── STEP 4 ───
-const renderStep4 = () => (
-  <div className="animate-in">
-    <div className="de-card-header">
-      <h2>Payout Setup</h2>
-      <p>Configure how and when you'd like to receive payments.</p>
-    </div>
+  // ─── STEP 4 ───
+  const renderStep4 = () => (
+    <div className="animate-in">
+      <div className="de-card-header">
+        <h2>Payout Setup</h2>
+        <p>Configure how and when you'd like to receive payments.</p>
+      </div>
 
-    <div className="de-card-body">
-      <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-        {["weekly", "monthly"].map((f) => (
-          <button
-            key={f}
-            className={`btn ${payoutFreq === f ? "btn-primary" : "btn-outline"} btn-sm`}
-            onClick={() => setPayoutFreq(f)}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)} Payout
+      <div className="de-card-body">
+        <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+          {["weekly", "monthly"].map((f) => (
+            <button
+              key={f}
+              className={`btn ${payoutFreq === f ? "btn-primary" : "btn-outline"} btn-sm`}
+              onClick={() => setPayoutFreq(f)}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)} Payout
+            </button>
+          ))}
+        </div>
+
+        <div className="form-grid">
+          <div className="field-group">
+            <label className="field-label">Bank Name</label>
+            <input
+              className="field-input"
+              placeholder="Bank name"
+              value={s4.bankName}
+              onChange={(e) => setS4({ ...s4, bankName: e.target.value })}
+            />
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">Account Number</label>
+            <input
+              className="field-input"
+              placeholder="Account number"
+              value={s4.accountNum}
+              onChange={(e) => setS4({ ...s4, accountNum: e.target.value })}
+            />
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">SWIFT / BIC Code</label>
+            <input
+              className="field-input"
+              placeholder="SWIFT / BIC Code"
+              value={s4.swift}
+              onChange={(e) => setS4({ ...s4, swift: e.target.value })}
+            />
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">PayPal ID</label>
+            <input
+              className="field-input"
+              placeholder="PayPal email or username"
+              value={s4.paypalId}
+              onChange={(e) => setS4({ ...s4, paypalId: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="btn-row">
+          <button className="btn btn-secondary" onClick={handleBack}>
+            ← Back
           </button>
-        ))}
-      </div>
 
-      <div className="form-grid">
-        <div className="field-group">
-          <label className="field-label">Bank Name</label>
-          <input
-            className="field-input"
-            placeholder="Bank name"
-            value={s4.bankName}
-            onChange={(e) => setS4({ ...s4, bankName: e.target.value })}
-          />
+          <button className="btn btn-primary" onClick={handleNext}>
+            Submit Application →
+          </button>
         </div>
-
-        <div className="field-group">
-          <label className="field-label">Account Number</label>
-          <input
-            className="field-input"
-            placeholder="Account number"
-            value={s4.accountNum}
-            onChange={(e) => setS4({ ...s4, accountNum: e.target.value })}
-          />
-        </div>
-
-        <div className="field-group">
-          <label className="field-label">SWIFT / BIC Code</label>
-          <input
-            className="field-input"
-            placeholder="SWIFT / BIC Code"
-            value={s4.swift}
-            onChange={(e) => setS4({ ...s4, swift: e.target.value })}
-          />
-        </div>
-
-        <div className="field-group">
-          <label className="field-label">PayPal ID</label>
-          <input
-            className="field-input"
-            placeholder="PayPal email or username"
-            value={s4.paypalId}
-            onChange={(e) => setS4({ ...s4, paypalId: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className="btn-row">
-        <button className="btn btn-secondary" onClick={handleBack}>
-          ← Back
-        </button>
-
-        <button className="btn btn-primary" onClick={handleNext}>
-          Submit Application →
-        </button>
       </div>
     </div>
-  </div>
-);
+  );
 
   // ─── STEP 5 ───
   const approvalPipeline = [
@@ -3713,12 +3735,6 @@ const renderStep4 = () => (
                 onClick={handleEditResubmit}
               >
                 Edit &amp; Resubmit
-              </button>
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={() => navigate("/doctor-dashboard/enrollments")}
-              >
-                View Status
               </button>
             </div>
           )}

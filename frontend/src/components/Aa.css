@@ -3,7 +3,7 @@
 ══════════════════════════════════════ */
 .aa-section {
   position: relative;
-  width: calc(100% - 80px);
+  width: calc(100% - 48px);
   max-width: 1500px;
   margin: 80px auto;
   padding: 70px 50px 80px;
@@ -91,7 +91,7 @@
 } */
 
 .aa-title {
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-primary);
   font-size: clamp(36px, 5vw, 56px);
   font-weight: 900;
   color: #061333;
@@ -308,7 +308,7 @@
    CARD TEXT 
 ══════════════════════════════════════ */
 .aa-name {
-  font-family: sans-serif;
+  font-family: var(--font-secondary);
   font-size: 14.5px;
   font-weight: 800;
   color: #ffffff;
@@ -398,7 +398,7 @@ a.aa-card {
 ========================= */
 @media (max-width: 768px) {
   .aa-section {
-    width: calc(100% - 24px);
+    width: calc(100% - 32px);
     margin: 20px auto;
     padding: 20px 14px 20px;
     border-radius: 20px;
@@ -570,5 +570,22 @@ a.aa-card {
 
   .aa-bottom-btn-wrap {
     margin-top: 6px;
+  }
+}
+
+/* Width overrides to match Hero section */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .aa-section {
+    width: calc(100% - 40px);
+  }
+}
+@media (max-width: 767px) and (min-width: 600px) {
+  .aa-section {
+    width: calc(100% - 24px);
+  }
+}
+@media (max-width: 399px) {
+  .aa-section {
+    width: calc(100% - 12px);
   }
 }

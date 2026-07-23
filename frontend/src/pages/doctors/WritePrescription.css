@@ -1,0 +1,123 @@
+/* =============================================
+   WritePrescription.css — split-view Rx page
+   Reuses DoctorPatients.css tokens/classes (dp-input, dp-btn, dp-med-card,
+   dp-timing-row, etc.) for the form fields; this file only owns the
+   page-level layout and the bits unique to this page.
+   ============================================= */
+
+.wp-page {
+  padding: 4px 0 32px;
+  font-family: "Outfit", "DM Sans", sans-serif;
+  color: var(--text);
+}
+
+.wp-topbar {
+  margin-bottom: 18px;
+}
+
+.wp-back-btn {
+  background: none;
+  border: none;
+  color: var(--blue-mid);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.wp-back-btn:hover {
+  text-decoration: underline;
+}
+
+.wp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+.wp-form-col {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.wp-form-header {
+  margin-bottom: 16px;
+}
+
+.wp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wp-form-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.wp-alert {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.wp-alert--success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.wp-notes-col {
+  min-width: 0;
+}
+
+.wp-notes-sticky {
+  position: sticky;
+  top: 16px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.wp-notes-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blue);
+  margin: 0 0 6px;
+}
+
+.wp-notes-hint {
+  font-size: 12px;
+  color: var(--text-2);
+  margin: 0 0 14px;
+}
+
+/* ── Responsive: stack notes below the form on narrow screens ── */
+@media (max-width: 900px) {
+  .wp-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wp-notes-sticky {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 450px) {
+  .wp-form-col {
+    padding: 16px;
+  }
+}

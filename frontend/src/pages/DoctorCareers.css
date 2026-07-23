@@ -24,7 +24,7 @@
   --dc-radius-pill: 999px;
   --dc-section-y: 96px;
 
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-primary);
   color: var(--dc-text);
   background: var(--dc-bg);
   overflow-x: hidden;
@@ -245,7 +245,7 @@
 
 .dc-hero {
   position: relative;
-  padding: 88px 0 100px;
+  padding: 100px 0 100px;
   overflow: hidden;
 }
 

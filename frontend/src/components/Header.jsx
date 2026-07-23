@@ -22,7 +22,7 @@ import {
 /* ── Lucide icon map for the 11 categories ── */
 const HelpIcons = {
   "Child & Family Care": <Baby size={18} strokeWidth={1.8} />,
-  "Chronic Care & Expert Opinion": <Activity size={18} strokeWidth={1.8} />,
+  "Chronic Care": <Activity size={18} strokeWidth={1.8} />,
   "Eye, Ear & Bone": <Eye size={18} strokeWidth={1.8} />,
   "General & Everyday Care": <Stethoscope size={18} strokeWidth={1.8} />,
   "Men's Health": <Mars size={18} strokeWidth={1.8} />,
@@ -37,7 +37,7 @@ const HelpIcons = {
 /* ── Route mapping for each category ── */
 const helpRoutes = {
   "Child & Family Care": "/child-and-family-care",
-  "Chronic Care & Expert Opinion": "/chronic-care",
+  "Chronic Care": "/chronic-care",
   "Eye, Ear & Bone": "/eye-ear-bone",
   "General & Everyday Care": "/general-and-everyday-care",
   "Men's Health": "/mens-health",
@@ -51,17 +51,17 @@ const helpRoutes = {
 
 /* ── Short descriptor shown in dropdown ── */
 const helpDesc = {
-  "Child & Family Care": "Pediatrics, adolescent & family health",
-  "Chronic Care & Expert Opinion": "Ongoing conditions & specialist review",
-  "Eye, Ear & Bone": "Vision, hearing & orthopaedic care",
-  "General & Everyday Care": "Primary care for everyday concerns",
-  "Men's Health": "Health built around men's needs",
-  "Mental Health": "Talk to a therapist or psychiatrist",
-  "Sexual Health": "Confidential STI & sexual wellness care",
-  "Skin & Hair": "Dermatology & hair loss treatment",
-  "Travel & Global Care": "Pre-travel advice & global teleconsults",
-  "Weight & Nutrition": "Diet plans & weight management",
-  "Women's Health": "OB-GYN, hormones & women's wellness",
+  "Child & Family Care": "Pediatrics, Adolescent Medicine",
+  "Chronic Care": "Cardiology, Endocrinology, Neurology, Pulmonology",
+  "Eye, Ear & Bone": "Ophthalmology, Orthopedics, ENT",
+  "General & Everyday Care": "Family Medicine, Internal Medicine , General Physician",
+  "Men's Health": "Men's Health, Urology",
+  "Mental Health": "Behavioral Health,Psychiatry,Psychology",
+  "Sexual Health": "Sexual Health",
+  "Skin & Hair": "Dermatology",
+  "Travel & Global Care": "Travel Medicine, Global / Cross-Border Care",
+  "Weight & Nutrition": "Lifestyle Medicine, Nutrition & Dietetics, Weight Management",
+  "Women's Health": "Menopause Care, OB-GYN, Women Mental Health",
 };
 
 export default function Header() {
@@ -79,7 +79,7 @@ export default function Header() {
 
   const helpItems = [
     "Child & Family Care",
-    "Chronic Care & Expert Opinion",
+    "Chronic Care",
     "Eye, Ear & Bone",
     "General & Everyday Care",
     "Men's Health",

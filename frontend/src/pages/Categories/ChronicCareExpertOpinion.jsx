@@ -214,7 +214,7 @@ const cat = {
     {
       name: "Post-COVID concerns",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "post-covid-concerns",
+      path: "/chronic-care/pulmonology/post-covid-concerns",
     },
   ],
 
@@ -613,7 +613,7 @@ function FaqSection({ faqGroups, catLabel }) {
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">⚡</span>
               <div className="badge-content">
-                <strong>Avg. response in 2 min</strong>
+                <strong>Avg. response in 10 min</strong>
               </div>
             </div>
             <div className="hcc-faq-trust-badge">
@@ -625,7 +625,7 @@ function FaqSection({ faqGroups, catLabel }) {
             <div className="hcc-faq-trust-badge">
               <span className="badge-icon">✓</span>
               <div className="badge-content">
-                <strong>Available in all 50 states</strong>
+                <strong>Available Globally</strong>
               </div>
             </div>
           </div>

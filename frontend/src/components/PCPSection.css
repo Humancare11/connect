@@ -496,6 +496,33 @@
   }
 }
 
+/* Width overrides to match Hero section */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .pcp-section {
+    width: calc(100% - 40px);
+  }
+}
+@media (max-width: 991px) and (min-width: 768px) {
+  .pcp-section {
+    width: calc(100% - 32px);
+  }
+}
+@media (max-width: 767px) and (min-width: 600px) {
+  .pcp-section {
+    width: calc(100% - 24px);
+  }
+}
+@media (max-width: 599px) and (min-width: 400px) {
+  .pcp-section {
+    width: calc(100% - 16px);
+  }
+}
+@media (max-width: 399px) {
+  .pcp-section {
+    width: calc(100% - 12px);
+  }
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .pcp-img-main,

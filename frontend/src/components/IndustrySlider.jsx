@@ -34,83 +34,83 @@ const industries = [
       "Mental Health & Wellness Support",
       "Preventive Health Screenings",
     ],
-    accent: "#508ec1",
+    accent: "#1d68a4",
     image: CorporateHealthcareImg,
     imageAlt:
       "Corporate employees accessing virtual healthcare and online doctor consultations through an employee wellness program",
   },
-{
-  id: 2,
-  icon: <MdHealthAndSafety />,
-  tab: "Insurance",
-  tag: "EMBEDDED CARE",
-  title: "Insurance & Healthcare Partners",
-  description:
-    "Enhance member experiences with integrated telehealth solutions. Support preventive care, improve healthcare accessibility, and help reduce unnecessary healthcare utilization through secure virtual healthcare services designed for insurers, health plans, and healthcare partners.",
-  features: [
-    "Claims Cost Reduction Strategies",
-    "Member Wellness & Engagement Programs",
-    "Real Time Virtual Consultations",
-  ],
-  accent: "#1a56db",
-  image: InsuranceTelehealthImg,
-  imageAlt:
-    "Health insurance members receiving secure virtual healthcare services through an integrated telehealth platform",
-},
-{
-  id: 3,
-  icon: <FaAnchor />,
-  tab: "Maritime",
-  tag: "REMOTE MEDICAL",
-  title: "Maritime Healthcare Solutions",
-  description:
-    "Keep crews connected to expert medical support wherever operations take them. Humancare Connect provides remote healthcare services for maritime organizations, helping vessels access medical guidance, telemedicine consultations, and coordinated care support while at sea or in international waters.",
-  features: [
-    "Remote Telemedicine Consultations",
-    "Emergency Medical Coordination",
-    "Port & Crew Healthcare Support",
-  ],
-  accent: "#0c8b7a",
-  image: MaritimeTelemedicineImg,
-  imageAlt:
-    "Maritime crew receiving remote telemedicine consultations and coordinated healthcare support while at sea",
-},
-{
-  id: 4,
-  icon: <FaBalanceScale />,
-  tab: "Law Firms",
-  tag: "MEDICO LEGAL",
-  title: "Healthcare Support for Legal Professionals",
-  description:
-    "Strengthen legal cases with access to qualified medical experts, healthcare documentation, and medico legal support services. Humancare Connect helps law firms obtain professional medical insights, coordinate independent medical evaluations, and access healthcare expertise that supports case preparation and informed legal decision making.",
-  features: [
-    "Expert Medical Opinions & Reports",
-    "Medical Record Review Services",
-    "Independent Medical Evaluation Coordination",
-  ],
-  accent: "#7c3aed",
-  image: MedicoLegalHealthcareImg,
-  imageAlt:
-    "Medical expert providing healthcare documentation, medical record review, and medico legal support for legal professionals",
-},
-{
-  id: 5,
-  icon: <FaHotel />,
-  tab: "Hotels",
-  tag: "GUEST HEALTHCARE",
-  title: "Healthcare Support for Hospitality & Travel",
-  description:
-    "Enhance the guest experience with convenient access to healthcare services and medical support whenever needed. Humancare Connect helps hotels, resorts, and hospitality providers offer trusted telemedicine services, giving guests access to licensed healthcare providers for routine medical concerns, travel related health issues, and urgent care coordination.",
-  features: [
-    "Virtual Medical Consultations for Guests",
-    "Concierge Healthcare Coordination",
-    "Emergency Referral & Care Support",
-  ],
-  accent: "#c97b1a",
-  image: HotelGuestHealthcareImg,
-  imageAlt:
-    "Hotel guest receiving virtual medical consultations and healthcare support through telemedicine services while traveling",
-},
+  {
+    id: 2,
+    icon: <MdHealthAndSafety />,
+    tab: "Insurance",
+    tag: "EMBEDDED CARE",
+    title: "Insurance & Healthcare Partners",
+    description:
+      "Enhance member experiences with integrated telehealth solutions. Support preventive care, improve healthcare accessibility, and help reduce unnecessary healthcare utilization through secure virtual healthcare services designed for insurers, health plans, and healthcare partners.",
+    features: [
+      "Claims Cost Reduction Strategies",
+      "Member Wellness & Engagement Programs",
+      "Real Time Virtual Consultations",
+    ],
+    accent: "#1a56db",
+    image: InsuranceTelehealthImg,
+    imageAlt:
+      "Health insurance members receiving secure virtual healthcare services through an integrated telehealth platform",
+  },
+  {
+    id: 3,
+    icon: <FaAnchor />,
+    tab: "Maritime",
+    tag: "REMOTE MEDICAL",
+    title: "Maritime Healthcare Solutions",
+    description:
+      "Keep crews connected to expert medical support wherever operations take them. Humancare Connect provides remote healthcare services for maritime organizations, helping vessels access medical guidance, telemedicine consultations, and coordinated care support while at sea or in international waters.",
+    features: [
+      "Remote Telemedicine Consultations",
+      "Emergency Medical Coordination",
+      "Port & Crew Healthcare Support",
+    ],
+    accent: "#0c8b7a",
+    image: MaritimeTelemedicineImg,
+    imageAlt:
+      "Maritime crew receiving remote telemedicine consultations and coordinated healthcare support while at sea",
+  },
+  {
+    id: 4,
+    icon: <FaBalanceScale />,
+    tab: "Law Firms",
+    tag: "MEDICO LEGAL",
+    title: "Healthcare Support for Legal Professionals",
+    description:
+      "Strengthen legal cases with access to qualified medical experts, healthcare documentation, and medico legal support services. Humancare Connect helps law firms obtain professional medical insights, coordinate independent medical evaluations, and access healthcare expertise that supports case preparation and informed legal decision making.",
+    features: [
+      "Expert Medical Opinions & Reports",
+      "Medical Record Review Services",
+      "Independent Medical Evaluation Coordination",
+    ],
+    accent: "#7c3aed",
+    image: MedicoLegalHealthcareImg,
+    imageAlt:
+      "Medical expert providing healthcare documentation, medical record review, and medico legal support for legal professionals",
+  },
+  {
+    id: 5,
+    icon: <FaHotel />,
+    tab: "Hotels",
+    tag: "GUEST HEALTHCARE",
+    title: "Healthcare Support for Hospitality & Travel",
+    description:
+      "Enhance the guest experience with convenient access to healthcare services and medical support whenever needed. Humancare Connect helps hotels, resorts, and hospitality providers offer trusted telemedicine services, giving guests access to licensed healthcare providers for routine medical concerns, travel related health issues, and urgent care coordination.",
+    features: [
+      "Virtual Medical Consultations for Guests",
+      "Concierge Healthcare Coordination",
+      "Emergency Referral & Care Support",
+    ],
+    accent: "#c97b1a",
+    image: HotelGuestHealthcareImg,
+    imageAlt:
+      "Hotel guest receiving virtual medical consultations and healthcare support through telemedicine services while traveling",
+  },
 ];
 
 export default function IndustrySlider() {
@@ -137,7 +137,7 @@ export default function IndustrySlider() {
             Telemedicine expertise across every <span> industry.</span>
           </h2>
           <p className="slider-subtitle">
-           Flexible telehealth services, online doctor appointments, and virtual healthcare solutions designed for corporate teams, healthcare organizations, logistics, technology, hospitality, education, manufacturing, and more.
+            Flexible telehealth services, online doctor appointments, and virtual healthcare solutions designed for corporate teams, healthcare organizations, logistics, technology, hospitality, education, manufacturing, and more.
           </p>
         </motion.div>
 
@@ -155,8 +155,19 @@ export default function IndustrySlider() {
                 key={ind.id}
                 className={`nav-v2-item ${activeIndex === i ? "active" : ""}`}
                 onClick={() => handleTabClick(i)}
+                style={{
+                  "--accent-color": ind.accent,
+                }}
               >
-                {ind.tab}
+                {activeIndex === i && (
+                  <motion.span
+                    layoutId="activeTabPill"
+                    className="nav-v2-active-bg"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="nav-v2-icon">{ind.icon}</span>
+                <span className="nav-v2-text">{ind.tab}</span>
               </button>
             ))}
           </div>

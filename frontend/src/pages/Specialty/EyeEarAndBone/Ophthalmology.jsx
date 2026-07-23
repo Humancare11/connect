@@ -602,7 +602,7 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
                   heroLoaded ? " sp-hero__content-inner--loaded" : ""
                 }`}
               >
-                <span className="sp-hero__badge">Child & Family Care</span>
+                <span className="sp-hero__badge">Eye, Ear & Bone Care</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
                 <p className="sp-hero__description">{data.heroDescription}</p>

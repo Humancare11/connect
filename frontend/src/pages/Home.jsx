@@ -42,7 +42,7 @@ const SCENES = [
     badge: "Create Account",
     title: " Create your account",
     desc: " Sign up in under a minute. Registration is frictionless and seamless.",
-    metricValue: "< 10s",
+    metricValue: "< 60s",
     metricLabel: " Sign-up time",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
@@ -288,7 +288,7 @@ export default function HomePage() {
     {
       id: 5,
       quote:
-        "My therapist on Humancare remembers every detail, follows up proactively, and has been a genuine partner in my recovery. Exceptional mental health care.",
+        "My therapist on Humancare Connect remembers every detail, follows up proactively, and has been a genuine partner in my recovery. Exceptional mental health care.",
       name: "Laura K.",
     },
   ];

@@ -142,5 +142,5 @@ export function useCategoryPrice(categoryId) {
     };
   }, [resolvedId]);
 
-  return price;
+  return price || 49;
 }

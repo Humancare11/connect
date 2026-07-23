@@ -43,12 +43,11 @@ import {
 import SEO from "../../../components/Seo";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Relationship-Stress.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Psychology Counseling",
+  badge: "Mental Health",
   heading: "Relationship Stress",
   description: "Emotional strain affecting relationships",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -246,23 +245,23 @@ export default function RelationshipStress() {
                       </h3>
                       <p className="condition-block-body">
                         Relationship stress can cause anxiety, communication
-                        problems, emotional exhaustion, frustration, sleep issues,
-                        mood changes, and tension that may affect personal
-                        well-being and daily life.
+                        problems, emotional exhaustion, frustration, sleep
+                        issues, mood changes, and tension that may affect
+                        personal well-being and daily life.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
-                        Get supportive care for relationship stress with Humancare
-                        Connect. Our telemedicine services make it easy to
-                        schedule an online doctor appointment and connect with a
-                        licensed provider from home. Through our secure virtual
-                        healthcare services, you can receive emotional support,
-                        stress management guidance, mental health care
-                        recommendations, and personalized support without the
-                        pressure of an in-person visit.
+                        Get supportive care for relationship stress with
+                        Humancare Connect. Our telemedicine services make it
+                        easy to schedule an online doctor appointment and
+                        connect with a licensed provider from home. Through our
+                        secure virtual healthcare services, you can receive
+                        emotional support, stress management guidance, mental
+                        health care recommendations, and personalized support
+                        without the pressure of an in-person visit.
                       </p>
                     </div>
 
@@ -337,7 +336,14 @@ export default function RelationshipStress() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=mental&condition=Relationship%20Stress")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=mental&condition=Relationship%20Stress",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">
@@ -356,86 +362,7 @@ export default function RelationshipStress() {
         </div>
 
         {/* ══════════════════════ FAQ ══════════════════════ */}
-        <section className="condition-section--faq">
-          <div className="condition-container">
-            <div className="condition-faq-layout">
-              {/* Sidebar */}
-              <div className="condition-faq-sidebar">
-                <span className="condition-section-label condition-section-label--light">
-                  FAQ
-                </span>
-                <h2 className="condition-faq-title">
-                  Frequently Asked
-                  <br />
-                  Questions
-                </h2>
-                <p className="condition-faq-desc">
-                  Everything you need to know about primary care at HumanCare
-                  Connect. Can't find an answer?
-                </p>
-                <button className="condition-faq-chat">
-                  <MessageCircle size={18} /> Chat with our team
-                </button>
-                <div className="condition-faq-stat">
-                  ⚡ Avg. response in 2 min
-                </div>
-                <div className="condition-faq-stat">
-                  🔒 HIPAA secure &amp; private
-                </div>
-                <div className="condition-faq-stat">
-                  🌍 Available in all 50 states
-                </div>
-              </div>
 
-              {/* Content */}
-              <div className="condition-faq-content">
-                {faqData.map((cat, ci) => (
-                  <div key={cat.category} className="condition-faq-card">
-                    <div className="condition-faq-cat">
-                      <span className="condition-faq-dot" />
-                      {cat.category}
-                    </div>
-                    {cat.items.map((item, ii) => {
-                      const id = `${ci}-${ii}`;
-                      return (
-                        <div key={id} className="condition-faq-item">
-                          <button
-                            className="condition-faq-q"
-                            onClick={() => toggle(id)}
-                          >
-                            <span>{item.q}</span>
-                            <div
-                              className={`condition-faq-icon ${openId === id ? "condition-active" : ""}`}
-                            >
-                              +
-                            </div>
-                          </button>
-                          <div
-                            className={`condition-faq-ans ${openId === id ? "condition-open" : ""}`}
-                          >
-                            <p>{item.a}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-
-                <div className="condition-faq-bottom-cta">
-                  <div>
-                    <h3>Still have questions?</h3>
-                    <p>Our care team is available every day, 8 AM – 10 PM.</p>
-                  </div>
-                  <a href="/appointment-booking">
-                    <button>
-                      Book a Call <ArrowRight size={18} />
-                    </button>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

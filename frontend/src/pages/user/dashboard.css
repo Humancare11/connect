@@ -40,7 +40,7 @@
 
 /* ── Page ────────────────────────────────────── */
 .hc-dash__page {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   color: var(--hd-text);
   min-height: 100%;
   padding: 32px;
@@ -94,7 +94,7 @@
 }
 
 .hc-dash__eyebrow {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 2.5px;
@@ -104,7 +104,7 @@
 }
 
 .hc-dash__title {
-  font-family: 'Satoshi', sans-serif;
+  font-family: var(--font-primary);
   font-size: 32px;
   font-weight: 700;
   color: #ffffff;
@@ -114,7 +114,7 @@
 }
 
 .hc-dash__subtitle {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 14px;
   color: rgba(255, 255, 255, 0.55);
   margin: 9px 0 0;
@@ -131,7 +131,7 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: #ffffff;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13.5px;
   font-weight: 600;
   border-radius: 50px;
@@ -268,7 +268,7 @@
 }
 
 .hc-dash__ov-num {
-  font-family: 'Satoshi', sans-serif;
+  font-family: var(--font-primary);
   font-size: 32px;
   font-weight: 700;
   color: var(--hd-ink);
@@ -277,7 +277,7 @@
 }
 
 .hc-dash__ov-label {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13px;
   font-weight: 600;
   color: var(--hd-text-2);
@@ -285,7 +285,7 @@
 }
 
 .hc-dash__ov-sub {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 11.5px;
   color: var(--hd-muted);
   margin-top: 4px;
@@ -307,7 +307,7 @@
 }
 
 .hc-dash__section-title {
-  font-family: 'Satoshi', sans-serif;
+  font-family: var(--font-primary);
   font-size: 20px;
   font-weight: 700;
   color: var(--hd-ink);
@@ -316,7 +316,7 @@
 }
 
 .hc-dash__section-sub {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13px;
   color: var(--hd-muted);
   margin: 4px 0 0;
@@ -326,7 +326,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 12.5px;
   font-weight: 600;
   color: var(--hd-accent);
@@ -411,7 +411,7 @@
 }
 
 .hc-dash__record-title {
-  font-family: 'Satoshi', sans-serif;
+  font-family: var(--font-primary);
   font-size: 15.5px;
   font-weight: 700;
   color: var(--hd-ink);
@@ -419,7 +419,7 @@
 }
 
 .hc-dash__record-count {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 12px;
   color: var(--hd-muted);
   margin: 3px 0 0;
@@ -474,7 +474,7 @@
 }
 
 .hc-dash__record-item-title {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13px;
   font-weight: 600;
   color: var(--hd-text);
@@ -484,7 +484,7 @@
 }
 
 .hc-dash__record-item-meta {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 11.5px;
   color: var(--hd-muted);
 }
@@ -493,7 +493,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 12.5px;
   font-weight: 600;
   color: var(--hd-accent);
@@ -613,7 +613,7 @@
 }
 
 .hc-dash__activity-title {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13.5px;
   font-weight: 600;
   color: var(--hd-text);
@@ -623,7 +623,7 @@
 }
 
 .hc-dash__activity-meta {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 12px;
   color: var(--hd-muted);
   display: flex;
@@ -633,7 +633,7 @@
 
 .hc-dash__activity-tag {
   display: inline-block;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -658,7 +658,7 @@
 }
 
 .hc-dash__activity-time {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 12px;
   color: var(--hd-muted);
   white-space: nowrap;
@@ -680,7 +680,7 @@
   border: 1px solid var(--hd-glass-border);
   border-radius: var(--hd-radius);
   color: var(--hd-muted);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 14px;
   box-shadow: var(--hd-glass-shadow);
 }
@@ -731,7 +731,7 @@
 }
 
 .hc-dash__empty h3 {
-  font-family: 'Satoshi', sans-serif;
+  font-family: var(--font-primary);
   font-size: 19px;
   font-weight: 700;
   color: var(--hd-ink);
@@ -739,7 +739,7 @@
 }
 
 .hc-dash__empty p {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13.5px;
   color: var(--hd-muted);
   margin: 0 0 24px;
@@ -754,7 +754,7 @@
   padding: 12px 26px;
   background: linear-gradient(135deg, #083ab0, #0e6ceb);
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13.5px;
   font-weight: 600;
   border-radius: 50px;
@@ -790,7 +790,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--hd-text-2);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -918,14 +918,27 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 450px) {
+  .hc-dash__page {
+    padding: 12px 8px;
+  }
+
   .hc-dash__header {
-    padding: 20px 16px;
-    gap: 14px;
+    padding: 18px 14px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .hc-dash__title {
-    font-size: 20px;
+    font-size: 18px;
+    word-break: break-word;
+  }
+
+  .hc-dash__book-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
   }
 
   .hc-dash__eyebrow {
@@ -933,24 +946,29 @@
     letter-spacing: 2px;
   }
 
+  .hc-dash__overview {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
   .hc-dash__ov-card {
-    padding: 16px 14px;
-    gap: 12px;
+    padding: 14px 12px;
+    gap: 10px;
   }
 
   .hc-dash__ov-num {
-    font-size: 26px;
+    font-size: 22px;
   }
 
   .hc-dash__ov-label {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .hc-dash__ov-icon {
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    border-radius: 10px;
   }
 
   .hc-dash__activity-item {

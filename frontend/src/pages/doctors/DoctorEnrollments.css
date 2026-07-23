@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Epilogue:wght@300;400;500;600&display=swap");
+
 
 /* ═════════════════════════════════════════════════
    DOCTOR ENROLLMENTS — Dark Clinical Editorial
@@ -45,7 +45,7 @@
     linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
   background-size: 40px 40px;
-  font-family: var(--de-font-body);
+  font-family: var(--font-secondary);
   color: var(--de-text);
   position: relative;
 }
@@ -75,7 +75,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--de-font-head);
+  font-family: var(--font-secondary);
   font-weight: 700;
   font-size: 16px;
   color: var(--de-teal);
@@ -87,7 +87,7 @@
 }
 
 .de-header-text h1 {
-  font-family: var(--de-font-head);
+  font-family: var(--font-secondary);
   font-size: 20px;
   font-weight: 700;
   color: var(--de-text);
@@ -110,7 +110,7 @@
   background: var(--de-teal-dim);
   color: var(--de-teal);
   font-size: 13px;
-  font-family: var(--de-font-body);
+  font-family: var(--font-secondary);
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -157,7 +157,7 @@
   border: none;
   background: transparent;
   color: var(--de-muted);
-  font-family: var(--de-font-body);
+  font-family: var(--font-secondary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -180,7 +180,7 @@
 }
 
 .de-sidenav-num {
-  font-family: var(--de-font-head);
+  font-family: var(--font-secondary);
   font-size: 11px;
   font-weight: 700;
   opacity: 0.6;
@@ -228,7 +228,7 @@
 }
 
 .de-section-num {
-  font-family: var(--de-font-head);
+  font-family: var(--font-secondary);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.5px;
@@ -241,7 +241,7 @@
 }
 
 .de-section-heading h2 {
-  font-family: var(--de-font-head);
+  font-family: var(--font-secondary);
   font-size: 22px;
   font-weight: 700;
   color: var(--de-text);
@@ -255,7 +255,7 @@
 }
 
 .de-subsection-label {
-  font-family: var(--de-font-head);
+  font-family: var(--font-secondary);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -319,7 +319,7 @@
   border-radius: var(--de-radius);
   padding: 0 14px;
   font-size: 14px;
-  font-family: var(--de-font-body);
+  font-family: var(--font-secondary);
   color: var(--de-text);
   transition:
     border-color 0.2s,
@@ -430,7 +430,7 @@
   color: var(--de-sub);
   font-size: 13px;
   font-weight: 500;
-  font-family: var(--de-font-body);
+  font-family: var(--font-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -462,7 +462,7 @@
   color: var(--de-sub);
   font-size: 12px;
   font-weight: 500;
-  font-family: var(--de-font-body);
+  font-family: var(--font-secondary);
   cursor: pointer;
   transition: all 0.18s;
 }
@@ -707,7 +707,7 @@
   color: #fff;
   font-size: 14px;
   font-weight: 700;
-  font-family: var(--de-font-head);
+  font-family: var(--font-secondary);
   letter-spacing: 0.5px;
   cursor: pointer;
   transition:
@@ -776,7 +776,7 @@
 }
 
 .de-success-box h3 {
-  font-family: var(--de-font-head);
+  font-family: var(--font-secondary);
   font-size: 24px;
   font-weight: 700;
   color: var(--de-text);

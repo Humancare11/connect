@@ -74,7 +74,7 @@ import SEO from "../../../components/Seo";
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const SPECIALTY_DATA = {
-  slug: "ent",
+  slug: "/eye-ear-bone/ear-nose-throat/ear-infection",
   name: "ENT (Ear, Nose & Throat)",
   categoryId: "eeb",
   tagline: "Specialized Care for Better Ear, Nose, and Throat Health.",
@@ -624,7 +624,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
                   heroLoaded ? " sp-hero__content-inner--loaded" : ""
                 }`}
               >
-                <span className="sp-hero__badge">Child & Family Care</span>
+                <span className="sp-hero__badge">Eye, Ear & Bone Care</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
                 <p className="sp-hero__description">{data.heroDescription}</p>

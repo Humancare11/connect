@@ -635,14 +635,7 @@ function HowItWorks() {
           })}
         </div>
 
-        <FadeIn>
-          <div className="pcp-hiw__footer">
-            <a href="/get-started" className="pcp-btn-primary pcp-btn-inline">
-              Get Started Now <ArrowRight size={16} />
-            </a>
-            <p className="pcp-hiw__footer-note">No insurance required · Cancel anytime</p>
-          </div>
-        </FadeIn>
+        
       </div>
     </section>
   )
@@ -786,7 +779,7 @@ function CTA() {
             Connect with a licensed provider through secure telemedicine services and get the care you need when and where it works best for you.
           </p>
 
-          <div className="pcp-cta__actions">
+          {/* <div className="pcp-cta__actions">
             <motion.a
               href="/get-started"
               whileHover={{ scale: 1.04, y: -2 }}
@@ -803,7 +796,7 @@ function CTA() {
             >
               <Phone size={16} /> Find a Provider
             </motion.a>
-          </div>
+          </div> */}
 
           <div className="pcp-cta-trust">
             {CTA_TRUST_POINTS.map(point => (

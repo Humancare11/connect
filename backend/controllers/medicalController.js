@@ -223,19 +223,35 @@ const createMedicalCertificate = async (req, res) => {
 const getMyPrescriptions = async (req, res) => {
   try {
     const prescriptions = await Prescription.find({ patientId: req.user.id })
+      .populate("patientId",     "patientId name email mobile gender dob")
       .populate("doctorId",      "name email")
       .populate("appointmentId", "date time problem")
       .sort({ createdAt: -1 })
       .lean();
 
+    // Enrich each prescription with the issuing doctor's enrollment details
+    const doctorMongoIds = [...new Set(
+      prescriptions.map((p) => p.doctorId?._id?.toString()).filter(Boolean)
+    )];
+    const enrollments = await Enrollment.find({ doctorId: { $in: doctorMongoIds } })
+      .select("doctorId specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName")
+      .lean();
+    const enrollMap = {};
+    for (const e of enrollments) enrollMap[e.doctorId.toString()] = e;
+
+    const enriched = prescriptions.map((rx) => ({
+      ...rx,
+      doctorEnrollment: enrollMap[rx.doctorId?._id?.toString()] || null,
+    }));
+
     await recordActivity(req, {
       action: "PHI_VIEW_PRESCRIPTIONS",
       resource: "Prescription",
       patientId: req.user.id,
-      details: { count: prescriptions.length },
+      details: { count: enriched.length },
     });
 
-    res.status(200).json(prescriptions);
+    res.status(200).json(enriched);
   } catch (err) {
     console.error("getMyPrescriptions error:", err);
     res.status(500).json({ msg: "Failed to fetch prescriptions." });

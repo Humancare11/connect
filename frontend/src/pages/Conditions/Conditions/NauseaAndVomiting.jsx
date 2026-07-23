@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/nausea-&-vomiting.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: " General & Everyday Care",
   heading: "Nausea & Vomiting",
   description: "Stomach discomfort and sickness",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -246,8 +245,8 @@ export default function NauseaAndVomiting() {
                       </h3>
                       <p className="condition-block-body">
                         Nausea and vomiting can be caused by infections, food
-                        poisoning, migraines, motion sickness, stomach viruses, or
-                        other underlying health conditions.
+                        poisoning, migraines, motion sickness, stomach viruses,
+                        or other underlying health conditions.
                       </p>
                     </div>
 
@@ -335,7 +334,14 @@ export default function NauseaAndVomiting() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Nausea%20%26%20Vomiting")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Nausea%20%26%20Vomiting",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">
@@ -354,86 +360,7 @@ export default function NauseaAndVomiting() {
         </div>
 
         {/* ══════════════════════ FAQ ══════════════════════ */}
-        <section className="condition-section--faq">
-          <div className="condition-container">
-            <div className="condition-faq-layout">
-              {/* Sidebar */}
-              <div className="condition-faq-sidebar">
-                <span className="condition-section-label condition-section-label--light">
-                  FAQ
-                </span>
-                <h2 className="condition-faq-title">
-                  Frequently Asked
-                  <br />
-                  Questions
-                </h2>
-                <p className="condition-faq-desc">
-                  Everything you need to know about primary care at HumanCare
-                  Connect. Can't find an answer?
-                </p>
-                <button className="condition-faq-chat">
-                  <MessageCircle size={18} /> Chat with our team
-                </button>
-                <div className="condition-faq-stat">
-                  ⚡ Avg. response in 2 min
-                </div>
-                <div className="condition-faq-stat">
-                  🔒 HIPAA secure &amp; private
-                </div>
-                <div className="condition-faq-stat">
-                  🌍 Available in all 50 states
-                </div>
-              </div>
 
-              {/* Content */}
-              <div className="condition-faq-content">
-                {faqData.map((cat, ci) => (
-                  <div key={cat.category} className="condition-faq-card">
-                    <div className="condition-faq-cat">
-                      <span className="condition-faq-dot" />
-                      {cat.category}
-                    </div>
-                    {cat.items.map((item, ii) => {
-                      const id = `${ci}-${ii}`;
-                      return (
-                        <div key={id} className="condition-faq-item">
-                          <button
-                            className="condition-faq-q"
-                            onClick={() => toggle(id)}
-                          >
-                            <span>{item.q}</span>
-                            <div
-                              className={`condition-faq-icon ${openId === id ? "condition-active" : ""}`}
-                            >
-                              +
-                            </div>
-                          </button>
-                          <div
-                            className={`condition-faq-ans ${openId === id ? "condition-open" : ""}`}
-                          >
-                            <p>{item.a}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-
-                <div className="condition-faq-bottom-cta">
-                  <div>
-                    <h3>Still have questions?</h3>
-                    <p>Our care team is available every day, 8 AM – 10 PM.</p>
-                  </div>
-                  <a href="/appointment-booking">
-                    <button>
-                      Book a Call <ArrowRight size={18} />
-                    </button>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

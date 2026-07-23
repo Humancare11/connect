@@ -787,7 +787,7 @@ function FaqSection() {
             <div className="cat-faq__info-list">
               <div className="cat-faq__info-item">
                 <Icon name="clock" size={14} />
-                <span>Avg. response in 2 min</span>
+                <span>Avg. response in 10 min</span>
               </div>
               <div className="cat-faq__info-item">
                 <Icon name="shield" size={14} />
@@ -795,7 +795,7 @@ function FaqSection() {
               </div>
               <div className="cat-faq__info-item">
                 <Icon name="globe" size={14} />
-                <span>Available in all 50 states</span>
+                <span>Available Globally</span>
               </div>
             </div>
           </div>
@@ -876,14 +876,6 @@ function scoreCategory(category, query) {
 export default function Categories() {
   const [query, setQuery] = useState("");
 
-  /* FIX: previously used `.includes()`, a raw substring match, which
-     matched "men" inside unrelated words like "treatment" and
-     "management" (false positives), and had no way to prioritize a
-     direct name match over an incidental tagline mention. This now
-     matches on word boundaries (so "men" only matches text where a
-     word actually starts with "men") and checks category-specific
-     keywords too (so "derma"/"dermatology" correctly finds Skin &
-     Hair Care), then sorts by how relevant the match is. */
   const filtered = query.trim()
     ? CATEGORIES.map((c) => ({
       category: c,

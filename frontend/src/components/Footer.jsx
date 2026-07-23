@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import "./footer.css";
 
 import {
@@ -6,6 +6,9 @@ import {
   FaFacebookF,
   FaYoutube,
   FaInstagram,
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaEnvelope,
 } from "react-icons/fa";
 
 import { FaThreads } from "react-icons/fa6";
@@ -16,8 +19,6 @@ import logo from "../assets/Logo.png";
 import { Link } from "react-router-dom";
 
 export default function Footer() {
-  const [openDropdown, setOpenDropdown] = useState(null);
-
   return (
     <footer className="footer">
       {/* MAIN GRID */}
@@ -44,6 +45,41 @@ export default function Footer() {
             <span className="footer-badge">SOC 2 Type II</span>
             <span className="footer-badge">HITRUST R2</span>
           </div> */}
+
+          {/* CONTACT GLASS CARD */}
+          <div className="footer-contact-card">
+            <div className="footer-contact-item">
+              <span className="footer-contact-icon">
+                <FaMapMarkerAlt />
+              </span>
+              <span className="footer-contact-text">
+                4 Peddlers Row, 1091 Newark,
+                <br />
+                DE 19702, USA
+              </span>
+            </div>
+
+            <div className="footer-contact-item">
+              <span className="footer-contact-icon">
+                <FaPhoneAlt />
+              </span>
+              <a href="tel:+13023039993" className="footer-contact-text">
+                +1 (302) 303-9993
+              </a>
+            </div>
+
+            <div className="footer-contact-item">
+              <span className="footer-contact-icon">
+                <FaEnvelope />
+              </span>
+              <a
+                href="mailto:support@humancareconnect.co"
+                className="footer-contact-text"
+              >
+                support@humancareconnect.co
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* PLATFORM */}
@@ -61,152 +97,27 @@ export default function Footer() {
           <a href="/online-prescription-refills">Online Prescription Refill</a>
           <a href="/appointment-booking">Online Doctor Consultation</a>
           <a href="/doctor-note-or-sick-notes">Sick Notes</a>
-          <a href="/lab-requisitions">  Lab Requisition  </a>
+          <a href="/lab-requisitions"> Lab Requisition </a>
           <a href="/fit-to-fly-certificate">Fit to Fly Certifications</a>
           {/* <a href="/sexual-health">Sexual Health</a>
           <a href="/weight-loss-programs">Weight Loss Programs</a> */}
         </div>
 
-        <div className="footer-col footer-col-dropdown">
+        {/* Services Quick Links */}
+        <div className="footer-col">
           <h5>Legal & Company Compliance</h5>
-
-          {[
-            {
-              key: "privacy",
-              label: "Privacy Policy",
-              children: [
-                { label: "Privacy Policy", href: "/privacy-policy" },
-                {
-                  label: "Patient Privacy Notice",
-                  href: "/patient-privacy-notice",
-                },
-                {
-                  label: "Notice of Privacy Practices",
-                  href: "/notice-of-privacy-practices",
-                },
-                { label: "CCPA Compliance", href: "/CCPA" },
-                { label: "Privacy Concerns", href: "/privacy-concerns" },
-              ],
-            },
-            {
-              key: "terms",
-              label: "Terms & Conditions",
-              children: [
-                { label: "Terms of Service", href: "/terms-of-service" },
-                {
-                  label: "Provider Terms of Service",
-                  href: "/provider-terms-of-service",
-                },
-              ],
-            },
-            {
-              key: "consent",
-              label: "Consent Forms",
-              children: [
-                {
-                  label: "TeleHealth Consent",
-                  href: "/tele-health-informed-consent",
-                },
-                {
-                  label: "Patient Informed Consent Form",
-                  href: "/patient-informed-consent-form",
-                },
-              ],
-            },
-            {
-              key: "policies",
-              label: "Policies",
-              children: [
-                { label: "Cookie Policy", href: "/cookie-policy" },
-                {
-                  label: "Refund & Cancellation Policy",
-                  href: "/refund-and-cancellation-policy",
-                },
-                {
-                  label: "Accessibility Statement",
-                  href: "/accessibility-statement",
-                },
-              ],
-            },
-            {
-              key: "agrement",
-              label: "Agreements",
-              children: [
-                {
-                  label: "Provider Agreement",
-                  href: "/tele-health-provider-agreement",
-                },
-              ],
-            },
-            {
-              key: "clinical",
-              label: "Clinical & Provider Policies",
-              children: [
-                {
-                  label: "Prescription Handling",
-                  href: "/prescription-handling-policy",
-                },
-                {
-                  label: "Teleconsultation Workflow",
-                  href: "/teleconsultation-workflow-policy",
-                },
-                {
-                  label: "Physician Credentialing",
-                  href: "/physician-credentialing-policy",
-                },
-              ],
-            },
-          ].map(({ key, label, children }) => (
-            <div key={key} className="footer-dropdown-item">
-              <button
-                type="button"
-                className={`footer-dropdown-trigger${
-                  openDropdown === key ? " is-open" : ""
-                }`}
-                onClick={() =>
-                  setOpenDropdown(openDropdown === key ? null : key)
-                }
-                aria-expanded={openDropdown === key}
-              >
-                <span>{label}</span>
-                <svg
-                  className="footer-dropdown-chevron"
-                  width="10"
-                  height="6"
-                  viewBox="0 0 10 6"
-                  fill="none"
-                >
-                  <path
-                    d="M1 1L5 5L9 1"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-
-              <div
-                className="footer-dropdown-panel"
-                style={{
-                  maxHeight:
-                    openDropdown === key
-                      ? `${children.length * 36 + 12}px`
-                      : "0px",
-                }}
-              >
-                {children.map((child) => (
-                  <a
-                    key={child.label}
-                    href={child.href}
-                    className="footer-sublink"
-                  >
-                    {child.label}
-                  </a>
-                ))}
-              </div>
-            </div>
-          ))}
+          <a href="/refund-cancellation-policy">Refund & Cancellation Policy</a>
+          <a href="/provider-terms-of-service">Provider Terms of Service</a>
+          <a href="/privacy-policy">Privacy Policy</a>
+          <a href="/terms-of-service">Terms of Service</a>
+          <a href="/hippa-notice-of-privacy-practices">
+            Notice of Privacy Practices
+          </a>
+          <a href="/california-privacy-rights-notice">
+            California Privacy Rights Notice
+          </a>
+          <a href="/cookie-policy">Cookie Policy</a>
+          <a href="/accessibility-statement">Accessibility Statement</a>
         </div>
 
         {/* SUPPORT */}

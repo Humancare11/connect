@@ -209,6 +209,7 @@ export default function WhySection() {
               {/* <div className="sf-val" style={{ color: "#436dba" }}>1,200+</div> */}
             </Motion.div>
 
+
             {/* ── float 5 — bottom-right ── */}
             <Motion.div
               className="stat-float sf5"
@@ -216,22 +217,22 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label">Digital Prescriptions</div>
+              <div className="sf-label"> Secure & Private Consultationsaa  </div>
               {/* <div className="sf-val" style={{ color: "#0c8b7a" }}>97%</div> */}
             </Motion.div>
 
             {/* ── float 6 — mid-right ── */}
-            <Motion.div
+           
+ <Motion.div
               className="stat-float sf6"
               variants={fadeUp(0.56)}
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label"> Secure & Private Consultations
+              <div className="sf-label">Digital Prescriptions
               </div>
               {/* <div className="sf-val" style={{ color: "#d97706" }}>98% +  </div> */}
             </Motion.div>
-
           </div>
         </div>
       </Motion.div>

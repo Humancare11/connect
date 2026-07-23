@@ -48,7 +48,7 @@ import SEO from "../../../components/Seo";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "General & Everyday Caree",
   heading: "Pink Eye",
   description: "Red, itchy, irritated eyes",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -241,11 +241,13 @@ export default function PinkEye() {
                   {/* RIGHT */}
                   <div className="condition-about-right">
                     <div>
-                      <h3 className="condition-block-title">What is pink eye?</h3>
+                      <h3 className="condition-block-title">
+                        What is pink eye?
+                      </h3>
                       <p className="condition-block-body">
-                        Pink eye can cause redness, itching, burning, watery eyes,
-                        discharge, and irritation, often caused by viral or
-                        bacterial infections, allergies, or environmental
+                        Pink eye can cause redness, itching, burning, watery
+                        eyes, discharge, and irritation, often caused by viral
+                        or bacterial infections, allergies, or environmental
                         irritants.
                       </p>
                     </div>
@@ -254,8 +256,8 @@ export default function PinkEye() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Get fast care for pink eye symptoms with Humancare
-                        Connect. Our telemedicine services make it easy to book an
-                        online doctor appointment and connect with a licensed
+                        Connect. Our telemedicine services make it easy to book
+                        an online doctor appointment and connect with a licensed
                         provider from home. Through our secure telemedicine
                         platform, you can receive symptom evaluation, treatment
                         recommendations, and prescriptions when appropriate
@@ -334,7 +336,14 @@ export default function PinkEye() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Pink%20Eye")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Pink%20Eye",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">
@@ -353,86 +362,7 @@ export default function PinkEye() {
         </div>
 
         {/* ══════════════════════ FAQ ══════════════════════ */}
-        <section className="condition-section--faq">
-          <div className="condition-container">
-            <div className="condition-faq-layout">
-              {/* Sidebar */}
-              <div className="condition-faq-sidebar">
-                <span className="condition-section-label condition-section-label--light">
-                  FAQ
-                </span>
-                <h2 className="condition-faq-title">
-                  Frequently Asked
-                  <br />
-                  Questions
-                </h2>
-                <p className="condition-faq-desc">
-                  Everything you need to know about primary care at HumanCare
-                  Connect. Can't find an answer?
-                </p>
-                <button className="condition-faq-chat">
-                  <MessageCircle size={18} /> Chat with our team
-                </button>
-                <div className="condition-faq-stat">
-                  ⚡ Avg. response in 2 min
-                </div>
-                <div className="condition-faq-stat">
-                  🔒 HIPAA secure &amp; private
-                </div>
-                <div className="condition-faq-stat">
-                  🌍 Available in all 50 states
-                </div>
-              </div>
 
-              {/* Content */}
-              <div className="condition-faq-content">
-                {faqData.map((cat, ci) => (
-                  <div key={cat.category} className="condition-faq-card">
-                    <div className="condition-faq-cat">
-                      <span className="condition-faq-dot" />
-                      {cat.category}
-                    </div>
-                    {cat.items.map((item, ii) => {
-                      const id = `${ci}-${ii}`;
-                      return (
-                        <div key={id} className="condition-faq-item">
-                          <button
-                            className="condition-faq-q"
-                            onClick={() => toggle(id)}
-                          >
-                            <span>{item.q}</span>
-                            <div
-                              className={`condition-faq-icon ${openId === id ? "condition-active" : ""}`}
-                            >
-                              +
-                            </div>
-                          </button>
-                          <div
-                            className={`condition-faq-ans ${openId === id ? "condition-open" : ""}`}
-                          >
-                            <p>{item.a}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-
-                <div className="condition-faq-bottom-cta">
-                  <div>
-                    <h3>Still have questions?</h3>
-                    <p>Our care team is available every day, 8 AM – 10 PM.</p>
-                  </div>
-                  <a href="/appointment-booking">
-                    <button>
-                      Book a Call <ArrowRight size={18} />
-                    </button>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

@@ -12,6 +12,7 @@ import "./App.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import CallErrorBoundary from "./components/CallErrorBoundary";
 
 const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
@@ -23,7 +24,6 @@ const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const Corporates = lazy(() => import("./pages/Corporates"));
 const Contact = lazy(() => import("./pages/Contact"));
 const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
-const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
@@ -63,45 +63,6 @@ const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
 // privacy concerns
-const PrivacyConcerns = lazy(
-  () => import("./pages/PrivacyPolicies/PrivacyConcerns"),
-);
-const PatientPrivacyNotice = lazy(
-  () => import("./pages/PrivacyPolicies/PatientPrivacyNotice"),
-);
-const PrivacyPolicy = lazy(
-  () => import("./pages/PrivacyPolicies/PrivacyPolicy"),
-);
-const ProviderTermsofService = lazy(
-  () => import("./pages/PrivacyPolicies/ProviderTermsofService"),
-);
-const RefundCancellation = lazy(
-  () => import("./pages/PrivacyPolicies/RefundCancellation"),
-);
-const TeleHealthConsent = lazy(
-  () => import("./pages/PrivacyPolicies/TeleHealthConsent"),
-);
-const TermsService = lazy(() => import("./pages/PrivacyPolicies/TermsService"));
-const AccessibilityStatement = lazy(
-  () => import("./pages/PrivacyPolicies/AccessibilityStatement"),
-);
-const CCPA = lazy(() => import("./pages/PrivacyPolicies/CCPA"));
-const CookiePolicy = lazy(() => import("./pages/PrivacyPolicies/CookiePolicy"));
-const PatientInformedConsentForm = lazy(
-  () => import("./pages/PrivacyPolicies/PatientInformedConsentForm"),
-);
-const PhysicianCredentialingPolicy = lazy(
-  () => import("./pages/PrivacyPolicies/PhysicianCredentialingPolicy"),
-);
-const TeleconsultationWorkflowPolicy = lazy(
-  () => import("./pages/PrivacyPolicies/TeleconsultationWorkflowPolicy"),
-);
-const PrescriptionHandlingPolicy = lazy(
-  () => import("./pages/PrivacyPolicies/PrescriptionHandlingPolicy"),
-);
-const TelehealthProviderAgreement = lazy(
-  () => import("./pages/PrivacyPolicies/TelehealthProviderAgreement"),
-);
 const Images = lazy(() => import("./components/Images"));
 // category pages
 const ChildFamilyCare = lazy(
@@ -117,7 +78,9 @@ const GeneralEverydayCare = lazy(
 const MenHealth = lazy(() => import("./pages/Categories/MenHealth"));
 const MentalHealth = lazy(() => import("./pages/Categories/MentalHealth"));
 // import Sexualhealth from "./pages/Categories/SexualHealth";
-const CategorySexualHealth = lazy(() => import("./pages/Categories/Sexual-Health"));
+const CategorySexualHealth = lazy(
+  () => import("./pages/Categories/Sexual-Health"),
+);
 const SkinHair = lazy(() => import("./pages/Categories/SkinHair"));
 const TravelGlobalCare = lazy(
   () => import("./pages/Categories/TravelGlobalCare"),
@@ -792,15 +755,18 @@ const DoctorEnrollments = lazy(
   () => import("./pages/doctors/DoctorEnrollments"),
 );
 import { useDoctorAuth } from "./context/DoctorAuthContext";
-const NoticePrivacy = lazy(
-  () => import("./pages/PrivacyPolicies/NoticePrivacy"),
-);
+// const NoticePrivacy = lazy(
+//   () => import("./pages/PrivacyPolicies/NoticePrivacy"),
+// );
 const DoctorProfile = lazy(() => import("./pages/doctors/DoctorProfile"));
 // import DoctorPendingApproval from "./pages/doctors/DoctorPendingApproval";
 const DoctorAppointments = lazy(
   () => import("./pages/doctors/DoctorAppointments"),
 );
 const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
+const WritePrescription = lazy(
+  () => import("./pages/doctors/WritePrescription"),
+);
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
 const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
@@ -881,6 +847,37 @@ const Categories = lazy(() => import("./pages/Categories"));
 const AppointmentBookingForm = lazy(
   () => import("./pages/AppointmentBookingForm"),
 );
+
+// New Privcay Policy Pages Start 
+const Refundcancellationpolicy = lazy(() =>
+  import("./pages/PrivacyPolicies/Refundcancellationpolicy"),
+);
+
+const ProviderTermsOfService1 = lazy(() =>
+  import("./pages/PrivacyPolicies/ProviderTermsOfService1"),
+);
+
+const PrivacyPolicy1 = lazy(() =>
+  import("./pages/PrivacyPolicies/PrivacyPolicy1"),
+);
+const TermsOfService1 = lazy(() =>
+  import("./pages/PrivacyPolicies/TermsOfService1"),
+);
+const HippaNoticeOfPrivacyPractices1 = lazy(() =>
+  import("./pages/PrivacyPolicies/HippaNoticeOfPrivacyPractices1"),
+);
+const CaliforniaPrivacyRightsNotice1 = lazy(() =>
+  import("./pages/PrivacyPolicies/CaliforniaPrivacyRightsNotice1"),
+);
+const CookiePolicy1 = lazy(() =>
+  import("./pages/PrivacyPolicies/CookiePolicy1"),
+);
+const AccessibilityStatement1 = lazy(() =>
+  import("./pages/PrivacyPolicies/AccessibilityStatement1"),
+);
+
+
+// New Privcay Policy Pages End 
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -982,7 +979,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -1056,7 +1053,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -1109,7 +1106,6 @@ function AppLayout() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/corporates" element={<Corporates />} />
           <Route path="/contact-us" element={<Contact />} />
-          <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           {/* <Route path="/register" element={<Register />} /> */}
@@ -1245,6 +1241,14 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <DoctorPatients />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/patients/:patientId/prescription"
+            element={
+              <DoctorLayout>
+                <WritePrescription />
               </DoctorLayout>
             }
           />
@@ -1570,10 +1574,21 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route path="/video-call/:appointmentId" element={<VideoCall />} />
+          <Route
+            path="/video-call/:appointmentId"
+            element={
+              <CallErrorBoundary>
+                <VideoCall />
+              </CallErrorBoundary>
+            }
+          />
           <Route
             path="/direct-video-call/:roomId"
-            element={<DirectVideoCall />}
+            element={
+              <CallErrorBoundary>
+                <DirectVideoCall />
+              </CallErrorBoundary>
+            }
           />
           {/* ALL*/}
           <Route path="/categories" element={<Categories />} />
@@ -1981,7 +1996,10 @@ function AppLayout() {
           />
           <Route path="/lab-results-review" element={<LabResultsReview />} />
           <Route path="/medical-certificate" element={<MedicalCertificate />} />
-          <Route path="/medication-review" element={<MedicationReview />} />
+          <Route
+            path="/general-and-everyday-care/internal-medicine/medication-review"
+            element={<MedicationReview />}
+          />
           <Route path="/prescription-refill" element={<PrescriptionRefill />} />
           <Route
             path="/return-to-work-clearance"
@@ -2334,7 +2352,7 @@ function AppLayout() {
             element={<PrenatalConsultation />}
           />
           <Route
-            path="/vaginal-yeast-infection"
+            path="/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection"
             element={<VaginalYeastInfection />}
           />
           <Route
@@ -2535,56 +2553,56 @@ function AppLayout() {
             element={<FutureofTelemedicine />}
           />
           {/* PRIVACY  */}
-          <Route path="/privacy-concerns" element={<PrivacyConcerns />} />
+          {/* <Route path="/privacy-concerns" element={<PrivacyConcerns />} /> */}
           {/* demo */}
-          <Route
+          {/* <Route
             path="/patient-privacy-notice"
             element={<PatientPrivacyNotice />}
-          />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route
+          /> */}
+          {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
+          {/* <Route
             path="/provider-terms-of-service"
             element={<ProviderTermsofService />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/refund-and-cancellation-policy"
             element={<RefundCancellation />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/tele-health-informed-consent"
             element={<TeleHealthConsent />}
-          />
-          <Route path="/terms-of-service" element={<TermsService />} />
-          <Route
+          /> */}
+          {/* <Route path="/terms-of-service" element={<TermsService />} /> */}
+          {/* <Route
             path="/accessibility-statement"
             element={<AccessibilityStatement />}
-          />
-          <Route path="/CCPA" element={<CCPA />} />
-          <Route path="/cookie-policy" element={<CookiePolicy />} />
-          <Route
+          /> */}
+          {/* <Route path="/CCPA" element={<CCPA />} /> */}
+          {/* <Route path="/cookie-policy" element={<CookiePolicy />} /> */}
+          {/* <Route
             path="/notice-of-privacy-practices"
             element={<NoticePrivacy />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/patient-informed-consent-form"
             element={<PatientInformedConsentForm />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/physician-credentialing-policy"
             element={<PhysicianCredentialingPolicy />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/teleconsultation-workflow-policy"
             element={<TeleconsultationWorkflowPolicy />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/prescription-handling-policy"
             element={<PrescriptionHandlingPolicy />}
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/tele-health-provider-agreement"
             element={<TelehealthProviderAgreement />}
-          />
+          /> */}
           <Route path="/about-us" element={<AboutPage />} />
           <Route path="/career" element={<DoctorCareers />} />
           <Route path="/support-center" element={<FAQ />} />
@@ -2678,10 +2696,21 @@ function AppLayout() {
           />
           <Route path="/category-consultant" element={<CategoryConsultant />} />
           <Route path="/service-consultant" element={<CategoryConsultant />} />
+          {/* New Privcay Policy Pages Start */}
+          <Route path="/refund-cancellation-policy" element={<Refundcancellationpolicy />} />
+          <Route path="/provider-terms-of-service" element={<ProviderTermsOfService1 />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy1 />} />
+          <Route path="/terms-of-service" element={<TermsOfService1 />} />
+          <Route path="/hippa-notice-of-privacy-practices" element={<HippaNoticeOfPrivacyPractices1 />} />
+          <Route path="/california-privacy-rights-notice" element={<CaliforniaPrivacyRightsNotice1 />} />
+          <Route path="/cookie-policy" element={<CookiePolicy1 />} />
+          <Route path="/accessibility-statement" element={<AccessibilityStatement1 />} />
+          {/* New Privcay Policy Pages End */}
           <Route
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}
           />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
 

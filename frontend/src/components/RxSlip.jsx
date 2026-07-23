@@ -2,7 +2,7 @@ import React from "react";
 import "./RxSlip.css";
 
 import defaultClinicLogoUrl from "../assets/prescription-logo.png";
-import defaultClinicFooterLogoUrl from "../assets/prescription-logo.png";
+import defaultClinicFooterLogoUrl from "../assets/prescription-footer-logo.png";
 
 function calcAge(dob) {
   if (!dob) return "";
@@ -21,7 +21,7 @@ export default function RxSlip({
   // ── swap these three in your app, no code changes needed ──
   clinicLogoUrl = defaultClinicLogoUrl, // your real clinic logo, falls back to the bundled default
   footerLogoUrl = defaultClinicFooterLogoUrl, // optional: defaults to clinicLogoUrl
-  qrCodeUrl, // required: your real, functional QR image
+  qrCodeUrl = defaultClinicFooterLogoUrl, // required: your real, functional QR image
 
   // fallback props (used only if rx/doctor aren't passed)
   date = "18 Jul 2026",
@@ -48,29 +48,29 @@ export default function RxSlip({
   // Resolve medicines — THIS ARRAY CAN BE ANY LENGTH, table grows automatically
   const medicinesList = rx?.medicines
     ? rx.medicines.map((m) => ({
-        name: m.name || "",
-        dose: m.dosage || "",
-        timing: m.frequency || "",
-        days: m.duration || "",
-      }))
+      name: m.name || "",
+      dose: m.dosage || "",
+      timing: m.frequency || "",
+      days: m.duration || "",
+    }))
     : medicines;
 
   const formattedDate = rx?.createdAt
     ? new Date(rx.createdAt).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
     : date;
   const diagnosisText = rx?.diagnosis || "";
   const adviceText = rx?.instructions || advice || "";
   const allergyText = rx?.allergy || allergy || "";
   const followUpText = rx?.followUpDate
     ? new Date(rx.followUpDate).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
     : "";
 
   const phyName = doctor?.name || rx?.doctorId?.name || physician?.name || "";
@@ -106,7 +106,7 @@ export default function RxSlip({
 
         {/* Title */}
         <div className="rx-title-row">
-          <div className="rx-title">E - prescription</div>
+          <div className="rx-title">prescription</div>
           <div className="rx-date-inline">Date : {formattedDate}</div>
         </div>
 
@@ -234,13 +234,13 @@ export default function RxSlip({
             <div className="rx-qr rx-qr-placeholder" aria-hidden="true" />
           )}
           <div className="rx-contact-lines">
-            <div>📞 {clinicPhone}</div>
-            <div>✉️ {clinicEmail}</div>
-            <div>📍 {clinicAddress}</div>
+            <span>📞 {clinicPhone}</span>
+            <span>✉️ {clinicEmail}</span>
+            <span>📍 {clinicAddress}</span>
           </div>
           <img
             className="rx-footer-logo"
-            src={footerLogoUrl || clinicLogoUrl}
+            src={clinicLogoUrl}
             alt="Clinic logo"
           />
         </div>

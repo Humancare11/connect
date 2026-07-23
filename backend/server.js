@@ -36,6 +36,7 @@ const { findUploadInS3, streamUploadFromS3, keyFromStoredValue } = require("./ut
 const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityEvent } = require("./utils/securityMonitor");
+const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
@@ -144,6 +145,39 @@ function validateRuntimeConfig() {
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length) {
     console.warn(`[config] Missing required environment variable(s): ${missing.join(", ")}`);
+  }
+
+  // TURN is required (not just STUN) because STUN alone cannot relay media
+  // for peers behind symmetric/restrictive NAT — see backend/routes/rtc.js
+  // and backend/utils/turnCredentials.js for how these are consumed. Unlike
+  // JWT_SECRET/MONGO_URI above, missing TURN config doesn't crash on its own
+  // request path (it silently degrades to STUN-only ICE servers, logged once
+  // as a console.warn deep in routes/rtc.js), so a misconfiguration here
+  // would otherwise stay invisible until a real user's call fails on a
+  // restrictive network. Fail fast at boot instead.
+  const requiredTurn = ["RTC_TURN_URLS", "TURN_STATIC_AUTH_SECRET"];
+  const missingTurn = requiredTurn.filter((key) => !process.env[key]);
+  if (missingTurn.length) {
+    console.error(
+      `[config] Missing required TURN environment variable(s): ${missingTurn.join(", ")}. ` +
+        "The primary TURN region needs both RTC_TURN_URLS (relay URL(s), comma-separated) and " +
+        "TURN_STATIC_AUTH_SECRET (must match the coturn server's static-auth-secret) to mint " +
+        "working ICE credentials. Set them in the environment (see backend/.env) before starting."
+    );
+    process.exit(1);
+  }
+
+  // The optional 2nd TURN region (see backend/.env.production) is only
+  // useful if both of its vars are set together — one without the other is
+  // almost certainly a partial/forgotten config rather than an intentional
+  // single-var setup, so warn (not fail) to surface it without blocking boot.
+  const turnRegion2Urls = Boolean(process.env.RTC_TURN_URLS_2);
+  const turnRegion2Secret = Boolean(process.env.TURN_STATIC_AUTH_SECRET_2);
+  if (turnRegion2Urls !== turnRegion2Secret) {
+    console.warn(
+      "[config] RTC_TURN_URLS_2 and TURN_STATIC_AUTH_SECRET_2 must both be set to enable the " +
+        "secondary TURN region; only one is set, so it will be ignored."
+    );
   }
 
   if (process.env.NODE_ENV === "uat" && !process.env.HTTPS) {
@@ -487,6 +521,32 @@ const socketUsers = new Map(); // socketId -> { userId, role }
 // (peer should renegotiate quickly) vs. an ordinary first-time join (peer
 // should not be perturbed while a normal handshake is already in progress).
 const roomActivated = new Map(); // appointmentId -> true
+
+// Per-socket rate limits for signaling/chat events — see socketRateLimit.js
+// for why this exists. Limits are generous relative to legitimate use
+// (ICE candidates are naturally bursty during gathering; SDP offers/answers
+// and chat/telemetry are not) so real users never notice them.
+const chatMessageLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
+const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
+const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
+const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
+const telemetryLimiter = makeSocketLimiter({ windowMs: 1000, max: 10 });
+const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
+const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
+const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
+const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
+
+const SOCKET_LIMITERS = [
+  chatMessageLimiter,
+  videoSdpLimiter,
+  iceCandidateLimiter,
+  iceRestartLimiter,
+  telemetryLimiter,
+  directChatLimiter,
+  directSdpLimiter,
+  directIceCandidateLimiter,
+  directIceRestartLimiter,
+];
 
 app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
   res.json({ activeUsers: onlineUsers.size });
@@ -1130,6 +1190,7 @@ io.on("connection", (socket) => {
     }) => {
       if (!appointmentId || (!text && !fileUrl)) return;
       if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+      if (!chatMessageLimiter.allow(socket.id)) return;
 
       const liveIdentity = socketUsers.get(socket.id);
       const senderRole = liveIdentity?.role || socket.userRole || "user";
@@ -1193,6 +1254,7 @@ io.on("connection", (socket) => {
 
   socket.on("video-telemetry", async ({ appointmentId, event, role, timestamp, details } = {}) => {
     if (!appointmentId || !event) return;
+    if (!telemetryLimiter.allow(socket.id)) return;
 
     const access = await canSocketAccessAppointment(socket, appointmentId);
     if (!access.allowed) return;
@@ -1210,6 +1272,7 @@ io.on("connection", (socket) => {
   socket.on("video-offer", ({ appointmentId, offer }) => {
     if (!appointmentId || !offer) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!videoSdpLimiter.allow(socket.id)) return;
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -1219,6 +1282,7 @@ io.on("connection", (socket) => {
   socket.on("video-answer", ({ appointmentId, answer }) => {
     if (!appointmentId || !answer) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!videoSdpLimiter.allow(socket.id)) return;
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -1228,6 +1292,7 @@ io.on("connection", (socket) => {
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
     if (!appointmentId || !candidate) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!iceCandidateLimiter.allow(socket.id)) return;
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -1237,6 +1302,7 @@ io.on("connection", (socket) => {
   socket.on("ice-restart-request", ({ appointmentId }) => {
     if (!appointmentId) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!iceRestartLimiter.allow(socket.id)) return;
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -1285,6 +1351,10 @@ io.on("connection", (socket) => {
     }
 
     io.emit("active-users-count", onlineUsers.size);
+
+    // Drop this socket's rate-limit bucket entries so SOCKET_LIMITERS' maps
+    // don't grow forever across the server's lifetime as sockets churn.
+    SOCKET_LIMITERS.forEach((limiter) => limiter.dispose(socket.id));
 
   });
 
@@ -1404,24 +1474,28 @@ io.on("connection", (socket) => {
   socket.on("direct-video-offer", ({ roomId, offer } = {}) => {
     if (!roomId || !offer) return;
     if (!isSocketInDirectRoom(socket, roomId)) return;
+    if (!directSdpLimiter.allow(socket.id)) return;
     socket.to(directRoomName(roomId)).emit("direct-video-offer", { offer });
   });
 
   socket.on("direct-video-answer", ({ roomId, answer } = {}) => {
     if (!roomId || !answer) return;
     if (!isSocketInDirectRoom(socket, roomId)) return;
+    if (!directSdpLimiter.allow(socket.id)) return;
     socket.to(directRoomName(roomId)).emit("direct-video-answer", { answer });
   });
 
   socket.on("direct-ice-candidate", ({ roomId, candidate } = {}) => {
     if (!roomId || !candidate) return;
     if (!isSocketInDirectRoom(socket, roomId)) return;
+    if (!directIceCandidateLimiter.allow(socket.id)) return;
     socket.to(directRoomName(roomId)).emit("direct-ice-candidate", { candidate });
   });
 
   socket.on("direct-ice-restart-request", ({ roomId } = {}) => {
     if (!roomId) return;
     if (!isSocketInDirectRoom(socket, roomId)) return;
+    if (!directIceRestartLimiter.allow(socket.id)) return;
     socket.to(directRoomName(roomId)).emit("direct-ice-restart-request");
   });
 
@@ -1431,6 +1505,7 @@ io.on("connection", (socket) => {
   socket.on("direct-room-message", ({ roomId, text } = {}) => {
     if (!roomId || !text) return;
     if (!isSocketInDirectRoom(socket, roomId)) return;
+    if (!directChatLimiter.allow(socket.id)) return;
 
     const meta = directRoomSockets.get(socket.id);
     socket.to(directRoomName(roomId)).emit("direct-room-message", {

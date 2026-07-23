@@ -218,7 +218,7 @@ export default function ProfileSettings() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
         * { box-sizing: border-box; }
         input::placeholder, textarea::placeholder { color: #94a3b8 !important; }
         select option { background: #fff; color: #0b0443; }

@@ -1118,13 +1118,13 @@ export default function Specialties() {
 
             <div className="sp-faq__trust">
               <div className="sp-faq__trust-item">
-                <Clock size={14} /> Avg. response in 2 min
+                <Clock size={14} /> Avg. response in 10 min
               </div>
               <div className="sp-faq__trust-item">
                 <Lock size={14} /> HIPAA secure &amp; private
               </div>
               <div className="sp-faq__trust-item">
-                <MapPin size={14} /> Available in all 50 states
+                <MapPin size={14} /> Available Globally
               </div>
             </div>
           </div>

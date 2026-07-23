@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
+import "./AdminDashboard.css";
 
 const CATEGORY_LABELS = {
   appointment: "Appointment",

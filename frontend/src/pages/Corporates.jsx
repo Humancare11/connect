@@ -299,7 +299,7 @@ export default function CorporateDemo() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Corporate Telemedicine Services | Humancare Connect for Corporates"
         description="Corporate telemedicine services designed to improve employee wellness, workforce productivity, and healthcare access through secure virtual healthcare services, online doctor appointments, and scalable telehealth solutions by Humancare Connect."
         keywords="Corporate telemedicine services, Virtual healthcare services, Online doctor appointment, Employee healthcare solutions"

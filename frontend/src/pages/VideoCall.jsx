@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import socket from "../socket";
+import socket, { setSocketAuthRole } from "../socket";
 import "./videocall.css";
 import api, { getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -26,19 +26,51 @@ import {
   FiUser,
   FiVideo,
   FiVideoOff,
+  FiWifi,
   FiX,
 } from "react-icons/fi";
 
 // ── In-call prescription modal (doctor only) ──────────────────────────────────
 const EMPTY_MED = { name: "", dosage: "", frequency: "", duration: "" };
 
+// A network blip or an accidental modal close mid-call previously lost
+// whatever the doctor had already typed, with no way to recover it — the
+// modal's fields always started blank on every open. Persist an in-progress
+// draft to sessionStorage, keyed per appointment, so reopening the modal
+// (or retrying after a failed save) restores exactly what was there.
+function loadPrescriptionDraft(appointmentId) {
+  try {
+    const raw = sessionStorage.getItem(`hc-vc-rx-draft-${appointmentId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function InCallPrescriptionModal({ appt, onClose, onSaved }) {
-  const [diagnosis, setDiagnosis] = useState("");
-  const [medicines, setMedicines] = useState([{ ...EMPTY_MED }]);
-  const [instructions, setInstructions] = useState("");
-  const [followUpDate, setFollowUpDate] = useState("");
+  const appointmentId = appt?._id || "unknown";
+  const [draft] = useState(() => loadPrescriptionDraft(appointmentId));
+  const [diagnosis, setDiagnosis] = useState(draft?.diagnosis || "");
+  const [medicines, setMedicines] = useState(
+    Array.isArray(draft?.medicines) && draft.medicines.length
+      ? draft.medicines
+      : [{ ...EMPTY_MED }],
+  );
+  const [instructions, setInstructions] = useState(draft?.instructions || "");
+  const [followUpDate, setFollowUpDate] = useState(draft?.followUpDate || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        `hc-vc-rx-draft-${appointmentId}`,
+        JSON.stringify({ diagnosis, medicines, instructions, followUpDate }),
+      );
+    } catch {
+      // Storage unavailable (private mode, etc.) — draft just won't survive a remount.
+    }
+  }, [appointmentId, diagnosis, medicines, instructions, followUpDate]);
 
   const setMed = (i, k, v) =>
     setMedicines((prev) => {
@@ -70,6 +102,11 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
           authRole: "doctor",
         },
       );
+      try {
+        sessionStorage.removeItem(`hc-vc-rx-draft-${appointmentId}`);
+      } catch {
+        // Non-fatal — worst case a stale draft lingers for this tab's session.
+      }
       onSaved();
     } catch (err) {
       setError(err.response?.data?.msg || "Failed to save prescription.");
@@ -251,6 +288,28 @@ const describeIceCandidate = (candidate = "") => {
   };
 };
 
+// Turns the stats already gathered by startStatsCollection into a coarse,
+// user-facing quality bucket. Packet loss is derived from the DELTA between
+// this poll and the previous one (not the raw cumulative counter) — using
+// the cumulative value directly would mean a single lost packet early in a
+// long call marks the connection "poor" for its entire remaining duration.
+const deriveConnectionQuality = (diagnostics, previousSample) => {
+  if (diagnostics.rtt === null) return "unknown";
+
+  let lossRatio = 0;
+  if (previousSample) {
+    const deltaSent = diagnostics.packetsSent - previousSample.packetsSent;
+    const deltaLost = diagnostics.packetsLost - previousSample.packetsLost;
+    if (deltaSent > 0 && deltaLost > 0) {
+      lossRatio = deltaLost / (deltaSent + deltaLost);
+    }
+  }
+
+  if (diagnostics.rtt > 400 || lossRatio > 0.08) return "poor";
+  if (diagnostics.rtt > 200 || lossRatio > 0.03) return "weak";
+  return "good";
+};
+
 const MEDIA_CONSTRAINTS = {
   audio: {
     echoCancellation: true,
@@ -292,6 +351,17 @@ const STATS_INTERVAL_MS = Number(
   import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000,
 );
 
+// First line of defense against a stuck Enter key / paste-loop flooding
+// chat — the server has its own rate limit (see backend/utils/socketRateLimit.js),
+// this just keeps the UI itself from firing faster than a human can type.
+const CHAT_SEND_COOLDOWN_MS = 300;
+
+// logVideoEvent silently dropped telemetry whenever the socket was
+// disconnected — exactly the events most useful for debugging what
+// happened around a disconnect. Cap how many get queued for replay on
+// reconnect so a long outage can't grow this without bound.
+const TELEMETRY_QUEUE_MAX = 50;
+
 const mediaErrorMessage = (err) => {
   if (!navigator.mediaDevices?.getUserMedia) {
     return "Your browser blocked camera/microphone access because this page isn't loaded over a secure (HTTPS) connection.";
@@ -308,6 +378,25 @@ const mediaErrorMessage = (err) => {
       return "Your camera or microphone is already in use by another app. Close it and retry.";
     default:
       return "Camera or microphone access failed. Check browser permissions and reload.";
+  }
+};
+
+// getDisplayMedia failures were previously collapsed into one generic
+// message regardless of cause. NotAllowedError/AbortError both mean "the
+// user dismissed the picker" (browsers differ on which they throw) and are
+// handled separately at the call site — this only needs to cover genuine
+// runtime failures.
+const screenShareErrorMessage = (err) => {
+  switch (err?.name) {
+    case "NotReadableError":
+    case "TrackStartError":
+      return "Your screen could not be captured — another app may be blocking screen capture. Close it and try again.";
+    case "NotFoundError":
+      return "No screen or window was available to share.";
+    case "TypeError":
+      return "Screen sharing isn't supported with the current browser configuration.";
+    default:
+      return "Screen sharing could not be started on this device.";
   }
 };
 
@@ -511,14 +600,16 @@ const tuneSenderQuality = async (
   } catch (_) { }
 };
 
-const fmtDate = (d) => {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
+// Chat messages have no server-issued id in the payload this page receives,
+// so array-index keys were being used for the message list — fine while
+// messages are only ever appended, but a landmine for any future reorder/
+// dedupe/pagination. Tag each message with a stable client-side key at the
+// moment it enters state instead.
+const makeMessageKey = () =>
+  typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `msg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
 const fmtTime = (iso) => {
   if (!iso) return "";
   return new Date(iso).toLocaleTimeString([], {
@@ -606,6 +697,7 @@ export default function VideoCall() {
   const peerJoinedRef = useRef(false);
   const chatOpenRef = useRef(false);
   const completedRef = useRef(false);
+  const completingRef = useRef(false);
   const isSwappedRef = useRef(false);
   const callTimerRef = useRef(null);
   const iceRestartTimerRef = useRef(null);
@@ -634,11 +726,18 @@ export default function VideoCall() {
   // identical to a real hangup and can flash "peer left" for the other party.
   const manualReconnectRef = useRef(false);
   const inlineErrorTimerRef = useRef(null);
+  // Previous stats poll's packet counters, so quality can be derived from
+  // the delta between polls instead of a misleading cumulative total.
+  const lastStatsSampleRef = useRef(null);
+  // Telemetry events queued while the socket is disconnected, replayed once
+  // it reconnects — see logVideoEvent/flushTelemetryQueue below.
+  const telemetryQueueRef = useRef([]);
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
   const [peerJoined, setPeerJoined] = useState(false);
   const [inCall, setInCall] = useState(false);
+  const [connectionQuality, setConnectionQuality] = useState("unknown");
   const [isRemoteConnected, setIsRemoteConnected] = useState(false);
   const [connectionState, setConnectionState] = useState("idle");
   const [callDuration, setCallDuration] = useState(0);
@@ -662,12 +761,16 @@ export default function VideoCall() {
   const [retryingMedia, setRetryingMedia] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [peerLeft, setPeerLeft] = useState(false);
+  const [apptClosedByOther, setApptClosedByOther] = useState("");
   const [endCallConfirm, setEndCallConfirm] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [inlineError, setInlineError] = useState("");
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const [reconnectStalled, setReconnectStalled] = useState(false);
   const [reconnectNonce, setReconnectNonce] = useState(0);
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== "undefined" ? !navigator.onLine : false,
+  );
   const pendingLeaveRef = useRef(null);
 
   // ── Chat state ────────────────────────────────────────────────────
@@ -676,8 +779,10 @@ export default function VideoCall() {
   const [chatInput, setChatInput] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [chatSendCoolingDown, setChatSendCoolingDown] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const chatSendCooldownTimerRef = useRef(null);
 
   // ── Doctor notes state ────────────────────────────────────────────
   const [notesOpen, setNotesOpen] = useState(false);
@@ -725,6 +830,9 @@ export default function VideoCall() {
   useEffect(() => {
     screenSharingRef.current = isScreenSharing;
   }, [isScreenSharing]);
+  useEffect(() => {
+    completingRef.current = completing;
+  }, [completing]);
 
   // Callback refs (rather than a mount-only effect) so the orientation
   // watcher attaches exactly when each <video> node appears — these
@@ -754,6 +862,20 @@ export default function VideoCall() {
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () =>
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  // A fully offline device previously only surfaced indirectly, once the
+  // socket/ICE timeouts eventually fired (many seconds later). Report it
+  // immediately via the browser's own connectivity signal instead.
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => setIsOffline(false);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
   }, []);
 
   // Auto-scroll chat — runs on new messages AND when panel opens
@@ -979,6 +1101,12 @@ export default function VideoCall() {
 
   useEffect(() => () => window.clearTimeout(inlineErrorTimerRef.current), []);
 
+  const flushTelemetryQueue = useCallback(() => {
+    if (!socket.connected || !telemetryQueueRef.current.length) return;
+    const queued = telemetryQueueRef.current.splice(0);
+    queued.forEach((payload) => socket.emit("video-telemetry", payload));
+  }, []);
+
   const logVideoEvent = useCallback(
     (event, details = {}) => {
       const payload = {
@@ -995,16 +1123,25 @@ export default function VideoCall() {
         console.info("[video-call]", event, details);
       }
 
-      if (socket.connected && appointmentId) {
+      if (!appointmentId) return;
+
+      if (socket.connected) {
+        flushTelemetryQueue();
         socket.emit("video-telemetry", payload);
+      } else {
+        const queue = telemetryQueueRef.current;
+        queue.push(payload);
+        if (queue.length > TELEMETRY_QUEUE_MAX) queue.shift();
       }
     },
-    [appointmentId, isDoctor],
+    [appointmentId, isDoctor, flushTelemetryQueue],
   );
 
   const stopStatsCollection = useCallback(() => {
     clearInterval(statsTimerRef.current);
     statsTimerRef.current = null;
+    lastStatsSampleRef.current = null;
+    setConnectionQuality("unknown");
   }, []);
 
   const startStatsCollection = useCallback(
@@ -1066,8 +1203,18 @@ export default function VideoCall() {
             }
           }
 
-          console.info("[webrtc-stats]", diagnostics);
+          if (import.meta.env.DEV) console.info("[webrtc-stats]", diagnostics);
           logVideoEvent("webrtc_stats", diagnostics);
+
+          const quality = deriveConnectionQuality(
+            diagnostics,
+            lastStatsSampleRef.current,
+          );
+          lastStatsSampleRef.current = {
+            packetsSent: diagnostics.packetsSent,
+            packetsLost: diagnostics.packetsLost,
+          };
+          setConnectionQuality(quality);
         } catch (err) {
           console.warn("[webrtc-stats] getStats failed:", err.message);
         }
@@ -1242,6 +1389,18 @@ export default function VideoCall() {
       return;
     }
 
+    // Capability check: everything below assumes RTCPeerConnection and
+    // getUserMedia exist. Older/locked-down browsers and some embedded
+    // WebViews don't have them — fail into the same gate-screen pattern
+    // used for every other fatal appointment state, instead of letting
+    // `new RTCPeerConnection` throw uncaught further down.
+    if (!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) {
+      setApptError(
+        "Your browser doesn't support video calls. Please use a recent version of Chrome, Edge, Firefox, or Safari.",
+      );
+      return;
+    }
+
     let mounted = true;
     completedRef.current = false;
     pendingRemoteCandidatesRef.current = [];
@@ -1261,14 +1420,23 @@ export default function VideoCall() {
       pcRef.current.close();
     }
 
-    const pc = new RTCPeerConnection(iceConfig);
+    let pc;
+    try {
+      pc = new RTCPeerConnection(iceConfig);
+    } catch (err) {
+      console.error("RTCPeerConnection construction failed:", err);
+      setApptError("Could not start the video call on this browser or device.");
+      return;
+    }
     pcRef.current = pc;
-    console.info("WebRTC peer connection created", {
-      iceServers: iceConfig.iceServers.map((server) => ({
-        urls: server.urls,
-        hasUsername: Boolean(server.username),
-      })),
-    });
+    if (import.meta.env.DEV) {
+      console.info("WebRTC peer connection created", {
+        iceServers: iceConfig.iceServers.map((server) => ({
+          urls: server.urls,
+          hasUsername: Boolean(server.username),
+        })),
+      });
+    }
 
     const remoteStream = new MediaStream();
     remoteStreamRef.current = remoteStream;
@@ -1580,6 +1748,13 @@ export default function VideoCall() {
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
         scheduleIceRestart();
+        // Only handlePeerJoined armed this watch before, gated on
+        // !inCallRef — so a drop after the call had already connected once
+        // was never given a manual Retry escape hatch, just a passive
+        // "Reconnecting..." message. Re-arm it here for that case, with a
+        // shorter timeout since this is a known-working connection, not a
+        // first handshake.
+        if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       }
     };
 
@@ -1616,6 +1791,7 @@ export default function VideoCall() {
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
         scheduleIceRestart();
+        if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       } else if (s === "disconnected") {
         console.warn("ICE connection disconnected");
         logVideoEvent("ice_connection_disconnected", {
@@ -1624,6 +1800,7 @@ export default function VideoCall() {
         });
         setConnectionState("connecting");
         scheduleIceRestart();
+        if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       }
     };
 
@@ -1814,13 +1991,14 @@ export default function VideoCall() {
 
     const handleChatMessage = (msg) => {
       if (mounted) {
-        setMessages((prev) => [...prev, msg]);
+        setMessages((prev) => [...prev, { ...msg, _localKey: makeMessageKey() }]);
         if (!chatOpenRef.current) setUnreadCount((c) => c + 1);
       }
     };
     const handleChatHistory = (payload) => {
       if (mounted && payload?.appointmentId === appointmentId) {
-        setMessages(Array.isArray(payload.messages) ? payload.messages : []);
+        const history = Array.isArray(payload.messages) ? payload.messages : [];
+        setMessages(history.map((msg) => ({ ...msg, _localKey: makeMessageKey() })));
       }
     };
 
@@ -1829,6 +2007,24 @@ export default function VideoCall() {
       if (["complete", "completed"].includes(status) && !isDoctor) {
         setShowCompletedOverlay(true);
         setTimeout(() => navigate("/user/dashboard", { replace: true }), 4000);
+        return;
+      }
+      // Doctor-side: an admin (or backend job) can close this appointment
+      // out from under a doctor who's still in the call. completingRef
+      // guards against re-showing this for the doctor's OWN
+      // completeAppointment() call — that PUT request triggers this exact
+      // same broadcast back to the doctor's own socket, which is still in
+      // the appointment room at that instant.
+      if (
+        ["complete", "completed", "cancelled"].includes(status) &&
+        isDoctor &&
+        !completingRef.current
+      ) {
+        setApptClosedByOther(
+          status === "cancelled"
+            ? "This appointment was cancelled by an administrator."
+            : "This appointment was marked complete by an administrator.",
+        );
       }
     };
 
@@ -1871,6 +2067,7 @@ export default function VideoCall() {
 
     const joinRoom = () => {
       emitOnlineAndJoinRoom();
+      flushTelemetryQueue();
     };
 
     const handleSocketDisconnect = () => {
@@ -1919,6 +2116,13 @@ export default function VideoCall() {
         }, 500);
       }
     };
+
+    // Keep the shared socket's handshake auth aligned with THIS page's role,
+    // not whatever api.js's ambient activeAuthRole happens to be — see
+    // setSocketAuthRole's own comment for why that matters. Set before any
+    // connect()/reconnect_attempt below so the very next handshake already
+    // carries the right token.
+    setSocketAuthRole(isDoctor ? "doctor" : "user");
 
     if (socket.connected && !socketAuthRefreshedRef.current) {
       socketAuthRefreshedRef.current = true;
@@ -2004,6 +2208,7 @@ export default function VideoCall() {
     attachLocalMediaStream,
     emitOnlineAndJoinRoom,
     logVideoEvent,
+    flushTelemetryQueue,
     stopStatsCollection,
     performCleanup,
     reconnectNonce,
@@ -2196,15 +2401,16 @@ export default function VideoCall() {
           restoreErr,
         );
       }
-      if (err.name !== "NotAllowedError") {
+      // NotAllowedError/AbortError both mean the user dismissed the share
+      // picker — browsers differ on which they throw for that case — so
+      // neither is a real failure worth logging or showing an error for.
+      if (err.name !== "NotAllowedError" && err.name !== "AbortError") {
         console.error("Screen share error:", err);
         logVideoEvent("screen_share_failed", {
           name: err.name,
           message: err.message,
         });
-        showInlineMessage(
-          "Screen sharing could not be started on this device.",
-        );
+        showInlineMessage(screenShareErrorMessage(err));
       }
     } finally {
       screenShareStartInProgressRef.current = false;
@@ -2486,6 +2692,7 @@ export default function VideoCall() {
   }, []);
 
   const sendMessage = useCallback(() => {
+    if (chatSendCooldownTimerRef.current) return;
     const text = chatInput.trim();
     if (!text) return;
     socket.emit("appointment-message", {
@@ -2495,7 +2702,14 @@ export default function VideoCall() {
       text,
     });
     setChatInput("");
+    setChatSendCoolingDown(true);
+    chatSendCooldownTimerRef.current = window.setTimeout(() => {
+      chatSendCooldownTimerRef.current = null;
+      setChatSendCoolingDown(false);
+    }, CHAT_SEND_COOLDOWN_MS);
   }, [chatInput, appointmentId, currentUser]);
+
+  useEffect(() => () => window.clearTimeout(chatSendCooldownTimerRef.current), []);
 
   const handleChatKey = useCallback(
     (e) => {
@@ -2666,19 +2880,15 @@ export default function VideoCall() {
             </div>
           )}
 
-          {/* <div className={`hc-vc__status-pill hc-vc__status-pill--${connectionState}`}>
-              <span className="hc-vc__status-dot" />
-              {connectionState === "idle" && "Waiting"}
-              {connectionState === "connecting" && "Connecting..."}
-              {connectionState === "connected" && "Live"}
-              {connectionState === "disconnected" && "Disconnected"}
-            </div> */}
-
-          {/* <span className="hc-vc__infobar-chip"><FiCalendar /> {fmtDate(appt.date)}</span>
-            <span className="hc-vc__infobar-chip"><FiClock /> {appt.time}</span>
-            <span className="hc-vc__infobar-chip hc-vc__infobar-chip--green"><FiCheckCircle /> Confirmed</span> */}
         </div>
       </div>
+
+      {/* ── Offline banner ───────────────────────────────────────── */}
+      {isOffline && (
+        <div className="hc-vc__offline-banner">
+          <FiAlertTriangle /> You're offline. Reconnecting once your internet is back.
+        </div>
+      )}
 
       {/* ── Inline error toast ──────────────────────────────────── */}
       {inlineError && (
@@ -2710,95 +2920,39 @@ export default function VideoCall() {
       {/* ── End Call confirm modal ───────────────────────────────── */}
       {endCallConfirm && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9998,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
+          className="hc-vc__confirm-overlay"
           onClick={() => setEndCallConfirm(false)}
         >
-          <div
-            style={{
-              background: "#0d1f35",
-              borderRadius: 16,
-              padding: "28px 32px",
-              maxWidth: 380,
-              width: "100%",
-              textAlign: "center",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ fontSize: 36, marginBottom: 12 }}>
-              <FiPhoneOff style={{ color: "#ef4444" }} />
+          <div className="hc-vc__confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hc-vc__confirm-icon hc-vc__confirm-icon--danger">
+              <FiPhoneOff />
             </div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#f1f5f9" }}>
+            <h3 className="hc-vc__confirm-title">
               {isDoctor ? "Leave or Complete?" : "Leave Call?"}
             </h3>
-            <p style={{ margin: "0 0 24px", fontSize: 13, color: "#94a3b8" }}>
+            <p className="hc-vc__confirm-text">
               {isDoctor
                 ? "Leave only exits the video call. Complete Appointment will mark the consultation complete."
                 : "You will leave the video call. The doctor will be notified."}
             </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
+            <div className="hc-vc__confirm-actions">
               <button
+                className="hc-vc__confirm-btn"
                 onClick={() => setEndCallConfirm(false)}
-                style={{
-                  padding: "9px 20px",
-                  borderRadius: 8,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  background: "rgba(255,255,255,0.07)",
-                  color: "#e2e8f0",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
               >
                 Stay
               </button>
               <button
+                className="hc-vc__confirm-btn hc-vc__confirm-btn--danger"
                 onClick={leaveCall}
-                style={{
-                  padding: "9px 22px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#ef4444",
-                  color: "#fff",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
               >
                 Leave Call
               </button>
               {isDoctor && (
                 <button
+                  className="hc-vc__confirm-btn hc-vc__confirm-btn--success"
                   onClick={completeAppointment}
                   disabled={completing}
-                  style={{
-                    padding: "9px 22px",
-                    borderRadius: 8,
-                    border: "none",
-                    background: "#16a34a",
-                    color: "#fff",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: completing ? "not-allowed" : "pointer",
-                    opacity: completing ? 0.7 : 1,
-                  }}
                 >
                   {completing ? "Completing..." : "Complete Appointment"}
                 </button>
@@ -2842,71 +2996,30 @@ export default function VideoCall() {
       {/* ── Leave (back button) confirm modal ───────────────────── */}
       {leaveConfirm && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9998,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
+          className="hc-vc__confirm-overlay"
           onClick={() => setLeaveConfirm(false)}
         >
-          <div
-            style={{
-              background: "#0d1f35",
-              borderRadius: 16,
-              padding: "28px 32px",
-              maxWidth: 380,
-              width: "100%",
-              textAlign: "center",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.5)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ fontSize: 36, marginBottom: 12 }}>⚠</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "#f1f5f9" }}>
-              Leave Consultation?
-            </h3>
-            <p style={{ margin: "0 0 24px", fontSize: 13, color: "#94a3b8" }}>
+          <div className="hc-vc__confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hc-vc__confirm-icon">⚠</div>
+            <h3 className="hc-vc__confirm-title">Leave Consultation?</h3>
+            <p className="hc-vc__confirm-text">
               Leaving will end your consultation session. Are you sure?
             </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+            <div className="hc-vc__confirm-actions">
               <button
+                className="hc-vc__confirm-btn"
                 onClick={() => setLeaveConfirm(false)}
-                style={{
-                  padding: "9px 20px",
-                  borderRadius: 8,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  background: "rgba(255,255,255,0.07)",
-                  color: "#e2e8f0",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
               >
                 Stay
               </button>
               <button
+                className="hc-vc__confirm-btn hc-vc__confirm-btn--danger"
                 onClick={() => {
                   setLeaveConfirm(false);
                   performCleanup();
                   navigate(pendingLeaveRef.current || "/user/dashboard", {
                     replace: true,
                   });
-                }}
-                style={{
-                  padding: "9px 22px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#ef4444",
-                  color: "#fff",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
                 }}
               >
                 Leave
@@ -2934,9 +3047,9 @@ export default function VideoCall() {
       )}
 
       {/* ── Prescription notification banner (patient) ───────────── */}
-      {/* {prescriptionNotif && !isDoctor && (
+      {prescriptionNotif && !isDoctor && (
         <div className="hc-vc__rx-notif">
-          <span className="hc-vc__rx-notif-icon"><FaCapsules /></span>
+          <span className="hc-vc__rx-notif-icon">💊</span>
           <span className="hc-vc__rx-notif-text">
             Prescription issued: <strong>{prescriptionNotif.diagnosis}</strong>
           </span>
@@ -2948,14 +3061,14 @@ export default function VideoCall() {
           </button>
           <button className="hc-vc__rx-notif-close" onClick={() => setPrescriptionNotif(null)}><FiX /></button>
         </div>
-      )} */}
+      )}
 
       {/* ── Rx saved toast (doctor) ──────────────────────────────── */}
-      {/* {rxSavedToast && isDoctor && (
+      {rxSavedToast && isDoctor && (
         <div className="hc-vc__rx-saved-toast">
           <FiCheckCircle /> Prescription issued successfully
         </div>
-      )} */}
+      )}
 
       {/* Main stage + chat */}
       <div
@@ -3154,7 +3267,7 @@ export default function VideoCall() {
                 const mine = msg.senderId === currentUser.id;
                 return (
                   <div
-                    key={i}
+                    key={msg._localKey ?? i}
                     className={`hc-vc__msg ${mine ? "hc-vc__msg--mine" : "hc-vc__msg--theirs"}`}
                   >
                     {!mine && (
@@ -3252,7 +3365,7 @@ export default function VideoCall() {
               <button
                 className="hc-vc__chat-send"
                 onClick={sendMessage}
-                disabled={!chatInput.trim()}
+                disabled={!chatInput.trim() || chatSendCoolingDown}
                 title="Send"
                 aria-label="Send message"
               >
@@ -3383,6 +3496,20 @@ export default function VideoCall() {
               Live
             </div>
           )}
+          {inCall && connectionQuality !== "unknown" && (
+            <div
+              className={`hc-vc__quality-pill hc-vc__quality-pill--${connectionQuality}`}
+              title={
+                connectionQuality === "poor"
+                  ? "Poor connection — the call may drop"
+                  : connectionQuality === "weak"
+                    ? "Unstable connection — video quality may drop"
+                    : "Good connection"
+              }
+            >
+              <FiWifi />
+            </div>
+          )}
           <button
             className={`hc-vc__btn ${isFullscreen ? "hc-vc__btn--active" : ""}`}
             onClick={toggleFullscreen}
@@ -3440,16 +3567,16 @@ export default function VideoCall() {
             </button>
           )}
 
-          {/* {isDoctor && (
+          {isDoctor && (
             <button
               className="hc-vc__btn hc-vc__btn--rx"
               onClick={() => setShowRxModal(true)}
               title="Issue prescription"
             >
-              <span className="hc-vc__btn-icon"><FaCapsules /></span>
+              <span className="hc-vc__btn-icon">💊</span>
               <span className="hc-vc__btn-label">Rx</span>
             </button>
-          )} */}
+          )}
 
           <button
             className="hc-vc__btn hc-vc__btn--end"
@@ -3488,6 +3615,30 @@ export default function VideoCall() {
             }}
           >
             {retryingMedia ? "Retrying..." : "Retry"}
+          </button>
+        </div>
+      )}
+
+      {/* Doctor-side notice: an admin/backend job closed this appointment
+          while the doctor is still in the call — no auto-redirect, since
+          the doctor may still want to finish talking to the patient first. */}
+      {apptClosedByOther && isDoctor && (
+        <div className="hc-vc__error-bar">
+          <FiAlertTriangle /> {apptClosedByOther}
+          <button
+            onClick={leaveCall}
+            style={{
+              marginLeft: 12,
+              padding: "4px 12px",
+              borderRadius: 6,
+              background: "#fff",
+              color: "#dc2626",
+              border: "none",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Leave Call
           </button>
         </div>
       )}

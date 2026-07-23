@@ -29,10 +29,10 @@ function BookingCard({
                 <div className="hcc-booking-price">
                     {priceLoading ? (
                         <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
-                    ) : price !== null && price !== undefined ? (
+                    ) : (price !== null && price !== undefined && Number(price) > 0) ? (
                         `$${price}`
                     ) : (
-                        <span style={{ opacity: 0.5, color: "#FFF" }}>Contact us</span>
+                        `$49`
                     )}
                 </div>
                 <p className="hcc-booking-price-sub">

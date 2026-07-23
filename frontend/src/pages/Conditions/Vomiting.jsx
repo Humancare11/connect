@@ -146,7 +146,7 @@ const STYLES = `
         gap:clamp(28px,4vw,56px);align-items:stretch;flex:1;
     }
     .sp-about-left { display:flex;flex-direction:column;gap:0;justify-content:space-between; }
-    .sp-about-h2 { font-size:clamp(20px,2.2vw,26px);font-weight:800;color:#0A1F44;line-height:1.2;font-family:'Georgia',serif;margin:0 0 18px; }
+    .sp-about-h2 { font-size:clamp(20px,2.2vw,26px);font-weight:800;color:#0A1F44;line-height:1.2;font-family: var(--font-secondary);margin:0 0 18px; }
     .sp-nav-card {
         background:rgba(11,87,232,.10);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
         border-radius:16px;padding:20px 18px;margin-bottom:14px;border:1px solid rgba(11,87,232,.22);
@@ -201,7 +201,7 @@ const STYLES = `
         width:7px;height:7px;border-radius:50%;background:#0B57E8;
         box-shadow:0 0 12px rgba(11,87,232,.5);animation:sp-sbcPulse 2s ease-in-out infinite;flex-shrink:0;
     }
-    .sp-sbc-price { font-size:clamp(32px,7vw,42px);font-weight:900;color:#0A1F44;line-height:1;letter-spacing:-1.5px;font-family:'Georgia',serif; }
+    .sp-sbc-price { font-size:clamp(32px,7vw,42px);font-weight:900;color:#0A1F44;line-height:1;letter-spacing:-1.5px;font-family: var(--font-secondary); }
     .sp-sbc-price-sub { font-size:12.5px;color:#7A90B8;margin:8px 0 0;line-height:1.5; }
     .sp-sbc-info {
         display:flex;align-items:flex-start;gap:10px;background:#EEF6FF;border:1px solid #C5DEFF;
@@ -235,7 +235,7 @@ const STYLES = `
     .sp-sym-section { background:#fff; padding:80px 0 100px; }
     .sp-sym-wrap { max-width:1240px; margin:0 auto; padding:0 24px; }
     .sp-sym-header { margin-bottom:40px; }
-    .sp-sym-h2 { font-size:clamp(24px,3vw,32px); font-weight:800; color:#0A1F44; font-family:'Georgia',serif; margin:6px 0 8px; line-height:1.15; }
+    .sp-sym-h2 { font-size:clamp(24px,3vw,32px); font-weight:800; color:#0A1F44; font-family: var(--font-secondary); margin:6px 0 8px; line-height:1.15; }
     .sp-sym-sub { color:#5C7099; font-size:15px; margin:0; }
 
     .sp-sym-grid {
@@ -292,7 +292,7 @@ const STYLES = `
     /* ══ FAQ ══ */
     .sp-faq-layout { display:grid;grid-template-columns:320px minmax(0,1fr);gap:48px;align-items:start; }
     .sp-faq-sidebar { position:sticky;top:110px; }
-    .sp-faq-title { font-size:52px;line-height:1.05;font-weight:800;color:#0a1f44;margin:14px 0;font-family:Georgia,serif; }
+    .sp-faq-title { font-size:52px;line-height:1.05;font-weight:800;color:#0a1f44;margin:14px 0;font-family: var(--font-secondary); }
     .sp-faq-desc { color:#5c7099;line-height:1.8;margin-bottom:28px; }
     .sp-faq-chat {
         height:52px;border-radius:14px;padding:0 24px;border:1px solid #0b57e8;background:white;
@@ -679,12 +679,7 @@ function HeroSection({ data }) {
               animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
             }}
           >
-            <a href="/appointment-booking" className="sp-btn sp-btn--primary">
-              <Calendar size={15} /> Book Appointment
-            </a>
-            <a href="#" className="sp-btn sp-btn--ghost">
-              <Users size={15} /> Know More
-            </a>
+
           </div>
 
           <div
@@ -880,170 +875,12 @@ function StickyBookingCard() {
 // ─────────────────────────────────────────────────────────────────
 // SYMPTOMS CHIPS — direction-aware, JS-driven active state
 // ─────────────────────────────────────────────────────────────────
-function SymptomsChips() {
-  const [activeIdx, setActiveIdx] = useState(null);
-  const [goLeft, setGoLeft] = useState({}); // { [i]: bool }
-  const wrapRefs = {}; // populated by ref callbacks
 
-  const EXPANDED_W = 300;
-
-  const onEnter = (i) => {
-    // Measure available space to the right before committing direction
-    const node = wrapRefs[i];
-    if (node) {
-      const rect = node.getBoundingClientRect();
-      const spaceRight = window.innerWidth - rect.right;
-      setGoLeft((prev) => ({ ...prev, [i]: spaceRight < EXPANDED_W + 16 }));
-    }
-    setActiveIdx(i);
-  };
-
-  const onLeave = () => setActiveIdx(null);
-
-  return (
-    <section className="sp-sym-section">
-      <div className="sp-sym-wrap">
-        <div className="sp-sym-header">
-          <SectionLabel>Common Symptoms</SectionLabel>
-          <h2 className="sp-sym-h2">Recognise Your Symptoms</h2>
-          <p className="sp-sym-sub">
-            Hover a symptom card to learn more and find the right care.
-          </p>
-        </div>
-
-        <div className="sp-sym-grid">
-          {symptomData.map((item, i) => {
-            const isActive = activeIdx === i;
-            const expandDir = goLeft[i] ? "sp-expand-left" : "sp-expand-right";
-
-            return (
-              <div
-                key={item.title}
-                ref={(node) => {
-                  wrapRefs[i] = node;
-                }}
-                className={`sp-sym-card-wrap${isActive ? " sp-wrap-active" : ""}`}
-                style={{ animationDelay: `${i * 0.04}s` }}
-              >
-                <div
-                  className={`sp-sym-card ${expandDir}${isActive ? " sp-card-active" : ""}`}
-                  onMouseEnter={() => onEnter(i)}
-                  onMouseLeave={onLeave}
-                >
-                  <div className="sp-sym-top">
-                    <span className="sp-sym-title">{item.title}</span>
-                    <span className="sp-sym-arrow">→</span>
-                  </div>
-                  <div className="sp-sym-body">
-                    <p className="sp-sym-desc">{item.desc}</p>
-                    <span className="sp-sym-cta">Find care →</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────
 // RELATED SPECIALTIES
 // ─────────────────────────────────────────────────────────────────
-function RelatedSpecialties() {
-  return (
-    <section style={{ background: "#F8FAFE", padding: "64px 0" }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
-        <div style={{ marginBottom: 36 }}>
-          <SectionLabel>Related Specialties</SectionLabel>
-          <h2
-            style={{
-              fontSize: 30,
-              fontWeight: 800,
-              color: "#0A1F44",
-              fontFamily: "'Georgia',serif",
-              marginTop: 8,
-            }}
-          >
-            Explore Other Specialties
-          </h2>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fill,minmax(min(100%,280px),1fr))",
-            gap: 16,
-          }}
-        >
-          {relatedSpecialties.map((s, idx) => (
-            <div
-              key={idx}
-              style={{
-                background: s.color,
-                borderRadius: 16,
-                padding: "24px 20px",
-                cursor: "pointer",
-                transition: "all .25s",
-                display: "flex",
-                flexDirection: "column",
-                gap: 14,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow =
-                  "0 12px 40px -10px rgba(11,40,100,.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: "rgba(255,255,255,0.7)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <s.icon size={20} style={{ color: s.accent }} />
-              </div>
-              <div>
-                <p
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: "#0A1F44",
-                    marginBottom: 4,
-                  }}
-                >
-                  {s.name}
-                </p>
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                    fontSize: 12,
-                    color: "#5C7099",
-                    fontWeight: 500,
-                  }}
-                >
-                  Learn More <ArrowRight size={12} />
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+
 
 // ─────────────────────────────────────────────────────────────────
 // WHY CHOOSE US
@@ -1136,82 +973,6 @@ function WhyChooseUs() {
 // ─────────────────────────────────────────────────────────────────
 // FAQ
 // ─────────────────────────────────────────────────────────────────
-function FaqSection() {
-  const [openId, setOpenId] = useState("0-0");
-  const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
-
-  return (
-    <section style={{ background: "#F7FAFF", padding: "90px 0" }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
-        <div className="sp-faq-layout">
-          {/* Sidebar */}
-          <div className="sp-faq-sidebar">
-            <SectionLabel>FAQ</SectionLabel>
-            <h2 className="sp-faq-title">
-              Frequently Asked
-              <br />
-              Questions
-            </h2>
-            <p className="sp-faq-desc">
-              Everything you need to know about primary care at HumanCare
-              Connect. Can't find an answer?
-            </p>
-            <button className="sp-faq-chat">
-              <MessageCircle size={18} /> Chat with our team
-            </button>
-            <div className="sp-faq-stat">⚡ Avg. response in 2 min</div>
-            <div className="sp-faq-stat">🔒 HIPAA secure &amp; private</div>
-            <div className="sp-faq-stat">🌍 Available in all 50 states</div>
-          </div>
-
-          {/* Content */}
-          <div className="sp-faq-content">
-            {faqData.map((cat, ci) => (
-              <div key={cat.category} className="sp-faq-card">
-                <div className="sp-faq-cat">
-                  <span className="sp-faq-dot" />
-                  {cat.category}
-                </div>
-                {cat.items.map((item, ii) => {
-                  const id = `${ci}-${ii}`;
-                  return (
-                    <div key={id} className="sp-faq-item">
-                      <button className="sp-faq-q" onClick={() => toggle(id)}>
-                        <span>{item.q}</span>
-                        <div
-                          className={`sp-faq-icon ${openId === id ? "sp-active" : ""}`}
-                        >
-                          +
-                        </div>
-                      </button>
-                      <div
-                        className={`sp-faq-ans ${openId === id ? "sp-open" : ""}`}
-                      >
-                        <p>{item.a}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-
-            <div className="sp-faq-bottom-cta">
-              <div>
-                <h3>Still have questions?</h3>
-                <p>Our care team is available every day, 8 AM – 10 PM.</p>
-              </div>
-              <a href="/appointment-booking">
-                <button>
-                  Book a Call <ArrowRight size={18} />
-                </button>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT  — drop-in replacement for any sub-page
@@ -1252,10 +1013,10 @@ export default function Vomiting() {
           </div>
         </div>
 
-        <SymptomsChips />
-        <RelatedSpecialties />
 
-        <FaqSection />
+
+
+
       </div>
     </>
   );

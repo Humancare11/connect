@@ -2,7 +2,7 @@
    DoctorAppointments.css  —  Humancare Light Theme
    ================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap");
+
 
 :root {
   --blue: #01164a;
@@ -32,7 +32,7 @@
 
 /* ── Root ── */
 .da-root {
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-primary);
   color: var(--text);
   padding: 4px 0 24px;
 }
@@ -237,7 +237,7 @@
   border: none;
   background: transparent;
   color: var(--text-2);
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -421,7 +421,7 @@
   gap: 6px;
   padding: 7px 16px;
   border-radius: var(--radius-sm);
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -697,6 +697,11 @@
 
   .da-stats {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .da-stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .da-greeting {
@@ -720,17 +725,26 @@
 
   .da-table th,
   .da-table td {
-    padding: 12px 14px;
+    padding: 12px 12px;
+  }
+
+  .da-mono {
+    white-space: nowrap;
   }
 
   .da-problem {
-    max-width: 100px;
+    max-width: 120px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .da-stats {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .da-stat {
+    padding: 14px 12px;
     gap: 10px;
   }
 
@@ -738,8 +752,37 @@
     font-size: 24px;
   }
 
+  .da-greeting {
+    font-size: 20px;
+  }
+
+  .da-panel-top {
+    padding: 14px 16px;
+  }
+
   .da-table th:nth-child(3),
-  .da-table td:nth-child(3) {
+  .da-table td:nth-child(3),
+  .da-table th:nth-child(4),
+  .da-table td:nth-child(4) {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .da-stat {
+    padding: 12px 10px;
+  }
+
+  .da-stat-num {
+    font-size: 20px;
+  }
+
+  .da-stat-label {
+    font-size: 11px;
+  }
+
+  .da-table th,
+  .da-table td {
+    padding: 10px 8px;
   }
 }

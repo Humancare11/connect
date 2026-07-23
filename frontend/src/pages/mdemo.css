@@ -22,8 +22,8 @@
   --shadow-1: 0 18px 50px -20px rgba(11,40,100,.18);
   --shadow-2: 0 30px 80px -30px rgba(11,40,100,.30);
   --shadow-3: 0 50px 120px -40px rgba(11,40,100,.40);
-  --display: "Satoshi", "Inter", system-ui, sans-serif;
-  --body: "Inter", system-ui, sans-serif;
+  --display: var(--font-primary);
+  --body: var(--font-secondary);
   --mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -33,7 +33,7 @@ html { scroll-behavior: auto; }
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--body);
+  font-family: var(--font-secondary);
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -76,7 +76,7 @@ img, svg { display: block; }
   transition: box-shadow .3s;
 }
 .nav-inner.scrolled { box-shadow: 0 18px 50px -20px rgba(11,40,100,.28); }
-.brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 700; letter-spacing: -.02em; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-primary); font-weight: 700; letter-spacing: -.02em; }
 .brand-mark {
   width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
   background: linear-gradient(135deg,#0B57E8,#1E6BFF); color: #fff;
@@ -90,7 +90,7 @@ img, svg { display: block; }
 .nav-cta { display: flex; gap: 6px; align-items: center; }
 .auth-combined {
   display: inline-flex; align-items: center; gap: 10px;
-  padding: 11px 18px; border-radius: 100px; font-weight: 600; font-size: 14px; font-family: var(--display);
+  padding: 11px 18px; border-radius: 100px; font-weight: 600; font-size: 14px; font-family: var(--font-primary);
   background: linear-gradient(135deg,var(--blue),var(--blue-2)); color: #fff;
   box-shadow: 0 10px 24px -10px rgba(11,87,232,.6), inset 0 1px 0 rgba(255,255,255,.25);
   transition: transform .2s, box-shadow .2s;
@@ -102,7 +102,7 @@ img, svg { display: block; }
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 11px 18px; border-radius: 100px; font-weight: 600; font-size: 14px;
-  font-family: var(--display); letter-spacing: -.005em;
+  font-family: var(--font-primary); letter-spacing: -.005em;
   transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
   white-space: nowrap;
 }
@@ -120,7 +120,7 @@ img, svg { display: block; }
 .section-head.left { text-align: left; margin-left: 0; padding-left: 0; }
 .kicker {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--display); font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+  font-family: var(--font-primary); font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
   color: var(--blue); font-weight: 700;
   padding: 7px 14px; border-radius: 100px;
   background: rgba(11,87,232,.08); border: 1px solid rgba(11,87,232,.14);
@@ -129,7 +129,7 @@ img, svg { display: block; }
 .kicker::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .kicker.light { color: #cfe0ff; background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.18); }
 .h2 {
-  font-family: var(--display); font-weight: 700;
+  font-family: var(--font-primary); font-weight: 700;
   font-size: clamp(34px, 4.4vw, 60px); line-height: 1.04; letter-spacing: -.03em;
   margin: 0 0 16px; text-wrap: balance;
 }
@@ -164,9 +164,9 @@ img, svg { display: block; }
 .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
 .stat { border-top: 1px solid rgba(255,255,255,.16); padding-top: 24px; }
 .stat-num {
-  font-family: var(--display); font-weight: 700;
+  font-family: var(--font-primary); font-weight: 700;
   font-size: clamp(48px,5.6vw,76px); line-height: 1; letter-spacing: -.03em;
   color: #fff; display: flex; align-items: baseline;
 }
-.stat-num .suffix { font-family: var(--display); font-weight: 700; color: var(--blue-3); font-size: .55em; margin-left: 2px; }
+.stat-num .suffix { font-family: var(--font-primary); font-weight: 700; color: var(--blue-3); font-size: .55em; margin-left: 2px; }
 .stat-lbl { font-size: 14px; color: rgba(255,255,255,.65); margin-top: 14px; line-height: 1.4; max-width: 200px; }

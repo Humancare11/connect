@@ -285,7 +285,7 @@ function Badge() {
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </span>
-      Available in all 50 states — 24/7
+      Available Globally — 24/7
     </div>
   );
 }

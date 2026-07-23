@@ -43,12 +43,11 @@ import {
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Constipation.webp";
 
-
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: " Chronic Care",
   heading: "Constipation",
   description: "Difficulty passing regular stools",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -245,9 +244,9 @@ export default function Constipation() {
                         What is Constipation?
                       </h3>
                       <p className="condition-block-body">
-                        Constipation can cause bloating, stomach discomfort, hard
-                        stools, abdominal pain, and infrequent bowel movements
-                        that affect your daily routine.
+                        Constipation can cause bloating, stomach discomfort,
+                        hard stools, abdominal pain, and infrequent bowel
+                        movements that affect your daily routine.
                       </p>
                     </div>
 
@@ -255,11 +254,12 @@ export default function Constipation() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Humancare Connect makes it simple to get care for
-                        constipation symptoms from home. Our telemedicine services
-                        let you schedule an online doctor appointment with a
-                        licensed provider who can help identify possible causes,
-                        recommend treatment options, and provide prescriptions
-                        when appropriate through our secure telemedicine platform.
+                        constipation symptoms from home. Our telemedicine
+                        services let you schedule an online doctor appointment
+                        with a licensed provider who can help identify possible
+                        causes, recommend treatment options, and provide
+                        prescriptions when appropriate through our secure
+                        telemedicine platform.
                       </p>
                     </div>
 
@@ -334,7 +334,14 @@ export default function Constipation() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=general&condition=Constipation")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=general&condition=Constipation",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">
@@ -353,86 +360,7 @@ export default function Constipation() {
         </div>
 
         {/* ══════════════════════ FAQ ══════════════════════ */}
-        <section className="condition-section--faq">
-          <div className="condition-container">
-            <div className="condition-faq-layout">
-              {/* Sidebar */}
-              <div className="condition-faq-sidebar">
-                <span className="condition-section-label condition-section-label--light">
-                  FAQ
-                </span>
-                <h2 className="condition-faq-title">
-                  Frequently Asked
-                  <br />
-                  Questions
-                </h2>
-                <p className="condition-faq-desc">
-                  Everything you need to know about primary care at HumanCare
-                  Connect. Can't find an answer?
-                </p>
-                <button className="condition-faq-chat">
-                  <MessageCircle size={18} /> Chat with our team
-                </button>
-                <div className="condition-faq-stat">
-                  ⚡ Avg. response in 2 min
-                </div>
-                <div className="condition-faq-stat">
-                  🔒 HIPAA secure &amp; private
-                </div>
-                <div className="condition-faq-stat">
-                  🌍 Available in all 50 states
-                </div>
-              </div>
 
-              {/* Content */}
-              <div className="condition-faq-content">
-                {faqData.map((cat, ci) => (
-                  <div key={cat.category} className="condition-faq-card">
-                    <div className="condition-faq-cat">
-                      <span className="condition-faq-dot" />
-                      {cat.category}
-                    </div>
-                    {cat.items.map((item, ii) => {
-                      const id = `${ci}-${ii}`;
-                      return (
-                        <div key={id} className="condition-faq-item">
-                          <button
-                            className="condition-faq-q"
-                            onClick={() => toggle(id)}
-                          >
-                            <span>{item.q}</span>
-                            <div
-                              className={`condition-faq-icon ${openId === id ? "condition-active" : ""}`}
-                            >
-                              +
-                            </div>
-                          </button>
-                          <div
-                            className={`condition-faq-ans ${openId === id ? "condition-open" : ""}`}
-                          >
-                            <p>{item.a}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-
-                <div className="condition-faq-bottom-cta">
-                  <div>
-                    <h3>Still have questions?</h3>
-                    <p>Our care team is available every day, 8 AM – 10 PM.</p>
-                  </div>
-                  <a href="/appointment-booking">
-                    <button>
-                      Book a Call <ArrowRight size={18} />
-                    </button>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

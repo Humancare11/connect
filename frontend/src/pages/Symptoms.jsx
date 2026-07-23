@@ -291,7 +291,10 @@ const conditionCategories = [
         name: "Preventive Screening",
         path: "/general-and-everyday-care/internal-medicine/preventive-screening",
       },
-      { name: "Medication Review", path: "/medication-review" },
+      {
+        name: "Medication Review",
+        path: "/general-and-everyday-care/internal-medicine/medication-review",
+      },
       {
         name: "Fever",
         path: "/general-and-everyday-care/general-physician/fever",
@@ -880,7 +883,7 @@ export default function Symptoms() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare Connect"
         description="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
         keywords="Consult a doctor online for symptoms, online doctor consultation, symptom-based online care, virtual healthcare services, symptom evaluation, medical advice online"
@@ -1207,7 +1210,7 @@ export default function Symptoms() {
             <div className="sy-faq__meta">
               <div className="sy-faq__meta-item">
                 <Clock size={14} />
-                <span>Avg. response in 2 min</span>
+                <span>Avg. response in 10 min</span>
               </div>
               <div className="sy-faq__meta-item">
                 <Lock size={14} />
@@ -1215,7 +1218,7 @@ export default function Symptoms() {
               </div>
               <div className="sy-faq__meta-item">
                 <Globe2 size={14} />
-                <span>Available in all 50 states</span>
+                <span>Available Globally</span>
               </div>
             </div>
           </div>

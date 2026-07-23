@@ -565,7 +565,7 @@ export const conditions = [
     keywords: ["medical certificate"]
   },
   {
-    id: "medication-review", title: "Medication Review", type: "condition", category: "general-and-everyday-care", route: "/medication-review",
+    id: "medication-review", title: "Medication Review", type: "condition", category: "general-and-everyday-care", route: "/general-and-everyday-care/internal-medicine/medication-review",
     keywords: ["medication review", "medicine review"]
   },
   {
@@ -981,7 +981,7 @@ export const conditions = [
     keywords: ["prenatal consultation"]
   },
   {
-    id: "vaginal-yeast-infection", title: "Vaginal Yeast Infection", type: "condition", category: "women-health", specialty: "obstetrics-and-gynaecology", route: "/vaginal-yeast-infection",
+    id: "vaginal-yeast-infection", title: "Vaginal Yeast Infection", type: "condition", category: "women-health", specialty: "obstetrics-and-gynaecology", route: "/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection",
     keywords: ["yeast infection", "vaginal itch", "candida", "thrush"]
   },
   {

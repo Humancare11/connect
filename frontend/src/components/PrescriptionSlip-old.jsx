@@ -11,7 +11,7 @@ const styles = `
   margin: 0;
   padding: 24px;
   background: ${LIGHT};
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
 }
 .rx-slip {
   width: 800px;
@@ -31,7 +31,7 @@ const styles = `
   position: absolute;
   right: -10px;
   top: -40px;
-  font-family: "Lora", serif;
+  font-family: var(--font-secondary);
   font-size: 220px;
   font-weight: 600;
   color: ${PRIMARY};
@@ -47,7 +47,7 @@ const styles = `
   position: relative;
 }
 .rx-clinic-name {
-  font-family: "Lora", serif;
+  font-family: var(--font-secondary);
   font-size: 26px;
   font-weight: 600;
   color: ${PRIMARY};
@@ -96,7 +96,7 @@ const styles = `
   padding: 18px 44px 0;
 }
 .rx-title {
-  font-family: "Lora", serif;
+  font-family: var(--font-secondary);
   font-size: 15px;
   font-weight: 600;
   color: ${PRIMARY};
@@ -113,7 +113,7 @@ const styles = `
   text-align: right;
 }
 .rx-ref-code {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-secondary);
   font-size: 12.5px;
   font-weight: 500;
   color: ${PRIMARY};
@@ -176,7 +176,7 @@ const styles = `
   padding: 24px 44px 0;
 }
 .rx-symbol {
-  font-family: "Lora", serif;
+  font-family: var(--font-secondary);
   font-size: 30px;
   color: ${ACCENT};
   margin-bottom: 6px;
@@ -295,7 +295,7 @@ table.rx-table tbody td {
   letter-spacing: 0.02em;
 }
 .rx-footer-brand {
-  font-family: "Lora", serif;
+  font-family: var(--font-secondary);
   font-size: 11px;
   color: #fff;
   letter-spacing: 0.03em;

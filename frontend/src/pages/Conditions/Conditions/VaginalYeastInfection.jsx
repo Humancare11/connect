@@ -132,7 +132,7 @@ export default function VaginalYeastInfection() {
         title="Vaginal Yeast Infection Treatment Online | Symptom Care"
         description="Get fast, discreet care for vaginal yeast infection symptoms. Connect with an online provider for symptom evaluation, treatment guidance, and prescriptions when appropriate."
         keywords="Vaginal yeast infection, Yeast infection treatment, vaginal yeast infection symptoms, vaginal itching, vaginal burning, vaginal irritation, unusual vaginal discharge, vaginal discomfort, yeast overgrowth, telemedicine services, online doctor appointment, telemedicine platform, online provider, prescription support"
-        url="https://humancareconnect.co/vaginal-yeast-infection"
+        url="https://humancareconnect.co/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection"
       />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
@@ -254,13 +254,13 @@ export default function VaginalYeastInfection() {
                       <h3 className="condition-block-title">How?</h3>
                       <p className="condition-block-body">
                         Get fast and discreet care for vaginal yeast infection
-                        symptoms with Humancare Connect. Our telemedicine services
-                        make it easy to schedule an online doctor appointment and
-                        connect with a licensed provider from home. Through our
-                        secure telemedicine platform, you can receive symptom
-                        evaluation, treatment guidance, and prescriptions when
-                        appropriate without the discomfort of an in-person clinic
-                        visit.
+                        symptoms with Humancare Connect. Our telemedicine
+                        services make it easy to schedule an online doctor
+                        appointment and connect with a licensed provider from
+                        home. Through our secure telemedicine platform, you can
+                        receive symptom evaluation, treatment guidance, and
+                        prescriptions when appropriate without the discomfort of
+                        an in-person clinic visit.
                       </p>
                     </div>
 
@@ -335,7 +335,14 @@ export default function VaginalYeastInfection() {
                   ))}
                 </div>
 
-                <button className="condition-sbc-cta" onClick={() => navigate("/category-consultant?category=women&condition=Vaginal%20Yeast%20Infection")}>
+                <button
+                  className="condition-sbc-cta"
+                  onClick={() =>
+                    navigate(
+                      "/category-consultant?category=women&condition=Vaginal%20Yeast%20Infection",
+                    )
+                  }
+                >
                   Start Consultation →
                 </button>
                 <p className="condition-sbc-terms">
@@ -354,86 +361,7 @@ export default function VaginalYeastInfection() {
         </div>
 
         {/* ══════════════════════ FAQ ══════════════════════ */}
-        <section className="condition-section--faq">
-          <div className="condition-container">
-            <div className="condition-faq-layout">
-              {/* Sidebar */}
-              <div className="condition-faq-sidebar">
-                <span className="condition-section-label condition-section-label--light">
-                  FAQ
-                </span>
-                <h2 className="condition-faq-title">
-                  Frequently Asked
-                  <br />
-                  Questions
-                </h2>
-                <p className="condition-faq-desc">
-                  Everything you need to know about primary care at HumanCare
-                  Connect. Can't find an answer?
-                </p>
-                <button className="condition-faq-chat">
-                  <MessageCircle size={18} /> Chat with our team
-                </button>
-                <div className="condition-faq-stat">
-                  ⚡ Avg. response in 2 min
-                </div>
-                <div className="condition-faq-stat">
-                  🔒 HIPAA secure &amp; private
-                </div>
-                <div className="condition-faq-stat">
-                  🌍 Available in all 50 states
-                </div>
-              </div>
 
-              {/* Content */}
-              <div className="condition-faq-content">
-                {faqData.map((cat, ci) => (
-                  <div key={cat.category} className="condition-faq-card">
-                    <div className="condition-faq-cat">
-                      <span className="condition-faq-dot" />
-                      {cat.category}
-                    </div>
-                    {cat.items.map((item, ii) => {
-                      const id = `${ci}-${ii}`;
-                      return (
-                        <div key={id} className="condition-faq-item">
-                          <button
-                            className="condition-faq-q"
-                            onClick={() => toggle(id)}
-                          >
-                            <span>{item.q}</span>
-                            <div
-                              className={`condition-faq-icon ${openId === id ? "condition-active" : ""}`}
-                            >
-                              +
-                            </div>
-                          </button>
-                          <div
-                            className={`condition-faq-ans ${openId === id ? "condition-open" : ""}`}
-                          >
-                            <p>{item.a}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-
-                <div className="condition-faq-bottom-cta">
-                  <div>
-                    <h3>Still have questions?</h3>
-                    <p>Our care team is available every day, 8 AM – 10 PM.</p>
-                  </div>
-                  <a href="/appointment-booking">
-                    <button>
-                      Book a Call <ArrowRight size={18} />
-                    </button>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

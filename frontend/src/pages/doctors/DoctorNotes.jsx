@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../api";
-import "./DoctorNotes.css";a
+import "./DoctorNotes.css";
 
 const fmtDateTime = (value) => {
   if (!value) return "";
