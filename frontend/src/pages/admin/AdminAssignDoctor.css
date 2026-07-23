@@ -2,7 +2,7 @@
 .aad-page {
   min-height: 100vh;
   background: #f6f8fb;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-secondary);
   color: #1a1d23;
   padding-bottom: 40px;
 }
@@ -206,7 +206,7 @@
 }
 
 .aad-cell-id {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-secondary);
   color: #475467;
 }
 

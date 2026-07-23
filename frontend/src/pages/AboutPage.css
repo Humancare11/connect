@@ -7,7 +7,7 @@
 
 /* ─── Root wrapper ─── */
 .about-page {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-secondary);
   background: #F4F7FB;
   color: #1E3A5F;
   line-height: 1.6;
@@ -23,7 +23,7 @@
 
 /* ─── Headings & text helpers ─── */
 .about-page .heading {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   line-height: 1.13;
   letter-spacing: -0.015em;
@@ -295,7 +295,7 @@
 }
 
 .about-page .about-hero__title {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   line-height: 1.13;
   letter-spacing: -0.015em;
@@ -436,7 +436,7 @@
   border-radius: 0 14px 14px 0;
   padding: 18px 16px 18px 26px;
   margin: 32px 0;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   font-size: 22px;
   color: #1E3A5F;
@@ -478,14 +478,14 @@
   margin-bottom: 16px;
 }
 .about-page .problem-card__num {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-size: 26px;
   font-weight: 700;
   letter-spacing: .05em;
   color: rgba(255,255,255,.12);
 }
 .about-page .problem-card__title {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-size: 18px;
   font-weight: 700;
   color: #fff;
@@ -519,7 +519,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   font-size: 18px;
   color: #fff;
@@ -534,7 +534,7 @@
 .about-page .step-card__num--gold { background: #C97B1A; box-shadow: 0 8px 18px rgba(201,123,26,.25); }
 
 .about-page .step-card__title {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-size: 18px;
   font-weight: 700;
   color: #1E3A5F;
@@ -612,7 +612,7 @@
   background: #F4F7FB;
 }
 .about-page .stats-cell__num {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   line-height: 1;
   font-size: clamp(34px, 4vw, 52px);
@@ -712,7 +712,7 @@
 
 .about-page .solve-card__title {
   position: relative;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-size: 20px;
   font-weight: 700;
   color: #1E3A5F;
@@ -781,7 +781,7 @@
 
 .about-page .service-card__title {
   position: relative;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-size: 18px;
   font-weight: 700;
   color: #1E3A5F;
@@ -800,7 +800,7 @@
 
 .about-page .service-card__price {
   position: relative;
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 700;
   font-size: 22px;
   margin-top: 8px;
@@ -850,7 +850,7 @@
   .about-page .trust-panel__text--first { order: 0; }
 }
 .about-page .trust-panel__title {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-size: 20px;
   font-weight: 700;
   color: #1E3A5F;
@@ -903,7 +903,7 @@
   position: relative;
 }
 .about-page .trust-privacy__text h3 {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-size: 22px;
   font-weight: 700;
   color: #fff;
@@ -981,7 +981,7 @@
   margin-bottom: 8px;
 }
 .about-page .address-card__name {
-  font-family: 'Satoshi', 'Inter', sans-serif;
+  font-family: var(--font-primary);
   font-size: 17px;
   font-weight: 700;
   color: #1E3A5F;

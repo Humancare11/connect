@@ -1,7 +1,7 @@
 /* ── Section Wrapper ── */
 .services-section-wrapper {
   position: relative;
-  width: calc(100% - 100px);
+  width: calc(100% - 48px);
   max-width: 1500px;
   margin: 80px auto;
   padding: 70px 50px;
@@ -72,7 +72,7 @@
 
 .services-main-heading,
 .services-heading-highlight {
-  font-family: "Playfair Display", serif;
+  font-family: var(--font-primary);
   font-weight: 300;
   font-size: clamp(40px, 6vw, 64px);
   color: white;
@@ -197,7 +197,7 @@
 
 /* ── Card Title ── */
 .services-card-title {
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-primary);
   font-size: 18px;
   font-weight: 700;
   color: white;
@@ -259,7 +259,7 @@
 }
 
 .services-stat-value-text {
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-primary);
   font-size: 20px;
   font-weight: 900;
   color: #ffffff;
@@ -324,7 +324,7 @@
 }
 
 .services-weight-stat-number {
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-primary);
   font-weight: 900;
   font-size: 28px;
   color: white;
@@ -419,6 +419,7 @@
 @media (max-width: 1199px) and (min-width: 992px) {
   .services-section-wrapper {
     padding: 80px 40px;
+    width: calc(100% - 40px);
   }
   .services-inner-container {
     padding: 0 20px;
@@ -478,7 +479,7 @@
 @media (max-width: 991px) and (min-width: 768px) {
   .services-section-wrapper {
     padding: 70px 32px;
-    width: calc(100% - 48px);
+    width: calc(100% - 32px);
   }
   .services-inner-container {
     padding: 0 16px;
@@ -522,7 +523,7 @@
 @media (max-width: 767px) and (min-width: 600px) {
   .services-section-wrapper {
     padding: 60px 24px;
-    width: calc(100% - 32px);
+    width: calc(100% - 24px);
   }
   .services-inner-container {
     padding: 0;
@@ -562,7 +563,7 @@
 @media (max-width: 599px) and (min-width: 400px) {
   .services-section-wrapper {
     padding: 50px 16px;
-    width: calc(100% - 24px);
+    width: calc(100% - 16px);
     border-radius: 24px;
   }
   .services-bento-grid {
@@ -607,7 +608,7 @@
 @media (max-width: 399px) {
   .services-section-wrapper {
     padding: 40px 14px;
-    width: calc(100% - 20px);
+    width: calc(100% - 12px);
     border-radius: 20px;
   }
   .services-bento-grid {

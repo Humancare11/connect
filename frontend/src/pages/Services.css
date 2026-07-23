@@ -37,7 +37,7 @@
    PAGE WRAPPER
    ============================================ */
 .ha-page {
-  font-family: var(--font);
+  font-family: var(--font-secondary);
   background: var(--bg-section);
   width: 100%;
   overflow-x: hidden;
@@ -342,7 +342,7 @@
   border: none;
   border-radius: var(--radius-btn);
   padding: 14px 32px;
-  font-family: var(--font);
+  font-family: var(--font-secondary);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -471,7 +471,7 @@
   border: none;
   border-radius: var(--radius-btn);
   padding: 14px 36px;
-  font-family: var(--font);
+  font-family: var(--font-secondary);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;

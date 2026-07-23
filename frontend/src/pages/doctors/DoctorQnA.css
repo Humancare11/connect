@@ -17,7 +17,7 @@
 .dq-root {
   padding: 32px;
   margin: 0 auto;
-  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-family: var(--font-secondary);
   color: var(--dq-text);
 }
 

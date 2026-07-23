@@ -6,6 +6,9 @@ import {
   FaFacebookF,
   FaYoutube,
   FaInstagram,
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaEnvelope,
 } from "react-icons/fa";
 
 import { FaThreads } from "react-icons/fa6";
@@ -42,6 +45,41 @@ export default function Footer() {
             <span className="footer-badge">SOC 2 Type II</span>
             <span className="footer-badge">HITRUST R2</span>
           </div> */}
+
+          {/* CONTACT GLASS CARD */}
+          <div className="footer-contact-card">
+            <div className="footer-contact-item">
+              <span className="footer-contact-icon">
+                <FaMapMarkerAlt />
+              </span>
+              <span className="footer-contact-text">
+                4 Peddlers Row, 1091 Newark,
+                <br />
+                DE 19702, USA
+              </span>
+            </div>
+
+            <div className="footer-contact-item">
+              <span className="footer-contact-icon">
+                <FaPhoneAlt />
+              </span>
+              <a href="tel:+13023039993" className="footer-contact-text">
+                +1 (302) 303-9993
+              </a>
+            </div>
+
+            <div className="footer-contact-item">
+              <span className="footer-contact-icon">
+                <FaEnvelope />
+              </span>
+              <a
+                href="mailto:support@humancareconnect.co"
+                className="footer-contact-text"
+              >
+                support@humancareconnect.co
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* PLATFORM */}

@@ -21,7 +21,7 @@
 
 .dp-root-mp {
   padding: 4px 0 24px;
-  font-family: "Outfit", "DM Sans", sans-serif;
+  font-family: var(--font-primary);
   color: var(--text);
 }
 

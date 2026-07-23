@@ -33,13 +33,13 @@
 }
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
   background: var(--bg);
   color: var(--text);
 }
 
 h1, h2, h3, h4 {
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-primary);
 }
 
 /* ─────────────────────────────────────────────
@@ -153,7 +153,7 @@ h1, h2, h3, h4 {
   font-size: 14px;
   color: var(--text);
   background: transparent;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
 }
 
 .hero-search-input::placeholder { color: var(--muted); }
@@ -184,7 +184,7 @@ h1, h2, h3, h4 {
 }
 
 .stat-value {
-  font-family: "Satoshi", sans-serif;
+  font-family: var(--font-primary);
   font-size: 24px;
   font-weight: 700;
   color: var(--primary);
@@ -253,7 +253,7 @@ h1, h2, h3, h4 {
   cursor: pointer;
   border-bottom: 2.5px solid transparent;
   transition: color 0.2s, border-color 0.2s;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
   white-space: nowrap;
   border-radius: 0;
 }
@@ -414,7 +414,7 @@ h1, h2, h3, h4 {
   color: var(--primary);
   cursor: pointer;
   width: fit-content;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
   transition:
     background 0.22s var(--ease),
     color      0.22s var(--ease),
@@ -493,7 +493,7 @@ h1, h2, h3, h4 {
   color: var(--text);
   font-size: 13.5px;
   font-weight: 500;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
   cursor: pointer;
   transition:
     background    0.2s var(--ease),
@@ -572,7 +572,7 @@ h1, h2, h3, h4 {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
   font-size: 14px;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
   outline: none;
   min-width: 240px;
   transition: border-color 0.2s, background 0.2s;
@@ -594,7 +594,7 @@ h1, h2, h3, h4 {
   color: #fff;
   font-size: 14px;
   font-weight: 600;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
   cursor: pointer;
   transition: background 0.2s, transform 0.18s, box-shadow 0.2s;
   white-space: nowrap;

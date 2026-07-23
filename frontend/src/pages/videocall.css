@@ -3,7 +3,7 @@
    All classes prefixed: hc-vc__
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap');
+
 
 /* ── Reset / root ────────────────────────────────────────────── */
 *,
@@ -18,7 +18,7 @@
   position: fixed;
   inset: 0;
   background: #000000;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-secondary);
   color: #e8f4ff;
   display: flex;
   flex-direction: column;
@@ -40,7 +40,7 @@
   gap: 20px;
   text-align: center;
   padding: 40px 24px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-secondary);
 }
 
 .hc-vc__gate-icon {
@@ -49,7 +49,7 @@
 }
 
 .hc-vc__gate h2 {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 24px;
   font-weight: 700;
   color: #f0f8ff;
@@ -84,7 +84,7 @@
   background: rgba(255, 255, 255, .06);
   border: 1px solid rgba(255, 255, 255, .12);
   color: #e8f4ff;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -145,7 +145,7 @@
 }
 
 .hc-vc__logo-text {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 14px;
   font-weight: 700;
   color: #f0f8ff;
@@ -173,7 +173,7 @@
   border-radius: 50px;
   background: #01164a;
   border: 1px solid rgba(255, 255, 255, .08);
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 14px;
   font-weight: 600;
   color: #f0f8ff;
@@ -209,7 +209,7 @@
   border-radius: 50px;
   background: rgba(255, 255, 255, .05);
   border: 1px solid rgba(255, 255, 255, .08);
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -277,7 +277,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 15px;
   font-weight: 700;
 }
@@ -292,7 +292,7 @@
 
 .hc-vc__infobar-label {
   font-size: 10px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .6px;
@@ -455,7 +455,7 @@
 }
 
 .hc-vc__waiting-title {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 17px;
   font-weight: 600;
   color: #e8f4ff;
@@ -484,7 +484,7 @@
   color: #fca5a5;
   padding: 10px 22px;
   border-radius: 50px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 600;
   backdrop-filter: blur(12px);
@@ -507,7 +507,7 @@
   color: #fca5a5;
   padding: 10px 22px;
   border-radius: 50px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 600;
   backdrop-filter: blur(12px);
@@ -526,7 +526,7 @@
   background: rgba(8, 25, 47, 0.94);
   color: #d7fff7;
   padding: 10px 18px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -603,7 +603,7 @@
   position: absolute;
   bottom: 7px;
   left: 9px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 10px;
   font-weight: 600;
   color: rgba(255, 255, 255, .75);
@@ -656,7 +656,7 @@
   border: 1px solid rgba(25, 201, 163, .3);
   color: #19c9a3;
   white-space: nowrap;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-weight: 600;
   backdrop-filter: blur(12px);
@@ -730,7 +730,7 @@
 }
 
 .hc-vc__chat-title {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 600;
   color: #e8f4ff;
@@ -826,7 +826,7 @@
 
 .hc-vc__msg-name {
   font-size: 10px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 600;
   color: #5a7a96;
   margin-bottom: 3px;
@@ -920,7 +920,7 @@
   font-size: 14px;
   color: #19c9a3;
   flex-shrink: 0;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
 }
 
 /* Chat footer */
@@ -976,7 +976,7 @@
   border-radius: 10px;
   padding: 9px 13px;
   color: #e8f4ff;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13px;
   outline: none;
   transition: border-color .2s;
@@ -1051,7 +1051,7 @@
   border: 1px solid rgba(255, 255, 255, .08);
   color: #7a9ab4;
   cursor: pointer;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: .3px;
@@ -1127,7 +1127,7 @@
   border-radius: 50px;
   background: #ef4444;
   color: #fff;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 10px;
   font-weight: 700;
   display: flex;
@@ -1146,7 +1146,7 @@
   background: rgba(34, 197, 94, .07);
   border: 1px solid rgba(34, 197, 94, .22);
   color: #22c55e;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1205,7 +1205,7 @@
   padding: 11px 24px;
   border-radius: 12px;
   font-size: 13px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 500;
   z-index: 30;
   backdrop-filter: blur(12px);
@@ -1299,7 +1299,7 @@
 }
 
 .hc-vc__completed-card h2 {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 22px;
   font-weight: 700;
   color: #f0f8ff;
@@ -1358,7 +1358,7 @@
   font-size: 13px;
   color: #ddd6fe;
   line-height: 1.45;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-secondary);
 }
 
 .hc-vc__rx-notif-text strong {
@@ -1373,7 +1373,7 @@
   border: 1px solid rgba(168, 85, 247, .5);
   color: #c4b5fd;
   font-size: 12px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 600;
   cursor: pointer;
   transition: all .2s;
@@ -1419,7 +1419,7 @@
   color: #86efac;
   padding: 10px 24px;
   border-radius: 12px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 13px;
   font-weight: 600;
   backdrop-filter: blur(12px);
@@ -1479,7 +1479,7 @@
 
 .hc-vc__rx-modal-head h3 {
   flex: 1;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 16px;
   font-weight: 700;
   color: #f0f8ff;
@@ -1519,12 +1519,12 @@
   padding: 9px 12px;
   border-radius: 8px;
   font-size: 12px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
 }
 
 .hc-vc__rx-label {
   font-size: 11px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .5px;
@@ -1539,7 +1539,7 @@
   border-radius: 10px;
   padding: 9px 12px;
   color: #e8f4ff;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-secondary);
   font-size: 13px;
   outline: none;
   transition: border-color .2s;
@@ -1600,7 +1600,7 @@
   border: 1px solid rgba(168, 85, 247, .3);
   color: #c4b5fd;
   font-size: 12px;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-weight: 600;
   cursor: pointer;
   transition: all .2s;
@@ -1623,7 +1623,7 @@
   background: rgba(255, 255, 255, .05);
   border: 1px solid rgba(255, 255, 255, .1);
   color: #7a9ab4;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1641,7 +1641,7 @@
   background: #a855f7;
   border: none;
   color: #fff;
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -1865,7 +1865,7 @@
   font-weight: 700;
   letter-spacing: 0.4px;
   color: #f4f8ff;
-  font-family: "Sora", sans-serif;
+  font-family: var(--font-primary);
 }
 
 .hc-vc__meta-party {
@@ -2280,7 +2280,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-family: "Sora", sans-serif;
+  font-family: var(--font-primary);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.3px;

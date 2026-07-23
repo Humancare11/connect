@@ -2,7 +2,7 @@
    DoctorDashboard.css — Humancare Dark Theme
    ================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 
 :root {
   --navy: #0d1b2a;
@@ -38,7 +38,7 @@
 
 /* ── Root ── */
 .dd-root {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary);
   background: var(--navy);
   min-height: 100vh;
   color: var(--text-1);
@@ -76,7 +76,7 @@
 
 .dd-eyebrow {
   display: block;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-secondary);
   font-size: 10px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -134,7 +134,7 @@
 }
 
 .dd-clock {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-secondary);
   font-size: 36px;
   font-weight: 500;
   color: var(--teal);
@@ -202,7 +202,7 @@
 }
 
 .dd-stat-value {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-secondary);
   font-size: 26px;
   font-weight: 500;
   color: var(--text-1);
@@ -304,7 +304,7 @@
   border: none;
   background: transparent;
   color: var(--text-2);
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary);
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
@@ -323,7 +323,7 @@
 }
 
 .dd-tab-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-secondary);
   font-size: 10px;
   background: var(--slate);
   padding: 1px 6px;
@@ -411,7 +411,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-secondary);
   font-size: 11px;
   color: var(--text-3);
 }
@@ -440,7 +440,7 @@
   border-radius: 20px;
   font-size: 11.5px;
   font-weight: 500;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-secondary);
   white-space: nowrap;
 }
 
@@ -495,7 +495,7 @@
   gap: 6px;
   padding: 7px 14px;
   border-radius: var(--radius-sm);
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-primary);
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
@@ -558,7 +558,7 @@
 .dd-done {
   font-size: 12px;
   color: var(--green);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-secondary);
   white-space: nowrap;
 }
 

@@ -20,7 +20,7 @@
     --shadow-2: 0 30px 80px -30px rgba(11, 40, 100, .30);
     --shadow-3: 0 50px 120px -40px rgba(11, 40, 100, .40);
     --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    --display: "Satoshi", sans-serif, system-ui, sans-serif;
+    --display: var(--font-primary);
     --mono: "JetBrains Mono", ui-monospace, monospace;
     --corp-bg: #F7FAFF;
 }
@@ -32,7 +32,7 @@
 .industry-slider-section {
     background: var(--corp-bg);
     padding: 140px 0;
-    font-family: var(--display);
+    font-family: var(--font-primary);
     position: relative;
     /* FIX: Do NOT set overflow-x: hidden here — it creates a new scroll
        context that traps the nav pill and prevents it from being seen.
@@ -103,7 +103,7 @@
     position: absolute;
     top: -20px;
     left: -10px;
-    font-family: var(--display);
+    font-family: var(--font-primary);
     font-size: clamp(32px, 6vw, 72px);
     font-weight: 900;
     color: rgba(255, 255, 255, 0.03);
@@ -113,7 +113,7 @@
 }
 
 .slider-h1-v2 {
-    font-family: var(--display);
+    font-family: var(--font-primary);
     font-size: 50px;
     font-weight: 800;
     color: var(--navy);
@@ -356,7 +356,7 @@
 }
 
 .v3-title {
-    font-family: var(--display);
+    font-family: var(--font-primary);
     font-size: clamp(32px, 4vw, 54px);
     font-weight: 700;
     color: var(--navy);

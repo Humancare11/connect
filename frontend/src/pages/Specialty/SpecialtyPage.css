@@ -6,12 +6,7 @@
 .sp-page {
   min-height: 100vh;
   background: #fff;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-secondary);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }

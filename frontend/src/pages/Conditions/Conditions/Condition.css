@@ -201,7 +201,7 @@
   font-weight: 800;
   color: #0a1f44;
   line-height: 1.2;
-  font-family: "Georgia", serif;
+  font-family: var(--font-secondary);
   margin: 0 0 18px;
 }
 .condition-nav-card {
@@ -381,7 +381,7 @@
   color: #0a1f44;
   line-height: 1;
   letter-spacing: -1.5px;
-  font-family: "Georgia", serif;
+  font-family: var(--font-secondary);
 }
 .condition-sbc-price-sub {
   font-size: 12.5px;
@@ -509,7 +509,7 @@
   font-weight: 800;
   color: #0a1f44;
   margin: 14px 0;
-  font-family: Georgia, serif;
+  font-family: var(--font-secondary);
 }
 .condition-faq-desc {
   color: #5c7099;
@@ -883,7 +883,7 @@
 
 /* ══ ROOT PAGE (replaces inline styles on the root export) ══ */
 .condition-root {
-  font-family: Satoshi, sans-serif;
+  font-family: var(--font-primary);
   color: #0a1f44;
   background: #fff;
 }
