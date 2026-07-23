@@ -24,7 +24,6 @@ const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const Corporates = lazy(() => import("./pages/Corporates"));
 const Contact = lazy(() => import("./pages/Contact"));
 const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
-const Terms = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 // import Register from "./pages/Register";
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
@@ -1146,7 +1145,6 @@ function AppLayout() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/corporates" element={<Corporates />} />
           <Route path="/contact-us" element={<Contact />} />
-          <Route path="/terms" element={<Terms />} />
           <Route path="/login" element={<Login />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
           {/* <Route path="/register" element={<Register />} /> */}

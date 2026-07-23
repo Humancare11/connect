@@ -323,7 +323,7 @@ export default function TeleconsultationWorkflowPolicy() {
                 <div>
                   <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#94a3b8", margin: "0 0 3px" }}>Mailing address</p>
                   <p style={{ fontSize: "13px", color: "#334155", lineHeight: 1.65, margin: 0 }}>
-                    131 Continental Dr, Suite 305<br />Newark, DE 19713
+                    4 Peddlers Row, 1091, <br />Newark, DE 19702, USA
                   </p>
                 </div>
               </div>

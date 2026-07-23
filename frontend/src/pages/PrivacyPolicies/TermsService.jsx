@@ -564,9 +564,8 @@ export default function TermsService() {
                       margin: 0,
                     }}
                   >
-                    131 Continental Dr, Suite 305
-                    <br />
-                    Newark, DE 19713
+4 Peddlers Row, 1091,               <br />
+                    Newark, DE 19702, USA 
                   </p>
                 </div>
               </div>
