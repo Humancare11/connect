@@ -439,7 +439,7 @@ const GhostBtn = ({ children, onClick }) => (
    HERO
   
 ────────────────────────────────────────────────────────────────────────── */
-const Hero = ({ s, price, priceLoading }) => {
+const Hero = ({ s, price, priceLoading, bp }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -501,12 +501,12 @@ const Hero = ({ s, price, priceLoading }) => {
           zIndex: 10,
           maxWidth: 1381,
           margin: "0 auto",
-          padding: "90px 50px 15px",
+          padding: bp.isMobile ? "100px 16px 40px" : "90px 50px 15px",
           width: "100%",
           opacity: op,
           display: "grid",
-          gridTemplateColumns: "1fr 450px",
-          gap: 48,
+          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 450px",
+          gap: bp.isMobile ? 24 : 48,
           alignItems: "center",
         }}
       ><div>
@@ -582,7 +582,7 @@ const Hero = ({ s, price, priceLoading }) => {
               flexWrap: "wrap",
             }}
           >
-            <PrimaryBtn ac={s.accentColor}>
+            <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
               <a
                 href="/appointment-booking"
                 style={{ color: "#fff", textDecoration: "none" }}
@@ -616,7 +616,7 @@ const Hero = ({ s, price, priceLoading }) => {
    previously held the icon visual panel — now holds the consultation form.
    The outcomes strip at the bottom is unchanged in structure.
 ────────────────────────────────────────────────────────────────────────── */
-const Overview = ({ s }) => (
+const Overview = ({ s, bp }) => (
   <section
     style={{
       background: BG_BASE,
@@ -627,7 +627,7 @@ const Overview = ({ s }) => (
       style={{
         maxWidth: 1200,
         margin: "0 auto",
-        padding: "88px 24px",
+        padding: bp.isMobile ? "48px 16px" : "88px 24px",
       }}
     >
       <motion.div
@@ -637,8 +637,8 @@ const Overview = ({ s }) => (
         viewport={{ once: true, margin: "-60px" }}
         style={{
           display: "grid",
-          gridTemplateColumns: "1.1fr 0.9fr",
-          gap: 64,
+          gridTemplateColumns: bp.isMobile ? "1fr" : "1.1fr 0.9fr",
+          gap: bp.isMobile ? 32 : 64,
           alignItems: "start",
         }}
       >
@@ -754,7 +754,7 @@ const Overview = ({ s }) => (
         viewport={{ once: true }}
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
           gap: 12,
           marginTop: 52,
         }}
@@ -808,16 +808,16 @@ const Overview = ({ s }) => (
    Fix 5: sticky card glass effect removed — flat surface, no backdrop-filter,
    no glow blob.
 ────────────────────────────────────────────────────────────────────────── */
-const HowItWorks = ({ s }) => (
+const HowItWorks = ({ s, bp }) => (
   <section
     style={{
-      padding: "88px 0",
+      padding: bp.isMobile ? "48px 0" : "88px 0",
       background: BG_SURFACE,
       borderTop: `1px solid ${BORDER}`,
       borderBottom: `1px solid ${BORDER}`,
     }}
   >
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "0 16px" : "0 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -825,8 +825,8 @@ const HowItWorks = ({ s }) => (
         viewport={{ once: true, margin: "-60px" }}
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 64,
+          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
+          gap: bp.isMobile ? 32 : 64,
           alignItems: "start",
         }}
       >
@@ -982,7 +982,7 @@ const HowItWorks = ({ s }) => (
               style={{
                 marginTop: 20,
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
                 gap: 8,
               }}
             >
@@ -1018,8 +1018,8 @@ const HowItWorks = ({ s }) => (
    FEATURES & BENEFITS
  
 ────────────────────────────────────────────────────────────────────────── */
-const Features = ({ s }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+const Features = ({ s, bp }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
     <motion.div
       variants={stagger}
       initial="hidden"
@@ -1191,11 +1191,11 @@ const whyUsItems = [
   ],
 ];
 
-const WhyUs = ({ s }) => {
+const WhyUs = ({ s, bp }) => {
   const [inView, setInView] = useState(false);
 
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -1229,7 +1229,7 @@ const WhyUs = ({ s }) => {
           viewport={{ once: true, amount: 0.3 }}
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
             gap: 12,
             marginBottom: 44,
           }}
@@ -1249,7 +1249,7 @@ const WhyUs = ({ s }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
             gap: 12,
           }}
         >
@@ -1309,16 +1309,16 @@ const WhyUs = ({ s }) => {
    FAQ
    Fix 5: container is a flat bordered surface, no backdrop blur.
 ────────────────────────────────────────────────────────────────────────── */
-const FAQ = ({ s }) => {
+const FAQ = ({ s, bp }) => {
   const [open, setOpen] = useState(null);
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+    <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 }}
+        style={{ display: "grid", gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr", gap: bp.isMobile ? 32 : 64 }}
       >
         <motion.div variants={fadeUp}>
           <SLabel text="FAQ" ac={s.accentColor} />
@@ -1471,8 +1471,8 @@ const FAQ = ({ s }) => {
    Fix 5: glow blobs and translucent layered gradient removed — flat tinted
    surface instead.
 ────────────────────────────────────────────────────────────────────────── */
-const FinalCTA = ({ s }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: "88px 24px" }}>
+const FinalCTA = ({ s, bp }) => (
+  <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -1481,7 +1481,7 @@ const FinalCTA = ({ s }) => (
       style={{
         position: "relative",
         borderRadius: 28,
-        padding: "72px 48px",
+        padding: bp.isMobile ? "40px 16px" : "72px 48px",
         textAlign: "center",
         background: `${s.accentColor}08`,
         border: `1px solid ${s.accentColor}25`,
@@ -1491,7 +1491,7 @@ const FinalCTA = ({ s }) => (
         <Pill ac={s.accentColor}>Start Today</Pill>
         <h2
           style={{
-            fontSize: "clamp(32px, 5vw, 52px)",
+            fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(32px, 5vw, 52px)",
             fontWeight: 900,
             color: TEXT_PRIMARY,
             lineHeight: 1.1,
@@ -1520,13 +1520,10 @@ const FinalCTA = ({ s }) => (
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 36,
-            flexWrap: "wrap",
+            justifyContent: "center", gap: 12, marginBottom: 36, flexWrap: "wrap", flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
-          <PrimaryBtn ac={s.accentColor}>
+          <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
             <a href="/login">Get Started</a>
           </PrimaryBtn>
           <GhostBtn>
@@ -1628,13 +1625,13 @@ export default function GeneralConsultation() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} price={price} priceLoading={priceLoading} />
-            <Overview s={s} />
-            <HowItWorks s={s} />
-            <Features s={s} />
-            <WhyUs s={s} />
-            <FAQ s={s} />
-            <FinalCTA s={s} />
+            <Hero s={s} price={price} priceLoading={priceLoading}  bp={bp} />
+            <Overview s={s}  bp={bp} />
+            <HowItWorks s={s}  bp={bp} />
+            <Features s={s}  bp={bp} />
+            <WhyUs s={s}  bp={bp} />
+            <FAQ s={s}  bp={bp} />
+            <FinalCTA s={s}  bp={bp} />
           </motion.div>
         </AnimatePresence>
       </div>

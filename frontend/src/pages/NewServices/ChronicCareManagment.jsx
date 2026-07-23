@@ -597,7 +597,7 @@ const Hero = ({ s, price, priceLoading, bp }) => {
               flexWrap: "wrap",
             }}
           >
-            <PrimaryBtn ac={s.accentColor}>
+            <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
               <a
                 href="/appointment-booking"
                 style={{ color: "#fff", textDecoration: "none" }}
@@ -990,7 +990,7 @@ const HowItWorks = ({ s, bp }) => (
               style={{
                 marginTop: 20,
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
                 gap: 8,
               }}
             >
@@ -1510,10 +1510,7 @@ const FinalCTA = ({ s, bp }) => (
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 36,
-            flexWrap: "wrap",
+            justifyContent: "center", gap: 12, marginBottom: 36, flexWrap: "wrap", flexDirection: bp.isMobile ? "column" : "row",
             flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
