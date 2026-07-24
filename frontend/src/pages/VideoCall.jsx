@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import socket, { setSocketAuthRole } from "../socket";
 import "./videocall.css";
+import HumancareLogo from "../assets/VideoCallingImage.png";
 import api, { getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
@@ -347,6 +348,18 @@ const ICE_MAX_RECOVERY_ATTEMPTS = Number(
 const ICE_RECOVERY_COOLDOWN_MS = Number(
   import.meta.env.VITE_RTC_ICE_RECOVERY_COOLDOWN_MS || 30000,
 );
+// How long we wait for a video-answer after sending an offer before treating
+// it as lost. Without this, a dropped/never-arriving answer (very likely
+// exactly during a network switch or a peer's page reload) leaves the offer
+// sender permanently stuck in "have-local-offer" — every later
+// renegotiation attempt (peer-joined, ICE restart, socket reconnect) all
+// funnel through createAndSendOffer, which refuses to run unless
+// signalingState is "stable". Nothing else in the app ever rolls back a
+// self-initiated offer, so without this timeout that stuck state is
+// permanent until the page is reloaded.
+const OFFER_ANSWER_TIMEOUT_MS = Number(
+  import.meta.env.VITE_RTC_OFFER_ANSWER_TIMEOUT_MS || 8000,
+);
 const STATS_INTERVAL_MS = Number(
   import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000,
 );
@@ -538,7 +551,7 @@ const setTrackHint = (track, hint) => {
   if (!track || !("contentHint" in track)) return;
   try {
     track.contentHint = hint;
-  } catch (_) { }
+  } catch (_) {}
 };
 
 const getSenderForKind = (pc, kind) => {
@@ -597,7 +610,7 @@ const tuneSenderQuality = async (
     }
 
     await sender.setParameters(params);
-  } catch (_) { }
+  } catch (_) {}
 };
 
 // Chat messages have no server-issued id in the payload this page receives,
@@ -729,6 +742,9 @@ export default function VideoCall() {
   // while we're legitimately waiting on one. Tracking the id of the offer
   // we're actually waiting on closes that gap.
   const pendingOfferIdRef = useRef(null);
+  // Fires if no answer arrives for our outstanding offer within
+  // OFFER_ANSWER_TIMEOUT_MS — see createAndSendOffer for why this exists.
+  const offerAnswerTimeoutRef = useRef(null);
   const restartRequestInFlightRef = useRef(false);
   const iceRecoveryAttemptsRef = useRef(0);
   const lastIceRecoveryAtRef = useRef(0);
@@ -1099,6 +1115,8 @@ export default function VideoCall() {
     ignoreOfferRef.current = false;
     pendingOfferIdRef.current = null;
     lastReceivedOfferIdRef.current = null;
+    clearTimeout(offerAnswerTimeoutRef.current);
+    offerAnswerTimeoutRef.current = null;
     restartRequestInFlightRef.current = false;
     screenSharingRef.current = false;
     screenShareStartInProgressRef.current = false;
@@ -1380,10 +1398,10 @@ export default function VideoCall() {
             activeSender,
             track.kind === "video"
               ? {
-                maxBitrate: BITRATE_PROFILE.cameraVideo,
-                maxFramerate: 30,
-                maintainResolution: true,
-              }
+                  maxBitrate: BITRATE_PROFILE.cameraVideo,
+                  maxFramerate: 30,
+                  maintainResolution: true,
+                }
               : { maxBitrate: BITRATE_PROFILE.voiceAudio },
           ),
         );
@@ -1430,12 +1448,14 @@ export default function VideoCall() {
     settingRemoteAnswerPendingRef.current = false;
     pendingOfferIdRef.current = null;
     lastReceivedOfferIdRef.current = null;
+    clearTimeout(offerAnswerTimeoutRef.current);
+    offerAnswerTimeoutRef.current = null;
     clearTimeout(iceRestartTimerRef.current);
     clearTimeout(ignoreOfferResetTimerRef.current);
     clearTimeout(reconnectStallTimerRef.current);
     reconnectStallTimerRef.current = null;
     setReconnectStalled(false);
-    let resolveLocalReady = () => { };
+    let resolveLocalReady = () => {};
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
@@ -1526,6 +1546,50 @@ export default function VideoCall() {
           logVideoEvent("ice_restart_offer_sent", {
             signalingState: pc.signalingState,
           });
+
+        // Self-heal if this specific offer never gets answered (dropped
+        // signaling message, peer mid-reconnect, replayed/rejected stale
+        // answer, etc.) — otherwise pc stays wedged in "have-local-offer"
+        // forever, since nothing else ever rolls back our own offer.
+        clearTimeout(offerAnswerTimeoutRef.current);
+        offerAnswerTimeoutRef.current = window.setTimeout(() => {
+          offerAnswerTimeoutRef.current = null;
+          if (!mounted || pc.signalingState === "closed") return;
+          if (pendingOfferIdRef.current !== offerId) return; // already resolved or superseded
+          if (pc.signalingState !== "have-local-offer") {
+            pendingOfferIdRef.current = null;
+            return;
+          }
+          logVideoEvent("offer_answer_timeout_rollback", {
+            offerId,
+            signalingState: pc.signalingState,
+          });
+          console.warn(
+            "No answer received for offer %s within %dms — rolling back to retry.",
+            offerId,
+            OFFER_ANSWER_TIMEOUT_MS,
+          );
+          pc.setLocalDescription({ type: "rollback" })
+            .then(() => {
+              pendingOfferIdRef.current = null;
+              // Retry directly rather than via scheduleIceRestart(): that
+              // helper bails out early whenever pc.connectionState already
+              // reads "connected" — which is exactly the misleading state
+              // this timeout is designed to catch (the underlying
+              // connectionState can lag well behind reality; a timed-out
+              // offer is itself strong evidence something needs
+              // renegotiating regardless of what connectionState currently
+              // reports). createAndSendOffer's own guards (mounted,
+              // signalingState, isReadyRef) still apply, so this can't fire
+              // against a closed/torn-down pc.
+              void createAndSendOffer({ iceRestart: true });
+            })
+            .catch((err) => {
+              pendingOfferIdRef.current = null;
+              console.error("Rollback after offer-answer timeout failed:", err);
+            });
+        }, OFFER_ANSWER_TIMEOUT_MS);
+
         return true;
       } catch (err) {
         console.error(
@@ -1712,7 +1776,10 @@ export default function VideoCall() {
         // can end up stuck rendering (or freezing on) the wrong track.
         remoteStream
           .getTracks()
-          .filter((existing) => existing.kind === track.kind && existing.id !== track.id)
+          .filter(
+            (existing) =>
+              existing.kind === track.kind && existing.id !== track.id,
+          )
           .forEach((stale) => remoteStream.removeTrack(stale));
 
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
@@ -1857,8 +1924,11 @@ export default function VideoCall() {
           console.info("Rolling back local offer to accept peer offer.");
           await pc.setLocalDescription({ type: "rollback" });
           // Our own outstanding offer was just discarded — any answer that
-          // still shows up for it later is stale and must be rejected.
+          // still shows up for it later is stale and must be rejected, and
+          // the answer-timeout watchdog for it is no longer relevant.
           pendingOfferIdRef.current = null;
+          clearTimeout(offerAnswerTimeoutRef.current);
+          offerAnswerTimeoutRef.current = null;
         } else if (offerCollision) {
           console.info(
             "Ignoring offer while negotiation is already in progress.",
@@ -1934,6 +2004,8 @@ export default function VideoCall() {
         settingRemoteAnswerPendingRef.current = true;
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         pendingOfferIdRef.current = null;
+        clearTimeout(offerAnswerTimeoutRef.current);
+        offerAnswerTimeoutRef.current = null;
         logVideoEvent("answer_accepted", {
           offerId: receivedOfferId,
           signalingState: pc.signalingState,
@@ -1979,11 +2051,27 @@ export default function VideoCall() {
     };
 
     const handleIceRestartRequest = async () => {
-      if (!mounted || isDoctor || !isReadyRef.current) return;
+      if (!mounted || !isReadyRef.current) return;
+      // The doctor still never self-initiates an offer as a matter of
+      // course (see handlePeerJoined) — but if the PATIENT explicitly asks
+      // for a restart because it just exhausted its own recovery attempts
+      // (see scheduleIceRestart's exhaustion branch), it needs the doctor
+      // to actually act on that request. Previously this returned early
+      // for isDoctor, so that hand-off silently went nowhere and neither
+      // side ever retried again. createAndSendOffer/handleOffer's existing
+      // collision handling (impolite ignores, polite rolls back) already
+      // resolves the rare case where both sides end up offering at once.
+      if (
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      )
+        return;
       console.info("Peer requested ICE restart.");
       logVideoEvent("ice_restart_request_received", {
         connectionState: pc.connectionState,
         iceConnectionState: pc.iceConnectionState,
+        role: isDoctor ? "doctor" : "user",
       });
       await createAndSendOffer({ iceRestart: true });
     };
@@ -2054,14 +2142,19 @@ export default function VideoCall() {
 
     const handleChatMessage = (msg) => {
       if (mounted) {
-        setMessages((prev) => [...prev, { ...msg, _localKey: makeMessageKey() }]);
+        setMessages((prev) => [
+          ...prev,
+          { ...msg, _localKey: makeMessageKey() },
+        ]);
         if (!chatOpenRef.current) setUnreadCount((c) => c + 1);
       }
     };
     const handleChatHistory = (payload) => {
       if (mounted && payload?.appointmentId === appointmentId) {
         const history = Array.isArray(payload.messages) ? payload.messages : [];
-        setMessages(history.map((msg) => ({ ...msg, _localKey: makeMessageKey() })));
+        setMessages(
+          history.map((msg) => ({ ...msg, _localKey: makeMessageKey() })),
+        );
       }
     };
 
@@ -2257,6 +2350,8 @@ export default function VideoCall() {
       ignoreOfferRef.current = false;
       pendingOfferIdRef.current = null;
       lastReceivedOfferIdRef.current = null;
+      clearTimeout(offerAnswerTimeoutRef.current);
+      offerAnswerTimeoutRef.current = null;
       screenSharingRef.current = false;
       screenShareStartInProgressRef.current = false;
       screenShareStopInProgressRef.current = false;
@@ -2308,7 +2403,7 @@ export default function VideoCall() {
           .post("/api/auth/refresh", null, {
             authRole: isDoctor ? "doctor" : "user",
           })
-          .catch(() => { });
+          .catch(() => {});
       },
       4 * 60 * 1000,
     );
@@ -2520,7 +2615,7 @@ export default function VideoCall() {
         assignStreams(isSwapped);
       }
 
-      pipVideoRef.current.play?.().catch(() => { });
+      pipVideoRef.current.play?.().catch(() => {});
     });
 
     return () => cancelAnimationFrame(frameId);
@@ -2574,7 +2669,7 @@ export default function VideoCall() {
       setCompleting(false);
       showInlineMessage(
         err.response?.data?.msg ||
-        "Failed to complete appointment. Please try again.",
+          "Failed to complete appointment. Please try again.",
         5000,
       );
     }
@@ -2775,7 +2870,10 @@ export default function VideoCall() {
     }, CHAT_SEND_COOLDOWN_MS);
   }, [chatInput, appointmentId, currentUser]);
 
-  useEffect(() => () => window.clearTimeout(chatSendCooldownTimerRef.current), []);
+  useEffect(
+    () => () => window.clearTimeout(chatSendCooldownTimerRef.current),
+    [],
+  );
 
   const handleChatKey = useCallback(
     (e) => {
@@ -2911,12 +3009,12 @@ export default function VideoCall() {
   const pipStyle =
     pipPos.x !== null
       ? {
-        position: "fixed",
-        left: `${pipPos.x}px`,
-        top: `${pipPos.y}px`,
-        right: "auto",
-        bottom: "auto",
-      }
+          position: "fixed",
+          left: `${pipPos.x}px`,
+          top: `${pipPos.y}px`,
+          right: "auto",
+          bottom: "auto",
+        }
       : {};
   const screenShareSupported = canUseScreenShare();
 
@@ -2926,33 +3024,32 @@ export default function VideoCall() {
       <div className="hc-vc__ctrlbar-meta">
         <div className="hc-vc__meta-left">
           <div className="hc-vc__logo-mark">
-            <div className="hc-vc__logo-dot" />
-            <span className="hc-vc__logo-text">Humancare Connect</span>
+            <img
+              src={HumancareLogo}
+              alt="Humancare Connect"
+              className="hc-vc__logo-img"
+            />
           </div>
+        </div>
 
-          {otherParty && (
-            <div className="hc-vc__meta-party">
+        {otherParty && (
+          <div className="hc-vc__meta-party">
+            <span className="hc-vc__meta-party-icon">
+              <FiUser />
+            </span>
+            <div className="hc-vc__meta-party-text">
               <span className="hc-vc__infobar-label">{otherParty.label}</span>
               <span className="hc-vc__infobar-name">{otherParty.name}</span>
             </div>
-          )}
-        </div>
-
-        <div className="hc-vc__meta-right">
-          {inCall && isDoctor && (
-            <div className="hc-vc__timer">
-              <FiClock />
-              <span>{fmtDuration(callDuration)}</span>
-            </div>
-          )}
-
-        </div>
+          </div>
+        )}
       </div>
 
       {/* ── Offline banner ───────────────────────────────────────── */}
       {isOffline && (
         <div className="hc-vc__offline-banner">
-          <FiAlertTriangle /> You're offline. Reconnecting once your internet is back.
+          <FiAlertTriangle /> You're offline. Reconnecting once your internet is
+          back.
         </div>
       )}
 
@@ -2989,7 +3086,10 @@ export default function VideoCall() {
           className="hc-vc__confirm-overlay"
           onClick={() => setEndCallConfirm(false)}
         >
-          <div className="hc-vc__confirm-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="hc-vc__confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="hc-vc__confirm-icon hc-vc__confirm-icon--danger">
               <FiPhoneOff />
             </div>
@@ -3065,7 +3165,10 @@ export default function VideoCall() {
           className="hc-vc__confirm-overlay"
           onClick={() => setLeaveConfirm(false)}
         >
-          <div className="hc-vc__confirm-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="hc-vc__confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="hc-vc__confirm-icon">⚠</div>
             <h3 className="hc-vc__confirm-title">Leave Consultation?</h3>
             <p className="hc-vc__confirm-text">
@@ -3125,7 +3228,12 @@ export default function VideoCall() {
           >
             View
           </button>
-          <button className="hc-vc__rx-notif-close" onClick={() => setPrescriptionNotif(null)}><FiX /></button>
+          <button
+            className="hc-vc__rx-notif-close"
+            onClick={() => setPrescriptionNotif(null)}
+          >
+            <FiX />
+          </button>
         </div>
       )}
 
@@ -3370,10 +3478,10 @@ export default function VideoCall() {
                               {msg.fileType?.includes("pdf")
                                 ? "📄"
                                 : msg.fileType?.includes("word") ||
-                                  msg.fileType?.includes("doc")
+                                    msg.fileType?.includes("doc")
                                   ? "📝"
                                   : msg.fileType?.includes("sheet") ||
-                                    msg.fileType?.includes("excel")
+                                      msg.fileType?.includes("excel")
                                     ? "📊"
                                     : "📎"}
                             </span>
@@ -3538,7 +3646,7 @@ export default function VideoCall() {
           </button>
 
           <button
-            className={`hc-vc__btn ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
+            className={`hc-vc__btn hc-vc__btn--share ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
             onClick={toggleScreenShare}
             disabled={!isReady || (!isScreenSharing && !screenShareSupported)}
             title={
@@ -3556,6 +3664,12 @@ export default function VideoCall() {
               {isScreenSharing ? "Stop" : "Share"}
             </span>
           </button>
+          {inCall && isDoctor && (
+            <div className="hc-vc__timer">
+              <FiClock />
+              <span>{fmtDuration(callDuration)}</span>
+            </div>
+          )}
           {inCall && (
             <div className="hc-vc__live-pill">
               <span className="hc-vc__live-dot" />
