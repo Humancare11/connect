@@ -187,6 +187,7 @@
 }
 
 @keyframes vc-blink {
+
   0%,
   100% {
     opacity: 1;
@@ -1912,12 +1913,10 @@
 
 .hc-vc__page {
   min-height: 100vh;
-  background: radial-gradient(
-    circle at top,
-    #000000 0%,
-    #000000 45%,
-    #020814 100%
-  );
+  background: radial-gradient(circle at top,
+      #000000 0%,
+      #000000 45%,
+      #020814 100%);
   overflow: hidden;
 }
 
@@ -1944,11 +1943,9 @@
 .hc-vc__ctrlbar {
   width: 100%;
   padding: 14px 18px 18px;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.95),
-    rgba(2, 12, 24, 0.98)
-  );
+  background: linear-gradient(180deg,
+      rgba(0, 0, 0, 0.95),
+      rgba(2, 12, 24, 0.98));
   border-top: 1px solid rgba(91, 144, 220, 0.18);
   backdrop-filter: blur(14px);
 }
@@ -1988,9 +1985,9 @@
 
 .hc-vc__logo-img {
   display: block;
-  height: 60px;
+  height: auto;
   width: auto;
-  max-width: 65vw;
+  max-width: 100px;
   object-fit: contain;
 }
 
@@ -2171,7 +2168,7 @@
   }
 
   .hc-vc__logo-img {
-    height: 85px;
+    max-width: 15vw;
   }
 
   .hc-vc__infobar-chip,
@@ -2205,7 +2202,7 @@
   }
 
   .hc-vc__logo-img {
-    height: 85px;
+    max-width: 10vw;
   }
 }
 
@@ -2284,7 +2281,7 @@
   }
 
   .hc-vc__logo-img {
-    height: 85px;
+    max-width: 88px;
   }
 
   .hc-vc__room-label {

@@ -3747,17 +3747,6 @@ export default function VideoCall() {
             </button>
           )}
 
-          {isDoctor && !inCall && (
-            <button
-              className="hc-vc__btn hc-vc__btn--rx"
-              onClick={() => setShowRxModal(true)}
-              title="Issue prescription"
-            >
-              <span className="hc-vc__btn-icon">💊</span>
-              <span className="hc-vc__btn-label">Rx</span>
-            </button>
-          )}
-
           <button
             className="hc-vc__btn hc-vc__btn--end"
             onClick={() => setEndCallConfirm(true)}
