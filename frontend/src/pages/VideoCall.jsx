@@ -1551,7 +1551,12 @@ export default function VideoCall() {
       });
     }
 
-    const remoteStream = new MediaStream();
+    // `let`, not `const` — pc.ontrack below reassigns this to a fresh
+    // MediaStream instance whenever it replaces a track, so every consumer
+    // that reads it afterwards (including this same closure, on the next
+    // track event) sees the current object. See pc.ontrack for why a fresh
+    // instance is needed rather than mutating this one in place.
+    let remoteStream = new MediaStream();
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
     const isPolitePeer = isDoctor;
@@ -1833,6 +1838,11 @@ export default function VideoCall() {
         ? event.streams.flatMap((stream) => stream.getTracks())
         : [event.track].filter(Boolean);
 
+      // Set when this event actually swaps out a previously-live track for
+      // a given kind (as opposed to a first-time add) — see below for why
+      // that case needs more than an in-place mutation.
+      let trackWasReplaced = false;
+
       incomingTracks.forEach((track) => {
         // The sending side only ever sends one track per kind (camera OR
         // screen share for video, never both — see startScreenShare's
@@ -1843,16 +1853,33 @@ export default function VideoCall() {
         // wouldn't dedupe by id — without pruning, the dead old track stays
         // in this stream alongside the new live one, and the video element
         // can end up stuck rendering (or freezing on) the wrong track.
-        remoteStream
+        const staleTracksOfKind = remoteStream
           .getTracks()
           .filter(
             (existing) =>
               existing.kind === track.kind && existing.id !== track.id,
-          )
-          .forEach((stale) => remoteStream.removeTrack(stale));
+          );
+        if (staleTracksOfKind.length > 0) trackWasReplaced = true;
+        staleTracksOfKind.forEach((stale) => remoteStream.removeTrack(stale));
 
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
       });
+
+      if (trackWasReplaced) {
+        // Some browsers don't reliably rebind a <video> element's decode/
+        // render pipeline to a track that was swapped into a MediaStream
+        // it's already displaying — re-assigning `srcObject` to the SAME
+        // object reference (as assignStreams does below) can be treated as
+        // a no-op, leaving the video frozen on the last frame from the old
+        // track. Audio recovers regardless, since continuous playback has
+        // no comparable per-frame pipeline to rebind. Rebuilding the stream
+        // as a new object forces every consumer's next `srcObject`
+        // assignment to be a genuine source change, which every browser
+        // does honor. First-time track additions (no replacement) are
+        // unaffected and keep mutating the existing stream as before.
+        remoteStream = new MediaStream(remoteStream.getTracks());
+        remoteStreamRef.current = remoteStream;
+      }
 
       if (mounted) {
         logVideoEvent("remote_track_received", {
