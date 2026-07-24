@@ -2428,6 +2428,15 @@
     border-radius: 0;
   }
 
+  /* On an actual mobile viewport the stage itself is already
+     portrait-shaped, so containing a portrait stream (see the note by
+     .hc-vc__main-video--portrait) just pillarboxes it — cover it instead
+     so the call fills the screen width, at the cost of a minor top/bottom
+     crop instead of side bars. */
+  .hc-vc__main-video--portrait {
+    object-fit: cover;
+  }
+
   /* .hc-vc__pip {
     width: clamp(128px, 34vw, 188px);
     top: 10px;
