@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const Appointment = require("../models/Appointment");
+const CategoryConsultation = require("../models/CategoryConsultation");
+const Enrollment = require("../models/Enrollment");
 const ConsultationNote = require("../models/ConsultationNote");
 const User = require("../models/User");
 
@@ -9,6 +11,31 @@ const isObjectId = (id) => mongoose.Types.ObjectId.isValid(String(id || ""));
 
 const normalizeContent = (value) => String(value ?? "").slice(0, 20000);
 
+const CATEGORY_CONSULTATION_STATUS_MAP = {
+  pending: "pending",
+  assigned: "assigned",
+  confirmed: "confirmed",
+  completed: "complete",
+  complete: "complete",
+  cancelled: "cancelled",
+};
+
+const normalizeCategoryConsultation = (cc, doctorId) => ({
+  _id: cc._id,
+  doctorId,
+  patientId: cc.patientId,
+  date: cc.date,
+  time: cc.slot,
+  problem: cc.concern,
+  status: CATEGORY_CONSULTATION_STATUS_MAP[String(cc.status || "").toLowerCase()] || "pending",
+  appointmentModel: "CategoryConsultation",
+});
+
+// Consultations can originate from two collections: the classic Appointment
+// booking (doctorId set directly on the document) or a CategoryConsultation
+// booking (assigned to a doctor indirectly via Enrollment). Both are valid
+// consultations a doctor can take notes on, so we check both and return a
+// normalized shape the rest of this controller can treat uniformly.
 const ensureDoctorAppointment = async (appointmentId, doctorId) => {
   if (!isObjectId(appointmentId)) {
     const err = new Error("Invalid appointment ID.");
@@ -21,20 +48,47 @@ const ensureDoctorAppointment = async (appointmentId, doctorId) => {
     doctorId,
   }).select("_id doctorId patientId date time problem status");
 
-  if (!appointment) {
-    const err = new Error("Appointment not found or access denied.");
-    err.statusCode = 404;
-    throw err;
+  if (appointment) {
+    return { ...appointment.toObject(), appointmentModel: "Appointment" };
   }
 
-  return appointment;
+  const enrollment = await Enrollment.findOne({ doctorId }).select("_id");
+  if (enrollment) {
+    const categoryConsultation = await CategoryConsultation.findOne({
+      _id: appointmentId,
+      assignedDoctorId: enrollment._id,
+    }).select("_id patientId date slot concern status");
+
+    if (categoryConsultation) {
+      return normalizeCategoryConsultation(categoryConsultation, doctorId);
+    }
+  }
+
+  const err = new Error("Appointment not found or access denied.");
+  err.statusCode = 404;
+  throw err;
 };
 
 const populateNote = (query) =>
   query
     .populate("patientId", "name email mobile")
-    .populate("appointmentId", "date time problem status")
+    .populate("appointmentId", "date time problem status slot concern")
     .populate("doctorId", "name email");
+
+// CategoryConsultation documents use different field names (slot/concern)
+// than Appointment (time/problem). Fold them onto the common names so
+// consumers of a populated note never need to know which collection it
+// came from.
+const normalizeNote = (note) => {
+  if (!note) return note;
+  const plain = note.toObject({ getters: true });
+  const populatedAppointment = plain.appointmentId;
+  if (populatedAppointment && plain.appointmentModel === "CategoryConsultation") {
+    populatedAppointment.time = populatedAppointment.time ?? populatedAppointment.slot;
+    populatedAppointment.problem = populatedAppointment.problem ?? populatedAppointment.concern;
+  }
+  return plain;
+};
 
 const handleError = (res, err, fallback) => {
   if (err.statusCode) {
@@ -88,7 +142,7 @@ const listNotes = async (req, res) => {
       ConsultationNote.find(query).sort({ updatedAt: -1 }).limit(250),
     );
 
-    res.status(200).json({ notes });
+    res.status(200).json({ notes: notes.map(normalizeNote) });
   } catch (err) {
     handleError(res, err, "Failed to fetch consultation notes.");
   }
@@ -105,7 +159,7 @@ const getAppointmentNote = async (req, res) => {
     );
 
     res.status(200).json({
-      note,
+      note: normalizeNote(note),
       appointment: {
         _id: appointment._id,
         patientId: appointment.patientId,
@@ -137,6 +191,7 @@ const upsertAppointmentNote = async (req, res) => {
         },
         $setOnInsert: {
           appointmentId: appointment._id,
+          appointmentModel: appointment.appointmentModel,
           doctorId: req.user.id,
           status: "draft",
         },
@@ -151,7 +206,7 @@ const upsertAppointmentNote = async (req, res) => {
     );
 
     const populated = await populateNote(ConsultationNote.findById(note._id));
-    res.status(note.createdAt.getTime() === note.updatedAt.getTime() ? 201 : 200).json({ note: populated });
+    res.status(note.createdAt.getTime() === note.updatedAt.getTime() ? 201 : 200).json({ note: normalizeNote(populated) });
   } catch (err) {
     handleError(res, err, "Failed to save consultation note.");
   }
@@ -198,7 +253,7 @@ const updateNote = async (req, res) => {
     }
 
     const populated = await populateNote(ConsultationNote.findById(note._id));
-    res.status(200).json({ note: populated });
+    res.status(200).json({ note: normalizeNote(populated) });
   } catch (err) {
     handleError(res, err, "Failed to update consultation note.");
   }
