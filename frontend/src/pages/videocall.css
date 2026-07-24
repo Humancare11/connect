@@ -2421,11 +2421,11 @@
 @media (max-width: 768px) {
   .hc-vc__body {
     gap: 8px;
-    padding: 8px;
+    padding: 8px 0;
   }
 
   .hc-vc__stage {
-    border-radius: 16px;
+    border-radius: 0;
   }
 
   /* .hc-vc__pip {
