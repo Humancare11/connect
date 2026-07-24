@@ -3747,7 +3747,7 @@ export default function VideoCall() {
             </button>
           )}
 
-          {isDoctor && (
+          {isDoctor && !inCall && (
             <button
               className="hc-vc__btn hc-vc__btn--rx"
               onClick={() => setShowRxModal(true)}
