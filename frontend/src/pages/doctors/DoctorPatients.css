@@ -280,14 +280,27 @@
 }
 
 /* ── Patient Panel (Slide-in) ── */
+/* backdrop-filter lives on a fixed ::before layer, not on the overlay
+   itself — combining backdrop-filter with a scrollable/scroll-adjacent
+   fixed element breaks mouse-wheel scrolling in Chromium (scrollbar drag
+   still works, wheel doesn't), so the blur must not sit on this box. */
 .dp-panel-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(4px);
   z-index: 9998;
   display: flex;
   justify-content: flex-end;
+}
+
+.dp-panel-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .dp-panel {
@@ -573,11 +586,14 @@
 }
 
 /* ── Modal ── */
+/* backdrop-filter is on a fixed ::before layer, not this element — see
+   the note on .dp-panel-overlay above. This element is also the one
+   that actually scrolls (overflow-y: auto), so keeping backdrop-filter
+   off of it directly is what restores mouse-wheel scrolling here. */
 .dp-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(6px);
   z-index: 9999; /* must beat the app's sidebar/nav z-index */
 
   display: block;
@@ -585,6 +601,16 @@
   overflow-x: hidden;
 
   padding: 40px 20px;
+}
+
+.dp-modal-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .dp-modal {
@@ -599,11 +625,11 @@
   margin: auto; /* centers horizontally AND vertically */
 }
 
-/* Letterhead preview modals (prescription / certificate) — these can be
+/* Letterhead previews (prescription / certificate) — these can be
    arbitrarily tall depending on how many medicines are listed, so they
    must NOT get the 90vh cap + inner scrollbar that the short form modals
-   use. The overlay above scrolls instead — one scrollbar, not three
-   nested ones. */
+   use. They render as plain page content now (PrescriptionPreview.jsx /
+   CertificatePreview.jsx), so the page itself scrolls normally. */
 .dp-modal--slip {
   max-height: none;
   overflow: visible;
@@ -623,12 +649,12 @@
   }
 }
 
-/* Slip preview modals (RxSlipModal / CertSlipModal) — letterhead-style
-   prescription & certificate previews, wider than the standard form modal.
-   These classes replace the inline styles that used to live in the JSX. */
+/* Prescription/Certificate letterhead previews (PrescriptionPreview.jsx /
+   CertificatePreview.jsx) — dedicated pages, not modals, so this box just
+   sits in normal page flow inside .dp-root-mp and lets the page scroll. */
 .dp-slip-modal-box {
   max-width: 860px;
-  width: 95vw;
+  width: 100%;
   padding: 0;
 }
 
