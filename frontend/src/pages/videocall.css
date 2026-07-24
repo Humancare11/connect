@@ -379,7 +379,7 @@
    landscape stage, cropping most of the frame into a tight "zoomed in"
    view. Switch to contain so the full frame stays visible, letterboxed. */
 .hc-vc__main-video--portrait {
-  object-fit: contain;
+  object-fit: cover;
 }
 
 /* Force non-mirrored orientation for local/self video */
