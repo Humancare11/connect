@@ -764,6 +764,12 @@ const DoctorPatients = lazy(() => import("./pages/doctors/DoctorPatients"));
 const WritePrescription = lazy(
   () => import("./pages/doctors/WritePrescription"),
 );
+const PrescriptionPreview = lazy(
+  () => import("./pages/doctors/PrescriptionPreview"),
+);
+const CertificatePreview = lazy(
+  () => import("./pages/doctors/CertificatePreview"),
+);
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
 const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
@@ -1245,6 +1251,22 @@ function AppLayout() {
             element={
               <DoctorLayout>
                 <WritePrescription />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/patients/:patientId/prescriptions/:rxId"
+            element={
+              <DoctorLayout>
+                <PrescriptionPreview />
+              </DoctorLayout>
+            }
+          />
+          <Route
+            path="/doctor-dashboard/patients/:patientId/certificates/:certId"
+            element={
+              <DoctorLayout>
+                <CertificatePreview />
               </DoctorLayout>
             }
           />

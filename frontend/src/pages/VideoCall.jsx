@@ -34,6 +34,36 @@ import {
 // ── In-call prescription modal (doctor only) ──────────────────────────────────
 const EMPTY_MED = { name: "", dosage: "", frequency: "", duration: "" };
 
+// Which role (doctor/patient) this tab is using for a given appointment is
+// normally known upfront — both entry points (DoctorAppointments' "Join" and
+// the patient's "Join Consultation") pass it via router state. But router
+// state doesn't survive every reload path (a fresh tab restore after a
+// mobile OS discards a backgrounded page, a bookmarked/shared link, opening
+// the URL directly) — and without it, the role used to be *guessed* from
+// which of the two independent auth checks (doctor vs. patient) happened to
+// resolve truthy. If a browser also holds a leftover, still-valid session
+// for the other role (common when testing both sides of a call from one
+// browser), that guess can pick the wrong one. Persisting the role actually
+// confirmed by a successful appointment fetch removes the need to guess on
+// a later reload for the same appointment.
+function loadPersistedRole(appointmentId) {
+  try {
+    const role = sessionStorage.getItem(`hc-vc-role-${appointmentId}`);
+    return role === "doctor" || role === "user" ? role : "";
+  } catch {
+    return "";
+  }
+}
+
+function persistRole(appointmentId, role) {
+  try {
+    sessionStorage.setItem(`hc-vc-role-${appointmentId}`, role);
+  } catch {
+    // Storage unavailable (private mode, etc.) — just falls back to the
+    // ordinary role-detection attempts on the next reload.
+  }
+}
+
 // A network blip or an accidental modal close mid-call previously lost
 // whatever the doctor had already typed, with no way to recover it — the
 // modal's fields always started blank on every open. Persist an in-progress
@@ -671,8 +701,11 @@ export default function VideoCall() {
     const stateRole = location.state?.role;
     const queryRole = new URLSearchParams(location.search).get("role");
     const role = String(stateRole || queryRole || "").toLowerCase();
-    return role === "doctor" || role === "user" ? role : "";
-  }, [location.search, location.state]);
+    if (role === "doctor" || role === "user") return role;
+    // Router state doesn't survive every reload path (see loadPersistedRole)
+    // — fall back to whatever role this same appointment last confirmed.
+    return loadPersistedRole(appointmentId);
+  }, [location.search, location.state, appointmentId]);
 
   const isDoctor = useMemo(() => {
     if (activeRole) return activeRole === "doctor";
@@ -680,8 +713,24 @@ export default function VideoCall() {
       return true;
     if (userId && apptPatientId && String(userId) === String(apptPatientId))
       return false;
+    // Only reached before the appointment has loaded (activeRole not yet
+    // set). Prefer the explicit/persisted role over guessing from which of
+    // the two independent auth checks happened to resolve — the doctor/user
+    // truthiness guess can pick the wrong role when a browser holds a
+    // leftover, still-valid session for the other role too (see
+    // loadPersistedRole's comment).
+    if (requestedRole) return requestedRole === "doctor";
     return !!doctor && !user;
-  }, [activeRole, doctorId, apptDoctorId, userId, apptPatientId, doctor, user]);
+  }, [
+    activeRole,
+    doctorId,
+    apptDoctorId,
+    userId,
+    apptPatientId,
+    requestedRole,
+    doctor,
+    user,
+  ]);
 
   const currentUser = useMemo(() => {
     if (isDoctor) {
@@ -982,16 +1031,22 @@ export default function VideoCall() {
     (async () => {
       let lastError = null;
 
+      // Always try both roles unless one was explicitly requested (router
+      // state or a persisted role from a prior confirm on this appointment
+      // — see loadPersistedRole). Narrowing to a single attempt based on
+      // which of `doctor`/`user` happened to be truthy previously meant a
+      // browser holding a leftover, still-valid session for the OTHER role
+      // (e.g. one tester using both a doctor and a patient account) could
+      // cause the genuine caller's own role to never even be attempted.
+      // Each attempt below already skips itself when that identity isn't
+      // authenticated at all, so this costs nothing extra in the normal
+      // single-identity case.
       const roleAttempts =
         requestedRole === "doctor"
           ? ["doctor", "user"]
           : requestedRole === "user"
             ? ["user", "doctor"]
-            : doctor && !user
-              ? ["doctor"]
-              : user && !doctor
-                ? ["user"]
-                : ["doctor", "user"];
+            : ["doctor", "user"];
 
       for (const role of roleAttempts) {
         if (role === "doctor" && !doctor) continue;
@@ -1006,6 +1061,7 @@ export default function VideoCall() {
           if (cancelled) return;
           setAppt(res.data);
           setActiveRole(role);
+          persistRole(appointmentId, role);
           setApptLoading(false);
           return;
         } catch (err) {
@@ -1127,6 +1183,21 @@ export default function VideoCall() {
   const canJoinConsultation = useMemo(() => {
     return appt?.status === "confirmed";
   }, [appt]);
+
+  // Where "leave this call" should send someone. Checked against the loaded
+  // appointment's actual participant ids first — ground truth from the DB —
+  // rather than trusting `isDoctor` alone, so a misresolved role can never
+  // route a patient into the doctor dashboard (or vice versa) once the
+  // appointment has loaded.
+  const resolveHomePath = useCallback(() => {
+    if (apptDoctorId && doctorId && String(apptDoctorId) === String(doctorId)) {
+      return "/doctor-dashboard/patients";
+    }
+    if (apptPatientId && userId && String(apptPatientId) === String(userId)) {
+      return "/user/dashboard";
+    }
+    return isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard";
+  }, [apptDoctorId, doctorId, apptPatientId, userId, isDoctor]);
 
   const showInlineMessage = useCallback((message, duration = 4000) => {
     // Cancel any pending clear from a previous toast so an older timer
@@ -1303,15 +1374,13 @@ export default function VideoCall() {
 
     const handlePopstate = () => {
       window.history.pushState(null, "", window.location.href);
-      pendingLeaveRef.current = isDoctor
-        ? "/doctor-dashboard/patients"
-        : "/user/dashboard";
+      pendingLeaveRef.current = resolveHomePath();
       setLeaveConfirm(true);
     };
 
     window.addEventListener("popstate", handlePopstate);
     return () => window.removeEventListener("popstate", handlePopstate);
-  }, [canJoinConsultation, navigate, isDoctor, performCleanup]);
+  }, [canJoinConsultation, navigate, resolveHomePath, performCleanup]);
 
   // ── Tab close / reload → allow socket reconnect recovery ──────────
   useEffect(() => {
@@ -1482,7 +1551,12 @@ export default function VideoCall() {
       });
     }
 
-    const remoteStream = new MediaStream();
+    // `let`, not `const` — pc.ontrack below reassigns this to a fresh
+    // MediaStream instance whenever it replaces a track, so every consumer
+    // that reads it afterwards (including this same closure, on the next
+    // track event) sees the current object. See pc.ontrack for why a fresh
+    // instance is needed rather than mutating this one in place.
+    let remoteStream = new MediaStream();
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
     const isPolitePeer = isDoctor;
@@ -1764,6 +1838,11 @@ export default function VideoCall() {
         ? event.streams.flatMap((stream) => stream.getTracks())
         : [event.track].filter(Boolean);
 
+      // Set when this event actually swaps out a previously-live track for
+      // a given kind (as opposed to a first-time add) — see below for why
+      // that case needs more than an in-place mutation.
+      let trackWasReplaced = false;
+
       incomingTracks.forEach((track) => {
         // The sending side only ever sends one track per kind (camera OR
         // screen share for video, never both — see startScreenShare's
@@ -1774,16 +1853,33 @@ export default function VideoCall() {
         // wouldn't dedupe by id — without pruning, the dead old track stays
         // in this stream alongside the new live one, and the video element
         // can end up stuck rendering (or freezing on) the wrong track.
-        remoteStream
+        const staleTracksOfKind = remoteStream
           .getTracks()
           .filter(
             (existing) =>
               existing.kind === track.kind && existing.id !== track.id,
-          )
-          .forEach((stale) => remoteStream.removeTrack(stale));
+          );
+        if (staleTracksOfKind.length > 0) trackWasReplaced = true;
+        staleTracksOfKind.forEach((stale) => remoteStream.removeTrack(stale));
 
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
       });
+
+      if (trackWasReplaced) {
+        // Some browsers don't reliably rebind a <video> element's decode/
+        // render pipeline to a track that was swapped into a MediaStream
+        // it's already displaying — re-assigning `srcObject` to the SAME
+        // object reference (as assignStreams does below) can be treated as
+        // a no-op, leaving the video frozen on the last frame from the old
+        // track. Audio recovers regardless, since continuous playback has
+        // no comparable per-frame pipeline to rebind. Rebuilding the stream
+        // as a new object forces every consumer's next `srcObject`
+        // assignment to be a genuine source change, which every browser
+        // does honor. First-time track additions (no replacement) are
+        // unaffected and keep mutating the existing stream as before.
+        remoteStream = new MediaStream(remoteStream.getTracks());
+        remoteStreamRef.current = remoteStream;
+      }
 
       if (mounted) {
         logVideoEvent("remote_track_received", {
@@ -2648,10 +2744,8 @@ export default function VideoCall() {
     if (completing) return;
     setEndCallConfirm(false);
     performCleanup();
-    navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", {
-      replace: true,
-    });
-  }, [completing, isDoctor, performCleanup, navigate]);
+    navigate(resolveHomePath(), { replace: true });
+  }, [completing, resolveHomePath, performCleanup, navigate]);
 
   const completeAppointment = useCallback(async () => {
     if (!isDoctor || completing) return;
@@ -3744,17 +3838,6 @@ export default function VideoCall() {
                 <FiFileText />
               </span>
               <span className="hc-vc__btn-label">Notes</span>
-            </button>
-          )}
-
-          {isDoctor && (
-            <button
-              className="hc-vc__btn hc-vc__btn--rx"
-              onClick={() => setShowRxModal(true)}
-              title="Issue prescription"
-            >
-              <span className="hc-vc__btn-icon">💊</span>
-              <span className="hc-vc__btn-label">Rx</span>
             </button>
           )}
 

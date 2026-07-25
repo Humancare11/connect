@@ -4,9 +4,19 @@ const consultationNoteSchema = new mongoose.Schema(
   {
     appointmentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Appointment",
+      refPath: "appointmentModel",
       required: true,
       index: true,
+    },
+    // Consultations booked through the category-consultation flow are stored
+    // in a separate collection (assigned to a doctor via Enrollment rather
+    // than a direct doctorId on the booking). This lets a single note point
+    // at either source without two parallel note schemas.
+    appointmentModel: {
+      type: String,
+      enum: ["Appointment", "CategoryConsultation"],
+      default: "Appointment",
+      required: true,
     },
     doctorId: {
       type: mongoose.Schema.Types.ObjectId,
