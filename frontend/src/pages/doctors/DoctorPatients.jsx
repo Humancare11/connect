@@ -1,22 +1,9 @@
-import { lazy, Suspense, useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./DoctorPatients.css";
 import api from "../../api";
-import { useDoctorAuth } from "../../context/DoctorAuthContext";
 import ConsultationNotesPanel from "../../components/ConsultationNotesPanel";
 import { formatShortDate as formatDate } from "../../utils/prescriptionForm";
-
-const PrescriptionSlip = lazy(() =>
-  import("../../components/RxSlip").then((module) => ({
-    default: module.PrescriptionSlip,
-  })),
-);
-
-const MedicalCertificateSlip = lazy(() =>
-  import("../../components/MedicalCertificateSlip").then((module) => ({
-    default: module.MedicalCertificateSlip,
-  })),
-);
 
 const EMPTY_CERT = {
   diagnosis: "",
@@ -209,156 +196,14 @@ function CertificateModal({ patient, appointments, onClose, onSaved }) {
   );
 }
 
-// ── Prescription letterhead preview modal ─────────────────────────────────────
-
-function RxSlipModal({ rx, patient, doctor, doctorEnrollment, onClose }) {
-  const slipRef = useRef(null);
-  const [busy, setBusy] = useState(false);
-
-  const handleDownload = async () => {
-    if (!slipRef.current) return;
-    setBusy(true);
-    try {
-      const { downloadPrescriptionPDF } =
-        await import("../../components/RxSlip");
-      const name = patient?.name?.replace(/\s+/g, "_") || "patient";
-      const date = rx.createdAt
-        ? new Date(rx.createdAt).toISOString().split("T")[0]
-        : "rx";
-      await downloadPrescriptionPDF(
-        slipRef.current,
-        `prescription_${name}_${date}.pdf`,
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="dp-modal-overlay" onClick={onClose}>
-      <div
-        className="dp-modal dp-modal--slip dp-slip-modal-box"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Modal toolbar */}
-        <div className="dp-slip-toolbar">
-          <span className="dp-slip-toolbar-title">Prescription Preview</span>
-          <div className="dp-slip-toolbar-actions">
-            <button
-              className="dp-slip-download-btn"
-              onClick={handleDownload}
-              disabled={busy}
-            >
-              {busy ? "Generating…" : "⬇ Download PDF"}
-            </button>
-            <button className="dp-slip-close-btn" onClick={onClose}>
-              Close
-            </button>
-          </div>
-        </div>
-
-        {/* Slip — no overflow/maxHeight here: the modal box (and, if needed,
-            the outer overlay) grow with content instead of trapping their
-            own inner scrollbar. */}
-        <div className="dp-slip-body">
-          <div className="dp-slip-body-inner">
-            <Suspense fallback={null}>
-              <PrescriptionSlip
-                rx={rx}
-                patient={patient}
-                doctor={doctor}
-                doctorEnrollment={doctorEnrollment}
-                slipRef={slipRef}
-              />
-            </Suspense>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Certificate letterhead preview modal ──────────────────────────────────────
-
-function CertSlipModal({ cert, patient, doctor, doctorEnrollment, onClose }) {
-  const slipRef = useRef(null);
-  const [busy, setBusy] = useState(false);
-
-  const handleDownload = async () => {
-    if (!slipRef.current) return;
-    setBusy(true);
-    try {
-      const { downloadCertificatePDF } =
-        await import("../../components/MedicalCertificateSlip");
-      const name = patient?.name?.replace(/\s+/g, "_") || "patient";
-      const date =
-        cert.issuedDate ||
-        (cert.createdAt
-          ? new Date(cert.createdAt).toISOString().split("T")[0]
-          : "cert");
-      await downloadCertificatePDF(
-        slipRef.current,
-        `certificate_${name}_${date}.pdf`,
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="dp-modal-overlay" onClick={onClose}>
-      <div
-        className="dp-modal dp-modal--slip dp-slip-modal-box"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="dp-slip-toolbar">
-          <span className="dp-slip-toolbar-title">
-            Medical Certificate Preview
-          </span>
-          <div className="dp-slip-toolbar-actions">
-            <button
-              className="dp-slip-download-btn"
-              onClick={handleDownload}
-              disabled={busy}
-            >
-              {busy ? "Generating…" : "⬇ Download PDF"}
-            </button>
-            <button className="dp-slip-close-btn" onClick={onClose}>
-              Close
-            </button>
-          </div>
-        </div>
-
-        {/* Slip — same fix as RxSlipModal: no overflow/maxHeight trap here. */}
-        <div className="dp-slip-body">
-          <div className="dp-slip-body-inner">
-            <Suspense fallback={null}>
-              <MedicalCertificateSlip
-                cert={cert}
-                patient={patient}
-                doctor={doctor}
-                doctorEnrollment={doctorEnrollment}
-                slipRef={slipRef}
-              />
-            </Suspense>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Patient Detail Panel ──────────────────────────────────────────────────────
 
 function PatientPanel({ entry, onClose }) {
   const { patient } = entry;
-  const { doctor } = useDoctorAuth();
   const navigate = useNavigate();
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [certModalOpen, setCertModalOpen] = useState(false);
-  const [previewRx, setPreviewRx] = useState(null); // rx object to preview
-  const [previewCert, setPreviewCert] = useState(null); // cert object to preview
   const [notesOpen, setNotesOpen] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -399,10 +244,10 @@ function PatientPanel({ entry, onClose }) {
           <Avatar name={patient.name} size={48} />
           <div>
             <h2 className="dp-panel-name">{patient.name}</h2>
-            <p className="dp-panel-email">{patient.email}</p>
-            {patient.mobile && (
+            {/* <p className="dp-panel-email">{patient.email}</p> */}
+            {/* {patient.mobile && (
               <p className="dp-panel-meta">📱 {patient.mobile}</p>
-            )}
+            )} */}
           </div>
           <button className="dp-modal-close" onClick={onClose}>
             ✕
@@ -496,7 +341,18 @@ function PatientPanel({ entry, onClose }) {
                       </span>
                       <button
                         className="dp-slip-btn"
-                        onClick={() => setPreviewRx(rx)}
+                        onClick={() =>
+                          navigate(
+                            `/doctor-dashboard/patients/${patient._id}/prescriptions/${rx._id}`,
+                            {
+                              state: {
+                                rx,
+                                patient,
+                                doctorEnrollment: history?.doctorEnrollment,
+                              },
+                            },
+                          )
+                        }
                         title="View & Download Prescription"
                       >
                         ⬇ View Slip
@@ -548,7 +404,18 @@ function PatientPanel({ entry, onClose }) {
                       </span>
                       <button
                         className="dp-slip-btn"
-                        onClick={() => setPreviewCert(cert)}
+                        onClick={() =>
+                          navigate(
+                            `/doctor-dashboard/patients/${patient._id}/certificates/${cert._id}`,
+                            {
+                              state: {
+                                cert,
+                                patient,
+                                doctorEnrollment: history?.doctorEnrollment,
+                              },
+                            },
+                          )
+                        }
                         title="View & Download Certificate"
                       >
                         ⬇ View Cert
@@ -580,24 +447,6 @@ function PatientPanel({ entry, onClose }) {
           appointments={completedAppts}
           onClose={() => setCertModalOpen(false)}
           onSaved={handleCertSaved}
-        />
-      )}
-      {previewRx && (
-        <RxSlipModal
-          rx={previewRx}
-          patient={patient}
-          doctor={doctor}
-          doctorEnrollment={history?.doctorEnrollment}
-          onClose={() => setPreviewRx(null)}
-        />
-      )}
-      {previewCert && (
-        <CertSlipModal
-          cert={previewCert}
-          patient={patient}
-          doctor={doctor}
-          doctorEnrollment={history?.doctorEnrollment}
-          onClose={() => setPreviewCert(null)}
         />
       )}
       {notesOpen && (
@@ -691,10 +540,10 @@ export default function DoctorPatients() {
               <Avatar name={entry.patient.name} size={52} />
               <div className="dp-card-info">
                 <h3 className="dp-card-name">{entry.patient.name}</h3>
-                <p className="dp-card-email">{entry.patient.email}</p>
-                {entry.patient.mobile && (
+                {/* <p className="dp-card-email">{entry.patient.email}</p> */}
+                {/* {entry.patient.mobile && (
                   <p className="dp-card-meta">📱 {entry.patient.mobile}</p>
-                )}
+                )} */}
               </div>
               <div className="dp-card-visits">
                 <span className="dp-card-visits-num">{entry.totalVisits}</span>

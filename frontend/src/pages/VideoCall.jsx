@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import socket, { setSocketAuthRole } from "../socket";
 import "./videocall.css";
+import HumancareLogo from "../assets/VideoCallingImage.png";
 import api, { getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
@@ -32,6 +33,36 @@ import {
 
 // ── In-call prescription modal (doctor only) ──────────────────────────────────
 const EMPTY_MED = { name: "", dosage: "", frequency: "", duration: "" };
+
+// Which role (doctor/patient) this tab is using for a given appointment is
+// normally known upfront — both entry points (DoctorAppointments' "Join" and
+// the patient's "Join Consultation") pass it via router state. But router
+// state doesn't survive every reload path (a fresh tab restore after a
+// mobile OS discards a backgrounded page, a bookmarked/shared link, opening
+// the URL directly) — and without it, the role used to be *guessed* from
+// which of the two independent auth checks (doctor vs. patient) happened to
+// resolve truthy. If a browser also holds a leftover, still-valid session
+// for the other role (common when testing both sides of a call from one
+// browser), that guess can pick the wrong one. Persisting the role actually
+// confirmed by a successful appointment fetch removes the need to guess on
+// a later reload for the same appointment.
+function loadPersistedRole(appointmentId) {
+  try {
+    const role = sessionStorage.getItem(`hc-vc-role-${appointmentId}`);
+    return role === "doctor" || role === "user" ? role : "";
+  } catch {
+    return "";
+  }
+}
+
+function persistRole(appointmentId, role) {
+  try {
+    sessionStorage.setItem(`hc-vc-role-${appointmentId}`, role);
+  } catch {
+    // Storage unavailable (private mode, etc.) — just falls back to the
+    // ordinary role-detection attempts on the next reload.
+  }
+}
 
 // A network blip or an accidental modal close mid-call previously lost
 // whatever the doctor had already typed, with no way to recover it — the
@@ -347,6 +378,18 @@ const ICE_MAX_RECOVERY_ATTEMPTS = Number(
 const ICE_RECOVERY_COOLDOWN_MS = Number(
   import.meta.env.VITE_RTC_ICE_RECOVERY_COOLDOWN_MS || 30000,
 );
+// How long we wait for a video-answer after sending an offer before treating
+// it as lost. Without this, a dropped/never-arriving answer (very likely
+// exactly during a network switch or a peer's page reload) leaves the offer
+// sender permanently stuck in "have-local-offer" — every later
+// renegotiation attempt (peer-joined, ICE restart, socket reconnect) all
+// funnel through createAndSendOffer, which refuses to run unless
+// signalingState is "stable". Nothing else in the app ever rolls back a
+// self-initiated offer, so without this timeout that stuck state is
+// permanent until the page is reloaded.
+const OFFER_ANSWER_TIMEOUT_MS = Number(
+  import.meta.env.VITE_RTC_OFFER_ANSWER_TIMEOUT_MS || 8000,
+);
 const STATS_INTERVAL_MS = Number(
   import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000,
 );
@@ -610,6 +653,14 @@ const makeMessageKey = () =>
     ? crypto.randomUUID()
     : `msg-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
+// Unique per created offer, echoed back in its answer — lets handleAnswer
+// tell a genuine fresh answer apart from a stale/replayed one (see
+// pendingOfferIdRef).
+const makeOfferId = () =>
+  typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `offer-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
 const fmtTime = (iso) => {
   if (!iso) return "";
   return new Date(iso).toLocaleTimeString([], {
@@ -650,8 +701,11 @@ export default function VideoCall() {
     const stateRole = location.state?.role;
     const queryRole = new URLSearchParams(location.search).get("role");
     const role = String(stateRole || queryRole || "").toLowerCase();
-    return role === "doctor" || role === "user" ? role : "";
-  }, [location.search, location.state]);
+    if (role === "doctor" || role === "user") return role;
+    // Router state doesn't survive every reload path (see loadPersistedRole)
+    // — fall back to whatever role this same appointment last confirmed.
+    return loadPersistedRole(appointmentId);
+  }, [location.search, location.state, appointmentId]);
 
   const isDoctor = useMemo(() => {
     if (activeRole) return activeRole === "doctor";
@@ -659,8 +713,24 @@ export default function VideoCall() {
       return true;
     if (userId && apptPatientId && String(userId) === String(apptPatientId))
       return false;
+    // Only reached before the appointment has loaded (activeRole not yet
+    // set). Prefer the explicit/persisted role over guessing from which of
+    // the two independent auth checks happened to resolve — the doctor/user
+    // truthiness guess can pick the wrong role when a browser holds a
+    // leftover, still-valid session for the other role too (see
+    // loadPersistedRole's comment).
+    if (requestedRole) return requestedRole === "doctor";
     return !!doctor && !user;
-  }, [activeRole, doctorId, apptDoctorId, userId, apptPatientId, doctor, user]);
+  }, [
+    activeRole,
+    doctorId,
+    apptDoctorId,
+    userId,
+    apptPatientId,
+    requestedRole,
+    doctor,
+    user,
+  ]);
 
   const currentUser = useMemo(() => {
     if (isDoctor) {
@@ -709,6 +779,21 @@ export default function VideoCall() {
   const ignoreOfferRef = useRef(false);
   const ignoreOfferResetTimerRef = useRef(null);
   const settingRemoteAnswerPendingRef = useRef(false);
+  // The offerId of the most recent remote offer we accepted — echoed back
+  // in our video-answer so the offerer can correlate it (see below).
+  const lastReceivedOfferIdRef = useRef(null);
+  // Correlates a video-answer back to the specific video-offer it's meant to
+  // answer. Socket.IO's connectionStateRecovery (server.js) replays buffered
+  // room events across a brief reconnect — under some timings that can
+  // redeliver an already-consumed answer from an earlier negotiation. The
+  // old guard (signalingState === "have-local-offer") can't tell that
+  // apart from a genuine fresh answer, since a replayed answer arrives
+  // while we're legitimately waiting on one. Tracking the id of the offer
+  // we're actually waiting on closes that gap.
+  const pendingOfferIdRef = useRef(null);
+  // Fires if no answer arrives for our outstanding offer within
+  // OFFER_ANSWER_TIMEOUT_MS — see createAndSendOffer for why this exists.
+  const offerAnswerTimeoutRef = useRef(null);
   const restartRequestInFlightRef = useRef(false);
   const iceRecoveryAttemptsRef = useRef(0);
   const lastIceRecoveryAtRef = useRef(0);
@@ -946,16 +1031,22 @@ export default function VideoCall() {
     (async () => {
       let lastError = null;
 
+      // Always try both roles unless one was explicitly requested (router
+      // state or a persisted role from a prior confirm on this appointment
+      // — see loadPersistedRole). Narrowing to a single attempt based on
+      // which of `doctor`/`user` happened to be truthy previously meant a
+      // browser holding a leftover, still-valid session for the OTHER role
+      // (e.g. one tester using both a doctor and a patient account) could
+      // cause the genuine caller's own role to never even be attempted.
+      // Each attempt below already skips itself when that identity isn't
+      // authenticated at all, so this costs nothing extra in the normal
+      // single-identity case.
       const roleAttempts =
         requestedRole === "doctor"
           ? ["doctor", "user"]
           : requestedRole === "user"
             ? ["user", "doctor"]
-            : doctor && !user
-              ? ["doctor"]
-              : user && !doctor
-                ? ["user"]
-                : ["doctor", "user"];
+            : ["doctor", "user"];
 
       for (const role of roleAttempts) {
         if (role === "doctor" && !doctor) continue;
@@ -970,6 +1061,7 @@ export default function VideoCall() {
           if (cancelled) return;
           setAppt(res.data);
           setActiveRole(role);
+          persistRole(appointmentId, role);
           setApptLoading(false);
           return;
         } catch (err) {
@@ -1077,6 +1169,10 @@ export default function VideoCall() {
     joinedSocketIdRef.current = "";
     peerJoinedRef.current = false;
     ignoreOfferRef.current = false;
+    pendingOfferIdRef.current = null;
+    lastReceivedOfferIdRef.current = null;
+    clearTimeout(offerAnswerTimeoutRef.current);
+    offerAnswerTimeoutRef.current = null;
     restartRequestInFlightRef.current = false;
     screenSharingRef.current = false;
     screenShareStartInProgressRef.current = false;
@@ -1087,6 +1183,21 @@ export default function VideoCall() {
   const canJoinConsultation = useMemo(() => {
     return appt?.status === "confirmed";
   }, [appt]);
+
+  // Where "leave this call" should send someone. Checked against the loaded
+  // appointment's actual participant ids first — ground truth from the DB —
+  // rather than trusting `isDoctor` alone, so a misresolved role can never
+  // route a patient into the doctor dashboard (or vice versa) once the
+  // appointment has loaded.
+  const resolveHomePath = useCallback(() => {
+    if (apptDoctorId && doctorId && String(apptDoctorId) === String(doctorId)) {
+      return "/doctor-dashboard/patients";
+    }
+    if (apptPatientId && userId && String(apptPatientId) === String(userId)) {
+      return "/user/dashboard";
+    }
+    return isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard";
+  }, [apptDoctorId, doctorId, apptPatientId, userId, isDoctor]);
 
   const showInlineMessage = useCallback((message, duration = 4000) => {
     // Cancel any pending clear from a previous toast so an older timer
@@ -1263,15 +1374,13 @@ export default function VideoCall() {
 
     const handlePopstate = () => {
       window.history.pushState(null, "", window.location.href);
-      pendingLeaveRef.current = isDoctor
-        ? "/doctor-dashboard/patients"
-        : "/user/dashboard";
+      pendingLeaveRef.current = resolveHomePath();
       setLeaveConfirm(true);
     };
 
     window.addEventListener("popstate", handlePopstate);
     return () => window.removeEventListener("popstate", handlePopstate);
-  }, [canJoinConsultation, navigate, isDoctor, performCleanup]);
+  }, [canJoinConsultation, navigate, resolveHomePath, performCleanup]);
 
   // ── Tab close / reload → allow socket reconnect recovery ──────────
   useEffect(() => {
@@ -1406,6 +1515,10 @@ export default function VideoCall() {
     pendingRemoteCandidatesRef.current = [];
     ignoreOfferRef.current = false;
     settingRemoteAnswerPendingRef.current = false;
+    pendingOfferIdRef.current = null;
+    lastReceivedOfferIdRef.current = null;
+    clearTimeout(offerAnswerTimeoutRef.current);
+    offerAnswerTimeoutRef.current = null;
     clearTimeout(iceRestartTimerRef.current);
     clearTimeout(ignoreOfferResetTimerRef.current);
     clearTimeout(reconnectStallTimerRef.current);
@@ -1438,7 +1551,12 @@ export default function VideoCall() {
       });
     }
 
-    const remoteStream = new MediaStream();
+    // `let`, not `const` — pc.ontrack below reassigns this to a fresh
+    // MediaStream instance whenever it replaces a track, so every consumer
+    // that reads it afterwards (including this same closure, on the next
+    // track event) sees the current object. See pc.ontrack for why a fresh
+    // instance is needed rather than mutating this one in place.
+    let remoteStream = new MediaStream();
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
     const isPolitePeer = isDoctor;
@@ -1491,14 +1609,61 @@ export default function VideoCall() {
         });
         if (!mounted || pc.signalingState === "closed") return false;
         await pc.setLocalDescription(offer);
+        const offerId = makeOfferId();
+        pendingOfferIdRef.current = offerId;
         socket.emit("video-offer", {
           appointmentId,
           offer: pc.localDescription,
+          offerId,
         });
         if (iceRestart)
           logVideoEvent("ice_restart_offer_sent", {
             signalingState: pc.signalingState,
           });
+
+        // Self-heal if this specific offer never gets answered (dropped
+        // signaling message, peer mid-reconnect, replayed/rejected stale
+        // answer, etc.) — otherwise pc stays wedged in "have-local-offer"
+        // forever, since nothing else ever rolls back our own offer.
+        clearTimeout(offerAnswerTimeoutRef.current);
+        offerAnswerTimeoutRef.current = window.setTimeout(() => {
+          offerAnswerTimeoutRef.current = null;
+          if (!mounted || pc.signalingState === "closed") return;
+          if (pendingOfferIdRef.current !== offerId) return; // already resolved or superseded
+          if (pc.signalingState !== "have-local-offer") {
+            pendingOfferIdRef.current = null;
+            return;
+          }
+          logVideoEvent("offer_answer_timeout_rollback", {
+            offerId,
+            signalingState: pc.signalingState,
+          });
+          console.warn(
+            "No answer received for offer %s within %dms — rolling back to retry.",
+            offerId,
+            OFFER_ANSWER_TIMEOUT_MS,
+          );
+          pc.setLocalDescription({ type: "rollback" })
+            .then(() => {
+              pendingOfferIdRef.current = null;
+              // Retry directly rather than via scheduleIceRestart(): that
+              // helper bails out early whenever pc.connectionState already
+              // reads "connected" — which is exactly the misleading state
+              // this timeout is designed to catch (the underlying
+              // connectionState can lag well behind reality; a timed-out
+              // offer is itself strong evidence something needs
+              // renegotiating regardless of what connectionState currently
+              // reports). createAndSendOffer's own guards (mounted,
+              // signalingState, isReadyRef) still apply, so this can't fire
+              // against a closed/torn-down pc.
+              void createAndSendOffer({ iceRestart: true });
+            })
+            .catch((err) => {
+              pendingOfferIdRef.current = null;
+              console.error("Rollback after offer-answer timeout failed:", err);
+            });
+        }, OFFER_ANSWER_TIMEOUT_MS);
+
         return true;
       } catch (err) {
         console.error(
@@ -1673,6 +1838,11 @@ export default function VideoCall() {
         ? event.streams.flatMap((stream) => stream.getTracks())
         : [event.track].filter(Boolean);
 
+      // Set when this event actually swaps out a previously-live track for
+      // a given kind (as opposed to a first-time add) — see below for why
+      // that case needs more than an in-place mutation.
+      let trackWasReplaced = false;
+
       incomingTracks.forEach((track) => {
         // The sending side only ever sends one track per kind (camera OR
         // screen share for video, never both — see startScreenShare's
@@ -1683,16 +1853,33 @@ export default function VideoCall() {
         // wouldn't dedupe by id — without pruning, the dead old track stays
         // in this stream alongside the new live one, and the video element
         // can end up stuck rendering (or freezing on) the wrong track.
-        remoteStream
+        const staleTracksOfKind = remoteStream
           .getTracks()
           .filter(
             (existing) =>
               existing.kind === track.kind && existing.id !== track.id,
-          )
-          .forEach((stale) => remoteStream.removeTrack(stale));
+          );
+        if (staleTracksOfKind.length > 0) trackWasReplaced = true;
+        staleTracksOfKind.forEach((stale) => remoteStream.removeTrack(stale));
 
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
       });
+
+      if (trackWasReplaced) {
+        // Some browsers don't reliably rebind a <video> element's decode/
+        // render pipeline to a track that was swapped into a MediaStream
+        // it's already displaying — re-assigning `srcObject` to the SAME
+        // object reference (as assignStreams does below) can be treated as
+        // a no-op, leaving the video frozen on the last frame from the old
+        // track. Audio recovers regardless, since continuous playback has
+        // no comparable per-frame pipeline to rebind. Rebuilding the stream
+        // as a new object forces every consumer's next `srcObject`
+        // assignment to be a genuine source change, which every browser
+        // does honor. First-time track additions (no replacement) are
+        // unaffected and keep mutating the existing stream as before.
+        remoteStream = new MediaStream(remoteStream.getTracks());
+        remoteStreamRef.current = remoteStream;
+      }
 
       if (mounted) {
         logVideoEvent("remote_track_received", {
@@ -1808,7 +1995,7 @@ export default function VideoCall() {
     };
 
     // Socket handlers
-    const handleOffer = async ({ offer }) => {
+    const handleOffer = async ({ offer, offerId: incomingOfferId }) => {
       if (!offer || !mounted) return;
       try {
         setConnectionState("connecting");
@@ -1832,6 +2019,12 @@ export default function VideoCall() {
         if (offerCollision && pc.signalingState === "have-local-offer") {
           console.info("Rolling back local offer to accept peer offer.");
           await pc.setLocalDescription({ type: "rollback" });
+          // Our own outstanding offer was just discarded — any answer that
+          // still shows up for it later is stale and must be rejected, and
+          // the answer-timeout watchdog for it is no longer relevant.
+          pendingOfferIdRef.current = null;
+          clearTimeout(offerAnswerTimeoutRef.current);
+          offerAnswerTimeoutRef.current = null;
         } else if (offerCollision) {
           console.info(
             "Ignoring offer while negotiation is already in progress.",
@@ -1840,6 +2033,11 @@ export default function VideoCall() {
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        // Record which offer we just accepted as soon as it's applied, not
+        // only once we get around to answering it — if local media isn't
+        // ready yet, retryMediaPermissions() answers this same remote
+        // description later, and needs the right id to echo back then too.
+        lastReceivedOfferIdRef.current = incomingOfferId || null;
         resetIgnoredOffer();
         await flushPendingIceCandidates();
         // Now wait for local tracks so the answer includes our video/audio.
@@ -1857,6 +2055,7 @@ export default function VideoCall() {
         socket.emit("video-answer", {
           appointmentId,
           answer: pc.localDescription,
+          offerId: incomingOfferId,
         });
         if (!inCallRef.current) {
           setInCall(true);
@@ -1867,7 +2066,7 @@ export default function VideoCall() {
       }
     };
 
-    const handleAnswer = async ({ answer }) => {
+    const handleAnswer = async ({ answer, offerId: receivedOfferId }) => {
       if (!answer || !mounted) return;
       try {
         if (pc.signalingState !== "have-local-offer") {
@@ -1877,8 +2076,37 @@ export default function VideoCall() {
           );
           return;
         }
+        // Guards against a stale/replayed video-answer being applied to a
+        // newer offer — e.g. connectionStateRecovery redelivering an
+        // already-consumed answer across a reconnect. signalingState alone
+        // can't tell a genuine fresh answer apart from that, since a
+        // replayed one arrives while we're legitimately in have-local-offer
+        // waiting for a real one.
+        const expectedOfferId = pendingOfferIdRef.current;
+        if (!expectedOfferId || receivedOfferId !== expectedOfferId) {
+          logVideoEvent("answer_rejected_stale", {
+            expectedOfferId: expectedOfferId || null,
+            receivedOfferId: receivedOfferId || null,
+            signalingState: pc.signalingState,
+            timestamp: new Date().toISOString(),
+          });
+          console.warn(
+            "Rejecting answer: offerId mismatch (expected %s, got %s) — not applying to current RTCPeerConnection state.",
+            expectedOfferId || "none",
+            receivedOfferId || "none",
+          );
+          return;
+        }
         settingRemoteAnswerPendingRef.current = true;
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        pendingOfferIdRef.current = null;
+        clearTimeout(offerAnswerTimeoutRef.current);
+        offerAnswerTimeoutRef.current = null;
+        logVideoEvent("answer_accepted", {
+          offerId: receivedOfferId,
+          signalingState: pc.signalingState,
+          timestamp: new Date().toISOString(),
+        });
         resetIgnoredOffer();
         await flushPendingIceCandidates();
         if (!inCallRef.current) {
@@ -1919,11 +2147,27 @@ export default function VideoCall() {
     };
 
     const handleIceRestartRequest = async () => {
-      if (!mounted || isDoctor || !isReadyRef.current) return;
+      if (!mounted || !isReadyRef.current) return;
+      // The doctor still never self-initiates an offer as a matter of
+      // course (see handlePeerJoined) — but if the PATIENT explicitly asks
+      // for a restart because it just exhausted its own recovery attempts
+      // (see scheduleIceRestart's exhaustion branch), it needs the doctor
+      // to actually act on that request. Previously this returned early
+      // for isDoctor, so that hand-off silently went nowhere and neither
+      // side ever retried again. createAndSendOffer/handleOffer's existing
+      // collision handling (impolite ignores, polite rolls back) already
+      // resolves the rare case where both sides end up offering at once.
+      if (
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      )
+        return;
       console.info("Peer requested ICE restart.");
       logVideoEvent("ice_restart_request_received", {
         connectionState: pc.connectionState,
         iceConnectionState: pc.iceConnectionState,
+        role: isDoctor ? "doctor" : "user",
       });
       await createAndSendOffer({ iceRestart: true });
     };
@@ -2200,6 +2444,10 @@ export default function VideoCall() {
       joinedSocketIdRef.current = "";
       peerJoinedRef.current = false;
       ignoreOfferRef.current = false;
+      pendingOfferIdRef.current = null;
+      lastReceivedOfferIdRef.current = null;
+      clearTimeout(offerAnswerTimeoutRef.current);
+      offerAnswerTimeoutRef.current = null;
       screenSharingRef.current = false;
       screenShareStartInProgressRef.current = false;
       screenShareStopInProgressRef.current = false;
@@ -2496,10 +2744,8 @@ export default function VideoCall() {
     if (completing) return;
     setEndCallConfirm(false);
     performCleanup();
-    navigate(isDoctor ? "/doctor-dashboard/patients" : "/user/dashboard", {
-      replace: true,
-    });
-  }, [completing, isDoctor, performCleanup, navigate]);
+    navigate(resolveHomePath(), { replace: true });
+  }, [completing, resolveHomePath, performCleanup, navigate]);
 
   const completeAppointment = useCallback(async () => {
     if (!isDoctor || completing) return;
@@ -2581,6 +2827,7 @@ export default function VideoCall() {
         socket.emit("video-answer", {
           appointmentId,
           answer: pc.localDescription,
+          offerId: lastReceivedOfferIdRef.current,
         });
       }
     } catch (err) {
@@ -2871,26 +3118,25 @@ export default function VideoCall() {
       <div className="hc-vc__ctrlbar-meta">
         <div className="hc-vc__meta-left">
           <div className="hc-vc__logo-mark">
-            <div className="hc-vc__logo-dot" />
-            <span className="hc-vc__logo-text">Humancare Connect</span>
+            <img
+              src={HumancareLogo}
+              alt="Humancare Connect"
+              className="hc-vc__logo-img"
+            />
           </div>
+        </div>
 
-          {otherParty && (
-            <div className="hc-vc__meta-party">
+        {otherParty && (
+          <div className="hc-vc__meta-party">
+            <span className="hc-vc__meta-party-icon">
+              <FiUser />
+            </span>
+            <div className="hc-vc__meta-party-text">
               <span className="hc-vc__infobar-label">{otherParty.label}</span>
               <span className="hc-vc__infobar-name">{otherParty.name}</span>
             </div>
-          )}
-        </div>
-
-        <div className="hc-vc__meta-right">
-          {inCall && isDoctor && (
-            <div className="hc-vc__timer">
-              <FiClock />
-              <span>{fmtDuration(callDuration)}</span>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* ── Offline banner ───────────────────────────────────────── */}
@@ -3494,7 +3740,7 @@ export default function VideoCall() {
           </button>
 
           <button
-            className={`hc-vc__btn ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
+            className={`hc-vc__btn hc-vc__btn--share ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
             onClick={toggleScreenShare}
             disabled={!isReady || (!isScreenSharing && !screenShareSupported)}
             title={
@@ -3512,6 +3758,12 @@ export default function VideoCall() {
               {isScreenSharing ? "Stop" : "Share"}
             </span>
           </button>
+          {inCall && isDoctor && (
+            <div className="hc-vc__timer">
+              <FiClock />
+              <span>{fmtDuration(callDuration)}</span>
+            </div>
+          )}
           {inCall && (
             <div className="hc-vc__live-pill">
               <span className="hc-vc__live-dot" />
@@ -3586,17 +3838,6 @@ export default function VideoCall() {
                 <FiFileText />
               </span>
               <span className="hc-vc__btn-label">Notes</span>
-            </button>
-          )}
-
-          {isDoctor && (
-            <button
-              className="hc-vc__btn hc-vc__btn--rx"
-              onClick={() => setShowRxModal(true)}
-              title="Issue prescription"
-            >
-              <span className="hc-vc__btn-icon">💊</span>
-              <span className="hc-vc__btn-label">Rx</span>
             </button>
           )}
 

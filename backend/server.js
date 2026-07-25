@@ -1269,24 +1269,26 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("video-offer", ({ appointmentId, offer }) => {
+  socket.on("video-offer", ({ appointmentId, offer, offerId }) => {
     if (!appointmentId || !offer) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
     if (!videoSdpLimiter.allow(socket.id)) return;
 
+    // offerId is opaque to the server — just relayed so the two peers can
+    // correlate an answer back to the offer it's meant for (see VideoCall.jsx).
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-offer", { offer });
+      .emit("video-offer", { offer, offerId });
   });
 
-  socket.on("video-answer", ({ appointmentId, answer }) => {
+  socket.on("video-answer", ({ appointmentId, answer, offerId }) => {
     if (!appointmentId || !answer) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
     if (!videoSdpLimiter.allow(socket.id)) return;
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-answer", { answer });
+      .emit("video-answer", { answer, offerId });
   });
 
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
