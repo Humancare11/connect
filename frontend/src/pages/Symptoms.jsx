@@ -1,11 +1,9 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
   Globe2,
   ArrowRight,
-  ArrowLeft,
-  Plane,
   Stethoscope,
   Brain,
   Activity,
@@ -28,36 +26,11 @@ import {
   Sparkles,
   Eye,
   Utensils,
+  Plane,
 } from "lucide-react";
 import "./symptoms.css";
 import SEO from "../components/Seo";
-
-const previewSpecialties = [
-  {
-    name: "Primary Care",
-    path: "/primary-care-provider",
-    icon: Stethoscope,
-    tags: ["Cold & Flu", "Fever"],
-  },
-  {
-    name: "Urgent Care",
-    path: "/urgent-care",
-    icon: ClipboardPlus,
-    tags: ["UTI", "Sore Throat"],
-  },
-  {
-    name: "Mental Health",
-    path: "/mental-health",
-    icon: Brain,
-    tags: ["Anxiety", "Depression"],
-  },
-  {
-    name: "Chronic Care",
-    path: "/chronic-care",
-    icon: Activity,
-    tags: ["Diabetes", "Hypertension"],
-  },
-];
+import ServiceSwitcher from "../components/ServiceSwitcher";
 
 const stats = [
   ["11", "Categories"],
@@ -65,54 +38,64 @@ const stats = [
   ["140+", "Conditions"],
 ];
 
-const heroSlides = [
+// Each entry pairs a "virtual care request" scenario with the specialty it
+// routes to — drives the ServiceSwitcher featured card, grid, and bottom bar.
+const HERO_SERVICES = [
   {
-    sub: "Virtual care request",
-    title: "Traveler needs consult",
-    icon: Plane,
-    rows: [
-      ["Condition", "Food Poisoning While Traveling"],
-      ["Need", "Telehealth consult + medical report"],
-      ["Route", "English-speaking doctor"],
-      ["Status", "Non-emergency triage"],
-    ],
-    activeIndex: 0,
+    id: "routine-checkups",
+    icon: Stethoscope,
+    category: "Primary Care",
+    title: "Routine Checkups",
+    eyebrow: "Preventive care consultation",
+    subtitle: "Annual Exams • Health Screenings • Wellness Visits",
+    condition: "Annual Exams, Health Screenings, Wellness Visits",
+    need: "Preventive assessment + personalized care plan",
+    route: "Primary care physician / Family doctor",
+    status: "Scheduled or routine appointment",
+    tags: ["Annual Exams", "Health Screenings"],
+    path: "/general-and-everyday-care/family-medicine/routine-check-ups",
   },
   {
-    sub: "Virtual care request",
-    title: "Patient needs urgent care",
-    icon: ClipboardPlus,
-    rows: [
-      ["Condition", "UTI Symptoms Since Last Night"],
-      ["Need", "Same-day telehealth consult"],
-      ["Route", "Nearest available provider"],
-      ["Status", "Non-emergency triage"],
-    ],
-    activeIndex: 1,
+    id: "sinus-infection",
+    icon: Stethoscope,
+    category: "Primary Care",
+    title: "Sinus Infection",
+    eyebrow: "Sinus care consultation",
+    subtitle: "Sinus Pressure • Congestion • Facial Pain",
+    condition: "Sinus Pressure, Congestion, Facial Pain",
+    need: "Diagnosis + personalized treatment plan",
+    route: "Primary care physician / ENT specialist",
+    status: "Same-day or routine appointment",
+    tags: ["Sinus Pressure", "Congestion"],
+    path: "/general-and-everyday-care/general-physician/sinus-infection",
   },
   {
-    sub: "Virtual care request",
-    title: "Member needs support",
-    icon: Brain,
-    rows: [
-      ["Condition", "Persistent Anxiety & Sleep Loss"],
-      ["Need", "Mental health consult"],
-      ["Route", "Licensed therapist match"],
-      ["Status", "Routine triage"],
-    ],
-    activeIndex: 2,
+    id: "dry-eyes",
+    icon: Stethoscope,
+    category: "Primary Care",
+    title: "Dry Eyes",
+    eyebrow: "Eye care consultation",
+    subtitle: "Dryness • Irritation • Burning Eyes",
+    condition: "Dryness, Irritation, Burning Eyes",
+    need: "Eye evaluation + symptom relief plan",
+    route: "Ophthalmologist / Eye care specialist",
+    status: "Same-day or routine appointment",
+    tags: ["Dryness", "Irritation"],
+    path: "/eye-ear-bone/ophthalmology/dry-eyes",
   },
   {
-    sub: "Virtual care request",
-    title: "Patient needs refill review",
-    icon: Activity,
-    rows: [
-      ["Condition", "Type 2 Diabetes Follow-Up"],
-      ["Need", "Medication review + refill"],
-      ["Route", "Chronic care specialist"],
-      ["Status", "Routine triage"],
-    ],
-    activeIndex: 3,
+    id: "puberty-concerns",
+    icon: Stethoscope,
+    category: "Primary Care",
+    title: "Puberty Concerns",
+    eyebrow: "Adolescent health consultation",
+    subtitle: "Delayed Puberty • Early Puberty • Hormonal Changes",
+    condition: "Delayed Puberty, Early Puberty, Hormonal Changes",
+    need: "Growth assessment + personalized guidance",
+    route: "Pediatrician / Adolescent medicine specialist",
+    status: "Routine or priority appointment",
+    tags: ["Delayed Puberty", "Hormonal Changes"],
+    path: "/child-and-family-care/adolescent-medicine/puberty-concerns",
   },
 ];
 
@@ -836,28 +819,6 @@ export default function Symptoms() {
   const [showAll, setShowAll] = useState(false);
   const [hoveredFilter, setHoveredFilter] = useState(null);
 
-  // Hero carousel state
-  const [slide, setSlide] = useState(0);
-  const slideCount = heroSlides.length;
-  const autoplayRef = useRef(null);
-
-  useEffect(() => {
-    autoplayRef.current = setInterval(() => {
-      setSlide((s) => (s + 1) % slideCount);
-    }, 5000);
-    return () => clearInterval(autoplayRef.current);
-  }, [slideCount]);
-
-  const goTo = (i) => {
-    clearInterval(autoplayRef.current);
-    setSlide(((i % slideCount) + slideCount) % slideCount);
-  };
-  const goPrev = () => goTo(slide - 1);
-  const goNext = () => goTo(slide + 1);
-
-  const current = heroSlides[slide];
-  const CurrentCardIcon = current.icon;
-
   // FAQ state — track which item is open within each group (one open per group)
   const [openFaq, setOpenFaq] = useState("0-0");
 
@@ -942,95 +903,7 @@ export default function Symptoms() {
           </div>
 
           <div className="sy-hero-panel">
-            <div className="sy-hero__card">
-              <div className="sy-hero__card-dark">
-                <div className="sy-hero__card-top">
-                  <div>
-                    <p className="sy-hero__card-sub">{current.sub}</p>
-                    <p className="sy-hero__card-title">{current.title}</p>
-                  </div>
-                  <div className="sy-hero__card-icon">
-                    <CurrentCardIcon size={22} />
-                  </div>
-                </div>
-                <div className="sy-hero__card-rows">
-                  {current.rows.map(([label, value]) => (
-                    <div key={label} className="sy-hero__card-row">
-                      <span>{label}</span>
-                      <span>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="sy-hero__mini-grid">
-                {previewSpecialties.map(
-                  ({ name, path, icon: Icon, tags }, i) => (
-                    <Link
-                      key={name}
-                      to={path}
-                      className={`sy-hero__mini-card${i === current.activeIndex ? " sy-hero__mini-card--active" : ""}`}
-                    >
-                      <Icon size={20} />
-                      <div className="sy-hero__mini-name">{name}</div>
-                      <div className="sy-hero__mini-tags">
-                        {tags.join(" · ")}
-                      </div>
-                    </Link>
-                  ),
-                )}
-              </div>
-
-              <Link
-                to={previewSpecialties[current.activeIndex].path}
-                className="sy-hero__feature-row"
-              >
-                <div className="sy-hero__feature-left">
-                  {(() => {
-                    const Icon = previewSpecialties[current.activeIndex].icon;
-                    return <Icon size={16} />;
-                  })()}
-                  <span>{previewSpecialties[current.activeIndex].name}</span>
-                </div>
-                <div className="sy-hero__feature-tags">
-                  {previewSpecialties[current.activeIndex].tags.map((t) => (
-                    <span key={t} className="sy-hero__feature-tag">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </Link>
-
-              <div className="sy-hero__nav">
-                <button
-                  type="button"
-                  className="sy-hero__nav-arrow"
-                  onClick={goPrev}
-                  aria-label="Previous"
-                >
-                  <ArrowLeft size={16} />
-                </button>
-                <div className="sy-hero__nav-dots">
-                  {heroSlides.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      className={`sy-hero__nav-dot${i === slide ? " sy-hero__nav-dot--active" : ""}`}
-                      onClick={() => goTo(i)}
-                      aria-label={`Go to slide ${i + 1}`}
-                    />
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  className="sy-hero__nav-arrow"
-                  onClick={goNext}
-                  aria-label="Next"
-                >
-                  <ArrowRight size={16} />
-                </button>
-              </div>
-            </div>
+            <ServiceSwitcher services={HERO_SERVICES} />
           </div>
         </div>
       </section>

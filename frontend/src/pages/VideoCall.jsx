@@ -538,7 +538,7 @@ const setTrackHint = (track, hint) => {
   if (!track || !("contentHint" in track)) return;
   try {
     track.contentHint = hint;
-  } catch (_) { }
+  } catch (_) {}
 };
 
 const getSenderForKind = (pc, kind) => {
@@ -597,7 +597,7 @@ const tuneSenderQuality = async (
     }
 
     await sender.setParameters(params);
-  } catch (_) { }
+  } catch (_) {}
 };
 
 // Chat messages have no server-issued id in the payload this page receives,
@@ -1358,10 +1358,10 @@ export default function VideoCall() {
             activeSender,
             track.kind === "video"
               ? {
-                maxBitrate: BITRATE_PROFILE.cameraVideo,
-                maxFramerate: 30,
-                maintainResolution: true,
-              }
+                  maxBitrate: BITRATE_PROFILE.cameraVideo,
+                  maxFramerate: 30,
+                  maintainResolution: true,
+                }
               : { maxBitrate: BITRATE_PROFILE.voiceAudio },
           ),
         );
@@ -1411,7 +1411,7 @@ export default function VideoCall() {
     clearTimeout(reconnectStallTimerRef.current);
     reconnectStallTimerRef.current = null;
     setReconnectStalled(false);
-    let resolveLocalReady = () => { };
+    let resolveLocalReady = () => {};
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
@@ -1685,7 +1685,10 @@ export default function VideoCall() {
         // can end up stuck rendering (or freezing on) the wrong track.
         remoteStream
           .getTracks()
-          .filter((existing) => existing.kind === track.kind && existing.id !== track.id)
+          .filter(
+            (existing) =>
+              existing.kind === track.kind && existing.id !== track.id,
+          )
           .forEach((stale) => remoteStream.removeTrack(stale));
 
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
@@ -1991,14 +1994,19 @@ export default function VideoCall() {
 
     const handleChatMessage = (msg) => {
       if (mounted) {
-        setMessages((prev) => [...prev, { ...msg, _localKey: makeMessageKey() }]);
+        setMessages((prev) => [
+          ...prev,
+          { ...msg, _localKey: makeMessageKey() },
+        ]);
         if (!chatOpenRef.current) setUnreadCount((c) => c + 1);
       }
     };
     const handleChatHistory = (payload) => {
       if (mounted && payload?.appointmentId === appointmentId) {
         const history = Array.isArray(payload.messages) ? payload.messages : [];
-        setMessages(history.map((msg) => ({ ...msg, _localKey: makeMessageKey() })));
+        setMessages(
+          history.map((msg) => ({ ...msg, _localKey: makeMessageKey() })),
+        );
       }
     };
 
@@ -2243,7 +2251,7 @@ export default function VideoCall() {
           .post("/api/auth/refresh", null, {
             authRole: isDoctor ? "doctor" : "user",
           })
-          .catch(() => { });
+          .catch(() => {});
       },
       4 * 60 * 1000,
     );
@@ -2455,7 +2463,7 @@ export default function VideoCall() {
         assignStreams(isSwapped);
       }
 
-      pipVideoRef.current.play?.().catch(() => { });
+      pipVideoRef.current.play?.().catch(() => {});
     });
 
     return () => cancelAnimationFrame(frameId);
@@ -2509,7 +2517,7 @@ export default function VideoCall() {
       setCompleting(false);
       showInlineMessage(
         err.response?.data?.msg ||
-        "Failed to complete appointment. Please try again.",
+          "Failed to complete appointment. Please try again.",
         5000,
       );
     }
@@ -2709,7 +2717,10 @@ export default function VideoCall() {
     }, CHAT_SEND_COOLDOWN_MS);
   }, [chatInput, appointmentId, currentUser]);
 
-  useEffect(() => () => window.clearTimeout(chatSendCooldownTimerRef.current), []);
+  useEffect(
+    () => () => window.clearTimeout(chatSendCooldownTimerRef.current),
+    [],
+  );
 
   const handleChatKey = useCallback(
     (e) => {
@@ -2845,12 +2856,12 @@ export default function VideoCall() {
   const pipStyle =
     pipPos.x !== null
       ? {
-        position: "fixed",
-        left: `${pipPos.x}px`,
-        top: `${pipPos.y}px`,
-        right: "auto",
-        bottom: "auto",
-      }
+          position: "fixed",
+          left: `${pipPos.x}px`,
+          top: `${pipPos.y}px`,
+          right: "auto",
+          bottom: "auto",
+        }
       : {};
   const screenShareSupported = canUseScreenShare();
 
@@ -2879,14 +2890,14 @@ export default function VideoCall() {
               <span>{fmtDuration(callDuration)}</span>
             </div>
           )}
-
         </div>
       </div>
 
       {/* ── Offline banner ───────────────────────────────────────── */}
       {isOffline && (
         <div className="hc-vc__offline-banner">
-          <FiAlertTriangle /> You're offline. Reconnecting once your internet is back.
+          <FiAlertTriangle /> You're offline. Reconnecting once your internet is
+          back.
         </div>
       )}
 
@@ -2923,7 +2934,10 @@ export default function VideoCall() {
           className="hc-vc__confirm-overlay"
           onClick={() => setEndCallConfirm(false)}
         >
-          <div className="hc-vc__confirm-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="hc-vc__confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="hc-vc__confirm-icon hc-vc__confirm-icon--danger">
               <FiPhoneOff />
             </div>
@@ -2999,7 +3013,10 @@ export default function VideoCall() {
           className="hc-vc__confirm-overlay"
           onClick={() => setLeaveConfirm(false)}
         >
-          <div className="hc-vc__confirm-modal" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="hc-vc__confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="hc-vc__confirm-icon">⚠</div>
             <h3 className="hc-vc__confirm-title">Leave Consultation?</h3>
             <p className="hc-vc__confirm-text">
@@ -3059,7 +3076,12 @@ export default function VideoCall() {
           >
             View
           </button>
-          <button className="hc-vc__rx-notif-close" onClick={() => setPrescriptionNotif(null)}><FiX /></button>
+          <button
+            className="hc-vc__rx-notif-close"
+            onClick={() => setPrescriptionNotif(null)}
+          >
+            <FiX />
+          </button>
         </div>
       )}
 
@@ -3304,10 +3326,10 @@ export default function VideoCall() {
                               {msg.fileType?.includes("pdf")
                                 ? "📄"
                                 : msg.fileType?.includes("word") ||
-                                  msg.fileType?.includes("doc")
+                                    msg.fileType?.includes("doc")
                                   ? "📝"
                                   : msg.fileType?.includes("sheet") ||
-                                    msg.fileType?.includes("excel")
+                                      msg.fileType?.includes("excel")
                                     ? "📊"
                                     : "📎"}
                             </span>

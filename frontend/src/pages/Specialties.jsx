@@ -1,10 +1,4 @@
-﻿import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-} from "react";
+﻿import React, { useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 
@@ -24,7 +18,6 @@ import {
   Pill,
   Users,
   CheckCircle2,
-  ChevronLeft,
   ChevronRight,
   Search,
   MessageCircle,
@@ -47,6 +40,7 @@ import {
 } from "lucide-react";
 import "./Specialties.css";
 import SEO from "../components/Seo";
+import ServiceSwitcher from "../components/ServiceSwitcher";
 
 const conditionIcons = {
   bone: Bone,
@@ -57,103 +51,65 @@ const conditionIcons = {
   stethoscope: Stethoscope,
   pill: Pill,
 };
-// ── Carousel slides ──────────────────────────────────────────────────────────
-const carouselSlides = [
+// ── Hero ServiceSwitcher data ────────────────────────────────────────────────
+// Each entry pairs a "virtual care request" scenario with the specialty it
+// routes to — drives the ServiceSwitcher featured card, grid, and bottom bar.
+const HERO_SERVICES = [
   {
-    icon: Plane,
-    cardSub: "Virtual care request",
-    cardTitle: "Traveler needs consult",
-    rows: [
-      ["Condition", "Food Poisoning While Traveling"],
-      ["Need", "Telehealth consult + medical report"],
-      ["Route", "English-speaking doctor"],
-      ["Status", "Non-emergency triage"],
-    ],
-    tabs: [
-      {
-        name: "Primary Care",
-        icon: Stethoscope,
-        tags: ["Cold & Flu", "Fever"],
-      },
-      {
-        name: "Urgent Care",
-        icon: ClipboardPlus,
-        tags: ["UTI", "Sore Throat"],
-      },
-      { name: "Mental Health", icon: Brain, tags: ["Anxiety", "Depression"] },
-      {
-        name: "Chronic Care",
-        icon: Activity,
-        tags: ["Diabetes", "Hypertension"],
-      },
-    ],
-  },
-  {
+    id: "pediatrics",
     icon: Stethoscope,
-    cardSub: "Chronic condition management",
-    cardTitle: "Ongoing care support",
-    rows: [
-      ["Condition", "Type 2 Diabetes"],
-      ["Need", "Medication review + monitoring"],
-      ["Route", "Certified chronic care physician"],
-      ["Status", "Scheduled follow-up"],
-    ],
-    tabs: [
-      {
-        name: "Chronic Care",
-        icon: Activity,
-        tags: ["Diabetes", "Hypertension"],
-      },
-      {
-        name: "Primary Care",
-        icon: Stethoscope,
-        tags: ["Preventive", "Check-ups"],
-      },
-      { name: "Medication Mgmt", icon: Pill, tags: ["Refill", "Side Effects"] },
-      {
-        name: "Second Opinion",
-        icon: Users,
-        tags: ["Lab Review", "Diagnosis"],
-      },
-    ],
+    category: "Pediatrics",
+    title: "Pediatrics",
+    eyebrow: "Pediatric consultation",
+    subtitle: "Fever • Infections • Growth Concerns",
+    condition: "Fever, Infections, Growth Concerns",
+    need: "Child health evaluation + treatment plan",
+    route: "Board-certified pediatrician",
+    status: "Same-day or routine appointment",
+    tags: ["Fever", "Infections"],
+    path: "/child-and-family-care/pediatrics",
   },
   {
-    icon: Brain,
-    cardSub: "Mental wellness session",
-    cardTitle: "Confidential therapy consult",
-    rows: [
-      ["Condition", "Generalised Anxiety Disorder"],
-      ["Need", "Behavioural health consultation"],
-      ["Route", "Licensed therapist, English"],
-      ["Status", "Non-emergency intake"],
-    ],
-    tabs: [
-      { name: "Mental Health", icon: Brain, tags: ["Anxiety", "Depression"] },
-      {
-        name: "Primary Care",
-        icon: Stethoscope,
-        tags: ["Insomnia", "Fatigue"],
-      },
-      { name: "Chronic Care", icon: Activity, tags: ["Stress", "Burnout"] },
-      { name: "Second Opinion", icon: Users, tags: ["Referral", "Clarity"] },
-    ],
+    id: "family-medicine",
+    icon: Stethoscope,
+    category: "Family Medicine",
+    title: "Family Medicine",
+    eyebrow: "Family medicine consultation",
+    subtitle: "Common Illnesses • Chronic Care • Preventive Health",
+    condition: "Common Illnesses, Chronic Care, Preventive Health",
+    need: "Comprehensive evaluation + ongoing care plan",
+    route: "Board-certified family physician",
+    status: "Same-day or routine appointment",
+    tags: ["Common Illnesses", "Chronic Care"],
+    path: "/general-and-everyday-care/family-medicine",
   },
   {
-    icon: Venus,
-    cardSub: "Women's health consult",
-    cardTitle: "Reproductive & hormonal care",
-    rows: [
-      ["Condition", "PCOS — irregular cycles"],
-      ["Need", "Hormone panel + birth control"],
-      ["Route", "OB-GYN specialist, telehealth"],
-      ["Status", "Initial consultation"],
-    ],
-    tabs: [
-      { name: "Women's Health", icon: Venus, tags: ["PCOS", "Birth Control"] },
-      { name: "Primary Care", icon: Stethoscope, tags: ["Fatigue", "Weight"] },
-      { name: "Mental Health", icon: Brain, tags: ["Mood", "Stress"] },
-      { name: "Medication Mgmt", icon: Pill, tags: ["Rx Refill", "Review"] },
-    ],
+    id: "urology",
+    icon: Stethoscope,
+    category: "Urology",
+    title: "Urology",
+    eyebrow: "Urology consultation",
+    subtitle: "UTIs • Kidney Stones • Prostate Concerns",
+    condition: "UTIs, Kidney Stones, Prostate Concerns",
+    need: "Urologic evaluation + personalized treatment",
+    route: "Board-certified urologist",
+    status: "Same-day or routine appointment",
+    tags: ["UTIs", "Kidney Stones"],
+    path: "/mens-health/urology",
+  },
+  {
+    id: "travel-medicine",
+    icon: Stethoscope,
+    category: "Travel Medicine",
+    title: "Travel Medicine",
+    eyebrow: "Travel medicine consultation",
+    subtitle: "Travel Vaccinations • Jet Lag • Travel Illness",
+    condition: "Travel Vaccinations, Jet Lag, Travel Illness",
+    need: "Pre-travel assessment + health guidance",
+    route: "Travel medicine specialist",
+    status: "Pre-travel or same-day appointment",
+    tags: ["Travel Vaccinations", "Travel Illness"],
+    path: "/travel-and-global-care/travel-medicine",
   },
 ];
 
@@ -615,190 +571,6 @@ const faqJsonLd = {
   ),
 };
 
-// ── HeroCarousel component ────────────────────────────────────────────────────
-function HeroCarousel() {
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState(0);
-  const [animating, setAnimating] = useState(false);
-  const [direction, setDirection] = useState("next"); // "next" | "prev"
-  const [isPaused, setIsPaused] = useState(false);
-
-  const total = carouselSlides.length;
-  const slide = carouselSlides[slideIndex];
-
-  // Refs keep goTo/goToOffset stable across renders so the autoplay effect
-  // below doesn't tear down and restart its timer on every animation tick.
-  const slideIndexRef = useRef(slideIndex);
-  const animatingRef = useRef(false);
-
-  useEffect(() => {
-    slideIndexRef.current = slideIndex;
-  }, [slideIndex]);
-
-  const goTo = useCallback((next, dir) => {
-    if (animatingRef.current) return;
-    animatingRef.current = true;
-    setDirection(dir);
-    setAnimating(true);
-    setTimeout(() => {
-      setSlideIndex(next);
-      setActiveTab(0);
-      setAnimating(false);
-      animatingRef.current = false;
-    }, 320);
-  }, []);
-
-  const goToOffset = useCallback(
-    (offset, dir) => {
-      const current = slideIndexRef.current;
-      goTo((current + offset + total) % total, dir);
-    },
-    [goTo, total],
-  );
-
-  const prev = () => goToOffset(-1, "prev");
-  const next = () => goToOffset(1, "next");
-
-  const handleDotClick = (i) => {
-    if (i === slideIndex) return;
-    goTo(i, i > slideIndex ? "next" : "prev");
-  };
-
-  // Auto-advance every 5s. Pauses on hover/focus (keyboard users included)
-  // and while the tab isn't visible, per WCAG 2.2.2 (pausable auto content).
-  useEffect(() => {
-    if (isPaused) return;
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        goToOffset(1, "next");
-      }
-    }, 5000);
-    return () => clearInterval(id);
-  }, [isPaused, goToOffset]);
-
-  const SlideIcon = slide.icon;
-  const activeTabData = slide.tabs[activeTab];
-  const ActiveTabIcon = activeTabData.icon;
-
-  return (
-    <div className="sp-hero__panel">
-      <div
-        className="sp-hero__card"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-        onFocus={() => setIsPaused(true)}
-        onBlur={() => setIsPaused(false)}
-      >
-        {/* ── Dark inner card (animated) ── */}
-        <div
-          className={`sp-hero__card-dark sp-carousel__slide ${animating ? `sp-carousel__slide--exit-${direction}` : "sp-carousel__slide--enter"}`}
-        >
-          <div className="sp-hero__card-top">
-            <div>
-              <p className="sp-hero__card-sub">{slide.cardSub}</p>
-              <p className="sp-hero__card-title">{slide.cardTitle}</p>
-            </div>
-            <div className="sp-hero__card-icon">
-              <SlideIcon size={18} />
-            </div>
-          </div>
-
-          <div className="sp-hero__card-rows">
-            {slide.rows.map(([label, value]) => (
-              <div key={label} className="sp-hero__card-row">
-                <span>{label}</span>
-                <span>{value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Tab mini-grid ── */}
-        <div className="sp-hero__mini-grid">
-          {slide.tabs.map(({ name, icon: Icon, tags }, i) => (
-            <button
-              key={name}
-              type="button"
-              className={`sp-hero__mini-card sp-hero__mini-card--btn${activeTab === i ? " sp-hero__mini-card--active" : ""}`}
-              onClick={() => setActiveTab(i)}
-              aria-pressed={activeTab === i}
-            >
-              <Icon
-                size={20}
-                style={{
-                  color: activeTab === i ? "var(--white)" : "var(--teal)",
-                }}
-              />
-              <div className="sp-hero__mini-name">{name}</div>
-              <div className="sp-hero__mini-tags">{tags.join(" · ")}</div>
-            </button>
-          ))}
-        </div>
-
-        {/* ── Active tab expanded preview ── */}
-        <div
-          className="sp-hero__tab-preview"
-          key={`${slideIndex}-${activeTab}`}
-        >
-          <ActiveTabIcon
-            size={16}
-            style={{ color: "var(--teal)", flexShrink: 0 }}
-          />
-          <span className="sp-hero__tab-preview-name">
-            {activeTabData.name}
-          </span>
-          <div className="sp-hero__tab-preview-tags">
-            {activeTabData.tags.map((t) => (
-              <span key={t} className="sp-hero__tab-preview-tag">
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Carousel controls ── */}
-        <div className="sp-carousel__controls">
-          <button
-            type="button"
-            className="sp-carousel__btn"
-            onClick={prev}
-            aria-label="Previous slide"
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          <div
-            className="sp-carousel__dots"
-            role="tablist"
-            aria-label="Carousel slides"
-          >
-            {carouselSlides.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                role="tab"
-                aria-selected={slideIndex === i}
-                className={`sp-carousel__dot${slideIndex === i ? " sp-carousel__dot--active" : ""}`}
-                onClick={() => handleDotClick(i)}
-                aria-label={`Go to slide ${i + 1}`}
-              />
-            ))}
-          </div>
-
-          <button
-            type="button"
-            className="sp-carousel__btn"
-            onClick={next}
-            aria-label="Next slide"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── FAQ Accordion item ───────────────────────────────────────────────────────
 function FaqItem({ q, a, isOpen, onToggle }) {
   return (
@@ -925,8 +697,8 @@ export default function Specialties() {
             </div>
           </div>
 
-          {/* Right panel — carousel */}
-          <HeroCarousel />
+          {/* Right panel — service switcher */}
+          <ServiceSwitcher services={HERO_SERVICES} />
         </div>
       </section>
 
@@ -1111,9 +883,9 @@ export default function Specialties() {
               Everything you need to know about primary care at Humancare
               Connect. Can't find an answer?
             </p>
-            <button type="button" className="sp-faq__chat-btn">
+            {/* <button type="button" className="sp-faq__chat-btn">
               <MessageCircle size={16} /> Chat with our team
-            </button>
+            </button> */}
 
             <div className="sp-faq__trust">
               <div className="sp-faq__trust-item">

@@ -57,7 +57,7 @@ import {
 import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 
-import heroBanner from "../../assets/MedicalServices/chronic-care-management-telemedicine.webp";
+import heroBanner from "../../assets/SpecialitiesImage/expert-medical-opinion-second-opinion-healthcare-specialist.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
 import "../Specialty/SpecialtyPage.css";
 import "../Categories/categoriesGlobal.css";
@@ -1743,14 +1743,14 @@ export default function SecondOpinion() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} price={price} priceLoading={priceLoading}  bp={bp} />
-            <Overview s={s}  bp={bp} />
-            <HowItWorks s={s}  bp={bp} />
-            <Features s={s}  bp={bp} />
-            <WhyUs s={s}  bp={bp} />
+            <Hero s={s} price={price} priceLoading={priceLoading} bp={bp} />
+            <Overview s={s} bp={bp} />
+            <HowItWorks s={s} bp={bp} />
+            <Features s={s} bp={bp} />
+            <WhyUs s={s} bp={bp} />
             <RelatedServices s={s} bp={bp} />
-            <FAQ s={s}  bp={bp} />
-            <FinalCTA s={s}  bp={bp} />
+            <FAQ s={s} bp={bp} />
+            <FinalCTA s={s} bp={bp} />
           </motion.div>
         </AnimatePresence>
       </div>

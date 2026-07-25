@@ -9,13 +9,11 @@
   overflow: hidden;
   isolation: isolate;
   background:
-    linear-gradient(
-      90deg,
+    linear-gradient(90deg,
       #33486d 0%,
       #1b3158 35%,
       #10284e 70%,
-      #0a1d3b 100%
-    );
+      #0a1d3b 100%);
   box-shadow:
     0 35px 80px rgba(0, 0, 0, 0.30),
     0 15px 35px rgba(8, 22, 50, 0.25);
@@ -61,7 +59,7 @@
   letter-spacing: 0.16em;
   color: #2f4f7a;
   text-transform: uppercase;
-  background: rgba(232, 238, 249, 0.95);
+  background: #e8eef9;
   border: 1px solid rgba(65, 90, 130, 0.15);
   margin-bottom: 26px;
   animation: fadeUp 0.6s var(--ease) both;
@@ -89,11 +87,8 @@
 
 /* ══════════════════════════════════════════════
    CLICKABLE CARD WRAPPER
-   The Motion.div keeps grid placement; the Link
-   fills it 100% and owns hover/focus styles.
 ══════════════════════════════════════════════ */
 .services-card-link-wrapper {
-  /* grid sizing classes attach here */
   display: flex;
   flex-direction: column;
 }
@@ -106,23 +101,18 @@
   color: inherit;
   border-radius: 18px;
   outline: none;
-
-  /* pass-through so card base styles render on the link itself */
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.09);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: 22px;
   gap: 10px;
-
   position: relative;
   overflow: hidden;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-
   cursor: pointer;
-
   transition:
     border-color 0.3s ease,
     box-shadow 0.3s ease,
@@ -130,7 +120,6 @@
     background 0.3s ease;
 }
 
-/* Hover — lift + brighten */
 .services-card-inner-link:hover {
   border-color: rgba(255, 255, 255, 0.22);
   box-shadow:
@@ -140,27 +129,18 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* Focus-visible keyboard ring */
 .services-card-inner-link:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.55);
   outline-offset: 3px;
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Arrow slides right on hover */
 .services-card-inner-link:hover .cta-arrow {
   transform: translateX(5px);
 }
 
-/* ══════════════════════════════════════════════
-   CARD BASE  (kept on .services-card-item for
-   any padding overrides via bento classes)
-══════════════════════════════════════════════ */
-.services-card-item {
-  /* sizing/padding overrides only — visual chrome lives on .services-card-inner-link */
-}
+.services-card-item {}
 
-/* ── Badge row ── */
 .services-icon-row {
   display: flex;
   align-items: center;
@@ -168,7 +148,6 @@
   flex-wrap: wrap;
 }
 
-/* ── Icon Box ── */
 .services-icon-box {
   width: 38px;
   height: 38px;
@@ -195,7 +174,6 @@
   color: rgba(255, 255, 255, 0.85);
 }
 
-/* ── Card Title ── */
 .services-card-title {
   font-family: var(--font-primary);
   font-size: 18px;
@@ -205,7 +183,6 @@
   margin: 0;
 }
 
-/* ── Card Description ── */
 .services-card-description {
   font-size: 13.5px;
   line-height: 1.65;
@@ -214,7 +191,6 @@
   flex-grow: 1;
 }
 
-/* ── CTA Link (now a <span>, not an <a>) ── */
 .services-card-cta-link {
   display: inline-flex;
   align-items: center;
@@ -236,47 +212,6 @@
   transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* ── Stats mini ── */
-.services-stat-mini {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  padding: 10px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-  text-align: center;
-  transition:
-    background 0.3s ease,
-    border-color 0.3s ease,
-    transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.services-card-inner-link:hover .services-stat-mini {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.services-stat-value-text {
-  font-family: var(--font-primary);
-  font-size: 20px;
-  font-weight: 900;
-  color: #ffffff;
-  line-height: 1;
-  letter-spacing: -0.5px;
-}
-
-.services-stat-label-text {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.4;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* ── Split layout inside large card ── */
 .services-content-split {
   display: flex;
   gap: 20px;
@@ -292,50 +227,9 @@
   gap: 8px;
 }
 
-.services-content-right {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 120px;
-  flex-shrink: 0;
-}
-
-/* ── Weight Loss Stats ── */
 .services-weight-stat-block {
   margin-top: auto;
   padding-top: 4px;
-}
-
-.services-weight-stat-eyebrow {
-  display: block;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.45);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.services-weight-stat-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.services-weight-stat-number {
-  font-family: var(--font-primary);
-  font-weight: 900;
-  font-size: 28px;
-  color: white;
-  line-height: 1;
-  letter-spacing: -1px;
-}
-
-.services-weight-stat-period {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.55);
-  font-weight: 400;
 }
 
 .services-weight-cta {
@@ -352,53 +246,60 @@
   gap: 15px;
 }
 
-/* Prescription Refills — 4 cols */
 .services-bento-large {
   grid-column: span 4;
 }
+
 .services-bento-large .services-card-inner-link {
   min-height: 175px;
   padding: 22px 24px;
 }
 
-/* Weight Loss — 2 cols */
 .services-bento-small-weightloss {
   grid-column: span 2;
 }
+
 .services-bento-small-weightloss .services-card-inner-link {
   min-height: 175px;
 }
 
-/* Mental Health — 2 cols, 2 rows (tall) */
 .services-bento-smal-1 {
   grid-column: span 2;
-  grid-row: span 2;
-}
-.services-bento-smal-1 .services-card-inner-link {
-  min-height: 360px;
-  padding: 24px;
 }
 
-/* General Consultation — 2 cols */
+.services-bento-smal-1 .services-card-inner-link {
+  min-height: 170px;
+  padding: 22px;
+}
+
 .services-bento-small {
   grid-column: span 2;
 }
+
 .services-bento-small .services-card-inner-link {
   min-height: 170px;
 }
 
-/* Sexual Health — 2 cols */
 .services-bento-small-0 {
   grid-column: span 2;
 }
+
 .services-bento-small-0 .services-card-inner-link {
   min-height: 170px;
 }
 
-/* Chronic Care — 4 cols */
+.services-bento-small-2 {
+  grid-column: span 2;
+}
+
+.services-bento-small-2 .services-card-inner-link {
+  min-height: 170px;
+}
+
 .services-bento-wide {
   grid-column: span 4;
 }
+
 .services-bento-wide .services-card-inner-link {
   min-height: 170px;
   padding: 22px 24px;
@@ -408,249 +309,242 @@
    RESPONSIVE
 ══════════════════════════════════════════════ */
 
-/* ─── Large Desktop 1200px+ ─── */
 @media (min-width: 1200px) {
   .services-section-wrapper {
     padding: 100px 48px;
   }
 }
 
-/* ─── Medium Desktop 992–1199px ─── */
 @media (max-width: 1199px) and (min-width: 992px) {
   .services-section-wrapper {
     padding: 80px 40px;
     width: calc(100% - 40px);
   }
+
   .services-inner-container {
     padding: 0 20px;
   }
+
   .services-bento-grid {
     grid-template-columns: repeat(4, 1fr);
     grid-auto-rows: minmax(180px, auto);
     gap: 12px;
   }
-  /* Row 1: Prescription (2) + Weight Loss (2) */
+
   .services-bento-large {
     grid-column: span 2;
     grid-row: span 1;
   }
+
   .services-bento-large .services-card-inner-link {
     min-height: auto;
   }
-  .services-bento-small-weightloss {
+
+  .services-bento-small-2 {
     grid-column: span 2;
     grid-row: span 1;
   }
-  .services-bento-small-weightloss .services-card-inner-link {
+
+  .services-bento-small-2 .services-card-inner-link {
     min-height: auto;
   }
-  /* Mental Health tall — 2 cols × 2 rows */
+
   .services-bento-smal-1 {
     grid-column: span 2;
     grid-row: span 2;
   }
+
   .services-bento-smal-1 .services-card-inner-link {
     min-height: auto;
   }
-  /* General + Sexual — 2 cols each */
-  .services-bento-small,
-  .services-bento-small-0 {
-    grid-column: span 2;
-    grid-row: span 1;
-  }
-  .services-bento-small .services-card-inner-link,
-  .services-bento-small-0 .services-card-inner-link {
-    min-height: auto;
-  }
-  /* Chronic Care — full 4-col width */
-  .services-bento-wide {
-    grid-column: span 4;
-    grid-row: span 1;
-  }
-  .services-bento-wide .services-card-inner-link {
-    min-height: auto;
-  }
-  .services-content-right {
-    width: 140px;
-  }
-}
 
-/* ─── Tablet 768–991px ─── */
-@media (max-width: 991px) and (min-width: 768px) {
-  .services-section-wrapper {
-    padding: 70px 32px;
-    width: calc(100% - 32px);
-  }
-  .services-inner-container {
-    padding: 0 16px;
-  }
-  .services-header-block {
-    margin-bottom: 36px;
-  }
-  .services-bento-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: auto;
-    gap: 10px;
-  }
-  .services-bento-large,
   .services-bento-small-weightloss,
-  .services-bento-smal-1,
   .services-bento-small,
   .services-bento-small-0,
   .services-bento-wide {
     grid-column: span 2;
     grid-row: span 1;
   }
-  .services-bento-large .services-card-inner-link,
+
   .services-bento-small-weightloss .services-card-inner-link,
-  .services-bento-smal-1 .services-card-inner-link,
   .services-bento-small .services-card-inner-link,
   .services-bento-small-0 .services-card-inner-link,
   .services-bento-wide .services-card-inner-link {
     min-height: auto;
   }
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+  .services-section-wrapper {
+    padding: 70px 32px;
+    width: calc(100% - 32px);
+  }
+
+  .services-inner-container {
+    padding: 0 16px;
+  }
+
+  .services-header-block {
+    margin-bottom: 36px;
+  }
+
+  .services-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: auto;
+    gap: 10px;
+  }
+
+  .services-bento-large,
+  .services-bento-small-2,
+  .services-bento-smal-1,
+  .services-bento-small-weightloss,
+  .services-bento-small,
+  .services-bento-small-0,
+  .services-bento-wide {
+    grid-column: span 2;
+    grid-row: span 1;
+  }
+
+  .services-bento-large .services-card-inner-link,
+  .services-bento-small-2 .services-card-inner-link,
+  .services-bento-smal-1 .services-card-inner-link,
+  .services-bento-small-weightloss .services-card-inner-link,
+  .services-bento-small .services-card-inner-link,
+  .services-bento-small-0 .services-card-inner-link,
+  .services-bento-wide .services-card-inner-link {
+    min-height: auto;
+  }
+
   .services-content-split {
     flex-direction: column;
     gap: 16px;
   }
-  .services-content-right {
-    flex-direction: row;
-    width: 100%;
-  }
 }
 
-/* ─── Mobile Landscape 600–767px ─── */
 @media (max-width: 767px) and (min-width: 600px) {
   .services-section-wrapper {
     padding: 60px 24px;
     width: calc(100% - 24px);
   }
+
   .services-inner-container {
     padding: 0;
   }
+
   .services-bento-grid {
     grid-template-columns: 1fr;
     gap: 9px;
   }
+
   .services-bento-large,
-  .services-bento-small-weightloss,
+  .services-bento-small-2,
   .services-bento-smal-1,
+  .services-bento-small-weightloss,
   .services-bento-small,
   .services-bento-small-0,
   .services-bento-wide {
     grid-column: span 1;
     grid-row: span 1;
   }
+
   .services-bento-large .services-card-inner-link,
-  .services-bento-small-weightloss .services-card-inner-link,
+  .services-bento-small-2 .services-card-inner-link,
   .services-bento-smal-1 .services-card-inner-link,
+  .services-bento-small-weightloss .services-card-inner-link,
   .services-bento-small .services-card-inner-link,
   .services-bento-small-0 .services-card-inner-link,
   .services-bento-wide .services-card-inner-link {
     min-height: auto;
   }
+
   .services-content-split {
     flex-direction: column;
     gap: 14px;
   }
-  .services-content-right {
-    flex-direction: row;
-    width: 100%;
-  }
 }
 
-/* ─── Mobile Portrait 400–599px ─── */
 @media (max-width: 599px) and (min-width: 400px) {
   .services-section-wrapper {
     padding: 50px 16px;
     width: calc(100% - 16px);
     border-radius: 24px;
   }
+
   .services-bento-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
+
   .services-bento-large,
-  .services-bento-small-weightloss,
+  .services-bento-small-2,
   .services-bento-smal-1,
+  .services-bento-small-weightloss,
   .services-bento-small,
   .services-bento-small-0,
   .services-bento-wide {
     grid-column: span 1;
     grid-row: span 1;
   }
+
   .services-bento-large .services-card-inner-link,
-  .services-bento-small-weightloss .services-card-inner-link,
+  .services-bento-small-2 .services-card-inner-link,
   .services-bento-smal-1 .services-card-inner-link,
+  .services-bento-small-weightloss .services-card-inner-link,
   .services-bento-small .services-card-inner-link,
   .services-bento-small-0 .services-card-inner-link,
   .services-bento-wide .services-card-inner-link {
     min-height: auto;
     padding: 18px;
   }
+
   .services-content-split {
     flex-direction: column;
     gap: 14px;
   }
-  .services-content-right {
-    flex-direction: row;
-    width: 100%;
-  }
-  .services-stat-value-text {
-    font-size: 18px;
-  }
-  .services-weight-stat-number {
-    font-size: 24px;
-  }
 }
 
-/* ─── Small Mobile <400px ─── */
 @media (max-width: 399px) {
   .services-section-wrapper {
     padding: 40px 14px;
     width: calc(100% - 12px);
     border-radius: 20px;
   }
+
   .services-bento-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
+
   .services-bento-large,
-  .services-bento-small-weightloss,
+  .services-bento-small-2,
   .services-bento-smal-1,
+  .services-bento-small-weightloss,
   .services-bento-small,
   .services-bento-small-0,
   .services-bento-wide {
     grid-column: span 1;
     grid-row: span 1;
   }
+
   .services-bento-large .services-card-inner-link,
-  .services-bento-small-weightloss .services-card-inner-link,
+  .services-bento-small-2 .services-card-inner-link,
   .services-bento-smal-1 .services-card-inner-link,
+  .services-bento-small-weightloss .services-card-inner-link,
   .services-bento-small .services-card-inner-link,
   .services-bento-small-0 .services-card-inner-link,
   .services-bento-wide .services-card-inner-link {
     min-height: auto;
     padding: 16px;
   }
+
   .services-content-split {
     flex-direction: column;
     gap: 12px;
   }
-  .services-content-right {
-    flex-direction: column;
-    width: 100%;
-  }
-  .services-stat-value-text {
-    font-size: 16px;
-  }
-  .services-weight-stat-number {
-    font-size: 22px;
-  }
 }
 
-/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
+
   .services-card-inner-link,
   .services-card-inner-link:hover,
   .cta-arrow {

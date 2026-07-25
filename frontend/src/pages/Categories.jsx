@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import "./Categories.css";
@@ -41,6 +41,7 @@ import {
 import { MdChildCare, MdOutlineLocalHospital } from "react-icons/md";
 import { RiMentalHealthLine } from "react-icons/ri";
 import SEO from "../components/Seo";
+import ServiceSwitcher from "../components/ServiceSwitcher";
 
 /* ─────────────────────────────────────────────────────────────
    ICON MAP
@@ -97,233 +98,70 @@ function Icon({ name, size = 18, style, className }) {
 }
 
 /* ────────────────────────────────────────────────────────────
-   CAROUSEL DATA
+   HERO SERVICE SWITCHER DATA
+   Each entry pairs a "virtual care request" scenario with the
+   specialty it routes to — drives the ServiceSwitcher featured
+   card, grid, and bottom bar.
 ───────────────────────────────────────────────────────────── */
-const SLIDES = [
+const HERO_SERVICES = [
   {
-    iconName: "globe",
-    sub: "Virtual care request",
-    title: "Traveler needs consult",
-    rows: [
-      ["Condition", "Food Poisoning While Traveling"],
-      ["Need", "Telehealth consult + medical report"],
-      ["Route", "English-speaking doctor"],
-      ["Status", "Non-emergency triage"],
-    ],
-    tabs: [
-      {
-        icon: "stethoscope",
-        name: "Primary Care",
-        tags: ["Cold & Flu", "Fever"],
-      },
-      { icon: "urgent", name: "Urgent Care", tags: ["UTI", "Sore Throat"] },
-      { icon: "brain", name: "Mental Health", tags: ["Anxiety", "Depression"] },
-      {
-        icon: "activity",
-        name: "Chronic Care",
-        tags: ["Diabetes", "Hypertension"],
-      },
-    ],
+    id: "children-family",
+    icon: ICONS.child,
+    category: "Children & Family Care",
+    title: "Children & Family Care",
+    eyebrow: "Family wellness consultation",
+    subtitle: "Fever • Cough • Child Wellness",
+    condition: "Fever, Cough, Child Wellness",
+    need: "Pediatric consultation + care plan",
+    route: "Pediatrician / Family physician",
+    status: "Same-day or Routine Appointment",
+    tags: ["Cold ", " Flu", "Fever"],
+    path: "/child-and-family-care",
   },
   {
-    iconName: "heart",
-    sub: "Specialist referral",
-    title: "Cardiac screening request",
-    rows: [
-      ["Condition", "Chest Pain & Shortness of Breath"],
-      ["Need", "Cardiology consult + ECG review"],
-      ["Route", "Board-certified cardiologist"],
-      ["Status", "Priority triage"],
-    ],
-    tabs: [
-      {
-        icon: "heart",
-        name: "Cardiology",
-        tags: ["Arrhythmia", "Hypertension"],
-      },
-      { icon: "activity", name: "Chronic Care", tags: ["BP", "Diabetes"] },
-      {
-        icon: "stethoscope",
-        name: "Primary Care",
-        tags: ["Annual", "Preventive"],
-      },
-      { icon: "hospital", name: "Urgent Care", tags: ["Chest Pain", "Stroke"] },
-    ],
+    id: "mens-health",
+    icon: ICONS.heart,
+    category: "Men's Health",
+    title: "Men's Health Support",
+    eyebrow: " Men's wellness consultation",
+    subtitle: "Arrhythmia • Hypertension",
+    condition: "Low Testosterone, ED, Hair Loss",
+    need: "Men's health evaluation + treatment plan",
+    route: "Men's health specialist / Urologist",
+    status: "Routine or Priority Appointment",
+    tags: ["Hair Loss", "Low Testosterone"],
+    path: "/mens-health",
   },
   {
-    iconName: "mental",
-    sub: "Wellness consultation",
-    title: "Mental health support",
-    rows: [
-      ["Condition", "Anxiety & Burnout Syndrome"],
-      ["Need", "Therapy session + follow-up plan"],
-      ["Route", "Licensed therapist / psychiatrist"],
-      ["Status", "Routine appointment"],
-    ],
-    tabs: [
-      { icon: "mental", name: "Mental Health", tags: ["Anxiety", "PTSD"] },
-      { icon: "brain", name: "Neurology", tags: ["Migraines", "Memory"] },
-      { icon: "smile", name: "Wellness", tags: ["Stress", "Sleep"] },
-      {
-        icon: "stethoscope",
-        name: "Primary Care",
-        tags: ["Check-up", "Referral"],
-      },
-    ],
+    id: "general-everyday",
+    icon: ICONS.stethoscope,
+    category: "General & Everyday Care",
+    title: "General & Everyday Care",
+    eyebrow: "Primary care consultation",
+    subtitle: "Cold • Fever • Allergies • Minor Illness",
+    condition: "Cold, Fever, Allergies, Minor Illness",
+    need: "Medical evaluation + treatment plan",
+    route: "Primary care physician / Family doctor",
+    status: "Same-day or routine appointment",
+    tags: ["Cold", "Allergies", "Minor Illness"],
+    path: "/general-and-everyday-care",
+  },
+
+  {
+    id: "travel-global",
+    icon: ICONS.globe,
+    category: "Travel & Global Care",
+    title: "Travel & Global Care",
+    eyebrow: "Travel health consultation",
+    subtitle: "Travel Illness • Vaccinations • Medical Advice",
+    condition: "Travel Illness, Vaccinations, Medical Advice",
+    need: "Pre-travel consultation + care guidance",
+    route: "Travel medicine specialist / Primary care physician",
+    status: "Pre-travel or same-day appointment",
+    tags: ["Travel Illness", " Vaccinations", "Medical Advice"],
+    path: "/travel-and-global-care",
   },
 ];
-
-/* ─────────────────────────────────────────────────────────────
-   HERO CAROUSEL
-───────────────────────────────────────────────────────────── */
-function HeroCarousel() {
-  const [idx, setIdx] = useState(0);
-  const [activeTab, setActiveTab] = useState(0);
-  const [animCls, setAnimCls] = useState("cat-carousel--enter-next");
-  const animating = useRef(false);
-  const timerRef = useRef(null);
-
-  const goTo = useCallback(
-    (next, dir) => {
-      if (animating.current || next === idx) return;
-      animating.current = true;
-      setAnimCls(
-        dir === "next" ? "cat-carousel--exit-next" : "cat-carousel--exit-prev",
-      );
-      setTimeout(() => {
-        setIdx(next);
-        setActiveTab(0);
-        setAnimCls(
-          dir === "next"
-            ? "cat-carousel--enter-next"
-            : "cat-carousel--enter-prev",
-        );
-        animating.current = false;
-      }, 300);
-    },
-    [idx],
-  );
-
-  const startAuto = useCallback(() => {
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setIdx((prev) => {
-        const next = (prev + 1) % SLIDES.length;
-        setAnimCls("cat-carousel--enter-next");
-        setActiveTab(0);
-        animating.current = false;
-        return next;
-      });
-    }, 4500);
-  }, []);
-
-  useEffect(() => {
-    startAuto();
-    return () => clearInterval(timerRef.current);
-  }, [startAuto]);
-
-  const handlePrev = () => {
-    clearInterval(timerRef.current);
-    goTo((idx - 1 + SLIDES.length) % SLIDES.length, "prev");
-    startAuto();
-  };
-  const handleNext = () => {
-    clearInterval(timerRef.current);
-    goTo((idx + 1) % SLIDES.length, "next");
-    startAuto();
-  };
-
-  const slide = SLIDES[idx];
-  const currentTab = slide.tabs[activeTab];
-
-  return (
-    <div className="cat-hero__panel">
-      <div className={`cat-carousel__card ${animCls}`}>
-        <div className="cat-carousel__card-header">
-          <div>
-            <p className="cat-carousel__card-sub">{slide.sub}</p>
-            <p className="cat-carousel__card-title">{slide.title}</p>
-          </div>
-          <div className="cat-carousel__icon-btn">
-            <Icon name={slide.iconName} size={18} />
-          </div>
-        </div>
-        <div className="cat-carousel__rows">
-          {slide.rows.map(([label, value]) => (
-            <div key={label} className="cat-carousel__row">
-              <span className="cat-carousel__row-label">{label}</span>
-              <span className="cat-carousel__row-value">{value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="cat-carousel__tabs cat-carousel__tab-fade" key={idx}>
-        {slide.tabs.map((tab, i) => (
-          <button
-            key={tab.name}
-            className={`cat-carousel__tab${i === activeTab ? " cat-carousel__tab--active" : ""}`}
-            onClick={() => setActiveTab(i)}
-            aria-pressed={i === activeTab}
-          >
-            <span className="cat-carousel__tab-icon">
-              <Icon name={tab.icon} size={20} />
-            </span>
-            <span className="cat-carousel__tab-name">{tab.name}</span>
-            <span className="cat-carousel__tab-tags">
-              {tab.tags.join(" · ")}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      <div className="cat-carousel__preview" key={`${idx}-${activeTab}`}>
-        <span className="cat-carousel__preview-icon">
-          <Icon name={currentTab.icon} size={16} />
-        </span>
-        <span className="cat-carousel__preview-name">{currentTab.name}</span>
-        <div className="cat-carousel__preview-tags">
-          {currentTab.tags.map((tag) => (
-            <span key={tag} className="cat-carousel__preview-tag">
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="cat-carousel__controls">
-        <button
-          className="cat-carousel__btn"
-          onClick={handlePrev}
-          aria-label="Previous"
-        >
-          <Icon name="chevronLeft" size={14} />
-        </button>
-        <div className="cat-carousel__dots">
-          {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              className={`cat-carousel__dot${i === idx ? " cat-carousel__dot--active" : ""}`}
-              onClick={() => {
-                clearInterval(timerRef.current);
-                goTo(i, i > idx ? "next" : "prev");
-                startAuto();
-              }}
-              aria-label={`Slide ${i + 1}`}
-            />
-          ))}
-        </div>
-        <button
-          className="cat-carousel__btn"
-          onClick={handleNext}
-          aria-label="Next"
-        >
-          <Icon name="chevronRight" size={14} />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 /* ─────────────────────────────────────────────────────────────
    STATIC DATA
@@ -935,7 +773,7 @@ export default function Categories() {
             </div>
           </div>
           <div className="cat-hero__right">
-            <HeroCarousel />
+            <ServiceSwitcher services={HERO_SERVICES} />
           </div>
         </div>
       </section>

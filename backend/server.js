@@ -249,7 +249,7 @@ const corsOptions = {
     }
 
     // Reject unknown origins
-    return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
   },
 
   credentials: true,
@@ -580,7 +580,7 @@ const io = new Server(server, {
       if (allowedOrigins.indexOf(normalizeOrigin(origin)) !== -1) {
         return callback(null, true);
       }
-      callback(null, true);
+      callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST"],
     credentials: true,

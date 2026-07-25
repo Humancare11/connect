@@ -66,6 +66,25 @@
   flex-direction: column;
 }
 
+.why-section .section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 7px 18px;
+  border-radius: 999px;
+  background: #e8eef9;
+  border: 1px solid rgba(12, 139, 122, 0.18);
+  color: #415a82;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.why-section .section-title {
+  font-weight: 800;
+}
 .why-list {
   display: flex;
   flex-direction: column;
@@ -127,8 +146,8 @@
   z-index: 1;
 }
 .why-item-desc {
-  font-size: 13px;
-  color: var(--muted, #6e7d96);
+  font-size: 14px;
+  color: #494343;
   line-height: 1.65;
   position: relative;
   z-index: 1;
