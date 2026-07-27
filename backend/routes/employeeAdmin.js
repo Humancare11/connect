@@ -22,24 +22,30 @@ function taskFilterForScope(scope, userId) {
 }
 
 function dateRangeFilter(range) {
+  // dueDate is stored as UTC midnight (see parseDueDate), so the "today"
+  // boundary must also be computed in UTC — using the server's local
+  // timezone here would shift the window and drop tasks due "today".
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const startOfTomorrow = new Date(startOfToday);
-  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+  startOfTomorrow.setUTCDate(startOfTomorrow.getUTCDate() + 1);
 
+  // dueDate is optional. "Today" and "This week" surface anything that
+  // needs attention now, so overdue tasks and tasks with no due date at
+  // all are included alongside tasks due within the window.
   if (range === "today") {
-    return { dueDate: { $gte: startOfToday, $lt: startOfTomorrow } };
+    return { $or: [{ dueDate: { $lt: startOfTomorrow } }, { dueDate: null }] };
   }
 
   if (range === "week") {
     const weekEnd = new Date(startOfToday);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    return { dueDate: { $gte: startOfToday, $lt: weekEnd } };
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
+    return { $or: [{ dueDate: { $lt: weekEnd } }, { dueDate: null }] };
   }
 
   if (range === "month") {
-    const monthEnd = new Date(startOfToday.getFullYear(), startOfToday.getMonth() + 1, 1);
-    return { dueDate: { $gte: startOfToday, $lt: monthEnd } };
+    const monthEnd = new Date(Date.UTC(startOfToday.getUTCFullYear(), startOfToday.getUTCMonth() + 1, 1));
+    return { $or: [{ dueDate: { $lt: monthEnd } }, { dueDate: null }] };
   }
 
   return {};
@@ -118,13 +124,16 @@ router.get("/tasks", verifyEmployeeAdminToken, employeeAdminOnly, async (req, re
       ? req.query.range
       : "all";
 
+    // Combine via $and instead of spreading — both taskFilterForScope
+    // (scope "all") and dateRangeFilter can independently produce an
+    // "$or" clause, and spreading two objects with the same key would
+    // silently drop one of them.
     const filter = {
-      ...taskFilterForScope(scope, req.user.id),
-      ...dateRangeFilter(range),
+      $and: [taskFilterForScope(scope, req.user.id), dateRangeFilter(range)],
     };
 
     if (STATUSES.includes(req.query.status)) {
-      filter.status = req.query.status;
+      filter.$and.push({ status: req.query.status });
     }
 
     const tasks = await EmployeeTask.find(filter)

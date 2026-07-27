@@ -309,15 +309,15 @@ function EmployeeTaskDetails({ taskId }) {
   };
 
   return (
-    <div className="et-page">
-      <header className="et-header et-detail-header">
-        <button type="button" className="et-back-btn" onClick={() => navigate("/employee-dashboard/my-tasks")}>
-          Back to tasks
-        </button>
-        <span className="et-eyebrow">Task details</span>
-        <h1 className="et-title">{task?.title || "Task details"}</h1>
-        <p className="et-sub">Full task information is shown here after opening a task card.</p>
-      </header>
+    <div className="et-page et-page--detail">
+      <button
+        type="button"
+        className="et-back-link"
+        onClick={() => navigate("/employee-dashboard/my-tasks")}
+      >
+        <BackIcon />
+        My Tasks
+      </button>
 
       {message.text && (
         <div className={`et-alert et-alert--${message.type === "success" ? "success" : "error"}`}>
@@ -336,135 +336,42 @@ function EmployeeTaskDetails({ taskId }) {
           <p>The task may have been removed or you may not have access.</p>
         </div>
       ) : (
-        <TaskDetailsCard task={task} currentUserId={currentUserId} onStatusChange={updateStatus} />
+        <TaskWorkspace task={task} currentUserId={currentUserId} onStatusChange={updateStatus} />
       )}
     </div>
   );
 }
 
-function TaskSummaryCard({ task, onOpen }) {
-  return (
-    <button type="button" className="et-summary-card" onClick={onOpen}>
-      <div className="et-summary-card__top">
-        <h3>{task.title || "Untitled task"}</h3>
-        <span className={`et-pill et-pill--${statusTone(task.status)}`}>{task.status || "Pending"}</span>
-      </div>
-      <p>{hasText(task.description) ? task.description : "No description added."}</p>
-      <span className="et-summary-card__open">Open details</span>
-    </button>
-  );
-}
-
-function TaskDetailsCard({ task, currentUserId, onStatusChange }) {
+function TaskWorkspace({ task, currentUserId, onStatusChange }) {
   const canUpdate = String(task.assignedTo?._id) === String(currentUserId);
   const attachments = task.attachments || [];
   const subtasks = task.subtasks || [];
   const tags = task.tags || [];
-  const due = dueInfo(task.dueDate, task.status);
 
   return (
-    <article className="et-card">
-      <div className="et-card__top">
-        <div className="et-card__title-wrap">
-          <span className="et-card__kicker">{task.department || "General"}</span>
-          <h3 className="et-card__title">{task.title || "Untitled task"}</h3>
-          <div className="et-card__created">Created {formatDateTime(task.createdAt)}</div>
-        </div>
-        <div className="et-card__badges">
-          <span className={`et-pill et-pill--${priorityTone(task.priority)}`}>
-            <span className="et-pill__dot" aria-hidden="true" />
-            {task.priority || "Medium"}
-          </span>
-          <span className={`et-pill et-pill--${statusTone(task.status)}`}>
-            {task.status || "Pending"}
-          </span>
-        </div>
-      </div>
-
-      <div className="et-field-grid">
-        <TaskField label="Department" value={task.department || "General"} />
-        <TaskField label="Task name" value={task.title || "Untitled task"} />
-        <TaskField label="Priority" value={task.priority || "Medium"} />
-        <TaskField label="Status" value={task.status || "Pending"} />
-        <TaskField label="Start date" value={formatDate(task.startDate)} />
-        <TaskField label="Due date" value={formatDate(task.dueDate)} />
-        <TaskField label="Assigned to user" value={task.assignedTo?.name} />
-        <TaskField label="Assigned by" value={task.createdBy?.name} />
-        <TaskField label="Created" value={formatDateTime(task.createdAt)} />
-      </div>
-
-      <div className="et-people">
-        <PersonRow role="Assigned to" person={task.assignedTo} />
-        <PersonRow role="Assigned by" person={task.createdBy} />
-      </div>
-
-      <div className="et-dates">
-        <div className="et-date">
-          <span className="et-date__label">Start</span>
-          <span className="et-date__value">{formatDate(task.startDate)}</span>
-        </div>
-        <span className="et-date__arrow" aria-hidden="true">to</span>
-        <div className="et-date">
-          <span className="et-date__label">Due</span>
-          <span className="et-date__value">{formatDate(task.dueDate)}</span>
-        </div>
-        {due && (
-          <span className="et-date__remaining" data-tone={due.tone}>
-            {due.label}
-          </span>
-        )}
-      </div>
-
-      <TextBlock label="Description" value={task.description} />
-      <TextBlock label="Comment" value={task.comment} />
-
-      <div className="et-block">
-        <div className="et-block__label">Tags</div>
-        {tags.length > 0 ? (
-          <div className="et-chips">
-            {tags.map((tag) => (
-              <span key={tag} className="et-chip">{tag}</span>
-            ))}
+    <article className="et-workspace">
+      <header className="et-workspace__header">
+        <span className="et-workspace__kicker">{task.department || "General"}</span>
+        <div className="et-workspace__title-row">
+          <h1 className="et-workspace__title">{task.title || "Untitled task"}</h1>
+          <div className="et-workspace__badges">
+            <span className={`et-pill et-pill--${priorityTone(task.priority)}`}>
+              <span className="et-pill__dot" aria-hidden="true" />
+              {task.priority || "Medium"}
+            </span>
+            <span className={`et-pill et-pill--${statusTone(task.status)}`}>
+              <span className="et-pill__dot" aria-hidden="true" />
+              {task.status || "Pending"}
+            </span>
           </div>
-        ) : (
-          <EmptyValue text="No tags added" />
-        )}
-      </div>
-
-      <div className="et-block">
-        <div className="et-block__label">
-          Attachments
-          <span className="et-block__count">{attachments.length}</span>
         </div>
-        <AttachmentList attachments={attachments} />
-      </div>
-
-      <div className="et-block">
-        <div className="et-block__label">
-          Subtasks
-          <span className="et-block__count">{subtasks.length}</span>
+        <div className="et-workspace__meta">
+          Created {formatDate(task.createdAt)} · Assigned by {task.createdBy?.name || "-"}
         </div>
-        {subtasks.length > 0 ? (
-          <div className="et-subtasks">
-            {subtasks.map((subtask, index) => (
-              <SubtaskCard
-                key={subtask._id || `subtask-${index}`}
-                subtask={subtask}
-                index={index}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyValue text="No subtasks added" />
-        )}
-      </div>
+      </header>
 
-      <div className="et-card__footer">
-        <div className="et-card__footer-note">
-          {canUpdate
-            ? "Update your status as work progresses."
-            : "Only the assignee can change the status."}
-        </div>
+      <div className="et-status-strip">
+        <span className="et-status-strip__label">Status</span>
         {canUpdate ? (
           <div className="et-status-set" role="radiogroup" aria-label="Update status">
             {STATUSES.map((statusOption) => (
@@ -483,47 +390,172 @@ function TaskDetailsCard({ task, currentUserId, onStatusChange }) {
             ))}
           </div>
         ) : (
-          <span className={`et-pill et-pill--${statusTone(task.status)}`}>
-            {task.status || "Pending"}
+          <span className="et-status-strip__note">
+            <span className={`et-pill et-pill--${statusTone(task.status)}`}>
+              {task.status || "Pending"}
+            </span>
+            Only the assignee can change this.
           </span>
         )}
+      </div>
+
+      <div className="et-workspace__body">
+        <div className="et-main">
+          <section className="et-section">
+            <h2 className="et-section__title">Description</h2>
+            {hasText(task.description) ? (
+              <p className="et-section__text">{task.description}</p>
+            ) : (
+              <EmptyValue text="No description added" />
+            )}
+          </section>
+
+          {hasText(task.comment) && (
+            <section className="et-section et-section--muted">
+              <h2 className="et-section__title">Comment</h2>
+              <p className="et-section__text et-section__text--muted">{task.comment}</p>
+            </section>
+          )}
+
+          <section className="et-section">
+            <h2 className="et-section__title">Tags</h2>
+            {tags.length > 0 ? (
+              <div className="et-chips">
+                {tags.map((tag) => (
+                  <span key={tag} className="et-chip">{tag}</span>
+                ))}
+              </div>
+            ) : (
+              <EmptyValue text="No tags added" />
+            )}
+          </section>
+
+          <section className="et-section">
+            <h2 className="et-section__title">
+              Attachments
+              <span className="et-section__count">{attachments.length}</span>
+            </h2>
+            <AttachmentList attachments={attachments} />
+          </section>
+
+          <section className="et-section">
+            <div className="et-section__head">
+              <h2 className="et-section__title">Subtasks</h2>
+              {subtasks.length > 0 && (
+                <span className="et-section__hint">{subtasks.length} total</span>
+              )}
+            </div>
+            {subtasks.length > 0 ? (
+              <div className="et-subtasks">
+                {subtasks.map((subtask, index) => (
+                  <SubtaskItem
+                    key={subtask._id || `subtask-${index}`}
+                    subtask={subtask}
+                    index={index}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyValue text="No subtasks added" />
+            )}
+          </section>
+        </div>
+
+        <TaskSidebar task={task} />
       </div>
     </article>
   );
 }
 
-function PersonRow({ role, person }) {
-  const name = person?.name || "-";
+function TaskSidebar({ task }) {
+  const attachments = task.attachments || [];
+  const subtasks = task.subtasks || [];
+  const due = dueInfo(task.dueDate, task.status);
+
   return (
-    <div className="et-person">
-      <span className="et-avatar">{initialsFor(person?.name)}</span>
-      <div className="et-person__body">
-        <span className="et-person__role">{role}</span>
-        <span className="et-person__name" title={name}>{name}</span>
+    <aside className="et-sidebar">
+      <div className="et-sidebar__panel">
+        <h3 className="et-sidebar__title">Task details</h3>
+
+        <div className="et-detail-row">
+          <span className="et-detail-row__label">Assignee</span>
+          <div className="et-detail-row__person">
+            <span className="et-avatar et-avatar--sm">{initialsFor(task.assignedTo?.name)}</span>
+            <div>
+              <div className="et-detail-row__value">{task.assignedTo?.name || "-"}</div>
+              {task.assignedTo?.email && (
+                <div className="et-detail-row__sub">{task.assignedTo.email}</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="et-detail-row">
+          <span className="et-detail-row__label">Assigned by</span>
+          <div className="et-detail-row__person">
+            <span className="et-avatar et-avatar--sm">{initialsFor(task.createdBy?.name)}</span>
+            <div className="et-detail-row__value">{task.createdBy?.name || "-"}</div>
+          </div>
+        </div>
+
+        <div className="et-detail-row">
+          <span className="et-detail-row__label">Priority</span>
+          <span className={`et-pill et-pill--${priorityTone(task.priority)}`}>
+            <span className="et-pill__dot" aria-hidden="true" />
+            {task.priority || "Medium"}
+          </span>
+        </div>
+
+        <div className="et-detail-row">
+          <span className="et-detail-row__label">Department</span>
+          <span className="et-detail-row__value">{task.department || "General"}</span>
+        </div>
+
+        <div className="et-detail-row et-detail-row--split">
+          <div>
+            <span className="et-detail-row__label">Start date</span>
+            <span className="et-detail-row__value">{formatDate(task.startDate)}</span>
+          </div>
+          <div>
+            <span className="et-detail-row__label">Due date</span>
+            <span className="et-detail-row__value">{formatDate(task.dueDate)}</span>
+            {due && (
+              <span className="et-due-tag" data-tone={due.tone}>{due.label}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="et-detail-row">
+          <span className="et-detail-row__label">Created</span>
+          <span className="et-detail-row__value">{formatDateTime(task.createdAt)}</span>
+        </div>
       </div>
-    </div>
+
+      <div className="et-sidebar__panel">
+        <h3 className="et-sidebar__title">Task progress</h3>
+        <div className="et-progress-row">
+          <span className="et-progress-row__label">Subtasks</span>
+          <span className="et-progress-row__value">{subtasks.length} total</span>
+        </div>
+        <div className="et-progress-row">
+          <span className="et-progress-row__label">Attachments</span>
+          <span className="et-progress-row__value">{attachments.length} files</span>
+        </div>
+      </div>
+    </aside>
   );
 }
 
-function TaskField({ label, value }) {
+function TaskSummaryCard({ task, onOpen }) {
   return (
-    <div className="et-field-item">
-      <span className="et-field-item__label">{label}</span>
-      <strong className="et-field-item__value">{hasText(value) && value !== "-" ? value : "Not added"}</strong>
-    </div>
-  );
-}
-
-function TextBlock({ label, value }) {
-  return (
-    <div className="et-block">
-      <div className="et-block__label">{label}</div>
-      {hasText(value) ? (
-        <p className="et-block__text">{value}</p>
-      ) : (
-        <EmptyValue text={`${label} not added`} />
-      )}
-    </div>
+    <button type="button" className="et-summary-card" onClick={onOpen}>
+      <div className="et-summary-card__top">
+        <h3>{task.title || "Untitled task"}</h3>
+        <span className={`et-pill et-pill--${statusTone(task.status)}`}>{task.status || "Pending"}</span>
+      </div>
+      <p>{hasText(task.description) ? task.description : "No description added."}</p>
+      <span className="et-summary-card__open">Open details</span>
+    </button>
   );
 }
 
@@ -549,29 +581,47 @@ function AttachmentList({ attachments }) {
   );
 }
 
-function SubtaskCard({ subtask, index }) {
+function SubtaskItem({ subtask, index }) {
+  const [open, setOpen] = useState(false);
   const attachments = subtask.attachments || [];
+
   return (
-    <div className="et-subtask">
-      <div className="et-subtask__head">
+    <div className="et-subtask" data-open={open}>
+      <button
+        type="button"
+        className="et-subtask__head"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+      >
         <span className="et-subtask__num">{String(index + 1).padStart(2, "0")}</span>
         <span className="et-subtask__title">{subtask.title || "Untitled subtask"}</span>
-      </div>
+        <ChevronIcon className="et-subtask__chevron" />
+      </button>
 
-      <div className="et-field-grid et-field-grid--subtask">
-        <TaskField label="Task name" value={subtask.title || "Untitled subtask"} />
-      </div>
-
-      <TextBlock label="Description" value={subtask.description} />
-      <TextBlock label="Comment" value={subtask.comment} />
-
-      <div className="et-block">
-        <div className="et-block__label">
-          Attachments
-          <span className="et-block__count">{attachments.length}</span>
+      {open && (
+        <div className="et-subtask__body">
+          <div className="et-subtask__field">
+            <span className="et-subtask__field-label">Description</span>
+            {hasText(subtask.description) ? (
+              <p className="et-subtask__field-text">{subtask.description}</p>
+            ) : (
+              <EmptyValue text="No description added" />
+            )}
+          </div>
+          <div className="et-subtask__field">
+            <span className="et-subtask__field-label">Comment</span>
+            {hasText(subtask.comment) ? (
+              <p className="et-subtask__field-text">{subtask.comment}</p>
+            ) : (
+              <EmptyValue text="No comment added" />
+            )}
+          </div>
+          <div className="et-subtask__field">
+            <span className="et-subtask__field-label">Attachments</span>
+            <AttachmentList attachments={attachments} />
+          </div>
         </div>
-        <AttachmentList attachments={attachments} />
-      </div>
+      )}
     </div>
   );
 }
@@ -611,6 +661,23 @@ function CheckIcon() {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
       <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ className }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
     </svg>
   );
 }

@@ -1,8 +1,14 @@
 import React from "react";
+import { Country } from "country-state-city";
 import "./RxSlip.css";
 
 import defaultClinicLogoUrl from "../assets/prescription-logo.png";
 import defaultClinicFooterLogoUrl from "../assets/prescription-footer-logo.png";
+
+function getCountryName(countryCode) {
+  if (!countryCode) return "";
+  return Country.getCountryByCode(countryCode)?.name || countryCode;
+}
 
 function calcAge(dob) {
   if (!dob) return "";
@@ -86,11 +92,13 @@ export default function RxSlip({
     rx?.doctorId?.specialization ||
     physician?.specialization ||
     "";
-  const phyCountry =
+  const phyCountry = getCountryName(
+    doctorEnrollment?.country ||
     doctor?.country ||
     rx?.doctorId?.country ||
     physician?.country ||
-    "United States";
+    "US",
+  );
 
   return (
     <div className="rx-slip-wrapper">
