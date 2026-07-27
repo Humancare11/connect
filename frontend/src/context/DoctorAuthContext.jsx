@@ -24,6 +24,15 @@ export function DoctorAuthProvider({ children }) {
       .then((res) => setDoctor(res.data.doctor))
       .catch(() => setDoctor(null))
       .finally(() => setLoading(false));
+
+    // Hydrates the in-memory bearer token that DoctorLayout/VideoCall pass as
+    // the explicit `token` field on socket events (user-online,
+    // join-appointment-room) — otherwise empty for any session restored from
+    // a cookie rather than the login form, which silently disables that
+    // fallback and leaves socket auth resting entirely on the connection's
+    // one-time cookie snapshot. Fire-and-forget: on failure, socket auth
+    // falls back to that existing snapshot, unchanged from current behavior.
+    api.post("/api/auth/refresh", null, { authRole: "doctor", skipAuthRefresh: true }).catch(() => {});
   }, []);
 
   const login = useCallback((doctorData) => setDoctor(doctorData), []);
