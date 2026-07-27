@@ -1580,6 +1580,10 @@ export default function VideoCall() {
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
     const isPolitePeer = isDoctor;
+    // Set when the connection drops (disconnected/failed) after having
+    // been up at least once, and consumed the next time either state
+    // handler below reports "connected" again — see refreshRemoteStreamBinding.
+    let remoteRebindPending = false;
 
     const resetIgnoredOffer = () => {
       clearTimeout(ignoreOfferResetTimerRef.current);
@@ -1853,6 +1857,27 @@ export default function VideoCall() {
       }
     })();
 
+    // Recovering from a dropped connection (network switch, brief outage)
+    // reuses the SAME transceiver/track — pc.ontrack never fires again, so
+    // it never gets a chance to run its own remote-stream-rebuild logic
+    // below. Some browsers don't reliably resume painting a <video>
+    // element's decode pipeline for a track that stalled for a stretch of
+    // time, even though the underlying MediaStreamTrack is still the same
+    // live object and media has resumed flowing — the fix is the same one
+    // pc.ontrack already applies for a literally-replaced track: rebuild
+    // the MediaStream wrapper and force a fresh srcObject assignment.
+    // Called only on a genuine recovery (see remoteRebindPending), never on
+    // the very first connect, which is already handled correctly by the
+    // real pc.ontrack event.
+    const refreshRemoteStreamBinding = () => {
+      if (!mounted || !remoteStream.getTracks().length) return;
+      remoteStream = new MediaStream(remoteStream.getTracks());
+      remoteStreamRef.current = remoteStream;
+      assignStreams(isSwappedRef.current);
+      void playAssignedVideos();
+      logVideoEvent("remote_stream_rebind_after_recovery", {});
+    };
+
     pc.ontrack = (event) => {
       const incomingTracks = event.streams?.length
         ? event.streams.flatMap((stream) => stream.getTracks())
@@ -1947,6 +1972,10 @@ export default function VideoCall() {
           inCallRef.current = true;
         }
         startStatsCollection(pc);
+        if (remoteRebindPending) {
+          remoteRebindPending = false;
+          refreshRemoteStreamBinding();
+        }
       } else if (s === "connecting") {
         setConnectionState("connecting");
         startConnectionWatchdog();
@@ -1957,6 +1986,7 @@ export default function VideoCall() {
         });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
+        if (hasConnectedOnceRef.current) remoteRebindPending = true;
         scheduleIceRestart();
         // Only handlePeerJoined armed this watch before, gated on
         // !inCallRef — so a drop after the call had already connected once
@@ -1987,6 +2017,10 @@ export default function VideoCall() {
           inCallRef.current = true;
         }
         startStatsCollection(pc);
+        if (remoteRebindPending) {
+          remoteRebindPending = false;
+          refreshRemoteStreamBinding();
+        }
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
         startConnectionWatchdog();
@@ -2000,6 +2034,7 @@ export default function VideoCall() {
         });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
+        if (hasConnectedOnceRef.current) remoteRebindPending = true;
         scheduleIceRestart();
         if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       } else if (s === "disconnected") {
@@ -2009,6 +2044,7 @@ export default function VideoCall() {
           connectionState: pc.connectionState,
         });
         setConnectionState("connecting");
+        if (hasConnectedOnceRef.current) remoteRebindPending = true;
         scheduleIceRestart();
         if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       }
@@ -2458,8 +2494,33 @@ export default function VideoCall() {
     socket.on("disconnect", handleSocketDisconnect);
     socket.io.on("reconnect", handleSocketReconnect);
 
+    // Wi-Fi <-> mobile data switches usually never trip the browser's
+    // offline/online events at all (the device has *some* connectivity the
+    // whole time) — this is a defense-in-depth nudge for the cases that do
+    // report a transition, so recovery doesn't have to wait purely on
+    // RTCPeerConnection's own state-change detection, which is known to
+    // lag behind the actual network change on some browsers/platforms.
+    // Mirrors handleSocketReconnect's recovery nudge above.
+    const handleNetworkOnline = () => {
+      if (!mounted || !socket.connected || pc.signalingState === "closed")
+        return;
+      if (
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      )
+        return;
+      if (isDoctor) {
+        requestPeerIceRestart();
+      } else if (isReadyRef.current) {
+        void createAndSendOffer({ iceRestart: inCallRef.current });
+      }
+    };
+    window.addEventListener("online", handleNetworkOnline);
+
     return () => {
       mounted = false;
+      window.removeEventListener("online", handleNetworkOnline);
       resolveLocalReady(false);
       clearTimeout(iceRestartTimerRef.current);
       clearTimeout(connectionFailTimerRef.current);
