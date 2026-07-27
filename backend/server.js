@@ -249,7 +249,7 @@ const corsOptions = {
     }
 
     // Reject unknown origins
-    return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
   },
 
   credentials: true,
@@ -520,7 +520,21 @@ const socketUsers = new Map(); // socketId -> { userId, role }
 // once, so a later rejoin can be told "this is a resume of an active call"
 // (peer should renegotiate quickly) vs. an ordinary first-time join (peer
 // should not be perturbed while a normal handshake is already in progress).
-const roomActivated = new Map(); // appointmentId -> true
+const roomActivated = new Map(); // appointmentId -> lastActivatedAt (ms epoch)
+// Entries persist across a room's transient auto-eviction (see the
+// disconnect grace-timeout handler below) so a simultaneous-drop-and-
+// reconnect still counts as a resume, not a first join — but that means
+// there's no other prompt cleanup for appointments that end via crash/kill/
+// permanent network loss without an explicit leave-appointment-room. Sweep
+// stale entries on a TTL instead of letting the Map grow unbounded.
+const ROOM_ACTIVATED_TTL_MS = Number(process.env.ROOM_ACTIVATED_TTL_MS || 24 * 60 * 60 * 1000);
+function sweepRoomActivated() {
+  const cutoff = Date.now() - ROOM_ACTIVATED_TTL_MS;
+  for (const [appointmentId, activatedAt] of roomActivated) {
+    if (activatedAt < cutoff) roomActivated.delete(appointmentId);
+  }
+}
+setInterval(sweepRoomActivated, Math.min(ROOM_ACTIVATED_TTL_MS, 60 * 60 * 1000)).unref();
 
 // Per-socket rate limits for signaling/chat events — see socketRateLimit.js
 // for why this exists. Limits are generous relative to legitimate use
@@ -565,7 +579,7 @@ app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
 // verdict is reached, closing the gap; anything slower already falls
 // through to the (already-correct) normal-join re-eviction/re-negotiation
 // path handled in join-appointment-room.
-const SOCKET_LEAVE_GRACE_MS = Number(process.env.SOCKET_LEAVE_GRACE_MS || 10000);
+const SOCKET_LEAVE_GRACE_MS = Number(process.env.SOCKET_LEAVE_GRACE_MS || 15000);
 
 // HTTP server
 const server = http.createServer(app);
@@ -580,7 +594,7 @@ const io = new Server(server, {
       if (allowedOrigins.indexOf(normalizeOrigin(origin)) !== -1) {
         return callback(null, true);
       }
-      callback(null, true);
+      callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST"],
     credentials: true,
@@ -599,6 +613,7 @@ const io = new Server(server, {
 });
 
 app.set("io", io);
+app.set("evictDoctorFromAppointmentRoom", evictDoctorFromAppointmentRoom);
 
 io.engine.on("connection_error", (err) => {
   console.warn("[socket] connection_error", {
@@ -691,8 +706,17 @@ function getSocketIdentity(socket, requested = {}) {
   const liveIdentity = socketUsers.get(socket.id);
   const userId = liveIdentity?.userId || socket.userId;
   const role = liveIdentity?.role || socket.userRole;
-  if (!userId || !role) return null;
-  return { userId: String(userId), role };
+  if (userId && role) return { userId: String(userId), role };
+
+  // Last resort: an identity resolved from this connection's cookies/handshake
+  // auth (io.use), for a socket that hasn't sent a "user-online" ping yet to
+  // populate socketUsers. Purely additive — only reached when every check
+  // above found nothing, so it can only make peer-presence detection more
+  // accurate, never less.
+  const cachedIdentity = Array.isArray(socket.authIdentities) ? socket.authIdentities[0] : null;
+  if (cachedIdentity) return { userId: String(cachedIdentity.id), role: cachedIdentity.role };
+
+  return null;
 }
 
 // True iff at least one live socket in `existingSocketIds` belongs to a real
@@ -772,6 +796,31 @@ function isSocketInAppointmentRoom(socket, appointmentId) {
   if (!appointmentId) return false;
   const room = appointmentRoomName(appointmentId);
   return String(socketRooms.get(socket.id) || "") === String(appointmentId) && socket.rooms.has(room);
+}
+
+// Forcibly removes a specific doctor's socket(s) from an appointment's video
+// call room — used when the appointment is reassigned to someone else while
+// a call may be live. video-offer/answer/ice-candidate only check room
+// membership (isSocketInAppointmentRoom), not DB authorization, per-message —
+// this is what actually revokes access, at the moment it changes, without
+// adding a DB check to every signaling message.
+function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
+  const room = appointmentRoomName(appointmentId);
+  const socketIds = io.sockets.adapter.rooms.get(room);
+  if (!socketIds) return;
+
+  for (const socketId of Array.from(socketIds)) {
+    const peerSocket = io.sockets.sockets.get(socketId);
+    if (!peerSocket) continue;
+    const identity = getSocketIdentity(peerSocket);
+    if (identity?.role === "doctor" && String(identity.userId) === String(doctorUserId)) {
+      peerSocket.emit("appointment-access-revoked", {
+        msg: "You have been removed from this appointment.",
+      });
+      peerSocket.leave(room);
+      socketRooms.delete(peerSocket.id);
+    }
+  }
 }
 
 async function canSocketAccessAppointment(socket, appointmentId, requestedIdentity = {}) {
@@ -1064,8 +1113,8 @@ io.on("connection", (socket) => {
 
       const existing = io.sockets.adapter.rooms.get(room);
       const peerPresent = hasOtherUserInRoom(existing, access.identity.userId);
-      const wasActivated = roomActivated.get(appointmentId) === true;
-      if (peerPresent) roomActivated.set(appointmentId, true);
+      const wasActivated = roomActivated.has(appointmentId);
+      if (peerPresent) roomActivated.set(appointmentId, Date.now());
 
       socket.to(room).emit("peer-joined", { resumedCall: wasActivated });
       if (peerPresent) socket.emit("peer-joined", { resumedCall: wasActivated });
@@ -1155,8 +1204,8 @@ io.on("connection", (socket) => {
     const peerPresent = Array.from(uniqueUsersInRoom).some(
       (id) => id !== String(socketUserId),
     );
-    const wasActivated = roomActivated.get(appointmentId) === true;
-    if (peerPresent) roomActivated.set(appointmentId, true);
+    const wasActivated = roomActivated.has(appointmentId);
+    if (peerPresent) roomActivated.set(appointmentId, Date.now());
 
     socket.to(room).emit("peer-joined", { resumedCall: wasActivated });
     if (peerPresent) socket.emit("peer-joined", { resumedCall: wasActivated });
@@ -1332,10 +1381,14 @@ io.on("connection", (socket) => {
 
         if (!sameUserStillInRoom) {
           io.to(appointmentRoom).emit("participant-left");
-          const remaining = io.sockets.adapter.rooms.get(appointmentRoom);
-          if (!remaining || remaining.size === 0) {
-            roomActivated.delete(appointmentId);
-          }
+          // Deliberately NOT clearing roomActivated here: this path also
+          // fires when both participants drop at once (e.g. a shared
+          // network outage) and later both reconnect — clearing it would
+          // make that reconnect look like a first join instead of a resume,
+          // costing the doctor the fast requestPeerIceRestart() nudge in
+          // favor of the ~20-25s passive watchdog. roomActivated is only
+          // cleared on a real, intentional departure — see the explicit
+          // leave-appointment-room handler above, which already does this.
         }
       }, SOCKET_LEAVE_GRACE_MS);
 

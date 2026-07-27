@@ -13,9 +13,9 @@ import {
 
 import { FaThreads } from "react-icons/fa6";
 import { FaXTwitter } from "react-icons/fa6";
-import logo from "../assets/Logo.png";
+// import logo from "../assets/Logo.png";
 // import FooterHippa from "../assets/new-hippa.png";
-
+import logo from "../assets/LogoFooter.png";
 import { Link } from "react-router-dom";
 
 export default function Footer() {

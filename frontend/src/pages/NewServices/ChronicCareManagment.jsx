@@ -317,13 +317,7 @@ const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 /* ──────────────────────────────────────────────────────────────────────────
    MICRO COMPONENTS
 ────────────────────────────────────────────────────────────────────────── */
-// Fix 1 (labels off-center): SLabel is a flex row (divider line + text). A
-// flex container is block-level by default, so it stretches to the full
-// width of its parent and its children sit at the start of that row —
-// `text-align: center` on an ancestor has no effect on it. Sections that
-// want a centered eyebrow label (Features, WhyUs) now pass `center`, which
-// switches `justifyContent` so the divider+text pair is actually centered
-// instead of hugging the left edge of the centered text block.
+
 const SLabel = ({ text, ac, center = false }) => (
   <div
     style={{

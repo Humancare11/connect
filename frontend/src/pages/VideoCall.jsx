@@ -404,6 +404,11 @@ const CHAT_SEND_COOLDOWN_MS = 300;
 // happened around a disconnect. Cap how many get queued for replay on
 // reconnect so a long outage can't grow this without bound.
 const TELEMETRY_QUEUE_MAX = 50;
+// Chat messages sent while we can't be sure join-appointment-room has
+// actually completed server-side are queued here and flushed once
+// appointment-chat-history confirms it — see roomJoinConfirmedRef/
+// flushChatQueue below. Capped for the same reason as the telemetry queue.
+const CHAT_QUEUE_MAX = 20;
 
 const mediaErrorMessage = (err) => {
   if (!navigator.mediaDevices?.getUserMedia) {
@@ -804,6 +809,7 @@ export default function VideoCall() {
   const socketAuthRefreshedRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
   const reconnectStallTimerRef = useRef(null);
+  const completedOverlayTimerRef = useRef(null);
   // Set just before a manual forceReconnect() tears the peer connection
   // down and rebuilds it. Lets the effect cleanup below tell "I'm
   // intentionally rebuilding my own connection" apart from "I'm actually
@@ -817,6 +823,13 @@ export default function VideoCall() {
   // Telemetry events queued while the socket is disconnected, replayed once
   // it reconnects — see logVideoEvent/flushTelemetryQueue below.
   const telemetryQueueRef = useRef([]);
+  // True only once appointment-chat-history has confirmed join-appointment-room
+  // fully completed for the CURRENT connection — socket.connected alone isn't
+  // enough, since that flips true before the server's async, DB-backed join
+  // finishes processing (the exact race that used to silently drop a chat
+  // message sent right at reconnect). See handleChatHistory/flushChatQueue.
+  const roomJoinConfirmedRef = useRef(false);
+  const chatQueueRef = useRef([]);
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
@@ -1175,6 +1188,7 @@ export default function VideoCall() {
     offerAnswerTimeoutRef.current = null;
     restartRequestInFlightRef.current = false;
     screenSharingRef.current = false;
+    setIsScreenSharing(false);
     screenShareStartInProgressRef.current = false;
     screenShareStopInProgressRef.current = false;
     socketAuthRefreshedRef.current = false;
@@ -1216,6 +1230,12 @@ export default function VideoCall() {
     if (!socket.connected || !telemetryQueueRef.current.length) return;
     const queued = telemetryQueueRef.current.splice(0);
     queued.forEach((payload) => socket.emit("video-telemetry", payload));
+  }, []);
+
+  const flushChatQueue = useCallback(() => {
+    if (!socket.connected || !chatQueueRef.current.length) return;
+    const queued = chatQueueRef.current.splice(0);
+    queued.forEach((payload) => socket.emit("appointment-message", payload));
   }, []);
 
   const logVideoEvent = useCallback(
@@ -1411,8 +1431,8 @@ export default function VideoCall() {
       : mainVideoRef.current;
     const mainOk = await playVideoElement(mainVideoRef.current);
     const pipOk = await playVideoElement(pipVideoRef.current);
-    await playVideoElement(remoteAudioRef.current);
-    const remoteOk = remoteVideo === pipVideoRef.current ? pipOk : mainOk;
+    const audioOk = await playVideoElement(remoteAudioRef.current);
+    const remoteOk = (remoteVideo === pipVideoRef.current ? pipOk : mainOk) && audioOk;
     setPlaybackBlocked(Boolean(remoteVideo?.srcObject) && !remoteOk);
   }, []);
 
@@ -1560,6 +1580,10 @@ export default function VideoCall() {
     remoteStreamRef.current = remoteStream;
     if (mainVideoRef.current) mainVideoRef.current.srcObject = remoteStream;
     const isPolitePeer = isDoctor;
+    // Set when the connection drops (disconnected/failed) after having
+    // been up at least once, and consumed the next time either state
+    // handler below reports "connected" again — see refreshRemoteStreamBinding.
+    let remoteRebindPending = false;
 
     const resetIgnoredOffer = () => {
       clearTimeout(ignoreOfferResetTimerRef.current);
@@ -1786,7 +1810,7 @@ export default function VideoCall() {
         logVideoEvent("device_check", summary);
 
         const stream = await getConsultationMediaStream();
-        if (!mounted) {
+        if (!mounted || completedRef.current) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
@@ -1832,6 +1856,27 @@ export default function VideoCall() {
         resolveLocalReady(false);
       }
     })();
+
+    // Recovering from a dropped connection (network switch, brief outage)
+    // reuses the SAME transceiver/track — pc.ontrack never fires again, so
+    // it never gets a chance to run its own remote-stream-rebuild logic
+    // below. Some browsers don't reliably resume painting a <video>
+    // element's decode pipeline for a track that stalled for a stretch of
+    // time, even though the underlying MediaStreamTrack is still the same
+    // live object and media has resumed flowing — the fix is the same one
+    // pc.ontrack already applies for a literally-replaced track: rebuild
+    // the MediaStream wrapper and force a fresh srcObject assignment.
+    // Called only on a genuine recovery (see remoteRebindPending), never on
+    // the very first connect, which is already handled correctly by the
+    // real pc.ontrack event.
+    const refreshRemoteStreamBinding = () => {
+      if (!mounted || !remoteStream.getTracks().length) return;
+      remoteStream = new MediaStream(remoteStream.getTracks());
+      remoteStreamRef.current = remoteStream;
+      assignStreams(isSwappedRef.current);
+      void playAssignedVideos();
+      logVideoEvent("remote_stream_rebind_after_recovery", {});
+    };
 
     pc.ontrack = (event) => {
       const incomingTracks = event.streams?.length
@@ -1927,6 +1972,10 @@ export default function VideoCall() {
           inCallRef.current = true;
         }
         startStatsCollection(pc);
+        if (remoteRebindPending) {
+          remoteRebindPending = false;
+          refreshRemoteStreamBinding();
+        }
       } else if (s === "connecting") {
         setConnectionState("connecting");
         startConnectionWatchdog();
@@ -1937,6 +1986,7 @@ export default function VideoCall() {
         });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
+        if (hasConnectedOnceRef.current) remoteRebindPending = true;
         scheduleIceRestart();
         // Only handlePeerJoined armed this watch before, gated on
         // !inCallRef — so a drop after the call had already connected once
@@ -1967,6 +2017,10 @@ export default function VideoCall() {
           inCallRef.current = true;
         }
         startStatsCollection(pc);
+        if (remoteRebindPending) {
+          remoteRebindPending = false;
+          refreshRemoteStreamBinding();
+        }
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
         startConnectionWatchdog();
@@ -1980,6 +2034,7 @@ export default function VideoCall() {
         });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
+        if (hasConnectedOnceRef.current) remoteRebindPending = true;
         scheduleIceRestart();
         if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       } else if (s === "disconnected") {
@@ -1989,6 +2044,7 @@ export default function VideoCall() {
           connectionState: pc.connectionState,
         });
         setConnectionState("connecting");
+        if (hasConnectedOnceRef.current) remoteRebindPending = true;
         scheduleIceRestart();
         if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       }
@@ -2251,6 +2307,13 @@ export default function VideoCall() {
         setMessages(
           history.map((msg) => ({ ...msg, _localKey: makeMessageKey() })),
         );
+        // Only reached on a fully successful join (a denied join emits
+        // room-access-denied instead and never gets here) — the reliable
+        // signal that it's now safe to send queued chat, unlike
+        // socket.connected alone, which flips true well before the async,
+        // DB-backed join finishes processing server-side.
+        roomJoinConfirmedRef.current = true;
+        flushChatQueue();
       }
     };
 
@@ -2258,7 +2321,10 @@ export default function VideoCall() {
       if (!mounted) return;
       if (["complete", "completed"].includes(status) && !isDoctor) {
         setShowCompletedOverlay(true);
-        setTimeout(() => navigate("/user/dashboard", { replace: true }), 4000);
+        completedOverlayTimerRef.current = setTimeout(() => {
+          if (!mounted) return;
+          navigate("/user/dashboard", { replace: true });
+        }, 4000);
         return;
       }
       // Doctor-side: an admin (or backend job) can close this appointment
@@ -2286,8 +2352,32 @@ export default function VideoCall() {
       setTimeout(() => setPrescriptionNotif(null), 10000);
     };
 
+    // Removes every listener this effect registers below. Shared by the
+    // effect's own unmount cleanup and by any handler that ends the call
+    // without unmounting the component (duplicate session, access revoked,
+    // room denied) — otherwise those stale handlers stay subscribed with
+    // closures over a now-closed peer connection for as long as the tab
+    // stays open on the resulting gate screen.
+    const unregisterVideoCallListeners = () => {
+      socket.off("video-offer", handleOffer);
+      socket.off("video-answer", handleAnswer);
+      socket.off("ice-candidate", handleIce);
+      socket.off("ice-restart-request", handleIceRestartRequest);
+      socket.off("peer-joined", handlePeerJoined);
+      socket.off("participant-left", handleParticipantLeft);
+      socket.off("appointment-message", handleChatMessage);
+      socket.off("appointment-chat-history", handleChatHistory);
+      socket.off("appointment-updated", handleApptUpdated);
+      socket.off("new-prescription", handleNewPrescription);
+      socket.off("room-access-denied", handleRoomDenied);
+      socket.off("duplicate-session", handleDuplicateSession);
+      socket.off("appointment-access-revoked", handleAppointmentAccessRevoked);
+    };
+
     const handleRoomDenied = ({ msg } = {}) => {
       if (!mounted) return;
+      performCleanup();
+      unregisterVideoCallListeners();
       setApptError(msg || "Access to this call room was denied.");
     };
 
@@ -2295,13 +2385,25 @@ export default function VideoCall() {
       if (!mounted) return;
       // A newer session for this appointment has taken over. Tear this
       // stale session all the way down — tracks, timers, socket room,
-      // peer connection — instead of only closing the PC, so nothing
-      // (call timer, stats polling, socket listeners) keeps running
-      // behind the "Access Denied" gate screen this triggers below.
+      // peer connection, socket listeners — instead of only closing the
+      // PC, so nothing (call timer, stats polling, a pending getUserMedia
+      // resolving into an orphaned stream) keeps running behind the
+      // "Access Denied" gate screen this triggers below.
       performCleanup();
+      unregisterVideoCallListeners();
       setApptError(
         msg || "Another consultation session was started elsewhere.",
       );
+    };
+
+    const handleAppointmentAccessRevoked = ({ msg } = {}) => {
+      if (!mounted) return;
+      // The backend evicts this socket (e.g. the appointment was reassigned
+      // to a different doctor) — tear down the same way as a denied/
+      // duplicate-session join so media and negotiation actually stop.
+      performCleanup();
+      unregisterVideoCallListeners();
+      setApptError(msg || "You no longer have access to this appointment.");
     };
 
     socket.on("video-offer", handleOffer);
@@ -2316,6 +2418,7 @@ export default function VideoCall() {
     socket.on("new-prescription", handleNewPrescription);
     socket.on("room-access-denied", handleRoomDenied);
     socket.on("duplicate-session", handleDuplicateSession);
+    socket.on("appointment-access-revoked", handleAppointmentAccessRevoked);
 
     const joinRoom = () => {
       emitOnlineAndJoinRoom();
@@ -2324,6 +2427,7 @@ export default function VideoCall() {
 
     const handleSocketDisconnect = () => {
       joinedSocketIdRef.current = "";
+      roomJoinConfirmedRef.current = false;
       if (!mounted) return;
       logVideoEvent("socket_disconnected_during_call", {
         inCall: inCallRef.current,
@@ -2390,16 +2494,43 @@ export default function VideoCall() {
     socket.on("disconnect", handleSocketDisconnect);
     socket.io.on("reconnect", handleSocketReconnect);
 
+    // Wi-Fi <-> mobile data switches usually never trip the browser's
+    // offline/online events at all (the device has *some* connectivity the
+    // whole time) — this is a defense-in-depth nudge for the cases that do
+    // report a transition, so recovery doesn't have to wait purely on
+    // RTCPeerConnection's own state-change detection, which is known to
+    // lag behind the actual network change on some browsers/platforms.
+    // Mirrors handleSocketReconnect's recovery nudge above.
+    const handleNetworkOnline = () => {
+      if (!mounted || !socket.connected || pc.signalingState === "closed")
+        return;
+      if (
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      )
+        return;
+      if (isDoctor) {
+        requestPeerIceRestart();
+      } else if (isReadyRef.current) {
+        void createAndSendOffer({ iceRestart: inCallRef.current });
+      }
+    };
+    window.addEventListener("online", handleNetworkOnline);
+
     return () => {
       mounted = false;
+      window.removeEventListener("online", handleNetworkOnline);
       resolveLocalReady(false);
       clearTimeout(iceRestartTimerRef.current);
       clearTimeout(connectionFailTimerRef.current);
       clearTimeout(ignoreOfferResetTimerRef.current);
       clearTimeout(reconnectStallTimerRef.current);
+      clearTimeout(completedOverlayTimerRef.current);
       iceRestartTimerRef.current = null;
       ignoreOfferResetTimerRef.current = null;
       reconnectStallTimerRef.current = null;
+      completedOverlayTimerRef.current = null;
       restartRequestInFlightRef.current = false;
       // A manual forceReconnect() also tears this effect down and re-runs
       // it (via reconnectNonce), but that's not a real departure — skip the
@@ -2417,18 +2548,7 @@ export default function VideoCall() {
       socket.off("connect", joinRoom);
       socket.off("disconnect", handleSocketDisconnect);
       socket.io.off("reconnect", handleSocketReconnect);
-      socket.off("video-offer", handleOffer);
-      socket.off("video-answer", handleAnswer);
-      socket.off("ice-candidate", handleIce);
-      socket.off("ice-restart-request", handleIceRestartRequest);
-      socket.off("peer-joined", handlePeerJoined);
-      socket.off("participant-left", handleParticipantLeft);
-      socket.off("appointment-message", handleChatMessage);
-      socket.off("appointment-chat-history", handleChatHistory);
-      socket.off("appointment-updated", handleApptUpdated);
-      socket.off("new-prescription", handleNewPrescription);
-      socket.off("room-access-denied", handleRoomDenied);
-      socket.off("duplicate-session", handleDuplicateSession);
+      unregisterVideoCallListeners();
       pc.ontrack = null;
       pc.onicecandidate = null;
       pc.onconnectionstatechange = null;
@@ -2449,6 +2569,7 @@ export default function VideoCall() {
       clearTimeout(offerAnswerTimeoutRef.current);
       offerAnswerTimeoutRef.current = null;
       screenSharingRef.current = false;
+      setIsScreenSharing(false);
       screenShareStartInProgressRef.current = false;
       screenShareStopInProgressRef.current = false;
       clearInterval(callTimerRef.current);
@@ -2465,6 +2586,7 @@ export default function VideoCall() {
     emitOnlineAndJoinRoom,
     logVideoEvent,
     flushTelemetryQueue,
+    flushChatQueue,
     stopStatsCollection,
     performCleanup,
     reconnectNonce,
@@ -2807,6 +2929,10 @@ export default function VideoCall() {
       logVideoEvent("media_retry_started", summary);
 
       const stream = await getConsultationMediaStream();
+      if (completedRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
       await attachLocalMediaStream(stream, pc);
 
       setIsReady(true);
@@ -2950,12 +3076,23 @@ export default function VideoCall() {
     if (chatSendCooldownTimerRef.current) return;
     const text = chatInput.trim();
     if (!text) return;
-    socket.emit("appointment-message", {
+    const payload = {
       appointmentId,
       senderId: currentUser.id,
       senderName: currentUser.name,
       text,
-    });
+    };
+    if (socket.connected && roomJoinConfirmedRef.current) {
+      socket.emit("appointment-message", payload);
+    } else {
+      // Not confirmed joined yet (disconnected, or reconnecting but the
+      // server hasn't finished processing join-appointment-room) — queue
+      // instead of emitting now. Socket.IO would otherwise auto-buffer this
+      // and flush it before our own reconnect handler re-joins the room,
+      // which the server silently drops since it isn't a room member yet.
+      chatQueueRef.current.push(payload);
+      if (chatQueueRef.current.length > CHAT_QUEUE_MAX) chatQueueRef.current.shift();
+    }
     setChatInput("");
     setChatSendCoolingDown(true);
     chatSendCooldownTimerRef.current = window.setTimeout(() => {

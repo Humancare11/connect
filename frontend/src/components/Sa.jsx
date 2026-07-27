@@ -8,6 +8,7 @@ import {
   FaHeartbeat,
   FaPills,
   FaBalanceScale,
+  FaUserMd,
 } from "react-icons/fa";
 import {
   motion as Motion,
@@ -51,7 +52,7 @@ function RevealCard({ children, className, delay = 0, to }) {
   );
 }
 
-const D = [0, 0.08, 0.16, 0.24, 0.32, 0.4];
+const D = [0, 0.08, 0.16, 0.24, 0.32, 0.4, 0.48];
 
 /* ─────────────────────────────────────────
    Component
@@ -139,17 +140,6 @@ export default function Sa() {
                   Refill Prescription <span className="cta-arrow">→</span>
                 </span>
               </div>
-
-              {/* <div className="services-content-right">
-                <div className="services-stat-mini">
-                  <span className="services-stat-value-text">2 hrs</span>
-                  <span className="services-stat-label-text">Avg. time</span>
-                </div>
-                <div className="services-stat-mini">
-                  <span className="services-stat-value-text">94%</span>
-                  <span className="services-stat-label-text">Same-day</span>
-                </div>
-              </div> */}
             </div>
           </RevealCard>
 
@@ -177,7 +167,7 @@ export default function Sa() {
             </div>
           </RevealCard>
 
-          {/* Fit to Fly  */}
+          {/* Fit to Fly — now a standard small card */}
           <RevealCard
             className="services-card-item services-bento-smal-1"
             delay={D[2]}
@@ -186,18 +176,18 @@ export default function Sa() {
             <div className="services-icon-box">
               <FaBrain />
             </div>
-            <h3 className="services-card-title"> Fit to Fly Certificate</h3>
+            <h3 className="services-card-title">Fit to Fly Certificate</h3>
             <p className="services-card-description">
               Travel with confidence by getting a fit to fly certificate from a
-              licensed telemedicine provider. If medically appropriate, obtain a
-              professional fitness-to-travel assessment to meet airline
-              requirements, recent surgery, pregnancy, or other health
-              conditions without an unnecessary clinic visit.
+              licensed telemedicine provider. If medically appropriate, obtain
+              a professional fitness-to-travel assessment to meet airline
+              requirements without an unnecessary clinic visit.
             </p>
             <span className="services-card-cta-link">
               Get Certificate <span className="cta-arrow">→</span>
             </span>
           </RevealCard>
+
           {/* ── General Consultation (2-col) ── */}
           <RevealCard
             className="services-card-item services-bento-small"
@@ -221,6 +211,7 @@ export default function Sa() {
             </span>
           </RevealCard>
 
+          {/* Lab Requisition */}
           <RevealCard
             className="services-card-item services-bento-small-0"
             delay={D[4]}
@@ -229,7 +220,7 @@ export default function Sa() {
             <div className="services-icon-box">
               <FaHeart />
             </div>
-            <h3 className="services-card-title"> Lab Requisition</h3>
+            <h3 className="services-card-title">Lab Requisition</h3>
             <p className="services-card-description">
               Need lab testing for new symptoms, ongoing conditions, or routine
               health monitoring? Connect with a licensed healthcare provider to
@@ -242,10 +233,30 @@ export default function Sa() {
             </span>
           </RevealCard>
 
-          {/* ── Chronic Care (4-col wide) ── */}
+          {/* ── Online Second Medical Opinion (new, 2-col) ── */}
+          <RevealCard
+            className="services-card-item services-bento-small-2"
+            delay={D[5]}
+            to="/online-second-medical-opinion"
+          >
+            <div className="services-icon-box">
+              <FaUserMd />
+            </div>
+            <h3 className="services-card-title">Online Second Medical Opinion</h3>
+            <p className="services-card-description">
+              Unsure about a diagnosis or treatment plan? Get a second opinion
+              from an independent licensed physician online, review your case,
+              and make informed decisions about your health with confidence.
+            </p>
+            <span className="services-card-cta-link">
+              Get a Second Opinion <span className="cta-arrow">→</span>
+            </span>
+          </RevealCard>
+
+          {/* ── Chronic Care (4-col wide) — unchanged ── */}
           <RevealCard
             className="services-card-item services-bento-wide"
-            delay={D[5]}
+            delay={D[6]}
             to="/chronic-care-management"
           >
             <div className="services-icon-box">

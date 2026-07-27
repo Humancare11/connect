@@ -1871,7 +1871,7 @@ export default function OnlinePrescriptionRefills() {
       <SEO
         title="Online Prescription Refills | Renew Medications Online | Humancare Connect"
         description="Need a prescription refill? Connect with licensed healthcare providers through secure telemedicine services and renew eligible medications online."
-        keywords="Online prescription refills, Medication refill online, Prescription renewal, Telemedicine prescription services"
+        keywords="Second Medical Opinion, Online Second Medical Opinion, Second Medical Opinion Service, Qualified Specialists, Telemedicine Services, Virtual Consultation"
         url="https://humancareconnect.co/online-prescription-refills"
       />
       <Helmet>
@@ -1893,7 +1893,7 @@ export default function OnlinePrescriptionRefills() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} price={price} priceLoading={priceLoading}  bp={bp} />
+            <Hero s={s} price={price} priceLoading={priceLoading} bp={bp} />
             <Overview s={s} bp={bp} />
             <HowItWorks s={s} bp={bp} />
             <Features s={s} bp={bp} />
