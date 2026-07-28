@@ -1,227 +1,412 @@
-/* Employee Admin Dashboard */
-.ead-root {
-  max-width: 960px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  font-family: var(--font-secondary);
+/* ============================================================
+   Employee Admin Dashboard — modern UI refresh
+   Dedicated stylesheet (ead- prefix). Independent of the shared
+   admin stylesheet. Matches the Task Master design language:
+   indigo accent, cool neutral surfaces, soft depth.
+   ============================================================ */
+
+/* ---------- Design tokens ---------- */
+:root {
+  /* Surfaces */
+  --ead-bg: #f6f7f9;
+  --ead-surface: #ffffff;
+  --ead-surface-2: #fbfbfd;
+  --ead-surface-sunken: #f3f4f7;
+
+  /* Text */
+  --ead-ink: #1a1d24;
+  --ead-ink-soft: #4b5160;
+  --ead-muted: #858c9c;
+  --ead-faint: #aab0bd;
+
+  /* Lines */
+  --ead-line: #e7e9ef;
+  --ead-line-strong: #d7dae2;
+
+  /* Accent (indigo / iris) */
+  --ead-accent: #5457e5;
+  --ead-accent-hover: #474ad6;
+  --ead-accent-soft: #eef0fe;
+  --ead-accent-ring: rgba(84, 87, 229, 0.28);
+
+  /* Semantic tones */
+  --ead-blue: #3f6fd6;
+  --ead-blue-soft: #e6eefb;
+  --ead-amber: #c07d10;
+  --ead-amber-soft: #fbf0d6;
+  --ead-green: #1f9d63;
+  --ead-green-soft: #e2f5ea;
+  --ead-red: #dc3a52;
+  --ead-red-soft: #fde6ea;
+  --ead-slate: #667085;
+  --ead-slate-soft: #eef0f4;
+
+  /* Radius & shadow */
+  --ead-r-sm: 8px;
+  --ead-r: 12px;
+  --ead-r-lg: 16px;
+  --ead-shadow-sm: 0 1px 2px rgba(20, 24, 40, 0.05);
+  --ead-shadow: 0 4px 16px -6px rgba(20, 24, 40, 0.12);
+  --ead-shadow-lg: 0 18px 48px -18px rgba(20, 24, 40, 0.28);
+
+  --ead-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
 }
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
+/* ============================================================
+   Header
+   ============================================================ */
+.ead-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+  font-family: var(--ead-font);
+}
+
 .ead-eyebrow {
-  display: inline-block;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 650;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: #0369a1;
-  margin-bottom: 6px;
+  color: var(--ead-accent);
 }
 
 .ead-title {
-  font-size: 26px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 6px;
-  letter-spacing: -0.5px;
-}
-
-.ead-subtitle {
-  font-size: 14px;
-  color: #64748b;
   margin: 0;
-}
-
-/* ── Profile card ────────────────────────────────────────────────────────── */
-.ead-profile-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-}
-
-.ead-profile-icon {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
-  color: #0369a1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.ead-profile-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.ead-profile-name {
-  font-size: 18px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 4px;
-}
-
-.ead-profile-email {
-  font-size: 13px;
-  color: #64748b;
-  margin: 0 0 10px;
-}
-
-.ead-profile-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.ead-badge {
-  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
-  color: #0369a1;
-  font-size: 11px;
+  font-size: 27px;
+  line-height: 1.15;
   font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: -0.02em;
+  color: var(--ead-ink);
 }
 
-.ead-member-since {
-  font-size: 12px;
-  color: #94a3b8;
+.ead-sub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ead-muted);
+  max-width: 62ch;
 }
 
-.ead-loading-line {
-  height: 14px;
-  width: 180px;
-  background: linear-gradient(90deg, #f1f5f9, #e2e8f0, #f1f5f9);
-  background-size: 200% 100%;
-  border-radius: 6px;
-  animation: ead-shimmer 1.4s infinite;
-}
-
-@keyframes ead-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* ── Stats grid ──────────────────────────────────────────────────────────── */
-.ead-stats-grid {
+/* ============================================================
+   Stat cards
+   ============================================================ */
+.ead-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  margin-bottom: 24px;
+  font-family: var(--ead-font);
 }
 
-.ead-stat-card {
-  background: #fff;
-  border-radius: 14px;
-  padding: 20px;
+.ead-stat {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.2s;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  background: var(--ead-surface);
+  border: 1px solid var(--ead-line);
+  border-radius: var(--ead-r);
+  box-shadow: var(--ead-shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.16s ease, transform 0.16s ease,
+    border-color 0.16s ease;
 }
-
-.ead-stat-card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+.ead-stat:hover {
+  box-shadow: var(--ead-shadow);
+  transform: translateY(-2px);
+  border-color: var(--ead-line-strong);
 }
 
 .ead-stat-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-}
-
-.ead-stat-card--blue .ead-stat-icon  { background: #eff6ff; color: #3b82f6; }
-.ead-stat-card--amber .ead-stat-icon { background: #fffbeb; color: #f59e0b; }
-.ead-stat-card--green .ead-stat-icon { background: #f0fdf4; color: #22c55e; }
-
-.ead-stat-body {
-  flex: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  margin-bottom: 8px;
+  color: var(--ead-accent);
+  background: var(--ead-accent-soft);
 }
 
 .ead-stat-value {
-  font-size: 24px;
-  font-weight: 800;
-  color: #0f172a;
+  font-size: 30px;
+  font-weight: 700;
   line-height: 1;
-  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+  color: var(--ead-ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .ead-stat-label {
+  font-size: 13px;
+  color: var(--ead-muted);
+}
+
+/* Tone accents */
+.ead-stat--blue .ead-stat-icon { background: var(--ead-blue-soft); color: var(--ead-blue); }
+.ead-stat--amber .ead-stat-icon { background: var(--ead-amber-soft); color: var(--ead-amber); }
+.ead-stat--green .ead-stat-icon { background: var(--ead-green-soft); color: var(--ead-green); }
+
+.ead-stat--blue::before,
+.ead-stat--amber::before,
+.ead-stat--green::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+}
+.ead-stat--blue::before { background: var(--ead-blue); }
+.ead-stat--amber::before { background: var(--ead-amber); }
+.ead-stat--green::before { background: var(--ead-green); }
+
+/* ============================================================
+   Card
+   ============================================================ */
+.ead-card {
+  background: var(--ead-surface);
+  border: 1px solid var(--ead-line);
+  border-radius: var(--ead-r-lg);
+  box-shadow: var(--ead-shadow);
+  overflow: hidden;
+  font-family: var(--ead-font);
+}
+
+.ead-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--ead-line);
+}
+
+.ead-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ead-ink);
+}
+
+/* ============================================================
+   Loading / spinner
+   ============================================================ */
+.ead-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 20px;
+  font-size: 13.5px;
+  color: var(--ead-muted);
+  font-family: var(--ead-font);
+}
+
+.ead-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--ead-line-strong);
+  border-top-color: var(--ead-accent);
+  animation: ead-spin 0.7s linear infinite;
+}
+
+@keyframes ead-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   Table
+   ============================================================ */
+.ead-table-wrap {
+  overflow-x: auto;
+}
+
+.ead-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ead-font);
+}
+
+.ead-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ead-muted);
+  background: var(--ead-surface-2);
+  border-bottom: 1px solid var(--ead-line);
+  white-space: nowrap;
+}
+
+.ead-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--ead-ink-soft);
+  border-bottom: 1px solid var(--ead-line);
+  vertical-align: middle;
+}
+
+.ead-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ead-table tbody tr {
+  transition: background 0.14s ease;
+}
+.ead-table tbody tr:hover {
+  background: var(--ead-surface-2);
+}
+
+.ead-table strong {
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ead-ink);
+}
+
+/* ============================================================
+   Avatar
+   ============================================================ */
+.ead-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ead-accent), #7b7ef0);
+  color: #fff;
+}
+
+/* ============================================================
+   Badges
+   ============================================================ */
+.ead-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
+  white-space: nowrap;
+  background: var(--ead-slate-soft);
+  color: var(--ead-slate);
 }
 
-.ead-stat-badge {
-  display: inline-block;
-  background: #f1f5f9;
-  color: #94a3b8;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.ead-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
-/* ── Notice ──────────────────────────────────────────────────────────────── */
-.ead-notice {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border: 1px solid #bfdbfe;
-  border-radius: 14px;
-  padding: 20px 24px;
-  display: flex;
-  align-items: flex-start;
+.ead-badge--open { background: var(--ead-accent-soft); color: var(--ead-accent); }
+.ead-badge--active { background: var(--ead-green-soft); color: var(--ead-green); }
+.ead-badge--pending { background: var(--ead-amber-soft); color: var(--ead-amber); }
+.ead-badge--closed { background: var(--ead-slate-soft); color: var(--ead-slate); }
+.ead-badge--inactive { background: var(--ead-slate-soft); color: var(--ead-slate); }
+.ead-badge--danger { background: var(--ead-red-soft); color: var(--ead-red); }
+
+/* ============================================================
+   Action grid (Workspace)
+   ============================================================ */
+.ead-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
+  font-family: var(--ead-font);
 }
 
-.ead-notice-icon {
-  font-size: 24px;
-  line-height: 1;
-  flex-shrink: 0;
+.ead-action-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  background: var(--ead-surface);
+  border: 1px solid var(--ead-line);
+  border-radius: var(--ead-r);
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease,
+    transform 0.16s ease, background 0.16s ease;
+}
+.ead-action-card:hover {
+  border-color: var(--ead-accent);
+  box-shadow: var(--ead-shadow);
+  transform: translateY(-2px);
 }
 
-.ead-notice-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1e40af;
-  margin: 0 0 4px;
+.ead-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+  color: var(--ead-accent);
+  background: var(--ead-accent-soft);
+  transition: background 0.16s ease, color 0.16s ease;
+}
+.ead-action-card:hover .ead-action-icon {
+  background: var(--ead-accent);
+  color: #fff;
 }
 
-.ead-notice-sub {
-  font-size: 13px;
-  color: #3b82f6;
-  margin: 0;
+.ead-action-label {
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ead-ink);
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .ead-stats-grid {
+.ead-action-sub {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ead-muted);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 860px) {
+  .ead-stats {
     grid-template-columns: 1fr;
   }
+}
 
-  .ead-profile-card {
-    flex-direction: column;
-    text-align: center;
+@media (max-width: 640px) {
+  .ead-title {
+    font-size: 23px;
   }
+  .ead-card-header {
+    padding: 16px 18px;
+  }
+  .ead-table td {
+    padding: 12px 14px;
+  }
+  .ead-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
-  .ead-profile-meta {
-    justify-content: center;
+/* ============================================================
+   Accessibility
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .ead-stat,
+  .ead-action-card,
+  .ead-action-icon,
+  .ead-spinner,
+  .ead-table tbody tr {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }

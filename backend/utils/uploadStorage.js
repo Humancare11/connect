@@ -16,7 +16,7 @@ function uploadKey(filename) {
 }
 
 function isKnownStructuredKey(value) {
-  return /^(uploads|doctors|patients)\//.test(String(value || ""));
+  return /^(uploads|doctors|patients|employee-tasks)\//.test(String(value || ""));
 }
 
 function stripApiUploadsPrefix(path) {

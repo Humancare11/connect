@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useEmployeeAdmin } from "../../context/EmployeeAdminContext";
-import "../admin/AdminDashboard.css";
+import "./EmployeeDashboard.css";
 
 const PLACEHOLDER_CARDS = [
   { label: "Assigned Tasks", icon: TaskIcon, color: "blue" },
@@ -76,17 +76,17 @@ export default function EmployeeAdminDashboard() {
 
   return (
     <div>
-      <div className="adp-header">
-        <span className="adp-eyebrow">Employee Admin Portal</span>
-        <h1 className="adp-title">
+      <div className="ead-header">
+        <span className="ead-eyebrow">Employee Admin Portal</span>
+        <h1 className="ead-title">
           Welcome back, {employeeAdmin?.name?.split(" ")[0] || "Admin"}
         </h1>
-        <p className="adp-sub">
+        <p className="ead-sub">
           Here's an overview of your workspace. More features are on their way.
         </p>
       </div>
 
-      <div className="adp-stats">
+      <div className="ead-stats">
         {PLACEHOLDER_CARDS.map(({ label, icon: Icon, color }) => {
           const value = label === "Assigned Tasks"
             ? tasks.length
@@ -97,34 +97,34 @@ export default function EmployeeAdminDashboard() {
           return (
           <div
             key={label}
-            className={`adp-stat adp-stat--${color}`}
+            className={`ead-stat ead-stat--${color}`}
             style={{ cursor: "pointer" }}
             onClick={() => navigate("/employee-dashboard/my-tasks")}
           >
-            <div className="adp-stat-icon"><Icon /></div>
-            <div className="adp-stat-value">{value}</div>
-            <div className="adp-stat-label">{label}</div>
+            <div className="ead-stat-icon"><Icon /></div>
+            <div className="ead-stat-value">{value}</div>
+            <div className="ead-stat-label">{label}</div>
           </div>
           );
         })}
       </div>
 
-      <div className="adp-card" style={{ marginBottom: 24 }}>
-        <div className="adp-card-header">
-          <h2 className="adp-card-title">Employee Admin Profile</h2>
+      <div className="ead-card" style={{ marginBottom: 24 }}>
+        <div className="ead-card-header">
+          <h2 className="ead-card-title">Employee Admin Profile</h2>
         </div>
         {loading ? (
-          <div className="adp-loading" style={{ border: "none", boxShadow: "none", borderRadius: 0 }}>
-            <div className="adp-spinner" />
+          <div className="ead-loading" style={{ border: "none", boxShadow: "none", borderRadius: 0 }}>
+            <div className="ead-spinner" />
             <span>Loading profile...</span>
           </div>
         ) : (
-          <div className="adp-table-wrap">
-            <table className="adp-table">
+          <div className="ead-table-wrap">
+            <table className="ead-table">
               <tbody>
                 <tr>
                   <td style={{ width: 72 }}>
-                    <div className="adp-avatar"><UserIcon /></div>
+                    <div className="ead-avatar"><UserIcon /></div>
                   </td>
                   <td>
                     <strong>{info?.name || employeeAdmin?.name}</strong>
@@ -133,7 +133,7 @@ export default function EmployeeAdminDashboard() {
                     </div>
                   </td>
                   <td>
-                    <span className="adp-badge adp-badge--open">Employee Admin</span>
+                    <span className="ead-badge ead-badge--open">Employee Admin</span>
                   </td>
                   <td style={{ color: "#6b7ca3" }}>
                     {memberSince ? `Member since ${memberSince}` : "Member since unavailable"}
@@ -145,21 +145,21 @@ export default function EmployeeAdminDashboard() {
         )}
       </div>
 
-      <div className="adp-card">
-        <div className="adp-card-header">
-          <h2 className="adp-card-title">Workspace</h2>
+      <div className="ead-card">
+        <div className="ead-card-header">
+          <h2 className="ead-card-title">Workspace</h2>
         </div>
         <div style={{ padding: "20px 22px" }}>
-          <div className="ado-grid">
+          <div className="ead-grid">
             {PLACEHOLDER_CARDS.map(({ label, icon: Icon }) => (
-              <div key={label} className="ado-action-card" onClick={() => navigate("/employee-dashboard/my-tasks")}>
-                <div className="ado-action-icon"><Icon /></div>
-                <div className="ado-action-label">{label}</div>
-                <div className="ado-action-sub">Open Task Master</div>
+              <div key={label} className="ead-action-card" onClick={() => navigate("/employee-dashboard/my-tasks")}>
+                <div className="ead-action-icon"><Icon /></div>
+                <div className="ead-action-label">{label}</div>
+                <div className="ead-action-sub">Open Task Master</div>
               </div>
             ))}
-            <div className="ado-action-card" onClick={() => navigate("/employee-dashboard/assign-task")}>
-              <div className="ado-action-icon">
+            <div className="ead-action-card" onClick={() => navigate("/employee-dashboard/assign-task")}>
+              <div className="ead-action-icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 7h-9"/>
                   <path d="M14 17H5"/>
@@ -167,8 +167,8 @@ export default function EmployeeAdminDashboard() {
                   <circle cx="7" cy="7" r="3"/>
                 </svg>
               </div>
-              <div className="ado-action-label">Assign Task</div>
-              <div className="ado-action-sub">Create tasks and track assigned work.</div>
+              <div className="ead-action-label">Assign Task</div>
+              <div className="ead-action-sub">Create tasks and track assigned work.</div>
             </div>
           </div>
         </div>

@@ -167,6 +167,7 @@ const verifyToken = async (req, res, next) => {
     req.cookies?.adminToken,
     req.cookies?.doctorToken,
     req.cookies?.userToken,
+    req.cookies?.employeeAdminToken,
     extractBearerToken(req),
   ].filter(Boolean);
 

@@ -51,6 +51,16 @@ function formatDateTime(value) {
   });
 }
 
+const TAG_COLORS = ["violet", "teal", "amber", "rose", "blue"];
+
+function colorForTag(tag = "") {
+  let hash = 0;
+  for (let i = 0; i < tag.length; i += 1) {
+    hash = (hash * 31 + tag.charCodeAt(i)) >>> 0;
+  }
+  return TAG_COLORS[hash % TAG_COLORS.length];
+}
+
 function initialsFor(name = "") {
   return (
     name
@@ -422,7 +432,7 @@ function TaskWorkspace({ task, currentUserId, onStatusChange }) {
             {tags.length > 0 ? (
               <div className="et-chips">
                 {tags.map((tag) => (
-                  <span key={tag} className="et-chip">{tag}</span>
+                  <span key={tag} className="et-chip" data-color={colorForTag(tag)}>{tag}</span>
                 ))}
               </div>
             ) : (
@@ -435,7 +445,7 @@ function TaskWorkspace({ task, currentUserId, onStatusChange }) {
               Attachments
               <span className="et-section__count">{attachments.length}</span>
             </h2>
-            <AttachmentList attachments={attachments} />
+            <AttachmentList attachments={attachments} taskId={task._id} />
           </section>
 
           <section className="et-section">
@@ -452,6 +462,7 @@ function TaskWorkspace({ task, currentUserId, onStatusChange }) {
                     key={subtask._id || `subtask-${index}`}
                     subtask={subtask}
                     index={index}
+                    taskId={task._id}
                   />
                 ))}
               </div>
@@ -563,7 +574,42 @@ function EmptyValue({ text = "Not added" }) {
   return <div className="et-empty-value">{text}</div>;
 }
 
-function AttachmentList({ attachments }) {
+function isImageAttachment(attachment) {
+  if (attachment.type) return attachment.type.startsWith("image/");
+  return /\.(png|jpe?g|gif|webp)$/i.test(attachment.name || "");
+}
+
+// Attachments are stored as private S3 keys, so viewing one requires a
+// short-lived signed URL fetched from the backend — a plain <img src> or
+// <a href> pointed at the bucket would 403 (see access-url route).
+function useSignedAttachmentUrl(taskId, fileKey) {
+  const [url, setUrl] = useState("");
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setUrl("");
+    setFailed(false);
+    if (!taskId || !fileKey) return undefined;
+
+    api
+      .get(`/api/employee-admin/tasks/${taskId}/attachments/access-url`, { params: { key: fileKey } })
+      .then((res) => {
+        if (alive) setUrl(res.data?.url || "");
+      })
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [taskId, fileKey]);
+
+  return { url, failed };
+}
+
+function AttachmentList({ attachments, taskId }) {
   if (!attachments.length) {
     return <EmptyValue text="No attachments added" />;
   }
@@ -571,17 +617,52 @@ function AttachmentList({ attachments }) {
   return (
     <div className="et-attachments">
       {attachments.map((attachment, index) => (
-        <div className="et-attachment" key={`${attachment.name}-${index}`}>
-          <span className="et-attachment__icon">{extOf(attachment.name)}</span>
-          <span className="et-attachment__name" title={attachment.name}>{attachment.name}</span>
-          {attachment.size && <span className="et-attachment__size">{attachment.size}</span>}
-        </div>
+        <AttachmentRow key={`${attachment.name}-${index}`} attachment={attachment} taskId={taskId} />
       ))}
     </div>
   );
 }
 
-function SubtaskItem({ subtask, index }) {
+function AttachmentRow({ attachment, taskId }) {
+  const { url, failed } = useSignedAttachmentUrl(taskId, attachment.key);
+  const isImage = isImageAttachment(attachment);
+
+  const content = (
+    <>
+      {isImage && url ? (
+        <img className="et-attachment__thumb" src={url} alt={attachment.name} />
+      ) : (
+        <span className="et-attachment__icon">{extOf(attachment.name)}</span>
+      )}
+      <span className="et-attachment__name" title={attachment.name}>{attachment.name}</span>
+      {failed ? (
+        <span className="et-attachment__error">Unavailable</span>
+      ) : (
+        attachment.size && <span className="et-attachment__size">{attachment.size}</span>
+      )}
+    </>
+  );
+
+  if (!attachment.key) {
+    return <div className="et-attachment">{content}</div>;
+  }
+
+  return (
+    <a
+      className="et-attachment et-attachment--link"
+      href={url || undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(event) => {
+        if (!url) event.preventDefault();
+      }}
+    >
+      {content}
+    </a>
+  );
+}
+
+function SubtaskItem({ subtask, index, taskId }) {
   const [open, setOpen] = useState(false);
   const attachments = subtask.attachments || [];
 
@@ -618,7 +699,7 @@ function SubtaskItem({ subtask, index }) {
           </div>
           <div className="et-subtask__field">
             <span className="et-subtask__field-label">Attachments</span>
-            <AttachmentList attachments={attachments} />
+            <AttachmentList attachments={attachments} taskId={taskId} />
           </div>
         </div>
       )}

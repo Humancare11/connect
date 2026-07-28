@@ -29,6 +29,7 @@ const Session = require("./models/Session");
 const RevokedToken = require("./models/RevokedToken");
 const ChatMessage = require("./models/ChatMessage");
 const Question = require("./models/Question");
+const EmployeeTask = require("./models/EmployeeTask");
 const DirectVideoRoom = require("./models/DirectVideoRoom");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
 const { recordActivity } = require("./utils/activityLogger");
@@ -322,6 +323,31 @@ async function canAccessUpload(req, filename) {
   }
 
   const fileUrlPattern = new RegExp(`(?:^|/)${escapeRegExp(filename)}$`);
+
+  const employeeAdminIdentity = identities.find((identity) => identity.role === "employeeadmin");
+  if (employeeAdminIdentity) {
+    const employeeTask = await EmployeeTask.findOne({
+      $or: [
+        { "attachments.key": filename },
+        { "attachments.url": fileUrlPattern },
+        { "subtasks.attachments.key": filename },
+        { "subtasks.attachments.url": fileUrlPattern },
+      ],
+    })
+      .select("assignedTo createdBy")
+      .lean();
+
+    if (employeeTask) {
+      const identityId = String(employeeAdminIdentity.id);
+      const allowed =
+        String(employeeTask.assignedTo) === identityId || String(employeeTask.createdBy) === identityId;
+      return {
+        allowed,
+        reason: allowed ? "employee_task" : "not_assigned",
+        identity: employeeAdminIdentity,
+      };
+    }
+  }
   const appointment = await Appointment.findOne({
     $or: [
       { "medicalReports.url": fileUrlPattern },

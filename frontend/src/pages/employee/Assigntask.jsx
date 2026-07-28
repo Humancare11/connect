@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
+import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import "./Assigntask.css";
 
 const PRIORITIES = [
@@ -44,6 +45,16 @@ const emptySubtask = {
   completed: false,
 };
 
+const TAG_COLORS = ["violet", "teal", "amber", "rose", "blue"];
+
+function colorForTag(tag = "") {
+  let hash = 0;
+  for (let i = 0; i < tag.length; i += 1) {
+    hash = (hash * 31 + tag.charCodeAt(i)) >>> 0;
+  }
+  return TAG_COLORS[hash % TAG_COLORS.length];
+}
+
 function initialsFor(name = "") {
   return (
     name
@@ -56,11 +67,37 @@ function initialsFor(name = "") {
   );
 }
 
-function filesToMetadata(fileList) {
-  return Array.from(fileList || []).map((file) => ({
-    name: file.name,
-    size: `${(file.size / 1024).toFixed(1)} KB`,
-  }));
+async function uploadFilesToTaskStorage(fileList, assigneeId) {
+  const files = Array.from(fileList || []);
+  const results = [];
+
+  for (const file of files) {
+    const size = `${(file.size / 1024).toFixed(1)} KB`;
+    try {
+      const uploaded = await uploadFileDirectToS3(file, {
+        ownerType: "employee-task",
+        ownerId: assigneeId,
+      });
+      // Store the raw S3 key (not the bucket URL) so the app's URL
+      // normalizer rewrites it to the authenticated /api/uploads proxy —
+      // the bucket itself is private and rejects direct, unauthenticated reads.
+      results.push({
+        name: uploaded.name || file.name,
+        size,
+        url: uploaded.key,
+        key: uploaded.key,
+        type: uploaded.type || file.type,
+      });
+    } catch (err) {
+      results.push({
+        name: file.name,
+        size,
+        error: err?.response?.data?.msg || err?.message || "Upload failed.",
+      });
+    }
+  }
+
+  return results;
 }
 
 function extOf(name = "") {
@@ -221,14 +258,14 @@ export default function AssignTask() {
       title: form.title,
       description: form.description,
       comment: form.comment,
-      attachments: form.attachments,
+      attachments: form.attachments.filter((file) => !file.error),
       // "completed" is a local-only UI affordance for this creation flow —
       // the backend subtask schema doesn't persist it, so it's left out.
       subtasks: form.subtasks.map(({ title, description, comment, attachments }) => ({
         title,
         description,
         comment,
-        attachments,
+        attachments: attachments.filter((file) => !file.error),
       })),
       startDate: form.startDate,
       dueDate: form.dueDate,
@@ -375,6 +412,7 @@ export default function AssignTask() {
                 onAdd={addSubtask}
                 onChange={updateSubtask}
                 onRemove={removeSubtask}
+                assigneeId={form.assignedTo}
               />
             </section>
 
@@ -390,6 +428,7 @@ export default function AssignTask() {
               <AttachmentDropzone
                 id="at-files"
                 attachments={form.attachments}
+                assigneeId={form.assignedTo}
                 onAdd={(files) => setField("attachments", [...form.attachments, ...files])}
                 onRemove={(index) =>
                   setField(
@@ -686,7 +725,7 @@ function DescriptionEditor({ id, value, onChange, placeholder, maxLength }) {
 /* ============================================================
    Subtasks — compact checklist, expandable per row.
    ============================================================ */
-function SubtaskChecklist({ subtasks, onAdd, onChange, onRemove }) {
+function SubtaskChecklist({ subtasks, onAdd, onChange, onRemove, assigneeId }) {
   const [expanded, setExpanded] = useState(() => new Set());
 
   const toggle = (index) => {
@@ -785,6 +824,7 @@ function SubtaskChecklist({ subtasks, onAdd, onChange, onRemove }) {
                   id={`subtask-files-${index}`}
                   compact
                   attachments={attachments}
+                  assigneeId={assigneeId}
                   onAdd={(files) => onChange(index, "attachments", [...attachments, ...files])}
                   onRemove={(attachmentIndex) =>
                     onChange(
@@ -806,8 +846,20 @@ function SubtaskChecklist({ subtasks, onAdd, onChange, onRemove }) {
 /* ============================================================
    Attachments — compact drag-and-drop dropzone.
    ============================================================ */
-function AttachmentDropzone({ id, attachments, onAdd, onRemove, compact = false }) {
+function AttachmentDropzone({ id, attachments, onAdd, onRemove, assigneeId, compact = false }) {
   const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFiles = async (fileList) => {
+    if (!fileList || !fileList.length) return;
+    setUploading(true);
+    try {
+      const uploaded = await uploadFilesToTaskStorage(fileList, assigneeId);
+      onAdd(uploaded);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="at-dropzone-wrap">
@@ -816,29 +868,33 @@ function AttachmentDropzone({ id, attachments, onAdd, onRemove, compact = false 
         htmlFor={id}
         data-dragging={dragging}
         data-compact={compact}
+        data-busy={uploading}
         onDragOver={(event) => {
           event.preventDefault();
-          setDragging(true);
+          if (!uploading) setDragging(true);
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={(event) => {
           event.preventDefault();
           setDragging(false);
-          onAdd(filesToMetadata(event.dataTransfer.files));
+          if (uploading) return;
+          handleFiles(event.dataTransfer.files);
         }}
       >
         <UploadIcon />
         <span className="at-dropzone__text">
-          <strong>Drop files here</strong> or browse
-          {!compact && <em>PDF, DOC, PNG, JPG</em>}
+          <strong>{uploading ? "Uploading…" : "Drop files here"}</strong> {!uploading && "or browse"}
+          {!compact && !uploading && <em>PDF, DOC, PNG, JPG</em>}
         </span>
         <input
           id={id}
           type="file"
           multiple
+          disabled={uploading}
           onChange={(event) => {
-            onAdd(filesToMetadata(event.target.files));
+            const { files } = event.target;
             event.target.value = "";
+            handleFiles(files);
           }}
         />
       </label>
@@ -853,10 +909,14 @@ function AttachmentList({ attachments, onRemove }) {
   return (
     <div className="at-attachments">
       {attachments.map((attachment, index) => (
-        <div key={`${attachment.name}-${index}`} className="at-attachment">
+        <div key={`${attachment.name}-${index}`} className="at-attachment" data-error={!!attachment.error}>
           <span className="at-attachment__icon">{extOf(attachment.name)}</span>
           <span className="at-attachment__name">{attachment.name}</span>
-          <span className="at-attachment__size">{attachment.size}</span>
+          {attachment.error ? (
+            <span className="at-attachment__error">{attachment.error}</span>
+          ) : (
+            <span className="at-attachment__size">{attachment.size}</span>
+          )}
           <button
             type="button"
             className="at-attachment__remove"
@@ -1013,6 +1073,7 @@ function TagInput({ tags, onAdd, onRemove }) {
           type="button"
           key={tag}
           className="at-chip"
+          data-color={colorForTag(tag)}
           onClick={() => onRemove(tag)}
           aria-label={`Remove tag ${tag}`}
         >

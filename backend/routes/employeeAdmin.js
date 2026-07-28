@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../models/User");
 const EmployeeTask = require("../models/EmployeeTask");
 const { verifyEmployeeAdminToken, employeeAdminOnly } = require("../middleware/verifyToken");
+const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
 const STATUSES = ["Pending", "In Progress", "Completed", "Blocked"];
@@ -64,6 +65,9 @@ function cleanAttachments(value) {
     .map((file) => ({
       name: cleanText(file?.name).slice(0, 255),
       size: cleanText(file?.size).slice(0, 40),
+      url: cleanText(file?.url).slice(0, 1000),
+      key: cleanText(file?.key).slice(0, 500),
+      type: cleanText(file?.type).slice(0, 100),
     }))
     .filter((file) => file.name);
 }
@@ -165,6 +169,35 @@ router.get("/tasks/:id", verifyEmployeeAdminToken, employeeAdminOnly, async (req
     res.json(task);
   } catch (err) {
     console.error("employee task detail error:", err);
+    res.status(500).json({ msg: "Server error." });
+  }
+});
+
+// GET /api/employee-admin/tasks/:id/attachments/access-url?key=... - short-lived signed URL to view/download an attachment
+router.get("/tasks/:id/attachments/access-url", verifyEmployeeAdminToken, employeeAdminOnly, async (req, res) => {
+  try {
+    const key = cleanText(req.query.key);
+    if (!key) return res.status(400).json({ msg: "Attachment key is required." });
+
+    const task = await EmployeeTask.findById(req.params.id)
+      .select("assignedTo createdBy attachments subtasks")
+      .lean();
+    if (!task) return res.status(404).json({ msg: "Task not found." });
+
+    const canView =
+      String(task.assignedTo) === String(req.user.id) || String(task.createdBy) === String(req.user.id);
+    if (!canView) return res.status(403).json({ msg: "You do not have access to this task." });
+
+    const knownKeys = new Set([
+      ...(task.attachments || []).map((file) => file.key),
+      ...(task.subtasks || []).flatMap((subtask) => (subtask.attachments || []).map((file) => file.key)),
+    ]);
+    if (!knownKeys.has(key)) return res.status(404).json({ msg: "Attachment not found on this task." });
+
+    const signed = await createS3PresignedGetUrl(key, { expiresIn: DEFAULT_EXPIRY_SECONDS });
+    res.json({ url: signed.url, expiresAt: signed.expiresAt });
+  } catch (err) {
+    console.error("employee task attachment access-url error:", err);
     res.status(500).json({ msg: "Server error." });
   }
 });
