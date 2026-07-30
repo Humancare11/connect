@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   ArrowRight,
@@ -23,8 +23,12 @@ import {
   Microscope,
 } from "lucide-react";
 import "./PCP.css";
+import "./Specialty/SpecialtyPage.css";
+import "./Categories/categoriesGlobal.css";
 import SEO from "../components/Seo";
 import pcpHeroBg from "../assets/SpecialitiesImage/family-medicine-primary-care-doctor-consultation-banner.webp";
+import BookingCard from "../components/SpecialityBookingCard";
+import api from "../api";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const FADE_VARIANTS = {
@@ -35,6 +39,10 @@ const FADE_VARIANTS = {
 };
 
 const EASE_SPRING = [0.22, 1, 0.36, 1];
+
+const PCP_BOOKING_HREF =
+  "/category-consultant?category=general&pcp=1&specialty=" +
+  encodeURIComponent("Primary Care");
 
 // ─── FadeIn (kept as a small reusable primitive, not a "section") ─────────────
 function FadeIn({ children, delay = 0, direction = "up", className = "" }) {
@@ -284,6 +292,32 @@ const CTA_TRUST_POINTS = [
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function PCP() {
   const [openIndex, setOpenIndex] = useState(null);
+  const PCP_FALLBACK_PRICE = 69;
+  const [price, setPrice] = useState(null);
+  const [priceLoading, setPriceLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchPrice() {
+      try {
+        const res = await api.get("/api/pricing");
+        if (!cancelled) {
+          const record = res.data?.general;
+          const fetchedPrice = Number(record?.price);
+          setPrice(Number.isFinite(fetchedPrice) && fetchedPrice > 0 ? fetchedPrice : PCP_FALLBACK_PRICE);
+        }
+      } catch (err) {
+        console.error("Failed to fetch category pricing:", err);
+        if (!cancelled) setPrice(PCP_FALLBACK_PRICE);
+      } finally {
+        if (!cancelled) setPriceLoading(false);
+      }
+    }
+    fetchPrice();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <>
@@ -310,62 +344,75 @@ export default function PCP() {
           <div className="pcp-hero__overlay" aria-hidden="true" />
 
           <div className="pcp-container">
-            <div className="pcp-hero__content">
-              <FadeIn delay={0.05}>
-                <div className="pcp-hero__badge-wrap">
-                  <span className="pcp-hero__badge">
-                    <span className="pcp-hero__badge-dot" />
-                    NO PCP? NO PROBLEM.
-                  </span>
-                </div>
-              </FadeIn>
+            <div className="pcp-hero__layout">
+              <div className="pcp-hero__content">
+                <FadeIn delay={0.05}>
+                  <div className="pcp-hero__badge-wrap">
+                    <span className="pcp-hero__badge">
+                      <span className="pcp-hero__badge-dot" />
+                      NO PCP? NO PROBLEM.
+                    </span>
+                  </div>
+                </FadeIn>
 
-              <FadeIn delay={0.12}>
-                <h1 className="pcp-hero__h1">
-                  Primary Care That Fits Your Life
-                  <span className="pcp-hero__subheading pcp-grad-text">
-                    Connect with a Licensed Provider in Minutes.
-                  </span>
-                </h1>
-              </FadeIn>
+                <FadeIn delay={0.12}>
+                  <h1 className="pcp-hero__h1">
+                    Primary Care That Fits Your Life
+                    <span className="pcp-hero__subheading pcp-grad-text">
+                      Connect with a Licensed Provider in Minutes.
+                    </span>
+                  </h1>
+                </FadeIn>
 
-              <FadeIn delay={0.2}>
-                <p className="pcp-hero__sub">
-                  Skip the wait and get the care you need with secure
-                  telemedicine services. Humancare Connect is your primary care
-                  destination for preventive care, prescription refills, daily
-                  health concerns and ongoing support wherever you are.
-                </p>
-              </FadeIn>
+                <FadeIn delay={0.2}>
+                  <p className="pcp-hero__sub">
+                    Skip the wait and get the care you need with secure
+                    telemedicine services. Humancare Connect is your primary
+                    care destination for preventive care, prescription
+                    refills, daily health concerns and ongoing support
+                    wherever you are.
+                  </p>
+                </FadeIn>
 
-              <FadeIn delay={0.28}>
-                <div className="pcp-hero__ctas">
-                  <a
-                    href="/appointment-booking"
-                    aria-label="Get started with HumanCare Connect"
-                    className="pcp-btn-primary"
-                  >
-                    Get Started <ArrowRight size={15} />
-                  </a>
-                  {/* <a href="#how-it-works" className="pcp-btn-secondary">
+                <FadeIn delay={0.28}>
+                  <div className="pcp-hero__ctas">
+                    <a
+                      href={PCP_BOOKING_HREF}
+                      aria-label="Get started with HumanCare Connect"
+                      className="pcp-btn-primary"
+                    >
+                      Get Started <ArrowRight size={15} />
+                    </a>
+                    {/* <a href="#how-it-works" className="pcp-btn-secondary">
                     <CirclePlay size={15} /> How It Works
                   </a> */}
-                </div>
-              </FadeIn>
+                  </div>
+                </FadeIn>
 
-              <FadeIn delay={0.33}>
-                <div className="pcp-hero__trust">
-                  {TRUST_BADGES.map((badge) => (
-                    <div key={badge} className="pcp-hero__trust-item">
-                      <CircleCheckBig
-                        size={13}
-                        color="var(--blue-3)"
-                        className="pcp-flex-shrink-0"
-                      />
-                      {badge}
-                    </div>
-                  ))}
-                </div>
+                <FadeIn delay={0.33}>
+                  <div className="pcp-hero__trust">
+                    {TRUST_BADGES.map((badge) => (
+                      <div key={badge} className="pcp-hero__trust-item">
+                        <CircleCheckBig
+                          size={13}
+                          color="var(--blue-3)"
+                          className="pcp-flex-shrink-0"
+                        />
+                        {badge}
+                      </div>
+                    ))}
+                  </div>
+                </FadeIn>
+              </div>
+
+              <FadeIn delay={0.2} direction="right" className="pcp-hero__sidebar">
+                <BookingCard
+                  price={price}
+                  priceLoading={priceLoading}
+                  categoryId="general"
+                  name="Primary Care"
+                  isPcp
+                />
               </FadeIn>
             </div>
           </div>
@@ -629,7 +676,7 @@ export default function PCP() {
 
               <div className="pcp-cta__actions">
                 <motion.a
-                  href="/appointment-booking"
+                  href={PCP_BOOKING_HREF}
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                   className="pcp-btn-cta-white"

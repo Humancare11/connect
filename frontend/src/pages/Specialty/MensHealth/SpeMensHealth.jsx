@@ -68,6 +68,7 @@ import {
   GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/mens-health-specialist-consultation.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/mens-health-wellness-consultation.webp";
@@ -608,8 +609,8 @@ export default function SpeMensHealth({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

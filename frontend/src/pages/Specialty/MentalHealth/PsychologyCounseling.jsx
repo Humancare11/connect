@@ -72,6 +72,7 @@ import {
   GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/psychology-counseling-mental-health-support-therapy.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/psychology-counseling-session-emotional-wellness.webp";
@@ -605,8 +606,8 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

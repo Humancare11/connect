@@ -878,7 +878,9 @@ const CookiePolicy1 = lazy(
 const AccessibilityStatement1 = lazy(
   () => import("./pages/PrivacyPolicies/AccessibilityStatement1"),
 );
-
+const TeleHealthInformedConsent1 = lazy(
+  () => import("./pages/PrivacyPolicies/TeleHealthInformedConsent"),
+);
 // New Privcay Policy Pages End
 
 function ScrollToTop() {
@@ -2739,6 +2741,10 @@ function AppLayout() {
           <Route
             path="/accessibility-statement"
             element={<AccessibilityStatement1 />}
+          />
+          <Route
+            path="/telehealth-informed-consent"
+            element={<TeleHealthInformedConsent1 />}
           />
           {/* New Privcay Policy Pages End */}
           <Route

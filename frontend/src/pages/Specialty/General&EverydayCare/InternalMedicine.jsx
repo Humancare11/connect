@@ -63,6 +63,7 @@ import {
 } from "react-icons/gi";
 
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 import heroImage from "../../../assets/SpecialitiesImage/internal-medicine-specialist-adult-healthcare-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/internal-medicine-doctor-adult-health-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";

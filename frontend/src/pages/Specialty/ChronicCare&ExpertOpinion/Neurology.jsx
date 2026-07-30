@@ -56,6 +56,7 @@ import {
   GiBodySwapping,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/neurology-specialist-brain-nerve-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/neurology-consultation-brain-health-specialist.webp";
@@ -606,8 +607,8 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>
