@@ -56,6 +56,7 @@ import {
   GiBodySwapping,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
 import heroImage from "../../../assets/SpecialitiesImage/endocrinology-specialist-hormone-metabolic-care.webp";
@@ -591,8 +592,8 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

@@ -2,6 +2,7 @@ const express  = require("express");
 const router   = express.Router();
 const multer   = require("multer");
 const path     = require("path");
+const mongoose = require("mongoose");
 const { randomBytes } = require("crypto");
 const { verifyToken } = require("../middleware/verifyToken");
 const { storeUploadInS3, uploadKey } = require("../utils/uploadStorage");
@@ -90,6 +91,14 @@ async function resolveUploadFolder(req) {
   if (role === "user") {
     const user = await User.findById(req.user.id).select("name email").lean();
     return `patients/${slugFolderName(user?.name || user?.email, req.user.id)}`;
+  }
+
+  if (role === "employeeadmin") {
+    const requestedOwnerId = String(req.body.ownerId || "");
+    const ownerId = mongoose.Types.ObjectId.isValid(requestedOwnerId) ? requestedOwnerId : req.user.id;
+    const employee = await User.findById(ownerId).select("email").lean();
+    const emailKey = employee?.email || req.user.email || String(ownerId);
+    return `employee-tasks/${slugFolderName(emailKey, ownerId)}`;
   }
 
   if (["admin", "superadmin", "paymentadmin"].includes(role)) {

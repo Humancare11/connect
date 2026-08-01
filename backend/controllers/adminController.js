@@ -116,26 +116,21 @@ const approveDoctor = async (req, res) => {
     const enrollment = await Enrollment.findById(req.params.id);
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
 
-    // if (enrollment.profileDeleteRequestStatus === "pending") {
-    //   return res.status(400).json({ msg: "This record has a pending delete request. Use delete approval action instead." });
-    // }
-
-    // const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
-    // if (isProfileUpdateRequest) {
-    //   (enrollment.pendingProfileChanges || []).forEach((change) => {
-    //     if (change?.field) enrollment.set(change.field, change.newValue);
-    //   });
-    //   enrollment.markModified("languagesKnown");
-    //   enrollment.markModified("licensedStates");
-    //   enrollment.markModified("internationalLicenses");
-    //   enrollment.markModified("availability");
-    // }
-
     if (enrollment.profileDeleteRequestStatus === "pending") {
       return res.status(400).json({ msg: "This record has a pending delete request. Use delete approval action instead." });
     }
 
     const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
+
+    if (isProfileUpdateRequest) {
+      (enrollment.pendingProfileChanges || []).forEach((change) => {
+        if (change?.field) enrollment.set(change.field, change.newValue);
+      });
+      enrollment.markModified("languagesKnown");
+      enrollment.markModified("licensedStates");
+      enrollment.markModified("internationalLicenses");
+      enrollment.markModified("availability");
+    }
 
     // ⛔ Guard: never allow approval of an enrollment that isn't actually complete.
     // A profile-update request is a different flow (editing an already-approved

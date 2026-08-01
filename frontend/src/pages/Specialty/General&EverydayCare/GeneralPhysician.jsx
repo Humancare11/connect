@@ -63,6 +63,7 @@ import {
 } from "react-icons/gi";
 
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/general-physician-primary-care-consultation-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/general-physician-patient-health-checkup.webp";
@@ -632,8 +633,8 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

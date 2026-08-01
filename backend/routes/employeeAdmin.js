@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../models/User");
 const EmployeeTask = require("../models/EmployeeTask");
 const { verifyEmployeeAdminToken, employeeAdminOnly } = require("../middleware/verifyToken");
+const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 
 const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
 const STATUSES = ["Pending", "In Progress", "Completed", "Blocked"];
@@ -22,24 +23,30 @@ function taskFilterForScope(scope, userId) {
 }
 
 function dateRangeFilter(range) {
+  // dueDate is stored as UTC midnight (see parseDueDate), so the "today"
+  // boundary must also be computed in UTC — using the server's local
+  // timezone here would shift the window and drop tasks due "today".
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const startOfTomorrow = new Date(startOfToday);
-  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+  startOfTomorrow.setUTCDate(startOfTomorrow.getUTCDate() + 1);
 
+  // dueDate is optional. "Today" and "This week" surface anything that
+  // needs attention now, so overdue tasks and tasks with no due date at
+  // all are included alongside tasks due within the window.
   if (range === "today") {
-    return { dueDate: { $gte: startOfToday, $lt: startOfTomorrow } };
+    return { $or: [{ dueDate: { $lt: startOfTomorrow } }, { dueDate: null }] };
   }
 
   if (range === "week") {
     const weekEnd = new Date(startOfToday);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    return { dueDate: { $gte: startOfToday, $lt: weekEnd } };
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
+    return { $or: [{ dueDate: { $lt: weekEnd } }, { dueDate: null }] };
   }
 
   if (range === "month") {
-    const monthEnd = new Date(startOfToday.getFullYear(), startOfToday.getMonth() + 1, 1);
-    return { dueDate: { $gte: startOfToday, $lt: monthEnd } };
+    const monthEnd = new Date(Date.UTC(startOfToday.getUTCFullYear(), startOfToday.getUTCMonth() + 1, 1));
+    return { $or: [{ dueDate: { $lt: monthEnd } }, { dueDate: null }] };
   }
 
   return {};
@@ -58,6 +65,9 @@ function cleanAttachments(value) {
     .map((file) => ({
       name: cleanText(file?.name).slice(0, 255),
       size: cleanText(file?.size).slice(0, 40),
+      url: cleanText(file?.url).slice(0, 1000),
+      key: cleanText(file?.key).slice(0, 500),
+      type: cleanText(file?.type).slice(0, 100),
     }))
     .filter((file) => file.name);
 }
@@ -118,13 +128,16 @@ router.get("/tasks", verifyEmployeeAdminToken, employeeAdminOnly, async (req, re
       ? req.query.range
       : "all";
 
+    // Combine via $and instead of spreading — both taskFilterForScope
+    // (scope "all") and dateRangeFilter can independently produce an
+    // "$or" clause, and spreading two objects with the same key would
+    // silently drop one of them.
     const filter = {
-      ...taskFilterForScope(scope, req.user.id),
-      ...dateRangeFilter(range),
+      $and: [taskFilterForScope(scope, req.user.id), dateRangeFilter(range)],
     };
 
     if (STATUSES.includes(req.query.status)) {
-      filter.status = req.query.status;
+      filter.$and.push({ status: req.query.status });
     }
 
     const tasks = await EmployeeTask.find(filter)
@@ -156,6 +169,35 @@ router.get("/tasks/:id", verifyEmployeeAdminToken, employeeAdminOnly, async (req
     res.json(task);
   } catch (err) {
     console.error("employee task detail error:", err);
+    res.status(500).json({ msg: "Server error." });
+  }
+});
+
+// GET /api/employee-admin/tasks/:id/attachments/access-url?key=... - short-lived signed URL to view/download an attachment
+router.get("/tasks/:id/attachments/access-url", verifyEmployeeAdminToken, employeeAdminOnly, async (req, res) => {
+  try {
+    const key = cleanText(req.query.key);
+    if (!key) return res.status(400).json({ msg: "Attachment key is required." });
+
+    const task = await EmployeeTask.findById(req.params.id)
+      .select("assignedTo createdBy attachments subtasks")
+      .lean();
+    if (!task) return res.status(404).json({ msg: "Task not found." });
+
+    const canView =
+      String(task.assignedTo) === String(req.user.id) || String(task.createdBy) === String(req.user.id);
+    if (!canView) return res.status(403).json({ msg: "You do not have access to this task." });
+
+    const knownKeys = new Set([
+      ...(task.attachments || []).map((file) => file.key),
+      ...(task.subtasks || []).flatMap((subtask) => (subtask.attachments || []).map((file) => file.key)),
+    ]);
+    if (!knownKeys.has(key)) return res.status(404).json({ msg: "Attachment not found on this task." });
+
+    const signed = await createS3PresignedGetUrl(key, { expiresIn: DEFAULT_EXPIRY_SECONDS });
+    res.json({ url: signed.url, expiresAt: signed.expiresAt });
+  } catch (err) {
+    console.error("employee task attachment access-url error:", err);
     res.status(500).json({ msg: "Server error." });
   }
 });

@@ -56,7 +56,7 @@
   text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: 8px; 
+  gap: 8px;
   display: inline-flex;
   align-items: center;
   padding: 6px 14px;
@@ -81,6 +81,7 @@
   margin-bottom: 24px;
   max-width: 680px;
 }
+
 .pcp-title span {
   display: block;
   color: #436dba;
@@ -104,7 +105,7 @@
 
 .pcp-feature-card {
   background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(52, 84, 142, 0.08);
+  border: 2px solid rgba(29, 51, 93, 0.08);
   border-radius: 28px;
   padding: 26px;
   display: flex;
@@ -120,7 +121,7 @@
 
 .pcp-feature-card:hover {
   background: #ffffff;
-  border-color: rgba(67, 109, 186, 0.14);
+  border-color: rgba(35, 67, 126, 0.14);
   box-shadow: 0 18px 50px rgba(25, 44, 76, 0.09);
 }
 
@@ -139,16 +140,13 @@
   transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
-.pcp-feature-card:hover .pcp-icon {
-  transform: scale(1.1) rotate(-4deg);
-}
-
 .pcp-feature-card h4 {
   font-size: 19px;
   color: #10203f;
   margin-bottom: 8px;
   font-weight: 700;
 }
+
 .pcp-feature-card p {
   color: #6e7d96;
   line-height: 1.7;
@@ -203,19 +201,30 @@
 }
 
 @keyframes imgFloatMain {
-  from { transform: translateY(0px); }
-  to   { transform: translateY(-10px); }
+  from {
+    transform: translateY(0px);
+  }
+
+  to {
+    transform: translateY(-10px);
+  }
 }
+
 @keyframes imgFloatSmall {
-  from { transform: translateY(0px) rotate(-1deg); }
-  to   { transform: translateY(-14px) rotate(1deg); }
+  from {
+    transform: translateY(0px) rotate(-1deg);
+  }
+
+  to {
+    transform: translateY(-14px) rotate(1deg);
+  }
 }
 
 /* ─── Steps card ─── */
 .pcp-steps-card {
   position: absolute;
   right: -28px;
-  bottom: 100px; 
+  bottom: 100px;
   width: 400px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(50, 79, 134, 0.08);
@@ -281,6 +290,7 @@
   margin-bottom: 4px;
   font-weight: 700;
 }
+
 .pcp-step p {
   font-size: 13px;
   line-height: 1.65;
@@ -417,15 +427,19 @@
   .pcp-section {
     padding: 50px 24px;
   }
+
   .pcp-title {
     font-size: 36px;
   }
+
   .pcp-image-stack {
     display: none !important;
   }
+
   .pcp-know-more-wrap {
     margin-top: 28px;
   }
+
   .pcp-know-more-btn {
     padding: 16px 32px;
     font-size: 14px;
@@ -441,55 +455,70 @@
     border-radius: 22px;
     margin: 48px auto 32px;
   }
+
   .pcp-title {
     font-size: 30px;
     letter-spacing: -1px;
   }
+
   .pcp-desc {
     font-size: 14px;
   }
+
   .pcp-feature-card {
     padding: 20px;
     border-radius: 20px;
   }
+
   .pcp-feature-card h4 {
     font-size: 16px;
   }
+
   .pcp-image-stack {
     display: none !important;
   }
+
   .pcp-steps-card {
     padding: 24px;
     border-radius: 26px;
   }
+
   .pcp-step-head h3 {
     font-size: 22px;
     margin-bottom: 22px;
   }
+
   .pcp-step {
     gap: 12px;
   }
+
   .pcp-step-num {
     min-width: 40px;
     height: 40px;
     font-size: 14px;
   }
+
   .pcp-step h4 {
     font-size: 14px;
   }
+
   .pcp-step p {
     font-size: 12px;
   }
+
   .pcp-know-more-wrap {
     margin-top: 24px;
-    align-items: stretch; /* full-width button on small screens */
+    align-items: stretch;
+    /* full-width button on small screens */
   }
+
   .pcp-know-more-btn {
     justify-content: center;
     padding: 14px 24px;
     font-size: 14px;
     border-radius: 12px;
   }
+
   .pcp-know-more-hint {
     text-align: center;
     padding-left: 0;
@@ -502,21 +531,25 @@
     width: calc(100% - 40px);
   }
 }
+
 @media (max-width: 991px) and (min-width: 768px) {
   .pcp-section {
     width: calc(100% - 32px);
   }
 }
+
 @media (max-width: 767px) and (min-width: 600px) {
   .pcp-section {
     width: calc(100% - 24px);
   }
 }
+
 @media (max-width: 599px) and (min-width: 400px) {
   .pcp-section {
     width: calc(100% - 16px);
   }
 }
+
 @media (max-width: 399px) {
   .pcp-section {
     width: calc(100% - 12px);
@@ -525,10 +558,12 @@
 
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
+
   .pcp-img-main,
   .pcp-img-small {
     animation: none;
   }
+
   .pcp-feature-card {
     transition: none;
   }

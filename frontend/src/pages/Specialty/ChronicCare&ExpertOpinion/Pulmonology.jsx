@@ -56,6 +56,7 @@ import {
   GiBodySwapping,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/pulmonology-specialist-lung-respiratory-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/pulmonology-lung-health-consultation.webp";
@@ -601,8 +602,8 @@ export default function Pulmonology({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

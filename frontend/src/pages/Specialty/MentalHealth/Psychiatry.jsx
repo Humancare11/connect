@@ -71,6 +71,7 @@ import {
   GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/psychiatry-mental-health-specialist-consultation-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/psychiatrist-patient-mental-health-evaluation-consultation.webp";
@@ -634,8 +635,8 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

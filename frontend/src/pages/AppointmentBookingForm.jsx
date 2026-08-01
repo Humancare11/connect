@@ -329,7 +329,7 @@ export function PaymentStage({
     } catch (err) {
       setStripeError(
         err.response?.data?.msg ||
-        "Failed to initialize payment. Please try again.",
+          "Failed to initialize payment. Please try again.",
       );
     } finally {
       setStripeCreating(false);
@@ -565,10 +565,8 @@ export default function AppointmentBookingForm() {
   // ── Consent modal state ──────────────────────────────────────────────────────
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consents, setConsents] = useState({
-    telehealth: false,
-    terms: true,
-    hipaa: true,
-    age: true,
+    agree: false,
+    age: false,
   });
   const allConsentsChecked = Object.values(consents).every(Boolean);
   const toggleConsent = (key) =>
@@ -648,7 +646,7 @@ export default function AppointmentBookingForm() {
     } catch (err) {
       setProceedErr(
         err?.response?.data?.msg ||
-        "Failed to upload reports. Please try again.",
+          "Failed to upload reports. Please try again.",
       );
     } finally {
       setProceeding(false);
@@ -770,7 +768,7 @@ export default function AppointmentBookingForm() {
       setProceedErr(pricingIssue);
       return;
     }
-    setConsents({ telehealth: false, terms: false, hipaa: false, age: false }); // reset
+    setConsents({ agree: false, age: false }); // reset
     setShowConsentModal(true);
   };
 
@@ -829,7 +827,7 @@ export default function AppointmentBookingForm() {
     } catch (err) {
       setConfirmErr(
         err?.response?.data?.msg ||
-        "Appointment creation failed after payment. Please contact support.",
+          "Appointment creation failed after payment. Please contact support.",
       );
       setStage("payment");
     }
@@ -1237,9 +1235,7 @@ export default function AppointmentBookingForm() {
               </div>
               <div className="ap-success-row">
                 <span className="ap-success-key">Condition</span>
-                <span className="ap-success-val">
-                  {selection.condName}
-                </span>
+                <span className="ap-success-val">{selection.condName}</span>
               </div>
               <div className="ap-success-row">
                 <span className="ap-success-key">Date</span>
@@ -1325,80 +1321,64 @@ export default function AppointmentBookingForm() {
                 <div className="ap-consent-checks" style={{ marginTop: 12 }}>
                   {[
                     {
-                      key: "telehealth",
-                      label: "I have read and agree to the ",
-                      linkText: "Telehealth Informed Consent",
-                      href: "/tele-health-informed-consent",
-                    },
-                    {
-                      key: "terms",
+                      key: "agree",
                       label: "I agree to the ",
-                      linkText: "Terms of Service",
-                      href: "/terms-of-service",
-                      extra: " and ",
-                      linkText2: "Privacy Policy",
-                      href2: "/privacy-policy",
+                      parts: [
+                        {
+                          text: "Telehealth Informed Consent",
+                          href: "/telehealth-informed-consent",
+                        },
+                        { text: ", " },
+                        { text: "Terms of Service", href: "/terms-of-service" },
+                        { text: ", " },
+                        { text: "Privacy Policy", href: "/privacy-policy" },
+                        { text: ", and " },
+                        {
+                          text: "HIPAA Notice of Privacy Practices",
+                          href: "/hippa-notice-of-privacy-practices",
+                        },
+                      ],
                     },
                     {
-                      key: "hipaa",
-                      label: "I have read the ",
-                      linkText: "HIPAA Notice of Privacy Practices",
-                      href: "/hippa-notice-of-privacy-practices",
+                      key: "age",
+                      label: "I confirm I am 18 years of age or older",
                     },
-                    { key: "age", label: "I am 18 years of age or older" },
-                  ].map(
-                    ({
-                      key,
-                      label,
-                      linkText,
-                      href,
-                      extra,
-                      linkText2,
-                      href2,
-                    }) => (
-                      <label
-                        key={key}
-                        htmlFor={`consent-${key}`}
-                        className="ap-consent-row"
-                      >
-                        <input
-                          type="checkbox"
-                          id={`consent-${key}`}
-                          name={`consent-${key}`}
-                          className="ap-consent-checkbox"
-                          checked={consents[key]}
-                          onChange={() => toggleConsent(key)}
-                        />
+                  ].map(({ key, label, parts }) => (
+                    <label
+                      key={key}
+                      htmlFor={`consent-${key}`}
+                      className="ap-consent-row"
+                    >
+                      <input
+                        type="checkbox"
+                        id={`consent-${key}`}
+                        name={`consent-${key}`}
+                        className="ap-consent-checkbox"
+                        checked={consents[key]}
+                        onChange={() => toggleConsent(key)}
+                      />
 
-                        <span className="ap-consent-label">
-                          {label}
-                          {linkText && href && (
+                      <span className="ap-consent-label">
+                        {label}
+                        {parts?.map((part, idx) =>
+                          part.href ? (
                             <a
-                              href={href}
+                              key={idx}
+                              href={part.href}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="ap-consent-link"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {linkText}
+                              {part.text}
                             </a>
-                          )}
-                          {extra}
-                          {linkText2 && href2 && (
-                            <a
-                              href={href2}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ap-consent-link"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {linkText2}
-                            </a>
-                          )}
-                        </span>
-                      </label>
-                    ),
-                  )}
+                          ) : (
+                            <span key={idx}>{part.text}</span>
+                          ),
+                        )}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
 

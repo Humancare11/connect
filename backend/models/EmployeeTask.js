@@ -30,6 +30,9 @@ const employeeTaskSchema = new mongoose.Schema(
       {
         name: { type: String, trim: true, maxlength: 255 },
         size: { type: String, trim: true, maxlength: 40 },
+        url: { type: String, trim: true, maxlength: 1000 },
+        key: { type: String, trim: true, maxlength: 500 },
+        type: { type: String, trim: true, maxlength: 100 },
       },
     ],
     subtasks: [
@@ -41,6 +44,9 @@ const employeeTaskSchema = new mongoose.Schema(
           {
             name: { type: String, trim: true, maxlength: 255 },
             size: { type: String, trim: true, maxlength: 40 },
+            url: { type: String, trim: true, maxlength: 1000 },
+            key: { type: String, trim: true, maxlength: 500 },
+            type: { type: String, trim: true, maxlength: 100 },
           },
         ],
       },

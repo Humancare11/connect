@@ -86,7 +86,7 @@ const getPatientHistory = async (req, res) => {
 
     // Attach the doctor's own enrollment for certificate slip rendering
     const enrollment = await Enrollment.findOne({ doctorId: req.user.id })
-      .select("specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName")
+      .select("specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName country")
       .lean();
 
     await recordActivity(req, {
@@ -234,7 +234,7 @@ const getMyPrescriptions = async (req, res) => {
       prescriptions.map((p) => p.doctorId?._id?.toString()).filter(Boolean)
     )];
     const enrollments = await Enrollment.find({ doctorId: { $in: doctorMongoIds } })
-      .select("doctorId specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName")
+      .select("doctorId specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName country")
       .lean();
     const enrollMap = {};
     for (const e of enrollments) enrollMap[e.doctorId.toString()] = e;
@@ -272,7 +272,7 @@ const getMyMedicalCertificates = async (req, res) => {
       certificates.map((c) => c.doctorId?._id?.toString()).filter(Boolean)
     )];
     const enrollments = await Enrollment.find({ doctorId: { $in: doctorMongoIds } })
-      .select("doctorId specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName")
+      .select("doctorId specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName country")
       .lean();
     const enrollMap = {};
     for (const e of enrollments) enrollMap[e.doctorId.toString()] = e;

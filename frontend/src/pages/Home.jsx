@@ -897,45 +897,6 @@ export default function HomePage() {
         </Suspense>
       </LazySection>
 
-      {/* ════════ TESTIMONIALS ══════════════════════════════════════════════ */}
-      <section
-        className="testimonials-section reveal reveal-stagger"
-        ref={testimonialsRef}
-      >
-        <div className="testi-header">
-          <div className="testi-eyebrow">Testimonials</div>
-          <h2 className="testi-title">
-            What patients are saying about Humancare Connect.
-          </h2>
-          <p className="testi-desc">
-            Real stories. Real care. Real results from trusted virtual
-            healthcare services and licensed online doctors.
-          </p>
-        </div>
-
-        <div className="testi-marquee-container">
-          {/* ROW 1 — Left to Right */}
-          <div className="testi-marquee-row marquee-left">
-            {[...testimonials, ...testimonials].map((t, i) => (
-              <div className="testi-card-v2" key={`r1-${i}`}>
-                <p className="testi-quote">&ldquo;{t.quote}&rdquo;</p>
-                <div className="testi-author-simple">— {t.name}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* ROW 2 — Right to Left */}
-          <div className="testi-marquee-row marquee-right">
-            {[...testimonials, ...testimonials].reverse().map((t, i) => (
-              <div className="testi-card-v2" key={`r2-${i}`}>
-                <p className="testi-quote">&ldquo;{t.quote}&rdquo;</p>
-                <div className="testi-author-simple">— {t.name}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ════════ CTA BAND ══════════════════════════════════════════════════ */}
       <section className="cta-band">
         <div className="cta-inner">
@@ -1013,6 +974,45 @@ export default function HomePage() {
               </svg>
               Transparent Pricing{" "}
             </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════ TESTIMONIALS ══════════════════════════════════════════════ */}
+      <section
+        className="testimonials-section reveal reveal-stagger"
+        ref={testimonialsRef}
+      >
+        <div className="testi-header">
+          <div className="testi-eyebrow">Testimonials</div>
+          <h2 className="testi-title">
+            What patients are saying about Humancare Connect.
+          </h2>
+          <p className="testi-desc">
+            Real stories. Real care. Real results from trusted virtual
+            healthcare services and licensed online doctors.
+          </p>
+        </div>
+
+        <div className="testi-marquee-container">
+          {/* ROW 1 — Left to Right */}
+          <div className="testi-marquee-row marquee-left">
+            {[...testimonials, ...testimonials].map((t, i) => (
+              <div className="testi-card-v2" key={`r1-${i}`}>
+                <p className="testi-quote">&ldquo;{t.quote}&rdquo;</p>
+                <div className="testi-author-simple">— {t.name}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* ROW 2 — Right to Left */}
+          <div className="testi-marquee-row marquee-right">
+            {[...testimonials, ...testimonials].reverse().map((t, i) => (
+              <div className="testi-card-v2" key={`r2-${i}`}>
+                <p className="testi-quote">&ldquo;{t.quote}&rdquo;</p>
+                <div className="testi-author-simple">— {t.name}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

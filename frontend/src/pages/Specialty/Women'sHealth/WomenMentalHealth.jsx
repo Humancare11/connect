@@ -64,6 +64,7 @@ import {
 } from "react-icons/gi";
 
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/womens-mental-health-specialists-telehealth-support.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/womens-mental-health-consultation-emotional-wellness.webp";
@@ -574,8 +575,8 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

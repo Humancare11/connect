@@ -99,6 +99,10 @@ const consultationSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    pcpName: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

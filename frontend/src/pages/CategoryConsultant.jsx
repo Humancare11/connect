@@ -148,6 +148,7 @@ export default function CategoryConsultant({ onComplete }) {
     queryParams.get("condition") || location.state?.conditionName || "";
   const serviceSlug = queryParams.get("service") || "";
   const isServiceMode = Boolean(serviceSlug);
+  const isPcpMode = queryParams.get("pcp") === "1";
   const [serviceName, setServiceName] = useState("");
 
   useEffect(() => {
@@ -293,9 +294,11 @@ export default function CategoryConsultant({ onComplete }) {
           cost: price,
           currency: "USD",
           isCategoryBooking: true,
+          isPcpBooking: isPcpMode,
           categoryName: categoryLabel,
-          specialtyName: specialtyName || "",
+          specialtyName: isPcpMode ? "" : specialtyName || "",
           conditionName: conditionName || "",
+          pcpName: isPcpMode ? specialtyName || "Primary Care" : "",
         };
 
       // Save raw data directly
