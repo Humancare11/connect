@@ -43,8 +43,22 @@ const deriveApplicationStatus = (enrollment) => {
 };
 
 const applyProgress = (enrollment, nextCompletedSteps, nextCurrentStep) => {
-    const completedSteps = clamp(toStepNumber(nextCompletedSteps, enrollment.completedSteps || 0), 0, 5);
-    const currentStep = clamp(toStepNumber(nextCurrentStep, enrollment.currentStep || 1), 1, 5);
+    const requestedCompleted = clamp(toStepNumber(nextCompletedSteps, enrollment.completedSteps || 0), 0, 5);
+    const requestedCurrent = clamp(toStepNumber(nextCurrentStep, enrollment.currentStep || 1), 1, 5);
+
+    // Re-opening an already-submitted application (the "Edit Application" /
+    // "Edit & Resubmit" buttons) rewinds the wizard UI to step 1, which would
+    // otherwise regress these counters even though the underlying field data
+    // is untouched. Once a doctor has fully submitted at least once, only
+    // forward motion is allowed here — a genuine restart always goes through
+    // the final-submit endpoint, which sets completedSteps to 5 directly.
+    const completedSteps = enrollment.formCompleted
+        ? Math.max(enrollment.completedSteps || 0, requestedCompleted)
+        : requestedCompleted;
+    const currentStep = enrollment.formCompleted
+        ? Math.max(enrollment.currentStep || 1, requestedCurrent)
+        : requestedCurrent;
+
     enrollment.completedSteps = completedSteps;
     enrollment.currentStep = currentStep;
     enrollment.currentStepLabel = STEP_LABELS[currentStep - 1] || "Identity";
