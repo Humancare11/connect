@@ -244,10 +244,10 @@ function PatientPanel({ entry, onClose }) {
           <Avatar name={patient.name} size={48} />
           <div>
             <h2 className="dp-panel-name">{patient.name}</h2>
-            <p className="dp-panel-email">{patient.email}</p>
-            {patient.mobile && (
+            {/* <p className="dp-panel-email">{patient.email}</p> */}
+            {/* {patient.mobile && (
               <p className="dp-panel-meta">📱 {patient.mobile}</p>
-            )}
+            )} */}
           </div>
           <button className="dp-modal-close" onClick={onClose}>
             ✕

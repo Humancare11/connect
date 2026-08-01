@@ -214,48 +214,42 @@ export default function WritePrescription() {
                   <div className="dp-timing-row">
                     <div className="dp-timing-slot">
                       <span className="dp-timing-label">🌅 Morning</span>
-                      <select
+                      <input
+                        type="text"
                         className="dp-input dp-timing-select"
                         value={med.timeMorning}
                         onChange={(e) =>
                           setMed(i, "timeMorning", e.target.value)
                         }
+                        placeholder="0"
                         disabled={saving || saved}
-                      >
-                        <option value="0">—</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                      </select>
+                      />
                     </div>
                     <div className="dp-timing-slot">
                       <span className="dp-timing-label">🌤 Afternoon</span>
-                      <select
+                      <input
+                        type="text"
                         className="dp-input dp-timing-select"
                         value={med.timeAfternoon}
                         onChange={(e) =>
                           setMed(i, "timeAfternoon", e.target.value)
                         }
+                        placeholder="0"
                         disabled={saving || saved}
-                      >
-                        <option value="0">—</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                      </select>
+                      />
                     </div>
                     <div className="dp-timing-slot">
                       <span className="dp-timing-label">🌙 Night</span>
-                      <select
+                      <input
+                        type="text"
                         className="dp-input dp-timing-select"
                         value={med.timeNight}
                         onChange={(e) =>
                           setMed(i, "timeNight", e.target.value)
                         }
+                        placeholder="0"
                         disabled={saving || saved}
-                      >
-                        <option value="0">—</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                      </select>
+                      />
                     </div>
                     <div className="dp-timing-slot dp-timing-slot--food">
                       <span className="dp-timing-label">🍽 Food</span>
@@ -269,7 +263,6 @@ export default function WritePrescription() {
                       >
                         <option value="Before Food">Before Food</option>
                         <option value="After Food">After Food</option>
-                        <option value="With Food">With Food</option>
                       </select>
                     </div>
                   </div>
@@ -330,10 +323,10 @@ export default function WritePrescription() {
           <aside className="wp-notes-col">
             <div className="wp-notes-sticky">
               <h2 className="wp-notes-title">📝 Consultation Notes</h2>
-              <p className="wp-notes-hint">
+              {/* <p className="wp-notes-hint">
                 Reference the doctor's saved consultation notes for{" "}
                 {patient.name} while preparing this prescription.
-              </p>
+              </p> */}
               <ConsultationNotesPanel patientId={patientId} />
             </div>
           </aside>
