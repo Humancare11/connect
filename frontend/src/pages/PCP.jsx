@@ -28,6 +28,7 @@ import SEO from "../components/Seo";
 import pcpHeroBg from "../assets/SpecialitiesImage/family-medicine-primary-care-doctor-consultation-banner.webp";
 import BookingCard from "../components/SpecialityBookingCard";
 import api from "../api";
+import FAQ from "../components/FAQ/FAQ";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const FADE_VARIANTS = {
