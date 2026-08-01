@@ -186,6 +186,7 @@ export default function AdminCategoryConsultationDetails() {
             <InfoTile label="Source Specialty" value={consultation.specialtyName} />
             <InfoTile label="Source Condition" value={consultation.conditionName} />
             <InfoTile label="Source Service" value={consultation.serviceName} />
+            <InfoTile label="Source PCP" value={consultation.pcpName} />
           </div>
         </Section>
 

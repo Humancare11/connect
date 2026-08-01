@@ -73,6 +73,7 @@ import {
   GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/aglobal-cross-border-care-telemedicine-consultation.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/global-cross-border-healthcare-support-specialists.webp";
@@ -581,8 +582,8 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

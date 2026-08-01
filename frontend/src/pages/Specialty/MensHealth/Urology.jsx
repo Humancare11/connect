@@ -69,6 +69,7 @@ import {
   GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/urology-specialist-urinary-kidney-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-urology-specialist-consultation.webp";
@@ -581,8 +582,8 @@ export default function Urology({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

@@ -170,7 +170,7 @@ api.interceptors.response.use(
 const _apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 const UPLOAD_URL_RE = /^(https?:\/\/[^/]+)\/(?:api\/)?(uploads\/.+)$/;
 const UPLOAD_PATH_RE = /^\/(?:api\/)?(uploads\/.+)$/;
-const STRUCTURED_UPLOAD_KEY_RE = /^(uploads|doctors|patients)\/.+$/;
+const STRUCTURED_UPLOAD_KEY_RE = /^(uploads|doctors|patients|employee-tasks)\/.+$/;
 const RAW_UPLOAD_KEY_FIELDS = new Set(["key", "storageKey"]);
 const _apiOrigin = (() => {
   try { return new URL(_apiBase).origin; } catch { return ""; }

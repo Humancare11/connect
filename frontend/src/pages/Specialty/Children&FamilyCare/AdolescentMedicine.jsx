@@ -55,6 +55,7 @@ import {
   GiBodySwapping,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 
@@ -543,8 +544,8 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
             <BookingCard
               price={price}
               priceLoading={priceLoading}
-              title={data.name}
-              specialitySlug={data.slug}
+              categoryId={data.categoryId}
+              name={data.name}
             />
           </div>
         </div>

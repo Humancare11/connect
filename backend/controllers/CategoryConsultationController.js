@@ -59,6 +59,7 @@ const createCategoryConsultation = async (req, res) => {
       specialtyName: req.body.specialtyName,
       conditionName: req.body.conditionName,
       serviceName: req.body.serviceName,
+      pcpName: req.body.pcpName,
     });
 
     res.status(201).json({

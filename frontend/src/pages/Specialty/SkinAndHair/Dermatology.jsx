@@ -72,6 +72,7 @@ import {
   GiNoseSide,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/dermatology-specialist-skin-care-consultation-banner.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/dermatologist-patient-skin-consultation.webp";

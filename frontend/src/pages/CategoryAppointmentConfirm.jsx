@@ -53,9 +53,7 @@ export default function CategoryAppointmentConfirm() {
   const [confirmErr, setConfirmErr] = useState("");
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consents, setConsents] = useState({
-    telehealth: false,
-    terms: false,
-    hipaa: false,
+    agree: false,
     age: false,
   });
   const allConsentsChecked = Object.values(consents).every(Boolean);
@@ -117,7 +115,7 @@ export default function CategoryAppointmentConfirm() {
   }
 
   const handleProceedClick = () => {
-    setConsents({ telehealth: false, terms: false, hipaa: false, age: false });
+    setConsents({ agree: false, age: false });
     setShowConsentModal(true);
   };
 
@@ -189,6 +187,7 @@ export default function CategoryAppointmentConfirm() {
           specialtyName: selection.specialtyName || "",
           conditionName: selection.conditionName || "",
           serviceName: selection.serviceName || "",
+          pcpName: selection.pcpName || "",
         };
         await api.post("/api/category-consultation", body);
       } else {
@@ -473,73 +472,64 @@ export default function CategoryAppointmentConfirm() {
                 <div className="ap-consent-checks" style={{ marginTop: 12 }}>
                   {[
                     {
-                      key: "telehealth",
-                      label: "I have read and agree to the ",
-                      linkText: "Telehealth Informed Consent",
-                      href: "/tele-health-informed-consent",
-                    },
-                    {
-                      key: "terms",
+                      key: "agree",
                       label: "I agree to the ",
-                      linkText: "Terms of Service",
-                      href: "/terms-of-service",
-                      extra: " and ",
-                      linkText2: "Privacy Policy",
-                      href2: "/privacy-policy",
+                      parts: [
+                        {
+                          text: "Telehealth Informed Consent",
+                          href: "/telehealth-informed-consent",
+                        },
+                        { text: ", " },
+                        { text: "Terms of Service", href: "/terms-of-service" },
+                        { text: ", " },
+                        { text: "Privacy Policy", href: "/privacy-policy" },
+                        { text: ", and " },
+                        {
+                          text: "HIPAA Notice of Privacy Practices",
+                          href: "/hippa-notice-of-privacy-practices",
+                        },
+                      ],
                     },
                     {
-                      key: "hipaa",
-                      label: "I have read the ",
-                      linkText: "HIPAA Notice of Privacy Practices",
-                      href: "/hippa-notice-of-privacy-practices",
+                      key: "age",
+                      label: "I confirm I am 18 years of age or older",
                     },
-                    { key: "age", label: "I am 18 years of age or older" },
-                  ].map(
-                    ({
-                      key,
-                      label,
-                      linkText,
-                      href,
-                      extra,
-                      linkText2,
-                      href2,
-                    }) => (
-                      <label key={key} className="ap-consent-row">
-                        <input
-                          type="checkbox"
-                          className="ap-consent-checkbox"
-                          checked={consents[key]}
-                          onChange={() => toggleConsent(key)}
-                        />
-                        <span className="ap-consent-label">
-                          {label}
-                          {linkText && href && (
+                  ].map(({ key, label, parts }) => (
+                    <label
+                      key={key}
+                      htmlFor={`consent-${key}`}
+                      className="ap-consent-row"
+                    >
+                      <input
+                        type="checkbox"
+                        id={`consent-${key}`}
+                        name={`consent-${key}`}
+                        className="ap-consent-checkbox"
+                        checked={consents[key]}
+                        onChange={() => toggleConsent(key)}
+                      />
+
+                      <span className="ap-consent-label">
+                        {label}
+                        {parts?.map((part, idx) =>
+                          part.href ? (
                             <a
-                              href={href}
+                              key={idx}
+                              href={part.href}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="ap-consent-link"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {linkText}
+                              {part.text}
                             </a>
-                          )}
-                          {extra}
-                          {linkText2 && href2 && (
-                            <a
-                              href={href2}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ap-consent-link"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {linkText2}
-                            </a>
-                          )}
-                        </span>
-                      </label>
-                    ),
-                  )}
+                          ) : (
+                            <span key={idx}>{part.text}</span>
+                          ),
+                        )}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
 

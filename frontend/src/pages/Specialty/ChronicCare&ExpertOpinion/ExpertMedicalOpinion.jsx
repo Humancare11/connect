@@ -56,6 +56,7 @@ import {
   GiBodySwapping,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/expert-medical-opinion-second-opinion-healthcare-specialist.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/expert-medical-opinion-consultation-review-medical-records.webp";

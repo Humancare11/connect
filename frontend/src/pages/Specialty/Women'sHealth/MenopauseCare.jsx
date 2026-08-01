@@ -64,6 +64,7 @@ import {
 } from "react-icons/gi";
 
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/menopause-care-specialist-womens-health-consultation.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/menopause-specialist-hormonal-health-patient-consultation.webp";
@@ -558,8 +559,8 @@ export default function MenopauseCare({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

@@ -56,6 +56,7 @@ import {
   GiBodySwapping,
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/cardiology-specialist-heart-care-consultation.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-cardiologist-heart-examination.webp";

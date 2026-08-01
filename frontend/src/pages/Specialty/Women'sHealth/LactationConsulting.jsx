@@ -63,6 +63,7 @@ import {
 } from "react-icons/gi";
 
 import "../SpecialtyPage.css";
+import "../../Categories/categoriesGlobal.css";
 
 import heroImage from "../../../assets/SpecialitiesImage/lactation-consulting-breastfeeding-support.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/lactation-consant-breastfeeding-consultation.webp";
@@ -567,8 +568,8 @@ export default function LactationConsulting({ data = SPECIALTY_DATA }) {
               <BookingCard
                 price={price}
                 priceLoading={priceLoading}
-                title={data.name}
-                specialitySlug={data.slug}
+                categoryId={data.categoryId}
+                name={data.name}
               />
             </div>
           </div>

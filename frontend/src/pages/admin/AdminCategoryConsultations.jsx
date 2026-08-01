@@ -195,7 +195,11 @@ export default function AdminCategoryConsultations() {
                     <td>{item.timeWindow || "-"}</td>
                     <td>{item.slot || "-"}</td>
                     <td>
-                      {item.conditionName ? (
+                      {item.pcpName ? (
+                        <div style={{ fontSize: "0.85rem" }}>
+                          <div><strong>PCP:</strong> <br /> {item.pcpName}</div>
+                        </div>
+                      ) : item.conditionName ? (
                         <div style={{ fontSize: "0.85rem" }}>
                           <div><strong>Condition:</strong> <br /> {item.conditionName}</div>
                         </div>

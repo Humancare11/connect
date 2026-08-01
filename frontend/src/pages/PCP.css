@@ -258,11 +258,35 @@
     rgba(8, 34, 84, 0.78) 100%
   );
 }
+/* ── Hero layout (content + booking sidebar) ── */
+.pcp-hero__layout {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  .pcp-hero__layout {
+    grid-template-columns: 1.6fr 1fr;
+  }
+}
+
+.pcp-hero__sidebar {
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+}
+@media (min-width: 1024px) {
+  .pcp-hero__sidebar {
+    margin-inline: 0;
+  }
+}
 
 /* ── Hero content ── */
 .pcp-hero__content {
-  position: relative;
-  z-index: 2;
   width: 100%;
   max-width: 640px;
   margin-inline: auto;
@@ -276,6 +300,7 @@
   .pcp-hero__content {
     text-align: left;
     margin-inline: 0;
+    max-width: none;
   }
 }
 

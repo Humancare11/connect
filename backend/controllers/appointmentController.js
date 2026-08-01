@@ -682,6 +682,7 @@ const reassignAppointmentDoctor = async (req, res) => {
     if (!appointment) {
       return res.status(404).json({ msg: "Appointment not found." });
     }
+    const previousDoctorId = appointment.doctorId ? String(appointment.doctorId) : null;
 
     // Find the new doctor by numeric doctorId
     const newDoctor = await Doctor.findOne({ doctorId });
@@ -820,6 +821,10 @@ const reassignAppointmentDoctor = async (req, res) => {
         date: appointment.date,
         time: appointment.time,
       });
+    }
+
+    if (previousDoctorId && previousDoctorId !== String(newDoctor._id)) {
+      req.app.get("evictDoctorFromAppointmentRoom")?.(appointment._id, previousDoctorId);
     }
 
     res.status(200).json({
