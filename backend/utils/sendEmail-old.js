@@ -145,7 +145,7 @@ const buildEmailHTML = (otp, type, name) => {
 <body>
   <div class="wrap">
     <div class="hdr">
-    <img src="https://humancareconnect.co/assets/Logo-CFoJDHpJ.png" alt="HumanCare Connect" width="48" style="margin-bottom:8px;"/>
+    <img src="https://humancareconnect.co/assets/Logo-CFoJDHpJ.png" alt="Humancare Connect" width="48" style="margin-bottom:8px;"/>
     <p>${type === "register" ? "Email Verification" : "Password Reset"}</p>
     </div>
 
@@ -174,7 +174,7 @@ const buildEmailHTML = (otp, type, name) => {
     </div>
 
     <div class="footer">
-      &copy; ${new Date().getFullYear()} HumanCare Connect
+      &copy; ${new Date().getFullYear()} Humancare Connect
       &nbsp;·&nbsp;
       <a href="https://humancareconnect.co">
         humancareconnect.co
@@ -192,7 +192,7 @@ const sendOTPEmail = async (to, otp, type = "register", name) => {
       : "Humancare Connect — Password Reset OTP";
 
   await sendMail({
-    from: `"HumanCare Connect" <${MAIL_FROM}>`,
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
     subject,
     html: buildEmailHTML(otp, type, name),
@@ -201,7 +201,7 @@ const sendOTPEmail = async (to, otp, type = "register", name) => {
 
 const sendEmail = async ({ to, subject, text, html }) => {
   await sendMail({
-    from: `"HumanCare Connect" <${MAIL_FROM}>`,
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
     subject,
     text,

@@ -783,7 +783,7 @@ const reassignAppointmentDoctor = async (req, res) => {
       <p>Thank you for choosing Humancare Connect.</p>
     </div>
     <div class="footer">
-      &copy; ${new Date().getFullYear()} HumanCare Connect &nbsp;·&nbsp;
+      &copy; ${new Date().getFullYear()} Humancare Connect &nbsp;·&nbsp;
       <a href="https://humancareconnect.co">humancareconnect.co</a>
     </div>
   </div>

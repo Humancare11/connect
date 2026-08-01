@@ -678,9 +678,7 @@ function HeroSection({ data }) {
             style={{
               animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
             }}
-          >
-
-          </div>
+          ></div>
 
           <div
             className="sp-trust"
@@ -878,11 +876,9 @@ function StickyBookingCard() {
 // SYMPTOMS CHIPS — direction-aware, JS-driven active state
 // ─────────────────────────────────────────────────────────────────
 
-
 // ─────────────────────────────────────────────────────────────────
 // RELATED SPECIALTIES
 // ─────────────────────────────────────────────────────────────────
-
 
 // ─────────────────────────────────────────────────────────────────
 // WHY CHOOSE US
@@ -892,7 +888,7 @@ function WhyChooseUs() {
     <section style={{ background: "#0A1F44", padding: "80px 0" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
-          <SectionLabel variant="dark">Why HumanCare Connect</SectionLabel>
+          <SectionLabel variant="dark">Why Humancare Connect</SectionLabel>
           <h2
             style={{
               fontSize: 36,
@@ -1014,11 +1010,6 @@ export default function EarInfection() {
             </aside>
           </div>
         </div>
-
-
-
-
-
       </div>
     </>
   );

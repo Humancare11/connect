@@ -20,6 +20,7 @@ import {
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
 import SEO from "../../components/Seo";
+import FAQ from "../../components/FAQ/FAQ";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -452,119 +453,6 @@ function ConditionCard({ cond, index }) {
   );
 }
 
-// ─── FAQ Section ─────────────────────────────────────────────────────────────
-
-function FaqSection({ faqGroups, catLabel }) {
-  const [openItem, setOpenItem] = useState(null);
-  const toggle = (key) => setOpenItem((prev) => (prev === key ? null : key));
-
-  return (
-    <section className="hcc-section">
-      <div className="hcc-faq-layout">
-        <div className="hcc-faq-sidebar">
-          <span className="hcc-faq-sidebar-eyebrow">FAQ</span>
-          <h2 className="hcc-faq-sidebar-title">Frequently Asked Questions</h2>
-          <p className="hcc-faq-sidebar-desc">
-            Everything you need to know about {catLabel} care at HumanCare
-            Connect. Can't find an answer?
-          </p>
-          {/* <button
-            className="hcc-faq-chat-btn"
-            onClick={() =>
-              (window.location.href = "mailto:support@humancareconnect.co")
-            }
-          >
-            <span className="chat-icon">
-              <FiMessageSquare size={10} />
-            </span>
-            Chat with our team
-          </button> */}
-          <div className="hcc-faq-trust-badges">
-            <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">⚡</span>
-              <div className="badge-content">
-                <strong>Avg. response in 10 min</strong>
-              </div>
-            </div>
-            <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">🔒</span>
-              <div className="badge-content">
-                <strong>HIPAA secure &amp; private</strong>
-              </div>
-            </div>
-            <div className="hcc-faq-trust-badge">
-              <span className="badge-icon">✓</span>
-              <div className="badge-content">
-                <strong>Available Globally</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="hcc-faq-groups">
-            {faqGroups.map((group, gi) => (
-              <div key={gi} className="hcc-faq-group">
-                <div className="hcc-faq-group-header">
-                  <span className="hcc-faq-group-dot" />
-                  <span className="hcc-faq-group-label">{group.label}</span>
-                </div>
-                {group.items.map((faq, fi) => {
-                  const key = `${gi}-${fi}`;
-                  const isOpen = openItem === key;
-                  return (
-                    <div
-                      key={fi}
-                      className={`hcc-faq-item${isOpen ? " open" : ""}`}
-                    >
-                      <button
-                        className="hcc-faq-btn"
-                        onClick={() => toggle(key)}
-                      >
-                        <span className="hcc-faq-question">{faq.q}</span>
-                        <span className="hcc-faq-toggle">
-                          {isOpen ? (
-                            <FiMinus size={12} />
-                          ) : (
-                            <FiPlus size={12} />
-                          )}
-                        </span>
-                      </button>
-                      <AnimatePresence>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.22 }}
-                            style={{ overflow: "hidden" }}
-                          >
-                            <div className="hcc-faq-answer">{faq.a}</div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {/* <div className="hcc-faq-still">
-            <div className="hcc-faq-still-text">
-              <strong>Still have questions?</strong>
-              Our care team is available every day, 8 AM – 10 PM.
-            </div>
-            <button className="hcc-faq-call-btn">
-              <FiPhone size={13} /> Book a Call
-            </button>
-          </div> */}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 export default function SkinHair() {
@@ -738,7 +626,23 @@ export default function SkinHair() {
 
         {/* FAQ */}
         {cat.faqGroups?.length > 0 && (
-          <FaqSection faqGroups={cat.faqGroups} catLabel={cat.label} />
+          <FAQ
+            badge="FAQ"
+            title="Frequently Asked Questions"
+            description={`Everything you need to know about ${cat.label} care at Humancare Connect. Can't find an answer?`}
+            stats={[
+              "Avg. response in 10 min",
+              "HIPAA secure & private",
+              "Available Globally",
+            ]}
+            sections={cat.faqGroups.map((group) => ({
+              title: group.label,
+              items: group.items.map((faq) => ({
+                question: faq.q || faq.question,
+                answer: faq.a || faq.answer,
+              })),
+            }))}
+          />
         )}
 
         {/* CTA Banner */}

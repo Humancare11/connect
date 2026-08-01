@@ -514,13 +514,14 @@ const Hero = ({ s, price, priceLoading, bp }) => {
           gap: bp.isMobile ? 24 : 48,
           alignItems: "center",
         }}
-      ><div>
+      >
+        <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.1 }}
           >
-            <Pill ac={s.accentColor}>HumanCare Connect</Pill>
+            <Pill ac={s.accentColor}>Humancare Connect</Pill>
           </motion.div>
 
           <motion.h1
@@ -610,7 +611,7 @@ const Hero = ({ s, price, priceLoading, bp }) => {
             slug={s.slug}
           />
         </motion.div>
-      </motion.div >
+      </motion.div>
     </section>
   );
 };
@@ -759,7 +760,11 @@ const Overview = ({ s, bp }) => (
         viewport={{ once: true }}
         style={{
           display: "grid",
-          gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+          gridTemplateColumns: bp.isMobile
+            ? "1fr"
+            : bp.isTablet
+              ? "repeat(2, 1fr)"
+              : "repeat(4, 1fr)",
           gap: 12,
           marginTop: 52,
         }}
@@ -819,7 +824,13 @@ const HowItWorks = ({ s, bp }) => (
       borderBottom: `1px solid ${BORDER}`,
     }}
   >
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "0 16px" : "0 24px" }}>
+    <div
+      style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: bp.isMobile ? "0 16px" : "0 24px",
+      }}
+    >
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -1021,7 +1032,13 @@ const HowItWorks = ({ s, bp }) => (
  
 ────────────────────────────────────────────────────────────────────────── */
 const Features = ({ s, bp }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
+  <section
+    style={{
+      maxWidth: 1200,
+      margin: "0 auto",
+      padding: bp.isMobile ? "48px 16px" : "88px 24px",
+    }}
+  >
     <motion.div
       variants={stagger}
       initial="hidden"
@@ -1202,7 +1219,11 @@ const WhyUs = ({ s, bp }) => {
 
   return (
     <section
-      style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}
+      style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: bp.isMobile ? "48px 16px" : "88px 24px",
+      }}
     >
       <motion.div
         variants={stagger}
@@ -1237,7 +1258,11 @@ const WhyUs = ({ s, bp }) => {
           viewport={{ once: true, amount: 0.3 }}
           style={{
             display: "grid",
-            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+            gridTemplateColumns: bp.isMobile
+              ? "1fr"
+              : bp.isTablet
+                ? "repeat(2, 1fr)"
+                : "repeat(4, 1fr)",
             gap: 12,
             marginBottom: 44,
           }}
@@ -1257,7 +1282,11 @@ const WhyUs = ({ s, bp }) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+            gridTemplateColumns: bp.isMobile
+              ? "1fr"
+              : bp.isTablet
+                ? "repeat(2, 1fr)"
+                : "repeat(3, 1fr)",
             gap: 12,
           }}
         >
@@ -1320,13 +1349,23 @@ const WhyUs = ({ s, bp }) => {
 const FAQ = ({ s, bp }) => {
   const [open, setOpen] = useState(null);
   return (
-    <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
+    <section
+      style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: bp.isMobile ? "48px 16px" : "88px 24px",
+      }}
+    >
       <motion.div
         variants={stagger}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-60px" }}
-        style={{ display: "grid", gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr", gap: bp.isMobile ? 32 : 64 }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
+          gap: bp.isMobile ? 32 : 64,
+        }}
       >
         <motion.div variants={fadeUp}>
           <SLabel text="FAQ" ac={s.accentColor} />
@@ -1480,7 +1519,13 @@ const FAQ = ({ s, bp }) => {
    surface instead.
 ────────────────────────────────────────────────────────────────────────── */
 const FinalCTA = ({ s, bp }) => (
-  <section style={{ maxWidth: 1200, margin: "0 auto", padding: bp.isMobile ? "48px 16px" : "88px 24px" }}>
+  <section
+    style={{
+      maxWidth: 1200,
+      margin: "0 auto",
+      padding: bp.isMobile ? "48px 16px" : "88px 24px",
+    }}
+  >
     <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -1499,7 +1544,9 @@ const FinalCTA = ({ s, bp }) => (
         <Pill ac={s.accentColor}>Start Today</Pill>
         <h2
           style={{
-            fontSize: bp.isMobile ? "clamp(28px, 8vw, 36px)" : "clamp(32px, 5vw, 52px)",
+            fontSize: bp.isMobile
+              ? "clamp(28px, 8vw, 36px)"
+              : "clamp(32px, 5vw, 52px)",
             fontWeight: 900,
             color: TEXT_PRIMARY,
             lineHeight: 1.1,
@@ -1537,7 +1584,11 @@ const FinalCTA = ({ s, bp }) => (
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center", gap: 12, marginBottom: 36, flexWrap: "wrap", flexDirection: bp.isMobile ? "column" : "row",
+            justifyContent: "center",
+            gap: 12,
+            marginBottom: 36,
+            flexWrap: "wrap",
+            flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
           <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
@@ -1645,12 +1696,12 @@ export default function FitToFly() {
             transition={{ duration: 0.22 }}
           >
             <Hero s={s} bp={bp} price={price} priceLoading={priceLoading} />
-            <Overview s={s}  bp={bp} />
-            <HowItWorks s={s}  bp={bp} />
-            <Features s={s}  bp={bp} />
-            <WhyUs s={s}  bp={bp} />
-            <FAQ s={s}  bp={bp} />
-            <FinalCTA s={s}  bp={bp} />
+            <Overview s={s} bp={bp} />
+            <HowItWorks s={s} bp={bp} />
+            <Features s={s} bp={bp} />
+            <WhyUs s={s} bp={bp} />
+            <FAQ s={s} bp={bp} />
+            <FinalCTA s={s} bp={bp} />
           </motion.div>
         </AnimatePresence>
       </div>

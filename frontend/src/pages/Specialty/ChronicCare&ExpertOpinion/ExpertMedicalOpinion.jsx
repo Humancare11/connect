@@ -62,6 +62,7 @@ import overviewImage from "../../../assets/SpecialitiesImage/expert-medical-opin
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 import SEO from "../../../components/Seo";
+import FAQ from "../../../components/FAQ/FAQ";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -455,34 +456,6 @@ function AnimatedStat({ value, label, Icon }) {
   );
 }
 
-// ── FAQ Item ──────────────────────────────────────────────────────────────────
-function FAQItem({ question, answer }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className={`sp-faq-item${open ? " sp-faq-item--open" : ""}`}>
-      <button
-        className="sp-faq-item__btn"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-      >
-        <span className="sp-faq-item__question">{question}</span>
-        <span
-          className={`sp-faq-item__icon${open ? " sp-faq-item__icon--open" : ""}`}
-        >
-          <FiPlus size={15} />
-        </span>
-      </button>
-      <div
-        className={`sp-faq-item__body${open ? " sp-faq-item__body--open" : ""}`}
-      >
-        <div className="sp-faq-item__answer">
-          <p>{answer}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Condition Card ────────────────────────────────────────────────────────────
 function ConditionCard({ Icon, name, description, delay, path }) {
   const cardContent = (
@@ -633,7 +606,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
               <div
                 className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
               >
-                <span className="sp-hero__badge">HumanCare Connect</span>
+                <span className="sp-hero__badge">Humancare Connect</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
                 <p className="sp-hero__description">{data.heroDescription}</p>
@@ -795,7 +768,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
 
             <Reveal>
               <div className="sp-trust__head">
-                <SectionLabel>Why HumanCare Connect</SectionLabel>
+                <SectionLabel>Why Humancare Connect</SectionLabel>
                 <h2>Care You Can Trust</h2>
                 <p>
                   We combine experienced medical specialists with advanced
@@ -814,35 +787,25 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
         </section>
 
         {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
-        <section className="sp-faq">
-          <div className="sp-container--narrow">
-            <Reveal>
-              <div className="sp-faq__head">
-                <SectionLabel>FAQ</SectionLabel>
-                <h2>Frequently Asked Questions</h2>
-                <p>
-                  Everything you need to know about {data.name.toLowerCase()} at
-                  HumanCare Connect.
-                </p>
-              </div>
-            </Reveal>
-
-            <div className="sp-faq__list">
-              {data.faqs.map((faq, i) => (
-                <Reveal key={i} delay={i * 45}>
-                  <FAQItem question={faq.question} answer={faq.answer} />
-                </Reveal>
-              ))}
-            </div>
-
-            <Reveal delay={80}>
-              <p className="sp-faq__footer">
-                Still have questions?{" "}
-                <a href="/contact-us">Chat with our care team →</a>
-              </p>
-            </Reveal>
-          </div>
-        </section>
+        <FAQ
+          badge="FAQ"
+          title="Frequently Asked Questions"
+          description={`Everything you need to know about ${data.name.toLowerCase()} at Humancare Connect.`}
+          stats={[
+            "Avg. response in 10 min",
+            "HIPAA secure & private",
+            "Available Globally",
+          ]}
+          sections={[
+            {
+              title: data.name,
+              items: data.faqs.map((faq) => ({
+                question: faq.question,
+                answer: faq.answer,
+              })),
+            },
+          ]}
+        />
 
         {/* ── 6. CTA ─────────────────────────────────────────────────────────── */}
         <section className="sp-cta">

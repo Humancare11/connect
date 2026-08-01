@@ -1,5 +1,5 @@
-﻿import { useState, useRef } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+﻿import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import {
   ArrowRight,
   CirclePlay,
@@ -15,7 +15,6 @@ import {
   UserCheck,
   Users,
   Heart,
-  ChevronDown,
   BadgeCheck,
   Thermometer,
   RefreshCw,
@@ -24,7 +23,8 @@ import {
 } from "lucide-react";
 import "./PCP.css";
 import SEO from "../components/Seo";
-import pcpHeroBg from "../assets/SpecialitiesImage/family-medicine-primary-care-doctor-consultation-banner.webp";
+import FAQ from "@/components/FAQ/FAQ";
+import pcpHeroBg from "../assets/BannerImages/PCP-Banner.jpeg";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const FADE_VARIANTS = {
@@ -32,6 +32,21 @@ const FADE_VARIANTS = {
   down: { hidden: { opacity: 0, y: -28 }, visible: { opacity: 1, y: 0, x: 0 } },
   left: { hidden: { opacity: 0, x: -28 }, visible: { opacity: 1, y: 0, x: 0 } },
   right: { hidden: { opacity: 0, x: 28 }, visible: { opacity: 1, y: 0, x: 0 } },
+  upScale: {
+    hidden: { opacity: 0, y: 24, scale: 0.96 },
+    visible: { opacity: 1, y: 0, scale: 1 },
+  },
+  cardPopup: {
+    hidden: { opacity: 0, y: 24, scale: 0.92 },
+    visible: { opacity: 1, y: 0, scale: 1 },
+  },
+};
+
+const POPUP_TRANSITION = {
+  type: "spring",
+  stiffness: 120,
+  damping: 14,
+  mass: 0.6,
 };
 
 const EASE_SPRING = [0.22, 1, 0.36, 1];
@@ -283,8 +298,6 @@ const CTA_TRUST_POINTS = [
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function PCP() {
-  const [openIndex, setOpenIndex] = useState(null);
-
   return (
     <>
       <SEO
@@ -296,13 +309,18 @@ export default function PCP() {
 
       <main className="pcp-root">
         {/* ───────────────────────── Hero ───────────────────────── */}
-        <section
+        <motion.section
           aria-label="Primary Care Hero"
           className="pcp-hero pcp-card-section"
+          variants={FADE_VARIANTS.up}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px 0px" }}
+          transition={{ duration: 0.6, ease: EASE_SPRING }}
         >
           <img
             src={pcpHeroBg}
-            alt=""
+            alt="Primary Care That Fits Your Life"
             aria-hidden="true"
             className="pcp-hero__bg"
             loading="eager"
@@ -342,7 +360,7 @@ export default function PCP() {
                 <div className="pcp-hero__ctas">
                   <a
                     href="/appointment-booking"
-                    aria-label="Get started with HumanCare Connect"
+                    aria-label="Get started with Humancare Connect"
                     className="pcp-btn-primary"
                   >
                     Get Started <ArrowRight size={15} />
@@ -369,17 +387,22 @@ export default function PCP() {
               </FadeIn>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ───────────────────────── About Primary Care ───────────────────────── */}
-        <section
+        <motion.section
           id="about"
           aria-label="About Primary Care"
           className="pcp-section pcp-about pcp-card-section"
+          variants={FADE_VARIANTS.cardPopup}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px 0px" }}
+          transition={POPUP_TRANSITION}
         >
           <div className="pcp-container">
             <div className="pcp-about__grid">
-              {/* About left — intro copy */}
+              {/* About left — intro copy + feature list stacked underneath */}
               <div className="pcp-about__left">
                 <FadeIn direction="left">
                   <span className="pcp-eyebrow">WHAT IS PRIMARY CARE?</span>
@@ -402,20 +425,13 @@ export default function PCP() {
                     quality healthcare more accessible.
                   </p>
                 </FadeIn>
-              </div>
 
-              {/* About right — feature column */}
-              <div className="pcp-about__right">
                 <div className="pcp-about__features">
                   {ABOUT_FEATURES.map((feature, i) => (
-                    <FadeIn
-                      key={feature.title}
-                      delay={i * 0.08}
-                      direction="right"
-                    >
+                    <FadeIn key={feature.title} delay={i * 0.08} direction="up">
                       <div className="pcp-about__feature">
                         <div className="pcp-about__feature-icon">
-                          <feature.icon size={18} />
+                          <feature.icon size={15} />
                         </div>
                         <div>
                           <p className="pcp-about__feature-title">
@@ -430,15 +446,25 @@ export default function PCP() {
                   ))}
                 </div>
               </div>
+
+              {/* About right — reserved for the booking flow */}
+              <div className="pcp-about__right">
+                <div className="pcp-about__booking-slot" />
+              </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ───────────────────────── How It Works ───────────────────────── */}
-        <section
+        <motion.section
           id="how-it-works"
           aria-label="How It Works"
           className="pcp-section pcp-hiw pcp-card-section"
+          variants={FADE_VARIANTS.cardPopup}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px 0px" }}
+          transition={POPUP_TRANSITION}
         >
           <div className="pcp-container--narrow">
             <FadeIn>
@@ -550,13 +576,18 @@ export default function PCP() {
               })}
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ───────────────────────── Services ───────────────────────── */}
-        <section
+        <motion.section
           id="services"
           aria-label="Services"
           className="pcp-section pcp-services pcp-card-section"
+          variants={FADE_VARIANTS.cardPopup}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px 0px" }}
+          transition={POPUP_TRANSITION}
         >
           <div className="pcp-container">
             <FadeIn>
@@ -577,7 +608,11 @@ export default function PCP() {
 
             <div className="pcp-services-grid">
               {SERVICES.map((service, i) => (
-                <FadeIn key={service.title} delay={i * 0.04}>
+                <FadeIn
+                  key={service.title}
+                  delay={Math.min(i * 0.05, 0.4)}
+                  direction="upScale"
+                >
                   <motion.div
                     whileHover={{ y: -5, transition: { duration: 0.2 } }}
                     className="pcp-service-card"
@@ -596,12 +631,17 @@ export default function PCP() {
               ))}
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* ───────────────────────── CTA ───────────────────────── */}
-        <section
+        <motion.section
           aria-label="Call to Action"
           className="pcp-section pcp-cta pcp-card-section"
+          variants={FADE_VARIANTS.cardPopup}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px 0px" }}
+          transition={POPUP_TRANSITION}
         >
           <div className="pcp-container--narrow pcp-cta__inner">
             <FadeIn>
@@ -652,85 +692,37 @@ export default function PCP() {
               </div>
             </FadeIn>
           </div>
-        </section>
+        </motion.section>
 
         {/* ───────────────────────── FAQ ───────────────────────── */}
-        <section
-          id="faq"
-          aria-label="Frequently Asked Questions"
-          className="pcp-section pcp-faq"
-        >
-          <div className="pcp-container--narrow">
-            <FadeIn>
-              <div className="pcp-section-header">
-                <span className="pcp-eyebrow">Frequently Asked</span>
-                <h2 className="pcp-section-title">Got Questions?</h2>
-                <p className="pcp-section-sub">
-                  Everything you need to know about primary care and HumanCare
-                  Connect.
-                </p>
-              </div>
-            </FadeIn>
-
-            <div className="pcp-faq__list">
-              {FAQS.map((faq, i) => {
-                const isOpen = openIndex === i;
-                const panelId = `faq-panel-${i}`;
-                const btnId = `faq-btn-${i}`;
-
-                return (
-                  <FadeIn key={faq.q} delay={i * 0.04}>
-                    <div
-                      className={`pcp-faq__item ${isOpen ? "pcp-faq__item--open" : ""}`}
-                    >
-                      <button
-                        id={btnId}
-                        onClick={() => setOpenIndex(isOpen ? null : i)}
-                        className="pcp-faq__btn"
-                        aria-expanded={isOpen}
-                        aria-controls={panelId}
-                      >
-                        <span className="pcp-faq__question">{faq.q}</span>
-                        <motion.div
-                          animate={{ rotate: isOpen ? 180 : 0 }}
-                          transition={{ duration: 0.25 }}
-                          className={`pcp-faq__chevron-wrap ${isOpen ? "pcp-faq__chevron-wrap--open" : "pcp-faq__chevron-wrap--closed"}`}
-                          aria-hidden="true"
-                        >
-                          <ChevronDown
-                            size={15}
-                            className={
-                              isOpen
-                                ? "pcp-faq__chevron--open"
-                                : "pcp-faq__chevron--closed"
-                            }
-                          />
-                        </motion.div>
-                      </button>
-
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            id={panelId}
-                            role="region"
-                            aria-labelledby={btnId}
-                            key="content"
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            className="pcp-faq-panel"
-                          >
-                            <div className="pcp-faq__answer">{faq.a}</div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </FadeIn>
-                );
-              })}
-            </div>
-          </div>
+        <section id="faq" aria-label="Frequently Asked Questions">
+          <FAQ
+            badge="FAQ"
+            title="Got Questions?"
+            description="Everything you need to know about primary care and Humancare Connect."
+            stats={[
+              ...CTA_TRUST_POINTS.map((point) => ({
+                label: point.text,
+                icon: () => <point.icon size={16} />,
+              })),
+            ]}
+            sections={[
+              {
+                title: "Frequently Asked",
+                items: FAQS.map((faq) => ({
+                  question: faq.q,
+                  answer: faq.a,
+                })),
+              },
+            ]}
+            cta={{
+              title: "Still have questions?",
+              description:
+                "Can't find what you're looking for? Our team is happy to help.",
+              button: "Book a Call",
+              href: "/contact-us",
+            }}
+          />
         </section>
       </main>
     </>
