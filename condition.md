@@ -7,9 +7,11 @@ This guide describes how to replicate the existing **Category Consultation** flo
 ## Part 1: Backend Implementation
 
 ### Step 1.1: Create the Mongoose Model
+
 Create a new model at `backend/models/ConditionConsultation.js` to store condition-based consultations.
 
 **File:** `backend/models/ConditionConsultation.js`
+
 ```javascript
 const mongoose = require("mongoose");
 
@@ -78,7 +80,7 @@ const conditionConsultationSchema = new mongoose.Schema(
     },
     medicalReports: [
       {
-        url:  { type: String },
+        url: { type: String },
         name: { type: String },
         type: { type: String },
         size: { type: Number },
@@ -91,19 +93,21 @@ const conditionConsultationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model(
   "ConditionConsultation",
-  conditionConsultationSchema
+  conditionConsultationSchema,
 );
 ```
 
 ### Step 1.2: Create the Backend Controller
+
 Create `backend/controllers/ConditionConsultationController.js` to handle CRUD operations and doctor assignments.
 
 **File:** `backend/controllers/ConditionConsultationController.js`
+
 ```javascript
 const ConditionConsultation = require("../models/ConditionConsultation");
 const Enrollment = require("../models/Enrollment");
@@ -170,7 +174,7 @@ exports.getMyConditionConsultations = async (req, res) => {
     })
       .populate(
         "assignedDoctorId",
-        "firstName surname email specialization city country"
+        "firstName surname email specialization city country",
       )
       .sort({ createdAt: -1 });
 
@@ -191,7 +195,9 @@ exports.getMyConditionConsultations = async (req, res) => {
 // Get consultations assigned to the logged-in doctor
 exports.getDoctorConditionConsultations = async (req, res) => {
   try {
-    const enrollment = await Enrollment.findOne({ doctorId: req.user.id }).select("_id");
+    const enrollment = await Enrollment.findOne({
+      doctorId: req.user.id,
+    }).select("_id");
     if (!enrollment) {
       return res.status(200).json({ success: true, count: 0, data: [] });
     }
@@ -223,16 +229,24 @@ exports.getConditionConsultationById = async (req, res) => {
       .populate("patientId", "name email mobile gender country dob")
       .populate(
         "assignedDoctorId",
-        "firstName surname email phoneNumber specialization qualification city state country"
+        "firstName surname email phoneNumber specialization qualification city state country",
       );
 
     if (!consultation) {
-      return res.status(404).json({ success: false, message: "Consultation not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Consultation not found." });
     }
 
     res.status(200).json({ success: true, data: consultation });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to fetch details.", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to fetch details.",
+        error: error.message,
+      });
   }
 };
 
@@ -243,29 +257,53 @@ exports.updateConditionConsultationStatus = async (req, res) => {
     const consultation = await ConditionConsultation.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!consultation) {
-      return res.status(404).json({ success: false, message: "Consultation not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Consultation not found." });
     }
 
-    res.status(200).json({ success: true, message: "Status updated successfully.", data: consultation });
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Status updated successfully.",
+        data: consultation,
+      });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to update status.", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to update status.",
+        error: error.message,
+      });
   }
 };
 
 // Delete consultation
 exports.deleteConditionConsultation = async (req, res) => {
   try {
-    const consultation = await ConditionConsultation.findByIdAndDelete(req.params.id);
+    const consultation = await ConditionConsultation.findByIdAndDelete(
+      req.params.id,
+    );
     if (!consultation) {
-      return res.status(404).json({ success: false, message: "Consultation not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Consultation not found." });
     }
     res.status(200).json({ success: true, message: "Consultation deleted." });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to delete.", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to delete.",
+        error: error.message,
+      });
   }
 };
 
@@ -275,7 +313,9 @@ exports.assignDoctor = async (req, res) => {
     const { doctorId } = req.body; // Expects Enrollment ID
     const enrollment = await Enrollment.findById(doctorId);
     if (!enrollment) {
-      return res.status(404).json({ success: false, message: "Doctor enrollment not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor enrollment not found." });
     }
 
     const doctorName = `${enrollment.firstName} ${enrollment.surname}`.trim();
@@ -287,11 +327,13 @@ exports.assignDoctor = async (req, res) => {
         assignedAt: new Date(),
         status: "Assigned",
       },
-      { new: true }
+      { new: true },
     );
 
     if (!consultation) {
-      return res.status(404).json({ success: false, message: "Consultation not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Consultation not found." });
     }
 
     res.status(200).json({
@@ -300,15 +342,23 @@ exports.assignDoctor = async (req, res) => {
       data: consultation,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to assign doctor.", error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to assign doctor.",
+        error: error.message,
+      });
   }
 };
 ```
 
 ### Step 1.3: Create API Routes
+
 Create `backend/routes/conditionConsultation.js` to define endpoints.
 
 **File:** `backend/routes/conditionConsultation.js`
+
 ```javascript
 const express = require("express");
 const router = express.Router();
@@ -346,7 +396,12 @@ router.post("/", verifyUserToken, createConditionConsultation);
 router.get("/:id", verifyAdminToken, adminOnly, getConditionConsultationById);
 
 // Admin: update status
-router.patch("/:id/status", verifyAdminToken, adminOnly, updateConditionConsultationStatus);
+router.patch(
+  "/:id/status",
+  verifyAdminToken,
+  adminOnly,
+  updateConditionConsultationStatus,
+);
 
 // Admin: delete
 router.delete("/:id", verifyAdminToken, adminOnly, deleteConditionConsultation);
@@ -358,12 +413,13 @@ module.exports = router;
 ```
 
 ### Step 1.4: Register Routes in `server.js`
+
 Open `backend/server.js` and mount the router:
 
 ```javascript
 app.use(
   "/api/condition-consultation",
-  require("./routes/conditionConsultation")
+  require("./routes/conditionConsultation"),
 );
 ```
 
@@ -372,15 +428,18 @@ app.use(
 ## Part 2: Frontend Implementation
 
 ### Step 2.1: Create Condition Intake Page (`ConditionConsultant.jsx`)
+
 Create a form similar to `CategoryConsultant.jsx` but tailored to retrieve details for a specific Condition. The page will dynamically pull the condition details or receive them via location state.
 
 **File:** `frontend/src/pages/ConditionConsultant.jsx`
-*You can copy the code from `CategoryConsultant.jsx` and replace category-related parameters with condition names and IDs.*
+_You can copy the code from `CategoryConsultant.jsx` and replace category-related parameters with condition names and IDs._
 
 ### Step 2.2: Create Condition Appointment Confirmation (`ConditionAppointmentConfirm.jsx`)
+
 Create a payment and confirmation screen similar to `CategoryAppointmentConfirm.jsx` that coordinates payments and posts to the new backend API endpoint `/api/condition-consultation`.
 
-### Step 2.3: Link the "Start Consultation" CTA Button
+### Step 2.3: Link the "Book Appointment" CTA Button
+
 In your condition page (e.g., `MoodAnxietyTeens.jsx`), update the CTA button click handler to redirect to the new intake page:
 
 ```javascript
@@ -394,17 +453,18 @@ const handleStartConsultation = () => {
     state: {
       conditionName: "Mood & Anxiety in Teens",
       price: 99, // dynamic or static price of this condition consultation
-    }
+    },
   });
 };
 
 // In the JSX:
 <button className="sp-sbc-cta" onClick={handleStartConsultation}>
-  Start Consultation →
-</button>
+  Book Appointment →
+</button>;
 ```
 
 ### Step 2.4: Admin Dashboard Integration
+
 1. Create `AdminConditionConsultations.jsx` in `frontend/src/pages/admin/` to display lists of condition consultation requests.
 2. Create `AdminConditionConsultationDetails.jsx` to view detail pages.
 3. Add a sidebar link in `AdminLayout.jsx`:
@@ -422,4 +482,5 @@ const handleStartConsultation = () => {
 4. Register the new components and paths in `frontend/src/App.jsx`.
 
 ---
+
 **Done!** Use these steps to build out your condition management flow.

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
+import { useEmployeeAdmin } from "../../context/EmployeeAdminContext";
 import "./Assigntask.css";
 
 const PRIORITIES = [
@@ -29,20 +30,11 @@ const emptyForm = {
   description: "",
   comment: "",
   attachments: [],
-  subtasks: [],
   startDate: new Date().toISOString().slice(0, 10),
   dueDate: new Date().toISOString().slice(0, 10),
   priority: "Medium",
   tags: [],
   assignedTo: "",
-};
-
-const emptySubtask = {
-  title: "",
-  description: "",
-  comment: "",
-  attachments: [],
-  completed: false,
 };
 
 const TAG_COLORS = ["violet", "teal", "amber", "rose", "blue"];
@@ -130,6 +122,8 @@ function formatDateDisplay(value) {
 
 export default function AssignTask() {
   const navigate = useNavigate();
+  const { employeeAdmin } = useEmployeeAdmin();
+  const currentUserId = employeeAdmin?._id || employeeAdmin?.id;
   const [employees, setEmployees] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [loadingEmployees, setLoadingEmployees] = useState(true);
@@ -138,10 +132,20 @@ export default function AssignTask() {
   const [draftSavedAt, setDraftSavedAt] = useState(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  const selectedEmployee = useMemo(
-    () => employees.find((employee) => employee._id === form.assignedTo),
-    [employees, form.assignedTo],
+  const assignableEmployees = useMemo(
+    () => employees.filter((employee) => String(employee._id) !== String(currentUserId)),
+    [employees, currentUserId],
   );
+
+  const selectedEmployee = useMemo(
+    () => assignableEmployees.find((employee) => employee._id === form.assignedTo),
+    [assignableEmployees, form.assignedTo],
+  );
+
+  useEffect(() => {
+    if (form.assignedTo || !assignableEmployees.length) return;
+    setForm((prev) => ({ ...prev, assignedTo: prev.assignedTo || assignableEmployees[0]._id }));
+  }, [assignableEmployees, form.assignedTo]);
 
   const priorityMeta = PRIORITIES.find((p) => p.value === form.priority);
   const priorityTone = priorityMeta?.tone || "medium";
@@ -159,10 +163,6 @@ export default function AssignTask() {
         if (!active) return;
         const list = res.data || [];
         setEmployees(list);
-        setForm((prev) => ({
-          ...prev,
-          assignedTo: prev.assignedTo || list[0]?._id || "",
-        }));
       })
       .catch(() => {
         if (active)
@@ -205,31 +205,6 @@ export default function AssignTask() {
     setForm((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
   };
 
-  const addSubtask = () => {
-    setForm((prev) => ({
-      ...prev,
-      subtasks: [...prev.subtasks, { ...emptySubtask }],
-    }));
-  };
-
-  const updateSubtask = (index, field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.map((subtask, currentIndex) =>
-        currentIndex === index ? { ...subtask, [field]: value } : subtask,
-      ),
-    }));
-  };
-
-  const removeSubtask = (index) => {
-    setForm((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.filter(
-        (_, currentIndex) => currentIndex !== index,
-      ),
-    }));
-  };
-
   const saveDraft = () => {
     const savedAt = Date.now();
     try {
@@ -259,14 +234,6 @@ export default function AssignTask() {
       description: form.description,
       comment: form.comment,
       attachments: form.attachments.filter((file) => !file.error),
-      // "completed" is a local-only UI affordance for this creation flow —
-      // the backend subtask schema doesn't persist it, so it's left out.
-      subtasks: form.subtasks.map(({ title, description, comment, attachments }) => ({
-        title,
-        description,
-        comment,
-        attachments: attachments.filter((file) => !file.error),
-      })),
       startDate: form.startDate,
       dueDate: form.dueDate,
       priority: form.priority,
@@ -292,7 +259,7 @@ export default function AssignTask() {
   };
 
   const goToTasks = () => navigate("/employee-dashboard/my-tasks");
-  const canSubmit = !saving && !loadingEmployees && !!employees.length && !!form.assignedTo;
+  const canSubmit = !saving && !loadingEmployees && !!assignableEmployees.length && !!form.assignedTo;
 
   return (
     <div className="at-page">
@@ -395,31 +362,6 @@ export default function AssignTask() {
 
             <section className="at-section">
               <div className="at-section__head">
-                <h2 className="at-section__title">Subtasks</h2>
-                <div className="at-section__head-actions">
-                  {form.subtasks.length > 0 && (
-                    <span className="at-section__hint">
-                      {form.subtasks.filter((s) => s.completed).length}/{form.subtasks.length} completed
-                    </span>
-                  )}
-                  <button type="button" className="at-section__action" onClick={addSubtask}>
-                    + Add subtask
-                  </button>
-                </div>
-              </div>
-              <SubtaskChecklist
-                subtasks={form.subtasks}
-                onAdd={addSubtask}
-                onChange={updateSubtask}
-                onRemove={removeSubtask}
-                assigneeId={form.assignedTo}
-              />
-            </section>
-
-            <div className="at-divider" />
-
-            <section className="at-section">
-              <div className="at-section__head">
                 <h2 className="at-section__title">Attachments</h2>
                 {form.attachments.length > 0 && (
                   <span className="at-section__count">{form.attachments.length}</span>
@@ -498,7 +440,7 @@ export default function AssignTask() {
                   Assignee<span className="at-label__req">*</span>
                 </label>
                 <AssigneeSelector
-                  employees={employees}
+                  employees={assignableEmployees}
                   loading={loadingEmployees}
                   selectedId={form.assignedTo}
                   onSelect={(id) => setField("assignedTo", id)}
@@ -568,10 +510,6 @@ export default function AssignTask() {
                 <div className="at-summary__row">
                   <dt>Due date</dt>
                   <dd>{formatDateDisplay(form.dueDate)}</dd>
-                </div>
-                <div className="at-summary__row">
-                  <dt>Subtasks</dt>
-                  <dd>{form.subtasks.length} added</dd>
                 </div>
                 <div className="at-summary__row">
                   <dt>Attachments</dt>
@@ -718,127 +656,6 @@ function DescriptionEditor({ id, value, onChange, placeholder, maxLength }) {
       <div className="at-foot">
         {value.length}/{maxLength}
       </div>
-    </div>
-  );
-}
-
-/* ============================================================
-   Subtasks — compact checklist, expandable per row.
-   ============================================================ */
-function SubtaskChecklist({ subtasks, onAdd, onChange, onRemove, assigneeId }) {
-  const [expanded, setExpanded] = useState(() => new Set());
-
-  const toggle = (index) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-  };
-
-  if (subtasks.length === 0) {
-    return (
-      <div className="at-checklist__empty">
-        <div className="at-checklist__empty-text">
-          <strong>No subtasks added yet</strong>
-          <span>Break the task into smaller steps.</span>
-        </div>
-        <button type="button" className="at-checklist__cta" onClick={onAdd}>
-          + Add your first subtask
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="at-checklist">
-      {subtasks.map((subtask, index) => {
-        const isOpen = expanded.has(index);
-        const isDone = !!subtask.completed;
-        const attachments = subtask.attachments || [];
-        return (
-          <div
-            className="at-checklist__item"
-            key={`subtask-${index}`}
-            data-open={isOpen}
-            data-done={isDone}
-          >
-            <div className="at-checklist__row">
-              <button
-                type="button"
-                className="at-checklist__check"
-                onClick={() => onChange(index, "completed", !isDone)}
-                aria-pressed={isDone}
-                aria-label={isDone ? "Mark subtask as not completed" : "Mark subtask as completed"}
-              >
-                {isDone && <CheckIcon />}
-              </button>
-              <input
-                className="at-checklist__input"
-                value={subtask.title}
-                onChange={(event) => onChange(index, "title", event.target.value)}
-                placeholder={`Step ${index + 1}`}
-                maxLength={140}
-              />
-              {attachments.length > 0 && (
-                <span className="at-checklist__badge">
-                  {attachments.length} file{attachments.length > 1 ? "s" : ""}
-                </span>
-              )}
-              <button
-                type="button"
-                className="at-checklist__toggle"
-                onClick={() => toggle(index)}
-                aria-label={isOpen ? "Collapse subtask" : "Expand subtask"}
-              >
-                <ChevronIcon open={isOpen} />
-              </button>
-              <button
-                type="button"
-                className="at-checklist__remove"
-                onClick={() => onRemove(index)}
-                aria-label="Remove subtask"
-              >
-                ×
-              </button>
-            </div>
-
-            {isOpen && (
-              <div className="at-checklist__detail">
-                <textarea
-                  className="at-textarea at-textarea--compact"
-                  value={subtask.description}
-                  onChange={(event) => onChange(index, "description", event.target.value)}
-                  placeholder="Description (optional)"
-                  maxLength={2000}
-                />
-                <textarea
-                  className="at-textarea at-textarea--compact"
-                  value={subtask.comment}
-                  onChange={(event) => onChange(index, "comment", event.target.value)}
-                  placeholder="Comment (optional)"
-                  maxLength={2000}
-                />
-                <AttachmentDropzone
-                  id={`subtask-files-${index}`}
-                  compact
-                  attachments={attachments}
-                  assigneeId={assigneeId}
-                  onAdd={(files) => onChange(index, "attachments", [...attachments, ...files])}
-                  onRemove={(attachmentIndex) =>
-                    onChange(
-                      index,
-                      "attachments",
-                      attachments.filter((_, j) => j !== attachmentIndex),
-                    )
-                  }
-                />
-              </div>
-            )}
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -1114,23 +931,6 @@ function TagInput({ tags, onAdd, onRemove }) {
 /* ============================================================
    Icons
    ============================================================ */
-function CheckIcon() {
-  return (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
 function ChevronIcon({ open }) {
   return (
     <svg

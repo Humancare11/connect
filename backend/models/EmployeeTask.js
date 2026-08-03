@@ -40,6 +40,7 @@ const employeeTaskSchema = new mongoose.Schema(
         title: { type: String, trim: true, maxlength: 140 },
         description: { type: String, default: "", trim: true, maxlength: 2000 },
         comment: { type: String, default: "", trim: true, maxlength: 2000 },
+        completed: { type: Boolean, default: false },
         attachments: [
           {
             name: { type: String, trim: true, maxlength: 255 },
@@ -49,6 +50,13 @@ const employeeTaskSchema = new mongoose.Schema(
             type: { type: String, trim: true, maxlength: 100 },
           },
         ],
+      },
+    ],
+    comments: [
+      {
+        text: { type: String, trim: true, maxlength: 2000, required: true },
+        author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        createdAt: { type: Date, default: Date.now },
       },
     ],
     startDate: {

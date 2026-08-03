@@ -370,11 +370,6 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 
   return (
     <div className="hcc-booking-card">
-      <div className="hcc-booking-badge">
-        <span className="hcc-booking-badge-dot" />
-        Doctors Available Now
-      </div>
-
       <div className="hcc-booking-price-block">
         <div className="hcc-booking-price">
           {priceLoading ? (
@@ -418,7 +413,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
       </div>
 
       <Link to="/category-consultant?category=general">
-        <button className="hcc-booking-cta">Start Consultation →</button>
+        <button className="hcc-booking-cta">Book Appointment →</button>
       </Link>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}

@@ -678,9 +678,7 @@ function HeroSection({ data }) {
             style={{
               animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
             }}
-          >
-
-          </div>
+          ></div>
 
           <div
             className="sp-trust"
@@ -858,7 +856,7 @@ function StickyBookingCard() {
           )
         }
       >
-        Start Consultation →
+        Book Appointment →
       </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
@@ -878,11 +876,9 @@ function StickyBookingCard() {
 // SYMPTOMS CHIPS — direction-aware, JS-driven active state
 // ─────────────────────────────────────────────────────────────────
 
-
 // ─────────────────────────────────────────────────────────────────
 // RELATED SPECIALTIES
 // ─────────────────────────────────────────────────────────────────
-
 
 // ─────────────────────────────────────────────────────────────────
 // WHY CHOOSE US
@@ -982,7 +978,12 @@ function WhyChooseUs() {
 export default function TravelersDiarrhea() {
   return (
     <>
-      <SEO title="Traveler's Diarrhea Treatment Online | Travel Health Care | Humancare Connect" description="Get expert traveler's diarrhea treatment online. Connect with a licensed provider for travel health care, symptom relief, and personalized guidance through telemedicine services." keywords="Traveler's diarrhea, Travel health care, Online doctor appointment, Telemedicine services" url="https://humancareconnect.co/travelers-diarrhea" />
+      <SEO
+        title="Traveler's Diarrhea Treatment Online | Travel Health Care | Humancare Connect"
+        description="Get expert traveler's diarrhea treatment online. Connect with a licensed provider for travel health care, symptom relief, and personalized guidance through telemedicine services."
+        keywords="Traveler's diarrhea, Travel health care, Online doctor appointment, Telemedicine services"
+        url="https://humancareconnect.co/travelers-diarrhea"
+      />
       <style>{STYLES}</style>
 
       <div
@@ -1009,11 +1010,6 @@ export default function TravelersDiarrhea() {
             </aside>
           </div>
         </div>
-
-
-
-
-
       </div>
     </>
   );

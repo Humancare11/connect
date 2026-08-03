@@ -341,7 +341,7 @@ function BookingForm({ specialtyPlaceholder }) {
         ))}
       </div>
 
-      <button className="hcc-booking-cta">Start Consultation →</button>
+      <button className="hcc-booking-cta">Book Appointment →</button>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}
         <a href="/terms-of-service" className="hcc-booking-link">

@@ -237,7 +237,7 @@ export default function Stye() {
                     navigate("/category-consultant?category=eeb&condition=Stye")
                   }
                 >
-                  Start Consultation →
+                  Book Appointment →
                 </button>
                 <p className="condition-sbc-terms">
                   By continuing, you agree to our{" "}

@@ -242,7 +242,7 @@ export default function SportsNutrition() {
                     )
                   }
                 >
-                  Start Consultation →
+                  Book Appointment →
                 </button>
                 <p className="condition-sbc-terms">
                   By continuing, you agree to our{" "}

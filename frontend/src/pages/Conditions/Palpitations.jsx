@@ -241,7 +241,7 @@ export default function Palpitations() {
                     )
                   }
                 >
-                  Start Consultation →
+                  Book Appointment →
                 </button>
                 <p className="condition-sbc-terms">
                   By continuing, you agree to our{" "}

@@ -270,7 +270,7 @@ export default function GriefAndLoss() {
                     )
                   }
                 >
-                  Start Consultation →
+                  Book Appointment →
                 </button>
                 <p className="condition-sbc-terms">
                   By continuing, you agree to our{" "}

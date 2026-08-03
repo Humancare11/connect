@@ -678,9 +678,7 @@ function HeroSection({ data }) {
             style={{
               animation: "sp-fadeUp .85s .26s cubic-bezier(.22,.68,0,1.2) both",
             }}
-          >
-
-          </div>
+          ></div>
 
           <div
             className="sp-trust"
@@ -858,7 +856,7 @@ function StickyBookingCard() {
           )
         }
       >
-        Start Consultation →
+        Book Appointment →
       </button>
       <p className="sp-sbc-terms">
         By continuing, you agree to our{" "}
@@ -878,11 +876,9 @@ function StickyBookingCard() {
 // SYMPTOMS CHIPS — direction-aware, JS-driven active state
 // ─────────────────────────────────────────────────────────────────
 
-
 // ─────────────────────────────────────────────────────────────────
 // RELATED SPECIALTIES
 // ─────────────────────────────────────────────────────────────────
-
 
 // ─────────────────────────────────────────────────────────────────
 // WHY CHOOSE US
@@ -1014,11 +1010,6 @@ export default function EarInfection() {
             </aside>
           </div>
         </div>
-
-
-
-
-
       </div>
     </>
   );

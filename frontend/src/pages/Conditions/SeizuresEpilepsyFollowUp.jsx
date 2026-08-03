@@ -229,7 +229,7 @@ export default function SeizuresEpilepsyFollowUp() {
                     )
                   }
                 >
-                  Start Consultation →
+                  Book Appointment →
                 </button>
                 <p className="condition-sbc-terms">
                   By continuing, you agree to our{" "}

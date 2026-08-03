@@ -10,6 +10,7 @@ const STATUSES = ["Pending", "In Progress", "Completed", "Blocked"];
 const taskPopulate = [
   { path: "assignedTo", select: "name email role" },
   { path: "createdBy", select: "name email role" },
+  { path: "comments.author", select: "name email role" },
 ];
 
 function cleanText(value) {
@@ -274,6 +275,88 @@ router.put("/tasks/:id/status", verifyEmployeeAdminToken, employeeAdminOnly, asy
     res.json(populated);
   } catch (err) {
     console.error("employee task status update error:", err);
+    res.status(500).json({ msg: "Server error." });
+  }
+});
+
+function canAccessTask(task, userId) {
+  return (
+    String(task.assignedTo?._id || task.assignedTo) === String(userId) ||
+    String(task.createdBy?._id || task.createdBy) === String(userId)
+  );
+}
+
+// POST /api/employee-admin/tasks/:id/subtasks - add a subtask (assignee or creator)
+router.post("/tasks/:id/subtasks", verifyEmployeeAdminToken, employeeAdminOnly, async (req, res) => {
+  try {
+    const title = cleanText(req.body.title).slice(0, 140);
+    if (!title) return res.status(400).json({ msg: "Subtask title is required." });
+
+    const task = await EmployeeTask.findById(req.params.id);
+    if (!task) return res.status(404).json({ msg: "Task not found." });
+    if (!canAccessTask(task, req.user.id)) {
+      return res.status(403).json({ msg: "You do not have access to this task." });
+    }
+
+    task.subtasks.push({ title, completed: false });
+    await task.save();
+
+    const populated = await EmployeeTask.findById(task._id).populate(taskPopulate).lean();
+    res.status(201).json(populated);
+  } catch (err) {
+    console.error("employee task add subtask error:", err);
+    res.status(500).json({ msg: "Server error." });
+  }
+});
+
+// PUT /api/employee-admin/tasks/:id/subtasks/:subtaskId - toggle subtask completion (assignee only)
+router.put(
+  "/tasks/:id/subtasks/:subtaskId",
+  verifyEmployeeAdminToken,
+  employeeAdminOnly,
+  async (req, res) => {
+    try {
+      const task = await EmployeeTask.findById(req.params.id);
+      if (!task) return res.status(404).json({ msg: "Task not found." });
+
+      if (String(task.assignedTo) !== String(req.user.id)) {
+        return res.status(403).json({ msg: "Only the assigned employee can update subtasks." });
+      }
+
+      const subtask = task.subtasks.id(req.params.subtaskId);
+      if (!subtask) return res.status(404).json({ msg: "Subtask not found." });
+
+      subtask.completed = Boolean(req.body.completed);
+      await task.save();
+
+      const populated = await EmployeeTask.findById(task._id).populate(taskPopulate).lean();
+      res.json(populated);
+    } catch (err) {
+      console.error("employee task subtask update error:", err);
+      res.status(500).json({ msg: "Server error." });
+    }
+  },
+);
+
+// POST /api/employee-admin/tasks/:id/comments - add a comment (assignee or creator)
+router.post("/tasks/:id/comments", verifyEmployeeAdminToken, employeeAdminOnly, async (req, res) => {
+  try {
+    const text = cleanText(req.body.text).slice(0, 2000);
+    if (!text) return res.status(400).json({ msg: "Comment text is required." });
+
+    const task = await EmployeeTask.findById(req.params.id);
+    if (!task) return res.status(404).json({ msg: "Task not found." });
+    if (!canAccessTask(task, req.user.id)) {
+      return res.status(403).json({ msg: "You do not have access to this task." });
+    }
+
+    task.comments.push({ text, author: req.user.id, createdAt: new Date() });
+    await task.save();
+
+    const populated = await EmployeeTask.findById(task._id).populate(taskPopulate).lean();
+    res.status(201).json(populated);
+  } catch (err) {
+    console.error("employee task add comment error:", err);
     res.status(500).json({ msg: "Server error." });
   }
 });

@@ -182,7 +182,7 @@ const SPECIALTY_DATA = {
       Icon: FiDroplet,
       name: "Pre-Travel Vaccination",
       desc: "Vaccinations before international travel",
-      path: "/travel-and-global-care/travel-medicine/pre-travel-vaccination",
+      path: "/travel-and-global-care/travel-medicine/pre-travel-vaccinations",
     },
     {
       Icon: FiShield,
@@ -313,10 +313,10 @@ const SPECIALTY_DATA = {
 };
 
 const TRUST_STATS = [
-  { Icon: FiUsers, value: "5,000+", label: "Board-Certified Providers" },
-  { Icon: FiBriefcase, value: "50+", label: "Specialties Covered" },
-  { Icon: FiCalendar, value: "24 hrs", label: "Average Appointment Time" },
-  { Icon: FiMonitor, value: "24/7", label: "Telehealth Support" },
+  { Icon: FiUsers, value: "500+", label: "Board-Certified Providers" },
+  { Icon: FiBriefcase, value: "30+", label: "Specialties Covered" },
+  { Icon: FiCalendar, value: "60 Minutes", label: "Average Appointment Time" },
+  { Icon: FiMonitor, value: "24/7", label: "Customer Support" },
 ];
 
 const TRUST_CARDS = [

@@ -272,7 +272,7 @@ export default function MinorInfections() {
                     )
                   }
                 >
-                  Start Consultation →
+                  Book Appointment →
                 </button>
                 <p className="condition-sbc-terms">
                   By continuing, you agree to our{" "}

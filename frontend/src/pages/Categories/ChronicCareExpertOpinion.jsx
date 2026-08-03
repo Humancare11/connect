@@ -489,7 +489,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
       </div>
 
       <Link to="/category-consultant?category=chronic">
-        <button className="hcc-booking-cta">Start Consultation →</button>
+        <button className="hcc-booking-cta">Book Appointment →</button>
       </Link>
       <p className="hcc-booking-terms">
         By continuing, you agree to our{" "}

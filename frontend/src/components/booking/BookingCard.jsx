@@ -13,7 +13,7 @@ function BookingCard({
   price,
   priceLoading,
   ctaHref,
-  ctaLabel = "Start Consultation →",
+  ctaLabel = "Book Appointment →",
   features = DEFAULT_FEATURES,
   // badgeLabel = "Doctors Available Now",
 }) {

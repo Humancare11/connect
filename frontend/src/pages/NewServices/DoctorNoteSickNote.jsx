@@ -519,13 +519,14 @@ const Hero = ({ s, bp, price, priceLoading }) => {
           gap: bp.isMobile ? 24 : 48,
           alignItems: "center",
         }}
-      ><div>
+      >
+        <div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.1 }}
           >
-            <Pill ac={s.accentColor}>HumanCare Connect</Pill>
+            <Pill ac={s.accentColor}>SERVICES</Pill>
           </motion.div>
 
           <motion.h1
@@ -581,26 +582,6 @@ const Hero = ({ s, bp, price, priceLoading }) => {
           >
             {s.intro}
           </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.38 }}
-            style={{
-              display: "flex",
-              gap: 12,
-              flexWrap: "wrap",
-            }}
-          >
-            <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
-              <a
-                href="/appointment-booking"
-                style={{ color: "#fff", textDecoration: "none" }}
-              >
-                Book Appointment
-              </a>
-            </PrimaryBtn>
-          </motion.div>
         </div>
 
         <motion.div
@@ -615,7 +596,7 @@ const Hero = ({ s, bp, price, priceLoading }) => {
             slug={s.slug}
           />
         </motion.div>
-      </motion.div >
+      </motion.div>
     </section>
   );
 };
@@ -858,7 +839,7 @@ const HowItWorks = ({ s, bp }) => (
                 marginBottom: 8,
               }}
             >
-              Getting started is {" "}
+              Getting started is{" "}
               <span style={{ color: s.accentColor }}>simple.</span>
             </h2>
             <p
@@ -1261,7 +1242,11 @@ const WhyUs = ({ s, bp }) => {
           viewport={{ once: true, amount: 0.3 }}
           style={{
             display: "grid",
-            gridTemplateColumns: bp.isMobile ? "1fr" : bp.isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+            gridTemplateColumns: bp.isMobile
+              ? "1fr"
+              : bp.isTablet
+                ? "repeat(2, 1fr)"
+                : "repeat(4, 1fr)",
             gap: 12,
             marginBottom: 44,
           }}
@@ -1562,7 +1547,11 @@ const FinalCTA = ({ s, bp }) => (
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center", gap: 12, marginBottom: 36, flexWrap: "wrap", flexDirection: bp.isMobile ? "column" : "row",
+            justifyContent: "center",
+            gap: 12,
+            marginBottom: 36,
+            flexWrap: "wrap",
+            flexDirection: bp.isMobile ? "column" : "row",
             flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
