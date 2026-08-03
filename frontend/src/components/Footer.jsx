@@ -13,9 +13,7 @@ import {
 
 import { FaThreads } from "react-icons/fa6";
 import { FaXTwitter } from "react-icons/fa6";
-// import logo from "../assets/Logo.png";
-// import FooterHippa from "../assets/new-hippa.png";
-import logo from "../assets/LogoFooter.png";
+import logo from "../assets/HC-Logo.webp";
 import { Link } from "react-router-dom";
 
 export default function Footer() {
@@ -25,7 +23,7 @@ export default function Footer() {
       <div className="footer-container">
         {/* BRAND SECTION */}
         <div className="footer-brand">
-          <Link to="/">
+          <Link to="/" className="footer-logo-link">
             <img
               src={logo}
               alt="Humancare Connect Logo"
@@ -46,8 +44,8 @@ export default function Footer() {
             <span className="footer-badge">HITRUST R2</span>
           </div> */}
 
-          {/* CONTACT GLASS CARD */}
-          <div className="footer-contact-card">
+          {/* CONTACT DETAILS — blended into footer background */}
+          <div className="footer-contact-list">
             <div className="footer-contact-item">
               <span className="footer-contact-icon">
                 <FaMapMarkerAlt />

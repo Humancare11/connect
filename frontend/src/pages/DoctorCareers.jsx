@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -39,6 +39,7 @@ import {
 } from "react-icons/fa6";
 import "./DoctorCareers.css";
 import SEO from "../components/Seo";
+import FAQ from "../components/FAQ/FAQ";
 import CareeerImg from "../assets/Career/Careers-for-Physicians.webp";
 import NetworkImg from "../assets/Career/Network-Trusted-by-Doctors.webp";
 /* -------------------------------------------------------------------- */
@@ -208,91 +209,116 @@ const BENEFITS_FEATURES = [
     desc: "Help make quality healthcare more accessible by providing timely, compassionate care to patients wherever they are.",
   },
 ];
-const FAQS = [
+const DOCTOR_FAQS = [
   {
-    q: "Who can apply to become a partner doctor with Humancare Connect?",
-    a: "Licensed physicians and qualified healthcare professionals who meet the applicable licensing and credential requirements can apply to join our telemedicine network.",
+    title: "Application & Verification",
+    items: [
+      {
+        question: "Who can apply to become a partner doctor with Humancare Connect?",
+        answer: "Licensed physicians and qualified healthcare professionals who meet the applicable licensing and credential requirements can apply to join our telemedicine network."
+      },
+      {
+        question: "How do I apply?",
+        answer: "Simply complete the online application form with your professional details. Our Doctor Success Team will review your application and guide you through the next steps."
+      },
+      {
+        question: "What documents will I need?",
+        answer: "You'll typically need a valid medical license, professional identification, relevant certifications, and any supporting documents required for credential verification."
+      },
+      {
+        question: "How does the credential verification process work?",
+        answer: "Our team carefully reviews your medical credentials and professional standing to help maintain a trusted network of healthcare professionals."
+      }
+    ]
   },
   {
-    q: "How do I apply?",
-    a: "Simply complete the online application form with your professional details. Our Doctor Success Team will review your application and guide you through the next steps.",
+    title: "Practice & Flexibility",
+    items: [
+      {
+        question: "Can I continue working at my clinic or hospital?",
+        answer: "Yes. Humancare Connect is designed to complement your existing practice, allowing you to offer virtual consultations alongside your regular professional commitments."
+      },
+      {
+        question: "Can I choose my own consultation schedule?",
+        answer: "Absolutely. You decide when you're available and can update your schedule based on your professional and personal commitments."
+      },
+      {
+        question: "Do I need previous telemedicine experience?",
+        answer: "No. Whether you're new to virtual care or already experienced, our onboarding process helps you become familiar with the platform."
+      },
+      {
+        question: "What medical specialties are welcome?",
+        answer: "Humancare Connect welcomes healthcare professionals from a wide range of medical specialties, depending on licensing and platform requirements."
+      }
+    ]
   },
   {
-    q: "What documents will I need?",
-    a: "You'll typically need a valid medical license, professional identification, relevant certifications, and any supporting documents required for credential verification.",
+    title: "Security & Consultation",
+    items: [
+      {
+        question: "Is the platform HIPAA compliant?",
+        answer: "Yes. Humancare Connect uses HIPAA-compliant technology with secure encryption and privacy-focused features to help protect patient health information."
+      },
+      {
+        question: "How do virtual consultations take place?",
+        answer: "Consultations are conducted through our secure telemedicine platform using video, audio, or other supported communication methods."
+      },
+      {
+        question: "Can I provide consultations from home?",
+        answer: "Yes. As long as you have a secure internet connection and a private environment suitable for patient consultations, you can practice from virtually anywhere."
+      },
+      {
+        question: "What technology do I need?",
+        answer: "A computer or laptop with a webcam and microphone, along with a stable high-speed internet connection, is recommended for the best consultation experience."
+      }
+    ]
   },
   {
-    q: "How does the credential verification process work?",
-    a: "Our team carefully reviews your medical credentials and professional standing to help maintain a trusted network of healthcare professionals.",
+    title: "Support & Commitments",
+    items: [
+      {
+        question: "Will I receive onboarding support?",
+        answer: "Yes. Our Doctor Success Team guides onboarding and is available to assist you with platform-related questions."
+      },
+      {
+        question: "Can I update my availability later?",
+        answer: "Yes. You can modify your consultation availability whenever needed to fit your changing schedule."
+      },
+      {
+        question: "Will I have access to technical support?",
+        answer: "Yes. Our support team is available to help with technical issues and platform-related assistance whenever you need it."
+      },
+      {
+        question: "Is there a long-term commitment?",
+        answer: "No. You have the flexibility to manage your participation according to your professional availability and preferences."
+      }
+    ]
   },
   {
-    q: "Can I continue working at my clinic or hospital?",
-    a: "Yes. Humancare Connect is designed to complement your existing practice, allowing you to offer virtual consultations alongside your regular professional commitments.",
-  },
-  {
-    q: "Can I choose my own consultation schedule?",
-    a: "Absolutely. You decide when you're available and can update your schedule based on your professional and personal commitments.",
-  },
-  {
-    q: "Do I need previous telemedicine experience?",
-    a: "No. Whether you're new to virtual care or already experienced, our onboarding process helps you become familiar with the platform.",
-  },
-  {
-    q: "What medical specialties are welcome?",
-    a: "Humancare Connect welcomes healthcare professionals from a wide range of medical specialties, depending on licensing and platform requirements.",
-  },
-  {
-    q: "Is the platform HIPAA compliant?",
-    a: "Yes. Humancare Connect uses HIPAA-compliant technology with secure encryption and privacy-focused features to help protect patient health information.",
-  },
-  {
-    q: "How do virtual consultations take place?",
-    a: "Consultations are conducted through our secure telemedicine platform using video, audio, or other supported communication methods.",
-  },
-  {
-    q: "Can I provide consultations from home?",
-    a: "Yes. As long as you have a secure internet connection and a private environment suitable for patient consultations, you can practice from virtually anywhere.",
-  },
-  {
-    q: "What technology do I need?",
-    a: "A computer or laptop with a webcam and microphone, along with a stable high-speed internet connection, is recommended for the best consultation experience.",
-  },
-  {
-    q: "Will I receive onboarding support?",
-    a: "Yes. Our Doctor Success Team guides onboarding and is available to assist you with platform-related questions.",
-  },
-  {
-    q: "Can I update my availability later?",
-    a: "Yes. You can modify your consultation availability whenever needed to fit your changing schedule.",
-  },
-  {
-    q: "Will I have access to technical support?",
-    a: "Yes. Our support team is available to help with technical issues and platform-related assistance whenever you need it.",
-  },
-  {
-    q: "Is there a long-term commitment?",
-    a: "No. You have the flexibility to manage your participation according to your professional availability and preferences.",
-  },
-  {
-    q: "How is patient privacy protected?",
-    a: "Patient information is safeguarded through secure technologies, encrypted communication, and privacy-focused platform practices.",
-  },
-  {
-    q: "Can I grow my professional presence on Humancare Connect?",
-    a: "Yes. By maintaining a complete professional profile and consistently delivering high-quality patient care, you can strengthen your visibility within the platform.",
-  },
-  {
-    q: "What makes Humancare Connect different?",
-    a: "Humancare Connect combines secure technology, flexible scheduling, dedicated physician support, and a patient-first approach to help healthcare professionals deliver exceptional virtual care.",
-  },
-  {
-    q: "How soon can I start consulting?",
-    a: "Once your application, credential verification, and onboarding are successfully completed, you'll be ready to begin offering virtual consultations.",
-  },
-  {
-    q: "Who can I contact if I have additional questions?",
-    a: "Our Doctor Success Team is always available to answer your questions and guide you through every stage of your journey with Humancare Connect.",
-  },
+    title: "Privacy & Growth",
+    items: [
+      {
+        question: "How is patient privacy protected?",
+        answer: "Patient information is safeguarded through secure technologies, encrypted communication, and privacy-focused platform practices."
+      },
+      {
+        question: "Can I grow my professional presence on Humancare Connect?",
+        answer: "Yes. By maintaining a complete professional profile and consistently delivering high-quality patient care, you can strengthen your visibility within the platform."
+      },
+      {
+        question: "What makes Humancare Connect different?",
+        answer: "Humancare Connect combines secure technology, flexible scheduling, dedicated physician support, and a patient-first approach to help healthcare professionals deliver exceptional virtual care."
+      },
+      {
+        question: "How soon can I start consulting?",
+        answer: "Once your application, credential verification, and onboarding are successfully completed, you'll be ready to begin offering virtual consultations."
+      },
+      {
+        question: "Who can I contact if I have additional questions?",
+        answer: "Our Doctor Success Team is always available to answer your questions and guide you through every stage of your journey with Humancare Connect."
+      }
+    ]
+  }
 ];
 
 const INITIAL_FORM_STATE = {

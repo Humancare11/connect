@@ -58,12 +58,21 @@ const approvalStatusFromApplicationStatus = (value) => {
 
 const normalizeEnrollmentWorkflow = (enrollment) => {
   const fallbackProgress = inferProgressFromFields(enrollment);
-  const completedSteps = Number.isFinite(Number(enrollment.completedSteps))
-    ? Number(enrollment.completedSteps)
-    : fallbackProgress.completedSteps;
-  const currentStep = Number.isFinite(Number(enrollment.currentStep))
-    ? Number(enrollment.currentStep)
-    : fallbackProgress.currentStep;
+  // A fully-submitted application is always 5/5, regardless of what's
+  // physically stored in completedSteps/currentStep — those can lag behind
+  // (e.g. after re-opening the wizard to review/edit) even though every
+  // field of data is complete. Mirrors the values the submit/approve
+  // endpoints already write.
+  const completedSteps = enrollment.formCompleted
+    ? 5
+    : Number.isFinite(Number(enrollment.completedSteps))
+      ? Number(enrollment.completedSteps)
+      : fallbackProgress.completedSteps;
+  const currentStep = enrollment.formCompleted
+    ? 5
+    : Number.isFinite(Number(enrollment.currentStep))
+      ? Number(enrollment.currentStep)
+      : fallbackProgress.currentStep;
   const applicationStatus = normalizeApplicationStatus(
     enrollment.applicationStatus,
     { ...enrollment, completedSteps }
@@ -72,7 +81,7 @@ const normalizeEnrollmentWorkflow = (enrollment) => {
     ...enrollment,
     completedSteps,
     currentStep,
-    currentStepLabel: enrollment.currentStepLabel || STEP_LABELS[Math.min(Math.max(currentStep - 1, 0), STEP_LABELS.length - 1)],
+    currentStepLabel: enrollment.formCompleted ? STEP_LABELS[4] : (enrollment.currentStepLabel || STEP_LABELS[Math.min(Math.max(currentStep - 1, 0), STEP_LABELS.length - 1)]),
     applicationStatus,
     pendingRequestType: enrollment.pendingRequestType || "none",
     profileUpdateRequestStatus: enrollment.profileUpdateRequestStatus || (enrollment.pendingRequestType === "profile_update" ? "pending" : "none"),

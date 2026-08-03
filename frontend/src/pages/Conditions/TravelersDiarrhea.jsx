@@ -888,7 +888,7 @@ function WhyChooseUs() {
     <section style={{ background: "#0A1F44", padding: "80px 0" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 24px" }}>
         <div style={{ textAlign: "center", marginBottom: 52 }}>
-          <SectionLabel variant="dark">Why HumanCare Connect</SectionLabel>
+          <SectionLabel variant="dark">Why Humancare Connect</SectionLabel>
           <h2
             style={{
               fontSize: 36,

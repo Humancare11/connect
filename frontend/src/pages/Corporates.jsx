@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "./Corporates.css";
 import IndustrySlider from "../components/IndustrySlider";
 import ECGTimeline from "../components/ECGTimeline";
@@ -13,6 +13,7 @@ import PrescriptionsImg from "../assets/CorporateSolutions/digital-prescription-
 import HrDashboardImg from "../assets/CorporateSolutions/health-analytics-reporting-dashboard.webp";
 import SickLeaveImg from "../assets/CorporateSolutions/employee-absence-management-solution.webp";
 import SEO from "../components/Seo";
+import FAQ from "../components/FAQ/FAQ";
 
 const SERVICES = [
   {
@@ -285,6 +286,109 @@ const AUTO_SPEED = 0.00018; // radians per ms
 /* ================================================================
    COMPONENT
 ================================================================ */
+const CORPORATE_FAQS = [
+  {
+    title: "Services & Benefits",
+    items: [
+      {
+        question: "What are corporate telemedicine services?",
+        answer: "Corporate telemedicine services allow businesses to provide employees with convenient access to licensed healthcare providers through virtual doctor appointments, digital prescriptions, mental health support, and ongoing healthcare guidance without requiring in-person clinic visits."
+      },
+      {
+        question: "How does corporate telemedicine benefit employees?",
+        answer: "Corporate telehealth services help employees receive faster medical care, reduce travel and waiting time, access healthcare more conveniently, and support their overall physical and mental well-being."
+      },
+      {
+        question: "How can corporate healthcare improve employee productivity?",
+        answer: "Fast access to healthcare allows employees to address medical concerns sooner, reduce unnecessary time away from work, manage chronic conditions effectively, and maintain better overall workplace productivity."
+      },
+      {
+        question: "What businesses can use corporate telemedicine solutions?",
+        answer: "Corporate telemedicine solutions are suitable for businesses of all sizes, including startups, enterprises, healthcare organizations, technology companies, logistics providers, hospitality businesses, educational institutions, and manufacturing teams."
+      },
+      {
+        question: "How quickly can employees connect with an online doctor?",
+        answer: "Employees can access virtual doctor consultations through the corporate telemedicine platform, often connecting with licensed providers within minutes depending on availability."
+      }
+    ]
+  },
+  {
+    title: "Care & Support",
+    items: [
+      {
+        question: "Are corporate telemedicine services available 24/7?",
+        answer: "Yes. Employees can access healthcare guidance and medical support at any time through 24/7 telehealth services, including evenings, weekends, and holidays."
+      },
+      {
+        question: "What healthcare services are included in a corporate telemedicine program?",
+        answer: "Corporate healthcare programs may include online doctor consultations, urgent medical guidance, mental health support, digital prescriptions, medical certificates, absence management, and employee wellness services."
+      },
+      {
+        question: "Does Humancare Connect provide mental health support for employees?",
+        answer: "Yes. Humancare Connect offers confidential mental health support, therapy access, and employee wellness services designed to improve emotional health and workplace well-being."
+      },
+      {
+        question: "Can employees receive prescriptions through virtual consultations?",
+        answer: "Yes. Licensed healthcare providers can evaluate employees during virtual appointments and provide prescriptions when medically appropriate and permitted by applicable healthcare regulations."
+      },
+      {
+        question: "How does telemedicine reduce employee absenteeism?",
+        answer: "Telemedicine reduces healthcare delays by giving employees faster access to medical advice, treatment recommendations, and documentation, helping them return to work sooner when appropriate."
+      }
+    ]
+  },
+  {
+    title: "Implementation & Compliance",
+    items: [
+      {
+        question: "What is digital absence management?",
+        answer: "Digital absence management simplifies processes such as sick leave validation, medical certificates, and return-to-work documentation through secure virtual healthcare services."
+      },
+      {
+        question: "How does corporate telemedicine support remote and distributed teams?",
+        answer: "Virtual healthcare allows employees to access medical support from home, the office, or while traveling, making it an effective healthcare solution for remote, hybrid, and geographically distributed workforces."
+      },
+      {
+        question: "Is employee healthcare information private and secure?",
+        answer: "Yes. Employee consultations and health information are protected through secure telemedicine systems designed to maintain patient privacy and confidentiality."
+      },
+      {
+        question: "Can corporate telemedicine integrate with existing employee benefits?",
+        answer: "Yes. Corporate telehealth solutions can complement existing employee wellness programs and healthcare benefits to create a more comprehensive employee support system."
+      },
+      {
+        question: "How does Humancare Connect help HR teams?",
+        answer: "Humancare Connect helps HR teams streamline healthcare access, reduce administrative burdens, manage employee wellness programs, and gain valuable workforce health insights."
+      }
+    ]
+  },
+  {
+    title: "Streamlining & Scale",
+    items: [
+      {
+        question: "What workforce health analytics are available?",
+        answer: "Organizations can access insights such as healthcare utilization trends, absenteeism patterns, and workforce wellness data to make more informed healthcare decisions."
+      },
+      {
+        question: "How long does it take to implement a corporate telemedicine program?",
+        answer: "Corporate telemedicine platforms are designed for quick onboarding, allowing businesses to provide employees with fast and seamless access to virtual healthcare services."
+      },
+      {
+        question: "Can small businesses use corporate telehealth services?",
+        answer: "Yes. Corporate telemedicine solutions are scalable and can support small businesses, growing companies, and large enterprises with flexible healthcare options."
+      },
+      {
+        question: "Why should companies invest in employee telehealth programs?",
+        answer: "Employee telehealth programs can improve healthcare accessibility, increase employee satisfaction, support workplace wellness, and help organizations build healthier and more productive teams."
+      },
+      {
+        question: "Why choose Humancare Connect as your corporate telemedicine partner?",
+        answer: "Humancare Connect combines licensed healthcare providers, secure technology, employee wellness services, digital healthcare solutions, and scalable telemedicine programs to support organizations of every size."
+      }
+    ]
+  }
+];
+
 export default function CorporateDemo() {
   const [activeIdx, setActiveIdx] = useState(0);
   const activeSvc = SERVICES[activeIdx];
@@ -418,6 +522,18 @@ export default function CorporateDemo() {
       </section>
 
       <Netaji />
+
+      <FAQ
+        badge="FAQ"
+        title="Frequently Asked Questions"
+        description="Everything you need to know about our corporate telemedicine services, benefits, and implementation."
+        stats={[
+          "Avg. response in 10 min",
+          "HIPAA secure & private",
+          "Available Globally",
+        ]}
+        sections={CORPORATE_FAQS}
+      />
     </>
   );
 }

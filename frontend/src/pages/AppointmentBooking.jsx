@@ -1,9 +1,10 @@
-﻿import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./AppointmentBooking.css";
 import api from "../api";
 import HealthcareIcon from "../components/HealthcareIcon";
 import SEO from "../components/Seo";
+import FAQ from "../components/FAQ/FAQ";
 
 // --- Search helpers ---------------------------------------------------------
 // Plain `.includes()` matches a query ANYWHERE inside a string, including
@@ -144,6 +145,93 @@ function Breadcrumb({ items, onNavigate }) {
 }
 
 // --- Main Component -----------------------------------------------------------
+const APPOINTMENT_FAQS = [
+  {
+    title: "Finding a Doctor",
+    items: [
+      {
+        question: "How do I choose the right online doctor for my symptoms?",
+        answer: "You can find the right online doctor by reviewing provider specialties, areas of expertise, experience, and availability. Choosing a doctor who matches your health concerns helps ensure you receive personalized and appropriate care."
+      },
+      {
+        question: "Can I search for doctors by specialty?",
+        answer: "Yes. Humancare Connect allows you to search for providers based on medical specialty, helping you find the right doctor for your specific health needs."
+      },
+      {
+        question: "Can I view a doctor’s qualifications before booking an appointment?",
+        answer: "Yes. You can review provider information, professional background, specialties, and available appointment times before selecting your doctor."
+      },
+      {
+        question: "How do I know which specialist I need?",
+        answer: "If you are unsure which provider is right for your symptoms, you can explore available specialties or get assistance in choosing the most appropriate healthcare professional."
+      }
+    ]
+  },
+  {
+    title: "Booking & Availability",
+    items: [
+      {
+        question: "Can I choose a specific doctor for my virtual appointment?",
+        answer: "Yes. You can select your preferred healthcare provider based on specialty, availability, and your personal healthcare preferences."
+      },
+      {
+        question: "What information should I provide when booking an online doctor appointment?",
+        answer: "You may be asked to share basic details such as your symptoms, medical history, current medications, and the reason for your visit to help your provider prepare for the consultation."
+      },
+      {
+        question: "How can I prepare for my first online doctor visit?",
+        answer: "Before your appointment, make sure you have a stable internet connection, a quiet environment, your medical information, medication list, and any questions you want to discuss."
+      },
+      {
+        question: "Can I book an appointment for a future date and time?",
+        answer: "Yes. You can choose from available appointment slots and schedule a virtual doctor visit at a time that works best for your schedule."
+      }
+    ]
+  },
+  {
+    title: "Rescheduling & Records",
+    items: [
+      {
+        question: "Can I reschedule or cancel my online appointment?",
+        answer: "Yes. Online appointment management allows you to modify or cancel your appointment in accordance with the platform’s scheduling policies."
+      },
+      {
+        question: "Will my doctor have access to my previous medical information?",
+        answer: "You can share relevant medical records, previous diagnoses, medications, and test results to help your provider better understand your healthcare needs."
+      },
+      {
+        question: "Can I upload reports or medical documents before my appointment?",
+        answer: "Yes. Digital healthcare platforms may allow patients to securely upload medical records, lab reports, prescriptions, and other relevant documents before a consultation."
+      },
+      {
+        question: "What happens after my online doctor appointment is completed?",
+        answer: "After your consultation, your provider may share treatment recommendations, prescriptions when appropriate, follow-up instructions, or suggest additional medical evaluation if needed."
+      }
+    ]
+  },
+  {
+    title: "Care & Follow-Up",
+    items: [
+      {
+        question: "Can I schedule follow-up appointments with the same doctor?",
+        answer: "Yes. When available, you can continue your care journey by scheduling follow-up appointments with the same provider for continuity of care."
+      },
+      {
+        question: "Can family members have separate appointments with different doctors?",
+        answer: "Yes. Family members can book individual appointments with healthcare providers based on their own symptoms and medical requirements."
+      },
+      {
+        question: "How do I find available doctors near my preferred appointment time?",
+        answer: "You can search for available providers, compare schedules, and select a doctor whose appointment times best match your availability."
+      },
+      {
+        question: "Why book your online doctor appointment through Humancare Connect?",
+        answer: "Humancare Connect makes it simple to find qualified healthcare providers, compare available doctors, choose convenient appointment times, and receive secure virtual care tailored to your health needs."
+      }
+    ]
+  }
+];
+
 export default function Ab() {
   const navigate = useNavigate();
   const [appointmentTree, setAppointmentTree] = useState([]);
@@ -373,311 +461,323 @@ export default function Ab() {
 
   return (
     <>
-                  <SEO
+      <SEO
         title="Online Doctor Appointment | Find a Doctor Online | Humancare Connect"
         description="Book an online doctor appointment and connect with licensed providers through secure virtual healthcare services, telemedicine services, and fast online consultations without long clinic wait times."
         keywords="Online doctor appointment, find a doctor online, online doctor, licensed providers, virtual healthcare services, telemedicine services, online consultation, virtual doctor visit, search providers, healthcare providers, book doctor appointment online, secure virtual care"
         url="https://humancareconnect.co/appointment-booking"
       />
       <section className="hcc-sx">
-      <div className="wrap">
-        {/* -- CENTERED HERO -- */}
-        <div className="head">
-          <span className="eyebrow">
-            <span className="eyebrow-dot" />
-            Discover Care
-          </span>
+        <div className="wrap">
+          {/* -- CENTERED HERO -- */}
+          <div className="head">
+            <span className="eyebrow">
+              <span className="eyebrow-dot" />
+              Discover Care
+            </span>
 
-          <h2>Find the right online doctor for your needs.</h2>
+            <h2>Find the right online doctor for your needs.</h2>
 
-          <p className="lead">
-            Book an online doctor appointment in minutes and access secure
-            virtual healthcare services without long wait times or unnecessary
-            clinic visits.
-          </p>
-        </div>
+            <p className="lead">
+              Book an online doctor appointment in minutes and access secure
+              virtual healthcare services without long wait times or unnecessary
+              clinic visits.
+            </p>
+          </div>
 
-        <div className="top-controls">
-          {/* -- NUMBERED TAB BAR -- */}
-          <div className="tab-bar-wrap">
-            <div className="switch">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  data-tab={t.id}
-                  className={activeTabId === t.id ? "active" : ""}
-                  onClick={() => handleTabSwitch(t.id)}
+          <div className="top-controls">
+            {/* -- NUMBERED TAB BAR -- */}
+            <div className="tab-bar-wrap">
+              <div className="switch">
+                {tabs.map((t) => (
+                  <button
+                    key={t.id}
+                    data-tab={t.id}
+                    className={activeTabId === t.id ? "active" : ""}
+                    onClick={() => handleTabSwitch(t.id)}
+                  >
+                    <span className="tab-num">{t.num}</span>
+                    <span className="tab-label">{t.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* -- SEARCH TOOLBAR -- */}
+            <div className="toolbar">
+              <div className="search">
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
                 >
-                  <span className="tab-num">{t.num}</span>
-                  <span className="tab-label">{t.label}</span>
-                </button>
-              ))}
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  autoComplete="off"
+                />
+              </div>
             </div>
           </div>
+          {/* -- CONTENT CARD (white rounded container) -- */}
+          <div className="content-card">
+            {/* -- DRILL MODE -- */}
+            {!browseTab && (
+              <>
+                {drillLevel !== "cat" && (
+                  <div style={{ padding: "28px 40px 0" }}>
+                    <Breadcrumb
+                      items={breadcrumbItems}
+                      onNavigate={handleBreadcrumb}
+                    />
+                  </div>
+                )}
 
-          {/* -- SEARCH TOOLBAR -- */}
-          <div className="toolbar">
-            <div className="search">
-              <svg
-                width="19"
-                height="19"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={searchPlaceholder}
-                autoComplete="off"
-              />
-            </div>
-          </div>
-        </div>
-        {/* -- CONTENT CARD (white rounded container) -- */}
-        <div className="content-card">
-          {/* -- DRILL MODE -- */}
-          {!browseTab && (
-            <>
-              {drillLevel !== "cat" && (
-                <div style={{ padding: "28px 40px 0" }}>
-                  <Breadcrumb
-                    items={breadcrumbItems}
-                    onNavigate={handleBreadcrumb}
-                  />
-                </div>
-              )}
-
-              {/* -- Category grid -- */}
-              {drillLevel === "cat" && (
-                <div className="panel">
-                  <div className="catgrid">
-                    {visibleCats.length ? (
-                      visibleCats.map((c) => {
-                        const specialtyCount = c.specialties.length;
-                        const conditionCount = c.specialties.reduce(
-                          (n, s) => n + s.conditions.length,
-                          0,
-                        );
-                        const description =
-                          c.description || "No description added yet.";
-                        return (
-                          <div
-                            key={c.id}
-                            className="catcard"
-                            onClick={(e) =>
-                              handleCardClick(e, () => handleOpenCat(c))
-                            }
-                          >
-                            <div className="ic">
-                              <HealthcareIcon name={c.icon} size={30} />
-                            </div>
-                            <h3>{c.label}</h3>
-                            <div className="meta">
-                              {specialtyCount} {specialtyCount === 1 ? "specialty" : "specialties"} - {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
-                            </div>                           <div className="samp">{description}</div>
-                            <div className="go">Explore → </div>
-                          </div >
-                        );
-                      })
-                    ) : (
-                      <div className="empty">
-                        <div className="big">Search</div>
-                        {treeLoading
-                          ? "Loading categories..."
-                          : treeError || "No categories match."}
-                      </div>
-                    )}
-                  </div >
-                </div >
-              )}
-
-              {/* -- Specialty list -- */}
-              {
-                drillLevel === "spec" && activeCat && (
+                {/* -- Category grid -- */}
+                {drillLevel === "cat" && (
                   <div className="panel">
-                    <div className="hcc-level-label">
-                      {catNumLabel && <>{catNumLabel} -</>}
-                      <span style={{ fontSize: 20 }}>
-                        <HealthcareIcon name={activeCat.icon} size={20} />
-                      </span>
-                      {activeCat.label}
-                    </div>
-                    <div className="grid">
-                      {activeCat.specialties
-                        .filter((s) => !q || s.name.toLowerCase().includes(q))
-                        .map((s) => {
-                          const specialtyWithCat = {
-                            ...s,
-                            catId: activeCat.id,
-                            catLabel: activeCat.label,
-                          };
+                    <div className="catgrid">
+                      {visibleCats.length ? (
+                        visibleCats.map((c) => {
+                          const specialtyCount = c.specialties.length;
+                          const conditionCount = c.specialties.reduce(
+                            (n, s) => n + s.conditions.length,
+                            0,
+                          );
+                          const description =
+                            c.description || "No description added yet.";
                           return (
                             <div
-                              key={s.id || s.name}
-                              className="spec"
+                              key={c.id}
+                              className="catcard"
                               onClick={(e) =>
-                                handleCardClick(e, () =>
-                                  handleOpenSpec(specialtyWithCat),
-                                )
+                                handleCardClick(e, () => handleOpenCat(c))
                               }
                             >
                               <div className="ic">
-                                <HealthcareIcon name={s.icon} size={30} />
+                                <HealthcareIcon name={c.icon} size={30} />
                               </div>
-                              <h3>{s.name}</h3>
-                              <div className="spec-footer">
-                                <div className="count">
-                                  {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
-                                </div>
-                                <div className="book-link">Book →</div>
-                              </div>
-                            </div>
+                              <h3>{c.label}</h3>
+                              <div className="meta">
+                                {specialtyCount} {specialtyCount === 1 ? "specialty" : "specialties"} - {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
+                              </div>                           <div className="samp">{description}</div>
+                              <div className="go">Explore → </div>
+                            </div >
                           );
-                        })}
-                    </div>
+                        })
+                      ) : (
+                        <div className="empty">
+                          <div className="big">Search</div>
+                          {treeLoading
+                            ? "Loading categories..."
+                            : treeError || "No categories match."}
+                        </div>
+                      )}
+                    </div >
                   </div >
-                )
-              }
+                )}
 
-              {/* -- Condition list -- (unchanged) -- */}
-              {
-                drillLevel === "cond" && activeSpec && (
-                  <div className="panel">
-                    <div className="hcc-level-label">
-                      <span style={{ fontSize: 20 }}>
-                        <HealthcareIcon name={activeSpec.icon} size={20} />
-                      </span>
-                      {activeSpec.name} - select your condition
-                    </div>
-                    {/* {!activeSpec.priceAvailable && (
+                {/* -- Specialty list -- */}
+                {
+                  drillLevel === "spec" && activeCat && (
+                    <div className="panel">
+                      <div className="hcc-level-label">
+                        {catNumLabel && <>{catNumLabel} -</>}
+                        <span style={{ fontSize: 20 }}>
+                          <HealthcareIcon name={activeCat.icon} size={20} />
+                        </span>
+                        {activeCat.label}
+                      </div>
+                      <div className="grid">
+                        {activeCat.specialties
+                          .filter((s) => !q || s.name.toLowerCase().includes(q))
+                          .map((s) => {
+                            const specialtyWithCat = {
+                              ...s,
+                              catId: activeCat.id,
+                              catLabel: activeCat.label,
+                            };
+                            return (
+                              <div
+                                key={s.id || s.name}
+                                className="spec"
+                                onClick={(e) =>
+                                  handleCardClick(e, () =>
+                                    handleOpenSpec(specialtyWithCat),
+                                  )
+                                }
+                              >
+                                <div className="ic">
+                                  <HealthcareIcon name={s.icon} size={30} />
+                                </div>
+                                <h3>{s.name}</h3>
+                                <div className="spec-footer">
+                                  <div className="count">
+                                    {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+                                  </div>
+                                  <div className="book-link">Book →</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div >
+                  )
+                }
+
+                {/* -- Condition list -- (unchanged) -- */}
+                {
+                  drillLevel === "cond" && activeSpec && (
+                    <div className="panel">
+                      <div className="hcc-level-label">
+                        <span style={{ fontSize: 20 }}>
+                          <HealthcareIcon name={activeSpec.icon} size={20} />
+                        </span>
+                        {activeSpec.name} - select your condition
+                      </div>
+                      {/* {!activeSpec.priceAvailable && (
                     <div className="hcc-price-alert">
                       {activeSpec.priceMessage}
                     </div>
                   )} */}
-                    <div className="condgrid">
-                      {drillConditions
-                        .filter(([name]) => !q || name.toLowerCase().includes(q))
-                        .map(([name, icon]) => (
-                          <div
-                            key={name}
-                            className="condcard"
-                            onClick={(e) =>
-                              handleCardClick(e, () =>
-                                handleSelectCond(name, icon, activeSpec),
-                              )
-                            }
-                          >
-                            <div className="condcard-ico">
-                              <HealthcareIcon name={icon} size={23} />
+                      <div className="condgrid">
+                        {drillConditions
+                          .filter(([name]) => !q || name.toLowerCase().includes(q))
+                          .map(([name, icon]) => (
+                            <div
+                              key={name}
+                              className="condcard"
+                              onClick={(e) =>
+                                handleCardClick(e, () =>
+                                  handleSelectCond(name, icon, activeSpec),
+                                )
+                              }
+                            >
+                              <div className="condcard-ico">
+                                <HealthcareIcon name={icon} size={23} />
+                              </div>
+                              <div className="condcard-name">{name}</div>
+                              <div className="book-link">Book →</div>
                             </div>
-                            <div className="condcard-name">{name}</div>
-                            <div className="book-link">Book →</div>
+                          ))}
+                        <div
+                          className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
+                          onClick={(e) =>
+                            handleCardClick(e, () =>
+                              handleSelectCond(
+                                "General Consultation",
+                                "stethoscope",
+                                activeSpec,
+                              ),
+                            )
+                          }
+                        >
+                          <div className="condcard-ico">
+                            <HealthcareIcon name="stethoscope" size={23} />
                           </div>
-                        ))}
-                      <div
-                        className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
-                        onClick={(e) =>
-                          handleCardClick(e, () =>
-                            handleSelectCond(
-                              "General Consultation",
-                              "stethoscope",
-                              activeSpec,
-                            ),
-                          )
-                        }
-                      >
-                        <div className="condcard-ico">
-                          <HealthcareIcon name="stethoscope" size={23} />
-                        </div>
-                        <div className="condcard-body">
-                          <div className="condcard-name">Other / not listed</div>
-                          <div className="condcard-desc">{activeSpec.name}</div>
+                          <div className="condcard-body">
+                            <div className="condcard-name">Other / not listed</div>
+                            <div className="condcard-desc">{activeSpec.name}</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                )
-              }
-            </>
-          )}
-
-          {/* -- FLAT BROWSE: Specialties -- */}
-          {
-            browseTab === "spec" && (
-              <div className="panel">
-                <div className="grid">
-                  {visibleFlatSpecialties.length ? (
-                    visibleFlatSpecialties.map((s) => (
-                      <div
-                        key={(s.id || s.name) + s.catId}
-                        className="spec"
-                        onClick={(e) =>
-                          handleCardClick(e, () => handleFlatSpecClick(s))
-                        }
-                      >
-                        <div className="ic">
-                          <HealthcareIcon name={s.icon} size={30} />
-                        </div>
-                        <h3>{s.name}</h3>
-                        <div className="spec-footer">
-                          <div className="count">
-                            {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
-                          </div>
-                          <div className="book-link">Book →</div>
-                        </div>
-
-                      </div >
-                    ))
-                  ) : (
-                    <div className="empty">
-                      <div className="big">Search</div>No specialties found.
                     </div>
                   )
-                  }
-                </div >
-              </div >
+                }
+              </>
             )}
 
-          {/* -- FLAT BROWSE: Conditions -- (unchanged) -- */}
-          {
-            browseTab === "cond" && (
-              <div className="panel">
-                <div className="condgrid">
-                  {visibleFlatConditions.length ? (
-                    visibleFlatConditions.map((c, i) => (
-                      <div
-                        key={i}
-                        className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
-                        onClick={(e) =>
-                          handleCardClick(e, () => handleFlatCondClick(c))
-                        }
-                      >
-                        <div className="condcard-ico">
-                          <HealthcareIcon name={c.icon} size={23} />
-                        </div>
-                        <div className="condcard-name">{c.name}</div>
-                        {/* <div className="condcard-spec">{c.to}</div> */}
-                        <div className="book-link">Book →</div>
+            {/* -- FLAT BROWSE: Specialties -- */}
+            {
+              browseTab === "spec" && (
+                <div className="panel">
+                  <div className="grid">
+                    {visibleFlatSpecialties.length ? (
+                      visibleFlatSpecialties.map((s) => (
+                        <div
+                          key={(s.id || s.name) + s.catId}
+                          className="spec"
+                          onClick={(e) =>
+                            handleCardClick(e, () => handleFlatSpecClick(s))
+                          }
+                        >
+                          <div className="ic">
+                            <HealthcareIcon name={s.icon} size={30} />
+                          </div>
+                          <h3>{s.name}</h3>
+                          <div className="spec-footer">
+                            <div className="count">
+                              {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
+                            </div>
+                            <div className="book-link">Book →</div>
+                          </div>
+
+                        </div >
+                      ))
+                    ) : (
+                      <div className="empty">
+                        <div className="big">Search</div>No specialties found.
                       </div>
-                    ))
-                  ) : (
-                    <div className="empty">
-                      <div className="big">Search</div>No conditions match.
-                    </div>
-                  )}
+                    )
+                    }
+                  </div >
+                </div >
+              )}
+
+            {/* -- FLAT BROWSE: Conditions -- (unchanged) -- */}
+            {
+              browseTab === "cond" && (
+                <div className="panel">
+                  <div className="condgrid">
+                    {visibleFlatConditions.length ? (
+                      visibleFlatConditions.map((c, i) => (
+                        <div
+                          key={i}
+                          className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
+                          onClick={(e) =>
+                            handleCardClick(e, () => handleFlatCondClick(c))
+                          }
+                        >
+                          <div className="condcard-ico">
+                            <HealthcareIcon name={c.icon} size={23} />
+                          </div>
+                          <div className="condcard-name">{c.name}</div>
+                          {/* <div className="condcard-spec">{c.to}</div> */}
+                          <div className="book-link">Book →</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="empty">
+                        <div className="big">Search</div>No conditions match.
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          }
+              )
+            }
+          </div >
+          {/* /content-card */}
         </div >
-        {/* /content-card */}
-      </div >
-    </section >
+      </section >
+
+      <FAQ
+        badge="FAQ"
+        title="Frequently Asked Questions"
+        description="Everything you need to know about booking online doctor appointments, qualifications, and preparing for your visit."
+        stats={[
+          "Avg. response in 10 min",
+          "HIPAA secure & private",
+          "Available Globally",
+        ]}
+        sections={APPOINTMENT_FAQS}
+      />
     </>
   );
 }

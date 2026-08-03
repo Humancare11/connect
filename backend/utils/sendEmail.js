@@ -57,7 +57,7 @@ const buildEmailHTML = (otp, type, name) => {
     Please note that this code will expire in 10 minutes and should not be shared with anyone.
   `
   : `
-    We received a request to reset your HumanCare Connect account password.
+    We received a request to reset your Humancare Connect account password.
     <br>
     Please use the one-time verification code below to proceed with resetting your password.
     <br>
@@ -69,7 +69,7 @@ const buildEmailHTML = (otp, type, name) => {
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>${badgeText} — HumanCare Connect</title>
+<title>${badgeText} — Humancare Connect</title>
 </head>
 <body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ff; padding: 10px 10px;">
 <div style="max-width:680px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden; border: 1px solid #0a1f44">
@@ -113,7 +113,7 @@ const buildEmailHTML = (otp, type, name) => {
         <span style="margin:0 5px;color:#d1d5db;">·</span>
         <a href="https://humancareconnect.co/support" style="color:#4b5db8;text-decoration:none;font-weight:500;">Support</a>
       </span>
-      <p style="margin:4px 0 0;font-size:11px;color:#b0b7c9;">© ${new Date().getFullYear()} HumanCare Connect. All rights reserved.</p>
+      <p style="margin:4px 0 0;font-size:11px;color:#b0b7c9;">© ${new Date().getFullYear()} Humancare Connect. All rights reserved.</p>
     </div>
   </div>
 
@@ -129,7 +129,7 @@ const sendOTPEmail = async (to, otp, type = "register", name) => {
       : "Humancare Connect — Password Reset OTP";
 
   await sendMail({
-    from: `"HumanCare Connect" <${MAIL_FROM}>`,
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
     subject,
     html: buildEmailHTML(otp, type, name),
@@ -138,7 +138,7 @@ const sendOTPEmail = async (to, otp, type = "register", name) => {
 
 const sendEmail = async ({ to, subject, text, html, replyTo }) => {
   await sendMail({
-    from: `"HumanCare Connect" <${MAIL_FROM}>`,
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
     subject,
     text,

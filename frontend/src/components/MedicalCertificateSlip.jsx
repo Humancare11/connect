@@ -270,7 +270,7 @@ export function MedicalCertificateSlip({
       >
         <img
           src={logoFull}
-          alt="HumanCare Connect"
+          alt="Humancare Connect"
           style={{ height: 54, objectFit: "contain", display: "block" }}
           crossOrigin="anonymous"
         />

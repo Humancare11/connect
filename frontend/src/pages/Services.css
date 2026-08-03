@@ -40,7 +40,7 @@
   font-family: var(--font-secondary);
   background: var(--bg-section);
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ============================================
@@ -111,6 +111,7 @@
     font-size: 14px;
   }
 }
+
 /* ============================================
    SERVICE BLOCK (alternating row)
    ============================================ */
@@ -131,7 +132,7 @@
 }
 
 /* Separator line between blocks */
-.ha-service-block + .ha-service-block::before {
+.ha-service-block+.ha-service-block::before {
   content: "";
   position: absolute;
   top: 0;
@@ -139,12 +140,10 @@
   transform: translateX(-50%);
   width: 80px;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--border-light),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      var(--border-light),
+      transparent);
 }
 
 /* Inner container */
@@ -162,7 +161,7 @@
   direction: rtl;
 }
 
-.ha-service-block.reverse .ha-service-inner > * {
+.ha-service-block.reverse .ha-service-inner>* {
   direction: ltr;
 }
 
@@ -184,11 +183,9 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(43, 108, 176, 0.1) 0%,
-    transparent 50%
-  );
+  background: linear-gradient(135deg,
+      rgba(43, 108, 176, 0.1) 0%,
+      transparent 50%);
   z-index: 1;
   pointer-events: none;
   transition: opacity var(--transition);
@@ -359,11 +356,9 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    var(--primary-dark) 0%,
-    var(--primary) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--primary-dark) 0%,
+      var(--primary) 100%);
   opacity: 0;
   transition: opacity var(--transition);
 }
