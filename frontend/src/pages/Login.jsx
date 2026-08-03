@@ -273,6 +273,7 @@ export default function AuthPage() {
     state: "",
     city: "",
     password: "",
+    confirmPassword: "",
     terms: false,
     privacyConsent: false,
     hipaaConsent: false,
@@ -303,6 +304,7 @@ export default function AuthPage() {
   const [confirmPass, setConfirmPass] = useState("");
   const [showPasswords, setShowPasswords] = useState({
     register: false,
+    registerConfirm: false,
     login: false,
     newPass: false,
     confirmPass: false,
@@ -634,13 +636,23 @@ export default function AuthPage() {
     }
     const passwordError = getPasswordError(registerForm.password);
     if (passwordError) return setFormError(passwordError);
+    if (!registerForm.confirmPassword) {
+      return setFormError("Confirm your password.");
+    }
+    if (registerForm.confirmPassword !== registerForm.password) {
+      return setFormError("Passwords do not match.");
+    }
     if (!registerForm.mobile) return setFormError("Enter mobile number");
     const dobError = getDobError(registerForm.dob);
     if (dobError) return setFormError(dobError);
     if (!registerForm.gender) return setFormError("Select Gender");
     if (!registerForm.country) return setFormError("Select your country");
-    if (!registerForm.state)
+    // Some countries have no subdivisions in the location API (e.g.
+    // Singapore, Monaco) — only require a state when the API actually
+    // returned options, otherwise the field can never be filled in.
+    if (states.length > 0 && !registerForm.state) {
       return setFormError("Select your state / province");
+    }
     // if (!registerForm.city) return setFormError("Select your city");
     setLoading(true);
     try {
@@ -669,7 +681,7 @@ export default function AuthPage() {
     setLoading(true);
     clrErr();
     try {
-      const { terms, ...data } = registerForm;
+      const { terms, confirmPassword, ...data } = registerForm;
       const res = await api.post("/api/auth/register", {
         ...data,
         otp: otpValue,
@@ -684,7 +696,10 @@ export default function AuthPage() {
         dob: "",
         gender: "",
         country: "",
+        state: "",
+        city: "",
         password: "",
+        confirmPassword: "",
         terms: false,
         privacyConsent: false,
         hipaaConsent: false,
@@ -1335,17 +1350,6 @@ export default function AuthPage() {
 
             {formError && <p className="hc-form-error">{formError}</p>}
 
-            {/* <input
-              className="hc-input"
-              type="text"
-              placeholder="Full Name"
-              value={registerForm.name}
-              onChange={(e) =>
-                setRegisterForm((p) => ({ ...p, name: e.target.value }))
-              }
-              required
-            /> */}
-
             <label htmlFor="patient-register-name" style={VISUALLY_HIDDEN}>
               Full Name
             </label>
@@ -1712,6 +1716,49 @@ export default function AuthPage() {
             >
               {registerPasswordError || PASSWORD_REQUIREMENTS}
             </p>
+
+            <div className="hc-pw-wrapper">
+              <label
+                htmlFor="patient-register-confirm-password"
+                style={VISUALLY_HIDDEN}
+              >
+                Confirm Password
+              </label>
+              <input
+                id="patient-register-confirm-password"
+                name="patientRegisterConfirmPassword"
+                className="hc-input"
+                type={showPasswords.registerConfirm ? "text" : "password"}
+                placeholder="Confirm Password"
+                value={registerForm.confirmPassword}
+                onChange={(e) =>
+                  setRegisterForm((p) => ({
+                    ...p,
+                    confirmPassword: e.target.value,
+                  }))
+                }
+                required
+              />
+              <button
+                type="button"
+                className="hc-pw-toggle"
+                onClick={() =>
+                  setShowPasswords((p) => ({
+                    ...p,
+                    registerConfirm: !p.registerConfirm,
+                  }))
+                }
+                tabIndex={-1}
+              >
+                <EyeIcon open={showPasswords.registerConfirm} />
+              </button>
+            </div>
+            {registerForm.confirmPassword &&
+              registerForm.confirmPassword !== registerForm.password && (
+                <p className="hc-pw-requirements hc-pw-requirements--error">
+                  Passwords do not match.
+                </p>
+              )}
 
             <div className="hc-consent-row">
               <label
