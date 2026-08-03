@@ -4,6 +4,8 @@ const Enrollment = require("../models/Enrollment");
 const { getS3ObjectUrl } = require("../config/s3");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { paypalFetch } = require("../utils/paypal");
 
 async function withPresignedMedicalReportUrls(consultation) {
   if (!consultation) return consultation;
@@ -43,14 +45,88 @@ async function withPresignedMedicalReportUrls(consultation) {
 // Create a new consultation
 const createCategoryConsultation = async (req, res) => {
   try {
+    // Derived server-side (not trusted from the client) so a stale/tampered
+    // payload can't claim a slot for a "next available" booking or vice versa.
+    const appointmentType =
+      req.body.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE";
+    const isFlexible = appointmentType === "FLEXIBLE_TIME";
+
+    const { paymentIntentId, paypalOrderId } = req.body;
+
+    // Payment validation
+    if (!paymentIntentId && !paypalOrderId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment is required to submit a consultation request.",
+      });
+    }
+
+    let paymentRef = "";
+    let paymentGateway = "";
+    let paymentAmountFinal = 0;
+    let paymentStatus = "unpaid";
+
+    // Validate Stripe payment
+    if (paymentIntentId) {
+      let pi;
+      try {
+        pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+      } catch (error) {
+        console.error("Stripe retrieve error:", error);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Stripe payment reference.",
+        });
+      }
+
+      if (pi.status !== "succeeded") {
+        return res.status(402).json({
+          success: false,
+          message: "Stripe payment not completed. Please complete payment first.",
+        });
+      }
+
+      paymentRef = paymentIntentId;
+      paymentGateway = "stripe";
+      paymentAmountFinal = pi.amount;
+      paymentStatus = "paid";
+    }
+    // Validate PayPal payment
+    else if (paypalOrderId) {
+      let order;
+      try {
+        order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`);
+      } catch (error) {
+        console.error("PayPal retrieve error:", error);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid PayPal payment reference.",
+        });
+      }
+
+      if (order.status !== "COMPLETED") {
+        return res.status(402).json({
+          success: false,
+          message: "PayPal payment not completed.",
+        });
+      }
+
+      const captureData = order.purchase_units[0].payments.captures[0];
+      paymentRef = paypalOrderId;
+      paymentGateway = "paypal";
+      paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
+      paymentStatus = "paid";
+    }
+
     const consultation = await CategoryConsultation.create({
       concern: req.body.concern,
       duration: req.body.duration,
       severity: req.body.severity,
       supportType: req.body.supportType,
       urgency: req.body.urgency,
-      timeWindow: req.body.timeWindow,
-      slot: req.body.slot,
+      appointmentType,
+      timeWindow: isFlexible ? req.body.timeWindow : "",
+      slot: isFlexible ? req.body.slot : null,
       date: req.body.date,
       patientId: req.user.id,
       medicalReports: req.body.medicalReports,
@@ -60,6 +136,10 @@ const createCategoryConsultation = async (req, res) => {
       conditionName: req.body.conditionName,
       serviceName: req.body.serviceName,
       pcpName: req.body.pcpName,
+      paymentIntentId: paymentRef,
+      paymentAmount: paymentAmountFinal,
+      paymentStatus,
+      paymentGateway,
     });
 
     res.status(201).json({
@@ -270,7 +350,7 @@ const deleteCategoryConsultation = async (req, res) => {
 
 const assignDoctor = async (req, res) => {
   try {
-    const { doctorId } = req.body;
+    const { doctorId, appointmentTime } = req.body;
 
     if (!doctorId) {
       return res.status(400).json({
@@ -303,6 +383,13 @@ const assignDoctor = async (req, res) => {
 
     consultation.assignedAt = new Date();
     consultation.status = "Assigned";
+
+    // NEXT_AVAILABLE bookings have no patient-chosen slot, so the admin
+    // supplies the actual appointment time being assigned here. Ignored for
+    // FLEXIBLE_TIME bookings, which already have their slot set.
+    if (consultation.appointmentType === "NEXT_AVAILABLE" && appointmentTime) {
+      consultation.assignedSlot = appointmentTime;
+    }
 
     await consultation.save();
 

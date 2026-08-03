@@ -29,14 +29,33 @@ const consultationSchema = new mongoose.Schema(
       required: true,
     },
 
-    timeWindow: {
+    // Derived from `urgency` server-side on create. Kept as its own field
+    // (rather than re-deriving from `urgency` everywhere it's displayed)
+    // so admin views have one clear source of truth.
+    appointmentType: {
       type: String,
-      required: true,
+      enum: ["NEXT_AVAILABLE", "FLEXIBLE_TIME"],
+      default: "FLEXIBLE_TIME",
     },
 
+    timeWindow: {
+      type: String,
+      default: "",
+    },
+
+    // Patient-chosen slot. Only set for FLEXIBLE_TIME bookings — null for
+    // NEXT_AVAILABLE, since the patient never picks a time in that flow.
     slot: {
       type: String,
-      required: true,
+      default: null,
+    },
+
+    // The concrete appointment time an admin assigns for a NEXT_AVAILABLE
+    // booking once a doctor is matched. Not used for FLEXIBLE_TIME bookings,
+    // where `slot` already holds the agreed time.
+    assignedSlot: {
+      type: String,
+      default: null,
     },
 
     date: {
@@ -101,6 +120,24 @@ const consultationSchema = new mongoose.Schema(
     },
     pcpName: {
       type: String,
+      default: "",
+    },
+    paymentIntentId: {
+      type: String,
+      default: "",
+    },
+    paymentAmount: {
+      type: Number,
+      default: 0,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["unpaid", "paid", "refunded"],
+      default: "unpaid",
+    },
+    paymentGateway: {
+      type: String,
+      enum: ["", "stripe", "paypal"],
       default: "",
     },
   },

@@ -143,7 +143,7 @@ router.get("/tasks", verifyEmployeeAdminToken, employeeAdminOnly, async (req, re
 
     const tasks = await EmployeeTask.find(filter)
       .populate(taskPopulate)
-      .sort({ dueDate: 1, createdAt: -1 })
+      .sort({ createdAt: -1 })
       .lean();
 
     res.json(tasks);

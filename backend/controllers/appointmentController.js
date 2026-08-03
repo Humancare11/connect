@@ -348,6 +348,16 @@ const createAppointment = async (req, res) => {
     res.status(500).json({ msg: "Failed to book appointment." });
   }
 };
+// NEXT_AVAILABLE bookings have no patient-chosen slot, so `cc.slot` is null
+// until an admin assigns one (stored in `cc.assignedSlot`). Falls back to
+// deriving from `urgency` for records created before appointmentType existed.
+const resolveCategoryConsultationTime = (cc) => {
+  const appointmentType =
+    cc.appointmentType || (cc.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE");
+  if (appointmentType === "FLEXIBLE_TIME") return cc.slot;
+  return cc.assignedSlot || "Next Available";
+};
+
 const mapCategoryConsultationToAppointment = (cc) => {
   let doctor = null;
   if (cc.assignedDoctorId) {
@@ -381,7 +391,7 @@ const mapCategoryConsultationToAppointment = (cc) => {
     condition: cc.urgency || "",
     consultationPrice: 49,
     date: cc.date,
-    time: cc.slot,
+    time: resolveCategoryConsultationTime(cc),
     problem: cc.concern,
     status: mappedStatus,
     medicalReports: [],
