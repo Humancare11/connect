@@ -22,6 +22,65 @@ function canonicalStatus(status) {
   return STATUS_META[s] ? s : "pending";
 }
 
+// Mirrors the server-side derivation in CategoryConsultationController so a
+// pre-migration record (no appointmentType stored yet) still displays right.
+function resolveAppointmentType(item) {
+  if (item.appointmentType) return item.appointmentType;
+  return item.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE";
+}
+
+function appointmentDisplay(item) {
+  if (resolveAppointmentType(item) === "FLEXIBLE_TIME") {
+    return item.slot || "-";
+  }
+  return item.assignedSlot || "Next Available";
+}
+
+// "05:40 PM" -> 17.667 (hours since midnight), for bucketing into a window.
+function timeStringToHour(display) {
+  const match = String(display || "").match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return null;
+  let [, hours, minutes, period] = match;
+  hours = parseInt(hours, 10);
+  minutes = parseInt(minutes, 10);
+  if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
+  if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
+  return hours + minutes / 60;
+}
+
+// Matches the Morning/Afternoon/Evening/Night ranges from CategoryConsultant.
+function windowLabelForHour(hour) {
+  if (hour === null) return "";
+  if (hour >= 6 && hour < 12) return "Morning";
+  if (hour >= 12 && hour < 18) return "Afternoon";
+  if (hour >= 18 && hour < 24) return "Evening";
+  return "Night";
+}
+
+// NEXT_AVAILABLE bookings have no patient-chosen time window — show "-"
+// until a doctor is assigned, then derive the window from the assigned time.
+function timeWindowDisplay(item) {
+  if (resolveAppointmentType(item) === "FLEXIBLE_TIME") {
+    return item.timeWindow || "-";
+  }
+  return windowLabelForHour(timeStringToHour(item.assignedSlot)) || "-";
+}
+
+// Highlights the "awaiting assignment" state so it reads as a call-to-action
+// next to a resolved appointment time, not just more table text.
+function AppointmentCell({ item }) {
+  const value = appointmentDisplay(item);
+  if (value !== "Next Available") return <>{value}</>;
+  return (
+    <span
+      className="adp-status-pill"
+      style={{ background: "#eef2ff", color: "#4338ca", borderColor: "#c7d2fe" }}
+    >
+      Next Available
+    </span>
+  );
+}
+
 function StatusPill({ status }) {
   const key = canonicalStatus(status);
   const meta = STATUS_META[key];
@@ -172,12 +231,9 @@ export default function AdminCategoryConsultations() {
               <thead>
                 <tr>
                   <th>SR No</th>
-                  <th>Concern</th>
-                  <th>Severity</th>
-                  <th>Support Type</th>
                   <th>Consultation Date</th>
                   <th>Time Window</th>
-                  <th>Slot</th>
+                  <th>Appointment</th>
                   <th>Source Page</th>
                   <th>Status</th>
                   <th>View</th>
@@ -188,12 +244,9 @@ export default function AdminCategoryConsultations() {
                 {displayed.map((item, index) => (
                   <tr key={item._id}>
                     <td className="adp-sr-cell">{index + 1}</td>
-                    <td>{item.concern || "-"}</td>
-                    <td>{item.severity || "-"}</td>
-                    <td>{item.supportType || "-"}</td>
                     <td>{item.date || "-"}</td>
-                    <td>{item.timeWindow || "-"}</td>
-                    <td>{item.slot || "-"}</td>
+                    <td>{timeWindowDisplay(item)}</td>
+                    <td><AppointmentCell item={item} /></td>
                     <td>
                       {item.pcpName ? (
                         <div style={{ fontSize: "0.85rem" }}>

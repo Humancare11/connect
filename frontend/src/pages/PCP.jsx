@@ -427,20 +427,6 @@ export default function PCP() {
                   </div>
                 </FadeIn>
               </div>
-
-              <FadeIn
-                delay={0.2}
-                direction="right"
-                className="pcp-hero__sidebar"
-              >
-                <BookingCard
-                  price={price}
-                  priceLoading={priceLoading}
-                  categoryId="general"
-                  name="Primary Care"
-                  isPcp
-                />
-              </FadeIn>
             </div>
           </div>
         </motion.section>
@@ -503,9 +489,17 @@ export default function PCP() {
                 </div>
               </div>
 
-              {/* About right — reserved for the booking flow */}
+              {/* About right — booking flow */}
               <div className="pcp-about__right">
-                <div className="pcp-about__booking-slot" />
+                <FadeIn direction="right" className="pcp-about__booking-slot">
+                  <BookingCard
+                    price={price}
+                    priceLoading={priceLoading}
+                    categoryId="general"
+                    name="Primary Care"
+                    isPcp
+                  />
+                </FadeIn>
               </div>
             </div>
           </div>

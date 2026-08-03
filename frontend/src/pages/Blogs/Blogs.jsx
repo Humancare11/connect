@@ -201,7 +201,7 @@ export default function BlogPage() {
         <section
           className="blog-hero"
           style={{
-            backgroundImage: `linear-gradient(135deg, rgba(220,230,242,0.92) 0%, rgba(244,247,251,0.88) 100%), url(${heroBg})`,
+            backgroundImage: `linear-gradient(135deg, rgba(220,230,242,0.55) 0%, rgba(244,247,251,0.4) 100%), url(${heroBg})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -334,47 +334,7 @@ export default function BlogPage() {
                         )}
                       </div>
                       <div className="card-body">
-                        <div className="card-meta">
-                          {blog.date && (
-                            <span className="meta-date">
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.2"
-                              >
-                                <rect
-                                  x="3"
-                                  y="4"
-                                  width="18"
-                                  height="18"
-                                  rx="2"
-                                />
-                                <path
-                                  d="M16 2v4M8 2v4M3 10h18"
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              {blog.date}
-                            </span>
-                          )}
-                          <span className="meta-read">
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.2"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <path d="M12 6v6l4 2" strokeLinecap="round" />
-                            </svg>
-                            {blog.readTime} min read
-                          </span>
-                        </div>
+                        
                         <h3 className="card-title">{blog.title}</h3>
                         <p className="card-desc">{blog.description}</p>
                       </div>

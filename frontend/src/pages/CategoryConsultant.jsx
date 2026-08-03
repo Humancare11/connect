@@ -183,8 +183,12 @@ export default function CategoryConsultant({ onComplete }) {
   const todayStr = new Date().toISOString().split("T")[0];
   const isToday = data.date === todayStr;
 
+  // Next Availability means "assign the earliest doctor" — no slot to pick.
+  const isFlexibleTiming = data.urgency === "flexible";
+
   // Is this window's slot range already over, for a "today" booking?
   const isWindowDisabled = (window) => {
+    if (!isFlexibleTiming) return true; // slot grid only applies to Flexible Timing
     if (!data.date) return true; // no date picked yet → nothing selectable
     if (!isToday) return false;
     const now = new Date();
@@ -263,7 +267,8 @@ export default function CategoryConsultant({ onComplete }) {
   const canContinueStep1 =
     data.concern.trim().length > 0 && data.severity && data.supportType;
 
-  const canContinueStep2 = data.date && data.urgency && data.slot;
+  const canContinueStep2 =
+    data.date && data.urgency && (isFlexibleTiming ? Boolean(data.slot) : true);
 
   const handleFinish = async () => {
     if (!data.date) {
@@ -573,7 +578,16 @@ export default function CategoryConsultant({ onComplete }) {
                       aria-checked={selected}
                       disabled={!data.date}
                       className={`hc-option-card hc-option-card--dark ${selected ? "is-selected" : ""} ${!data.date ? "is-disabled" : ""}`}
-                      onClick={() => data.date && setData({ ...data, urgency: opt.id })}
+                      onClick={() => {
+                        if (!data.date) return;
+                        setData((prev) => ({
+                          ...prev,
+                          urgency: opt.id,
+                          // "Next Availability" doesn't take a slot — clear any prior pick.
+                          ...(opt.id === "next" ? { timeWindow: "", slot: "" } : {}),
+                        }));
+                        if (opt.id === "next") setOpenWindow(null);
+                      }}
                     >
                       <span className="hc-option-card__icon" aria-hidden="true">
                         {opt.icon}
@@ -604,6 +618,11 @@ export default function CategoryConsultant({ onComplete }) {
 
             <div className="hc-timing-col">
               <h2 className="hc-timing-col__heading">Select Time Window</h2>
+              {!isFlexibleTiming && (
+                <p className="hc-field__label" style={{ marginBottom: 12, fontWeight: 400 }}>
+                  We'll match you with the earliest available physician — no need to pick a slot.
+                </p>
+              )}
               <div
                 className="hc-accordion"
                 role="region"
