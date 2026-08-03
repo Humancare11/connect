@@ -35,6 +35,19 @@ function statusLabel(status) {
   return status || "Pending";
 }
 
+// Mirrors the server-side derivation in CategoryConsultationController so a
+// pre-migration record (no appointmentType stored yet) still displays right.
+function resolveAppointmentType(consultation) {
+  if (consultation?.appointmentType) return consultation.appointmentType;
+  return consultation?.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE";
+}
+
+function appointmentTypeLabel(consultation) {
+  return resolveAppointmentType(consultation) === "FLEXIBLE_TIME"
+    ? "Flexible Timing"
+    : "Next Availability";
+}
+
 function isDoctorAssigned(consultation) {
   return Boolean(
     consultation?.assignedDoctorId ||
@@ -179,8 +192,20 @@ export default function AdminCategoryConsultationDetails() {
             <InfoTile label="Support Type" value={consultation.supportType} />
             <InfoTile label="Consultation Fee" value={formatMoney(consultation.consultationPrice)} />
             <InfoTile label="Consultation Date" value={consultation.date} />
-            <InfoTile label="Time Window" value={consultation.timeWindow} />
-            <InfoTile label="Slot" value={consultation.slot} />
+            <InfoTile label="Appointment Type" value={appointmentTypeLabel(consultation)} />
+            <InfoTile label="Preferred Time Window" value={consultation.timeWindow} />
+            <InfoTile label="Selected Slot" value={consultation.slot} />
+            {resolveAppointmentType(consultation) === "NEXT_AVAILABLE" && (
+              <InfoTile label="Assigned Appointment Time" value={consultation.assignedSlot} />
+            )}
+            <InfoTile
+              label="Booking Time"
+              value={
+                consultation.createdAt
+                  ? new Date(consultation.createdAt).toLocaleString()
+                  : "-"
+              }
+            />
             <InfoTile label="Status" value={statusLabel(consultation.status)} />
             <InfoTile label="Source Category" value={consultation.categoryName} />
             <InfoTile label="Source Specialty" value={consultation.specialtyName} />

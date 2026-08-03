@@ -42,6 +42,35 @@ function getAppointmentCountry(appointment) {
   return appointment?.patientId?.country || appointment?.country || "";
 }
 
+// <input type="time"> works in 24h "HH:MM"; slot values elsewhere in the app
+// (e.g. CategoryConsultant's slot grid) are stored as "05:30 PM". These
+// convert between the two so the picker and the stored value stay in sync.
+function to24Hour(display) {
+  const match = String(display || "").match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return "";
+  let [, hours, minutes, period] = match;
+  hours = parseInt(hours, 10);
+  if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
+  if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
+  return `${String(hours).padStart(2, "0")}:${minutes}`;
+}
+
+function to12Hour(value) {
+  if (!value) return "";
+  const [hoursStr, minutes] = value.split(":");
+  let hours = parseInt(hoursStr, 10);
+  const period = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  return `${String(hours).padStart(2, "0")}:${minutes} ${period}`;
+}
+
+// Mirrors the server-side derivation in CategoryConsultationController so a
+// pre-migration record (no appointmentType stored yet) still behaves right.
+function resolveAppointmentType(appointment) {
+  if (appointment?.appointmentType) return appointment.appointmentType;
+  return appointment?.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE";
+}
+
 function getLicenseCountries(doctor) {
   return uniqueValues([
     doctor.licenseCountry,
@@ -145,6 +174,9 @@ export default function AdminAssignCategoryDoctor() {
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // Only used for NEXT_AVAILABLE bookings, where the admin — not the
+  // patient — is the one picking the actual appointment time.
+  const [appointmentTime, setAppointmentTime] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -159,6 +191,7 @@ export default function AdminAssignCategoryDoctor() {
         ]);
         if (!alive) return;
         setAppointment(consultationRes.data.data);
+        setAppointmentTime(consultationRes.data.data?.assignedSlot || "");
         setDoctors(Array.isArray(doctorsRes.data) ? doctorsRes.data : []);
       } catch (err) {
         if (alive) setError(err.response?.data?.msg || "Failed to load data.");
@@ -223,9 +256,14 @@ export default function AdminAssignCategoryDoctor() {
   }, [appointment, doctors, query]);
 
   const currentDoctorMongoId = appointment?.assignedDoctorId?.toString() || "";
+  const isNextAvailable = resolveAppointmentType(appointment) === "NEXT_AVAILABLE";
 
   const assignDoctor = async (doctor) => {
     if (!doctor?.id || assigningDoctorId) return;
+    if (isNextAvailable && !appointmentTime.trim()) {
+      setError("Enter the appointment time you're assigning before selecting a doctor.");
+      return;
+    }
     setAssigningDoctorId(String(doctor.id));
     setError("");
     setNotice("");
@@ -234,6 +272,7 @@ export default function AdminAssignCategoryDoctor() {
         `/api/category-consultation/${id}/assign-doctor`,
         {
           doctorId: doctor.id,
+          ...(isNextAvailable ? { appointmentTime: appointmentTime.trim() } : {}),
         },
       );
       setNotice(res.data?.message || res.data?.msg || "Doctor assigned successfully.");
@@ -311,8 +350,20 @@ export default function AdminAssignCategoryDoctor() {
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">
-          <span className="aad-appt-label">Slot</span>
-          <span className="aad-appt-val">{appointment.slot || "—"}</span>
+          <span className="aad-appt-label">
+            {isNextAvailable ? "Appointment" : "Slot"}
+          </span>
+          {isNextAvailable ? (
+            <input
+              type="time"
+              className="aad-appt-val"
+              value={to24Hour(appointmentTime)}
+              onChange={(e) => setAppointmentTime(to12Hour(e.target.value))}
+              style={{ border: "1px solid #cbd5e1", borderRadius: 6, padding: "2px 8px" }}
+            />
+          ) : (
+            <span className="aad-appt-val">{appointment.slot || "—"}</span>
+          )}
         </div>
         <div className="aad-appt-sep" />
         <div className="aad-appt-field">

@@ -44,6 +44,10 @@ export default function CategoryAppointmentConfirm() {
   const [time] = useState(
     pending?.formData?.time || pending?.formData?.slot || "",
   );
+  // "Next Availability" bookings never had a slot picked — show that
+  // explicitly instead of a blank "Time" row on the payment summary.
+  const isNextAvailability = pending?.formData?.urgency !== "flexible";
+  const displayTime = time || (isNextAvailability ? "Next Available" : "");
   const [date, setDate] = useState(pending?.formData?.date || "");
   const [stage, setStage] = useState("form"); // form | payment | confirming | success
   const [reports, setReports] = useState([]);
@@ -388,7 +392,7 @@ export default function CategoryAppointmentConfirm() {
           <PaymentStage
             amount={livePrice}
             selection={selection}
-            formData={{ notes, date, time }}
+            formData={{ notes, date, time: displayTime }}
             uploadedReports={reports}
             onBack={() => {
               setStage("form");
