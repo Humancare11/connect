@@ -230,7 +230,7 @@ const PediatricColdFlu = lazy(
 );
 const PediatricFever = lazy(() => import("./pages/Conditions/PediatricFever"));
 const PinkEyeChildren = lazy(
-  () => import("./pages/Conditions/PinkEyeChildren"),
+  () => import("./pages/Conditions/PinkEyeChildren")f,
 );
 const PubertyConcerns = lazy(
   () => import("./pages/Conditions/PubertyConcerns"),
