@@ -63,10 +63,7 @@ import overviewImage from "../../../assets/SpecialitiesImage/gastroenterologist-
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 import SEO from "../../../components/Seo";
-<<<<<<< HEAD
-=======
 import FAQ from "../../../components/FAQ/FAQ";
->>>>>>> bdefc59ce0ee2a86ba3fca62ebd5c4c5c14591aa
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
