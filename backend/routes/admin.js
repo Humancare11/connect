@@ -5,7 +5,8 @@ const {
   getDoctorDocumentAccessUrl,
   approveDoctor, rejectDoctor,
   approveDoctorDeleteRequest, rejectDoctorDeleteRequest,
-  getAllUsers, deleteUser, getUserDetails, forceLogoutUser, disableUser, migrateDoctorIds,
+  getAllUsers, deleteUser, approveUserDeleteRequest, rejectUserDeleteRequest,
+  getUserDetails, forceLogoutUser, disableUser, migrateDoctorIds,
   getApprovedDoctors, getDoctorWorkflowStats, getDoctorPayments, markDoctorPayout, editDoctorPayout,
   processDoctorPayout,
 } = require("../controllers/adminController");
@@ -31,6 +32,8 @@ router.get("/users/:id",    verifyAdminToken, adminOnly, getUserDetails);
 router.post("/users/:id/force-logout", verifyAdminToken, superAdminOnly, forceLogoutUser);
 router.put("/users/:id/disable",       verifyAdminToken, superAdminOnly, disableUser);
 router.delete("/users/:id", verifyAdminToken, adminOnly, deleteUser);
+router.put("/users/:id/delete-request/approve", verifyAdminToken, adminOnly, approveUserDeleteRequest);
+router.put("/users/:id/delete-request/reject",  verifyAdminToken, adminOnly, rejectUserDeleteRequest);
 
 router.get("/doctor-payments",                  verifyAdminToken, adminOnly,      getDoctorPayments);
 router.put("/doctor-payments/:id/mark-paid",    verifyAdminToken, superAdminOnly, markDoctorPayout);

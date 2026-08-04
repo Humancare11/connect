@@ -153,6 +153,34 @@ const CHAT_SEND_COOLDOWN_MS = 300;
 
 const CONNECTION_STATS_INTERVAL_MS = 5000;
 
+// Short-lived TURN credentials minted by the backend for this specific room
+// (see GET /api/direct-video-room/:roomId/ice-servers) — the same approach
+// the appointment VideoCall page uses, kept independent since guests here
+// have no authenticated identity to gate that page's endpoint on. Falls back
+// to the static RTC_CONFIG (built from VITE_RTC_TURN_* at build time) if the
+// fetch fails or is unreachable, so a backend hiccup degrades rather than
+// blocks the call.
+async function fetchDirectRoomIceConfig(roomId) {
+  try {
+    const res = await api.get(`/api/direct-video-room/${roomId}/ice-servers`, { timeout: 8000 });
+    const iceServers = res.data?.iceServers;
+    if (Array.isArray(iceServers) && iceServers.length) {
+      return {
+        iceServers,
+        iceCandidatePoolSize: RTC_CONFIG?.iceCandidatePoolSize ?? 10,
+        bundlePolicy: "max-bundle",
+        rtcpMuxPolicy: "require",
+      };
+    }
+  } catch (err) {
+    console.warn(
+      "[direct-video-call] Failed to fetch dynamic ICE servers, falling back to static config:",
+      err.message,
+    );
+  }
+  return RTC_CONFIG;
+}
+
 const playVideoElement = async (videoEl) => {
   if (!videoEl) return true;
   try {
@@ -278,6 +306,7 @@ export default function DirectVideoCall() {
   const dragRef = useRef({ active: false, ox: 0, oy: 0, ex: 0, ey: 0 });
   const statsTimerRef = useRef(null);
   const lastStatsSampleRef = useRef(null);
+  const iceConfigPromiseRef = useRef(null);
 
   useEffect(() => {
     if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -531,6 +560,7 @@ export default function DirectVideoCall() {
     }
 
     startedRef.current = true;
+    iceConfigPromiseRef.current = fetchDirectRoomIceConfig(roomId);
 
     const flushPendingCandidates = async () => {
       const pc = pcRef.current;
@@ -648,10 +678,13 @@ export default function DirectVideoCall() {
       ]);
     };
 
-    const setupPeerConnection = () => {
+    const setupPeerConnection = async () => {
+      const iceConfig = (await iceConfigPromiseRef.current) || RTC_CONFIG;
+      if (!mountedRef.current || pcRef.current) return;
+
       let pc;
       try {
-        pc = new RTCPeerConnection(RTC_CONFIG);
+        pc = new RTCPeerConnection(iceConfig);
       } catch (err) {
         console.error("[direct-video-call] RTCPeerConnection construction failed:", err);
         handleRoomError({
@@ -724,7 +757,7 @@ export default function DirectVideoCall() {
       if (!mountedRef.current) return;
       isInitiatorRef.current = !!isInitiator;
       setCallStatus(isInitiator ? "connecting" : "waiting");
-      setupPeerConnection();
+      void setupPeerConnection();
     };
 
     const joinRoom = () => {

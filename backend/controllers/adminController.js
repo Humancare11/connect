@@ -95,8 +95,9 @@ const getAdminStats = async (req, res) => {
     const activeUsers = await User.countDocuments({ role: "user" }); // For now, same as total users
     const totalDoctors = await Enrollment.countDocuments({ approvalStatus: "approved" });
     const totalAppointments = await Appointment.countDocuments();
+    const pendingAccountDeletionRequests = await User.countDocuments({ deletionRequestStatus: "pending" });
 
-    res.status(200).json({ totalUsers, activeUsers, totalDoctors, totalAppointments });
+    res.status(200).json({ totalUsers, activeUsers, totalDoctors, totalAppointments, pendingAccountDeletionRequests });
   } catch (error) {
     console.error("Admin stats error:", error);
     res.status(500).json({ msg: "Failed to fetch admin stats" });
@@ -362,6 +363,66 @@ const deleteUser = async (req, res) => {
   } catch (error) {
     console.error("deleteUser error:", error);
     res.status(500).json({ msg: "Failed to delete user" });
+  }
+};
+
+// PUT /api/admin/users/:id/delete-request/approve — approve a user's self-requested account deletion (hard-deletes the account)
+const approveUserDeleteRequest = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    if (user.deletionRequestStatus !== "pending") {
+      return res.status(400).json({ msg: "No pending deletion request for this user." });
+    }
+
+    await User.findByIdAndDelete(user._id);
+    await revokeUserSessions(user._id, "account_deleted");
+
+    await recordActivity(req, {
+      action: "ADMIN_APPROVE_USER_DELETE_REQUEST",
+      resource: "User",
+      resourceId: req.params.id,
+      details: { deletedUserEmail: user.email, deletedUserName: user.name, deletedUserRole: user.role, reason: user.deletionReason },
+    });
+
+    return res.status(200).json({ msg: "Account deletion approved and account deleted." });
+  } catch (error) {
+    console.error("approveUserDeleteRequest error:", error);
+    return res.status(500).json({ msg: "Failed to approve account deletion request." });
+  }
+};
+
+// PUT /api/admin/users/:id/delete-request/reject — reject a user's self-requested account deletion
+const rejectUserDeleteRequest = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    if (user.deletionRequestStatus !== "pending") {
+      return res.status(400).json({ msg: "No pending deletion request for this user." });
+    }
+
+    user.deletionRequestStatus = "rejected";
+    user.deletionRejectedAt = new Date();
+    await user.save();
+
+    await recordActivity(req, {
+      action: "ADMIN_REJECT_USER_DELETE_REQUEST",
+      resource: "User",
+      resourceId: user._id,
+      details: { userEmail: user.email, userName: user.name },
+    });
+
+    const { password, ...safeUser } = user.toObject();
+
+    return res.status(200).json({
+      msg: "Account deletion request rejected.",
+      user: safeUser,
+    });
+  } catch (error) {
+    console.error("rejectUserDeleteRequest error:", error);
+    return res.status(500).json({ msg: "Failed to reject account deletion request." });
   }
 };
 
@@ -890,6 +951,8 @@ module.exports = {
   rejectDoctorDeleteRequest,
   getAllUsers,
   deleteUser,
+  approveUserDeleteRequest,
+  rejectUserDeleteRequest,
   getUserDetails,
   forceLogoutUser,
   disableUser,

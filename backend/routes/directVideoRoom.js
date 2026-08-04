@@ -6,6 +6,7 @@ const {
   getDirectVideoRooms,
   closeDirectVideoRoom,
   getDirectVideoRoomStatus,
+  getDirectVideoRoomIceServers,
 } = require("../controllers/directVideoRoomController");
 
 // Admin: generate / list / close rooms
@@ -16,5 +17,6 @@ router.post("/:roomId/close", verifyAdminToken, adminOnly, closeDirectVideoRoom)
 // Public: no login required — anyone with the link checks room validity
 // before joining as a guest, same trust model as a Google Meet link.
 router.get("/:roomId/status", getDirectVideoRoomStatus);
+router.get("/:roomId/ice-servers", getDirectVideoRoomIceServers);
 
 module.exports = router;

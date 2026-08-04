@@ -43,6 +43,17 @@ const userSchema = new mongoose.Schema(
     disabledAt: { type: Date, default: null },
     disabledReason: { type: String, default: "" },
 
+    deletionRequestStatus: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none",
+      index: true,
+    },
+    deletionReason: { type: String, default: "" },
+    deletionRequestedAt: { type: Date, default: null },
+    deletionApprovedAt: { type: Date, default: null },
+    deletionRejectedAt: { type: Date, default: null },
+
     privacyConsent: {
       accepted: { type: Boolean, default: false },
       acceptedAt: { type: Date, default: null },
