@@ -20,12 +20,22 @@ const CATEGORY_CONSULTATION_STATUS_MAP = {
   cancelled: "cancelled",
 };
 
+// NEXT_AVAILABLE bookings have no patient-chosen slot, so `cc.slot` is null
+// until an admin assigns one (stored in `cc.assignedSlot`). Falls back to
+// deriving from `urgency` for records created before appointmentType existed.
+const resolveCategoryConsultationTime = (cc) => {
+  const appointmentType =
+    cc.appointmentType || (cc.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE");
+  if (appointmentType === "FLEXIBLE_TIME") return cc.slot;
+  return cc.assignedSlot || "Next Available";
+};
+
 const normalizeCategoryConsultation = (cc, doctorId) => ({
   _id: cc._id,
   doctorId,
   patientId: cc.patientId,
   date: cc.date,
-  time: cc.slot,
+  time: resolveCategoryConsultationTime(cc),
   problem: cc.concern,
   status: CATEGORY_CONSULTATION_STATUS_MAP[String(cc.status || "").toLowerCase()] || "pending",
   appointmentModel: "CategoryConsultation",
@@ -57,7 +67,7 @@ const ensureDoctorAppointment = async (appointmentId, doctorId) => {
     const categoryConsultation = await CategoryConsultation.findOne({
       _id: appointmentId,
       assignedDoctorId: enrollment._id,
-    }).select("_id patientId date slot concern status");
+    }).select("_id patientId date slot assignedSlot appointmentType urgency concern status");
 
     if (categoryConsultation) {
       return normalizeCategoryConsultation(categoryConsultation, doctorId);

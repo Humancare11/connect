@@ -193,6 +193,8 @@ export default function CategoryAppointmentConfirm() {
           serviceName: selection.serviceName || "",
           pcpName: selection.pcpName || "",
         };
+        if (gateway === "paypal") body.paypalOrderId = paymentRef;
+        else body.paymentIntentId = paymentRef;
         await api.post("/api/category-consultation", body);
       } else {
         const body = {
