@@ -586,7 +586,21 @@ const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const telemetryLimiter = makeSocketLimiter({ windowMs: 1000, max: 10 });
 const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
-const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
+// max: 6, not 2 like videoSdpLimiter above. That budget works for the
+// appointment flow because only one side (the patient) ever self-initiates
+// an offer there — the doctor only answers, so a normal handshake never
+// sends more than one SDP message per side per second. Direct Video Call
+// guests are symmetric peers: both sides independently create their
+// RTCPeerConnection and add tracks, so an initial "offer glare" (both sides
+// firing onnegotiationneeded at once) is expected, and the polite side's
+// rollback can itself re-trigger onnegotiationneeded, producing a real
+// burst of up to 3 legitimate SDP messages (offer, re-offer, then the
+// answer) within under a second. At max: 2, the answer that actually
+// completes the handshake was being silently dropped by this limiter,
+// leaving the call stuck at "connecting" forever. 6 keeps comfortable
+// headroom for that burst while still capping well below anything a real
+// flood needs.
+const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
 const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 
@@ -1513,6 +1527,20 @@ io.on("connection", (socket) => {
 
     const alreadyInRoom = uniqueGuestIds.has(guestId);
 
+    // Name of whichever other guest is already in the room, if any — used
+    // below to tell a joining guest about them immediately. Without this,
+    // only the pre-existing guest ever learned about the new joiner (via the
+    // broadcast at the end of this handler); the joiner itself had no way to
+    // know someone was already there, leaving it stuck showing "waiting" and
+    // (since the client only creates its RTCPeerConnection once it knows a
+    // peer is present) never starting WebRTC negotiation at all.
+    let existingPeerName = "";
+    for (const [gid, sid] of uniqueGuestIds.entries()) {
+      if (gid === guestId) continue;
+      existingPeerName = directRoomSockets.get(sid)?.name || "";
+      break;
+    }
+
     // Evict a stale socket for the same guest (refresh / duplicate tab)
     // rather than counting it as a second seat.
     if (alreadyInRoom) {
@@ -1547,6 +1575,7 @@ io.on("connection", (socket) => {
     DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => { });
 
     socket.emit("direct-room-joined", { roomId, isInitiator, resumedCall });
+    if (existingPeerName) socket.emit("direct-peer-joined", { name: existingPeerName });
     socket.to(room).emit("direct-peer-joined", { name: guestName, resumedCall });
   });
 
