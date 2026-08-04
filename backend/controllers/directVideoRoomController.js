@@ -1,6 +1,8 @@
 const crypto = require("crypto");
 const DirectVideoRoom = require("../models/DirectVideoRoom");
 const User = require("../models/User");
+const { TURN_REGIONS, buildStunServers } = require("../utils/iceServerRegions");
+const { generateTurnCredentials } = require("../utils/turnCredentials");
 
 const MIN_EXPIRY_HOURS = 1;
 const MAX_EXPIRY_HOURS = 72;
@@ -150,9 +152,57 @@ const getDirectVideoRoomStatus = async (req, res) => {
   }
 };
 
+// GET /api/direct-video-room/:roomId/ice-servers — public, no login required.
+// Mirrors GET /api/rtc/ice-servers (routes/rtc.js), which the appointment
+// Video Consultation flow uses to get short-lived TURN credentials minted by
+// the backend instead of depending on a permanent credential baked into the
+// frontend build. Direct Video Call guests have no authenticated identity to
+// gate that endpoint on, so this scopes the mint to a currently-active room
+// instead of a user — it can't be used to mint credentials for an
+// expired/closed/nonexistent roomId.
+const getDirectVideoRoomIceServers = async (req, res) => {
+  try {
+    const room = await DirectVideoRoom.findOne({ roomId: req.params.roomId })
+      .select("status expiresAt")
+      .lean();
+    if (!room || effectiveStatus(room) !== "active") {
+      return res.status(404).json({ msg: "This meeting link is invalid or has expired." });
+    }
+
+    const iceServers = buildStunServers();
+    let ttlSeconds = null;
+    for (const region of TURN_REGIONS) {
+      if (!region.secret) {
+        console.warn("[direct-video-room] A TURN region has urls configured but no matching secret — skipping it.");
+        continue;
+      }
+      const creds = generateTurnCredentials({ identifier: req.params.roomId, secret: region.secret });
+      if (!creds) continue;
+
+      iceServers.push({
+        urls: region.urls,
+        username: creds.username,
+        credential: creds.credential,
+        credentialType: "password",
+      });
+      ttlSeconds = ttlSeconds === null ? creds.ttlSeconds : Math.min(ttlSeconds, creds.ttlSeconds);
+    }
+
+    if (!TURN_REGIONS.length) {
+      console.warn("[direct-video-room] No TURN region is configured — serving STUN-only ICE config.");
+    }
+
+    res.status(200).json({ iceServers, ttlSeconds: ttlSeconds || 0 });
+  } catch (error) {
+    console.error("getDirectVideoRoomIceServers error:", error);
+    res.status(500).json({ msg: "Failed to fetch ICE server configuration." });
+  }
+};
+
 module.exports = {
   createDirectVideoRoom,
   getDirectVideoRooms,
   closeDirectVideoRoom,
   getDirectVideoRoomStatus,
+  getDirectVideoRoomIceServers,
 };

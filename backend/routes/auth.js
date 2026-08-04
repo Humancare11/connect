@@ -8,6 +8,7 @@ const {
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
+  requestAccountDeletion,
 } = require("../controllers/authController");
 
 const authMiddleware                                                    = require("../middleware/authMiddleware");
@@ -51,5 +52,6 @@ router.post("/doctor-login",    doctorLogin);
 // ── Protected user routes ─────────────────────────────────────────────────────
 router.put("/update-profile",  authMiddleware, updateProfile);
 router.put("/change-password", authMiddleware, changePassword);
+router.post("/account-delete-request", authMiddleware, requestAccountDeletion);
 
 module.exports = router;

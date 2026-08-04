@@ -73,6 +73,7 @@ const safeUser = (user) => ({
   phone:           user.phone,
   isVerified:      user.isVerified,
   rating:          user.rating,
+  deletionRequestStatus: user.deletionRequestStatus,
 });
 
 const buildTokenPayload = (user, session) => ({
@@ -592,6 +593,47 @@ const updateProfile = async (req, res) => {
     return res.json({ msg: "Profile updated successfully.", user: safeUser(updated) });
   } catch (err) {
     console.error("updateProfile error:", err.message, err.stack);
+    return res.status(500).json({ msg: "Server error. Please try again." });
+  }
+};
+
+// PUT /api/auth/account-delete-request — user requests admin approval to delete their own account
+const requestAccountDeletion = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { reason } = req.body || {};
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ msg: "User not found." });
+
+    if (user.deletionRequestStatus === "pending") {
+      return res.status(400).json({ msg: "An account deletion request is already pending admin approval." });
+    }
+
+    user.deletionReason = String(reason || "").trim();
+    user.deletionRequestedAt = new Date();
+    user.deletionApprovedAt = null;
+    user.deletionRejectedAt = null;
+    user.deletionRequestStatus = "pending";
+    await user.save();
+
+    await recordActivity(req, {
+      action: "USER_REQUEST_ACCOUNT_DELETION",
+      resource: "User",
+      resourceId: user._id,
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+      details: { reason: user.deletionReason },
+    });
+
+    return res.status(201).json({
+      msg: "Account deletion request sent to admin for approval.",
+      user: safeUser(user),
+    });
+  } catch (err) {
+    console.error("requestAccountDeletion error:", err.message, err.stack);
     return res.status(500).json({ msg: "Server error. Please try again." });
   }
 };
@@ -1127,4 +1169,5 @@ module.exports = {
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
+  requestAccountDeletion,
 };

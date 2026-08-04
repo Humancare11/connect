@@ -95,8 +95,10 @@ function formatPatientId(value) {
   return String(value);
 }
 
-function UserModal({ user, onClose, onDelete }) {
+function UserModal({ user, onClose, onDelete, onApproveDelete, onRejectDelete }) {
   if (!user) return null;
+
+  const hasPendingDeletion = user.deletionRequestStatus === "pending";
 
   const initials = user.name
     ? user.name
@@ -274,18 +276,59 @@ function UserModal({ user, onClose, onDelete }) {
               noBorder
             />
           </InfoSection>
+
+          {hasPendingDeletion && (
+            <InfoSection title="Account Deletion Request">
+              <InfoRow
+                icon="🗑️"
+                label="Reason"
+                value={user.deletionReason || "No reason provided"}
+              />
+              <InfoRow
+                icon="📅"
+                label="Requested On"
+                value={
+                  user.deletionRequestedAt
+                    ? new Date(user.deletionRequestedAt).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "—"
+                }
+                noBorder
+              />
+            </InfoSection>
+          )}
         </div>
 
         <div className="adp-modal-footer">
           <button className="adp-btn adp-btn--ghost" onClick={onClose}>
             Close
           </button>
-          <button
-            className="adp-btn adp-btn--reject"
-            onClick={() => onDelete(user._id, user.name)}
-          >
-            Delete User
-          </button>
+          {hasPendingDeletion ? (
+            <>
+              <button
+                className="adp-btn adp-btn--reject"
+                onClick={() => onRejectDelete(user._id, user.name)}
+              >
+                Reject Deletion
+              </button>
+              <button
+                className="adp-btn adp-btn--approve"
+                onClick={() => onApproveDelete(user._id, user.name)}
+              >
+                Approve Deletion
+              </button>
+            </>
+          ) : (
+            <button
+              className="adp-btn adp-btn--reject"
+              onClick={() => onDelete(user._id, user.name)}
+            >
+              Delete User
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -298,6 +341,7 @@ export default function ManageUsers() {
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     api
@@ -325,14 +369,45 @@ export default function ManageUsers() {
     }
   };
 
-  const filtered = users.filter(
-    (u) =>
-      String(u.patientId || "")
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const handleApproveDelete = async (userId, userName) => {
+    if (!window.confirm(`Approve deletion request for "${userName}"? Their account will be permanently deleted.`))
+      return;
+    try {
+      await api.put(`/api/admin/users/${userId}/delete-request/approve`, {});
+      setUsers((prev) => prev.filter((u) => u._id !== userId));
+      setSelected(null);
+      showToast("Account deletion approved and account deleted.");
+    } catch (err) {
+      showToast(err?.response?.data?.msg || "Failed to approve deletion request.", false);
+    }
+  };
+
+  const handleRejectDelete = async (userId, userName) => {
+    if (!window.confirm(`Reject deletion request for "${userName}"?`)) return;
+    try {
+      const res = await api.put(`/api/admin/users/${userId}/delete-request/reject`, {});
+      setUsers((prev) => prev.map((u) => (u._id === userId ? res.data?.user || u : u)));
+      setSelected((prev) => (prev?._id === userId ? res.data?.user || prev : prev));
+      showToast("Deletion request rejected.");
+    } catch (err) {
+      showToast(err?.response?.data?.msg || "Failed to reject deletion request.", false);
+    }
+  };
+
+  const deletionRequestCount = users.filter((u) => u.deletionRequestStatus === "pending").length;
+
+  const filtered = users
+    .filter((u) =>
+      filter === "deletion_requests" ? u.deletionRequestStatus === "pending" : true,
+    )
+    .filter(
+      (u) =>
+        String(u.patientId || "")
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
+        u.name?.toLowerCase().includes(search.toLowerCase()) ||
+        u.email?.toLowerCase().includes(search.toLowerCase()),
+    );
 
   return (
     <div>
@@ -348,6 +423,8 @@ export default function ManageUsers() {
           user={selected}
           onClose={() => setSelected(null)}
           onDelete={handleDelete}
+          onApproveDelete={handleApproveDelete}
+          onRejectDelete={handleRejectDelete}
         />
       )}
 
@@ -361,7 +438,7 @@ export default function ManageUsers() {
 
       <div
         className="adp-stats"
-        style={{ gridTemplateColumns: "repeat(3,1fr)" }}
+        style={{ gridTemplateColumns: "repeat(4,1fr)" }}
       >
         <div className="adp-stat adp-stat--blue">
           <div className="adp-stat-icon">👥</div>
@@ -391,11 +468,31 @@ export default function ManageUsers() {
           </div>
           <div className="adp-stat-label">Joined This Month</div>
         </div>
+        <div className="adp-stat adp-stat--amber">
+          <div className="adp-stat-icon">🗑️</div>
+          <div className="adp-stat-value">{deletionRequestCount}</div>
+          <div className="adp-stat-label">Pending Deletion Requests</div>
+        </div>
       </div>
 
       <div className="adp-card">
         <div className="adp-card-header">
-          <h2 className="adp-card-title">All Users ({filtered.length})</h2>
+          <div className="adp-tabs">
+            {[
+              { key: "all", label: "All Users", count: users.length },
+              { key: "deletion_requests", label: "Deletion Requests", count: deletionRequestCount },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                className={`adp-tab ${filter === tab.key ? "active" : ""}`}
+                onClick={() => setFilter(tab.key)}
+              >
+                {tab.label}
+                <span className="adp-tab-count">{tab.count}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="adp-search">
             <svg
               width="14"
@@ -423,11 +520,15 @@ export default function ManageUsers() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="adp-empty">
-            <div className="adp-empty-icon">👥</div>
+            <div className="adp-empty-icon">
+              {filter === "deletion_requests" ? "🗑️" : "👥"}
+            </div>
             <h3>No users found</h3>
             <p>
               {search
                 ? "Try a different search."
+                : filter === "deletion_requests"
+                ? "No pending account deletion requests."
                 : "No users have registered yet."}
             </p>
           </div>
@@ -441,6 +542,7 @@ export default function ManageUsers() {
                   <th>Mobile</th>
                   <th>Gender</th>
                   <th>Country</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -493,6 +595,27 @@ export default function ManageUsers() {
                     </td>
                     <td>{getCountryName(u.country) || "—"}</td>
                     <td>
+                      {u.deletionRequestStatus === "pending" ? (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            background: "#fee2e2",
+                            color: "#991b1b",
+                            borderRadius: 20,
+                            padding: "3px 10px",
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          🗑️ Deletion Requested
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button
                           className="adp-btn adp-btn--view"
@@ -500,12 +623,29 @@ export default function ManageUsers() {
                         >
                           View
                         </button>
-                        <button
-                          className="adp-btn adp-btn--reject"
-                          onClick={() => handleDelete(u._id, u.name)}
-                        >
-                          Delete
-                        </button>
+                        {u.deletionRequestStatus === "pending" ? (
+                          <>
+                            <button
+                              className="adp-btn adp-btn--approve"
+                              onClick={() => handleApproveDelete(u._id, u.name)}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              className="adp-btn adp-btn--reject"
+                              onClick={() => handleRejectDelete(u._id, u.name)}
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            className="adp-btn adp-btn--reject"
+                            onClick={() => handleDelete(u._id, u.name)}
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
