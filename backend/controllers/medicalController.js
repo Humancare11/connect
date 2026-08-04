@@ -2,16 +2,18 @@ const Prescription       = require("../models/Prescription");
 const MedicalCertificate = require("../models/MedicalCertificate");
 const Appointment        = require("../models/Appointment");
 const Enrollment         = require("../models/Enrollment");
+const CategoryConsultation = require("../models/CategoryConsultation");
 const { recordActivity }       = require("../utils/activityLogger");
 const { sendPushToUser }       = require("../utils/pushNotifications");
 
-// ── Doctor: get distinct patients from completed appointments ─────────────────
+// ── Doctor: get all completed consultations (newest to oldest) ───────────────
 const getDoctorPatients = async (req, res) => {
   try {
     if (req.user.role !== "doctor") {
       return res.status(403).json({ msg: "Access denied. Doctors only." });
     }
 
+    // Fetch regular appointments
     const appointments = await Appointment.find({
       doctorId: req.user.id,
       status:   { $in: ["complete", "completed"] },
@@ -20,28 +22,45 @@ const getDoctorPatients = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Deduplicate patients, attach last appointment info
-    const seen = new Map();
-    for (const appt of appointments) {
-      const pid = appt.patientId?._id?.toString();
-      if (!pid) continue;
-      if (!seen.has(pid)) {
-        seen.set(pid, {
-          patient:         appt.patientId,
-          lastAppointment: appt,
-          totalVisits:     1,
-        });
-      } else {
-        seen.get(pid).totalVisits += 1;
-      }
+    // Fetch category consultations (Next Availability appointments)
+    // First find the enrollment for this doctor
+    const enrollment = await Enrollment.findOne({ doctorId: req.user.id }).select("_id").lean();
+    
+    let categoryConsultations = [];
+    if (enrollment) {
+      categoryConsultations = await CategoryConsultation.find({
+        assignedDoctorId: enrollment._id,
+        status: "Completed",
+      })
+        .populate("patientId", "patientId name email mobile gender dob")
+        .sort({ createdAt: -1 })
+        .lean();
     }
 
-    const result = Array.from(seen.values());
+    // Combine both appointment types and sort by createdAt (newest to oldest)
+    const allAppointments = [...appointments, ...categoryConsultations].sort((a, b) => 
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    // Map each appointment to the expected format
+    const result = allAppointments
+      .filter(appt => appt.patientId) // Filter out any appointments without patient data
+      .map(appt => ({
+        patient: appt.patientId,
+        appointment: appt,
+        totalVisits: 1, // Each entry represents one consultation
+      }));
+
+    // Count unique patients for activity logging
+    const uniquePatients = new Set(result.map(r => r.patient._id.toString())).size;
 
     await recordActivity(req, {
       action: "PHI_VIEW_PATIENT_LIST",
       resource: "Appointment",
-      details: { patientCount: result.length },
+      details: { 
+        patientCount: uniquePatients,
+        totalConsultations: result.length 
+      },
     });
 
     res.status(200).json(result);
@@ -60,6 +79,7 @@ const getPatientHistory = async (req, res) => {
 
     const { patientId } = req.params;
 
+    // Fetch regular appointments
     const appointments = await Appointment.find({
       doctorId:  req.user.id,
       patientId,
@@ -67,6 +87,25 @@ const getPatientHistory = async (req, res) => {
       .populate("patientId", "patientId name email mobile")
       .sort({ createdAt: -1 })
       .lean();
+
+    // Fetch category consultations (Next Availability appointments)
+    const enrollment = await Enrollment.findOne({ doctorId: req.user.id }).select("_id specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName country").lean();
+    
+    let categoryConsultations = [];
+    if (enrollment) {
+      categoryConsultations = await CategoryConsultation.find({
+        assignedDoctorId: enrollment._id,
+        patientId,
+      })
+        .populate("patientId", "patientId name email mobile")
+        .sort({ createdAt: -1 })
+        .lean();
+    }
+
+    // Combine both appointment types
+    const allAppointments = [...appointments, ...categoryConsultations].sort((a, b) => 
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
 
     const prescriptions = await Prescription.find({
       doctorId:  req.user.id,
@@ -84,23 +123,18 @@ const getPatientHistory = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Attach the doctor's own enrollment for certificate slip rendering
-    const enrollment = await Enrollment.findOne({ doctorId: req.user.id })
-      .select("specialization qualification clinicName clinicAddress medicalRegistrationNumber medicalCouncilName country")
-      .lean();
-
     await recordActivity(req, {
       action: "PHI_VIEW_PATIENT_HISTORY",
       resource: "Appointment",
       patientId,
       details: {
-        appointmentCount: appointments.length,
+        appointmentCount: allAppointments.length,
         prescriptionCount: prescriptions.length,
         certificateCount: certificates.length,
       },
     });
 
-    res.status(200).json({ appointments, prescriptions, certificates, doctorEnrollment: enrollment || null });
+    res.status(200).json({ appointments: allAppointments, prescriptions, certificates, doctorEnrollment: enrollment || null });
   } catch (err) {
     console.error("getPatientHistory error:", err);
     res.status(500).json({ msg: "Failed to fetch patient history." });

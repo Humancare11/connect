@@ -48,7 +48,10 @@ function ConsultationNotesModal({ patient, onClose }) {
       aria-modal="true"
       aria-label={`Consultation notes for ${patient.name}`}
     >
-      <div className="dp-modal dp-notes-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="dp-modal dp-notes-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="dp-modal-header">
           <h2>Consultation Notes</h2>
           <span className="dp-modal-patient">for {patient.name}</span>
@@ -232,7 +235,7 @@ function PatientPanel({ entry, onClose }) {
 
   const completedAppts =
     history?.appointments?.filter((a) =>
-      ["complete", "completed"].includes(a.status),
+      ["complete", "completed"].includes(a.status?.toLowerCase()),
     ) || [];
 
   return (
@@ -487,7 +490,9 @@ export default function DoctorPatients() {
         <div>
           <span className="dp-eyebrow">Humancare</span>
           <h1 className="dp-title">My Patients</h1>
-          <p className="dp-sub">Patients from completed consultations</p>
+          <p className="dp-sub">
+            All completed consultations (newest to oldest)
+          </p>
         </div>
         <div className="dp-header-right">
           <div className="dp-search-wrap">
@@ -506,13 +511,13 @@ export default function DoctorPatients() {
       <div className="dp-stats">
         <div className="dp-stat">
           <div className="dp-stat-num">{patients.length}</div>
-          <div className="dp-stat-label">Total Patients</div>
+          <div className="dp-stat-label">Total Consultations</div>
         </div>
         <div className="dp-stat">
           <div className="dp-stat-num">
-            {patients.reduce((s, e) => s + e.totalVisits, 0)}
+            {new Set(patients.map((p) => p.patient?._id?.toString())).size}
           </div>
-          <div className="dp-stat-label">Completed Sessions</div>
+          <div className="dp-stat-label">Unique Patients</div>
         </div>
       </div>
 
@@ -524,16 +529,14 @@ export default function DoctorPatients() {
       ) : filtered.length === 0 ? (
         <div className="dp-empty-state">
           <div className="dp-empty-icon">👥</div>
-          <h3>No patients yet</h3>
-          <p>
-            Patients will appear here after you complete a video consultation.
-          </p>
+          <h3>No consultations yet</h3>
+          <p>Completed consultations will appear here (newest to oldest).</p>
         </div>
       ) : (
         <div className="dp-grid">
-          {filtered.map((entry) => (
+          {filtered.map((entry, index) => (
             <button
-              key={entry.patient._id}
+              key={`${entry.patient._id}-${entry.appointment._id || index}`}
               className="dp-card"
               onClick={() => setSelected(entry)}
             >
@@ -546,14 +549,12 @@ export default function DoctorPatients() {
                 )} */}
               </div>
               <div className="dp-card-visits">
-                <span className="dp-card-visits-num">{entry.totalVisits}</span>
-                <span className="dp-card-visits-label">
-                  visit{entry.totalVisits > 1 ? "s" : ""}
-                </span>
+                <span className="dp-card-visits-num">✓</span>
+                <span className="dp-card-visits-label">completed</span>
               </div>
               <div className="dp-card-last">
-                <span>Last visit</span>
-                <span>{formatDate(entry.lastAppointment?.date)}</span>
+                <span>Visit date</span>
+                <span>{formatDate(entry.appointment?.date)}</span>
               </div>
               <span className="dp-card-arrow">›</span>
             </button>

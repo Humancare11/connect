@@ -36,7 +36,7 @@ export default function WritePrescription() {
         ? data.appointments
         : [];
       const completed = allAppointments.filter((a) =>
-        ["complete", "completed"].includes(a.status),
+        ["complete", "completed"].includes(a.status?.toLowerCase()),
       );
       setPatient(allAppointments[0]?.patientId || null);
       setAppointments(completed);
