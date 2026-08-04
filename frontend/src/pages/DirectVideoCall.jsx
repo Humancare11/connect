@@ -3,7 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import socket from "../socket";
 import api from "../api";
 import { RTC_CONFIG } from "../utils/rtcIceConfig";
+import "./videocall.css";
 import "./directvideocall.css";
+import HumancareLogo from "../assets/VideoCallingImage.png";
 import {
   FiMic,
   FiMicOff,
@@ -14,6 +16,14 @@ import {
   FiSend,
   FiX,
   FiAlertTriangle,
+  FiUser,
+  FiClock,
+  FiWifi,
+  FiMaximize,
+  FiMaximize2,
+  FiMinimize,
+  FiMinimize2,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 const MEDIA_CONSTRAINTS = {
@@ -120,6 +130,14 @@ const fmtDuration = (secs) => {
   return `${m}:${s}`;
 };
 
+const fmtTime = (iso) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 // Chat messages here have no server-issued id — array-index keys were being
 // used for the message list, fine only while messages are strictly appended.
 // Tag each message with a stable client-side key at the moment it enters state.
@@ -132,6 +150,65 @@ const makeMessageKey = () =>
 // chat — the server has its own rate limit (see backend/utils/socketRateLimit.js),
 // this just keeps the UI itself from firing faster than a human can type.
 const CHAT_SEND_COOLDOWN_MS = 300;
+
+const CONNECTION_STATS_INTERVAL_MS = 5000;
+
+const playVideoElement = async (videoEl) => {
+  if (!videoEl) return true;
+  try {
+    const playResult = videoEl.play?.();
+    if (playResult && typeof playResult.then === "function") {
+      await playResult;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Video playback was blocked:", err?.message || err);
+    return false;
+  }
+};
+
+// Tracks a <video> element's intrinsic frame shape so the UI can switch
+// object-fit from cover to contain for portrait streams (e.g. a guest
+// holding a phone upright). "resize" fires whenever the underlying track's
+// dimensions change (device rotation, camera renegotiation), not just once.
+const watchVideoOrientation = (videoEl, onOrientationChange) => {
+  if (!videoEl) return () => {};
+  const update = () => {
+    const { videoWidth, videoHeight } = videoEl;
+    if (videoWidth && videoHeight) {
+      onOrientationChange(videoHeight > videoWidth);
+    }
+  };
+  update();
+  videoEl.addEventListener("loadedmetadata", update);
+  videoEl.addEventListener("resize", update);
+  return () => {
+    videoEl.removeEventListener("loadedmetadata", update);
+    videoEl.removeEventListener("resize", update);
+  };
+};
+
+// Turns raw WebRTC stats into a coarse, user-facing quality bucket. Packet
+// loss is derived from the DELTA between this poll and the previous one
+// (not the raw cumulative counter) — using the cumulative value directly
+// would mean a single lost packet early in a long call marks the
+// connection "poor" for its entire remaining duration.
+const deriveConnectionQuality = (diagnostics, previousSample) => {
+  if (diagnostics.rtt === null) return "unknown";
+
+  let lossRatio = 0;
+  if (previousSample) {
+    const deltaSent = diagnostics.packetsSent - previousSample.packetsSent;
+    const deltaLost = diagnostics.packetsLost - previousSample.packetsLost;
+    if (deltaSent > 0 && deltaLost > 0) {
+      lossRatio = deltaLost / (deltaSent + deltaLost);
+    }
+  }
+
+  if (diagnostics.rtt > 400 || lossRatio > 0.08) return "poor";
+  if (diagnostics.rtt > 200 || lossRatio > 0.03) return "weak";
+  return "good";
+};
 
 export default function DirectVideoCall() {
   const { roomId } = useParams();
@@ -167,13 +244,26 @@ export default function DirectVideoCall() {
     typeof navigator !== "undefined" ? !navigator.onLine : false,
   );
 
+  // ── Stage/UI extras — same visual language as the main VideoCall screen ──
+  const [isSwapped, setIsSwapped] = useState(false);
+  const [isSelfViewMinimized, setIsSelfViewMinimized] = useState(false);
+  const [isMainVideoPortrait, setIsMainVideoPortrait] = useState(false);
+  const [isPipVideoPortrait, setIsPipVideoPortrait] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [playbackBlocked, setPlaybackBlocked] = useState(false);
+  const [connectionQuality, setConnectionQuality] = useState("unknown");
+  const [pipPos, setPipPos] = useState({ x: null, y: null });
+
   const previewVideoRef = useRef(null);
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
+  const mainVideoRef = useRef(null);
+  const pipVideoRef = useRef(null);
+  const mainVideoOrientationCleanupRef = useRef(null);
+  const pipVideoOrientationCleanupRef = useRef(null);
   const localStreamRef = useRef(null);
   const remoteStreamRef = useRef(new MediaStream());
   const pcRef = useRef(null);
   const isInitiatorRef = useRef(false);
+  const isSwappedRef = useRef(false);
   const makingOfferRef = useRef(false);
   const ignoreOfferRef = useRef(false);
   const pendingCandidatesRef = useRef([]);
@@ -183,6 +273,11 @@ export default function DirectVideoCall() {
   const timerRef = useRef(null);
   const chatEndRef = useRef(null);
   const chatSendCooldownTimerRef = useRef(null);
+  const pageRef = useRef(null);
+  const pipRef = useRef(null);
+  const dragRef = useRef({ active: false, ox: 0, oy: 0, ex: 0, ey: 0 });
+  const statsTimerRef = useRef(null);
+  const lastStatsSampleRef = useRef(null);
 
   useEffect(() => {
     if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -194,6 +289,10 @@ export default function DirectVideoCall() {
       mountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    isSwappedRef.current = isSwapped;
+  }, [isSwapped]);
 
   // A fully offline device previously only surfaced indirectly, once the
   // socket/ICE timeouts eventually fired. Report it immediately via the
@@ -207,6 +306,15 @@ export default function DirectVideoCall() {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
     };
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   // ── Step 1: validate the room link, no login required ─────────────────────
@@ -285,6 +393,105 @@ export default function DirectVideoCall() {
     timerRef.current = null;
   }, []);
 
+  const stopStatsCollection = useCallback(() => {
+    clearInterval(statsTimerRef.current);
+    statsTimerRef.current = null;
+    lastStatsSampleRef.current = null;
+    setConnectionQuality("unknown");
+  }, []);
+
+  const startStatsCollection = useCallback(
+    (pc) => {
+      stopStatsCollection();
+      statsTimerRef.current = setInterval(async () => {
+        if (!pc || pc.signalingState === "closed") {
+          stopStatsCollection();
+          return;
+        }
+        try {
+          const stats = await pc.getStats();
+          const diagnostics = { rtt: null, packetsSent: 0, packetsLost: 0 };
+          for (const report of stats.values()) {
+            if (report.type === "candidate-pair" && report.state === "succeeded") {
+              if (typeof report.currentRoundTripTime === "number") {
+                diagnostics.rtt = Math.round(report.currentRoundTripTime * 1000);
+              }
+              if (typeof report.packetsSent === "number") {
+                diagnostics.packetsSent = report.packetsSent;
+              }
+              if (typeof report.packetsLost === "number") {
+                diagnostics.packetsLost = report.packetsLost;
+              }
+            }
+          }
+          const quality = deriveConnectionQuality(diagnostics, lastStatsSampleRef.current);
+          lastStatsSampleRef.current = {
+            packetsSent: diagnostics.packetsSent,
+            packetsLost: diagnostics.packetsLost,
+          };
+          setConnectionQuality(quality);
+        } catch (err) {
+          console.warn("[direct-video-call] getStats failed:", err.message);
+        }
+      }, CONNECTION_STATS_INTERVAL_MS);
+    },
+    [stopStatsCollection],
+  );
+
+  // ── Assign local/remote streams to whichever <video> is in the main vs.
+  // pip slot right now — kept as a single source of truth so swapping the
+  // view just re-points srcObject instead of moving DOM nodes around. ──────
+  const playAssignedVideos = useCallback(async () => {
+    const mainOk = await playVideoElement(mainVideoRef.current);
+    const pipOk = await playVideoElement(pipVideoRef.current);
+    const remoteVideoEl = isSwappedRef.current ? pipVideoRef.current : mainVideoRef.current;
+    const remoteOk = remoteVideoEl === pipVideoRef.current ? pipOk : mainOk;
+    setPlaybackBlocked(Boolean(remoteVideoEl?.srcObject) && !remoteOk);
+  }, []);
+
+  const assignStreams = useCallback(
+    (swapped) => {
+      if (mainVideoRef.current) {
+        mainVideoRef.current.srcObject = swapped
+          ? localStreamRef.current
+          : remoteStreamRef.current;
+      }
+      if (pipVideoRef.current) {
+        pipVideoRef.current.srcObject = swapped
+          ? remoteStreamRef.current
+          : localStreamRef.current;
+      }
+      void playAssignedVideos();
+    },
+    [playAssignedVideos],
+  );
+
+  const setMainVideoRef = useCallback((node) => {
+    mainVideoRef.current = node;
+    mainVideoOrientationCleanupRef.current?.();
+    mainVideoOrientationCleanupRef.current = node
+      ? watchVideoOrientation(node, setIsMainVideoPortrait)
+      : null;
+  }, []);
+
+  const setPipVideoRef = useCallback((node) => {
+    pipVideoRef.current = node;
+    pipVideoOrientationCleanupRef.current?.();
+    pipVideoOrientationCleanupRef.current = node
+      ? watchVideoOrientation(node, setIsPipVideoPortrait)
+      : null;
+  }, []);
+
+  // The pip <video> unmounts while self-view is minimized, so restoring it
+  // needs its srcObject re-assigned — the node is brand new.
+  useEffect(() => {
+    if (isSelfViewMinimized) return;
+    const frameId = requestAnimationFrame(() => {
+      assignStreams(isSwappedRef.current);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [isSelfViewMinimized, assignStreams]);
+
   const cleanupCall = useCallback(() => {
     socket.emit("leave-direct-room", { roomId });
     const pc = pcRef.current;
@@ -302,7 +509,8 @@ export default function DirectVideoCall() {
       localStreamRef.current = null;
     }
     stopCallTimer();
-  }, [roomId, stopCallTimer]);
+    stopStatsCollection();
+  }, [roomId, stopCallTimer, stopStatsCollection]);
 
   // ── Step 3: media + peer connection + signaling, once the guest joins ────
   useEffect(() => {
@@ -474,7 +682,7 @@ export default function DirectVideoCall() {
           if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
         });
 
-        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+        assignStreams(isSwappedRef.current);
       };
 
       pc.onnegotiationneeded = async () => {
@@ -495,10 +703,13 @@ export default function DirectVideoCall() {
           setCallStatus("connected");
           setPeerLeftNotice(false);
           startCallTimer();
+          startStatsCollection(pc);
         } else if (pc.connectionState === "disconnected") {
           setCallStatus("reconnecting");
+          stopStatsCollection();
         } else if (pc.connectionState === "failed") {
           setCallStatus("reconnecting");
+          stopStatsCollection();
           socket.emit("direct-ice-restart-request", { roomId });
         }
       };
@@ -533,9 +744,7 @@ export default function DirectVideoCall() {
     socket.on("direct-ice-restart-request", handleIceRestartRequest);
     socket.on("direct-room-message", handleChatMessage);
 
-    if (localVideoRef.current && localStreamRef.current) {
-      localVideoRef.current.srcObject = localStreamRef.current;
-    }
+    assignStreams(isSwappedRef.current);
 
     if (socket.connected) joinRoom();
     else socket.connect();
@@ -635,6 +844,32 @@ export default function DirectVideoCall() {
     });
   }, []);
 
+  const toggleSwap = useCallback(() => {
+    setIsSwapped((prev) => {
+      const next = !prev;
+      assignStreams(next);
+      return next;
+    });
+  }, [assignStreams]);
+
+  const toggleSelfView = useCallback(() => {
+    setIsSelfViewMinimized((prev) => !prev);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    const pageEl = pageRef.current;
+    if (!pageEl) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (pageEl.requestFullscreen) {
+        await pageEl.requestFullscreen();
+      }
+    } catch (err) {
+      console.error("[direct-video-call] Fullscreen toggle failed:", err);
+    }
+  }, []);
+
   const leaveCall = useCallback(() => {
     cleanupCall();
     setStage("ended");
@@ -669,41 +904,69 @@ export default function DirectVideoCall() {
 
   useEffect(() => () => window.clearTimeout(chatSendCooldownTimerRef.current), []);
 
+  // ── PiP drag ──────────────────────────────────────────────────────
+  const handlePipPointerDown = useCallback((e) => {
+    if (e.target.closest("button")) return;
+    e.preventDefault();
+    const rect = pipRef.current.getBoundingClientRect();
+    dragRef.current = {
+      active: true,
+      ox: e.clientX - rect.left,
+      oy: e.clientY - rect.top,
+      ex: rect.left,
+      ey: rect.top,
+    };
+    pipRef.current.setPointerCapture(e.pointerId);
+  }, []);
+
+  const handlePipPointerMove = useCallback((e) => {
+    if (!dragRef.current.active) return;
+    const { ox, oy } = dragRef.current;
+    const pip = pipRef.current;
+    const w = pip?.offsetWidth ?? 200;
+    const h = pip?.offsetHeight ?? 140;
+    const x = Math.max(8, Math.min(e.clientX - ox, window.innerWidth - w - 8));
+    const y = Math.max(8, Math.min(e.clientY - oy, window.innerHeight - h - 8));
+    setPipPos({ x, y });
+  }, []);
+
+  const handlePipPointerUp = useCallback(() => {
+    dragRef.current.active = false;
+  }, []);
+
   // ── Render: terminal / setup states ────────────────────────────────────────
   if (stage === "checking") {
     return (
-      <div className="dvcall-page dvcall-page--center">
-        <div className="dvcall-spinner" />
-        <p>Checking your meeting link…</p>
+      <div className="hc-vc__gate">
+        <div className="hc-vc__gate-spinner" />
+        <p>Checking your meeting link...</p>
       </div>
     );
   }
 
   if (stage === "error") {
     return (
-      <div className="dvcall-page dvcall-page--center">
-        <div className="dvcall-error-card">
-          <FiAlertTriangle size={34} />
-          <h2>Can't join this meeting</h2>
-          <p>{errorInfo?.msg}</p>
-          <Link to="/" className="dvcall-btn-primary">
-            Return Home
-          </Link>
+      <div className="hc-vc__gate">
+        <div className="hc-vc__gate-icon">
+          <FiAlertTriangle />
         </div>
+        <h2>Can't join this meeting</h2>
+        <p>{errorInfo?.msg}</p>
+        <Link to="/" className="hc-vc__gate-btn">
+          Return Home
+        </Link>
       </div>
     );
   }
 
   if (stage === "ended") {
     return (
-      <div className="dvcall-page dvcall-page--center">
-        <div className="dvcall-error-card">
-          <h2>Call ended</h2>
-          <p>You have left the meeting.</p>
-          <Link to="/" className="dvcall-btn-primary">
-            Return Home
-          </Link>
-        </div>
+      <div className="hc-vc__gate">
+        <h2>Call ended</h2>
+        <p>You have left the meeting.</p>
+        <Link to="/" className="hc-vc__gate-btn">
+          Return Home
+        </Link>
       </div>
     );
   }
@@ -768,84 +1031,309 @@ export default function DirectVideoCall() {
   const reconnecting = callStatus === "reconnecting";
   const connected = callStatus === "connected";
 
+  const pipStyle =
+    pipPos.x !== null
+      ? {
+          position: "fixed",
+          left: `${pipPos.x}px`,
+          top: `${pipPos.y}px`,
+          right: "auto",
+          bottom: "auto",
+        }
+      : {};
+
   return (
-    <div className="dvcall-page">
+    <div className="hc-vc__page" ref={pageRef}>
+      <div className="hc-vc__ctrlbar-meta">
+        <div className="hc-vc__meta-left">
+          <div className="hc-vc__logo-mark">
+            <img src={HumancareLogo} alt="Humancare Connect" className="hc-vc__logo-img" />
+          </div>
+        </div>
+
+        <div className="hc-vc__meta-party">
+          <span className="hc-vc__meta-party-icon">
+            <FiUser />
+          </span>
+          <div className="hc-vc__meta-party-text">
+            <span className="hc-vc__infobar-label">Participant</span>
+            <span className="hc-vc__infobar-name">{peerName || "Guest"}</span>
+          </div>
+        </div>
+      </div>
+
       {isOffline && (
-        <div className="dvcall-offline-banner">
+        <div className="hc-vc__offline-banner">
           <FiAlertTriangle /> You're offline. Reconnecting once your internet is back.
         </div>
       )}
-      <div className="dvcall-topbar">
-        <span className="dvcall-badge">Direct Video Consultation</span>
-        {connected && <span className="dvcall-duration">{fmtDuration(duration)}</span>}
-      </div>
 
-      <div className="dvcall-stage">
-        <video ref={remoteVideoRef} className="dvcall-remote-video" autoPlay playsInline />
-        {!connected && (
-          <div className="dvcall-waiting-overlay">
-            <div className="dvcall-spinner" />
-            <p>
-              {waitingForPeer && "Waiting for the other participant to join…"}
-              {connecting && `Connecting${peerName ? ` to ${peerName}` : ""}…`}
-              {reconnecting && "Reconnecting…"}
-            </p>
-          </div>
-        )}
-        {peerLeftNotice && !connected && (
-          <div className="dvcall-peer-left-banner">The other participant left the meeting.</div>
-        )}
-
-        <video ref={localVideoRef} className="dvcall-local-video" autoPlay playsInline muted />
-      </div>
-
-      <div className="dvcall-controls">
-        <button type="button" className={`dvcall-ctrl ${!micOn ? "dvcall-ctrl--off" : ""}`} onClick={toggleMic}>
-          {micOn ? <FiMic /> : <FiMicOff />}
-        </button>
-        <button type="button" className={`dvcall-ctrl ${!camOn ? "dvcall-ctrl--off" : ""}`} onClick={toggleCam}>
-          {camOn ? <FiVideo /> : <FiVideoOff />}
-        </button>
-        <button type="button" className="dvcall-ctrl dvcall-ctrl--chat" onClick={() => setChatOpen((v) => !v)}>
-          <FiMessageSquare />
-        </button>
-        <button type="button" className="dvcall-ctrl dvcall-ctrl--leave" onClick={leaveCall}>
-          <FiPhoneOff />
-        </button>
-      </div>
-
-      {chatOpen && (
-        <div className="dvcall-chat">
-          <div className="dvcall-chat__head">
-            <span>In-call chat</span>
-            <button type="button" onClick={() => setChatOpen(false)}>
-              <FiX />
-            </button>
-          </div>
-          <div className="dvcall-chat__body">
-            {messages.length === 0 && <p className="dvcall-chat__empty">No messages yet.</p>}
-            {messages.map((msg, idx) => (
-              <div key={msg._localKey ?? idx} className={`dvcall-chat__msg ${msg.mine ? "dvcall-chat__msg--mine" : ""}`}>
-                <span className="dvcall-chat__sender">{msg.senderName}</span>
-                <p>{msg.text}</p>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-          <form className="dvcall-chat__form" onSubmit={sendChatMessage}>
-            <input
-              type="text"
-              value={chatText}
-              maxLength={2000}
-              placeholder="Type a message…"
-              onChange={(e) => setChatText(e.target.value)}
+      <div className={`hc-vc__body ${chatOpen ? "hc-vc__body--chat" : ""}`}>
+        <div className="hc-vc__stage">
+          <div className="hc-vc__main-wrap">
+            <video
+              ref={setMainVideoRef}
+              autoPlay
+              playsInline
+              muted={isSwapped}
+              className={`hc-vc__main-video${isSwapped ? " hc-vc__video--local" : ""}${isMainVideoPortrait ? " hc-vc__main-video--portrait" : ""}`}
             />
-            <button type="submit" disabled={!chatText.trim() || chatSendCoolingDown}>
-              <FiSend />
+
+            {!connected && (
+              <div className="hc-vc__waiting">
+                <div className="hc-vc__waiting-ring">
+                  <div className="hc-vc__waiting-avatar-wrap">
+                    <span className="hc-vc__waiting-icon">
+                      <FiUser />
+                    </span>
+                  </div>
+                </div>
+                <p className="hc-vc__waiting-title">
+                  {waitingForPeer && "Waiting for the other participant to join..."}
+                  {connecting && `Connecting${peerName ? ` to ${peerName}` : ""}...`}
+                  {reconnecting && "Reconnecting..."}
+                </p>
+                <p className="hc-vc__waiting-sub">
+                  {waitingForPeer && "Share the meeting link with the other person to begin."}
+                  {connecting && "Both participants are ready. Video starting soon."}
+                  {reconnecting && "Restoring your connection to the call."}
+                </p>
+              </div>
+            )}
+
+            {playbackBlocked && (
+              <button
+                type="button"
+                className="hc-vc__playback-unblock"
+                onClick={() => void playAssignedVideos()}
+              >
+                Tap to resume audio/video
+              </button>
+            )}
+
+            {peerLeftNotice && !connected && (
+              <div className="hc-vc__peer-left-notice">
+                <span>
+                  <FiPhoneOff />
+                </span>
+                <span>The other participant left the meeting.</span>
+              </div>
+            )}
+          </div>
+
+          {!isSelfViewMinimized && (
+            <div
+              ref={pipRef}
+              className={`hc-vc__pip ${!camOn && !isSwapped ? "hc-vc__pip--cam-off" : ""}`}
+              style={pipStyle}
+              onPointerDown={handlePipPointerDown}
+              onPointerMove={handlePipPointerMove}
+              onPointerUp={handlePipPointerUp}
+            >
+              <video
+                ref={setPipVideoRef}
+                autoPlay
+                playsInline
+                muted={!isSwapped}
+                className={`hc-vc__pip-video${!isSwapped ? " hc-vc__video--local" : ""}${isPipVideoPortrait ? " hc-vc__pip-video--portrait" : ""}`}
+              />
+
+              {!camOn && !isSwapped && (
+                <div className="hc-vc__pip-cam-off">
+                  <span>
+                    <FiVideoOff />
+                  </span>
+                </div>
+              )}
+              <button
+                className="hc-vc__pip-min-btn"
+                onClick={toggleSelfView}
+                title="Minimize self view"
+                aria-label="Minimize self view"
+              >
+                <FiMinimize2 />
+              </button>
+
+              <button
+                className="hc-vc__pip-swap-btn"
+                onClick={toggleSwap}
+                title="Swap view"
+                aria-label="Swap view"
+              >
+                <FiRefreshCw />
+              </button>
+            </div>
+          )}
+
+          {isSelfViewMinimized && (
+            <button
+              className="hc-vc__pip-restore-btn"
+              onClick={toggleSelfView}
+              title="Show self view"
+              aria-label="Show self view"
+            >
+              <FiMaximize2 />
+              <span>Self View</span>
             </button>
-          </form>
+          )}
         </div>
-      )}
+
+        {chatOpen && (
+          <div className="hc-vc__chat">
+            <div className="hc-vc__chat-head">
+              <div className="hc-vc__chat-head-left">
+                <span className="hc-vc__chat-icon">
+                  <FiMessageSquare />
+                </span>
+                <span className="hc-vc__chat-title">In-call Chat</span>
+              </div>
+              <button
+                className="hc-vc__chat-close-btn"
+                onClick={() => setChatOpen(false)}
+                title="Close chat"
+                aria-label="Close chat"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <div className="hc-vc__chat-body">
+              {messages.length === 0 && (
+                <div className="hc-vc__chat-empty">
+                  <span>
+                    <FiMessageSquare />
+                  </span>
+                  <p>No messages yet.</p>
+                </div>
+              )}
+
+              {messages.map((msg, i) => (
+                <div
+                  key={msg._localKey ?? i}
+                  className={`hc-vc__msg ${msg.mine ? "hc-vc__msg--mine" : "hc-vc__msg--theirs"}`}
+                >
+                  {!msg.mine && <div className="hc-vc__msg-name">{msg.senderName}</div>}
+                  <div className="hc-vc__msg-bubble">{msg.text}</div>
+                  <div className="hc-vc__msg-time">{fmtTime(msg.createdAt)}</div>
+                </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+
+            <form className="hc-vc__chat-foot" onSubmit={sendChatMessage}>
+              <input
+                className="hc-vc__chat-input"
+                type="text"
+                placeholder="Type a message..."
+                value={chatText}
+                maxLength={2000}
+                onChange={(e) => setChatText(e.target.value)}
+                autoComplete="off"
+              />
+              <button
+                className="hc-vc__chat-send"
+                type="submit"
+                disabled={!chatText.trim() || chatSendCoolingDown}
+                title="Send"
+                aria-label="Send message"
+              >
+                <FiSend />
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+
+      <div className="hc-vc__ctrlbar">
+        <div className="hc-vc__ctrlbar-inner">
+          <button
+            className={`hc-vc__btn ${!micOn ? "hc-vc__btn--danger" : ""}`}
+            onClick={toggleMic}
+            title={micOn ? "Mute microphone" : "Unmute"}
+          >
+            <span className="hc-vc__btn-icon">{micOn ? <FiMic /> : <FiMicOff />}</span>
+            <span className="hc-vc__btn-label">{micOn ? "Mute" : "Unmute"}</span>
+          </button>
+
+          <button
+            className={`hc-vc__btn ${!camOn ? "hc-vc__btn--danger" : ""}`}
+            onClick={toggleCam}
+            title={camOn ? "Turn camera off" : "Turn camera on"}
+          >
+            <span className="hc-vc__btn-icon">{camOn ? <FiVideo /> : <FiVideoOff />}</span>
+            <span className="hc-vc__btn-label">{camOn ? "Cam Off" : "Cam On"}</span>
+          </button>
+
+          {connected && (
+            <div className="hc-vc__timer">
+              <FiClock />
+              <span>{fmtDuration(duration)}</span>
+            </div>
+          )}
+          {connected && (
+            <div className="hc-vc__live-pill">
+              <span className="hc-vc__live-dot" />
+              Live
+            </div>
+          )}
+          {connected && connectionQuality !== "unknown" && (
+            <div
+              className={`hc-vc__quality-pill hc-vc__quality-pill--${connectionQuality}`}
+              title={
+                connectionQuality === "poor"
+                  ? "Poor connection — the call may drop"
+                  : connectionQuality === "weak"
+                    ? "Unstable connection — video quality may drop"
+                    : "Good connection"
+              }
+            >
+              <FiWifi />
+            </div>
+          )}
+
+          <button
+            className={`hc-vc__btn ${isFullscreen ? "hc-vc__btn--active" : ""}`}
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit full screen" : "Full screen"}
+          >
+            <span className="hc-vc__btn-icon">{isFullscreen ? <FiMinimize /> : <FiMaximize />}</span>
+            <span className="hc-vc__btn-label">{isFullscreen ? "Exit" : "Full"}</span>
+          </button>
+
+          <button
+            className={`hc-vc__btn ${isSelfViewMinimized ? "hc-vc__btn--active" : ""}`}
+            onClick={toggleSelfView}
+            title={isSelfViewMinimized ? "Show self view" : "Minimize self view"}
+          >
+            <span className="hc-vc__btn-icon">
+              {isSelfViewMinimized ? <FiMaximize2 /> : <FiMinimize2 />}
+            </span>
+            <span className="hc-vc__btn-label">{isSelfViewMinimized ? "Show Me" : "Hide Me"}</span>
+          </button>
+
+          <button
+            className={`hc-vc__btn ${chatOpen ? "hc-vc__btn--chat-on" : ""}`}
+            onClick={() => setChatOpen((v) => !v)}
+            title="Chat"
+          >
+            <span className="hc-vc__btn-icon">
+              <FiMessageSquare />
+            </span>
+            <span className="hc-vc__btn-label">Chat</span>
+          </button>
+
+          <button
+            className="hc-vc__btn hc-vc__btn--end"
+            onClick={leaveCall}
+            title="Leave call"
+          >
+            <span className="hc-vc__btn-icon">
+              <FiPhoneOff />
+            </span>
+            <span className="hc-vc__btn-label">Leave Call</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

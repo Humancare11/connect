@@ -141,6 +141,28 @@ const allowedOrigins = Array.from(
   ].filter(Boolean))
 );
 
+function isLocalDevOrigin(origin) {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
+// Flutter web's dev server (flutter run -d chrome) binds a fresh random
+// port every session, so it can never be tracked by a fixed allow-list
+// entry the way the React app's stable Vite port (5173) can. Only relax
+// this outside production — the UAT backend is shared by every
+// developer's local web build, but the real deployed sites must keep the
+// strict explicit allow-list.
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  const normalized = normalizeOrigin(origin);
+  if (allowedOrigins.indexOf(normalized) !== -1) return true;
+  return process.env.NODE_ENV !== "production" && isLocalDevOrigin(normalized);
+}
+
 function validateRuntimeConfig() {
   const required = ["JWT_SECRET", "MONGO_URI"];
   const missing = required.filter((key) => !process.env[key]);
@@ -241,15 +263,7 @@ app.use((req, res, next) => {
 // CORS Config
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests without origin
-    if (!origin) return callback(null, true);
-
-    // Allow listed origins
-    if (allowedOrigins.indexOf(normalizeOrigin(origin)) !== -1) {
-      return callback(null, true);
-    }
-
-    // Reject unknown origins
+    if (isOriginAllowed(origin)) return callback(null, true);
     return callback(new Error("Not allowed by CORS"));
   },
 
@@ -616,10 +630,7 @@ const io = new Server(server, {
   allowEIO3: true,
   cors: {
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(normalizeOrigin(origin)) !== -1) {
-        return callback(null, true);
-      }
+      if (isOriginAllowed(origin)) return callback(null, true);
       callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST"],
