@@ -9,8 +9,6 @@ const DEFAULT_POLICIES = [
 ];
 
 async function ensureDefaults() {
-  await RetentionPolicy.deleteMany({ key: { $in: ["audit" + "Logs", "auth" + "Logs"] } });
-  await RetentionPolicy.deleteOne({ key: "security" + "Incidents" });
   await Promise.all(DEFAULT_POLICIES.map((policy) =>
     RetentionPolicy.updateOne({ key: policy.key }, { $setOnInsert: policy }, { upsert: true })
   ));

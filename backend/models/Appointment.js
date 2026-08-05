@@ -100,4 +100,7 @@ appointmentSchema.index({ doctorId: 1, date: 1, time: 1, status: 1 });
 // Time-range queries (e.g. "upcoming appointments in next 7 days")
 appointmentSchema.index({ appointmentDateTimeUtc: 1, status: 1 });
 
+// Doctor availability conflict check by canonical UTC instant (timezone-safe)
+appointmentSchema.index({ doctorId: 1, appointmentDateTimeUtc: 1, status: 1 });
+
 module.exports = mongoose.model("Appointment", appointmentSchema);

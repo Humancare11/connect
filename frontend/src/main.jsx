@@ -1,6 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { installSecureConsole } from "./utils/secureConsole";
+
+// Must run before anything else can call console.error/warn with a raw
+// Axios error object (see utils/secureConsole.js for why).
+installSecureConsole();
 import { AuthProvider } from "./context/AuthContext";
 import { DoctorAuthProvider } from "./context/DoctorAuthContext";
 import { AdminProvider } from "./context/AdminContext";

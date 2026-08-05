@@ -26,11 +26,19 @@ doctorSchema.pre("save", async function () {
 
   // Generate unique 5-digit doctorId if not already set
   if (!this.doctorId) {
+    const MAX_ATTEMPTS = 20;
     let doctorId;
     let exists = true;
+    let attempts = 0;
     while (exists) {
+      attempts += 1;
+      if (attempts > MAX_ATTEMPTS) {
+        throw new Error(
+          "Unable to generate a unique doctor ID after multiple attempts. Please try again."
+        );
+      }
       doctorId = randomInt(10000, 100000);
-      exists = await mongoose.models.Doctor.findOne({ doctorId });
+      exists = await mongoose.models.Doctor.findOne({ doctorId }).select("_id").lean();
     }
     this.doctorId = doctorId;
   }

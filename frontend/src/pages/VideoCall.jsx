@@ -7,6 +7,7 @@ import api, { getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
+import createLogger from "../utils/logger";
 import {
   FiAlertTriangle,
   FiCheckCircle,
@@ -30,6 +31,8 @@ import {
   FiWifi,
   FiX,
 } from "react-icons/fi";
+
+const logger = createLogger("video-call");
 
 // ── In-call prescription modal (doctor only) ──────────────────────────────────
 const EMPTY_MED = { name: "", dosage: "", frequency: "", duration: "" };
@@ -69,9 +72,42 @@ function persistRole(appointmentId, role) {
 // modal's fields always started blank on every open. Persist an in-progress
 // draft to sessionStorage, keyed per appointment, so reopening the modal
 // (or retrying after a failed save) restores exactly what was there.
+const RX_DRAFT_PREFIX = "hc-vc-rx-draft-";
+const MAX_RX_DRAFTS = 20;
+
+// Safety net for a long-lived tab where the doctor opens (and abandons) the
+// prescription modal for many different appointments without saving —
+// caps how many stale drafts can accumulate in sessionStorage. Keeps
+// `keepKey` (the draft currently being written) untouched.
+function pruneOldPrescriptionDrafts(keepKey) {
+  try {
+    const entries = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (!key || !key.startsWith(RX_DRAFT_PREFIX) || key === keepKey) continue;
+      let savedAt = 0;
+      try {
+        savedAt = JSON.parse(sessionStorage.getItem(key) || "null")?._savedAt || 0;
+      } catch {
+        // Corrupt entry — treat as oldest so it's pruned first.
+      }
+      entries.push({ key, savedAt });
+    }
+    if (entries.length < MAX_RX_DRAFTS) return;
+    entries.sort((a, b) => a.savedAt - b.savedAt);
+    entries
+      .slice(0, entries.length - MAX_RX_DRAFTS + 1)
+      .forEach((entry) => sessionStorage.removeItem(entry.key));
+  } catch {
+    // Storage unavailable — nothing to prune.
+  }
+}
+
 function loadPrescriptionDraft(appointmentId) {
   try {
-    const raw = sessionStorage.getItem(`hc-vc-rx-draft-${appointmentId}`);
+    const key = `${RX_DRAFT_PREFIX}${appointmentId}`;
+    pruneOldPrescriptionDrafts(key);
+    const raw = sessionStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -93,13 +129,30 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const key = `${RX_DRAFT_PREFIX}${appointmentId}`;
+    const payload = JSON.stringify({
+      diagnosis,
+      medicines,
+      instructions,
+      followUpDate,
+      _savedAt: Date.now(),
+    });
     try {
-      sessionStorage.setItem(
-        `hc-vc-rx-draft-${appointmentId}`,
-        JSON.stringify({ diagnosis, medicines, instructions, followUpDate }),
-      );
-    } catch {
-      // Storage unavailable (private mode, etc.) — draft just won't survive a remount.
+      sessionStorage.setItem(key, payload);
+    } catch (err) {
+      if (err?.name === "QuotaExceededError") {
+        // Extremely unlikely (drafts are tiny), but if a long session has
+        // piled up many abandoned drafts, prune and retry once instead of
+        // silently losing this one.
+        pruneOldPrescriptionDrafts(key);
+        try {
+          sessionStorage.setItem(key, payload);
+        } catch {
+          // Still failing — draft just won't survive a remount.
+        }
+      }
+      // Other errors (storage unavailable in private mode, etc.) — draft
+      // just won't survive a remount, same as before.
     }
   }, [appointmentId, diagnosis, medicines, instructions, followUpDate]);
 
@@ -447,7 +500,7 @@ const getConsultationMediaStream = async () => {
   try {
     return await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
   } catch (firstErr) {
-    console.warn(
+    logger.warn(
       "High-quality media failed, trying basic constraints:",
       firstErr.name,
     );
@@ -457,7 +510,7 @@ const getConsultationMediaStream = async () => {
         video: true,
       });
     } catch (secondErr) {
-      console.warn(
+      logger.warn(
         "Basic video+audio failed, trying separate devices:",
         secondErr.name,
       );
@@ -471,7 +524,7 @@ const getConsultationMediaStream = async () => {
         });
         videoOnly.getTracks().forEach((track) => partialStream.addTrack(track));
       } catch (videoErr) {
-        console.warn("Video-only media failed:", videoErr.name);
+        logger.warn("Video-only media failed:", videoErr.name);
         lastErr = videoErr;
       }
 
@@ -482,7 +535,7 @@ const getConsultationMediaStream = async () => {
         });
         audioOnly.getTracks().forEach((track) => partialStream.addTrack(track));
       } catch (audioErr) {
-        console.warn("Audio-only media failed:", audioErr.name);
+        logger.warn("Audio-only media failed:", audioErr.name);
         lastErr = audioErr;
       }
 
@@ -548,7 +601,7 @@ const playVideoElement = async (videoEl) => {
     }
     return true;
   } catch (err) {
-    console.warn("Video playback was blocked:", err?.message || err);
+    logger.warn("Video playback was blocked:", err?.message || err);
     return false;
   }
 };
@@ -779,6 +832,10 @@ export default function VideoCall() {
   const ignoreOfferRef = useRef(false);
   const ignoreOfferResetTimerRef = useRef(null);
   const settingRemoteAnswerPendingRef = useRef(false);
+  // Most recent measured round-trip time (ms) from getStats(), used to widen
+  // the offer-answer timeout on high-latency connections. null until the
+  // first stats sample comes in (e.g. before the call has connected once).
+  const lastRttMsRef = useRef(null);
   // The offerId of the most recent remote offer we accepted — echoed back
   // in our video-answer so the offerer can correlate it (see below).
   const lastReceivedOfferIdRef = useRef(null);
@@ -1316,6 +1373,9 @@ export default function VideoCall() {
 
           if (import.meta.env.DEV) console.info("[webrtc-stats]", diagnostics);
           logVideoEvent("webrtc_stats", diagnostics);
+          if (typeof diagnostics.rtt === "number") {
+            lastRttMsRef.current = diagnostics.rtt;
+          }
 
           const quality = deriveConnectionQuality(
             diagnostics,
@@ -1327,7 +1387,7 @@ export default function VideoCall() {
           };
           setConnectionQuality(quality);
         } catch (err) {
-          console.warn("[webrtc-stats] getStats failed:", err.message);
+          logger.warn("[webrtc-stats] getStats failed:", err.message);
         }
       }, STATS_INTERVAL_MS);
     },
@@ -1537,19 +1597,17 @@ export default function VideoCall() {
     try {
       pc = new RTCPeerConnection(iceConfig);
     } catch (err) {
-      console.error("RTCPeerConnection construction failed:", err);
+      logger.error("RTCPeerConnection construction failed:", err);
       setApptError("Could not start the video call on this browser or device.");
       return;
     }
     pcRef.current = pc;
-    if (import.meta.env.DEV) {
-      console.info("WebRTC peer connection created", {
-        iceServers: iceConfig.iceServers.map((server) => ({
-          urls: server.urls,
-          hasUsername: Boolean(server.username),
-        })),
-      });
-    }
+    logger.info("WebRTC peer connection created", {
+      iceServers: iceConfig.iceServers.map((server) => ({
+        urls: server.urls,
+        hasUsername: Boolean(server.username),
+      })),
+    });
 
     // `let`, not `const` — pc.ontrack below reassigns this to a fresh
     // MediaStream instance whenever it replaces a track, so every consumer
@@ -1583,7 +1641,7 @@ export default function VideoCall() {
         try {
           await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (err) {
-          console.warn("Queued ICE candidate rejected:", err.message);
+          logger.warn("Queued ICE candidate rejected:", err.message);
         }
       }
     };
@@ -1593,7 +1651,7 @@ export default function VideoCall() {
         return false;
       if (!isReadyRef.current) return false;
       if (pc.signalingState !== "stable") {
-        console.info(
+        logger.info(
           "Skipping offer because signaling state is",
           pc.signalingState,
         );
@@ -1625,6 +1683,23 @@ export default function VideoCall() {
         // signaling message, peer mid-reconnect, replayed/rejected stale
         // answer, etc.) — otherwise pc stays wedged in "have-local-offer"
         // forever, since nothing else ever rolls back our own offer.
+        //
+        // The wait is widened on high-latency links: OFFER_ANSWER_TIMEOUT_MS
+        // is sized for a typical connection, but on a slow/high-RTT network
+        // (mobile, international) that alone can fire before the answer had
+        // any realistic chance to arrive. When a recent RTT sample exists,
+        // require at least 3x it (plus headroom for signaling + SDP
+        // processing), capped so a temporarily degraded link can't wedge
+        // retry logic behind a multi-minute wait.
+        const measuredRtt = lastRttMsRef.current;
+        const effectiveOfferAnswerTimeoutMs =
+          typeof measuredRtt === "number" && measuredRtt > 0
+            ? Math.min(
+                Math.max(OFFER_ANSWER_TIMEOUT_MS, measuredRtt * 3 + 5000),
+                30000,
+              )
+            : OFFER_ANSWER_TIMEOUT_MS;
+
         clearTimeout(offerAnswerTimeoutRef.current);
         offerAnswerTimeoutRef.current = window.setTimeout(() => {
           offerAnswerTimeoutRef.current = null;
@@ -1637,11 +1712,14 @@ export default function VideoCall() {
           logVideoEvent("offer_answer_timeout_rollback", {
             offerId,
             signalingState: pc.signalingState,
+            timeoutMs: effectiveOfferAnswerTimeoutMs,
+            measuredRtt,
           });
-          console.warn(
-            "No answer received for offer %s within %dms — rolling back to retry.",
+          logger.warn(
+            "No answer received for offer %s within %dms (rtt=%s) — rolling back to retry.",
             offerId,
-            OFFER_ANSWER_TIMEOUT_MS,
+            effectiveOfferAnswerTimeoutMs,
+            measuredRtt ?? "unknown",
           );
           pc.setLocalDescription({ type: "rollback" })
             .then(() => {
@@ -1660,13 +1738,13 @@ export default function VideoCall() {
             })
             .catch((err) => {
               pendingOfferIdRef.current = null;
-              console.error("Rollback after offer-answer timeout failed:", err);
+              logger.error("Rollback after offer-answer timeout failed:", err);
             });
-        }, OFFER_ANSWER_TIMEOUT_MS);
+        }, effectiveOfferAnswerTimeoutMs);
 
         return true;
       } catch (err) {
-        console.error(
+        logger.error(
           iceRestart ? "ICE restart offer failed:" : "Offer failed:",
           err,
         );
@@ -1688,7 +1766,7 @@ export default function VideoCall() {
           pc.iceConnectionState === "completed"
         )
           return;
-        console.warn(
+        logger.warn(
           "Connection establishment timed out; requesting ICE recovery.",
         );
         scheduleIceRestart();
@@ -1819,7 +1897,7 @@ export default function VideoCall() {
         }
         resolveLocalReady(true);
       } catch (err) {
-        console.error("All media attempts failed:", err.name, err.message);
+        logger.error("All media attempts failed:", err.name, err.message);
         logVideoEvent("media_permission_failed", {
           name: err.name,
           message: err.message,
@@ -1971,7 +2049,7 @@ export default function VideoCall() {
         if (!inCallRef.current) setConnectionState("connecting");
         startConnectionWatchdog();
       } else if (s === "failed") {
-        console.warn(
+        logger.warn(
           "ICE connection failed - connection may not work properly",
         );
         logVideoEvent("ice_connection_failed", {
@@ -1983,7 +2061,7 @@ export default function VideoCall() {
         scheduleIceRestart();
         if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       } else if (s === "disconnected") {
-        console.warn("ICE connection disconnected");
+        logger.warn("ICE connection disconnected");
         logVideoEvent("ice_connection_disconnected", {
           state: s,
           connectionState: pc.connectionState,
@@ -2012,12 +2090,12 @@ export default function VideoCall() {
           resetIgnoredOffer();
         }
         if (shouldIgnoreOffer) {
-          console.info("Ignoring colliding offer from peer.");
+          logger.info("Ignoring colliding offer from peer.");
           return;
         }
 
         if (offerCollision && pc.signalingState === "have-local-offer") {
-          console.info("Rolling back local offer to accept peer offer.");
+          logger.info("Rolling back local offer to accept peer offer.");
           await pc.setLocalDescription({ type: "rollback" });
           // Our own outstanding offer was just discarded — any answer that
           // still shows up for it later is stale and must be rejected, and
@@ -2026,7 +2104,7 @@ export default function VideoCall() {
           clearTimeout(offerAnswerTimeoutRef.current);
           offerAnswerTimeoutRef.current = null;
         } else if (offerCollision) {
-          console.info(
+          logger.info(
             "Ignoring offer while negotiation is already in progress.",
           );
           return;
@@ -2062,7 +2140,7 @@ export default function VideoCall() {
           inCallRef.current = true;
         }
       } catch (err) {
-        console.error("Offer error:", err);
+        logger.error("Offer error:", err);
       }
     };
 
@@ -2070,7 +2148,7 @@ export default function VideoCall() {
       if (!answer || !mounted) return;
       try {
         if (pc.signalingState !== "have-local-offer") {
-          console.info(
+          logger.info(
             "Ignoring stale answer while signaling state is",
             pc.signalingState,
           );
@@ -2090,7 +2168,7 @@ export default function VideoCall() {
             signalingState: pc.signalingState,
             timestamp: new Date().toISOString(),
           });
-          console.warn(
+          logger.warn(
             "Rejecting answer: offerId mismatch (expected %s, got %s) — not applying to current RTCPeerConnection state.",
             expectedOfferId || "none",
             receivedOfferId || "none",
@@ -2114,7 +2192,7 @@ export default function VideoCall() {
           inCallRef.current = true;
         }
       } catch (err) {
-        console.error("Answer error:", err);
+        logger.error("Answer error:", err);
       } finally {
         settingRemoteAnswerPendingRef.current = false;
       }
@@ -2126,7 +2204,7 @@ export default function VideoCall() {
       logVideoEvent("ice_candidate_received", candidateInfo);
       if (!pc.remoteDescription) {
         if (ignoreOfferRef.current) {
-          console.info("Dropping ICE candidate for ignored colliding offer.");
+          logger.info("Dropping ICE candidate for ignored colliding offer.");
           return;
         }
         pendingRemoteCandidatesRef.current.push(candidate);
@@ -2136,13 +2214,13 @@ export default function VideoCall() {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
         if (ignoreOfferRef.current) {
-          console.info(
+          logger.info(
             "Ignoring ICE candidate rejected after offer collision:",
             err.message,
           );
           return;
         }
-        console.warn("ICE candidate rejected:", err.message);
+        logger.warn("ICE candidate rejected:", err.message);
       }
     };
 
@@ -2163,7 +2241,7 @@ export default function VideoCall() {
         pc.iceConnectionState === "completed"
       )
         return;
-      console.info("Peer requested ICE restart.");
+      logger.info("Peer requested ICE restart.");
       logVideoEvent("ice_restart_request_received", {
         connectionState: pc.connectionState,
         iceConnectionState: pc.iceConnectionState,
@@ -2446,6 +2524,7 @@ export default function VideoCall() {
       ignoreOfferRef.current = false;
       pendingOfferIdRef.current = null;
       lastReceivedOfferIdRef.current = null;
+      lastRttMsRef.current = null;
       clearTimeout(offerAnswerTimeoutRef.current);
       offerAnswerTimeoutRef.current = null;
       screenSharingRef.current = false;
@@ -2572,7 +2651,7 @@ export default function VideoCall() {
         await restoreCameraAfterScreenShare();
         logVideoEvent("screen_share_stopped", { stopTracks });
       } catch (err) {
-        console.error("Camera restore after screen share failed:", err);
+        logger.error("Camera restore after screen share failed:", err);
         logVideoEvent("screen_share_restore_failed", { message: err.message });
         showInlineMessage(
           "Screen sharing stopped, but camera could not be restored. Toggle the camera or rejoin the call.",
@@ -2652,7 +2731,7 @@ export default function VideoCall() {
       try {
         await restoreCameraAfterScreenShare();
       } catch (restoreErr) {
-        console.error(
+        logger.error(
           "Camera restore after failed screen share start failed:",
           restoreErr,
         );
@@ -2661,7 +2740,7 @@ export default function VideoCall() {
       // picker — browsers differ on which they throw for that case — so
       // neither is a real failure worth logging or showing an error for.
       if (err.name !== "NotAllowedError" && err.name !== "AbortError") {
-        console.error("Screen share error:", err);
+        logger.error("Screen share error:", err);
         logVideoEvent("screen_share_failed", {
           name: err.name,
           message: err.message,
@@ -2734,7 +2813,7 @@ export default function VideoCall() {
         showInlineMessage("Full screen is not supported by this browser.");
       }
     } catch (err) {
-      console.error("Fullscreen toggle failed:", err);
+      logger.error("Fullscreen toggle failed:", err);
       logVideoEvent("fullscreen_failed", { message: err.message });
       showInlineMessage("Full screen could not be started on this device.");
     }

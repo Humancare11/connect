@@ -8,6 +8,7 @@ const Doctor = require("../models/Doctor");
 const PaymentLink = require("../models/PaymentLink");
 const { verifyUserToken, verifyAdminToken, adminOnly, paymentAdminOnly } = require("../middleware/verifyToken");
 const { toCents } = require("../utils/currency");
+const { resolveCategoryFeeCents, resolveServiceFeeCents } = require("../utils/paymentVerification");
 
 const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd"];
 const ZERO_DECIMAL_CURRENCIES = new Set(["jpy"]);
@@ -295,15 +296,23 @@ router.get("/admin/payment-link-creators", verifyAdminToken, paymentAdminOnly, a
 });
 
 /* POST /api/payments/create-intent-by-amount
-   Creates a Stripe PaymentIntent for a fixed USD amount (specialty preset fee).
-   Used for category-based appointment bookings where no specific doctor is chosen yet. */
+   Creates a Stripe PaymentIntent for a category or service consultation fee.
+   The amount is always resolved server-side from HealthcareCategory /
+   ServicePrice (via priceType + priceRef) — a client-supplied amount is
+   never trusted here, since that used to let a patient mint an
+   arbitrarily-cheap PaymentIntent and reuse it to book any appointment. */
 router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
   try {
-    const amountUsd = Number(req.body.amountUsd);
-    if (!Number.isFinite(amountUsd) || amountUsd < 1) {
-      return res.status(400).json({ msg: "Valid amountUsd (in USD) is required." });
+    const { priceType, priceRef } = req.body;
+    const amountCents = priceType === "service"
+      ? await resolveServiceFeeCents(priceRef)
+      : await resolveCategoryFeeCents(priceRef);
+
+    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+      return res.status(400).json({
+        msg: "Could not determine a valid price for this selection. Please reselect and try again.",
+      });
     }
-    const amountCents = Math.round(amountUsd * 100);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
@@ -312,6 +321,8 @@ router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
       metadata: {
         patientId: req.user.id,
         bookingType: "category-based",
+        priceType: priceType === "service" ? "service" : "category",
+        priceRef: String(priceRef || "").slice(0, 120),
       },
     });
 

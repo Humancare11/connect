@@ -5,6 +5,25 @@ const Enrollment         = require("../models/Enrollment");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const { recordActivity }       = require("../utils/activityLogger");
 const { sendPushToUser }       = require("../utils/pushNotifications");
+const { encryptPHI, decryptPHI } = require("../utils/phiCrypto");
+const { ensureDoctorAppointment } = require("../utils/doctorAppointmentAccess");
+
+// Strips the cipher envelope off a lean-queried document and merges in its
+// decrypted PHI fields. Documents created before field-level encryption was
+// added have no cipherText, so they fall through to their own (already
+// plaintext) fields on `doc` untouched — no migration required for old data.
+function withDecryptedFields(doc, fieldNames) {
+  if (!doc) return doc;
+  const { cipherText, iv, authTag, keyVersion, ...rest } = doc;
+  if (!cipherText) return rest;
+  const data = decryptPHI(doc) || {};
+  const decrypted = {};
+  for (const field of fieldNames) decrypted[field] = data[field];
+  return { ...rest, ...decrypted };
+}
+
+const PRESCRIPTION_PHI_FIELDS = ["diagnosis", "medicines", "instructions", "followUpDate"];
+const CERTIFICATE_PHI_FIELDS = ["diagnosis", "recommendation", "restFromDate", "restToDate", "notes"];
 
 // ── Doctor: get all completed consultations (newest to oldest) ───────────────
 const getDoctorPatients = async (req, res) => {
@@ -134,7 +153,12 @@ const getPatientHistory = async (req, res) => {
       },
     });
 
-    res.status(200).json({ appointments: allAppointments, prescriptions, certificates, doctorEnrollment: enrollment || null });
+    res.status(200).json({
+      appointments: allAppointments,
+      prescriptions: prescriptions.map((p) => withDecryptedFields(p, PRESCRIPTION_PHI_FIELDS)),
+      certificates: certificates.map((c) => withDecryptedFields(c, CERTIFICATE_PHI_FIELDS)),
+      doctorEnrollment: enrollment || null,
+    });
   } catch (err) {
     console.error("getPatientHistory error:", err);
     res.status(500).json({ msg: "Failed to fetch patient history." });
@@ -148,20 +172,61 @@ const createPrescription = async (req, res) => {
       return res.status(403).json({ msg: "Access denied. Doctors only." });
     }
 
-    const { appointmentId, patientId, diagnosis, medicines, instructions, followUpDate } = req.body;
+    const { appointmentId, diagnosis, medicines, instructions, followUpDate } = req.body;
 
-    if (!appointmentId || !patientId || !diagnosis) {
-      return res.status(400).json({ msg: "appointmentId, patientId, and diagnosis are required." });
+    if (!appointmentId || !diagnosis || !String(diagnosis).trim()) {
+      return res.status(400).json({ msg: "appointmentId and diagnosis are required." });
     }
+
+    // Confirms this doctor actually has (or was assigned) this appointment,
+    // and derives the patient from that verified appointment rather than
+    // trusting a client-supplied patientId — otherwise any doctor account
+    // could write a prescription for an arbitrary patient it never treated.
+    let appointment;
+    try {
+      appointment = await ensureDoctorAppointment(appointmentId, req.user.id);
+    } catch (err) {
+      return res.status(err.statusCode || 404).json({ msg: err.message });
+    }
+    const patientId = appointment.patientId;
+
+    // Each medicine must at least have a name — anything else (missing
+    // name, non-object entries, junk shapes) is rejected here with a clear
+    // 400 instead of surfacing as an opaque 500 from the schema validator.
+    const rawMedicines = Array.isArray(medicines) ? medicines : [];
+    const safeMedicines = [];
+    for (const med of rawMedicines) {
+      const name = typeof med?.name === "string" ? med.name.trim() : "";
+      if (!name) continue;
+      safeMedicines.push({
+        name,
+        dosage: typeof med?.dosage === "string" ? med.dosage.trim().slice(0, 200) : "",
+        frequency: typeof med?.frequency === "string" ? med.frequency.trim().slice(0, 200) : "",
+        duration: typeof med?.duration === "string" ? med.duration.trim().slice(0, 200) : "",
+        notes: typeof med?.notes === "string" ? med.notes.trim().slice(0, 500) : "",
+      });
+    }
+    if (rawMedicines.length && !safeMedicines.length) {
+      return res.status(400).json({ msg: "Each medicine must have a name." });
+    }
+
+    const cleanDiagnosis = String(diagnosis).trim();
+    const cleanInstructions = typeof instructions === "string" ? instructions.trim().slice(0, 2000) : "";
+    const cleanFollowUpDate = followUpDate || "";
 
     const prescription = await Prescription.create({
       appointmentId,
       doctorId: req.user.id,
       patientId,
-      diagnosis,
-      medicines:    medicines    || [],
-      instructions: instructions || "",
-      followUpDate: followUpDate || "",
+      // PHI at rest: diagnosis/medicines/instructions/followUpDate are only
+      // ever stored inside this encrypted blob, never as plaintext fields —
+      // see utils/phiCrypto.js and withDecryptedFields() above.
+      ...encryptPHI({
+        diagnosis: cleanDiagnosis,
+        medicines: safeMedicines,
+        instructions: cleanInstructions,
+        followUpDate: cleanFollowUpDate,
+      }),
     });
 
     // Notify patient in real-time
@@ -185,10 +250,16 @@ const createPrescription = async (req, res) => {
       resource: "Prescription",
       resourceId: prescription._id,
       patientId,
-      details: { appointmentId, diagnosis },
+      // Audit trail records that a prescription was created, not its clinical
+      // content — logging the diagnosis text here would defeat encrypting it
+      // at rest in the first place.
+      details: { appointmentId },
     });
 
-    res.status(201).json({ msg: "Prescription created.", prescription });
+    res.status(201).json({
+      msg: "Prescription created.",
+      prescription: withDecryptedFields(prescription.toObject(), PRESCRIPTION_PHI_FIELDS),
+    });
   } catch (err) {
     console.error("createPrescription error:", err);
     res.status(500).json({ msg: "Failed to create prescription." });
@@ -202,24 +273,38 @@ const createMedicalCertificate = async (req, res) => {
       return res.status(403).json({ msg: "Access denied. Doctors only." });
     }
 
-    const { appointmentId, patientId, diagnosis, recommendation, restFromDate, restToDate, notes } = req.body;
+    const { appointmentId, diagnosis, recommendation, restFromDate, restToDate, notes } = req.body;
 
-    if (!appointmentId || !patientId || !diagnosis) {
-      return res.status(400).json({ msg: "appointmentId, patientId, and diagnosis are required." });
+    if (!appointmentId || !diagnosis) {
+      return res.status(400).json({ msg: "appointmentId and diagnosis are required." });
     }
 
-    const issuedDate = new Date().toISOString().split("T")[0];
+    // Same ownership check as createPrescription above — the patient is
+    // derived from the verified appointment, never trusted from the client.
+    let appointment;
+    try {
+      appointment = await ensureDoctorAppointment(appointmentId, req.user.id);
+    } catch (err) {
+      return res.status(err.statusCode || 404).json({ msg: err.message });
+    }
+    const patientId = appointment.patientId;
 
-    const certificate = await MedicalCertificate.create({
-      appointmentId,
-      doctorId:       req.user.id,
-      patientId,
+    const issuedDate = new Date().toISOString().split("T")[0];
+    const cleanCert = {
       diagnosis,
       recommendation: recommendation || "",
       restFromDate:   restFromDate   || "",
       restToDate:     restToDate     || "",
       notes:          notes          || "",
+    };
+
+    const certificate = await MedicalCertificate.create({
+      appointmentId,
+      doctorId: req.user.id,
+      patientId,
       issuedDate,
+      // PHI at rest — see the matching comment in createPrescription above.
+      ...encryptPHI(cleanCert),
     });
 
     // Notify patient in real-time
@@ -243,10 +328,13 @@ const createMedicalCertificate = async (req, res) => {
       resource: "MedicalCertificate",
       resourceId: certificate._id,
       patientId,
-      details: { appointmentId, diagnosis },
+      details: { appointmentId },
     });
 
-    res.status(201).json({ msg: "Medical certificate issued.", certificate });
+    res.status(201).json({
+      msg: "Medical certificate issued.",
+      certificate: withDecryptedFields(certificate.toObject(), CERTIFICATE_PHI_FIELDS),
+    });
   } catch (err) {
     console.error("createMedicalCertificate error:", err);
     res.status(500).json({ msg: "Failed to issue certificate." });
@@ -274,7 +362,7 @@ const getMyPrescriptions = async (req, res) => {
     for (const e of enrollments) enrollMap[e.doctorId.toString()] = e;
 
     const enriched = prescriptions.map((rx) => ({
-      ...rx,
+      ...withDecryptedFields(rx, PRESCRIPTION_PHI_FIELDS),
       doctorEnrollment: enrollMap[rx.doctorId?._id?.toString()] || null,
     }));
 
@@ -312,7 +400,7 @@ const getMyMedicalCertificates = async (req, res) => {
     for (const e of enrollments) enrollMap[e.doctorId.toString()] = e;
 
     const enriched = certificates.map((cert) => ({
-      ...cert,
+      ...withDecryptedFields(cert, CERTIFICATE_PHI_FIELDS),
       doctorEnrollment: enrollMap[cert.doctorId?._id?.toString()] || null,
     }));
 

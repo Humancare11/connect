@@ -1,11 +1,16 @@
 const CategoryConsultation = require("../models/CategoryConsultation");
 
 const Enrollment = require("../models/Enrollment");
-const { getS3ObjectUrl } = require("../config/s3");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { paypalFetch } = require("../utils/paypal");
+const {
+  PaymentVerificationError,
+  resolveCategoryFeeCents,
+  resolveServiceFeeCents,
+  verifyStripePaymentIntent,
+  verifyPaypalOrder,
+  claimPaymentOnce,
+} = require("../utils/paymentVerification");
 
 async function withPresignedMedicalReportUrls(consultation) {
   if (!consultation) return consultation;
@@ -26,9 +31,12 @@ async function withPresignedMedicalReportUrls(consultation) {
       if (!key) return report;
 
       const signed = await createS3PresignedGetUrl(key);
+      // Only the short-lived presigned URL is returned to clients — a raw
+      // getS3ObjectUrl() would be a permanent, unauthenticated link to a PHI
+      // document (medical report) that keeps working even if the bucket's
+      // ACL is ever loosened, unlike a presigned URL which expires.
       return {
         ...report,
-        s3Url: getS3ObjectUrl(key),
         url: signed.url,
         urlExpiresAt: signed.expiresAt,
       };
@@ -51,7 +59,7 @@ const createCategoryConsultation = async (req, res) => {
       req.body.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE";
     const isFlexible = appointmentType === "FLEXIBLE_TIME";
 
-    const { paymentIntentId, paypalOrderId } = req.body;
+    const { paymentIntentId, paypalOrderId, serviceName, categoryName } = req.body;
 
     // Payment validation
     if (!paymentIntentId && !paypalOrderId) {
@@ -66,81 +74,85 @@ const createCategoryConsultation = async (req, res) => {
     let paymentAmountFinal = 0;
     let paymentStatus = "unpaid";
 
-    // Validate Stripe payment
-    if (paymentIntentId) {
-      let pi;
-      try {
-        pi = await stripe.paymentIntents.retrieve(paymentIntentId);
-      } catch (error) {
-        console.error("Stripe retrieve error:", error);
+    try {
+      // The charged amount must match the real price of the service/category
+      // being booked — resolved server-side, never trusted from the client.
+      // Fail closed if neither identifies a known priced item.
+      const expectedCents = serviceName
+        ? await resolveServiceFeeCents(serviceName)
+        : await resolveCategoryFeeCents(categoryName);
+      if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
         return res.status(400).json({
           success: false,
-          message: "Invalid Stripe payment reference.",
+          message: "Unrecognized service/category. Please reselect and try again.",
         });
       }
 
-      if (pi.status !== "succeeded") {
-        return res.status(402).json({
-          success: false,
-          message: "Stripe payment not completed. Please complete payment first.",
-        });
-      }
+      const verified = paymentIntentId
+        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
+        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
 
-      paymentRef = paymentIntentId;
-      paymentGateway = "stripe";
-      paymentAmountFinal = pi.amount;
+      paymentRef = verified.ref;
+      paymentGateway = verified.gateway;
+      paymentAmountFinal = verified.amountCents;
       paymentStatus = "paid";
-    }
-    // Validate PayPal payment
-    else if (paypalOrderId) {
-      let order;
-      try {
-        order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`);
-      } catch (error) {
-        console.error("PayPal retrieve error:", error);
-        return res.status(400).json({
-          success: false,
-          message: "Invalid PayPal payment reference.",
-        });
-      }
 
-      if (order.status !== "COMPLETED") {
-        return res.status(402).json({
-          success: false,
-          message: "PayPal payment not completed.",
-        });
+      // Marks this payment as spent so the same reference can't fund a
+      // second consultation/appointment.
+      await claimPaymentOnce({
+        gateway: paymentGateway,
+        ref: paymentRef,
+        consumedFor: "categoryConsultation",
+        patientId: req.user.id,
+      });
+    } catch (err) {
+      if (err instanceof PaymentVerificationError) {
+        return res.status(err.status).json({ success: false, message: err.message });
       }
-
-      const captureData = order.purchase_units[0].payments.captures[0];
-      paymentRef = paypalOrderId;
-      paymentGateway = "paypal";
-      paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
-      paymentStatus = "paid";
+      throw err;
     }
 
-    const consultation = await CategoryConsultation.create({
-      concern: req.body.concern,
-      duration: req.body.duration,
-      severity: req.body.severity,
-      supportType: req.body.supportType,
-      urgency: req.body.urgency,
-      appointmentType,
-      timeWindow: isFlexible ? req.body.timeWindow : "",
-      slot: isFlexible ? req.body.slot : null,
-      date: req.body.date,
-      patientId: req.user.id,
-      medicalReports: req.body.medicalReports,
-      consultationPrice: req.body.consultationPrice,
-      categoryName: req.body.categoryName,
-      specialtyName: req.body.specialtyName,
-      conditionName: req.body.conditionName,
-      serviceName: req.body.serviceName,
-      pcpName: req.body.pcpName,
-      paymentIntentId: paymentRef,
-      paymentAmount: paymentAmountFinal,
-      paymentStatus,
-      paymentGateway,
-    });
+    let consultation;
+    try {
+      consultation = await CategoryConsultation.create({
+        concern: req.body.concern,
+        duration: req.body.duration,
+        severity: req.body.severity,
+        supportType: req.body.supportType,
+        urgency: req.body.urgency,
+        appointmentType,
+        timeWindow: isFlexible ? req.body.timeWindow : "",
+        slot: isFlexible ? req.body.slot : null,
+        date: req.body.date,
+        patientId: req.user.id,
+        medicalReports: req.body.medicalReports,
+        consultationPrice: paymentAmountFinal / 100,
+        categoryName: req.body.categoryName,
+        specialtyName: req.body.specialtyName,
+        conditionName: req.body.conditionName,
+        serviceName: req.body.serviceName,
+        pcpName: req.body.pcpName,
+        paymentIntentId: paymentRef,
+        paymentAmount: paymentAmountFinal,
+        paymentStatus,
+        paymentGateway,
+      });
+    } catch (err) {
+      // Payment was already claimed above (money was taken) but the write
+      // failed after that — surface a reconciliation reference instead of a
+      // generic error, matching the same pattern used for doctor bookings.
+      console.error(
+        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal}) ` +
+          `but consultation creation failed for patient ${req.user?.id}. Needs manual reconciliation.`,
+      );
+      return res.status(500).json({
+        success: false,
+        message: "Your payment was received, but we couldn't finalize the request due to a server error. " +
+          "Please contact support with this reference so we can resolve it immediately.",
+        paymentReference: paymentRef,
+        paymentGateway,
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -359,9 +371,15 @@ const assignDoctor = async (req, res) => {
       });
     }
 
-    const consultation = await CategoryConsultation.findById(req.params.id);
+    // Peek at appointmentType (read-only) to decide whether to stamp
+    // assignedSlot — this doesn't mutate anything, so it's safe outside
+    // the atomic update below. Checked first to preserve the original
+    // "Consultation not found" vs "Doctor not found" precedence.
+    const existing = await CategoryConsultation.findById(req.params.id)
+      .select("appointmentType")
+      .lean();
 
-    if (!consultation) {
+    if (!existing) {
       return res.status(404).json({
         success: false,
         message: "Consultation not found",
@@ -377,21 +395,40 @@ const assignDoctor = async (req, res) => {
       });
     }
 
-    consultation.assignedDoctorId = doctor._id;
-    consultation.assignedDoctorName =
-      `${doctor.firstName} ${doctor.surname}`.trim();
-
-    consultation.assignedAt = new Date();
-    consultation.status = "Assigned";
+    const update = {
+      assignedDoctorId: doctor._id,
+      assignedDoctorName: `${doctor.firstName} ${doctor.surname}`.trim(),
+      assignedAt: new Date(),
+      status: "Assigned",
+    };
 
     // NEXT_AVAILABLE bookings have no patient-chosen slot, so the admin
     // supplies the actual appointment time being assigned here. Ignored for
     // FLEXIBLE_TIME bookings, which already have their slot set.
-    if (consultation.appointmentType === "NEXT_AVAILABLE" && appointmentTime) {
-      consultation.assignedSlot = appointmentTime;
+    if (existing.appointmentType === "NEXT_AVAILABLE" && appointmentTime) {
+      update.assignedSlot = appointmentTime;
     }
 
-    await consultation.save();
+    // Atomic $set-by-_id instead of the previous find → mutate 4 fields on
+    // the in-memory document → .save() pattern. .save() on a Mongoose
+    // document re-persists the whole document as it was loaded, so if
+    // another request (e.g. a payment webhook, or another admin) changed an
+    // unrelated field in between, that concurrent change could be silently
+    // clobbered. Scoping the write to $set on just these fields removes
+    // that lost-update window while still allowing intentional reassignment
+    // (the UI explicitly supports assigning a different doctor later).
+    const consultation = await CategoryConsultation.findOneAndUpdate(
+      { _id: req.params.id },
+      { $set: update },
+      { new: true }
+    );
+
+    if (!consultation) {
+      return res.status(404).json({
+        success: false,
+        message: "Consultation not found",
+      });
+    }
 
     res.json({
       success: true,

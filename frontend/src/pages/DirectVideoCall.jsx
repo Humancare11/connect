@@ -627,6 +627,11 @@ export default function DirectVideoCall() {
       setPeerLeftNotice(false);
       setPeerName(name || "");
       setCallStatus((prev) => (prev === "connected" ? prev : "connecting"));
+      // The peer connection (and therefore the initial offer + ICE
+      // gathering) is only created once we know someone is actually in the
+      // room to receive it — see setupPeerConnection's comment below for why
+      // creating it eagerly in handleRoomJoined lost the initial offer.
+      void setupPeerConnection();
     };
 
     const handleParticipantLeft = () => {
@@ -678,6 +683,18 @@ export default function DirectVideoCall() {
       ]);
     };
 
+    // Called from handlePeerJoined, never from handleRoomJoined directly:
+    // creating the RTCPeerConnection immediately on joining used to add
+    // tracks before anyone else was in the room, which fires
+    // onnegotiationneeded (and starts ICE gathering) into a socket room with
+    // nobody listening — the resulting offer and early ICE candidates were
+    // silently dropped, and the peer that made it never re-sent them, so the
+    // call got permanently stuck at "connecting" whenever the first guest
+    // joined even a moment before the second. Waiting for confirmation that
+    // a peer is actually present (self-emitted immediately by the server if
+    // one was already there, or on their later join) guarantees the offer
+    // always has a listener. pcRef.current guards against handlePeerJoined
+    // firing more than once (e.g. a peer briefly reconnecting).
     const setupPeerConnection = async () => {
       const iceConfig = (await iceConfigPromiseRef.current) || RTC_CONFIG;
       if (!mountedRef.current || pcRef.current) return;
@@ -757,7 +774,8 @@ export default function DirectVideoCall() {
       if (!mountedRef.current) return;
       isInitiatorRef.current = !!isInitiator;
       setCallStatus(isInitiator ? "connecting" : "waiting");
-      void setupPeerConnection();
+      // Peer connection setup is deferred to handlePeerJoined — see the
+      // comment on setupPeerConnection for why.
     };
 
     const joinRoom = () => {

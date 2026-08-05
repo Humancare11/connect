@@ -313,6 +313,16 @@ export function PaymentStage({
   const [stripeError, setStripeError] = useState("");
   const [paypalLoading, setPaypalLoading] = useState(false);
   const [paypalError, setPaypalError] = useState("");
+
+  // The backend now resolves the charge amount itself from HealthcareCategory
+  // / ServicePrice — it no longer trusts a client-supplied amount. We just
+  // need to tell it *what* is being booked so it can look up the right price.
+  const isServiceBooking = Boolean(selection?.isServiceBooking);
+  const priceType = isServiceBooking ? "service" : "category";
+  const priceRef = isServiceBooking
+    ? selection?.serviceName || selection?.catId || ""
+    : selection?.categoryName || selection?.catLabel || selection?.catId || "";
+
   const selectStripe = async () => {
     setStripeError("");
     if (clientSecret) {
@@ -322,7 +332,8 @@ export function PaymentStage({
     setStripeCreating(true);
     try {
       const res = await api.post("/api/payments/create-intent-by-amount", {
-        amountUsd: amount,
+        priceType,
+        priceRef,
       });
       setClientSecret(res.data.clientSecret);
       setMethod("stripe");
@@ -338,7 +349,8 @@ export function PaymentStage({
 
   const createPaypalOrder = async () => {
     const res = await api.post("/api/paypal/create-order-by-amount", {
-      amountUsd: amount,
+      priceType,
+      priceRef,
     });
     return res.data.orderId;
   };
