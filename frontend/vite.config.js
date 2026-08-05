@@ -49,6 +49,12 @@ export default ({ mode }) => {
           target: apiUrl,
           changeOrigin: true,
           secure: false,
+        },
+        '/socket.io': {
+          target: apiUrl,
+          changeOrigin: true,
+          secure: false,
+          ws: true,
         }
       }
     }
