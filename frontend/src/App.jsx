@@ -784,9 +784,6 @@ const AdminAuthPage = lazy(() => import("./pages/admin/AdminAuth"));
 const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
 // const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 // const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
-const HealthcareManagement = lazy(
-  () => import("./pages/admin/HealthcareManagement"),
-);
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
@@ -1427,26 +1424,6 @@ function AppLayout() {
             }
           />
           <Route
-            path="/admin-dashboard/payment-links"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <AdminLayout>
-                  <PaymentLinks />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/payment-link-history"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <AdminLayout>
-                  <PaymentLinkHistory />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
             path="/admin-dashboard/our-doctors"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
@@ -1581,16 +1558,6 @@ function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <SuperAdminDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/superadmin-dashboard/healthcare-management"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <AdminLayout>
-                  <HealthcareManagement />
-                </AdminLayout>
               </PrivateRoute>
             }
           />

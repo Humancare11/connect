@@ -5,6 +5,9 @@ import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
 import ServicesPrices from "./ServicesPrices";
 import PrimaryCarePrice from "./PrimaryCarePrice";
+import HealthcareManagement from "./HealthcareManagement";
+import PaymentLinks from "./PaymentLinks";
+import PaymentLinkHistory from "./PaymentLinkHistory";
 
 function EyeIcon({ open }) {
   return open ? (
@@ -779,22 +782,20 @@ export default function SuperAdminDashboard() {
             Employee Admins
           </button>
           <button
-            className="dash-nav-item"
-            onClick={() =>
-              navigate("/superadmin-dashboard/healthcare-management")
-            }
+            className={`dash-nav-item${activeTab === "healthcareManagement" ? " active" : ""}`}
+            onClick={() => setActiveTab("healthcareManagement")}
           >
             Healthcare Management
           </button>
           <button
-            className="dash-nav-item"
-            onClick={() => navigate("/admin-dashboard/payment-links")}
+            className={`dash-nav-item${activeTab === "paymentLinks" ? " active" : ""}`}
+            onClick={() => setActiveTab("paymentLinks")}
           >
             Payment Links
           </button>
           <button
-            className="dash-nav-item"
-            onClick={() => navigate("/admin-dashboard/payment-link-history")}
+            className={`dash-nav-item${activeTab === "paymentHistory" ? " active" : ""}`}
+            onClick={() => setActiveTab("paymentHistory")}
           >
             Payment History
           </button>
@@ -838,6 +839,17 @@ export default function SuperAdminDashboard() {
           {activeTab === "employeeAdmins" && <EmployeeAdminsTab />}
           {activeTab === "servicesPrices" && <ServicesPrices />}
           {activeTab === "primaryCarePrice" && <PrimaryCarePrice />}
+          {activeTab === "healthcareManagement" && <HealthcareManagement />}
+          {activeTab === "paymentLinks" && (
+            <div className="sa-payment-scope">
+              <PaymentLinks />
+            </div>
+          )}
+          {activeTab === "paymentHistory" && (
+            <div className="sa-payment-scope">
+              <PaymentLinkHistory />
+            </div>
+          )}
         </div>
       </main>
     </div>
