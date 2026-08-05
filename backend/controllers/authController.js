@@ -6,7 +6,7 @@ const Doctor     = require("../models/Doctor");
 const { generatePatientId } = require("../utils/idSequence");
 const Enrollment = require("../models/Enrollment");
 const Consent    = require("../models/Consent");
-const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
+const { createAndSendOTP, verifyOTPCode, padToMinDuration } = require("../utils/otpUtils");
 const Session    = require("../models/Session");
 const {
   COOKIE_OPTS,
@@ -166,7 +166,7 @@ const sendRegisterOTP = async (req, res) => {
     console.error("sendRegisterOTP error:", err);
     const status = err.statusCode || 500;
     return res.status(status).json({
-      msg: `Failed to send OTP: ${err.message}`,
+      msg: "Failed to send OTP. Please try again shortly.",
       ...(err.retryAfterMs != null && { retryAfterMs: err.retryAfterMs }),
     });
   }
@@ -731,23 +731,35 @@ const googleAuthDoctor = async (req, res) => {
 //  10. FORGOT PASSWORD — send OTP (user)
 // ════════════════════════════════════════════
 const sendForgotOTP = async (req, res) => {
+  const startedAt = Date.now();
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ msg: "Email is required." });
 
     const clean = email.toLowerCase().trim();
     const user  = await User.findOne({ email: clean });
-    if (!user) return res.status(404).json({ msg: "No account found with this email." });
-    if (["doctor"].includes(user.role))
-      return res.status(403).json({ msg: "Please use the Doctor Login page." });
+
+    // Deliberately identical response whether the email is unregistered or
+    // belongs to a doctor account — branching here (e.g. a 404) would let a
+    // caller enumerate which emails have a patient account. Only actually
+    // send an OTP when there's a real patient account to send it to.
+    const genericResponse = { msg: "If an account exists for this email, a password reset OTP has been sent." };
+    if (!user || user.role === "doctor") {
+      // Same response body as the "OTP sent" branch below, but this path
+      // skips the SMTP send — pad it up to that branch's floor so response
+      // timing can't be used to tell the two cases apart (see padToMinDuration).
+      await padToMinDuration(startedAt);
+      return res.json(genericResponse);
+    }
 
     await createAndSendOTP(clean, "forgot", "user");
-    return res.json({ msg: "Password reset OTP sent to your email." });
+    await padToMinDuration(startedAt);
+    return res.json(genericResponse);
   } catch (err) {
     console.error("sendForgotOTP error:", err);
     const status = err.statusCode || 500;
     return res.status(status).json({
-      msg: `Failed to send OTP: ${err.message}`,
+      msg: "Failed to send OTP. Please try again shortly.",
       ...(err.retryAfterMs != null && { retryAfterMs: err.retryAfterMs }),
     });
   }

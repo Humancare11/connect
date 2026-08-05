@@ -4,14 +4,20 @@ const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const mongoose = require("mongoose");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const { paypalFetch } = require("../utils/paypal");
 const { sendEmail } = require("../utils/sendEmail");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { getS3ObjectUrl } = require("../config/s3");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const { sendPushToUser } = require("../utils/pushNotifications");
+const {
+  PaymentVerificationError,
+  resolveDoctorFeeCents,
+  resolveCategoryFeeCents,
+  verifyStripePaymentIntent,
+  verifyPaypalOrder,
+  claimPaymentOnce,
+} = require("../utils/paymentVerification");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 
@@ -41,9 +47,12 @@ async function withPresignedMedicalReportUrls(appointment) {
       const key = keyFromStoredValue(report?.key || report?.url);
       if (!key) return report;
       const signed = await createS3PresignedGetUrl(key);
+      // Only the short-lived presigned URL is returned to clients — a raw
+      // getS3ObjectUrl() would be a permanent, unauthenticated link to a PHI
+      // document (medical report) that keeps working even if the bucket's
+      // ACL is ever loosened, unlike a presigned URL which expires.
       return {
         ...report,
-        s3Url: getS3ObjectUrl(key),
         url: signed.url,
         urlExpiresAt: signed.expiresAt,
       };
@@ -135,6 +144,15 @@ function buildUtcDateTime(date, time, timezone) {
 }
 
 const createAppointment = async (req, res) => {
+  // Hoisted so the catch block can tell whether payment already succeeded
+  // before the booking failed (needed to give the patient/support a safe,
+  // reconcilable error instead of silently losing their payment).
+  let paymentRef = "";
+  let paymentGateway = "";
+  let paymentAmountFinal = 0;
+  let paymentStatus = "unpaid";
+
+  const session = await mongoose.startSession();
   try {
     const {
       doctorId,
@@ -181,10 +199,20 @@ const createAppointment = async (req, res) => {
       }
     }
 
-    let paymentRef = "";
-    let paymentGateway = "";
-    let paymentAmountFinal = 0;
-    let paymentStatus = "unpaid";
+    // Resolve the canonical UTC instant up front (before any conflict check) so
+    // doctor-availability conflicts are detected by actual UTC instant rather
+    // than by comparing the patient-local date/time strings, which can miss
+    // same-slot conflicts across timezones (e.g. 11PM PST === 2AM EST next day).
+    const safeTimezone = typeof patientTimezone === "string" ? patientTimezone.slice(0, 80) : "";
+    let resolvedUtc = null;
+    if (appointmentDateTimeUtc) {
+      const d = new Date(appointmentDateTimeUtc);
+      if (!Number.isNaN(d.getTime())) resolvedUtc = d;
+    }
+    if (!resolvedUtc) {
+      resolvedUtc = buildUtcDateTime(date, time, safeTimezone);
+    }
+
     let resolvedDoctorId = null;
 
     if (doctorId) {
@@ -192,43 +220,38 @@ const createAppointment = async (req, res) => {
         return res.status(400).json({ msg: "Payment is required to book an appointment." });
       }
 
-      if (paymentIntentId) {
-        let pi;
-        try { pi = await stripe.paymentIntents.retrieve(paymentIntentId); }
-        catch { return res.status(400).json({ msg: "Invalid Stripe payment reference." }); }
-        if (pi.status !== "succeeded") {
-          return res.status(402).json({ msg: "Stripe payment not completed. Please complete payment first." });
-        }
-        paymentRef = paymentIntentId;
-        paymentGateway = "stripe";
-        paymentAmountFinal = pi.amount;
-      } else {
-        let order;
-        try { order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`); }
-        catch { return res.status(400).json({ msg: "Invalid PayPal payment reference." }); }
-        if (order.status !== "COMPLETED") {
-          return res.status(402).json({ msg: "PayPal payment not completed." });
-        }
-        const captureData = order.purchase_units[0].payments.captures[0];
-        paymentRef = paypalOrderId;
-        paymentGateway = "paypal";
-        paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
-      }
-
-      paymentStatus = "paid";
+      // Resolve + validate the doctor before touching Stripe/PayPal, so an
+      // invalid doctorId fails fast without an extra external API call.
       resolvedDoctorId = await resolveDoctorId(doctorId);
       const doctor = resolvedDoctorId ? await Doctor.findById(resolvedDoctorId) : null;
       if (!doctor) {
         return res.status(404).json({ msg: "Doctor not found." });
       }
 
-      const conflict = await Appointment.findOne({
+      // The charged amount must match this doctor's real fee — never trust
+      // whatever amount happens to be on the payment reference the client
+      // sends, otherwise a patient could pay for a $1 booking elsewhere and
+      // reuse that reference here. See PaymentVerificationError below.
+      const expectedCents = await resolveDoctorFeeCents(resolvedDoctorId);
+      const verified = paymentIntentId
+        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
+        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
+
+      paymentRef = verified.ref;
+      paymentGateway = verified.gateway;
+      paymentAmountFinal = verified.amountCents;
+      paymentStatus = "paid";
+
+      // Note: the authoritative conflict check happens inside the transaction
+      // below (right before creation) so it can't race against a concurrent
+      // booking for the same slot. This early check is just a fast-path to
+      // avoid making the patient wait for the transaction on the common case.
+      const earlyConflict = await Appointment.findOne({
         doctorId: resolvedDoctorId,
-        date,
-        time,
         status: { $in: ACTIVE_DOCTOR_STATUSES },
-      });
-      if (conflict) {
+        $or: [{ appointmentDateTimeUtc: resolvedUtc }, { date, time }],
+      }).select("_id").lean();
+      if (earlyConflict) {
         return res.status(409).json({ msg: "This time slot is already booked. Please choose a different time." });
       }
     }
@@ -239,42 +262,22 @@ const createAppointment = async (req, res) => {
         return res.status(400).json({ msg: "Payment is required to submit an appointment request." });
       }
 
-      if (paymentIntentId) {
-        let pi;
-        try { pi = await stripe.paymentIntents.retrieve(paymentIntentId); }
-        catch { return res.status(400).json({ msg: "Invalid Stripe payment reference." }); }
-        if (pi.status !== "succeeded") {
-          return res.status(402).json({ msg: "Stripe payment not completed. Please complete payment first." });
-        }
-        paymentRef = paymentIntentId;
-        paymentGateway = "stripe";
-        paymentAmountFinal = pi.amount;
-      } else {
-        let order;
-        try { order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`); }
-        catch { return res.status(400).json({ msg: "Invalid PayPal payment reference." }); }
-        if (order.status !== "COMPLETED") {
-          return res.status(402).json({ msg: "PayPal payment not completed." });
-        }
-        const captureData = order.purchase_units[0].payments.captures[0];
-        paymentRef = paypalOrderId;
-        paymentGateway = "paypal";
-        paymentAmountFinal = Math.round(parseFloat(captureData.amount.value) * 100);
+      // Fail closed: if the category name doesn't resolve to a known,
+      // priced category, reject rather than silently skipping the amount
+      // check (an unresolved category must not become a way to bypass it).
+      const expectedCents = await resolveCategoryFeeCents(category);
+      if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
+        return res.status(400).json({ msg: "Unrecognized category. Please reselect and try again." });
       }
-      paymentStatus = "paid";
-    }
 
-    // Resolve the UTC instant for the appointment.
-    // Prefer the value sent by the frontend (already converted in the patient's browser TZ).
-    // Fall back to a server-side conversion using the patient's IANA timezone string.
-    const safeTimezone = typeof patientTimezone === "string" ? patientTimezone.slice(0, 80) : "";
-    let resolvedUtc = null;
-    if (appointmentDateTimeUtc) {
-      const d = new Date(appointmentDateTimeUtc);
-      if (!Number.isNaN(d.getTime())) resolvedUtc = d;
-    }
-    if (!resolvedUtc) {
-      resolvedUtc = buildUtcDateTime(date, time, safeTimezone);
+      const verified = paymentIntentId
+        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
+        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
+
+      paymentRef = verified.ref;
+      paymentGateway = verified.gateway;
+      paymentAmountFinal = verified.amountCents;
+      paymentStatus = "paid";
     }
 
     const bookedAt = new Date();
@@ -289,26 +292,70 @@ const createAppointment = async (req, res) => {
       gender: patientDetails?.gender || patient?.gender || "",
     };
 
-    const appointment = await Appointment.create({
-      patientId,
-      doctorId: resolvedDoctorId,
-      date,
-      time,
-      appointmentDateTimeUtc: resolvedUtc,
-      bookedAt,
-      patientTimezone: safeTimezone,
-      problem,
-      category,
-      specialty,
-      condition,
-      consultationPrice: Number(consultationPrice) || 0,
-      patientDetails: safePatientDetails,
-      medicalReports: normalizeMedicalReports(medicalReports),
-      status: resolvedDoctorId ? "pending" : "upcoming",
-      paymentIntentId: paymentRef,
-      paymentAmount: paymentAmountFinal,
-      paymentStatus,
-      paymentGateway,
+    // ── Payment (Stripe/PayPal) is already verified above, outside the
+    // transaction — external API calls must never live inside a DB
+    // transaction. Everything from here on is a DB write, so the
+    // definitive conflict re-check + insert are wrapped in a transaction:
+    // this closes the race window where two concurrent requests could both
+    // pass the conflict check and double-book the same doctor slot.
+    let appointment;
+    await session.withTransaction(async () => {
+      if (resolvedDoctorId) {
+        const conflict = await Appointment.findOne({
+          doctorId: resolvedDoctorId,
+          status: { $in: ACTIVE_DOCTOR_STATUSES },
+          $or: [{ appointmentDateTimeUtc: resolvedUtc }, { date, time }],
+        })
+          .select("_id")
+          .session(session);
+        if (conflict) {
+          const slotTakenError = new Error("SLOT_TAKEN");
+          slotTakenError.code = "SLOT_TAKEN";
+          throw slotTakenError;
+        }
+      }
+
+      // Marks this payment as spent — if it was already used for another
+      // booking, this throws and the whole transaction (including the
+      // conflict check above) rolls back, so nothing is created twice.
+      const appointmentId = new mongoose.Types.ObjectId();
+      await claimPaymentOnce({
+        gateway: paymentGateway,
+        ref: paymentRef,
+        consumedFor: "appointment",
+        resourceId: appointmentId,
+        patientId,
+        session,
+      });
+
+      const created = await Appointment.create(
+        [
+          {
+            _id: appointmentId,
+            patientId,
+            doctorId: resolvedDoctorId,
+            date,
+            time,
+            appointmentDateTimeUtc: resolvedUtc,
+            bookedAt,
+            patientTimezone: safeTimezone,
+            problem,
+            category,
+            specialty,
+            condition,
+            consultationPrice: Number(consultationPrice) || 0,
+            patientDetails: safePatientDetails,
+            medicalReports: normalizeMedicalReports(medicalReports),
+            status: resolvedDoctorId ? "pending" : "upcoming",
+            paymentIntentId: paymentRef,
+            paymentAmount: paymentAmountFinal,
+            paymentStatus,
+            paymentGateway,
+          },
+        ],
+        { session }
+      );
+      appointment = created[0];
     });
 
     const io = req.app.get("io");
@@ -344,8 +391,35 @@ const createAppointment = async (req, res) => {
       appointment,
     });
   } catch (error) {
+    if (error?.code === "SLOT_TAKEN") {
+      return res.status(409).json({ msg: "This time slot is already booked. Please choose a different time." });
+    }
+
+    if (error instanceof PaymentVerificationError) {
+      return res.status(error.status).json({ msg: error.message });
+    }
+
     console.error("createAppointment error:", error);
+
+    // Payment already succeeded (money was taken) but the booking write failed
+    // after that — never show a generic error here, since the patient needs a
+    // reference to get this reconciled instead of silently losing their payment.
+    if (paymentStatus === "paid" && paymentRef) {
+      console.error(
+        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal}) ` +
+          `but appointment creation failed for patient ${req.user?.id}. Needs manual reconciliation.`
+      );
+      return res.status(500).json({
+        msg: "Your payment was received, but we couldn't finalize the booking due to a server error. " +
+          "Please contact support with this reference so we can resolve it immediately.",
+        paymentReference: paymentRef,
+        paymentGateway,
+      });
+    }
+
     res.status(500).json({ msg: "Failed to book appointment." });
+  } finally {
+    session.endSession();
   }
 };
 // NEXT_AVAILABLE bookings have no patient-chosen slot, so `cc.slot` is null

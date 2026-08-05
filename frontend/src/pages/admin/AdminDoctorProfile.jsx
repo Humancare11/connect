@@ -667,6 +667,20 @@ function displayFileName(value) {
   }
 }
 
+// The document-preview popup below builds its content via document.write()
+// on a same-origin blank window it just opened. The static markup is safe,
+// but the error message can come from the backend (e.g. a validation error
+// echoing submitted input) — escape it so it can never be interpreted as
+// HTML/script in that popup.
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 async function getAdminDocumentAccessUrl(enrollmentId, field) {
   const { data } = await api.get(
     `/api/admin/doctors/${enrollmentId}/documents/${field}/access-url`,
@@ -701,7 +715,7 @@ function SignedDocumentButton({ enrollmentId, field, label, style }) {
       if (opened) {
         opened.document.open();
         opened.document.write(
-          `<!doctype html><title>Document error</title><body style="font-family: var(--font-secondary);padding:24px;color:#991b1b">${message}</body>`,
+          `<!doctype html><title>Document error</title><body style="font-family: var(--font-secondary);padding:24px;color:#991b1b">${escapeHtml(message)}</body>`,
         );
         opened.document.close();
       }

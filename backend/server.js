@@ -16,12 +16,13 @@ require("dotenv").config({
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const http = require("http");
 const { Server } = require("socket.io");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { randomInt } = require("crypto");
+const { randomInt, randomUUID, randomBytes } = require("crypto");
 const User = require("./models/User");
 const Appointment = require("./models/Appointment");
 const Doctor = require("./models/Doctor");
@@ -55,40 +56,49 @@ const app = express();
 // Without this, req.protocol returns "http" even behind HTTPS termination.
 app.set("trust proxy", 1);
 
+// Creates a default account if it doesn't already exist. In development
+// this uses a fixed, well-known password for local convenience. Outside
+// development a random password is generated and printed to the server
+// log once — a fresh/reset database must never end up with a hardcoded,
+// publicly-documented admin login.
+async function seedDefaultAccount({ email, name, role, devPassword, isDev }) {
+  const existing = await User.findOne({ email });
+  if (existing) return;
+
+  const password = isDev ? devPassword : randomBytes(18).toString("base64url");
+  const hashed = await bcrypt.hash(password, 10);
+
+  await User.create({ name, email, password: hashed, role });
+
+  if (!isDev) {
+    console.warn(
+      `[startup] No "${role}" account existed — created ${email} with a generated password (shown once, not recoverable): ${password}`
+    );
+    console.warn(`[startup] Log in and change this password immediately.`);
+  }
+}
+
 // DB connect + auto-seed admin
 const startServer = async () => {
   await connectDB();
 
-  // Seed default admin
-  const existingAdmin = await User.findOne({ email: "admin@gmail.com" });
+  const isDev = process.env.NODE_ENV === "development";
 
-  if (!existingAdmin) {
-    const hashed = await bcrypt.hash("admin123", 10);
-
-    await User.create({
-      name: "Admin",
-      email: "admin@gmail.com",
-      password: hashed,
-      role: "admin",
-    });
-  }
-
-  // Seed superadmin
-  const existingSuperAdmin = await User.findOne({
-    email: "superadmin@humancare.com",
+  await seedDefaultAccount({
+    email: "admin@gmail.com",
+    name: "Admin",
+    role: "admin",
+    devPassword: "admin123",
+    isDev,
   });
 
-  if (!existingSuperAdmin) {
-    const hashed = await bcrypt.hash("superadmin123", 10);
-
-    await User.create({
-      name: "Super Admin",
-      email: "superadmin@humancare.com",
-      password: hashed,
-      role: "superadmin",
-    });
-
-  }
+  await seedDefaultAccount({
+    email: "superadmin@humancare.com",
+    name: "Super Admin",
+    role: "superadmin",
+    devPassword: "superadmin123",
+    isDev,
+  });
 
   // Backfill 5-digit doctorId for any doctor that doesn't have one yet
   const doctorsWithoutId = await Doctor.find({
@@ -163,11 +173,43 @@ function isOriginAllowed(origin) {
   return process.env.NODE_ENV !== "production" && isLocalDevOrigin(normalized);
 }
 
+// A missing JWT_SECRET must never silently degrade into a hardcoded/weak
+// fallback — every access/refresh token in this app (verifyToken.js,
+// server.js's socket auth) is signed and verified with this single secret,
+// so an absent or guessable value means anyone can forge an admin token.
+// Same fail-fast requirement as the TURN vars below, for the same reason:
+// this failure mode is otherwise invisible until it's actively exploited.
+const MIN_JWT_SECRET_LENGTH = 32;
+const WEAK_JWT_SECRETS = new Set([
+  "secret",
+  "password",
+  "123456",
+  "jwt_secret",
+  "fallback_secret_not_secure",
+  "default",
+  "test",
+  "changeme",
+]);
+
 function validateRuntimeConfig() {
   const required = ["JWT_SECRET", "MONGO_URI"];
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length) {
-    console.warn(`[config] Missing required environment variable(s): ${missing.join(", ")}`);
+    console.error(`[config] FATAL: Missing required environment variable(s): ${missing.join(", ")}`);
+    process.exit(1);
+  }
+
+  const jwtSecret = process.env.JWT_SECRET;
+  if (jwtSecret.length < MIN_JWT_SECRET_LENGTH) {
+    console.error(
+      `[config] FATAL: JWT_SECRET is too short (${jwtSecret.length} chars, minimum ${MIN_JWT_SECRET_LENGTH}). ` +
+        "Generate one with: openssl rand -base64 64"
+    );
+    process.exit(1);
+  }
+  if (WEAK_JWT_SECRETS.has(jwtSecret.toLowerCase())) {
+    console.error("[config] FATAL: JWT_SECRET is a well-known weak/default value. Generate a strong secret with: openssl rand -base64 64");
+    process.exit(1);
   }
 
   // TURN is required (not just STUN) because STUN alone cannot relay media
@@ -275,6 +317,34 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(require("cookie-parser")());
+
+// Every response carries an X-Request-Id so a user-reported error (or a
+// support ticket quoting the header) can be traced back to the matching
+// server-side log line. Requests over 1s are also logged here so slow
+// endpoints surface without needing a full APM setup.
+app.use((req, res, next) => {
+  req.id = randomUUID();
+  res.setHeader("X-Request-Id", req.id);
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (duration > 1000) {
+      console.warn(
+        `[perf] ${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms (${req.id})`
+      );
+    }
+  });
+  next();
+});
+
+// API responses (session data, PHI, tokens) must never be cached by browsers,
+// proxies, or CDNs — a shared/back-forward cache serving a previous user's
+// response to the next visitor on a shared machine is a real PHI leak path in
+// a healthcare app. Static assets aren't under /api and are unaffected.
+app.use("/api", (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
 
 const contactRoutes = require("./routes/contact");
 app.use("/api/contact", contactRoutes);
@@ -1660,6 +1730,24 @@ io.on("connection", (socket) => {
 
 }); // end io.on("connection")
 
+// ── Global error handler ──────────────────────────────────────────────────
+// Catches uncaught errors from routes/middleware (Express 5 auto-forwards
+// async rejections here too) and body-parser errors (e.g. malformed JSON).
+// Always logs full detail server-side but never echoes internals (stack
+// trace, file paths) to the client.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
+  const status = Number.isInteger(err?.status)
+    ? err.status
+    : Number.isInteger(err?.statusCode)
+      ? err.statusCode
+      : 500;
+  res.status(status).json({
+    msg: status >= 400 && status < 500 ? "Invalid request." : "Something went wrong. Please try again.",
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 validateRuntimeConfig();
@@ -1674,3 +1762,51 @@ startServer()
     console.error("Startup error:", err);
     process.exit(1);
   });
+
+// ── Graceful shutdown ──────────────────────────────────────────────────────
+// Without this, SIGTERM (e.g. a container orchestrator redeploying/scaling
+// down) kills the process immediately — mid-request HTTP calls get dropped
+// and active video-call sockets disconnect without a clean close frame.
+let shuttingDown = false;
+async function gracefulShutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`\n[shutdown] ${signal} received — closing server...`);
+
+  // Most orchestrators (Docker, ECS, k8s) SIGKILL shortly after SIGTERM
+  // anyway if the process hasn't exited — this just makes that deterministic
+  // and logged instead of the process hanging silently on a stuck close.
+  const forceExitTimer = setTimeout(() => {
+    console.error("[shutdown] Graceful shutdown timed out — forcing exit.");
+    process.exit(1);
+  }, 10000);
+  forceExitTimer.unref();
+
+  try {
+    // Disconnects all Socket.IO clients (active video-call signaling
+    // connections included) before the HTTP server stops — closing the raw
+    // HTTP server first would otherwise hang waiting for those long-lived
+    // websocket connections to end on their own.
+    await new Promise((resolve) => io.close(resolve));
+    console.log("[shutdown] Socket.IO closed.");
+
+    await new Promise((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
+    console.log("[shutdown] HTTP server closed.");
+
+    await mongoose.connection.close();
+    console.log("[shutdown] MongoDB connection closed.");
+
+    clearTimeout(forceExitTimer);
+    console.log("[shutdown] Graceful shutdown complete.");
+    process.exit(0);
+  } catch (err) {
+    console.error("[shutdown] Error during graceful shutdown:", err);
+    clearTimeout(forceExitTimer);
+    process.exit(1);
+  }
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

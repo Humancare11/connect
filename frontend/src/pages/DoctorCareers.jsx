@@ -321,6 +321,10 @@ const DOCTOR_FAQS = [
   }
 ];
 
+const DOCTOR_FAQ_ITEMS = DOCTOR_FAQS.flatMap((group) =>
+  group.items.map((item) => ({ q: item.question, a: item.answer }))
+);
+
 const INITIAL_FORM_STATE = {
   fullName: "",
   email: "",
@@ -989,7 +993,7 @@ export default function DoctorCareers() {
               viewport={{ once: true, amount: 0.1 }}
               variants={staggerContainer}
             >
-              {FAQS.map((item, idx) => (
+              {DOCTOR_FAQ_ITEMS.map((item, idx) => (
                 <motion.div key={item.q} variants={fadeUp}>
                   <FAQItem
                     item={item}

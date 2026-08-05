@@ -12,12 +12,44 @@ const {
     signAccessToken,
     signRefreshToken,
 } = require("../middleware/verifyToken");
-const { createAndSendOTP, verifyOTPCode } = require("../utils/otpUtils");
+const { createAndSendOTP, verifyOTPCode, padToMinDuration } = require("../utils/otpUtils");
 const { assertPasswordAllowed, rememberPassword } = require("../utils/passwordPolicy");
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
 const { recordFailedLogin } = require("../utils/securityMonitor");
+const { loginLimiter, otpRequestLimiter, otpVerifyLimiter } = require("../middleware/rateLimiters");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
+
+// /approved and /:id are public, unauthenticated listing endpoints (used by
+// the patient-facing "Find a Doctor" page), but two admin-panel pages
+// (AdminAssignDoctor, AdminAssignCategoryDoctor) also happen to call them —
+// via a plain axios GET that still carries the browser's adminToken cookie
+// even though no Authorization header is attached for this URL prefix. Admin
+// fields (internal Mongo _id, medical registration/council numbers, license
+// list) are only released when that cookie proves an active admin/superadmin
+// session; every anonymous/patient caller gets the trimmed public shape.
+async function isPrivilegedAdminRequest(req) {
+    const token = req.cookies?.adminToken ||
+        (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.split(" ")[1] : null);
+    if (!token) return false;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (!["admin", "superadmin"].includes(decoded.role) || !decoded.sid) return false;
+        const session = await Session.findById(decoded.sid).select("userId role revokedAt").lean();
+        if (!session || session.revokedAt) return false;
+        if (session.userId !== String(decoded.id) || session.role !== decoded.role) return false;
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+const ADMIN_ONLY_DOCTOR_FIELDS = ["mongoId", "medicalRegistrationNumber", "medicalCouncilName", "internationalLicenses"];
+function stripAdminOnlyFields(doctor) {
+    const trimmed = { ...doctor };
+    for (const field of ADMIN_ONLY_DOCTOR_FIELDS) delete trimmed[field];
+    return trimmed;
+}
 
 const withDoctorRole = (doctor) => ({ ...doctor.toObject(), role: "doctor" });
 const buildTokenPayload = (doctor, session) => {
@@ -169,7 +201,7 @@ const buildPendingProfileChanges = (enrollment, updates) =>
         }));
 
 // ── POST /api/doctor/send-register-otp ───────────────────────────────────────
-router.post("/send-register-otp", async (req, res) => {
+router.post("/send-register-otp", otpRequestLimiter, async (req, res) => {
     try {
         const { email, name } = req.body;
         if (!email) return res.status(400).json({ message: "Email is required." });
@@ -185,14 +217,14 @@ router.post("/send-register-otp", async (req, res) => {
         console.error("sendDoctorRegisterOTP error:", err);
         const status = err.statusCode || 500;
         return res.status(status).json({
-            message: `Failed to send OTP: ${err.message}`,
+            message: "Failed to send OTP. Please try again shortly.",
             ...(err.retryAfterMs != null && { retryAfterMs: err.retryAfterMs }),
         });
     }
 });
 
 // ── POST /api/doctor/register ─────────────────────────────────────────────────
-router.post("/register", async (req, res) => {
+router.post("/register", otpVerifyLimiter, async (req, res) => {
     try {
         const { name, email, password, confirmPassword, otp } = req.body;
 
@@ -249,7 +281,7 @@ router.post("/register", async (req, res) => {
 });
 
 // ── POST /api/doctor/login ────────────────────────────────────────────────────
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password)
@@ -305,18 +337,31 @@ router.post("/login", async (req, res) => {
 });
 
 // ── POST /api/doctor/send-forgot-otp ─────────────────────────────────────────
-router.post("/send-forgot-otp", async (req, res) => {
+router.post("/send-forgot-otp", otpRequestLimiter, async (req, res) => {
+    const startedAt = Date.now();
     try {
         const { email } = req.body;
         if (!email) return res.status(400).json({ message: "Email is required." });
 
         const clean = email.toLowerCase().trim();
         const doctor = await Doctor.findOne({ email: clean });
-        if (!doctor)
-            return res.status(404).json({ message: "No doctor account found with this email." });
+
+        // Deliberately identical response whether or not the email has a
+        // doctor account — a 404 here would let a caller enumerate which
+        // emails belong to doctors. Only actually send an OTP when there's
+        // a real account to send it to.
+        const genericResponse = { message: "If a doctor account exists for this email, a password reset OTP has been sent." };
+        if (!doctor) {
+            // Same response body as the branch below, but this path skips the
+            // SMTP send — pad it up to that branch's floor so response timing
+            // can't be used to tell the two cases apart (see padToMinDuration).
+            await padToMinDuration(startedAt);
+            return res.json(genericResponse);
+        }
 
         await createAndSendOTP(clean, "forgot", "doctor");
-        return res.json({ message: "Password reset OTP sent to your email." });
+        await padToMinDuration(startedAt);
+        return res.json(genericResponse);
     } catch (err) {
         console.error("sendDoctorForgotOTP error:", err);
         const status = err.statusCode || 500;
@@ -328,7 +373,7 @@ router.post("/send-forgot-otp", async (req, res) => {
 });
 
 // ── POST /api/doctor/verify-forgot-otp ───────────────────────────────────────
-router.post("/verify-forgot-otp", async (req, res) => {
+router.post("/verify-forgot-otp", otpVerifyLimiter, async (req, res) => {
     try {
         const { email, otp } = req.body;
         if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required." });
@@ -789,7 +834,7 @@ router.get("/profile/:doctorId", async (req, res) => {
         }
 
         const e = enrollment;
-        return res.json({
+        let doctorPayload = {
             id: e._id,
             doctorId: e.doctorId?.doctorId,
             mongoId: e.doctorId?._id,
@@ -819,7 +864,13 @@ router.get("/profile/:doctorId", async (req, res) => {
             medicalCouncilName: e.medicalCouncilName || "",
             availability: e.availability || null,
             timezone: e.timezone || "",
-        });
+        };
+
+        if (!(await isPrivilegedAdminRequest(req))) {
+            doctorPayload = stripAdminOnlyFields(doctorPayload);
+        }
+
+        return res.json(doctorPayload);
     } catch (err) {
         console.error("getDoctorByNumericId error:", err);
         return res.status(500).json({ message: "Server error" });
@@ -833,7 +884,7 @@ router.get("/approved", async (req, res) => {
             .populate("doctorId", "name email doctorId")
             .lean();
 
-        const doctors = enrollments.map((e) => ({
+        let doctors = enrollments.map((e) => ({
             id: e._id,
             doctorId: e.doctorId?.doctorId,
             mongoId: e.doctorId?._id,
@@ -860,6 +911,10 @@ router.get("/approved", async (req, res) => {
             source: "enrollment",
         }));
 
+        if (!(await isPrivilegedAdminRequest(req))) {
+            doctors = doctors.map(stripAdminOnlyFields);
+        }
+
         return res.json(doctors);
     } catch (err) {
         console.error("approved doctors error:", err);
@@ -879,7 +934,7 @@ router.get("/:id", async (req, res) => {
         }
 
         const e = enrollment;
-        return res.json({
+        let doctorPayload = {
             id: e._id,
             doctorId: e.doctorId?.doctorId,
             mongoId: e.doctorId?._id,
@@ -909,7 +964,13 @@ router.get("/:id", async (req, res) => {
             medicalCouncilName: e.medicalCouncilName || "",
             availability: e.availability || null,
             timezone: e.timezone || "",
-        });
+        };
+
+        if (!(await isPrivilegedAdminRequest(req))) {
+            doctorPayload = stripAdminOnlyFields(doctorPayload);
+        }
+
+        return res.json(doctorPayload);
     } catch (err) {
         console.error("getDoctorById error:", err);
         if (err.name === "CastError") {

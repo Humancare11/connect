@@ -6,6 +6,7 @@ const Enrollment = require("../models/Enrollment");
 const Doctor     = require("../models/Doctor");
 const { paypalFetch } = require("../utils/paypal");
 const { convertAmount } = require("../utils/currency");
+const { resolveCategoryFeeCents, resolveServiceFeeCents } = require("../utils/paymentVerification");
 
 async function resolveDoctorId(value) {
   if (!value) return null;
@@ -59,18 +60,28 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
 });
 
 /* POST /api/paypal/create-order-by-amount
-   Creates a PayPal order for a fixed USD amount (category-based bookings). */
+   Creates a PayPal order for a category or service consultation fee. The
+   amount is always resolved server-side (via priceType + priceRef), never
+   trusted from the client — see the matching Stripe endpoint for why. */
 router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
   try {
-    const amountUsd = Number(req.body.amountUsd);
-    if (!Number.isFinite(amountUsd) || amountUsd < 1)
-      return res.status(400).json({ msg: "Valid amountUsd (in USD) is required." });
+    const { priceType, priceRef } = req.body;
+    const amountCents = priceType === "service"
+      ? await resolveServiceFeeCents(priceRef)
+      : await resolveCategoryFeeCents(priceRef);
+
+    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+      return res.status(400).json({
+        msg: "Could not determine a valid price for this selection. Please reselect and try again.",
+      });
+    }
 
     const order = await paypalFetch("POST", "/v2/checkout/orders", {
       intent: "CAPTURE",
       purchase_units: [{
-        amount: { currency_code: "USD", value: amountUsd.toFixed(2) },
+        amount: { currency_code: "USD", value: (amountCents / 100).toFixed(2) },
         description: "Consultation Booking Fee",
+        custom_id: `${priceType === "service" ? "service" : "category"}:${String(priceRef || "").slice(0, 100)}`,
       }],
     });
 
