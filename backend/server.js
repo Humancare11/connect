@@ -280,20 +280,20 @@ app.use(
       includeSubDomains: true,
       preload: true,
     },
-    contentSecurityPolicy: {
-      useDefaults: true,
-      directives: {
-        defaultSrc: ["'self'"],
-        baseUri: ["'self'"],
-        frameAncestors: ["'none'"],
-        objectSrc: ["'none'"],
-        imgSrc: ["'self'", "data:", "blob:", ...s3AssetSources],
-        connectSrc: ["'self'", ...allowedOrigins, ...s3AssetSources],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null,
-      },
-    },
+    // contentSecurityPolicy: {
+    //   useDefaults: true,
+    //   directives: {
+    //     defaultSrc: ["'self'"],
+    //     baseUri: ["'self'"],
+    //     frameAncestors: ["'none'"],
+    //     objectSrc: ["'none'"],
+    //     imgSrc: ["'self'", "data:", "blob:", ...s3AssetSources],
+    //     connectSrc: ["'self'", ...allowedOrigins, ...s3AssetSources],
+    //     scriptSrc: ["'self'"],
+    //     styleSrc: ["'self'", "'unsafe-inline'"],
+    //     upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null,
+    //   },
+    // },
   })
 );
 
