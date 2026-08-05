@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Country } from "country-state-city";
 import api from "../../api";
 import "./AdminDashboard.css";
 
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 const STATUS_META = {
   pending: { label: "Pending", bg: "#fef3c7", color: "#92400e" },
@@ -121,11 +127,10 @@ function ProgressCell({ progress }) {
 
 
 export default function ManageDoctors() {
-  const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("pending");
   const [toast, setToast] = useState(null);
 
   const fetchDoctors = useCallback(async (silent = false) => {
@@ -267,12 +272,12 @@ export default function ManageDoctors() {
         <div className="adp-card-header">
           <div className="adp-tabs">
             {[
-              { key: "all", label: "All", count: counts.all },
               { key: "pending", label: "Pending", count: counts.pending },
               { key: "approved", label: "Approved", count: counts.approved },
               { key: "rejected", label: "Rejected", count: counts.rejected },
               { key: "update_requests", label: "Update Requests", count: counts.update_requests },
               { key: "delete_requests", label: "Delete Requests", count: counts.delete_requests },
+              { key: "all", label: "All", count: counts.all },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -317,6 +322,8 @@ export default function ManageDoctors() {
                   <th>Sr No</th>
                   <th>Doctor ID</th>
                   <th>Doctor</th>
+                  <th>Country</th>
+                  <th>Phone NO</th>
                   <th>Request Type</th>
                   <th>Specialization</th>
                   <th>Progress</th>
@@ -366,6 +373,12 @@ export default function ManageDoctors() {
                           </div>
                         </div>
                       </td>
+                      <td>{getCountryName(row.country) || <span style={{ color: "#94a3b8" }}>-</span>}</td>
+                      <td>
+                        {row.phoneNumber
+                          ? `${row.countryCode ? row.countryCode + " " : ""}${row.phoneNumber}`
+                          : <span style={{ color: "#94a3b8" }}>-</span>}
+                      </td>
                       <td>
                         <span
                           style={{
@@ -398,12 +411,14 @@ export default function ManageDoctors() {
                       </td>
                       <td>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          <button
+                          <a
                             className="adp-btn adp-btn--view"
-                            onClick={() => navigate(`/admin-dashboard/doctor-profile/${row._id}`, { state: { enrollment: row, from: "manage-doctors" } })}
+                            href={`/admin-dashboard/doctor-profile/${row._id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
                           >
                             View Profile
-                          </button>
+                          </a>
 
                           {requestType === "profile_delete" ? (
                             <>
