@@ -21,6 +21,7 @@ import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
 import SEO from "../../components/Seo";
 import FAQ from "../../components/FAQ/FAQ";
+import childFamilyHero from "../../assets/HomeImageCategories/child-family-care-services.webp";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -501,7 +502,14 @@ export default function ChildFamilyCare() {
       </Helmet>
 
       {/* ── Hero ── */}
-      <section className="hcc-hero">
+      <section
+        className="hcc-hero"
+        style={{
+          backgroundImage: `url(${childFamilyHero})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         <div className="hcc-hero-overlay" />
         <div className="hcc-hero-deco-1" />
         <div className="hcc-hero-deco-2" />

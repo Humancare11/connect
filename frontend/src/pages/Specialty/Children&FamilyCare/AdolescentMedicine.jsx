@@ -61,7 +61,7 @@ import api from "../../../api";
 
 import SEO from "../../../components/Seo";
 
-import heroImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-teen-healthcare-banner.webp";
+import heroImage from "../../../assets/HeroImageSpecialities/adolescent-medicine-healthcare-services.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-consultation.webp";
 import FAQ from "../../../components/FAQ/FAQ";
 

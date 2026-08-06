@@ -58,7 +58,7 @@ import {
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
 
-import heroImage from "../../../assets/SpecialitiesImage/family-medicine-primary-care-doctor-consultation-banner.webp";
+import heroImage from "../../../assets/HeroImageSpecialities/neurology-brain-and-nerve-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/family-medicine-doctor-patient-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";

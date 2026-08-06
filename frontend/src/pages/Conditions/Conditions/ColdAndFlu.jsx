@@ -41,7 +41,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Cold-&-Flu.webp";
+import ConditionBannerImage from "../../../assets/HomeImageConditions/cold-cough-treatment-services.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -81,7 +81,7 @@ export default function ColdAndFlu() {
               url(${pageData.bgImage})
               `,
             backgroundSize: "cover",
-            backgroundPosition: "center top",
+            backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
         >

@@ -68,7 +68,7 @@ import {
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
 
-import heroImage from "../../../assets/SpecialitiesImage/ophthalmology-eye-specialist-vision-care-banner.webp";
+import heroImage from "../../../assets/HeroImageSpecialities/ophthalmology-eye-care-services.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/ophthalmologist-comprehensive-eye-examination-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";

@@ -70,7 +70,7 @@ import {
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
 
-import heroImage from "../../../assets/SpecialitiesImage/orthopedics-bone-joint-muscle-care-banner.webp";
+import heroImage from "../../../assets/HeroImageSpecialities/orthopedic-bone-joint-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/orthopedic-doctor-bone-joint-examination.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";

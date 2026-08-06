@@ -65,7 +65,7 @@ import {
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
 
-import heroImage from "../../../assets/SpecialitiesImage/ent-ear-nose-throat-specialist-consultation-banner.webp";
+import heroImage from "../../../assets/HeroImageSpecialities/ent-ear-nose-throat-specialist.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/ent-specialist-ear-nose-throat-examination-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";

@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import generalCareHero from "../../assets/HomeImageCategories/general-everyday-healthcare-services.webp";
 import SEO from "../../components/Seo";
 import FAQ from "../../components/FAQ/FAQ";
 
@@ -526,7 +527,14 @@ export default function GeneralEverydayCare() {
       </Helmet>
 
       {/* ── Hero ── */}
-      <section className="hcc-hero">
+      <section
+        className="hcc-hero"
+        style={{
+          backgroundImage: `url(${generalCareHero})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         <div className="hcc-hero-overlay" />
         <div className="hcc-hero-deco-1" />
         <div className="hcc-hero-deco-2" />

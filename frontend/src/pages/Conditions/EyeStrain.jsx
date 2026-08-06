@@ -11,7 +11,7 @@ import {
   HeartPulse,
   Users,
 } from "lucide-react";
-import ConditionBannerImage from "../../assets/ConditionImages/EyeEarAndMusculoskeletal/Eye-Strain.webp";
+import ConditionBannerImage from "../../assets/HomeImageConditions/eye-problems-vision-care-services.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -49,7 +49,7 @@ export default function EyeStrain() {
               url(${pageData.bgImage})
               `,
             backgroundSize: "cover",
-            backgroundPosition: "center top",
+            backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
         >

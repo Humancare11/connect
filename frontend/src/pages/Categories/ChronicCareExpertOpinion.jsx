@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import chronicCareHero from "../../assets/HomeImageCategories/chronic-care-expert-medical-opinion.webp";
 import SEO from "../../components/Seo";
 import FAQ from "../../components/FAQ/FAQ";
 
@@ -613,7 +614,14 @@ export default function ChronicCareExpertOpinion() {
       </Helmet>
 
       {/* ── Hero ── */}
-      <section className="hcc-hero">
+      <section
+        className="hcc-hero"
+        style={{
+          backgroundImage: `url(${chronicCareHero})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         <div className="hcc-hero-overlay" />
         <div className="hcc-hero-deco-1" />
         <div className="hcc-hero-deco-2" />
