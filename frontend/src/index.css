@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+/* ================================================================
+   SHARED CORPORATE HERO THEME
+================================================================ */
+
+.corp-hero {
+  background:
+    radial-gradient(circle at top right,
+      rgba(124, 183, 255, 0.18),
+      transparent 35%),
+    linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+  background-size: cover;
+  background-position: center;
+  padding-top: 142px;
+  padding-bottom: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.corp-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+  z-index: 1;
+  animation: slideDown 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.corp-hero h1 {
+  font-size: clamp(28px, 5vw, 46px);
+  max-width: 700px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin-bottom: 12px;
+}
+
+.corp-hero p {
+  font-size: 15px;
+  color: #c8dfff;
+  line-height: 1.65;
+  max-width: 520px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 768px) {
+  .corp-hero {
+    padding-top: 100px;
+    padding-bottom: 40px;
+  }
+
+  .corp-hero-inner {
+    padding: 0 20px;
+  }
+
+  .corp-hero p {
+    font-size: 14px;
+  }
+}

@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 
@@ -41,6 +41,7 @@ import {
 import "./Specialties.css";
 import SEO from "../components/Seo";
 import ServiceSwitcher from "../components/ServiceSwitcher";
+import FAQ from "../components/FAQ/FAQ";
 
 const conditionIcons = {
   bone: Bone,
@@ -873,60 +874,18 @@ export default function Specialties() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="sp-faq">
-        <div className="sp-faq__inner">
-          {/* Left column */}
-          <div className="sp-faq__left">
-            <span className="sp-faq__tag">FAQ</span>
-            <h2 className="sp-faq__heading">Frequently Asked Questions</h2>
-            <p className="sp-faq__copy">
-              Everything you need to know about primary care at Humancare
-              Connect. Can't find an answer?
-            </p>
-            {/* <button type="button" className="sp-faq__chat-btn">
-              <MessageCircle size={16} /> Chat with our team
-            </button> */}
-
-            <div className="sp-faq__trust">
-              <div className="sp-faq__trust-item">
-                <Clock size={14} /> Avg. response in 10 min
-              </div>
-              <div className="sp-faq__trust-item">
-                <Lock size={14} /> HIPAA secure &amp; private
-              </div>
-              <div className="sp-faq__trust-item">
-                <MapPin size={14} /> Available Globally
-              </div>
-            </div>
-          </div>
-
-          {/* Right column — accordion groups */}
-          <div className="sp-faq__right">
-            {faqGroups.map((group, gi) => (
-              <div className="sp-faq__group" key={group.label}>
-                <span className="sp-faq__group-label">
-                  <span className="sp-faq__group-dot" />
-                  {group.label}
-                </span>
-                <div className="sp-faq__card">
-                  {group.items.map((item, ii) => {
-                    const id = `${gi}-${ii}`;
-                    return (
-                      <FaqItem
-                        key={id}
-                        q={item.q}
-                        a={item.a}
-                        isOpen={openFaq === id}
-                        onToggle={() => setOpenFaq(openFaq === id ? null : id)}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FAQ
+        badge="FAQ"
+        title="Frequently Asked Questions"
+        description="Everything you need to know about primary care at Humancare Connect. Can't find an answer?"
+        sections={faqGroups.map((group) => ({
+          title: group.label,
+          items: group.items.map((item) => ({
+            question: item.q,
+            answer: item.a,
+          })),
+        }))}
+      />
 
       {/* Bottom CTA card */}
       <section id="cta" className="sp-cta">

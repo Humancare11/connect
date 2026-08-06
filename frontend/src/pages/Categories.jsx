@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import "./Categories.css";
@@ -42,6 +42,7 @@ import { MdChildCare, MdOutlineLocalHospital } from "react-icons/md";
 import { RiMentalHealthLine } from "react-icons/ri";
 import SEO from "../components/Seo";
 import ServiceSwitcher from "../components/ServiceSwitcher";
+import FAQ from "../components/FAQ/FAQ";
 
 /* ─────────────────────────────────────────────────────────────
    ICON MAP
@@ -605,77 +606,19 @@ function CareSection() {
    FAQ SECTION
 ───────────────────────────────────────────────────────────── */
 function FaqSection() {
-  const [openKey, setOpenKey] = useState("0-0");
-
   return (
-    <section className="cat-faq">
-      <div className="cat-section__wrap">
-        <div className="cat-faq__grid">
-          <div className="cat-faq__left">
-            <span className="cat-faq__eyebrow">FAQ</span>
-            <h2 className="cat-faq__title">Frequently Asked Questions</h2>
-            <p className="cat-faq__copy">
-              Everything you need to know about primary care at Humancare
-              Connect. Can&apos;t find an answer?
-            </p>
-            {/* <button type="button" className="cat-faq__chat-btn">
-              <Icon name="chat" size={16} />
-              Chat with our team
-            </button> */}
-            <div className="cat-faq__info-list">
-              <div className="cat-faq__info-item">
-                <Icon name="clock" size={14} />
-                <span>Avg. response in 10 min</span>
-              </div>
-              <div className="cat-faq__info-item">
-                <Icon name="shield" size={14} />
-                <span>HIPAA secure &amp; private</span>
-              </div>
-              <div className="cat-faq__info-item">
-                <Icon name="globe" size={14} />
-                <span>Available Globally</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="cat-faq__right">
-            {FAQ_GROUPS.map((group, gi) => (
-              <div className="cat-faq__group" key={group.label}>
-                <span className="cat-faq__group-label">
-                  <span className="cat-faq__group-dot" />
-                  {group.label}
-                </span>
-                <div className="cat-faq__card">
-                  {group.items.map((item, ii) => {
-                    const key = `${gi}-${ii}`;
-                    const isOpen = openKey === key;
-                    return (
-                      <div
-                        key={key}
-                        className={`cat-faq__item${isOpen ? " cat-faq__item--open" : ""}`}
-                      >
-                        <button
-                          type="button"
-                          className="cat-faq__item-head"
-                          onClick={() => setOpenKey(isOpen ? null : key)}
-                          aria-expanded={isOpen}
-                        >
-                          <span className="cat-faq__item-q">{item.q}</span>
-                          <span className="cat-faq__item-icon">
-                            <Icon name={isOpen ? "minus" : "plus"} size={13} />
-                          </span>
-                        </button>
-                        {isOpen && <p className="cat-faq__item-a">{item.a}</p>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
+    <FAQ
+      badge="FAQ"
+      title="Frequently Asked Questions"
+      description="Everything you need to know about primary care at Humancare Connect. Can't find an answer?"
+      sections={FAQ_GROUPS.map((group) => ({
+        title: group.label,
+        items: group.items.map((item) => ({
+          question: item.q,
+          answer: item.a,
+        })),
+      }))}
+    />
   );
 }
 

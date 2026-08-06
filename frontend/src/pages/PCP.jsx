@@ -349,87 +349,33 @@ export default function PCP() {
 
       <main className="pcp-root">
         {/* ───────────────────────── Hero ───────────────────────── */}
-        <motion.section
-          aria-label="Primary Care Hero"
-          className="pcp-hero pcp-card-section"
-          variants={FADE_VARIANTS.up}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-60px 0px" }}
-          transition={{ duration: 0.6, ease: EASE_SPRING }}
-        >
-          <img
-            src={pcpHeroBg}
-            alt="Primary Care That Fits Your Life"
-            aria-hidden="true"
-            className="pcp-hero__bg"
-            loading="eager"
-          />
-          <div className="pcp-hero__overlay" aria-hidden="true" />
-
-          <div className="pcp-container">
-            <div className="pcp-hero__layout">
-              <div className="pcp-hero__content">
-                <FadeIn delay={0.05}>
-                  <div className="pcp-hero__badge-wrap">
-                    <span className="pcp-hero__badge">
-                      <span className="pcp-hero__badge-dot" />
-                      NO PCP? NO PROBLEM.
-                    </span>
-                  </div>
-                </FadeIn>
-
-                <FadeIn delay={0.12}>
-                  <h1 className="pcp-hero__h1">
-                    Primary Care That Fits Your Life
-                    <span className="pcp-hero__subheading pcp-grad-text">
-                      Connect with a Licensed Provider in Minutes.
-                    </span>
-                  </h1>
-                </FadeIn>
-
-                <FadeIn delay={0.2}>
-                  <p className="pcp-hero__sub">
-                    Skip the wait and get the care you need with secure
-                    telemedicine services. Humancare Connect is your primary
-                    care destination for preventive care, prescription refills,
-                    daily health concerns and ongoing support wherever you are.
-                  </p>
-                </FadeIn>
-
-                <FadeIn delay={0.28}>
-                  <div className="pcp-hero__ctas">
-                    <a
-                      href={PCP_BOOKING_HREF}
-                      aria-label="Get started with HumanCare Connect"
-                      className="pcp-btn-primary"
-                    >
-                      Get Started <ArrowRight size={15} />
-                    </a>
-                    {/* <a href="#how-it-works" className="pcp-btn-secondary">
-                    <CirclePlay size={15} /> How It Works
-                  </a> */}
-                  </div>
-                </FadeIn>
-
-                <FadeIn delay={0.33}>
-                  <div className="pcp-hero__trust">
-                    {TRUST_BADGES.map((badge) => (
-                      <div key={badge} className="pcp-hero__trust-item">
-                        <CircleCheckBig
-                          size={13}
-                          color="var(--blue-3)"
-                          className="pcp-flex-shrink-0"
-                        />
-                        {badge}
-                      </div>
-                    ))}
-                  </div>
-                </FadeIn>
-              </div>
+        {/* 1. Hero */}
+        <section>
+          <div
+            className="corp-hero"
+            style={{
+              backgroundImage: `
+                linear-gradient(
+                  rgba(51, 71, 121, 0.75),
+                  rgba(0, 0, 0, 0.75)
+                ),
+                url(${pcpHeroBg})
+              `,
+            }}
+          >
+            <div className="corp-hero-inner">
+              <h1>
+                Primary Care That Fits Your Life
+              </h1>
+              <p>
+                Skip the wait and get the care you need with secure
+                telemedicine services. Humancare Connect is your primary
+                care destination for preventive care, prescription refills,
+                daily health concerns and ongoing support wherever you are.
+              </p>
             </div>
           </div>
-        </motion.section>
+        </section>
 
         {/* ───────────────────────── About Primary Care ───────────────────────── */}
         <motion.section
@@ -639,7 +585,7 @@ export default function PCP() {
           viewport={{ once: true, margin: "-60px 0px" }}
           transition={POPUP_TRANSITION}
         >
-          <div className="pcp-container">
+          <div className="pcp-container pcp-container--services">
             <FadeIn>
               <div className="pcp-section-header">
                 <span className="pcp-eyebrow">WHAT'S INCLUDED</span>

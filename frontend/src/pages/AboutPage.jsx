@@ -1,5 +1,4 @@
 import "./AboutPage.css";
-import AboutHeroImg from "../assets/AboutUsPage/about-humancare-connect-telehealth.webp";
 import WhyHumancareImg from "../assets/AboutUsPage/why-humancare-connect-healthcare.webp";
 import PatientTrustImg from "../assets/AboutUsPage/global-healthcare-professionals-network.webp";
 import NetworkDoctorsImg from "../assets/AboutUsPage//patient-virtual-healthcare-experience.webp";
@@ -258,49 +257,19 @@ export default function AboutPage() {
       />
       <div className="about-page">
         {/* 1. Hero */}
-        <section className="about-hero">
-          <div className="about-hero__glow about-hero__glow--blue" />
-          <div className="about-hero__glow about-hero__glow--gold" />
-          <div className="container">
-            <div className="about-hero__grid">
-              <div className="about-hero__text is-visible">
-                <Eyebrow>About Humancare Connect</Eyebrow>
-                <h1 className="about-hero__title">
-                  One Global Connection{" "}
-                  <span className="about-hero__title-accent">
-                    to Better Healthcare{" "}
-                  </span>
-                </h1>
-                <p className="about-hero__lead">
-                  At Humancare Connect, we make quality healthcare accessible
-                  beyond borders. Through secure online doctor consultations and
-                  virtual healthcare services, we connect individuals,
-                  travelers, and organizations with trusted medical care
-                  anytime, anywhere.
-                </p>
-                {/* <div className="about-hero__actions">
-                  <Btn href="#how">See how it works</Btn>
-                </div> */}
-
-                <div className="trust-strip">
-                  {["GDPR", "HIPAA-aligned", "Verified doctors"].map((b) => (
-                    <div key={b} className="trust-strip__item">
-                      <span className="trust-strip__dot" />
-                      <span>{b}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="about-hero__photo is-visible">
-                <div className="about-hero__photo-frame">
-                  <img
-                    src={AboutHeroImg}
-                    alt="About Humancare Connect providing secure virtual healthcare and online doctor consultations"
-                    loading="eager"
-                  />
-                </div>
-              </div>
+        <section>
+          <div className="corp-hero about-page-hero">
+            <div className="corp-hero-inner">
+              <h1>
+                One Global Connection to Better Healthcare.
+              </h1>
+              <p>
+                At Humancare Connect, we make quality healthcare accessible
+                beyond borders. Through secure online doctor consultations and
+                virtual healthcare services, we connect individuals,
+                travelers, and organizations with trusted medical care
+                anytime, anywhere.
+              </p>
             </div>
           </div>
         </section>
