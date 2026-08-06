@@ -17,7 +17,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Surge
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Chronic Care",
+  badge: "Online Second Opinion",
   heading: "Surgery Second Opinion",
   description: "Confidence before your procedure",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

@@ -396,7 +396,7 @@
   margin: 0 0 18px;
 }
 
-.dc-about-content > p {
+.dc-about-content>p {
   font-size: 16px;
   color: var(--dc-text-muted);
   line-height: 1.7;
@@ -454,7 +454,7 @@
   margin: 0 0 14px;
 }
 
-.dc-requirements-grid > div > p {
+.dc-requirements-grid>div>p {
   color: var(--dc-text-muted);
   line-height: 1.6;
   font-size: 15.5px;
@@ -508,13 +508,11 @@
   left: 50%;
   width: 100%;
   height: 2px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--dc-border) 0,
-    var(--dc-border) 6px,
-    transparent 6px,
-    transparent 12px
-  );
+  background: repeating-linear-gradient(90deg,
+      var(--dc-border) 0,
+      var(--dc-border) 6px,
+      transparent 6px,
+      transparent 12px);
   transform: translateY(-50%);
   z-index: 0;
 }
@@ -1156,4 +1154,15 @@
   .dc-final-cta-actions .dc-btn {
     width: 100%;
   }
+}
+
+/* ---------------------------------------------------------------- */
+/* Custom Hero Background                                           */
+/* ---------------------------------------------------------------- */
+
+.doctor-careers-hero {
+  background-image: linear-gradient(rgba(51, 71, 121, 0.75),
+      rgba(0, 0, 0, 0.75)),
+    url("../assets/Career/Careers-for-Physicians.webp");
+  background-position: center 15%;
 }

@@ -129,10 +129,12 @@ export default function Sa() {
               <div className="services-content-left">
                 <h3 className="services-card-title">Prescription Refills</h3>
                 <p className="services-card-description">
-                  Get trusted guidance from qualified specialists with an
-                  independent review of your diagnosis, treatment plan, or
-                  surgery recommendation, helping you make informed healthcare
-                  decisions with confidence.
+                  Need a refill but don’t want to wait? Refill prescriptions
+                  online with a quick online doctor appointment with a licensed
+                  telemedicine doctor. If you have a chronic condition or just
+                  need to renew a prescription, get care when you need it and
+                  save yourself a trip to the clinic with quick, easy
+                  telemedicine appointments.
                 </p>
                 <span className="services-card-cta-link">
                   Refill Prescription <span className="cta-arrow">→</span>
@@ -179,7 +181,8 @@ export default function Sa() {
               Travel with confidence by getting a fit to fly certificate from a
               licensed telemedicine provider. If medically appropriate, obtain a
               professional fitness-to-travel assessment to meet airline
-              requirements without an unnecessary clinic visit.
+              requirements, recent surgery, pregnancy, or other health
+              conditions without an unnecessary clinic visit.
             </p>
             <span className="services-card-cta-link">
               Get Certificate <span className="cta-arrow">→</span>
@@ -227,7 +230,7 @@ export default function Sa() {
               treatment.
             </p>
             <span className="services-card-cta-link">
-              Learn more <span className="cta-arrow">→</span>
+              Learn More <span className="cta-arrow">→</span>
             </span>
           </RevealCard>
 
@@ -244,9 +247,10 @@ export default function Sa() {
               Online Second Medical Opinion
             </h3>
             <p className="services-card-description">
-              Unsure about a diagnosis or treatment plan? Get a second opinion
-              from an independent licensed physician online, review your case,
-              and make informed decisions about your health with confidence.
+              Get trusted guidance from qualified specialists with an
+              independent review of your diagnosis, treatment plan, or surgery
+              recommendation, helping you make informed healthcare decisions
+              with confidence.
             </p>
             <span className="services-card-cta-link">
               Get a Second Opinion <span className="cta-arrow">→</span>

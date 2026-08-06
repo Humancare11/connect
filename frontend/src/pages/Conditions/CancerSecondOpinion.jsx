@@ -14,7 +14,7 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Cancer-Second-Opinion.webp";
 
 const pageData = {
-  badge: "Chronic Care",
+  badge: "Online Second Opinion",
   heading: "Cancer Second Opinion",
   description: "Expert guidance for treatment decisions",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

@@ -43,6 +43,8 @@ body {
       rgba(124, 183, 255, 0.18),
       transparent 35%),
     linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+  background-size: cover;
+  background-position: center;
   padding-top: 142px;
   padding-bottom: 60px;
   position: relative;

@@ -97,8 +97,10 @@ export default function Footer() {
           <a href="/doctor-note-or-sick-notes">Sick Notes</a>
           <a href="/lab-requisitions"> Lab Requisition </a>
           <a href="/fit-to-fly-certificate">Fit to Fly Certifications</a>
-          {/* <a href="/sexual-health">Sexual Health</a>
-          <a href="/weight-loss-programs">Weight Loss Programs</a> */}
+          <a href="/online-second-medical-opinion">
+            Online Second Medical Opinion
+          </a>
+          {/* <a href="/weight-loss-programs">Weight Loss Programs</a> */}
         </div>
 
         {/* Services Quick Links */}
