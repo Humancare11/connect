@@ -118,6 +118,7 @@ export default function Footer() {
           </a>
           <a href="/cookie-policy">Cookie Policy</a>
           <a href="/accessibility-statement">Accessibility Statement</a>
+          <a href="/account-deletion-policy">Account Deletion Policy</a>
         </div>
 
         {/* SUPPORT */}
