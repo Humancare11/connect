@@ -74,7 +74,7 @@ import {
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
 
-import heroImage from "../../../assets/SpecialitiesImage/dermatology-specialist-skin-care-consultation-banner.webp";
+import heroImage from "../../../assets/HeroImageSpecialities/dermatology-skin-care-services.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/dermatologist-patient-skin-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";

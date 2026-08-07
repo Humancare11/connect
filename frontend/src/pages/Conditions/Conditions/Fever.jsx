@@ -41,7 +41,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Fever.webp";
+import ConditionBannerImage from "../../../assets/HomeImageConditions/fever-diagnosis-treatment-services.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -81,7 +81,7 @@ export default function Fever() {
               url(${pageData.bgImage})
               `,
             backgroundSize: "cover",
-            backgroundPosition: "center top",
+            backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
         >

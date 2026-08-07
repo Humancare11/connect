@@ -14,7 +14,7 @@ import {
 import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Complex-Diagnosis-Review.webp";
 
 const pageData = {
-  badge: "Chronic Care",
+  badge: "Online Second Opinion",
   heading: "Complex Diagnosis Review",
   description: "Expert insight for challenging conditions",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

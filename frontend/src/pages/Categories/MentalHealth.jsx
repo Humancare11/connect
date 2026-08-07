@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
+import mentalHealthHero from "../../assets/HomeImageCategories/mental-health-counseling-services.webp";
 import SEO from "../../components/Seo";
 import FAQ from "../../components/FAQ/FAQ";
 
@@ -570,7 +571,14 @@ export default function MentalHealth() {
       </Helmet>
 
       {/* ── Hero ── */}
-      <section className="hcc-hero">
+      <section
+        className="hcc-hero"
+        style={{
+          backgroundImage: `url(${mentalHealthHero})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         <div className="hcc-hero-overlay" />
         <div className="hcc-hero-deco-1" />
         <div className="hcc-hero-deco-2" />

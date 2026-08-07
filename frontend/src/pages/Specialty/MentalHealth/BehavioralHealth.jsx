@@ -73,7 +73,7 @@ import {
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
 
-import heroImage from "../../../assets/SpecialitiesImage/behavioral-health-mental-health-counseling-session-banner.webp";
+import heroImage from "../../../assets/HeroImageSpecialities/behavioral-health-mental-wellness.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/behavioral-health-therapy-patient-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";

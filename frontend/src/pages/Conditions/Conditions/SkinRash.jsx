@@ -40,7 +40,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
-import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Skin-Rash.webp";
+import ConditionBannerImage from "../../../assets/HomeImageConditions/skin-issues-dermatology-services.webp";
 
 import SEO from "../../../components/Seo";
 
@@ -52,8 +52,7 @@ const pageData = {
   heading: "Skin Rash",
   description: "Red, itchy, irritated skin",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
-  bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -83,7 +82,7 @@ export default function SkinRash() {
               url(${pageData.bgImage})
               `,
             backgroundSize: "cover",
-            backgroundPosition: "center top",
+            backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
         >

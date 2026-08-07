@@ -878,6 +878,9 @@ const AccessibilityStatement1 = lazy(
 const TeleHealthInformedConsent1 = lazy(
   () => import("./pages/PrivacyPolicies/TeleHealthInformedConsent"),
 );
+const DeleteAccount = lazy(
+  () => import("./pages/PrivacyPolicies/DeleteAccount"),
+);
 // New Privcay Policy Pages End
 
 function ScrollToTop() {
@@ -2712,6 +2715,10 @@ function AppLayout() {
           <Route
             path="/telehealth-informed-consent"
             element={<TeleHealthInformedConsent1 />}
+          />
+          <Route
+            path="/account-deletion-policy"
+            element={<DeleteAccount />}
           />
           {/* New Privcay Policy Pages End */}
           <Route

@@ -57,7 +57,7 @@ import {
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
 
-import heroImage from "../../../assets/SpecialitiesImage/pediatrics-specialist-child-healthcare-banner.webp";
+import heroImage from "../../../assets/HeroImageSpecialities/pediatrics-child-healthcare-services.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/pediatric-specialist-child-health-checkup-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";

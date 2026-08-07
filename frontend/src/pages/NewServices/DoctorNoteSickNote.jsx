@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -61,6 +61,7 @@ import "../Categories/categoriesGlobal.css";
 import { useServicePrice } from "../../hooks/useServicePrice";
 import api from "../../api";
 import ServiceContact from "./ServiceContact";
+import CentralFAQ from "../../components/FAQ/FAQ";
 
 const HERO_IMAGE = {
   src: heroBanner,
@@ -1321,170 +1322,22 @@ const WhyUs = ({ s, bp }) => {
 /* ─────────────────────────────────────────────────────────────────────────
    FAQ
 ───────────────────────────────────────────────────────────────────────── */
-const FAQ = ({ s, bp }) => {
-  const [open, setOpen] = useState(null);
+const FAQ = ({ s }) => {
   return (
-    <section
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: bp.isMobile ? "52px 20px" : "88px 24px",
-      }}
-    >
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: bp.isMobile || bp.isTablet ? "1fr" : "1fr 1fr",
-          gap: bp.isMobile ? 32 : 64,
-        }}
-      >
-        <motion.div variants={fadeUp}>
-          <SLabel text="FAQ" ac={s.accentColor} />
-          <h2
-            style={{
-              fontSize: "clamp(26px, 3.5vw, 36px)",
-              fontWeight: 900,
-              color: TEXT_PRIMARY,
-              lineHeight: 1.15,
-              marginBottom: 14,
-            }}
-          >
-            Questions about
-            <br />
-            <span style={{ color: s.accentColor }}>{s.name}?</span>
-          </h2>
-          <p
-            style={{
-              color: TEXT_DIM,
-              fontSize: 15,
-              lineHeight: 1.7,
-              marginBottom: 24,
-            }}
-          >
-            We've answered the most common questions below. Our care team is one
-            message away if yours isn't listed.
-          </p>
-          <button
-            style={{
-              padding: "11px 20px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              background: `${s.accentColor}10`,
-              color: s.accentColor,
-              border: `1px solid ${s.accentColor}30`,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}1A`)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}10`)
-            }
-          >
-            {/* <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team */}
-          </button>
-        </motion.div>
-
-        <motion.div
-          variants={fadeUp}
-          style={{
-            padding: bp.isMobile ? 16 : 20,
-            borderRadius: 22,
-            background: "#fff",
-            border: `1px solid ${BORDER}`,
-          }}
-        >
-          {s.faqs.map((faq, i) => (
-            <div
-              key={i}
-              style={{
-                borderBottom:
-                  i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
-              }}
-            >
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "16px 0",
-                  textAlign: "left",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <span
-                  style={{
-                    color: TEXT_PRIMARY,
-                    fontWeight: 700,
-                    fontSize: bp.isMobile ? 13 : 14,
-                    paddingRight: 16,
-                  }}
-                >
-                  {faq.q}
-                </span>
-                <div
-                  style={{
-                    flexShrink: 0,
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: open === i ? s.accentColor : BG_SURFACE,
-                    transition: "background 0.2s, transform 0.2s",
-                    transform: open === i ? "rotate(45deg)" : "none",
-                  }}
-                >
-                  <FiPlus
-                    style={{
-                      fontSize: 14,
-                      color: open === i ? "#fff" : TEXT_DIM,
-                    }}
-                  />
-                </div>
-              </button>
-              <AnimatePresence>
-                {open === i && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.26 }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <div
-                      style={{
-                        paddingBottom: 16,
-                        paddingRight: bp.isMobile ? 8 : 40,
-                        color: TEXT_BODY,
-                        fontSize: 14,
-                        lineHeight: 1.7,
-                      }}
-                    >
-                      {faq.a}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </motion.div>
-      </motion.div>
-    </section>
+    <CentralFAQ
+      badge="FAQ"
+      title={`Questions about ${s.name}?`}
+      description="We've answered the most common questions below. Our care team is one message away if yours isn't listed."
+      sections={[
+        {
+          title: "Frequently Asked",
+          items: s.faqs.map((faq) => ({
+            question: faq.q,
+            answer: faq.a,
+          })),
+        },
+      ]}
+    />
   );
 };
 
@@ -1558,9 +1411,9 @@ const FinalCTA = ({ s, bp }) => (
           <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
             <a href="/login">Get Started</a>
           </PrimaryBtn>
-          <GhostBtn>
+          {/* <GhostBtn>
             <a href="/appointment-booking">Request Your Consultation Today</a>
-          </GhostBtn>
+          </GhostBtn> */}
         </div>
         <div
           style={{

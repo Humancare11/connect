@@ -446,6 +446,12 @@ const OFFER_ANSWER_TIMEOUT_MS = Number(
 const STATS_INTERVAL_MS = Number(
   import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000,
 );
+// After this many reconnect-stall episodes in a row without a successful
+// reconnect in between, the automatic ICE-restart machinery is clearly not
+// going to resolve this on its own — stop presenting the stall banner as a
+// "still working on it, hang tight" message and offer an explicit way out
+// instead of retrying silently forever.
+const MAX_RECONNECT_STALL_RETRIES = 3;
 
 // First line of defense against a stuck Enter key / paste-loop flooding
 // chat — the server has its own rate limit (see backend/utils/socketRateLimit.js),
@@ -859,8 +865,12 @@ export default function VideoCall() {
   const screenShareStartInProgressRef = useRef(false);
   const screenShareStopInProgressRef = useRef(false);
   const socketAuthRefreshedRef = useRef(false);
+  const verifyingVisibilityRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
   const reconnectStallTimerRef = useRef(null);
+  // How many times the stall banner has fired since the last successful
+  // (re)connect — see MAX_RECONNECT_STALL_RETRIES.
+  const reconnectStallCountRef = useRef(0);
   // Set just before a manual forceReconnect() tears the peer connection
   // down and rebuilds it. Lets the effect cleanup below tell "I'm
   // intentionally rebuilding my own connection" apart from "I'm actually
@@ -1780,6 +1790,11 @@ export default function VideoCall() {
     const clearReconnectStallWatch = () => {
       clearTimeout(reconnectStallTimerRef.current);
       reconnectStallTimerRef.current = null;
+      // Every call site of this function represents either a genuine
+      // reconnect success or "no longer trying to reconnect right now"
+      // (peer left) — either way, a future stall is a fresh episode, not a
+      // continuation of whatever was happening before.
+      reconnectStallCountRef.current = 0;
       setReconnectStalled(false);
     };
 
@@ -1794,6 +1809,7 @@ export default function VideoCall() {
           pc.iceConnectionState === "completed"
         )
           return;
+        reconnectStallCountRef.current += 1;
         setReconnectStalled(true);
       }, delayMs);
     };
@@ -2447,6 +2463,91 @@ export default function VideoCall() {
       }
     };
 
+    const sampleInboundBytes = async (pcInstance) => {
+      try {
+        const stats = await pcInstance.getStats();
+        for (const report of stats.values()) {
+          if (report.type === "candidate-pair" && report.state === "succeeded") {
+            if (typeof report.bytesReceived === "number") return report.bytesReceived;
+          }
+        }
+      } catch {
+        // Unknown, not stalled — see verifyConnectionAfterVisible's null handling.
+      }
+      return null;
+    };
+
+    // A browser tab can be throttled or fully frozen while hidden (most
+    // aggressively on mobile Safari/Chrome), which can silently kill the
+    // underlying connection without pc.onconnectionstatechange ever getting
+    // a chance to run — so pc.connectionState can still read "connected"
+    // purely because nothing updated it since the freeze. Tabs don't get
+    // suspended by the OS the way a backgrounded native app does, so this
+    // has no exact equivalent elsewhere in this file, but the risk is the
+    // same one VideoCallController.handleAppResumed guards against on
+    // mobile: take two inbound-bytes samples ~1.5s apart on the
+    // already-selected candidate pair, and only treat it as stalled (and
+    // force a restart) if there's zero growth — a connected call should
+    // always show some growth from RTP/RTCP keepalives even during
+    // silence/camera-off.
+    const verifyConnectionAfterVisible = async () => {
+      if (verifyingVisibilityRef.current) return;
+      verifyingVisibilityRef.current = true;
+      try {
+        if (!mounted || pc.signalingState === "closed") return;
+        const isConnected =
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed";
+        if (!isConnected) return; // already unhealthy — the normal state-change handlers own this
+
+        const before = await sampleInboundBytes(pc);
+        if (!mounted || pc.signalingState === "closed") return;
+        await new Promise((resolve) => window.setTimeout(resolve, 1500));
+        if (!mounted || pc.signalingState === "closed") return;
+        const stillConnected =
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed";
+        if (!stillConnected) return; // a real state-change callback already took over
+
+        const after = await sampleInboundBytes(pc);
+        if (!mounted || pc.signalingState === "closed") return;
+        if (before === null || after === null || after > before) return;
+
+        logVideoEvent("tab_resume_stale_connection_detected", {
+          bytesBefore: before,
+          bytesAfter: after,
+        });
+        logger.warn(
+          'Tab resumed with a stale "connected" state — no inbound media progress, forcing recovery.',
+        );
+        if (isDoctor) {
+          requestPeerIceRestart();
+        } else {
+          void createAndSendOffer({ iceRestart: true });
+        }
+      } finally {
+        verifyingVisibilityRef.current = false;
+      }
+    };
+
+    // No exact equivalent needed on native mobile — VideoCallController
+    // already has handleAppResumed for the analogous app-background case.
+    // Refreshing the auth token here (like that method does) isn't
+    // necessary: unlike the mobile access token, this page's session isn't
+    // proactively refreshed on a timer either, so a stale-token rejection
+    // would already have to be handled by the existing auth/redirect flow
+    // regardless of tab visibility.
+    const handleVisibilityChange = () => {
+      if (!mounted || document.visibilityState !== "visible") return;
+      if (!socket.connected) {
+        socket.connect();
+        return;
+      }
+      void verifyConnectionAfterVisible();
+    };
+
     // Keep the shared socket's handshake auth aligned with THIS page's role,
     // not whatever api.js's ambient activeAuthRole happens to be — see
     // setSocketAuthRole's own comment for why that matters. Set before any
@@ -2467,6 +2568,7 @@ export default function VideoCall() {
     socket.on("connect", joinRoom);
     socket.on("disconnect", handleSocketDisconnect);
     socket.io.on("reconnect", handleSocketReconnect);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       mounted = false;
@@ -2495,6 +2597,7 @@ export default function VideoCall() {
       socket.off("connect", joinRoom);
       socket.off("disconnect", handleSocketDisconnect);
       socket.io.off("reconnect", handleSocketReconnect);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       socket.off("video-offer", handleOffer);
       socket.off("video-answer", handleAnswer);
       socket.off("ice-candidate", handleIce);
@@ -3460,13 +3563,20 @@ export default function VideoCall() {
               </div>
             )}
 
-            {/* Reconnect stalled — manual escape hatch if automatic recovery is slow */}
+            {/* Reconnect stalled — manual escape hatch if automatic recovery is
+                slow. Past MAX_RECONNECT_STALL_RETRIES stalls in a row, stop
+                implying "still working on it" and offer an explicit way to
+                give up instead of retrying silently forever. */}
             {reconnectStalled && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
                   <FiAlertTriangle />
                 </span>
-                <span>Reconnection is taking longer than expected.</span>
+                <span>
+                  {reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES
+                    ? "Still unable to reconnect. You can keep trying or end the call."
+                    : "Reconnection is taking longer than expected."}
+                </span>
                 <button
                   type="button"
                   className="hc-vc__rx-btn-primary"
@@ -3474,6 +3584,15 @@ export default function VideoCall() {
                 >
                   Retry
                 </button>
+                {reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES && (
+                  <button
+                    type="button"
+                    className="hc-vc__rx-btn-ghost"
+                    onClick={() => setEndCallConfirm(true)}
+                  >
+                    End Call
+                  </button>
+                )}
               </div>
             )}
 

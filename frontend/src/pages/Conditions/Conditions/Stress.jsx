@@ -41,7 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
-import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Stress.webp";
+import ConditionBannerImage from "../../../assets/HomeImageConditions/stress-management-mental-wellness.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -80,7 +80,7 @@ export default function Stress() {
               url(${pageData.bgImage})
               `,
             backgroundSize: "cover",
-            backgroundPosition: "center top",
+            backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
         >

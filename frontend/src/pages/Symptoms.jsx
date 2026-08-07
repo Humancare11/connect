@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -31,6 +31,7 @@ import {
 import "./symptoms.css";
 import SEO from "../components/Seo";
 import ServiceSwitcher from "../components/ServiceSwitcher";
+import FAQ from "../components/FAQ/FAQ";
 
 const stats = [
   ["11", "Categories"],
@@ -1082,73 +1083,18 @@ export default function Symptoms() {
       </section>
 
       {/* --------------------(FAQ section)--------- */}
-
-      <section id="sy-faq" className="sy-faq">
-        <div className="sy-faq__inner">
-          <div className="sy-faq__left">
-            <span className="sy-faq__eyebrow">FAQ</span>
-            <h2 className="sy-faq__heading">
-              Consult a Doctor Online for Symptoms
-            </h2>
-            <p className="sy-faq__copy">
-              Everything you need to know about consulting a doctor online for
-              symptoms with Humancare Connect. Can't find an answer?
-            </p>
-
-            <div className="sy-faq__meta">
-              <div className="sy-faq__meta-item">
-                <Clock size={14} />
-                <span>Avg. response in 10 min</span>
-              </div>
-              <div className="sy-faq__meta-item">
-                <Lock size={14} />
-                <span>HIPAA secure &amp; private</span>
-              </div>
-              <div className="sy-faq__meta-item">
-                <Globe2 size={14} />
-                <span>Available Globally</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="sy-faq__right">
-            {faqGroups.map((group, gi) => (
-              <div key={group.group} className="sy-faq__group">
-                {faqGroups.length > 1 && (
-                  <span className="sy-faq__group-label">{group.group}</span>
-                )}
-                <div className="sy-faq__list">
-                  {group.items.map((item, ii) => {
-                    const id = `${gi}-${ii}`;
-                    const isOpen = openFaq === id;
-                    return (
-                      <div
-                        key={id}
-                        className={`sy-faq__item${isOpen ? " sy-faq__item--open" : ""}`}
-                      >
-                        <button
-                          type="button"
-                          className="sy-faq__q"
-                          onClick={() => setOpenFaq(isOpen ? null : id)}
-                          aria-expanded={isOpen}
-                        >
-                          <span>{item.q}</span>
-                          <ChevronDown size={18} className="sy-faq__chev" />
-                        </button>
-                        {isOpen && (
-                          <div className="sy-faq__a">
-                            <p>{item.a}</p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FAQ
+        badge="FAQ"
+        title="Consult a Doctor Online for Symptoms"
+        description="Everything you need to know about consulting a doctor online for symptoms with Humancare Connect. Can't find an answer?"
+        sections={faqGroups.map((group) => ({
+          title: group.group || "Frequently Asked",
+          items: group.items.map((item) => ({
+            question: item.q,
+            answer: item.a,
+          })),
+        }))}
+      />
 
       {/* --------------------(CTA section)--------- */}
 

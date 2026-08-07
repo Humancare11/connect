@@ -40,7 +40,6 @@ import {
 import "./DoctorCareers.css";
 import SEO from "../components/Seo";
 import FAQ from "../components/FAQ/FAQ";
-import CareeerImg from "../assets/Career/Careers-for-Physicians.webp";
 import NetworkImg from "../assets/Career/Network-Trusted-by-Doctors.webp";
 /* -------------------------------------------------------------------- */
 /*  Static content                                                      */
@@ -657,72 +656,22 @@ export default function DoctorCareers() {
         {/* ---------------------------------------------------------- */}
         {/* 1. Hero                                                     */}
         {/* ---------------------------------------------------------- */}
-        <section className="dc-hero">
-          <div className="dc-hero-bg" aria-hidden="true">
-            <span className="dc-blob dc-blob--1" />
-            <span className="dc-blob dc-blob--2" />
-          </div>
 
-          <div className="dc-container dc-hero-grid">
-            <motion.div
-              className="dc-hero-content"
-              initial="hidden"
-              animate="show"
-              variants={staggerContainer}
-            >
-              <motion.span className="dc-eyebrow" variants={fadeUp}>
-                Careers for Physicians
-              </motion.span>
-              <motion.h1 variants={fadeUp}>
-                The Future of Healthcare{" "}
-                <span className="dc-text-accent">Needs Doctors Like You. </span>
-              </motion.h1>
-              <motion.p className="dc-hero-sub" variants={fadeUp}>
+        <section>
+          <div className="corp-hero doctor-careers-hero">
+            <div className="corp-hero-inner">
+              <h1>
+                The Future of Healthcare Needs Doctors Like You.
+              </h1>
+              <p>
                 Join a trusted global telemedicine platform built for licensed
                 healthcare professionals who want to make a greater impact.
                 Humancare Connect helps doctors connect with patients through
                 secure virtual consultations, giving you the flexibility to
                 practice from anywhere while delivering timely, high-quality
-                care. Whether you're growing your practice, supporting
-                underserved communities, or embracing the future of healthcare,
-                you'll have the technology, support, and professional network to
-                succeed
-              </motion.p>
-              {/* <motion.div className="dc-hero-actions" variants={fadeUp}> */}
-              {/* <a href="#apply" className="dc-btn dc-btn--primary">
-                Apply Now <FaArrowRight aria-hidden="true" />
-              </a> */}
-              {/* <a href="#why-join" className="dc-btn dc-btn--secondary">
-                Learn More
-              </a> */}
-              {/* </motion.div> */}
-              <motion.p className="dc-hero-trust" variants={fadeUp}>
-                Join a growing community of licensed healthcare professionals
-                delivering trusted virtual care worldwide.
-              </motion.p>
-            </motion.div>
-
-            <motion.div
-              className="dc-hero-media"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-            >
-              <div className="dc-hero-image-frame">
-                <img
-                  src={CareeerImg}
-                  alt="The Future of Healthcare Needs Doctors."
-                  loading="eager"
-                />
-              </div>
-              {/* <div className="dc-hero-floating-card">
-                <FaVideo aria-hidden="true" />
-                <div>
-                  <strong>1,200+</strong>
-                  <span>Active Providers</span>
-                </div>
-              </div> */}
-            </motion.div>
+                care.
+              </p>
+            </div>
           </div>
         </section>
 

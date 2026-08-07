@@ -11,7 +11,7 @@ import {
   HeartPulse,
   Users,
 } from "lucide-react";
-import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Chest-Pain-Non-Emergency.webp";
+import ConditionBannerImage from "../../assets/HomeImageConditions/chest-pain-medical-evaluation.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -54,7 +54,7 @@ export default function ChestPain() {
               url(${pageData.bgImage})
               `,
             backgroundSize: "cover",
-            backgroundPosition: "center top",
+            backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
           }}
         >

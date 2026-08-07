@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -54,6 +54,7 @@ import {
 import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 import ServiceContact from "./ServiceContact";
+import CentralFAQ from "../../components/FAQ/FAQ";
 import heroBanner from "../../assets/MedicalServices/online-prescription-digital-healthcare.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
 import "../Specialty/SpecialtyPage.css";
@@ -597,228 +598,6 @@ const Hero = ({ s, bp, price, priceLoading }) => {
     </section>
   );
 };
-
-/* ─────────────────────────────────────────────────────────────────────────
-   CONSULTATION FORM
-───────────────────────────────────────────────────────────────────────── */
-// const ConsultationForm = ({ s }) => {
-//   const [values, setValues] = useState({ name: "", email: "", message: "" });
-//   const [submitted, setSubmitted] = useState(false);
-
-//   const handleChange = (field) => (e) =>
-//     setValues((v) => ({ ...v, [field]: e.target.value }));
-
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-//     setSubmitted(true);
-//   };
-
-//   const inputStyle = {
-//     width: "100%",
-//     padding: "11px 14px",
-//     borderRadius: 10,
-//     border: `1px solid ${BORDER}`,
-//     background: "#fff",
-//     color: TEXT_PRIMARY,
-//     fontSize: 14,
-//     outline: "none",
-//     transition: "border-color 0.2s, box-shadow 0.2s",
-//     fontFamily: "inherit",
-//     boxSizing: "border-box",
-//   };
-
-//   const labelStyle = {
-//     display: "block",
-//     fontSize: 13,
-//     fontWeight: 600,
-//     color: TEXT_PRIMARY,
-//     marginBottom: 6,
-//   };
-
-//   const focusHandlers = {
-//     onFocus: (e) => {
-//       e.target.style.borderColor = s.accentColor;
-//       e.target.style.boxShadow = `0 0 0 3px ${s.accentColor}1A`;
-//     },
-//     onBlur: (e) => {
-//       e.target.style.borderColor = BORDER;
-//       e.target.style.boxShadow = "none";
-//     },
-//   };
-
-//   return (
-//     <div
-//       style={{
-//         borderRadius: 24,
-//         padding: 32,
-//         background: "#fff",
-//         border: `1px solid ${BORDER}`,
-//       }}
-//     >
-//       {submitted ? (
-//         <div style={{ textAlign: "center", padding: "32px 8px" }}>
-//           <div
-//             style={{
-//               width: 52,
-//               height: 52,
-//               borderRadius: "50%",
-//               margin: "0 auto 16px",
-//               display: "flex",
-//               alignItems: "center",
-//               justifyContent: "center",
-//               background: `${s.accentColor}12`,
-//             }}
-//           >
-//             <FiCheckCircle style={{ fontSize: 24, color: s.accentColor }} />
-//           </div>
-//           <h3
-//             style={{
-//               color: TEXT_PRIMARY,
-//               fontSize: 18,
-//               fontWeight: 800,
-//               marginBottom: 8,
-//             }}
-//           >
-//             Request received
-//           </h3>
-//           <p
-//             style={{
-//               color: TEXT_BODY,
-//               fontSize: 14,
-//               lineHeight: 1.6,
-//               marginBottom: 20,
-//             }}
-//           >
-//             A member of our care team will reach out to {values.email || "you"}{" "}
-//             shortly.
-//           </p>
-//           <button
-//             onClick={() => {
-//               setSubmitted(false);
-//               setValues({ name: "", email: "", message: "" });
-//             }}
-//             style={{
-//               fontSize: 13,
-//               fontWeight: 600,
-//               color: s.accentColor,
-//               background: "none",
-//               border: "none",
-//               cursor: "pointer",
-//             }}
-//           >
-//             Send another request
-//           </button>
-//         </div>
-//       ) : (
-//         <>
-//           <div
-//             style={{
-//               width: 44,
-//               height: 44,
-//               borderRadius: 12,
-//               display: "flex",
-//               alignItems: "center",
-//               justifyContent: "center",
-//               background: `${s.accentColor}12`,
-//               marginBottom: 16,
-//             }}
-//           >
-//             <FiMessageSquare style={{ fontSize: 20, color: s.accentColor }} />
-//           </div>
-//           <h3
-//             style={{
-//               color: TEXT_PRIMARY,
-//               fontSize: 19,
-//               fontWeight: 800,
-//               marginBottom: 6,
-//             }}
-//           >
-//             Request a Consultation
-//           </h3>
-//           <p
-//             style={{
-//               color: TEXT_DIM,
-//               fontSize: 13.5,
-//               lineHeight: 1.6,
-//               marginBottom: 22,
-//             }}
-//           >
-//             Tell us a little about what you need, and a care coordinator will
-//             follow up within one business day.
-//           </p>
-
-//           <form onSubmit={handleSubmit}>
-//             <div style={{ marginBottom: 16 }}>
-//               <label style={labelStyle} htmlFor="consult-name">
-//                 Full name
-//               </label>
-//               <input
-//                 id="consult-name"
-//                 type="text"
-//                 required
-//                 placeholder="Jordan Lee"
-//                 value={values.name}
-//                 onChange={handleChange("name")}
-//                 style={inputStyle}
-//                 {...focusHandlers}
-//               />
-//             </div>
-//             <div style={{ marginBottom: 16 }}>
-//               <label style={labelStyle} htmlFor="consult-email">
-//                 Email address
-//               </label>
-//               <input
-//                 id="consult-email"
-//                 type="email"
-//                 required
-//                 placeholder="jordan@email.com"
-//                 value={values.email}
-//                 onChange={handleChange("email")}
-//                 style={inputStyle}
-//                 {...focusHandlers}
-//               />
-//             </div>
-//             <div style={{ marginBottom: 20 }}>
-//               <label style={labelStyle} htmlFor="consult-message">
-//                 What can we help with?
-//               </label>
-//               <textarea
-//                 id="consult-message"
-//                 required
-//                 rows={4}
-//                 placeholder="Briefly describe your symptoms or what you'd like to discuss…"
-//                 value={values.message}
-//                 onChange={handleChange("message")}
-//                 style={{
-//                   ...inputStyle,
-//                   resize: "vertical",
-//                   fontFamily: "inherit",
-//                 }}
-//                 {...focusHandlers}
-//               />
-//             </div>
-//             <PrimaryBtn ac={s.accentColor} fullWidth type="submit">
-//               Submit Request
-//             </PrimaryBtn>
-//             <div
-//               style={{
-//                 display: "flex",
-//                 alignItems: "center",
-//                 gap: 6,
-//                 marginTop: 14,
-//                 color: TEXT_DIM,
-//                 fontSize: 12,
-//               }}
-//             >
-//               <FiLock style={{ fontSize: 13, color: s.accentColor }} />
-//               Your information is encrypted and never shared without consent.
-//             </div>
-//           </form>
-//         </>
-//       )}
-//     </div>
-//   );
-// };
 
 /* ─────────────────────────────────────────────────────────────────────────
    OVERVIEW
@@ -1482,18 +1261,7 @@ const WhyUs = ({ s, bp }) => {
             gap: 12,
             marginBottom: 44,
           }}
-        >
-          {/* {s.stats.map((st, i) => (
-            <StatCard
-              key={i}
-              value={st.value}
-              suffix={st.suffix}
-              label={st.label}
-              ac={s.accentColor}
-              go={inView}
-            />
-          ))} */}
-        </motion.div>
+        ></motion.div>
 
         <div
           style={{
@@ -1556,171 +1324,24 @@ const WhyUs = ({ s, bp }) => {
 
 /* ─────────────────────────────────────────────────────────────────────────
    FAQ
+   Uses the shared CentralFAQ component (matching the FittoFly pattern)
 ───────────────────────────────────────────────────────────────────────── */
-const FAQ = ({ s, bp }) => {
-  const [open, setOpen] = useState(null);
+const FAQ = ({ s }) => {
   return (
-    <section
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: bp.isMobile ? "52px 20px" : "88px 24px",
-      }}
-    >
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: bp.isMobile || bp.isTablet ? "1fr" : "1fr 1fr",
-          gap: bp.isMobile ? 32 : 64,
-        }}
-      >
-        <motion.div variants={fadeUp}>
-          <SLabel text="FAQ" ac={s.accentColor} />
-          <h2
-            style={{
-              fontSize: "clamp(26px, 3.5vw, 36px)",
-              fontWeight: 900,
-              color: TEXT_PRIMARY,
-              lineHeight: 1.15,
-              marginBottom: 14,
-            }}
-          >
-            Questions about
-            <br />
-            <span style={{ color: s.accentColor }}>{s.name}?</span>
-          </h2>
-          <p
-            style={{
-              color: TEXT_DIM,
-              fontSize: 15,
-              lineHeight: 1.7,
-              marginBottom: 24,
-            }}
-          >
-            We've answered the most common questions below. Our care team is one
-            message away if yours isn't listed.
-          </p>
-          {/* <button
-            style={{
-              padding: "11px 20px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              background: `${s.accentColor}10`,
-              color: s.accentColor,
-              border: `1px solid ${s.accentColor}30`,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}1A`)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}10`)
-            }
-          >
-            <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button> */}
-        </motion.div>
-
-        <motion.div
-          variants={fadeUp}
-          style={{
-            padding: bp.isMobile ? 16 : 20,
-            borderRadius: 22,
-            background: "#fff",
-            border: `1px solid ${BORDER}`,
-          }}
-        >
-          {s.faqs.map((faq, i) => (
-            <div
-              key={i}
-              style={{
-                borderBottom:
-                  i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
-              }}
-            >
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "16px 0",
-                  textAlign: "left",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <span
-                  style={{
-                    color: TEXT_PRIMARY,
-                    fontWeight: 700,
-                    fontSize: bp.isMobile ? 13 : 14,
-                    paddingRight: 16,
-                  }}
-                >
-                  {faq.q}
-                </span>
-                <div
-                  style={{
-                    flexShrink: 0,
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: open === i ? s.accentColor : BG_SURFACE,
-                    transition: "background 0.2s, transform 0.2s",
-                    transform: open === i ? "rotate(45deg)" : "none",
-                  }}
-                >
-                  <FiPlus
-                    style={{
-                      fontSize: 14,
-                      color: open === i ? "#fff" : TEXT_DIM,
-                    }}
-                  />
-                </div>
-              </button>
-              <AnimatePresence>
-                {open === i && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.26 }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <div
-                      style={{
-                        paddingBottom: 16,
-                        paddingRight: bp.isMobile ? 8 : 40,
-                        color: TEXT_BODY,
-                        fontSize: 14,
-                        lineHeight: 1.7,
-                      }}
-                    >
-                      {faq.a}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </motion.div>
-      </motion.div>
-    </section>
+    <CentralFAQ
+      badge="FAQ"
+      title={`Questions about ${s.name}?`}
+      description="We've answered the most common questions below. Our care team is one message away if yours isn't listed."
+      sections={[
+        {
+          title: "Frequently Asked",
+          items: s.faqs.map((faq) => ({
+            question: faq.q,
+            answer: faq.a,
+          })),
+        },
+      ]}
+    />
   );
 };
 
@@ -1789,16 +1410,15 @@ const FinalCTA = ({ s, bp }) => (
             marginBottom: 36,
             flexWrap: "wrap",
             flexDirection: bp.isMobile ? "column" : "row",
-            flexDirection: bp.isMobile ? "column" : "row",
           }}
         >
           <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
             <a href="/login"> Get Started Today</a>
           </PrimaryBtn>
-          <GhostBtn>
+          {/* <GhostBtn>
             {" "}
             <a href="/appointment-booking"> Book Appointment </a>
-          </GhostBtn>
+          </GhostBtn> */}
           {/* <button
             style={{
               padding: "13px 24px",
