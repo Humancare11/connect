@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import "./AppointmentBooking.css";
 import api from "../api";
 import HealthcareIcon from "../components/HealthcareIcon";
 import SEO from "../components/Seo";
 import FAQ from "../components/FAQ/FAQ";
+import { slugify } from "../utils/slug";
+import { normalizeAppointmentTree } from "../utils/appointmentTree";
 
 // --- Search helpers ---------------------------------------------------------
 // Plain `.includes()` matches a query ANYWHERE inside a string, including
@@ -23,31 +25,6 @@ function matchQuery(text, q) {
   return re.test(text);
 }
 
-// Convert the database-owned appointment tree into the shape this UI already uses.
-function normalizeAppointmentTree(tree) {
-  return (Array.isArray(tree) ? tree : []).map((category) => ({
-    id: category._id,
-    icon: category.icon || "stethoscope",
-    label: category.name || "Untitled Category",
-    description: category.description || "",
-    price: Number.isFinite(Number(category.price)) ? Number(category.price) : 0,
-    currency: category.currency || "USD",
-    specialties: (Array.isArray(category.specialties)
-      ? category.specialties
-      : []
-    ).map((specialty) => ({
-      id: specialty._id,
-      name: specialty.name || "Untitled Specialty",
-      icon: specialty.icon || "stethoscope",
-      conditions: (Array.isArray(specialty.conditions) ? specialty.conditions : []).map((condition) => [
-        condition.name || "Untitled Condition",
-        condition.icon || "stethoscope",
-        condition._id,
-        condition.description || "",
-      ]),
-    })),
-  }));
-}
 // Build flat helpers from the price-enriched tree. `label`, `cost`, and
 // `currency` all originate from the API (attached in enrichedTree).
 function buildFlatHelpers(tree) {
@@ -151,89 +128,114 @@ const APPOINTMENT_FAQS = [
     items: [
       {
         question: "How do I choose the right online doctor for my symptoms?",
-        answer: "You can find the right online doctor by reviewing provider specialties, areas of expertise, experience, and availability. Choosing a doctor who matches your health concerns helps ensure you receive personalized and appropriate care."
+        answer:
+          "You can find the right online doctor by reviewing provider specialties, areas of expertise, experience, and availability. Choosing a doctor who matches your health concerns helps ensure you receive personalized and appropriate care.",
       },
       {
         question: "Can I search for doctors by specialty?",
-        answer: "Yes. Humancare Connect allows you to search for providers based on medical specialty, helping you find the right doctor for your specific health needs."
+        answer:
+          "Yes. Humancare Connect allows you to search for providers based on medical specialty, helping you find the right doctor for your specific health needs.",
       },
       {
-        question: "Can I view a doctor’s qualifications before booking an appointment?",
-        answer: "Yes. You can review provider information, professional background, specialties, and available appointment times before selecting your doctor."
+        question:
+          "Can I view a doctor’s qualifications before booking an appointment?",
+        answer:
+          "Yes. You can review provider information, professional background, specialties, and available appointment times before selecting your doctor.",
       },
       {
         question: "How do I know which specialist I need?",
-        answer: "If you are unsure which provider is right for your symptoms, you can explore available specialties or get assistance in choosing the most appropriate healthcare professional."
-      }
-    ]
+        answer:
+          "If you are unsure which provider is right for your symptoms, you can explore available specialties or get assistance in choosing the most appropriate healthcare professional.",
+      },
+    ],
   },
   {
     title: "Booking & Availability",
     items: [
       {
         question: "Can I choose a specific doctor for my virtual appointment?",
-        answer: "Yes. You can select your preferred healthcare provider based on specialty, availability, and your personal healthcare preferences."
+        answer:
+          "Yes. You can select your preferred healthcare provider based on specialty, availability, and your personal healthcare preferences.",
       },
       {
-        question: "What information should I provide when booking an online doctor appointment?",
-        answer: "You may be asked to share basic details such as your symptoms, medical history, current medications, and the reason for your visit to help your provider prepare for the consultation."
+        question:
+          "What information should I provide when booking an online doctor appointment?",
+        answer:
+          "You may be asked to share basic details such as your symptoms, medical history, current medications, and the reason for your visit to help your provider prepare for the consultation.",
       },
       {
         question: "How can I prepare for my first online doctor visit?",
-        answer: "Before your appointment, make sure you have a stable internet connection, a quiet environment, your medical information, medication list, and any questions you want to discuss."
+        answer:
+          "Before your appointment, make sure you have a stable internet connection, a quiet environment, your medical information, medication list, and any questions you want to discuss.",
       },
       {
         question: "Can I book an appointment for a future date and time?",
-        answer: "Yes. You can choose from available appointment slots and schedule a virtual doctor visit at a time that works best for your schedule."
-      }
-    ]
+        answer:
+          "Yes. You can choose from available appointment slots and schedule a virtual doctor visit at a time that works best for your schedule.",
+      },
+    ],
   },
   {
     title: "Rescheduling & Records",
     items: [
       {
         question: "Can I reschedule or cancel my online appointment?",
-        answer: "Yes. Online appointment management allows you to modify or cancel your appointment in accordance with the platform’s scheduling policies."
+        answer:
+          "Yes. Online appointment management allows you to modify or cancel your appointment in accordance with the platform’s scheduling policies.",
       },
       {
-        question: "Will my doctor have access to my previous medical information?",
-        answer: "You can share relevant medical records, previous diagnoses, medications, and test results to help your provider better understand your healthcare needs."
+        question:
+          "Will my doctor have access to my previous medical information?",
+        answer:
+          "You can share relevant medical records, previous diagnoses, medications, and test results to help your provider better understand your healthcare needs.",
       },
       {
-        question: "Can I upload reports or medical documents before my appointment?",
-        answer: "Yes. Digital healthcare platforms may allow patients to securely upload medical records, lab reports, prescriptions, and other relevant documents before a consultation."
+        question:
+          "Can I upload reports or medical documents before my appointment?",
+        answer:
+          "Yes. Digital healthcare platforms may allow patients to securely upload medical records, lab reports, prescriptions, and other relevant documents before a consultation.",
       },
       {
-        question: "What happens after my online doctor appointment is completed?",
-        answer: "After your consultation, your provider may share treatment recommendations, prescriptions when appropriate, follow-up instructions, or suggest additional medical evaluation if needed."
-      }
-    ]
+        question:
+          "What happens after my online doctor appointment is completed?",
+        answer:
+          "After your consultation, your provider may share treatment recommendations, prescriptions when appropriate, follow-up instructions, or suggest additional medical evaluation if needed.",
+      },
+    ],
   },
   {
     title: "Care & Follow-Up",
     items: [
       {
         question: "Can I schedule follow-up appointments with the same doctor?",
-        answer: "Yes. When available, you can continue your care journey by scheduling follow-up appointments with the same provider for continuity of care."
+        answer:
+          "Yes. When available, you can continue your care journey by scheduling follow-up appointments with the same provider for continuity of care.",
       },
       {
-        question: "Can family members have separate appointments with different doctors?",
-        answer: "Yes. Family members can book individual appointments with healthcare providers based on their own symptoms and medical requirements."
+        question:
+          "Can family members have separate appointments with different doctors?",
+        answer:
+          "Yes. Family members can book individual appointments with healthcare providers based on their own symptoms and medical requirements.",
       },
       {
-        question: "How do I find available doctors near my preferred appointment time?",
-        answer: "You can search for available providers, compare schedules, and select a doctor whose appointment times best match your availability."
+        question:
+          "How do I find available doctors near my preferred appointment time?",
+        answer:
+          "You can search for available providers, compare schedules, and select a doctor whose appointment times best match your availability.",
       },
       {
-        question: "Why book your online doctor appointment through Humancare Connect?",
-        answer: "Humancare Connect makes it simple to find qualified healthcare providers, compare available doctors, choose convenient appointment times, and receive secure virtual care tailored to your health needs."
-      }
-    ]
-  }
+        question:
+          "Why book your online doctor appointment through Humancare Connect?",
+        answer:
+          "Humancare Connect makes it simple to find qualified healthcare providers, compare available doctors, choose convenient appointment times, and receive secure virtual care tailored to your health needs.",
+      },
+    ],
+  },
 ];
 
 export default function Ab() {
   const navigate = useNavigate();
+  const { catSlug, specSlug } = useParams();
   const [appointmentTree, setAppointmentTree] = useState([]);
   const [treeLoading, setTreeLoading] = useState(true);
   const [treeError, setTreeError] = useState("");
@@ -319,6 +321,42 @@ export default function Ab() {
     }
   }, [enrichedTree, activeCat?.id, activeSpec?.id]);
 
+  // Resolve activeCat/activeSpec/drillLevel from the URL — the reverse
+  // direction of the navigate() calls in the click handlers above. Runs on
+  // initial load, browser back/forward, and pasted/shared links. Click
+  // handlers never read useParams(), so this is the only place params flow
+  // into state, which keeps the two mechanisms from fighting each other.
+  useEffect(() => {
+    if (treeLoading) return;
+    if (!catSlug) {
+      if (drillLevel !== "cat" && !browseTab) {
+        setActiveCat(null);
+        setActiveSpec(null);
+        setDrillLevel("cat");
+      }
+      return;
+    }
+    const cat = enrichedTree.find((c) => slugify(c.label) === catSlug);
+    if (!cat) {
+      navigate("/appointment-booking", { replace: true });
+      return;
+    }
+    if (!specSlug) {
+      setActiveCat(cat);
+      setActiveSpec(null);
+      setDrillLevel("spec");
+      return;
+    }
+    const spec = cat.specialties.find((s) => slugify(s.name) === specSlug);
+    if (!spec) {
+      navigate(`/appointment-booking/${catSlug}`, { replace: true });
+      return;
+    }
+    setActiveCat(cat);
+    setActiveSpec({ ...spec, catId: cat.id, catLabel: cat.label });
+    setDrillLevel("cond");
+  }, [treeLoading, enrichedTree, catSlug, specSlug]);
+
   const { specialties: flatSpecialties, conditions: flatConditions } = useMemo(
     () => buildFlatHelpers(enrichedTree),
     [enrichedTree],
@@ -365,6 +403,7 @@ export default function Ab() {
       setDrillLevel("cat");
       setActiveCat(null);
       setActiveSpec(null);
+      if (catSlug) navigate("/appointment-booking", { replace: true });
     } else if (tabId === "spec") {
       setBrowseTab("spec");
     } else {
@@ -378,6 +417,7 @@ export default function Ab() {
     setActiveCat(cat);
     setDrillLevel("spec");
     setQuery("");
+    navigate(`/appointment-booking/${slugify(cat.label)}`);
   };
 
   const handleOpenSpec = (specialty) => {
@@ -385,23 +425,35 @@ export default function Ab() {
     setActiveSpec(specialty);
     setDrillLevel("cond");
     setQuery("");
+    navigate(
+      `/appointment-booking/${slugify(specialty.catLabel)}/${slugify(specialty.name)}`,
+    );
   };
 
   const handleSelectCond = (condName, condIcon, specialty) => {
-    navigate("/appointment-booking/form", {
-      state: {
-        selection: {
-          specName: specialty.name,
-          specIco: specialty.icon, // payload key kept for the booking form contract
-          catId: specialty.catId,
-          catLabel: specialty.catLabel,
-          cost: specialty.cost,
-          currency: specialty.currency ?? "USD", // dynamic currency for booking form
-          condName,
-          condIco: condIcon, // payload key kept for the booking form contract
+    const catSlugForUrl = slugify(specialty.catLabel);
+    const specSlugForUrl = slugify(specialty.name);
+    const condSlugForUrl =
+      condName === "General Consultation" && condIcon === "stethoscope"
+        ? "general-consultation"
+        : slugify(condName);
+    navigate(
+      `/appointment-booking/${catSlugForUrl}/${specSlugForUrl}/${condSlugForUrl}`,
+      {
+        state: {
+          selection: {
+            specName: specialty.name,
+            specIco: specialty.icon, // payload key kept for the booking form contract
+            catId: specialty.catId,
+            catLabel: specialty.catLabel,
+            cost: specialty.cost,
+            currency: specialty.currency ?? "USD", // dynamic currency for booking form
+            condName,
+            condIco: condIcon, // payload key kept for the booking form contract
+          },
         },
       },
-    });
+    );
   };
 
   const handleFlatCondClick = (condition) => {
@@ -418,6 +470,11 @@ export default function Ab() {
     setActiveSpec(specialty);
     setDrillLevel("cond");
     setQuery("");
+    if (cat) {
+      navigate(
+        `/appointment-booking/${slugify(cat.label)}/${slugify(specialty.name)}`,
+      );
+    }
   };
 
   const handleBreadcrumb = (idx) => {
@@ -425,10 +482,12 @@ export default function Ab() {
       setDrillLevel("cat");
       setActiveCat(null);
       setActiveSpec(null);
+      navigate("/appointment-booking");
     }
     if (idx === 1) {
       setDrillLevel("spec");
       setActiveSpec(null);
+      if (activeCat) navigate(`/appointment-booking/${slugify(activeCat.label)}`);
     }
   };
 
@@ -566,10 +625,18 @@ export default function Ab() {
                               </div>
                               <h3>{c.label}</h3>
                               <div className="meta">
-                                {specialtyCount} {specialtyCount === 1 ? "specialty" : "specialties"} - {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
-                              </div>                           <div className="samp">{description}</div>
+                                {specialtyCount}{" "}
+                                {specialtyCount === 1
+                                  ? "specialty"
+                                  : "specialties"}{" "}
+                                - {conditionCount}{" "}
+                                {conditionCount === 1
+                                  ? "condition"
+                                  : "conditions"}
+                              </div>{" "}
+                              <div className="samp">{description}</div>
                               <div className="go">Explore → </div>
-                            </div >
+                            </div>
                           );
                         })
                       ) : (
@@ -580,192 +647,193 @@ export default function Ab() {
                             : treeError || "No categories match."}
                         </div>
                       )}
-                    </div >
-                  </div >
+                    </div>
+                  </div>
                 )}
 
                 {/* -- Specialty list -- */}
-                {
-                  drillLevel === "spec" && activeCat && (
-                    <div className="panel">
-                      <div className="hcc-level-label">
-                        {catNumLabel && <>{catNumLabel} -</>}
-                        <span style={{ fontSize: 20 }}>
-                          <HealthcareIcon name={activeCat.icon} size={20} />
-                        </span>
-                        {activeCat.label}
-                      </div>
-                      <div className="grid">
-                        {activeCat.specialties
-                          .filter((s) => !q || s.name.toLowerCase().includes(q))
-                          .map((s) => {
-                            const specialtyWithCat = {
-                              ...s,
-                              catId: activeCat.id,
-                              catLabel: activeCat.label,
-                            };
-                            return (
-                              <div
-                                key={s.id || s.name}
-                                className="spec"
-                                onClick={(e) =>
-                                  handleCardClick(e, () =>
-                                    handleOpenSpec(specialtyWithCat),
-                                  )
-                                }
-                              >
-                                <div className="ic">
-                                  <HealthcareIcon name={s.icon} size={30} />
-                                </div>
-                                <h3>{s.name}</h3>
-                                <div className="spec-footer">
-                                  <div className="count">
-                                    {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
-                                  </div>
-                                  <div className="book-link">Book →</div>
-                                </div>
+                {drillLevel === "spec" && activeCat && (
+                  <div className="panel">
+                    <div className="hcc-level-label">
+                      {catNumLabel && <>{catNumLabel} -</>}
+                      <span style={{ fontSize: 20 }}>
+                        <HealthcareIcon name={activeCat.icon} size={20} />
+                      </span>
+                      {activeCat.label}
+                    </div>
+                    <div className="grid">
+                      {activeCat.specialties
+                        .filter((s) => !q || s.name.toLowerCase().includes(q))
+                        .map((s) => {
+                          const specialtyWithCat = {
+                            ...s,
+                            catId: activeCat.id,
+                            catLabel: activeCat.label,
+                          };
+                          return (
+                            <div
+                              key={s.id || s.name}
+                              className="spec"
+                              onClick={(e) =>
+                                handleCardClick(e, () =>
+                                  handleOpenSpec(specialtyWithCat),
+                                )
+                              }
+                            >
+                              <div className="ic">
+                                <HealthcareIcon name={s.icon} size={30} />
                               </div>
-                            );
-                          })}
-                      </div>
-                    </div >
-                  )
-                }
+                              <h3>{s.name}</h3>
+                              <div className="spec-footer">
+                                <div className="count">
+                                  {s.conditions.length}{" "}
+                                  {s.conditions.length === 1
+                                    ? "condition"
+                                    : "conditions"}
+                                </div>
+                                <div className="book-link">Book →</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
 
                 {/* -- Condition list -- (unchanged) -- */}
-                {
-                  drillLevel === "cond" && activeSpec && (
-                    <div className="panel">
-                      <div className="hcc-level-label">
-                        <span style={{ fontSize: 20 }}>
-                          <HealthcareIcon name={activeSpec.icon} size={20} />
-                        </span>
-                        {activeSpec.name} - select your condition
-                      </div>
-                      {/* {!activeSpec.priceAvailable && (
+                {drillLevel === "cond" && activeSpec && (
+                  <div className="panel">
+                    <div className="hcc-level-label">
+                      <span style={{ fontSize: 20 }}>
+                        <HealthcareIcon name={activeSpec.icon} size={20} />
+                      </span>
+                      {activeSpec.name} - select your condition
+                    </div>
+                    {/* {!activeSpec.priceAvailable && (
                     <div className="hcc-price-alert">
                       {activeSpec.priceMessage}
                     </div>
                   )} */}
-                      <div className="condgrid">
-                        {drillConditions
-                          .filter(([name]) => !q || name.toLowerCase().includes(q))
-                          .map(([name, icon]) => (
-                            <div
-                              key={name}
-                              className="condcard"
-                              onClick={(e) =>
-                                handleCardClick(e, () =>
-                                  handleSelectCond(name, icon, activeSpec),
-                                )
-                              }
-                            >
-                              <div className="condcard-ico">
-                                <HealthcareIcon name={icon} size={23} />
-                              </div>
-                              <div className="condcard-name">{name}</div>
-                              <div className="book-link">Book →</div>
+                    <div className="condgrid">
+                      {drillConditions
+                        .filter(
+                          ([name]) => !q || name.toLowerCase().includes(q),
+                        )
+                        .map(([name, icon]) => (
+                          <div
+                            key={name}
+                            className="condcard"
+                            onClick={(e) =>
+                              handleCardClick(e, () =>
+                                handleSelectCond(name, icon, activeSpec),
+                              )
+                            }
+                          >
+                            <div className="condcard-ico">
+                              <HealthcareIcon name={icon} size={23} />
                             </div>
-                          ))}
-                        <div
-                          className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
-                          onClick={(e) =>
-                            handleCardClick(e, () =>
-                              handleSelectCond(
-                                "General Consultation",
-                                "stethoscope",
-                                activeSpec,
-                              ),
-                            )
-                          }
-                        >
-                          <div className="condcard-ico">
-                            <HealthcareIcon name="stethoscope" size={23} />
+                            <div className="condcard-name">{name}</div>
+                            <div className="book-link">Book →</div>
                           </div>
-                          <div className="condcard-body">
-                            <div className="condcard-name">Other / not listed</div>
-                            <div className="condcard-desc">{activeSpec.name}</div>
+                        ))}
+                      <div
+                        className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
+                        onClick={(e) =>
+                          handleCardClick(e, () =>
+                            handleSelectCond(
+                              "General Consultation",
+                              "stethoscope",
+                              activeSpec,
+                            ),
+                          )
+                        }
+                      >
+                        <div className="condcard-ico">
+                          <HealthcareIcon name="stethoscope" size={23} />
+                        </div>
+                        <div className="condcard-body">
+                          <div className="condcard-name">
+                            Other / not listed
                           </div>
+                          <div className="condcard-desc">{activeSpec.name}</div>
                         </div>
                       </div>
                     </div>
-                  )
-                }
+                  </div>
+                )}
               </>
             )}
 
             {/* -- FLAT BROWSE: Specialties -- */}
-            {
-              browseTab === "spec" && (
-                <div className="panel">
-                  <div className="grid">
-                    {visibleFlatSpecialties.length ? (
-                      visibleFlatSpecialties.map((s) => (
-                        <div
-                          key={(s.id || s.name) + s.catId}
-                          className="spec"
-                          onClick={(e) =>
-                            handleCardClick(e, () => handleFlatSpecClick(s))
-                          }
-                        >
-                          <div className="ic">
-                            <HealthcareIcon name={s.icon} size={30} />
+            {browseTab === "spec" && (
+              <div className="panel">
+                <div className="grid">
+                  {visibleFlatSpecialties.length ? (
+                    visibleFlatSpecialties.map((s) => (
+                      <div
+                        key={(s.id || s.name) + s.catId}
+                        className="spec"
+                        onClick={(e) =>
+                          handleCardClick(e, () => handleFlatSpecClick(s))
+                        }
+                      >
+                        <div className="ic">
+                          <HealthcareIcon name={s.icon} size={30} />
+                        </div>
+                        <h3>{s.name}</h3>
+                        <div className="spec-footer">
+                          <div className="count">
+                            {s.conditions.length}{" "}
+                            {s.conditions.length === 1
+                              ? "condition"
+                              : "conditions"}
                           </div>
-                          <h3>{s.name}</h3>
-                          <div className="spec-footer">
-                            <div className="count">
-                              {s.conditions.length} {s.conditions.length === 1 ? "condition" : "conditions"}
-                            </div>
-                            <div className="book-link">Book →</div>
-                          </div>
-
-                        </div >
-                      ))
-                    ) : (
-                      <div className="empty">
-                        <div className="big">Search</div>No specialties found.
-                      </div>
-                    )
-                    }
-                  </div >
-                </div >
-              )}
-
-            {/* -- FLAT BROWSE: Conditions -- (unchanged) -- */}
-            {
-              browseTab === "cond" && (
-                <div className="panel">
-                  <div className="condgrid">
-                    {visibleFlatConditions.length ? (
-                      visibleFlatConditions.map((c, i) => (
-                        <div
-                          key={i}
-                          className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
-                          onClick={(e) =>
-                            handleCardClick(e, () => handleFlatCondClick(c))
-                          }
-                        >
-                          <div className="condcard-ico">
-                            <HealthcareIcon name={c.icon} size={23} />
-                          </div>
-                          <div className="condcard-name">{c.name}</div>
-                          {/* <div className="condcard-spec">{c.to}</div> */}
                           <div className="book-link">Book →</div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="empty">
-                        <div className="big">Search</div>No conditions match.
                       </div>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <div className="empty">
+                      <div className="big">Search</div>No specialties found.
+                    </div>
+                  )}
                 </div>
-              )
-            }
-          </div >
+              </div>
+            )}
+
+            {/* -- FLAT BROWSE: Conditions -- (unchanged) -- */}
+            {browseTab === "cond" && (
+              <div className="panel">
+                <div className="condgrid">
+                  {visibleFlatConditions.length ? (
+                    visibleFlatConditions.map((c, i) => (
+                      <div
+                        key={i}
+                        className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
+                        onClick={(e) =>
+                          handleCardClick(e, () => handleFlatCondClick(c))
+                        }
+                      >
+                        <div className="condcard-ico">
+                          <HealthcareIcon name={c.icon} size={23} />
+                        </div>
+                        <div className="condcard-name">{c.name}</div>
+                        {/* <div className="condcard-spec">{c.to}</div> */}
+                        <div className="book-link">Book →</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty">
+                      <div className="big">Search</div>No conditions match.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           {/* /content-card */}
-        </div >
-      </section >
+        </div>
+      </section>
 
       <FAQ
         badge="FAQ"

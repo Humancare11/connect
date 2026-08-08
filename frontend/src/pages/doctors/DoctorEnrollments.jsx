@@ -1912,7 +1912,7 @@ export default function DoctorOnboardingWizard({
     if (data.timezone) setTimezone(data.timezone);
     if (Array.isArray(data.licensedStates) && data.licensedStates.length) {
       setLicensedStates(data.licensedStates);
-    } else if (data.state) {
+    } else if (data.state && (data.country === "US" || data.country === "CA")) {
       setLicensedStates([data.state]);
     }
     if (

@@ -3522,12 +3522,13 @@ export default function AdminDoctorProfile() {
                 </div>
               </div>
             )}
-            {(Array.isArray(e.licensedStates)
-              ? e.licensedStates
-              : e.state
-                ? [e.state]
-                : []
-            ).length > 0 && (
+            {(e.country === "US" || e.country === "CA") &&
+              (Array.isArray(e.licensedStates)
+                ? e.licensedStates
+                : e.state
+                  ? [e.state]
+                  : []
+              ).length > 0 && (
                 <div
                   style={{
                     marginTop: 16,
@@ -3545,7 +3546,7 @@ export default function AdminDoctorProfile() {
                       marginBottom: 10,
                     }}
                   >
-                    🏛️ State/Territory Licensing (AU)
+                    🏛️ State/Territory Licensing
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {(Array.isArray(e.licensedStates)

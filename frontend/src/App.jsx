@@ -847,6 +847,9 @@ const Categories = lazy(() => import("./pages/Categories"));
 const AppointmentBookingForm = lazy(
   () => import("./pages/AppointmentBookingForm"),
 );
+const AppointmentBookingLegacyRedirect = lazy(
+  () => import("./pages/AppointmentBookingLegacyRedirect"),
+);
 
 // New Privcay Policy Pages Start
 const Refundcancellationpolicy = lazy(
@@ -1109,6 +1112,19 @@ function AppLayout() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
+          <Route
+            path="/appointment-booking/:catSlug"
+            element={<AppointmentBooking />}
+          />
+          <Route
+            path="/appointment-booking/:catSlug/:specSlug"
+            element={<AppointmentBooking />}
+          />
+          {/* Canonical, deep-linkable booking form URL. */}
+          <Route
+            path="/appointment-booking/:category/:specialty/:condition"
+            element={<AppointmentBookingForm />}
+          />
           {/* <Route path="/register" element={<Register />} /> */}
           <Route path="/book-appointment" element={<BookAppointment />} />
           <Route path="/test" element={<Test />} />
@@ -2496,9 +2512,10 @@ function AppLayout() {
           /> */}
           <Route path="/doctors-note" element={<DoctorsNote />} />
           {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
+          {/* Legacy query-param URL — redirects to the path-based form URL above. */}
           <Route
             path="/appointment-booking/form"
-            element={<AppointmentBookingForm />}
+            element={<AppointmentBookingLegacyRedirect />}
           />
           <Route path="/primary-care-provider" element={<PCP />} /> {/* PCP */}
           {/* Blog individual Pages */}

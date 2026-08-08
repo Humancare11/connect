@@ -1,1 +1,5 @@
+# Legacy appointment-booking form URL -> new SEO-friendly path-based URL.
+# Must come before the SPA catch-all below (Netlify uses first-match).
+/appointment-booking/form?category=:category&specialty=:specialty&condition=:condition  /appointment-booking/:category/:specialty/:condition  301
+
 /*    /index.html   200
