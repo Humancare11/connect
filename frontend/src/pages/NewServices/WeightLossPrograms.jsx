@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   motion,
   useScroll,
@@ -663,61 +663,7 @@ const Overview = ({ s, bp }) => (
         </motion.div>
       </motion.div>
 
-      {/* Outcomes strip — unchanged */}
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: bp.isMobile
-            ? "1fr"
-            : bp.isTablet
-              ? "repeat(2, 1fr)"
-              : "repeat(4, 1fr)",
-          gap: 12,
-          marginTop: 52,
-        }}
-      >
-        {s.keyOutcomes.map((o, i) => (
-          <motion.div
-            key={i}
-            variants={fadeUp}
-            custom={i}
-            style={{
-              display: "flex",
-              gap: 12,
-              alignItems: "flex-start",
-              padding: 16,
-              borderRadius: 14,
-              background: BG_ELEVATED,
-              border: `1px solid ${BORDER}`,
-            }}
-          >
-            <div
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: s.accentColor,
-                marginTop: 5,
-                flexShrink: 0,
-              }}
-            />
-            <p
-              style={{
-                color: TEXT_BODY,
-                fontSize: 13,
-                lineHeight: 1.6,
-                margin: 0,
-              }}
-            >
-              {o}
-            </p>
-          </motion.div>
-        ))}
-      </motion.div>
+
     </div>
   </section>
 );

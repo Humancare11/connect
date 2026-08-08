@@ -234,13 +234,18 @@ const APPOINTMENT_FAQS = [
 
 export default function Ab() {
   const navigate = useNavigate();
+  const { state: locationState } = useLocation();
   const [appointmentTree, setAppointmentTree] = useState([]);
   const [treeLoading, setTreeLoading] = useState(true);
   const [treeError, setTreeError] = useState("");
   const [drillLevel, setDrillLevel] = useState("cat");
   const [activeCat, setActiveCat] = useState(null);
   const [activeSpec, setActiveSpec] = useState(null);
-  const [browseTab, setBrowseTab] = useState(null);
+  const [browseTab, setBrowseTab] = useState(() =>
+    locationState?.tab === "cond" || locationState?.tab === "spec"
+      ? locationState.tab
+      : null
+  );
   const [query, setQuery] = useState("");
 
   const fetchAppointmentTree = useCallback(async ({ silent = false } = {}) => {
@@ -471,10 +476,10 @@ export default function Ab() {
         <div className="wrap">
           {/* -- CENTERED HERO -- */}
           <div className="head">
-            <span className="eyebrow">
+            {/* <span className="eyebrow">
               <span className="eyebrow-dot" />
               Discover Care
-            </span>
+            </span> */}
 
             <h2>Find the right online doctor for your needs.</h2>
 

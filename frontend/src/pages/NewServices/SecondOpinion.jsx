@@ -746,7 +746,7 @@ const Overview = ({ s, bp }) => (
           marginTop: 52,
         }}
       >
-        {s.keyOutcomes.map((o, i) => (
+        {/* {s.keyOutcomes.map((o, i) => (
           <motion.div
             key={i}
             variants={fadeUp}
@@ -782,7 +782,7 @@ const Overview = ({ s, bp }) => (
               {o}
             </p>
           </motion.div>
-        ))}
+        ))} */}
       </motion.div>
     </div>
   </section>

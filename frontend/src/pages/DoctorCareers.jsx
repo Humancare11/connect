@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FaClock,
@@ -23,7 +23,6 @@ import {
   FaChartLine,
   FaGraduationCap,
   FaQuoteLeft,
-  FaChevronDown,
   FaArrowRight,
   FaChevronLeft,
   FaChevronRight,
@@ -320,9 +319,6 @@ const DOCTOR_FAQS = [
   }
 ];
 
-const DOCTOR_FAQ_ITEMS = DOCTOR_FAQS.flatMap((group) =>
-  group.items.map((item) => ({ q: item.question, a: item.answer }))
-);
 
 const INITIAL_FORM_STATE = {
   fullName: "",
@@ -412,33 +408,6 @@ function BenefitTile({ icon, title, desc }) {
   );
 }
 
-function FAQItem({ item, isOpen, onToggle }) {
-  return (
-    <div className={`dc-faq-item ${isOpen ? "dc-faq-item--open" : ""}`}>
-      <button
-        className="dc-faq-question"
-        onClick={onToggle}
-        aria-expanded={isOpen}
-      >
-        <span>{item.q}</span>
-        <FaChevronDown className="dc-faq-chevron" aria-hidden="true" />
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            className="dc-faq-answer"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            <p>{item.a}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 function ApplicationForm() {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
@@ -639,10 +608,7 @@ function ApplicationForm() {
 /* -------------------------------------------------------------------- */
 
 export default function DoctorCareers() {
-  const [openFAQ, setOpenFAQ] = useState(0);
   const [activeSlide, setActiveSlide] = useState(0);
-
-  const toggleFAQ = (idx) => setOpenFAQ(openFAQ === idx ? -1 : idx);
 
   return (
     <>
@@ -922,38 +888,18 @@ export default function DoctorCareers() {
         {/* ---------------------------------------------------------- */}
         {/* 10. FAQ                                                      */}
         {/* ---------------------------------------------------------- */}
-        <section className="dc-section dc-section--muted">
-          <div className="dc-container dc-faq-container">
-            <motion.div
-              className="dc-section-header"
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={fadeUp}
-            >
-              <span className="dc-eyebrow">FREQUENTLY ASKED QUESTIONS</span>
-              <h2>Common questions from physicians</h2>
-            </motion.div>
-
-            <motion.div
-              className="dc-faq-list"
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.1 }}
-              variants={staggerContainer}
-            >
-              {DOCTOR_FAQ_ITEMS.map((item, idx) => (
-                <motion.div key={item.q} variants={fadeUp}>
-                  <FAQItem
-                    item={item}
-                    isOpen={openFAQ === idx}
-                    onToggle={() => toggleFAQ(idx)}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
+        <FAQ
+          badge="FAQ"
+          title="Common questions from physicians"
+          description="Everything you need to know about joining and practicing with Humancare Connect. Can't find an answer? Contact our Doctor Success Team."
+          sections={DOCTOR_FAQS.map((group) => ({
+            title: group.title,
+            items: group.items.map((item) => ({
+              question: item.question,
+              answer: item.answer,
+            })),
+          }))}
+        />
 
         {/* ---------------------------------------------------------- */}
         {/* 11. Final CTA                                               */}
@@ -989,7 +935,7 @@ export default function DoctorCareers() {
                   HIPAA-compliant telemedicine platform built for modern
                   medicine
                 </motion.p>
-                <motion.div
+                {/* <motion.div
                   className="dc-final-cta-actions"
                   initial="hidden"
                   whileInView="show"
@@ -1002,7 +948,7 @@ export default function DoctorCareers() {
                   >
                     Contact Recruitment
                   </Link>
-                </motion.div>
+                </motion.div> */}
               </div>
             </motion.div>
           </div>

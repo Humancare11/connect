@@ -7,7 +7,7 @@
 
 .wp-page {
   padding: 4px 0 32px;
-  font-family: "Outfit", "DM Sans", sans-serif;
+  font-family: var(--font-secondary);
   color: var(--text);
 }
 

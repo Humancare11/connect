@@ -367,6 +367,7 @@ export default function PCP() {
               <h1>
                 Primary Care That Fits Your Life
               </h1>
+              <p>Connect with a Licensed Provider in Minutes.</p>
               <p>
                 Skip the wait and get the care you need with secure
                 telemedicine services. Humancare Connect is your primary

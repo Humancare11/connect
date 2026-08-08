@@ -659,12 +659,12 @@ export default function Categories() {
 
   const filtered = query.trim()
     ? CATEGORIES.map((c) => ({
-        category: c,
-        score: scoreCategory(c, query.trim()),
-      }))
-        .filter((r) => r.score !== null)
-        .sort((a, b) => b.score - a.score)
-        .map((r) => r.category)
+      category: c,
+      score: scoreCategory(c, query.trim()),
+    }))
+      .filter((r) => r.score !== null)
+      .sort((a, b) => b.score - a.score)
+      .map((r) => r.category)
     : CATEGORIES;
 
   return (
@@ -690,10 +690,10 @@ export default function Categories() {
       <section className="cat-hero">
         <div className="cat-hero__inner">
           <div className="cat-hero__left">
-            <div className="cat-hero__eyebrow">
+            {/* <div className="cat-hero__eyebrow">
               <Icon name="globe" size={14} />
               Discover Care Categories
-            </div>
+            </div> */}
             <h1 className="cat-hero__title">
               Explore Online Doctor Consultation Services Designed Around Your
               Needs
@@ -924,9 +924,9 @@ export default function Categories() {
               Book a consultation
               <Icon name="arrowRight" size={16} />
             </Link>
-            <Link to="/specialties" className="cat-btn-outline">
+            {/* <Link to="/specialties" className="cat-btn-outline">
               Browse specialties
-            </Link>
+            </Link> */}
           </div>
         </div>
       </section>
