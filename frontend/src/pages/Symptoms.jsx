@@ -744,7 +744,7 @@ const careFeatures = [
 // ----------- FAQ section --------
 const faqGroups = [
   {
-    group: "Consult a Doctor Online for Symptoms",
+    group: "Consult a Doctor Online for Conditions",
     items: [
       {
         q: "What does it mean to consult a doctor online for symptoms?",
@@ -890,7 +890,12 @@ export default function Symptoms() {
             </h1>
 
             <p className="sy-hero-copy">
-              Consult a Doctor Online for Symptoms and Get the Right Care
+              Find the right care for your symptoms and health concerns with
+              Humancare Connect. Our symptom-based virtual healthcare services
+              make it easy to consult a doctor online for symptoms, understand
+              possible health concerns, and receive personalized medical
+              guidance and treatment support from trusted healthcare
+              professionals.
             </p>
 
             <div className="sy-hero__stats">
@@ -914,7 +919,7 @@ export default function Symptoms() {
       <section id="sy-conditions" className="symptoms">
         <div className="symptoms__container">
           <div className="symptoms__title-block">
-            <span className="symptoms__eyebrow">Conditions page</span>
+            <span className="symptoms__eyebrow">SYMPTOMS WE CAN HELP WITH</span>
             <h2 className="symptoms__heading">
               Searchable US medical condition directory
             </h2>
@@ -1112,13 +1117,17 @@ export default function Symptoms() {
             same-day appointments available across all categories.
           </p>
           <div className="sy-cta__actions">
-            <a href="/book-appointment" className="sy-cta__btn-primary">
+            <Link
+              to="/appointment-booking"
+              state={{ tab: "cond" }}
+              className="sy-cta__btn-primary"
+            >
               Book a consultation
               <ArrowRight size={16} />
-            </a>
-            <a href="/specialties" className="sy-cta__btn-secondary">
+            </Link>
+            {/* <a href="/specialties" className="sy-cta__btn-secondary">
               Browse specialties
-            </a>
+            </a> */}
           </div>
         </div>
       </section>

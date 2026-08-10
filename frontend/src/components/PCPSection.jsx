@@ -308,14 +308,14 @@ export default function PCPSection() {
               </a>
             </Motion.button>
 
-            <Motion.p
+            {/* <Motion.p
               className="pcp-know-more-hint"
               variants={fadeUp(0.92)}
               initial="hidden"
               animate={rightInView ? "visible" : "hidden"}
             >
               No insurance needed · Cancel anytime
-            </Motion.p>
+            </Motion.p> */}
           </Motion.div>
         </div>
       </div>

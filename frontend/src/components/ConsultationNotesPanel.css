@@ -1,5 +1,5 @@
 .cnp-root {
-  font-family: "Outfit", "DM Sans", sans-serif;
+  font-family: var(--font-secondary);
 }
 
 .cnp-loading {

@@ -43,7 +43,9 @@ export default function FAQ({
   const hasMore = totalQuestions > initialLimit;
 
   return (
-    <section className={`faq${isExpanded ? " faq--expanded" : ""}${className ? ` ${className}` : ""}`}>
+    <section
+      className={`faq${isExpanded ? " faq--expanded" : ""}${className ? ` ${className}` : ""}`}
+    >
       <div className="faq__inner">
         <div className="faq__main">
           <aside className="faq__side">
@@ -57,7 +59,7 @@ export default function FAQ({
             {title && <h2 className="faq__title">{title}</h2>}
             {description && <p className="faq__description">{description}</p>}
 
-            {stats.length > 0 && (
+            {/* {stats.length > 0 && (
               <ul className="faq__stats">
                 {stats.map((stat, i) => (
                   <FAQStat
@@ -67,7 +69,7 @@ export default function FAQ({
                   />
                 ))}
               </ul>
-            )}
+            )} */}
           </aside>
 
           <div className="faq__groups">
@@ -116,7 +118,6 @@ function FAQStat({ stat, index }) {
         <Icon />
       </span>
       <span className="faq__stat-label">{data.label}</span>
-
     </>
   );
 
@@ -150,17 +151,23 @@ function FAQSection({ section, initialLimit, isExpanded }) {
   const [openIndex, setOpenIndex] = useState(0);
   const uid = useId();
 
-  const isSectionExtra = section.items.every(item => item.globalIndex >= initialLimit);
+  const isSectionExtra = section.items.every(
+    (item) => item.globalIndex >= initialLimit,
+  );
 
   return (
     <motion.div
-      initial={isSectionExtra ? { height: 0, opacity: 0, overflow: "hidden" } : undefined}
+      initial={
+        isSectionExtra
+          ? { height: 0, opacity: 0, overflow: "hidden" }
+          : undefined
+      }
       animate={
         isSectionExtra
           ? {
-            height: isExpanded ? "auto" : 0,
-            opacity: isExpanded ? 1 : 0,
-          }
+              height: isExpanded ? "auto" : 0,
+              opacity: isExpanded ? 1 : 0,
+            }
           : undefined
       }
       transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
@@ -182,13 +189,17 @@ function FAQSection({ section, initialLimit, isExpanded }) {
           return (
             <motion.li
               key={item.question}
-              initial={isExtra ? { height: 0, opacity: 0, overflow: "hidden" } : undefined}
+              initial={
+                isExtra
+                  ? { height: 0, opacity: 0, overflow: "hidden" }
+                  : undefined
+              }
               animate={
                 isExtra
                   ? {
-                    height: isExpanded ? "auto" : 0,
-                    opacity: isExpanded ? 1 : 0,
-                  }
+                      height: isExpanded ? "auto" : 0,
+                      opacity: isExpanded ? 1 : 0,
+                    }
                   : undefined
               }
               transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
@@ -310,7 +321,13 @@ function PlusIcon() {
 
 function ChevronDownIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" width="16" height="16" className="faq__view-more-icon">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      width="16"
+      height="16"
+      className="faq__view-more-icon"
+    >
       <path
         d="M6 9L12 15L18 9"
         stroke="currentColor"

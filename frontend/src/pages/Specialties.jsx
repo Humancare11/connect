@@ -671,10 +671,10 @@ export default function Specialties() {
         <div className="sp-hero__inner">
           {/* Left column */}
           <div>
-            <div className="sp-hero__badge">
+            {/* <div className="sp-hero__badge">
               <Globe2 size={14} />
               Discover Care Categories
-            </div>
+            </div> */}
 
             <h1 className="sp-hero__title">
               Online Specialist Doctor Services for Your Unique Health Needs
@@ -903,18 +903,14 @@ export default function Specialties() {
             serve any eligibility across all categories.
           </p>
           <div className="sp-cta__actions">
-            <a
-              href="/appointment-booking"
+            <Link
+              to="/appointment-booking"
+              state={{ tab: "spec" }}
               className="sp-cta__btn sp-cta__btn--primary"
             >
               Book a consultation <ArrowRight size={15} />
-            </a>
-            <a
-              href="#specialties"
-              className="sp-cta__btn sp-cta__btn--secondary"
-            >
-              Browse specialties
-            </a>
+            </Link>
+
           </div>
         </div>
       </section>

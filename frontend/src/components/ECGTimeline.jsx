@@ -420,8 +420,7 @@ export default function ECGTimeline() {
       <div className="hc-header">
         <p className="hc-header-eyebrow">How It Works</p>
         <h2 className="hc-header-title">From employee signup to virtual care in minutes.</h2>
-        <p className="hc-header-desc">
-Fast onboarding, secure telehealth services, and convenient virtual doctor visits built to improve employee healthcare access, productivity, and workforce wellness.        </p>
+        <p className="hc-header-desc">Fast onboarding, secure telehealth services, and convenient virtual doctor visits built to improve employee healthcare access, productivity, and workforce wellness.     </p>
       </div>
 
       <div className="hc-svg-wrapper">

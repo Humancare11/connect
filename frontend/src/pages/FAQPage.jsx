@@ -494,13 +494,13 @@ function CTACard() {
         <span className="cta-card__avatar">
           <ChatIcon />
         </span>
-        <span className="cta-card__status">
+        {/* <span className="cta-card__status">
           <span className="pulse-dot" aria-hidden="true" />
           We're Here When You Need Us.
-        </span>
+        </span> */}
       </div>
 
-      <h2 className="cta-card__title">Still have a question?</h2>
+      <h2 className="cta-card__title">We're Here When You Need Us.</h2>
       <p className="cta-card__text">
         If you couldn't find the answer in our Help Center, our support team is
         ready to assist you with any questions about Humancare Connect, so you

@@ -25,11 +25,9 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
     0 20px 60px rgba(15, 23, 42, 0.06);
 
-  /* ✅ visible — overflow:hidden clips Framer Motion scale() */
+  /* overflow:visible — keeps Framer Motion scale() unclipped */
   overflow: visible;
   z-index: 1;
-
-  /* Framer Motion drives scale/opacity/y */
   will-change: transform, opacity;
   transform-origin: center center;
 }

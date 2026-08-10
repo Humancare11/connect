@@ -391,15 +391,17 @@ const CORPORATE_FAQS = [
 
 export default function CorporateDemo() {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const activeSvc = SERVICES[activeIdx];
 
-  // Auto cycle through services
+  // Auto cycle through services (pauses when user clicks or hovers)
   useEffect(() => {
+    if (isPaused) return;
     const interval = setInterval(() => {
       setActiveIdx((prev) => (prev + 1) % SERVICES.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPaused]);
 
   return (
     <>
@@ -459,15 +461,25 @@ export default function CorporateDemo() {
           </p>
         </div>
 
-        <div className="corp-accordion-container">
+        <div
+          className="corp-accordion-container"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
           {SERVICES.map((svc, i) => {
             const isActive = i === activeIdx;
             return (
               <div
                 key={svc.label}
                 className={`accordion-panel ${isActive ? "active" : ""}`}
-                onMouseEnter={() => setActiveIdx(i)}
-                onClick={() => setActiveIdx(i)}
+                onMouseEnter={() => {
+                  setActiveIdx(i);
+                  setIsPaused(true);
+                }}
+                onClick={() => {
+                  setActiveIdx(i);
+                  setIsPaused(true);
+                }}
                 style={{
                   "--panel-accent": svc.accent,
                   "--panel-image": `url(${svc.img})`,

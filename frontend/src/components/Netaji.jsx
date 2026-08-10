@@ -186,6 +186,24 @@ export default function WhyChooseUs() {
   }, [activeId, closeCard]);
 
   useEffect(() => {
+    if (!activeId || phase === "idle") return;
+
+    const handleInstantDismiss = () => {
+      closeCard();
+    };
+
+    window.addEventListener("scroll", handleInstantDismiss, { capture: true, passive: true });
+    window.addEventListener("wheel", handleInstantDismiss, { capture: true, passive: true });
+    window.addEventListener("touchmove", handleInstantDismiss, { capture: true, passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleInstantDismiss, { capture: true });
+      window.removeEventListener("wheel", handleInstantDismiss, { capture: true });
+      window.removeEventListener("touchmove", handleInstantDismiss, { capture: true });
+    };
+  }, [activeId, phase, closeCard]);
+
+  useEffect(() => {
     document.body.style.overflow =
       phase === "open" || phase === "opening" ? "hidden" : "";
     return () => {

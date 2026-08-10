@@ -340,7 +340,7 @@ export default function AboutPage() {
               <h2 className="heading heading--lg problem__title">
                 The Healthcare{" "}
                 <span className="text-blue">
-                  The Healthcare Challenges We’re Solving
+                  Challenges We’re Solving
                 </span>
               </h2>
               <p className="heading heading--lg problem__desc">
@@ -518,7 +518,7 @@ export default function AboutPage() {
           <div className="container">
             <Rv>
               <div className="section-head">
-                <Eyebrow>Trust, by design</Eyebrow>
+                {/* <Eyebrow>Trust, by design</Eyebrow> */}
                 <h2 className="heading heading--lg section-head__title">
                   Built on Trust. Designed for Better Care.
                 </h2>
@@ -632,7 +632,7 @@ export default function AboutPage() {
           <div className="container">
             <div className="contact-grid">
               <Rv>
-                <Eyebrow>Where to find us</Eyebrow>
+                {/* <Eyebrow>Where to find us</Eyebrow> */}
                 <h2 className="heading heading--md contact__title">
                   Let's Connect
                 </h2>
