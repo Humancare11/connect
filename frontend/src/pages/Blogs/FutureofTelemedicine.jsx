@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
@@ -1142,9 +1143,9 @@ export default function FutureofTelemedicine() {
                 </strong>
               </p>
               <div className="cta-buttons">
-                <a href="/appointment-booking" className="btn btn-primary">
+                <Link to="/appointment-booking" state={{ tab: "spec" }} className="btn btn-primary">
                   Book Online Consultation
-                </a>
+                </Link>
                 {/* <a href="/specialists" className="btn btn-secondary">
                   Talk to a Specialist
                 </a> */}

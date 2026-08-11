@@ -667,11 +667,11 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
       {/* ── 4. WHY HUMANCARE ───────────────────────────────────────────────── */}
       <section className="sp-trust">
         <div className="sp-container">
-          <div className="sp-stats-grid">
+          {/* <div className="sp-stats-grid">
             {TRUST_STATS.map((s, i) => (
               <AnimatedStat key={i} {...s} />
             ))}
-          </div>
+          </div> */}
 
           <Reveal>
             <div className="sp-trust__head">
@@ -693,28 +693,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         </div>
       </section>
 
-      {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
-      <FAQ
-        badge="FAQ"
-        title="Frequently Asked Questions"
-        description={`Everything you need to know about ${data.name.toLowerCase()} at Humancare Connect.`}
-        stats={[
-          "Avg. response in 10 min",
-          "HIPAA secure & private",
-          "Available Globally",
-        ]}
-        sections={[
-          {
-            title: data.name,
-            items: data.faqs.map((faq) => ({
-              question: faq.question,
-              answer: faq.answer,
-            })),
-          },
-        ]}
-      />
-
-      {/* ── 6. CTA ─────────────────────────────────────────────────────────── */}
+      {/* ── 5. CTA ─────────────────────────────────────────────────────────── */}
       <section className="sp-cta">
         <div className="sp-cta__glow-top" aria-hidden="true" />
         <div className="sp-cta__glow-bottom" aria-hidden="true" />
@@ -735,20 +714,20 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
           <Reveal delay={80}>
             <div className="sp-cta__actions">
               <a href="/login" className="sp-btn sp-btn--primary-lg">
-                <FiSearch size={18} />
-                Find a Doctor
+                Get Started
               </a>
-              <a
-                href="/appointment-booking"
+              <Link
+                to="/appointment-booking"
+                state={{ tab: "spec" }}
                 className="sp-btn sp-btn--ghost-lg"
               >
-                <FiCalendar size={18} />
+                {/* <FiCalendar size={18} /> */}
                 Book Appointment
-              </a>
+              </Link>
             </div>
           </Reveal>
 
-          <Reveal delay={130}>
+          {/* <Reveal delay={130}>
             <div className="sp-cta__badges">
               {[
                 { Icon: FiLock, label: "HIPAA Compliant" },
@@ -762,9 +741,29 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                 </div>
               ))}
             </div>
-          </Reveal>
+          </Reveal> */}
         </div>
       </section>
+      {/* ── 5. FAQ ─────────────────────────────────────────────────────────── */}
+      <FAQ
+        badge="FAQ"
+        title="Frequently Asked Questions"
+        description={`Everything you need to know about ${data.name.toLowerCase()} at Humancare Connect.`}
+        // stats={[
+        //   "Avg. response in 10 min",
+        //   "HIPAA secure & private",
+        //   "Available Globally",
+        // ]}
+        sections={[
+          {
+            title: data.name,
+            items: data.faqs.map((faq) => ({
+              question: faq.question,
+              answer: faq.answer,
+            })),
+          },
+        ]}
+      />
     </main>
   );
 }

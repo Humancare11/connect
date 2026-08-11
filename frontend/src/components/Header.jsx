@@ -102,7 +102,11 @@ export default function Header() {
   const navItems = [
     ...(location.pathname !== "/" ? [{ label: "Home", link: "/" }] : []),
     { label: "About Us", link: "/about-us" },
-    { label: "Book Appointment", link: "/appointment-booking" },
+    {
+      label: "Book Appointment",
+      link: "/appointment-booking",
+      state: { tab: "spec" },
+    },
     { label: "Corporates", link: "/corporates" },
     { label: "Blogs", link: "/blogs" },
   ];
@@ -333,6 +337,7 @@ export default function Header() {
                 <Link
                   key={i}
                   to={item.link}
+                  state={item.state}
                   className={`nav-item ${location.pathname === item.link ? "active" : ""}`}
                 >
                   {item.label}
@@ -380,6 +385,7 @@ export default function Header() {
             <Link
               key={i}
               to={item.link}
+              state={item.state}
               className={`mobile-nav-item ${location.pathname === item.link ? "active" : ""}`}
               onClick={() => setMobileOpen(false)}
             >

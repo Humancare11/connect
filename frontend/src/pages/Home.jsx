@@ -29,7 +29,7 @@ import {
 import searchIndex from "../data/searchIndex.js";
 import { searchTreatments } from "../utils/search";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 import LazySection from "../components/LazySection";
 
@@ -1003,9 +1003,9 @@ export default function HomePage() {
             <a href="/login">
               <button className="cta-btn-w">Create Free Account</button>
             </a>
-            <a href="/appointment-booking">
+            <Link to="/appointment-booking" state={{ tab: "spec" }}>
               <button className="cta-btn-g">Talk to a Doctor Now</button>
-            </a>
+            </Link>
           </div>
           <div className="cta-pills">
             <span className="cta-pill">

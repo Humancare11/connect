@@ -1287,7 +1287,7 @@ export default function AppointmentBookingForm() {
               type="button"
               className="ap-btn-outline"
               style={{ marginTop: 10 }}
-              onClick={() => navigate("/appointment-booking")}
+              onClick={() => navigate("/appointment-booking", { state: { tab: "spec" } })}
             >
               Book Another Appointment
             </button>

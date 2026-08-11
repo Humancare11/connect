@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import telemedicineSafe from "../../assets/BlogImages/telemedicine-safe.webp";
@@ -1224,9 +1225,9 @@ export default function TelemedicineSafe() {
                 </strong>
               </p>
               <div className="cta-buttons">
-                <a href="/appointment-booking" className="btn btn-primary">
+                <Link to="/appointment-booking" state={{ tab: "spec" }} className="btn btn-primary">
                   Book Online Consultation
-                </a>
+                </Link>
                 {/* <a href="/specialists" className="btn btn-secondary">
                   Talk to a Specialist
                 </a> */}

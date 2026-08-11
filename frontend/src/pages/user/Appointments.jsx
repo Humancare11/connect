@@ -138,7 +138,7 @@ export default function Appointments() {
             Track, manage and connect with your doctors
           </p>
         </div>
-        <Link to="/appointment-booking" className="appt-book-btn">
+        <Link to="/appointment-booking" state={{ tab: "spec" }} className="appt-book-btn">
           <span className="appt-book-icon">+</span>
           Book Appointment
         </Link>
@@ -206,7 +206,7 @@ export default function Appointments() {
                   : "Your completed consultations will appear here."}
             </p>
             {activeTab !== "completed" && (
-              <Link to="/appointment-booking" className="appt-empty-cta">
+              <Link to="/appointment-booking" state={{ tab: "spec" }} className="appt-empty-cta">
                 Book Appointment
               </Link>
             )}

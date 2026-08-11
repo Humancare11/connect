@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import {
@@ -163,12 +163,13 @@ export default function AdhdEvaluation() {
               </p>
 
               <div className="condition-btns condition-hero-anim-btns">
-                <a
-                  href="/appointment-booking"
+                <Link
+                  to="/appointment-booking"
+                  state={{ tab: "cond" }}
                   className="condition-btn condition-btn--primary"
                 >
                   <Calendar size={15} /> Book Appointment
-                </a>
+                </Link>
                 <a href="#" className="condition-btn condition-btn--ghost">
                   <Users size={15} /> Know More
                 </a>
@@ -430,11 +431,11 @@ export default function AdhdEvaluation() {
                     <h3>Still have questions?</h3>
                     <p>Our care team is available every day, 8 AM – 10 PM.</p>
                   </div>
-                  <a href="/appointment-booking">
+                  <Link to="/appointment-booking" state={{ tab: "cond" }}>
                     <button>
                       Book a Call <ArrowRight size={18} />
                     </button>
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

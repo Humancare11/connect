@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import {
   motion,
   useScroll,
@@ -51,7 +52,7 @@ import {
   FiUser,
 } from "react-icons/fi";
 import SEO from "../../components/Seo";
-import ServiceBookingCard from "./ServiceBookingCard";
+import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
 import CentralFAQ from "../../components/FAQ/FAQ";
 /* ──────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS — light theme
@@ -525,10 +526,10 @@ const Hero = ({ s, bp }) => {
             <a href="/login">Get Started</a>
           </PrimaryBtn>
           <GhostBtn>
-            <a href="/appointment-booking">
+            <Link to="/appointment-booking" state={{ tab: "spec" }}>
               {" "}
               Request Your Lab Consultation Today
-            </a>
+            </Link>
           </GhostBtn>
         </motion.div>
       </motion.div>

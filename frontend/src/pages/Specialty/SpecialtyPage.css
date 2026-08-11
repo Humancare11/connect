@@ -44,7 +44,7 @@
 /* ── Container ─────────────────────────────────────────────────────────────── */
 .sp-container {
   max-width: 1280px;
-  margin: 0 auto;
+  margin: 60px auto;
   padding: 0 clamp(16px, 4vw, 48px);
   box-sizing: border-box;
 }
@@ -897,7 +897,7 @@
   padding: clamp(64px, 10vw, 112px) 0;
   overflow: hidden;
   width: 100%;
-  background: #0f172a;
+  background: #101e3e;
 }
 
 .sp-cta__glow-top {
@@ -935,7 +935,7 @@
 .sp-cta__inner {
   position: relative;
   z-index: 10;
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0 clamp(16px, 4vw, 48px);
   box-sizing: border-box;
@@ -971,7 +971,7 @@
 .sp-cta__sub {
   color: #94a3b8;
   font-size: clamp(14px, 2vw, 18px);
-  max-width: 520px;
+  max-width: 600px;
   margin: 0 auto 40px;
   line-height: 1.7;
 }
