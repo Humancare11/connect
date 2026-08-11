@@ -149,17 +149,6 @@ export default function EmergencyTeleconsultationAbroad() {
                         ))}
                       </div>
                     </div>
-
-                    <div className="condition-stat-row">
-                      <div className="condition-stat-pill">
-                        <HeartPulse size={13} />
-                        <span>15 K+ Patients</span>
-                      </div>
-                      <div className="condition-stat-pill">
-                        <ShieldCheck size={13} />
-                        <span>98% Satisfaction</span>
-                      </div>
-                    </div>
                   </div>
 
                   {/* RIGHT */}

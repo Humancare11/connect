@@ -2443,12 +2443,13 @@ export default function DoctorProfile() {
                   }
                 />
               </div>
-              {(Array.isArray(e.licensedStates)
-                ? e.licensedStates
-                : e.state
-                  ? [e.state]
-                  : []
-              ).length > 0 && (
+              {(e.country === "US" || e.country === "CA") &&
+                (Array.isArray(e.licensedStates)
+                  ? e.licensedStates
+                  : e.state
+                    ? [e.state]
+                    : []
+                ).length > 0 && (
                   <div style={{ marginTop: 6, marginBottom: 16 }}>
                     <div
                       style={{

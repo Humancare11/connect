@@ -9,7 +9,7 @@ export default ({ mode }) => {
   const apiUrl = env.VITE_API_URL || 'http://localhost:5000'
 
   return defineConfig({
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss()],    
     publicDir: 'public',
     resolve: {
       alias: {

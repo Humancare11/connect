@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import "./AppointmentBooking.css";
 import api from "../api";
 import HealthcareIcon from "../components/HealthcareIcon";
 import SEO from "../components/Seo";
 import FAQ from "../components/FAQ/FAQ";
+import { slugify } from "../utils/slug";
+import { normalizeAppointmentTree } from "../utils/appointmentTree";
 
 // --- Search helpers ---------------------------------------------------------
 // Plain `.includes()` matches a query ANYWHERE inside a string, including
@@ -23,34 +25,6 @@ function matchQuery(text, q) {
   return re.test(text);
 }
 
-// Convert the database-owned appointment tree into the shape this UI already uses.
-function normalizeAppointmentTree(tree) {
-  return (Array.isArray(tree) ? tree : []).map((category) => ({
-    id: category._id,
-    icon: category.icon || "stethoscope",
-    label: category.name || "Untitled Category",
-    description: category.description || "",
-    price: Number.isFinite(Number(category.price)) ? Number(category.price) : 0,
-    currency: category.currency || "USD",
-    specialties: (Array.isArray(category.specialties)
-      ? category.specialties
-      : []
-    ).map((specialty) => ({
-      id: specialty._id,
-      name: specialty.name || "Untitled Specialty",
-      icon: specialty.icon || "stethoscope",
-      conditions: (Array.isArray(specialty.conditions)
-        ? specialty.conditions
-        : []
-      ).map((condition) => [
-        condition.name || "Untitled Condition",
-        condition.icon || "stethoscope",
-        condition._id,
-        condition.description || "",
-      ]),
-    })),
-  }));
-}
 // Build flat helpers from the price-enriched tree. `label`, `cost`, and
 // `currency` all originate from the API (attached in enrichedTree).
 function buildFlatHelpers(tree) {
@@ -261,6 +235,9 @@ const APPOINTMENT_FAQS = [
 
 export default function Ab() {
   const navigate = useNavigate();
+
+  const { catSlug, specSlug } = useParams();
+
   const { state: locationState } = useLocation();
   const [appointmentTree, setAppointmentTree] = useState([]);
   const [treeLoading, setTreeLoading] = useState(true);
@@ -363,6 +340,42 @@ export default function Ab() {
     }
   }, [enrichedTree, activeCat?.id, activeSpec?.id]);
 
+  // Resolve activeCat/activeSpec/drillLevel from the URL — the reverse
+  // direction of the navigate() calls in the click handlers above. Runs on
+  // initial load, browser back/forward, and pasted/shared links. Click
+  // handlers never read useParams(), so this is the only place params flow
+  // into state, which keeps the two mechanisms from fighting each other.
+  useEffect(() => {
+    if (treeLoading) return;
+    if (!catSlug) {
+      if (drillLevel !== "cat" && !browseTab) {
+        setActiveCat(null);
+        setActiveSpec(null);
+        setDrillLevel("cat");
+      }
+      return;
+    }
+    const cat = enrichedTree.find((c) => slugify(c.label) === catSlug);
+    if (!cat) {
+      navigate("/appointment-booking", { replace: true });
+      return;
+    }
+    if (!specSlug) {
+      setActiveCat(cat);
+      setActiveSpec(null);
+      setDrillLevel("spec");
+      return;
+    }
+    const spec = cat.specialties.find((s) => slugify(s.name) === specSlug);
+    if (!spec) {
+      navigate(`/appointment-booking/${catSlug}`, { replace: true });
+      return;
+    }
+    setActiveCat(cat);
+    setActiveSpec({ ...spec, catId: cat.id, catLabel: cat.label });
+    setDrillLevel("cond");
+  }, [treeLoading, enrichedTree, catSlug, specSlug]);
+
   const { specialties: flatSpecialties, conditions: flatConditions } = useMemo(
     () => buildFlatHelpers(enrichedTree),
     [enrichedTree],
@@ -409,6 +422,7 @@ export default function Ab() {
       setDrillLevel("cat");
       setActiveCat(null);
       setActiveSpec(null);
+      if (catSlug) navigate("/appointment-booking", { replace: true });
     } else if (tabId === "spec") {
       setBrowseTab("spec");
     } else {
@@ -422,6 +436,7 @@ export default function Ab() {
     setActiveCat(cat);
     setDrillLevel("spec");
     setQuery("");
+    navigate(`/appointment-booking/${slugify(cat.label)}`);
   };
 
   const handleOpenSpec = (specialty) => {
@@ -429,23 +444,35 @@ export default function Ab() {
     setActiveSpec(specialty);
     setDrillLevel("cond");
     setQuery("");
+    navigate(
+      `/appointment-booking/${slugify(specialty.catLabel)}/${slugify(specialty.name)}`,
+    );
   };
 
   const handleSelectCond = (condName, condIcon, specialty) => {
-    navigate("/appointment-booking/form", {
-      state: {
-        selection: {
-          specName: specialty.name,
-          specIco: specialty.icon, // payload key kept for the booking form contract
-          catId: specialty.catId,
-          catLabel: specialty.catLabel,
-          cost: specialty.cost,
-          currency: specialty.currency ?? "USD", // dynamic currency for booking form
-          condName,
-          condIco: condIcon, // payload key kept for the booking form contract
+    const catSlugForUrl = slugify(specialty.catLabel);
+    const specSlugForUrl = slugify(specialty.name);
+    const condSlugForUrl =
+      condName === "General Consultation" && condIcon === "stethoscope"
+        ? "general-consultation"
+        : slugify(condName);
+    navigate(
+      `/appointment-booking/${catSlugForUrl}/${specSlugForUrl}/${condSlugForUrl}`,
+      {
+        state: {
+          selection: {
+            specName: specialty.name,
+            specIco: specialty.icon, // payload key kept for the booking form contract
+            catId: specialty.catId,
+            catLabel: specialty.catLabel,
+            cost: specialty.cost,
+            currency: specialty.currency ?? "USD", // dynamic currency for booking form
+            condName,
+            condIco: condIcon, // payload key kept for the booking form contract
+          },
         },
       },
-    });
+    );
   };
 
   const handleFlatCondClick = (condition) => {
@@ -462,6 +489,11 @@ export default function Ab() {
     setActiveSpec(specialty);
     setDrillLevel("cond");
     setQuery("");
+    if (cat) {
+      navigate(
+        `/appointment-booking/${slugify(cat.label)}/${slugify(specialty.name)}`,
+      );
+    }
   };
 
   const handleBreadcrumb = (idx) => {
@@ -469,10 +501,13 @@ export default function Ab() {
       setDrillLevel("cat");
       setActiveCat(null);
       setActiveSpec(null);
+      navigate("/appointment-booking");
     }
     if (idx === 1) {
       setDrillLevel("spec");
       setActiveSpec(null);
+      if (activeCat)
+        navigate(`/appointment-booking/${slugify(activeCat.label)}`);
     }
   };
 

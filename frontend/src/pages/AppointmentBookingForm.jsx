@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useLocation, useNavigate, Navigate, Link } from "react-router-dom";
+import { useLocation, useNavigate, useParams, Navigate, Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -10,9 +10,12 @@ import {
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../api";
 import HealthcareIcon from "../components/HealthcareIcon";
+import SEO from "../components/Seo";
 import { useAuth } from "../context/AuthContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
+import { slugify } from "../utils/slug";
+import { normalizeAppointmentTree } from "../utils/appointmentTree";
 import "./Appointment.css";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -207,7 +210,7 @@ function StripeForm({
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/appointment-booking/form`,
+        return_url: `${window.location.origin}${window.location.pathname}`,
       },
       redirect: "if_required",
     });
@@ -545,7 +548,10 @@ export function PaymentStage({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AppointmentBookingForm() {
-  const { state } = useLocation();
+  const location = useLocation();
+  const { state, pathname } = location;
+  const { category: categorySlug, specialty: specialtySlug, condition: conditionSlug } =
+    useParams();
   const { user, loading: authLoading } = useAuth();
   const categoryPrices = usePrices();
   const pricingMeta = usePricingMeta();
@@ -556,6 +562,78 @@ export default function AppointmentBookingForm() {
     if (state?.selection) return state.selection;
     return readPendingBooking()?.selection || null;
   });
+
+  // Shared/refreshed link with no state and no sessionStorage: reconstruct
+  // the selection straight from the category/specialty/condition URL
+  // segments by resolving them against the live appointment tree, so the
+  // form URL is fully shareable/refresh-safe without bouncing back to the
+  // picker.
+  const [resolvingSelection, setResolvingSelection] = useState(() => {
+    if (state?.selection || readPendingBooking()?.selection) return false;
+    return !!(categorySlug && specialtySlug && conditionSlug);
+  });
+  useEffect(() => {
+    if (!resolvingSelection) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await api.get("/api/appointment-tree");
+        if (cancelled) return;
+        const tree = normalizeAppointmentTree(res.data);
+        const cat = tree.find((c) => slugify(c.label) === categorySlug);
+        const spec = cat?.specialties.find(
+          (s) => slugify(s.name) === specialtySlug,
+        );
+        let condName = null;
+        let condIco = null;
+        if (spec) {
+          if (conditionSlug === "general-consultation") {
+            condName = "General Consultation";
+            condIco = "stethoscope";
+          } else {
+            const match = spec.conditions.find(
+              ([name]) => slugify(name) === conditionSlug,
+            );
+            if (match) {
+              condName = match[0];
+              condIco = match[1];
+            }
+          }
+        }
+        if (cat && spec && condName) {
+          // Mirror AppointmentBooking.jsx's enrichedTree: category.price is
+          // the tree-sourced fallback price, used whenever the live
+          // /api/pricing lookup (via PricingContext, below) doesn't have an
+          // entry for this category.
+          const price = Number(cat.price);
+          const priceAvailable = Number.isFinite(price) && price > 0;
+          setSelection({
+            specName: spec.name,
+            specIco: spec.icon,
+            catId: cat.id,
+            catLabel: cat.label,
+            cost: priceAvailable ? price : undefined,
+            currency: "USD",
+            condName,
+            condIco,
+          });
+        }
+        // else: leave selection unset — the guard below redirects to
+        // /appointment-booking once resolvingSelection flips to false.
+      } catch {
+        // Fetch failed — same fallthrough as an unresolved slug above.
+      } finally {
+        if (!cancelled) setResolvingSelection(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // Resolve once, from the URL the page was entered with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [stage, setStage] = useState("form");
   const [form, setForm] = useState(() => {
@@ -804,7 +882,7 @@ export default function AppointmentBookingForm() {
       sessionStorage.setItem(BOOKING_RESUME_KEY, "1");
       navigate("/login", {
         state: {
-          from: "/appointment-booking/form",
+          from: pathname,
           resumeBooking: true,
         },
         replace: true,
@@ -863,22 +941,70 @@ export default function AppointmentBookingForm() {
     );
   }
 
+  if (resolvingSelection) {
+    return (
+      <div className="ap-page">
+        <div className="ap-card">
+          <div className="ap-confirming">
+            <span className="ap-spinner ap-spinner--lg" />
+            <p>Loading your appointment details…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!selection) return <Navigate to="/appointment-booking" replace />;
 
   if (!user && stage !== "form") {
-    return (
-      <Navigate
-        to="/login"
-        state={{ from: "/appointment-booking/form" }}
-        replace
-      />
-    );
+    return <Navigate to="/login" state={{ from: pathname }} replace />;
   }
 
   const stageIndex = stage === "form" ? 0 : stage === "payment" ? 1 : 2;
 
+  const siteOrigin = "https://humancareconnect.co";
+  const canonicalUrl = `${siteOrigin}/appointment-booking/${categorySlug}/${specialtySlug}/${conditionSlug}`;
+  const seoTitle = `Book ${selection.condName} Appointment | ${selection.specName} | Humancare Connect`;
+  const seoDescription = `Book an online ${selection.condName} appointment with a licensed ${selection.specName} provider under ${selection.catLabel} through Humancare Connect's secure virtual healthcare services.`;
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Appointment Booking",
+        item: `${siteOrigin}/appointment-booking`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: selection.catLabel,
+        item: `${siteOrigin}/appointment-booking/${categorySlug}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: selection.specName,
+        item: `${siteOrigin}/appointment-booking/${categorySlug}/${specialtySlug}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: selection.condName,
+        item: canonicalUrl,
+      },
+    ],
+  };
+
   return (
     <div className="ap-page">
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        url={canonicalUrl}
+        schemaData={breadcrumbSchema}
+      />
       {/* Page-level heading */}
       {stage === "form" && (
         <div className="ap-page-title">
