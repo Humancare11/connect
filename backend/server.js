@@ -654,6 +654,7 @@ const chatMessageLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
 const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
+const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 const telemetryLimiter = makeSocketLimiter({ windowMs: 1000, max: 10 });
 const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // max: 6, not 2 like videoSdpLimiter above. That budget works for the
@@ -679,6 +680,7 @@ const SOCKET_LIMITERS = [
   videoSdpLimiter,
   iceCandidateLimiter,
   iceRestartLimiter,
+  cameraStateLimiter,
   telemetryLimiter,
   directChatLimiter,
   directSdpLimiter,
@@ -1479,6 +1481,21 @@ io.on("connection", (socket) => {
     socket
       .to(appointmentRoomName(appointmentId))
       .emit("ice-restart-request");
+  });
+
+  // Native mobile stops producing frames entirely when a video track's
+  // `enabled` is set to false (unlike browsers, which keep sending black
+  // frames per spec), so the peer can't tell "camera off" from "frozen"
+  // by inspecting the media alone — the mobile client explicitly signals
+  // it. Relayed the same way as the other simple call-signaling events.
+  socket.on("camera-state", ({ appointmentId, isCamOff }) => {
+    if (!appointmentId) return;
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!cameraStateLimiter.allow(socket.id)) return;
+
+    socket
+      .to(appointmentRoomName(appointmentId))
+      .emit("camera-state", { isCamOff: Boolean(isCamOff) });
   });
 
   socket.on("disconnect", (reason) => {
