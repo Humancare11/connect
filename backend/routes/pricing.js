@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { CategoryPricing, CATEGORY_IDS } = require("../models/CategoryPricing");
+const { CategoryPricing } = require("../models/CategoryPricing");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { recordActivity } = require("../utils/activityLogger");
 
@@ -34,10 +34,14 @@ router.get("/all", verifyAdminToken, superAdminOnly, async (req, res) => {
   }
 });
 
-// PUT /api/pricing/:categoryId - superadmin only, update a category price
+// PUT /api/pricing/:categoryId - superadmin only, update a category price.
+// categoryId is either one of the 11 legacy buckets or a dynamically
+// generated HealthcareCategory.pricingSlug (see backend/utils/categoryPricing.js)
+// - no longer a fixed list, so the shape is validated here and existence is
+// enforced by findOneAndUpdate below returning null for an unknown id.
 router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) => {
   const { categoryId } = req.params;
-  if (!CATEGORY_IDS.includes(categoryId)) {
+  if (!/^[a-z0-9-]{1,80}$/.test(categoryId)) {
     return res.status(400).json({ msg: "Invalid category ID." });
   }
 

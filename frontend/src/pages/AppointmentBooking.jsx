@@ -263,6 +263,8 @@ export default function Ab() {
     );
   }, [locationState]);
   const [query, setQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchWrapRef = useRef(null);
 
   const fetchAppointmentTree = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setTreeLoading(true);
@@ -381,6 +383,18 @@ export default function Ab() {
     [enrichedTree],
   );
 
+  // Close the global search dropdown on outside click.
+  useEffect(() => {
+    if (!searchFocused) return;
+    const handleClickOutside = (e) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [searchFocused]);
+
   const tabs = [
     { id: "cat", num: "01", label: "Categories" },
     { id: "spec", num: "02", label: "Specialties" },
@@ -415,6 +429,35 @@ export default function Ab() {
       ),
     [q, enrichedTree],
   );
+
+  // Unified search across categories + specialties + conditions/symptoms,
+  // shown as a dropdown below the search box regardless of the active tab.
+  // Uses matchQuery() (word-boundary match) for more precise suggestions
+  // than the plain substring filters used by the per-tab panels above.
+  const trimmedQuery = query.trim();
+  const searchResults = useMemo(() => {
+    if (!trimmedQuery) {
+      return { categories: [], specialties: [], conditions: [] };
+    }
+    return {
+      categories: enrichedTree
+        .filter((c) => matchQuery(c.label, trimmedQuery))
+        .slice(0, 4),
+      specialties: flatSpecialties
+        .filter((s) => matchQuery(s.name, trimmedQuery))
+        .slice(0, 5),
+      conditions: flatConditions
+        .filter((c) => matchQuery(c.name, trimmedQuery))
+        .slice(0, 6),
+    };
+  }, [trimmedQuery, enrichedTree, flatSpecialties, flatConditions]);
+
+  const hasSearchResults =
+    searchResults.categories.length > 0 ||
+    searchResults.specialties.length > 0 ||
+    searchResults.conditions.length > 0;
+
+  const showSearchDropdown = searchFocused && trimmedQuery.length > 0;
 
   const handleTabSwitch = (tabId) => {
     if (tabId === "cat") {
@@ -493,6 +536,23 @@ export default function Ab() {
       navigate(
         `/appointment-booking/${slugify(cat.label)}/${slugify(specialty.name)}`,
       );
+    }
+  };
+
+  // Dispatches a global search-dropdown pick to the existing navigation
+  // handlers used by the category/specialty/condition cards, so a search
+  // result lands on exactly the same page a manual click would.
+  const handleSelectSearchResult = (type, item) => {
+    setSearchFocused(false);
+    if (type === "category") handleOpenCat(item);
+    else if (type === "specialty") handleFlatSpecClick(item);
+    else if (type === "condition") handleFlatCondClick(item);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Escape") {
+      setSearchFocused(false);
+      e.currentTarget.blur();
     }
   };
 
@@ -584,24 +644,153 @@ export default function Ab() {
 
             {/* -- SEARCH TOOLBAR -- */}
             <div className="toolbar">
-              <div className="search">
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={searchPlaceholder}
-                  autoComplete="off"
-                />
+              <div className="search-wrap" ref={searchWrapRef}>
+                <div className="search">
+                  <svg
+                    width="19"
+                    height="19"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onKeyDown={handleSearchKeyDown}
+                    placeholder={searchPlaceholder}
+                    autoComplete="off"
+                    role="combobox"
+                    aria-expanded={showSearchDropdown}
+                    aria-autocomplete="list"
+                    aria-controls="hcc-search-listbox"
+                  />
+                </div>
+
+                {showSearchDropdown && (
+                  <div
+                    className="search-dropdown"
+                    id="hcc-search-listbox"
+                    role="listbox"
+                  >
+                    {hasSearchResults ? (
+                      <>
+                        {searchResults.categories.length > 0 && (
+                          <div className="search-group">
+                            <div className="search-group-label">
+                              Categories
+                            </div>
+                            {searchResults.categories.map((c) => (
+                              <button
+                                key={`cat-${c.id}`}
+                                type="button"
+                                role="option"
+                                aria-selected="false"
+                                className="search-result"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() =>
+                                  handleSelectSearchResult("category", c)
+                                }
+                              >
+                                <span className="search-result-ico">
+                                  <HealthcareIcon name={c.icon} size={18} />
+                                </span>
+                                <span className="search-result-text">
+                                  <span className="search-result-name">
+                                    {c.label}
+                                  </span>
+                                </span>
+                                <span className="search-result-type">
+                                  Category
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {searchResults.specialties.length > 0 && (
+                          <div className="search-group">
+                            <div className="search-group-label">
+                              Specialties
+                            </div>
+                            {searchResults.specialties.map((s) => (
+                              <button
+                                key={`spec-${s.catId}-${s.id || s.name}`}
+                                type="button"
+                                role="option"
+                                aria-selected="false"
+                                className="search-result"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() =>
+                                  handleSelectSearchResult("specialty", s)
+                                }
+                              >
+                                <span className="search-result-ico">
+                                  <HealthcareIcon name={s.icon} size={18} />
+                                </span>
+                                <span className="search-result-text">
+                                  <span className="search-result-name">
+                                    {s.name}
+                                  </span>
+                                  <span className="search-result-sub">
+                                    {s.catLabel}
+                                  </span>
+                                </span>
+                                <span className="search-result-type">
+                                  Specialty
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {searchResults.conditions.length > 0 && (
+                          <div className="search-group">
+                            <div className="search-group-label">
+                              Conditions / Symptoms
+                            </div>
+                            {searchResults.conditions.map((c, i) => (
+                              <button
+                                key={`cond-${c.catId}-${c.to}-${c.name}-${i}`}
+                                type="button"
+                                role="option"
+                                aria-selected="false"
+                                className="search-result"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() =>
+                                  handleSelectSearchResult("condition", c)
+                                }
+                              >
+                                <span className="search-result-ico">
+                                  <HealthcareIcon name={c.icon} size={18} />
+                                </span>
+                                <span className="search-result-text">
+                                  <span className="search-result-name">
+                                    {c.name}
+                                  </span>
+                                  <span className="search-result-sub">
+                                    {c.to} · {c.catLabel}
+                                  </span>
+                                </span>
+                                <span className="search-result-type">
+                                  Condition
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="search-empty">
+                        No matches for "{trimmedQuery}"
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

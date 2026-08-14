@@ -34,10 +34,24 @@ const healthcareCategorySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Stable identifier linking this category to its CategoryPricing
+    // record (see backend/utils/categoryPricing.js). Generated once from
+    // the category's name at creation time and never changed afterward,
+    // so renaming a category never breaks its price lookup. Optional at
+    // the schema level (sparse index) so existing documents created
+    // before this field existed remain valid until backfilled.
+    pricingSlug: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      maxlength: 80,
+      match: /^[a-z0-9-]+$/,
+    },
   },
   { timestamps: true },
 );
 
 healthcareCategorySchema.index({ name: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
+healthcareCategorySchema.index({ pricingSlug: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("HealthcareCategory", healthcareCategorySchema);

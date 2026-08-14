@@ -3,6 +3,11 @@ const HealthcareCategory = require("../models/HealthcareCategory");
 const HealthcareSpecialty = require("../models/HealthcareSpecialty");
 const HealthcareCondition = require("../models/HealthcareCondition");
 const { CategoryPricing } = require("../models/CategoryPricing");
+const {
+  buildCategoryPricingLookup,
+  resolveEffectiveCategoryPrice,
+  generateUniquePricingSlug,
+} = require("../utils/categoryPricing");
 
 function cleanString(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -42,7 +47,13 @@ function categoryPayload(body, partial = false) {
   }
   if (body.icon !== undefined) payload.icon = cleanString(body.icon);
   if (body.description !== undefined) payload.description = cleanString(body.description);
-  if (body.price !== undefined || !partial) {
+  // Price is only accepted at creation, to seed the category's matching
+  // CategoryPricing row (see createCategory). On update it's intentionally
+  // never part of this payload - price is managed exclusively through
+  // CategoryPricing via PUT /api/pricing/:categoryId, so a `price` sent
+  // here on an update is silently ignored rather than written to the
+  // (legacy, no-longer-authoritative) HealthcareCategory.price field.
+  if (!partial) {
     const parsed = parseNonNegativeNumber(body.price, "Price");
     if (parsed.error) return { error: parsed.error };
     payload.price = parsed.value;
@@ -106,11 +117,26 @@ async function ensureSpecialty(specialtyId) {
 
 async function listCategories(_req, res) {
   try {
-    const categories = await HealthcareCategory.find()
-      .select("-displayOrder")
-      .sort({ name: 1 })
-      .lean();
-    res.json(categories);
+    const [categories, pricingLookup] = await Promise.all([
+      HealthcareCategory.find().select("-displayOrder").sort({ name: 1 }).lean(),
+      buildCategoryPricingLookup(),
+    ]);
+
+    // `price`/`currency` are overwritten with the resolved effective value
+    // (CategoryPricing override, falling back to the category's own price)
+    // so the admin table and edit form always show the same number the
+    // booking flow actually uses - never the raw, possibly-stale field.
+    const enrichedCategories = await Promise.all(
+      categories.map(async (category) => {
+        const { price, currency } = await resolveEffectiveCategoryPrice(
+          category,
+          pricingLookup,
+        );
+        return { ...category, price, currency };
+      }),
+    );
+
+    res.json(enrichedCategories);
   } catch (err) {
     res.status(500).json({ msg: "Failed to fetch categories." });
   }
@@ -119,11 +145,45 @@ async function listCategories(_req, res) {
 async function createCategory(req, res) {
   const { payload, error } = categoryPayload(req.body);
   if (error) return res.status(400).json({ msg: error });
+
+  const pricingSlug = await generateUniquePricingSlug(payload.name);
+  if (!pricingSlug) {
+    return res.status(400).json({
+      msg: "Could not derive a valid pricing identifier from this category name - please include at least one letter or number.",
+    });
+  }
+
+  // Created together, in one transaction, so a category can never exist
+  // without a matching CategoryPricing record (or vice versa).
+  const session = await mongoose.startSession();
   try {
-    const category = await HealthcareCategory.create(payload);
+    let category;
+    await session.withTransaction(async () => {
+      const [created] = await HealthcareCategory.create(
+        [{ ...payload, pricingSlug }],
+        { session },
+      );
+      category = created;
+
+      await CategoryPricing.create(
+        [
+          {
+            categoryId: pricingSlug,
+            label: payload.name,
+            price: payload.price,
+            currency: payload.currency,
+            updatedBy: req.user?.id,
+          },
+        ],
+        { session },
+      );
+    });
+
     res.status(201).json({ msg: "Category created.", category });
   } catch (err) {
     res.status(err?.code === 11000 ? 409 : 500).json({ msg: duplicateMessage(err, "Category") || "Failed to create category." });
+  } finally {
+    session.endSession();
   }
 }
 
@@ -134,34 +194,6 @@ async function updateCategory(req, res) {
   try {
     const category = await HealthcareCategory.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true });
     if (!category) return res.status(404).json({ msg: "Category not found." });
-
-    // Synchronize price update to CategoryPricing if price is being updated
-    if (payload.price !== undefined) {
-      const CATEGORY_NAME_TO_ID = {
-        "General & Everyday Care": "general",
-        "Mental Health": "mental",
-        "Skin & Hair": "skin",
-        "Skin & Hair Care": "skin",
-        "Women's Health": "women",
-        "Men's Health": "men",
-        "Children & Family": "family",
-        "Children & Family Care": "family",
-        "Weight & Nutrition": "weight",
-        "Chronic Care & Expert Opinion": "chronic",
-        "Eye, Ear & Bone": "eeb",
-        "Sexual Health": "sexual",
-        "Travel & Global Care": "travel"
-      };
-
-      const pricingId = CATEGORY_NAME_TO_ID[category.name];
-      if (pricingId) {
-        await CategoryPricing.updateOne(
-          { categoryId: pricingId },
-          { $set: { price: payload.price, updatedBy: req.user?.id } }
-        );
-      }
-    }
-
     res.json({ msg: "Category updated.", category });
   } catch (err) {
     res.status(err?.code === 11000 ? 409 : 500).json({ msg: duplicateMessage(err, "Category") || "Failed to update category." });
@@ -177,6 +209,9 @@ async function deleteCategory(req, res) {
     const specialtyIds = specialties.map((specialty) => specialty._id);
     await HealthcareCondition.deleteMany({ specialtyId: { $in: specialtyIds } });
     await HealthcareSpecialty.deleteMany({ categoryId: req.params.id });
+    if (category.pricingSlug) {
+      await CategoryPricing.deleteOne({ categoryId: category.pricingSlug });
+    }
     res.json({ msg: "Category deleted." });
   } catch (err) {
     res.status(500).json({ msg: "Failed to delete category." });
@@ -301,10 +336,11 @@ async function deleteCondition(req, res) {
 
 async function getAppointmentTree(_req, res) {
   try {
-    const [categories, specialties, conditions] = await Promise.all([
+    const [categories, specialties, conditions, pricingLookup] = await Promise.all([
       HealthcareCategory.find({ isActive: true }).sort({ name: 1 }).lean(),
       HealthcareSpecialty.find({ isActive: true }).sort({ name: 1 }).lean(),
       HealthcareCondition.find({ isActive: true }).sort({ name: 1 }).lean(),
+      buildCategoryPricingLookup(),
     ]);
 
     const conditionsBySpecialty = conditions.reduce((map, condition) => {
@@ -328,18 +364,26 @@ async function getAppointmentTree(_req, res) {
       return map;
     }, new Map());
 
-    res.json(
-      categories.map((category) => ({
-        _id: category._id,
-        name: category.name,
-        icon: category.icon,
-        description: category.description,
-        price: Number.isFinite(Number(category.price)) ? Number(category.price) : 0,
-        currency: category.currency || "USD",
-        isActive: category.isActive,
-        specialties: specialtiesByCategory.get(String(category._id)) || [],
-      })),
+    const enrichedCategories = await Promise.all(
+      categories.map(async (category) => {
+        const { price, currency } = await resolveEffectiveCategoryPrice(
+          category,
+          pricingLookup,
+        );
+        return {
+          _id: category._id,
+          name: category.name,
+          icon: category.icon,
+          description: category.description,
+          price,
+          currency,
+          isActive: category.isActive,
+          specialties: specialtiesByCategory.get(String(category._id)) || [],
+        };
+      }),
     );
+
+    res.json(enrichedCategories);
   } catch (err) {
     res.status(500).json({ msg: "Failed to fetch appointment tree." });
   }

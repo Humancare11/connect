@@ -12,7 +12,6 @@ import api from "../api";
 import HealthcareIcon from "../components/HealthcareIcon";
 import SEO from "../components/Seo";
 import { useAuth } from "../context/AuthContext";
-import { usePrices, usePricingMeta } from "../context/PricingContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { slugify } from "../utils/slug";
 import { normalizeAppointmentTree } from "../utils/appointmentTree";
@@ -553,8 +552,6 @@ export default function AppointmentBookingForm() {
   const { category: categorySlug, specialty: specialtySlug, condition: conditionSlug } =
     useParams();
   const { user, loading: authLoading } = useAuth();
-  const categoryPrices = usePrices();
-  const pricingMeta = usePricingMeta();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -602,10 +599,11 @@ export default function AppointmentBookingForm() {
           }
         }
         if (cat && spec && condName) {
-          // Mirror AppointmentBooking.jsx's enrichedTree: category.price is
-          // the tree-sourced fallback price, used whenever the live
-          // /api/pricing lookup (via PricingContext, below) doesn't have an
-          // entry for this category.
+          // cat.price is already the effective price - the backend merges
+          // in the CategoryPricing admin override (see
+          // resolveEffectiveCategoryPrice server-side) before returning it
+          // via /api/appointment-tree, so no separate client-side pricing
+          // lookup is needed here.
           const price = Number(cat.price);
           const priceAvailable = Number.isFinite(price) && price > 0;
           setSelection({
@@ -614,7 +612,7 @@ export default function AppointmentBookingForm() {
             catId: cat.id,
             catLabel: cat.label,
             cost: priceAvailable ? price : undefined,
-            currency: "USD",
+            currency: cat.currency || "USD",
             condName,
             condIco,
           });
@@ -663,48 +661,18 @@ export default function AppointmentBookingForm() {
     setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const today = new Date().toISOString().split("T")[0];
-  const pricingRecord = selection?.catId
-    ? categoryPrices?.[selection.catId]
-    : null;
-  const pricingAmount = Number(pricingRecord?.price);
+  // selection.cost is already the effective price: the backend merges the
+  // CategoryPricing admin override into /api/appointment-tree's category
+  // price (see resolveEffectiveCategoryPrice), so nothing further needs to
+  // be resolved on the client.
   const selectionAmount = Number(selection?.cost);
-  const hasDbPrice =
-    !!selection?.catId &&
-    !!pricingRecord &&
-    Number.isFinite(pricingAmount) &&
-    pricingAmount > 0;
-  const hasSelectionPrice =
+  const hasAppointmentPrice =
     Number.isFinite(selectionAmount) && selectionAmount > 0;
-  const hasAppointmentPrice = hasDbPrice || hasSelectionPrice;
-  const effectivePrice = hasDbPrice ? pricingAmount : selectionAmount;
-  const effectiveCurrency = hasDbPrice
-    ? pricingRecord.currency || "USD"
-    : selection?.currency || "USD";
   const pricingIssue = !selection?.catId
     ? "Please reselect your appointment category so the current database price can be loaded."
-    : pricingMeta.loading && !hasSelectionPrice
-      ? "Loading the latest appointment price. Please wait."
-      : pricingMeta.error && !hasSelectionPrice
-        ? "Pricing could not be loaded. Please try again shortly."
-        : !hasAppointmentPrice
-          ? "No valid database price is configured for this category."
-          : "";
-  useEffect(() => {
-    if (!hasAppointmentPrice) return;
-    setSelection((prev) => {
-      if (
-        !prev ||
-        (prev.cost === effectivePrice && prev.currency === effectiveCurrency)
-      ) {
-        return prev;
-      }
-      return {
-        ...prev,
-        cost: effectivePrice,
-        currency: effectiveCurrency,
-      };
-    });
-  }, [hasAppointmentPrice, effectivePrice, effectiveCurrency]);
+    : !hasAppointmentPrice
+      ? "No valid database price is configured for this category."
+      : "";
 
   const availableSlots = useMemo(
     () => ALL_TIME_SLOTS.filter((t) => !isSlotPassed(form.date, t)),
