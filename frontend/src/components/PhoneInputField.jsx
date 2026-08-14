@@ -365,6 +365,7 @@ export default function PhoneInputField({
   inputName,
   searchInputId,
   searchInputName,
+  required = false,
 }) {
   const init = parseValue(value, defaultCountry);
   const [country, setCountry] = useState(init.country);
@@ -694,6 +695,7 @@ export default function PhoneInputField({
           onChange={handleLocalChange}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
+          required={required}
           className="pif-input"
         />
       </div>
