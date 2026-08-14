@@ -84,7 +84,7 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Navigation </h5>
           <a href="/about-us">About Us</a>
-          <Link to="/appointment-booking" state={{ tab: "spec" }}>Book Appointment</Link>
+          <Link to="/appointment-booking">Book Appointment</Link>
           <a href="/corporates">Corporates</a>
           <a href="/blogs">Blogs</a>
         </div>
