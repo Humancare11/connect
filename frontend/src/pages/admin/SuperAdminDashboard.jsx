@@ -4,7 +4,6 @@ import "./Dashboard.css";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
 import ServicesPrices from "./ServicesPrices";
-import PrimaryCarePrice from "./PrimaryCarePrice";
 import HealthcareManagement from "./HealthcareManagement";
 import PaymentLinks from "./PaymentLinks";
 import PaymentLinkHistory from "./PaymentLinkHistory";
@@ -806,12 +805,6 @@ export default function SuperAdminDashboard() {
             Services Price
           </button>
           <button
-            className={`dash-nav-item${activeTab === "primaryCarePrice" ? " active" : ""}`}
-            onClick={() => setActiveTab("primaryCarePrice")}
-          >
-            Primary Care Price
-          </button>
-          <button
             className="dash-nav-item"
             onClick={() => navigate("/admin-dashboard")}
           >
@@ -838,7 +831,6 @@ export default function SuperAdminDashboard() {
           {activeTab === "admins" && <AdminsTab />}
           {activeTab === "employeeAdmins" && <EmployeeAdminsTab />}
           {activeTab === "servicesPrices" && <ServicesPrices />}
-          {activeTab === "primaryCarePrice" && <PrimaryCarePrice />}
           {activeTab === "healthcareManagement" && <HealthcareManagement />}
           {activeTab === "paymentLinks" && (
             <div className="sa-payment-scope">

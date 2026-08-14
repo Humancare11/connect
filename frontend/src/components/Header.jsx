@@ -105,7 +105,6 @@ export default function Header() {
     {
       label: "Book Appointment",
       link: "/appointment-booking",
-      state: { tab: "spec" },
     },
     { label: "Corporates", link: "/corporates" },
     { label: "Blogs", link: "/blogs" },

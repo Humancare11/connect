@@ -42,6 +42,10 @@ const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
+const {
+  backfillCategoryPricingSlugs,
+  normalizeCategoryPricingCurrency,
+} = require("./utils/categoryPricing");
 // const Anthropic = require("@anthropic-ai/sdk");
 // const Groq = require("groq-sdk");
 
@@ -115,6 +119,8 @@ const startServer = async () => {
   }
 
   await seedCategoryPricing();
+  await backfillCategoryPricingSlugs();
+  await normalizeCategoryPricingCurrency();
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
 

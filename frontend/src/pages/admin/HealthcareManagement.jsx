@@ -17,6 +17,9 @@ const EMPTY_FORMS = {
     description: "",
     price: "0",
     isActive: true,
+    // Not user-editable - carried through from the loaded record so an
+    // edit's price update can target the right CategoryPricing row.
+    pricingSlug: "",
   },
   specialties: {
     categoryId: "",
@@ -147,6 +150,7 @@ export default function HealthcareManagement() {
         description: item.description || "",
         price: String(item.price ?? 0),
         isActive: Boolean(item.isActive),
+        pricingSlug: item.pricingSlug || "",
       });
       return;
     }
@@ -179,9 +183,34 @@ export default function HealthcareManagement() {
     try {
       const payload = { ...form };
       if (active === "conditions") delete payload.categoryId;
-      const res = editing
-        ? await api.put(`${endpoint}/${editing}`, payload)
-        : await api.post(endpoint, payload);
+
+      let res;
+      if (active === "categories" && editing) {
+        // An existing category's price is managed exclusively through
+        // CategoryPricing (PUT /api/pricing/:pricingSlug) - it's never part
+        // of the category's own update payload, so the two are saved as
+        // separate requests here even though they look like one form.
+        const { price, pricingSlug, ...categoryFields } = payload;
+        res = await api.put(`${endpoint}/${editing}`, categoryFields);
+        try {
+          await api.put(`/api/pricing/${pricingSlug}`, { price: Number(price) });
+        } catch (priceErr) {
+          await loadAll();
+          resetForm();
+          setMessage({
+            type: "error",
+            text:
+              priceErr.response?.data?.msg ||
+              "Category details saved, but the price update failed - please try again.",
+          });
+          return;
+        }
+      } else {
+        res = editing
+          ? await api.put(`${endpoint}/${editing}`, payload)
+          : await api.post(endpoint, payload);
+      }
+
       await loadAll();
       resetForm();
       setMessage({ type: "success", text: res.data?.msg || "Saved successfully." });

@@ -303,6 +303,139 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   SEARCH DROPDOWN — unified categories + specialties + conditions
+   ═══════════════════════════════════════════════════════════════ */
+.hcc-sx .search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  max-width: 100%;
+}
+
+.hcc-sx .search-wrap .search {
+  width: 100%;
+  min-width: 0;
+}
+
+.hcc-sx .search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: #ffffff;
+  border: 1px solid rgba(30, 45, 69, 0.12);
+  border-radius: 16px;
+  box-shadow:
+    0 12px 32px rgba(11, 87, 232, 0.14),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 8px;
+  /* Base opacity is 1 so the dropdown is guaranteed visible even if the
+     entrance animation is throttled (e.g. backgrounded tab, reduced-motion,
+     slow devices) - the animation is a progressive-enhancement fade-in only. */
+  opacity: 1;
+  animation: hcc-fadein 0.15s var(--ease);
+  animation-fill-mode: both;
+}
+
+.hcc-sx .search-group + .search-group {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(30, 45, 69, 0.08);
+}
+
+.hcc-sx .search-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 6px 10px 4px;
+}
+
+.hcc-sx .search-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-secondary);
+  transition: background var(--t);
+}
+
+.hcc-sx .search-result:hover,
+.hcc-sx .search-result:focus-visible {
+  background: rgba(11, 87, 232, 0.08);
+  outline: none;
+}
+
+.hcc-sx .search-result-ico {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: rgba(11, 87, 232, 0.08);
+  color: var(--accent);
+}
+
+.hcc-sx .search-result-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.hcc-sx .search-result-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy-deep);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hcc-sx .search-result-sub {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hcc-sx .search-result-type {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(11, 87, 232, 0.08);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.hcc-sx .search-empty {
+  padding: 16px 10px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .hcc-sx .search-result-type {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    CONTENT CARD — [CHANGED] blue glass panel
    ═══════════════════════════════════════════════════════════════ */
 .hcc-sx .content-card {

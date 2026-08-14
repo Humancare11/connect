@@ -6,6 +6,7 @@ const ServicePrice = require("../models/ServicePrice");
 const ConsumedPayment = require("../models/ConsumedPayment");
 const { paypalFetch } = require("./paypal");
 const { toCents } = require("./currency");
+const { resolveEffectiveCategoryPrice } = require("./categoryPricing");
 
 // Thrown whenever a payment fails verification (wrong/missing amount, not
 // completed, already used elsewhere). Controllers catch this and respond
@@ -34,13 +35,16 @@ async function resolveDoctorFeeCents(doctorMongoId) {
 // Category price, matched by Mongo _id (when the caller already resolved a
 // real id) or by name (the identifier used throughout the booking flows,
 // since the frontend matches categories by display name against
-// /api/appointment-tree).
+// /api/appointment-tree). Applies the same CategoryPricing admin override
+// (see categoryPricing.js) that /api/appointment-tree uses, so the amount
+// actually charged always matches the amount the user was shown.
 async function resolveCategoryFeeCents(priceRef) {
   if (!priceRef) return null;
   const query = mongoose.isValidObjectId(priceRef) ? { _id: priceRef } : { name: priceRef };
   const category = await HealthcareCategory.findOne({ ...query, isActive: true }).lean();
   if (!category) return null;
-  return toCents(category.price, category.currency || "USD");
+  const { price, currency } = await resolveEffectiveCategoryPrice(category);
+  return toCents(price, currency);
 }
 
 // Service price, matched by slug or by name — both are unique on ServicePrice.

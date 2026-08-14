@@ -21,11 +21,20 @@ const DEFAULT_PRICES = {
 
 const categoryPricingSchema = new mongoose.Schema(
   {
+    // A stable per-category identifier: either one of the 11 legacy
+    // CATEGORY_IDS (pinned so the public GET /api/pricing response keys
+    // never change for existing consumers) or a dynamically generated
+    // HealthcareCategory.pricingSlug for any category created afterward.
+    // No longer restricted to the fixed CATEGORY_IDS enum - shape is
+    // validated instead, since pricing now scales to any category.
     categoryId: {
       type: String,
       required: true,
       unique: true,
-      enum: CATEGORY_IDS,
+      trim: true,
+      lowercase: true,
+      maxlength: 80,
+      match: /^[a-z0-9-]+$/,
     },
     label: {
       type: String,
@@ -37,8 +46,12 @@ const categoryPricingSchema = new mongoose.Schema(
       min: 0,
     },
     currency: {
+      // Locked to USD: the booking UI's price formatting is USD-only
+      // (see AppointmentBookingForm.jsx's formatPrice), so a differing
+      // currency here would silently mislabel the amount charged.
       type: String,
       default: "USD",
+      enum: ["USD"],
     },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
