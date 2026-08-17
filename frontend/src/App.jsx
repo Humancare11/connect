@@ -880,8 +880,8 @@ const CookiePolicy1 = lazy(
 const AccessibilityStatement1 = lazy(
   () => import("./pages/PrivacyPolicies/AccessibilityStatement1"),
 );
-const TeleHealthInformedConsent1 = lazy(
-  () => import("./pages/PrivacyPolicies/TeleHealthInformedConsent"),
+const TelehealthInformedConsent1 = lazy(
+  () => import("./pages/PrivacyPolicies/TelehealthInformedConsent"),
 );
 const DeleteAccount = lazy(
   () => import("./pages/PrivacyPolicies/DeleteAccount"),
@@ -2764,7 +2764,7 @@ function AppLayout() {
           />
           <Route
             path="/telehealth-informed-consent"
-            element={<TeleHealthInformedConsent1 />}
+            element={<TelehealthInformedConsent1 />}
           />
           <Route
             path="/account-deletion-policy"
