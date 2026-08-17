@@ -137,6 +137,19 @@ async function streamUploadFromS3(filename, res) {
   }
 }
 
+// Fetches an S3 object's bytes as a Buffer, given its full key (not run
+// through uploadKey() — callers that already hold a stored key, like a
+// ManualInvoice's pdfKey, pass it straight through). Used to resend an
+// already-generated invoice email without regenerating the PDF, so the
+// resent attachment is guaranteed byte-identical to whatever's downloadable.
+async function getUploadBuffer(key) {
+  const object = await s3Client.send(new GetObjectCommand({
+    Bucket: getBucketName(),
+    Key: key,
+  }));
+  return streamToBuffer(object.Body);
+}
+
 async function deleteUploadFromS3(filename) {
   await s3Client.send(new DeleteObjectCommand({
     Bucket: getBucketName(),
@@ -175,6 +188,7 @@ module.exports = {
   storeUploadInS3,
   findUploadInS3,
   streamUploadFromS3,
+  getUploadBuffer,
   deleteUploadFromS3,
   deleteUploadsOlderThan,
   uploadKey,

@@ -40,6 +40,7 @@ const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
+const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
 const {
@@ -123,6 +124,7 @@ const startServer = async () => {
   await normalizeCategoryPricingCurrency();
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
+  scheduleInvoiceReconciliation();
 
   await ensureBucketCors(allowedOrigins);
 };
@@ -591,6 +593,7 @@ app.use("/api/tickets", require("./routes/tickets"));
 app.use("/api/medical", require("./routes/medical"));
 app.use("/api/notes", require("./routes/consultationNotes"));
 app.use("/api/payments", require("./routes/payments"));
+app.use("/api/admin/manual-invoices", require("./routes/manualInvoices"));
 app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/services", require("./routes/services"));

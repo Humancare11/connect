@@ -808,6 +808,7 @@ const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
 const PaymentLinkHistory = lazy(
   () => import("./pages/admin/PaymentLinkHistory"),
 );
+const ManualInvoices = lazy(() => import("./pages/admin/ManualInvoices"));
 const QnAPage = lazy(() => import("./pages/admin/QnAPage"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
 const SuperAdminDashboard = lazy(
@@ -833,6 +834,7 @@ const LabAppointments = lazy(() => import("./pages/user/LabAppointments"));
 const ProfileSettings = lazy(() => import("./pages/user/ProfileSettings"));
 const ChangePassword = lazy(() => import("./pages/user/ChangePassword"));
 const MyRecords = lazy(() => import("./pages/user/MyRecords"));
+const PaymentHistory = lazy(() => import("./pages/user/PaymentHistory"));
 const UserRaiseTicket = lazy(() => import("./pages/user/RaiseTicket"));
 
 const Test = lazy(() => import("./pages/Test"));
@@ -1206,6 +1208,14 @@ function AppLayout() {
             }
           />
           <Route
+            path="/user/payment-history"
+            element={
+              <UserLayout>
+                <PaymentHistory />
+              </UserLayout>
+            }
+          />
+          <Route
             path="/user/raise-ticket"
             element={
               <UserLayout>
@@ -1423,6 +1433,29 @@ function AppLayout() {
               >
                 <AdminLayout>
                   <PaymentLinkHistory />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/payment-admin/manual-invoices"
+            element={
+              <PrivateRoute
+                allowedRoles={["paymentadmin"]}
+                loginPath="/payment-admin-login"
+              >
+                <AdminLayout>
+                  <ManualInvoices />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/manual-invoices"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <ManualInvoices />
                 </AdminLayout>
               </PrivateRoute>
             }

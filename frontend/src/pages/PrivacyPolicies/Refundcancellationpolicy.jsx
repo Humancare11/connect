@@ -27,18 +27,18 @@ const RefundCancellationPolicy = () => {
                 </section>
 
                 <section className="rcp-section">
-                    <h2 className="rcp-heading">No-Show Policy</h2>
+                    <h2 className="rcp-heading">No-Show Policy and Rescheduling</h2>
                     <p>
                         If you do not attend your scheduled appointment and have not cancelled in advance, you may be charged the full appointment fee. No-show fees are non-refundable. Repeated no-shows may result in restrictions on future booking activity on the Platform.
                     </p>
                 </section>
 
-                <section className="rcp-section">
+                {/* <section className="rcp-section">
                     <h2 className="rcp-heading">Rescheduling</h2>
                     <p>
                         If you do not attend your scheduled appointment and have not cancelled in advance, you may be charged the full appointment fee. No-show fees are non-refundable. Repeated no-shows may result in restrictions on future booking activity on the Platform.
                     </p>
-                </section>
+                </section> */}
 
                 <section className="rcp-section">
                     <h2 className="rcp-heading">Eligible Refunds</h2>

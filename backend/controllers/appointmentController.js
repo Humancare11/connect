@@ -18,6 +18,7 @@ const {
   verifyPaypalOrder,
   claimPaymentOnce,
 } = require("../utils/paymentVerification");
+const { recordPaymentAndInvoice } = require("../utils/billing");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 
@@ -151,6 +152,7 @@ const createAppointment = async (req, res) => {
   let paymentGateway = "";
   let paymentAmountFinal = 0;
   let paymentStatus = "unpaid";
+  let paymentDescription = "";
 
   const session = await mongoose.startSession();
   try {
@@ -241,6 +243,7 @@ const createAppointment = async (req, res) => {
       paymentGateway = verified.gateway;
       paymentAmountFinal = verified.amountCents;
       paymentStatus = "paid";
+      paymentDescription = `Consultation with Dr. ${doctor.name}`;
 
       // Note: the authoritative conflict check happens inside the transaction
       // below (right before creation) so it can't race against a concurrent
@@ -278,6 +281,7 @@ const createAppointment = async (req, res) => {
       paymentGateway = verified.gateway;
       paymentAmountFinal = verified.amountCents;
       paymentStatus = "paid";
+      paymentDescription = `${category || "Category"} consultation booking`;
     }
 
     const bookedAt = new Date();
@@ -390,6 +394,27 @@ const createAppointment = async (req, res) => {
       msg: resolvedDoctorId ? "Appointment booked successfully." : "Appointment request submitted successfully.",
       appointment,
     });
+
+    // Fire-and-forget: ledgering the payment and generating/emailing its
+    // invoice must never block or fail the booking response — the booking
+    // and the payment have already succeeded by this point. recordPaymentAndInvoice
+    // is an async function, so any internal failure becomes a rejected
+    // promise here (never a synchronous throw), which .catch() absorbs.
+    if (paymentStatus === "paid" && paymentRef) {
+      recordPaymentAndInvoice({
+        userId: patientId,
+        userName: patient?.name || safePatientDetails.firstName,
+        userEmail: patient?.email || safePatientDetails.email,
+        appointmentId: appointment._id,
+        gateway: paymentGateway,
+        gatewayReference: paymentRef,
+        amountCents: paymentAmountFinal,
+        currency: "usd",
+        description: paymentDescription,
+      }).catch((err) => {
+        console.error(`[invoice] Failed to record payment/invoice for appointment ${appointment._id}:`, err.message);
+      });
+    }
   } catch (error) {
     if (error?.code === "SLOT_TAKEN") {
       return res.status(409).json({ msg: "This time slot is already booked. Please choose a different time." });
