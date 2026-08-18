@@ -1,0 +1,180 @@
+/* ═══════════════════════════════════════════════════════════════
+   Humancare — Payment History Page
+   ═══════════════════════════════════════════════════════════════ */
+
+.ph-page {
+  padding: 0 20px;
+}
+
+.ph-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 22px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset,
+    0 8px 24px rgba(99, 102, 241, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 24px 28px;
+  margin-bottom: 20px;
+}
+
+.ph-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin: 0 0 4px;
+}
+
+.ph-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e1b4b;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+.ph-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ph-panel {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset,
+    0 4px 16px rgba(0, 0, 0, 0.05);
+  padding: 8px;
+  overflow: hidden;
+}
+
+.ph-state {
+  padding: 48px 20px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.ph-state--error {
+  color: #b91c1c;
+}
+
+.ph-table-wrap {
+  overflow-x: auto;
+}
+
+.ph-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ph-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+}
+
+.ph-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: #374151;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.ph-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ph-table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.ph-amount {
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.ph-invoice-no {
+  font-family: monospace;
+  font-size: 12px;
+  color: #4b5db8;
+}
+
+.ph-invoice-pending {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.ph-download-btn {
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: none;
+  background-color: #08308e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.18s;
+}
+
+.ph-download-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.ph-download-btn:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.ph-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 18px 12px 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.ph-pagination button {
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  color: #1e1b4b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ph-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .ph-page {
+    padding: 0 8px;
+  }
+}

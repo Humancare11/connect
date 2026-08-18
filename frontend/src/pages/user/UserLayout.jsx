@@ -46,6 +46,14 @@ const IconUser = () => (
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
+const IconReceipt = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 2h16v20l-3-2-3 2-3-2-3 2-3-2-1 2z" />
+    <line x1="8" y1="7" x2="16" y2="7" />
+    <line x1="8" y1="11" x2="16" y2="11" />
+    <line x1="8" y1="15" x2="12" y2="15" />
+  </svg>
+);
 const IconLock = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -88,6 +96,7 @@ const menuItems = [
   { path: "/user/appointments", label: "Appointments", icon: <IconCalendar /> },
   { path: "/user/medical-questions", label: "Medical Questions", icon: <IconQuestion /> },
   { path: "/user/my-records", label: "My Records", icon: <IconRecords /> },
+  { path: "/user/payment-history", label: "Payment History", icon: <IconReceipt /> },
   { path: "/user/raise-ticket", label: "Raise a Ticket", icon: <IconTicket /> },
   { path: "/user/profile-settings", label: "Profile Settings", icon: <IconUser /> },
   { path: "/user/change-password", label: "Change Password", icon: <IconLock /> },
