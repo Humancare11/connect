@@ -653,7 +653,9 @@ export default function AuthPage() {
     if (states.length > 0 && !registerForm.state) {
       return setFormError("Select your state / province");
     }
-    // if (!registerForm.city) return setFormError("Select your city");
+    if (cities.length > 0 && !registerForm.city) {
+      return setFormError("Select your city");
+    }
     setLoading(true);
     try {
       await api.post("/api/auth/send-register-otp", {
@@ -1664,6 +1666,7 @@ export default function AuthPage() {
                     setRegisterForm((p) => ({ ...p, city: e.target.value }))
                   }
                   disabled={!registerForm.state}
+                  required={cities.length > 0}
                 >
                   <option value="">
                     {loadingCities
