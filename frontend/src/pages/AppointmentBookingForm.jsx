@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useLocation, useNavigate, useParams, Navigate, Link } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  Navigate,
+  Link,
+} from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -549,8 +555,11 @@ export function PaymentStage({
 export default function AppointmentBookingForm() {
   const location = useLocation();
   const { state, pathname } = location;
-  const { category: categorySlug, specialty: specialtySlug, condition: conditionSlug } =
-    useParams();
+  const {
+    category: categorySlug,
+    specialty: specialtySlug,
+    condition: conditionSlug,
+  } = useParams();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -634,6 +643,9 @@ export default function AppointmentBookingForm() {
   }, []);
 
   const [stage, setStage] = useState("form");
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [stage]);
   const [form, setForm] = useState(() => {
     const formData = readPendingBooking()?.formData;
     return {
@@ -1381,7 +1393,9 @@ export default function AppointmentBookingForm() {
               type="button"
               className="ap-btn-outline"
               style={{ marginTop: 10 }}
-              onClick={() => navigate("/appointment-booking", { state: { tab: "spec" } })}
+              onClick={() =>
+                navigate("/appointment-booking", { state: { tab: "spec" } })
+              }
             >
               Book Another Appointment
             </button>
