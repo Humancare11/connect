@@ -147,4 +147,169 @@ const sendEmail = async ({ to, subject, text, html, replyTo }) => {
   });
 };
 
-module.exports = { sendOTPEmail, sendEmail };
+const buildInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, description }) => {
+  const greeting = name ? `Hello ${name},` : `Hello,`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Payment Receipt — Humancare Connect</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ff; padding: 10px 10px;">
+<div style="max-width:680px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden; border: 1px solid #0a1f44">
+
+  <div style="background:#dcebff;padding:20px 32px;text-align:center;border-radius: 16px 16px 0 0;">
+    <img src="https://humancareconnect.co/logo-email.png" alt="Humancare Connect" style="display:block;margin:0 auto 12px;object-fit:contain; width:220px; height:72px;"/>
+    <span style="display:inline-block;background:rgba(255,255,255,0.18);color: #0a1f44;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:20px; border: 1px solid #0a1f44">Payment Receipt</span>
+  </div>
+
+  <div style="padding:24px 32px;">
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 12px;">${greeting}</p>
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 20px;">
+      Thank you for your payment to Humancare Connect. Your invoice is attached to this email as a PDF, and is always available for download from your account under <strong>Payment History</strong>.
+    </p>
+
+    <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:20px 24px;margin:0 0 18px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Invoice Number</td><td style="font-size:13px;color:#1e1b4b;font-weight:700;text-align:right;padding:4px 0;">${invoiceNumber}</td></tr>
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Description</td><td style="font-size:13px;color:#1e1b4b;text-align:right;padding:4px 0;">${description || "Consultation booking fee"}</td></tr>
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Amount Paid</td><td style="font-size:16px;color:#0a1f44;font-weight:800;text-align:right;padding:4px 0;">${amountDisplay}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr>
+        <td style="vertical-align:middle;width:140px;">
+          <img src="https://humancareconnect.co/logo-footer.png" alt="Humancare Connect"  style="display:block;object-fit:contain;width:140px;height:44px;"/>
+        </td>
+        <td style="vertical-align:middle;text-align:right;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin-left:auto;">
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="mailto:support@humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">support@humancareconnect.co</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="tel:+13023039993" style="color:#4b5db8;text-decoration:none;font-weight:500;">+1 302-303-9993</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="https://humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">humancareconnect.co</a></td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;text-align:center;">
+      <p style="margin:4px 0 0;font-size:11px;color:#b0b7c9;">© ${new Date().getFullYear()} Humancare Connect. All rights reserved.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+};
+
+const sendInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, description, pdfBuffer }) => {
+  await sendMail({
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
+    to,
+    subject: `Humancare Connect — Payment Receipt (${invoiceNumber})`,
+    html: buildInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, description }),
+    attachments: [
+      {
+        filename: `${invoiceNumber}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  });
+};
+
+// clientName/description here are admin-typed free text about a third party
+// (not validated internal data like the fields above), so — unlike
+// buildInvoiceEmailHTML — this escapes them before HTML interpolation.
+// Same escaping contact.js already uses for its user-submitted fields.
+const escapeHtml = (value) =>
+  String(value).replace(/[&<>"']/g, (char) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]
+  ));
+
+const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, description, status }) => {
+  const greeting = name ? `Hello ${escapeHtml(name)},` : `Hello,`;
+  const isPaid = status === "paid";
+  const badgeText = isPaid ? "Payment Receipt" : "Invoice";
+  const introText = isPaid
+    ? "This receipt confirms the payment below. Your invoice is attached to this email as a PDF."
+    : "Please find your invoice attached to this email as a PDF. Payment details are included on the document.";
+  const amountRowLabel = isPaid ? "Amount Paid" : "Amount Due";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>${badgeText} — Humancare Connect</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ff; padding: 10px 10px;">
+<div style="max-width:680px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden; border: 1px solid #0a1f44">
+
+  <div style="background:#dcebff;padding:20px 32px;text-align:center;border-radius: 16px 16px 0 0;">
+    <img src="https://humancareconnect.co/logo-email.png" alt="Humancare Connect" style="display:block;margin:0 auto 12px;object-fit:contain; width:220px; height:72px;"/>
+    <span style="display:inline-block;background:rgba(255,255,255,0.18);color: #0a1f44;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:20px; border: 1px solid #0a1f44">${badgeText}</span>
+  </div>
+
+  <div style="padding:24px 32px;">
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 12px;">${greeting}</p>
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 20px;">${introText}</p>
+
+    <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:20px 24px;margin:0 0 18px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Invoice Number</td><td style="font-size:13px;color:#1e1b4b;font-weight:700;text-align:right;padding:4px 0;">${escapeHtml(invoiceNumber)}</td></tr>
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Description</td><td style="font-size:13px;color:#1e1b4b;text-align:right;padding:4px 0;">${escapeHtml(description || "Invoice")}</td></tr>
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">${amountRowLabel}</td><td style="font-size:16px;color:#0a1f44;font-weight:800;text-align:right;padding:4px 0;">${escapeHtml(amountDisplay)}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr>
+        <td style="vertical-align:middle;width:140px;">
+          <img src="https://humancareconnect.co/logo-footer.png" alt="Humancare Connect"  style="display:block;object-fit:contain;width:140px;height:44px;"/>
+        </td>
+        <td style="vertical-align:middle;text-align:right;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin-left:auto;">
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="mailto:support@humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">support@humancareconnect.co</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="tel:+13023039993" style="color:#4b5db8;text-decoration:none;font-weight:500;">+1 302-303-9993</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="https://humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">humancareconnect.co</a></td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;text-align:center;">
+      <p style="margin:4px 0 0;font-size:11px;color:#b0b7c9;">© ${new Date().getFullYear()} Humancare Connect. All rights reserved.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+};
+
+// status: "due" (bill — not yet paid) or "paid" (receipt). Recipient is an
+// admin-entered client address, not necessarily a registered platform user.
+const sendManualInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, description, status, pdfBuffer }) => {
+  await sendMail({
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
+    to,
+    subject: status === "paid"
+      ? `Humancare Connect — Payment Receipt (${invoiceNumber})`
+      : `Humancare Connect — Invoice ${invoiceNumber}`,
+    html: buildManualInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, description, status }),
+    attachments: [
+      {
+        filename: `${invoiceNumber}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  });
+};
+
+module.exports = { sendOTPEmail, sendEmail, sendInvoiceEmail, sendManualInvoiceEmail };

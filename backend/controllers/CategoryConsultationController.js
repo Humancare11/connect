@@ -1,6 +1,7 @@
 const CategoryConsultation = require("../models/CategoryConsultation");
 
 const Enrollment = require("../models/Enrollment");
+const User = require("../models/User");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const {
@@ -11,6 +12,7 @@ const {
   verifyPaypalOrder,
   claimPaymentOnce,
 } = require("../utils/paymentVerification");
+const { recordPaymentAndInvoice } = require("../utils/billing");
 
 async function withPresignedMedicalReportUrls(consultation) {
   if (!consultation) return consultation;
@@ -159,6 +161,29 @@ const createCategoryConsultation = async (req, res) => {
       message: "Consultation submitted successfully.",
       data: consultation,
     });
+
+    // Fire-and-forget: see the matching comment in appointmentController.js —
+    // the booking + payment already succeeded, so a ledger/invoice failure
+    // here must never surface as a request failure to the patient.
+    if (paymentStatus === "paid" && paymentRef) {
+      User.findById(req.user.id).select("name email").lean()
+        .then((patient) =>
+          recordPaymentAndInvoice({
+            userId: req.user.id,
+            userName: patient?.name,
+            userEmail: patient?.email,
+            categoryConsultationId: consultation._id,
+            gateway: paymentGateway,
+            gatewayReference: paymentRef,
+            amountCents: paymentAmountFinal,
+            currency: "usd",
+            description: `${req.body.categoryName || req.body.serviceName || "Category"} consultation booking`,
+          })
+        )
+        .catch((err) => {
+          console.error(`[invoice] Failed to record payment/invoice for consultation ${consultation._id}:`, err.message);
+        });
+    }
   } catch (error) {
     console.error("Create Consultation Error:", error);
 

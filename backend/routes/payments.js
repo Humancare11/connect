@@ -6,9 +6,11 @@ const crypto = require("crypto");
 const Enrollment = require("../models/Enrollment");
 const Doctor = require("../models/Doctor");
 const PaymentLink = require("../models/PaymentLink");
+const Payment = require("../models/Payment");
 const { verifyUserToken, verifyAdminToken, adminOnly, paymentAdminOnly } = require("../middleware/verifyToken");
 const { toCents } = require("../utils/currency");
 const { resolveCategoryFeeCents, resolveServiceFeeCents } = require("../utils/paymentVerification");
+const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 
 const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd"];
 const ZERO_DECIMAL_CURRENCIES = new Set(["jpy"]);
@@ -425,6 +427,89 @@ router.post("/payment-links/:token/confirm", async (req, res) => {
   } catch (err) {
     console.error("confirm payment link error:", err.message);
     res.status(500).json({ msg: "Failed to confirm payment." });
+  }
+});
+
+/* GET /api/payments/mine
+   User Dashboard — Payment History. Returns the logged-in patient's own
+   payments only (never another patient's — filtered by req.user.id at the
+   query level, not just in the response). The raw Stripe/PayPal gateway
+   reference is intentionally omitted from this list response; it's only
+   ever used server-side and inside the generated invoice PDF. */
+router.get("/mine", verifyUserToken, async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
+
+    const [payments, total] = await Promise.all([
+      Payment.find({ user: req.user.id })
+        .populate("invoice", "invoiceNumber issuedAt emailedAt")
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Payment.countDocuments({ user: req.user.id }),
+    ]);
+
+    res.json({
+      payments: payments.map((p) => ({
+        _id: p._id,
+        description: p.description,
+        amountCents: p.amountCents,
+        currency: p.currency,
+        gateway: p.gateway,
+        status: p.status,
+        paidAt: p.createdAt,
+        appointmentId: p.appointment || null,
+        categoryConsultationId: p.categoryConsultation || null,
+        invoice: p.invoice
+          ? {
+              invoiceNumber: p.invoice.invoiceNumber,
+              issuedAt: p.invoice.issuedAt,
+              emailed: Boolean(p.invoice.emailedAt),
+            }
+          : null,
+      })),
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit) || 1,
+    });
+  } catch (err) {
+    console.error("payments/mine error:", err.message);
+    res.status(500).json({ msg: "Failed to load payment history." });
+  }
+});
+
+/* GET /api/payments/:paymentId/invoice-url
+   Returns a short-lived (5 min) presigned S3 URL to download this payment's
+   invoice PDF. Ownership is enforced at the DB query level (user must match
+   req.user.id) so one patient can never fetch another patient's invoice by
+   guessing/incrementing an id (IDOR). */
+router.get("/:paymentId/invoice-url", verifyUserToken, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.paymentId)) {
+      return res.status(400).json({ msg: "Invalid payment id." });
+    }
+
+    const payment = await Payment.findOne({ _id: req.params.paymentId, user: req.user.id })
+      .populate("invoice", "invoiceNumber pdfKey")
+      .lean();
+
+    if (!payment) return res.status(404).json({ msg: "Payment not found." });
+    if (!payment.invoice) {
+      return res.status(404).json({ msg: "Invoice is not available yet for this payment. Please try again shortly." });
+    }
+
+    const signed = await createS3PresignedGetUrl(payment.invoice.pdfKey, { expiresIn: 300 });
+    res.json({
+      url: signed.url,
+      invoiceNumber: payment.invoice.invoiceNumber,
+      expiresAt: signed.expiresAt,
+    });
+  } catch (err) {
+    console.error("invoice-url error:", err.message);
+    res.status(500).json({ msg: "Failed to generate invoice download link." });
   }
 });
 
