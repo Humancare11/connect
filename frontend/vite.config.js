@@ -24,6 +24,7 @@ export default ({ mode }) => {
       emptyOutDir: true,
       target: 'es2020',
       cssCodeSplit: true,
+      cssMinify: false,
       sourcemap: env.VITE_BUILD_SOURCEMAP === 'true',
       modulePreload: {
         polyfill: false,
