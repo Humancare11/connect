@@ -185,29 +185,70 @@ export default function WhyChooseUs() {
     return () => window.removeEventListener("keydown", onKey);
   }, [activeId, closeCard]);
 
+  // Only arm the "dismiss on scroll" listeners once the popup has FULLY
+  // opened (phase === "open"). Arming them earlier — during "opening" —
+  // caused them to catch the scroll event fired by the scrollbar
+  // disappearing (see the body-lock effect below), which instantly
+  // re-triggered closeCard() while the popup was still animating in.
+  // That created an open -> close -> layout-shift loop, which is what
+  // produced the "shaking" screen and the popup never staying open.
   useEffect(() => {
-    if (!activeId || phase === "idle") return;
+    if (phase !== "open") return;
 
-    const handleInstantDismiss = () => {
+    const handleInstantDismiss = (e) => {
+      // Ignore events that originate from inside the popup itself
+      // (e.g. the user scrolling the popup's own body text).
+      if (e.target && e.target.closest && e.target.closest(".wcu-popup"))
+        return;
       closeCard();
     };
 
-    window.addEventListener("scroll", handleInstantDismiss, { capture: true, passive: true });
-    window.addEventListener("wheel", handleInstantDismiss, { capture: true, passive: true });
-    window.addEventListener("touchmove", handleInstantDismiss, { capture: true, passive: true });
+    window.addEventListener("scroll", handleInstantDismiss, {
+      capture: true,
+      passive: true,
+    });
+    window.addEventListener("wheel", handleInstantDismiss, {
+      capture: true,
+      passive: true,
+    });
+    window.addEventListener("touchmove", handleInstantDismiss, {
+      capture: true,
+      passive: true,
+    });
 
     return () => {
-      window.removeEventListener("scroll", handleInstantDismiss, { capture: true });
-      window.removeEventListener("wheel", handleInstantDismiss, { capture: true });
-      window.removeEventListener("touchmove", handleInstantDismiss, { capture: true });
+      window.removeEventListener("scroll", handleInstantDismiss, {
+        capture: true,
+      });
+      window.removeEventListener("wheel", handleInstantDismiss, {
+        capture: true,
+      });
+      window.removeEventListener("touchmove", handleInstantDismiss, {
+        capture: true,
+      });
     };
-  }, [activeId, phase, closeCard]);
+  }, [phase, closeCard]);
 
+  // Lock body scroll while the popup is open/opening, AND compensate for
+  // the scrollbar width so hiding it doesn't shift the page layout
+  // horizontally (that shift was firing a phantom "scroll" event, which
+  // combined with the bug above caused the shake).
   useEffect(() => {
-    document.body.style.overflow =
-      phase === "open" || phase === "opening" ? "hidden" : "";
+    const locked = phase === "open" || phase === "opening";
+    if (locked) {
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    }
     return () => {
       document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
     };
   }, [phase]);
 

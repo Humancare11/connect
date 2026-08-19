@@ -219,7 +219,7 @@ export default function BlogPage() {
               </p>
 
               {/* Search bar */}
-              <div className="hero-search" style={{ marginTop: '20px' }}>
+              <div className="hero-search" style={{ marginTop: "20px" }}>
                 <svg
                   className="search-icon"
                   width="18"
@@ -335,7 +335,6 @@ export default function BlogPage() {
                         )}
                       </div>
                       <div className="card-body">
-                        
                         <h3 className="card-title">{blog.title}</h3>
                         <p className="card-desc">{blog.description}</p>
                       </div>
