@@ -93,7 +93,9 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Services </h5>
           <a href="/online-prescription-refills">Online Prescription Refill</a>
-          <Link to="/appointment-booking" state={{ tab: "spec" }}>Online Doctor Consultation</Link>
+          <Link to="/appointment-booking" state={{ tab: "spec" }}>
+            Online Doctor Consultation
+          </Link>
           <a href="/doctor-note-or-sick-notes">Sick Notes</a>
           <a href="/lab-requisitions"> Lab Requisition </a>
           <a href="/fit-to-fly-certificate">Fit to Fly Certifications</a>
@@ -110,7 +112,7 @@ export default function Footer() {
           <a href="/provider-terms-of-service">Provider Terms of Service</a>
           <a href="/privacy-policy">Privacy Policy</a>
           <a href="/terms-of-service">Terms of Service</a>
-          <a href="/hippa-notice-of-privacy-practices">
+          <a href="/hipaa-notice-of-privacy-practices">
             Notice of Privacy Practices
           </a>
           <a href="/california-privacy-rights-notice">

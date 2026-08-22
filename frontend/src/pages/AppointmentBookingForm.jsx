@@ -1455,7 +1455,7 @@ export default function AppointmentBookingForm() {
                         { text: ", and " },
                         {
                           text: "HIPAA Notice of Privacy Practices",
-                          href: "/hippa-notice-of-privacy-practices",
+                          href: "/hipaa-notice-of-privacy-practices",
                         },
                       ],
                     },
