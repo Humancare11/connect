@@ -2750,7 +2750,7 @@ function AppLayout() {
           <Route path="/privacy-policy" element={<PrivacyPolicy1 />} />
           <Route path="/terms-of-service" element={<TermsOfService1 />} />
           <Route
-            path="/hippa-notice-of-privacy-practices"
+            path="/hipaa-notice-of-privacy-practices"
             element={<HippaNoticeOfPrivacyPractices1 />}
           />
           <Route
@@ -2766,10 +2766,7 @@ function AppLayout() {
             path="/telehealth-informed-consent"
             element={<TelehealthInformedConsent1 />}
           />
-          <Route
-            path="/account-deletion-policy"
-            element={<DeleteAccount />}
-          />
+          <Route path="/account-deletion-policy" element={<DeleteAccount />} />
           {/* New Privcay Policy Pages End */}
           <Route
             path="/appointment-booking/category-confirm"

@@ -366,6 +366,7 @@ export default function PhoneInputField({
   searchInputId,
   searchInputName,
   required = false,
+  maxLength,
 }) {
   const init = parseValue(value, defaultCountry);
   const [country, setCountry] = useState(init.country);
@@ -433,7 +434,7 @@ export default function PhoneInputField({
 
   const handleLocalChange = (e) => {
     userSelectedRef.current = true;
-    const l = e.target.value.replace(/\D/g, "");
+    const l = e.target.value.replace(/\D/g, "").slice(0, maxLength);
     setLocal(l);
     emit(country, l);
   };
@@ -696,6 +697,7 @@ export default function PhoneInputField({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           required={required}
+          maxLength={maxLength}
           className="pif-input"
         />
       </div>

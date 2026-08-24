@@ -364,15 +364,13 @@ export default function PCP() {
             }}
           >
             <div className="corp-hero-inner">
-              <h1>
-                Primary Care That Fits Your Life
-              </h1>
+              <h1>Primary Care That Fits Your Life</h1>
               <p>Connect with a Licensed Provider in Minutes.</p>
               <p>
-                Skip the wait and get the care you need with secure
-                telemedicine services. Humancare Connect is your primary
-                care destination for preventive care, prescription refills,
-                daily health concerns and ongoing support wherever you are.
+                Skip the wait and get the care you need with secure telemedicine
+                services. Humancare Connect is your primary care destination for
+                preventive care, prescription refills, daily health concerns and
+                ongoing support wherever you are.
               </p>
             </div>
           </div>
@@ -712,13 +710,6 @@ export default function PCP() {
                 })),
               },
             ]}
-            cta={{
-              title: "Still have questions?",
-              description:
-                "Can't find what you're looking for? Our team is happy to help.",
-              button: "Book a Call",
-              href: "/contact-us",
-            }}
           />
         </section>
       </main>

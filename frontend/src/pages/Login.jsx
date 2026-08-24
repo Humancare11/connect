@@ -1615,6 +1615,7 @@ export default function AuthPage() {
                   defaultCountry={selectedPhoneCountry?.code || "auto"}
                   placeholder="Mobile number"
                   required
+                  maxLength={15}
                 />
               </div>
             </div>
@@ -1782,7 +1783,7 @@ export default function AuthPage() {
                   required
                 />
                 <a href="/terms-of-service" target="_blank" rel="noreferrer">
-                  Terms & Conditions
+                  Terms of Service
                 </a>
               </label>
               <label
@@ -1824,7 +1825,7 @@ export default function AuthPage() {
                   required
                 />
                 <a
-                  href="/hippa-notice-of-privacy-practices"
+                  href="/hipaa-notice-of-privacy-practices"
                   target="_blank"
                   rel="noreferrer"
                 >
