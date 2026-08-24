@@ -26,9 +26,9 @@ const pageData = {
   bgImage: ConditionBannerImage,
 };
 
-export default function SecondMedicalOpinion() {
+export default function SecondMedicalOpinion({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

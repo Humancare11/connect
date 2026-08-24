@@ -32,9 +32,9 @@ const pageData = {
 // mismatch already existed in the pre-migration file and has been carried
 // over unchanged — see migration report.
 // ─────────────────────────────────────────────────────────────────
-export default function PostCovidConcerns() {
+export default function PostCovidConcerns({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

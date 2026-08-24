@@ -33,9 +33,9 @@ const pageData = {
 // text-encoding corruption, not introduced by this migration) — see
 // migration report.
 // ─────────────────────────────────────────────────────────────────
-export default function DoctorsNote() {
+export default function DoctorsNote({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

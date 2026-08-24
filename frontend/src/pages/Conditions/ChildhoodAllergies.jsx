@@ -21,9 +21,9 @@ const pageData = {
   bgImage: ConditionBannerImage,
 };
 
-export default function ChildhoodAllergies() {
+export default function ChildhoodAllergies({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

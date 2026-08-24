@@ -35,9 +35,9 @@ const pageData = {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
-export default function Indigestion() {
+export default function Indigestion({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

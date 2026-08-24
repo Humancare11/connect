@@ -21,9 +21,9 @@ const pageData = {
   bgImage: ConditionBannerImage,
 };
 
-export default function SeizuresEpilepsyFollowUp() {
+export default function SeizuresEpilepsyFollowUp({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

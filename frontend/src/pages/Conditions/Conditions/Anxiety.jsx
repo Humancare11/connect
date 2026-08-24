@@ -57,9 +57,9 @@ const pageData = {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
-export default function Anxiety() {
+export default function Anxiety({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 

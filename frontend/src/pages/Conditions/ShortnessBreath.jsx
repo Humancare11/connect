@@ -21,9 +21,9 @@ const pageData = {
   bgImage: ConditionBannerImage,
 };
 
-export default function ShortnessOfBreath() {
+export default function ShortnessOfBreath({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

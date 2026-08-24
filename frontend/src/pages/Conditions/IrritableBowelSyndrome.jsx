@@ -27,9 +27,9 @@ const pageData = {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
-export default function IrritableBowelSyndrome() {
+export default function IrritableBowelSyndrome({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

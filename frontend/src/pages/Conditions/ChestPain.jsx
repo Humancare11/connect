@@ -32,9 +32,9 @@ const pageData = {
 // existed in the pre-migration file and has been carried over
 // unchanged — see migration report.
 // ─────────────────────────────────────────────────────────────────
-export default function ChestPain() {
+export default function ChestPain({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

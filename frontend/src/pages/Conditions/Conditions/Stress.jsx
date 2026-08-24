@@ -57,8 +57,8 @@ const pageData = {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
-export default function Stress() {
-  const price = useCategoryPrice();
+export default function Stress({ categoryId } = {}) {
+  const price = useCategoryPrice(categoryId);
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 

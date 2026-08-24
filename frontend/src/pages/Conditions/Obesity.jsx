@@ -32,9 +32,9 @@ const pageData = {
 // copy-paste artifact from another condition page) and has been carried
 // over unchanged. See migration report.
 // ─────────────────────────────────────────────────────────────────
-export default function Obesity() {
+export default function Obesity({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

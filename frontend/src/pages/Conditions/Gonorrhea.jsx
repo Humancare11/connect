@@ -27,9 +27,9 @@ const pageData = {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
-export default function Gonorrhea() {
+export default function Gonorrhea({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

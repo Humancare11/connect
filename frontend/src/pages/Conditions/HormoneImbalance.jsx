@@ -32,9 +32,9 @@ const pageData = {
 // "hormone-imbalance"). Both already existed in the pre-migration file
 // and have been carried over unchanged — see migration report.
 // ─────────────────────────────────────────────────────────────────
-export default function HormoneImbalance() {
+export default function HormoneImbalance({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

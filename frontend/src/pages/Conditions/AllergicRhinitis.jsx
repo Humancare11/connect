@@ -33,9 +33,9 @@ const pageData = {
 // (content was evidently copy-pasted from the Asthma page and never
 // updated) and has been carried over unchanged — see migration report.
 // ─────────────────────────────────────────────────────────────────
-export default function AllergicRhinitis() {
+export default function AllergicRhinitis({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

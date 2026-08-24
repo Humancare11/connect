@@ -33,9 +33,9 @@ const pageData = {
 // existed in the pre-migration file and has been carried over unchanged
 // — see migration report.
 // ─────────────────────────────────────────────────────────────────
-export default function HighCholesterol() {
+export default function HighCholesterol({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
 
   return (
     <>

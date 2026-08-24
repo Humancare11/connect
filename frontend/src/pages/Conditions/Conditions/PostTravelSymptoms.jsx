@@ -58,9 +58,9 @@ const pageData = {
 // ─────────────────────────────────────────────────────────────────
 // ROOT EXPORT — everything inlined into one component, no sub-components
 // ─────────────────────────────────────────────────────────────────
-export default function PostTravelSymptoms() {
+export default function PostTravelSymptoms({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const price = useCategoryPrice(categoryId);
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
