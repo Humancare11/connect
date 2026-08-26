@@ -502,7 +502,14 @@ router.get("/enrollment/:doctorId/documents/:field/access-url", verifyDoctorToke
 // ── POST /api/doctor/enrollment ───────────────────────────────────────────────
 router.post("/enrollment", verifyDoctorToken, async (req, res) => {
     try {
-        const { doctorId, ...enrollmentData } = req.body;
+        const { doctorId, ...enrollmentDataRaw } = req.body;
+        // Only wizard-data fields may come from the client — admin-controlled
+        // fields like approvalStatus/verified/pendingRequestType must only ever
+        // be set by this route's own logic below, never by the request body.
+        const enrollmentData = pickAllowedStepFields(enrollmentDataRaw, ENROLLMENT_FIELD_ALLOWLIST);
+        // hasProfilePhoto is derived, not client-trusted — same pattern used in
+        // adminController.js — so it can't be spoofed independently of profilePhoto.
+        enrollmentData.hasProfilePhoto = !!enrollmentData.profilePhoto;
         if (!doctorId) return res.status(400).json({ message: "Doctor ID required" });
         if (req.user.id !== doctorId) {
             return res.status(403).json({ message: "Access denied." });
@@ -538,8 +545,11 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
             // approval — their live profile must stay "approved" while pending.
             if (!wasApproved) {
                 enrollment.set(enrollmentData);
-                enrollment.markModified("availability");
-                enrollment.markModified("languagesKnown");
+                for (const field of STEP_ARRAY_OR_MIXED_FIELDS) {
+                    if (Object.prototype.hasOwnProperty.call(enrollmentData, field)) {
+                        enrollment.markModified(field);
+                    }
+                }
             }
             enrollment.formCompleted = true;
             enrollment.completedSteps = 5;
@@ -675,6 +685,14 @@ const STEP_FIELD_ALLOWLIST = {
 const STEP_ARRAY_OR_MIXED_FIELDS = new Set([
     "languagesKnown", "licensedStates", "internationalLicenses", "availability",
 ]);
+
+// Union of every step's allowed fields — used by POST /enrollment (full
+// wizard submit), which receives all steps' data in one payload instead of
+// one step at a time. Deriving from STEP_FIELD_ALLOWLIST instead of
+// duplicating the field list prevents the two from drifting apart.
+const ENROLLMENT_FIELD_ALLOWLIST = Array.from(
+    new Set(Object.values(STEP_FIELD_ALLOWLIST).flat())
+);
 
 function pickAllowedStepFields(data, allowedKeys) {
     const out = {};

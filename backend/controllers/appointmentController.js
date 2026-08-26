@@ -703,6 +703,7 @@ const completeAppointment = async (req, res) => {
       io.to(`appointment_${appointment._id}`).emit("appointment-updated", payload);
       io.to("admin_room").emit("appointment-updated", payload);
     }
+    req.app.get("evictAllFromAppointmentRoom")?.(appointment._id, { reason: "completed" });
 
     sendPushToUser(appointment.patientId, {
       title: "Appointment completed",
@@ -766,6 +767,7 @@ const cancelAppointment = async (req, res) => {
         status: isCategory ? "cancelled" : appointment.status,
       });
     }
+    req.app.get("evictAllFromAppointmentRoom")?.(appointment._id, { reason: "cancelled" });
 
     sendPushToUser(appointment.patientId, {
       title: "Appointment cancelled",
