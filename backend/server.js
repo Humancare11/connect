@@ -632,6 +632,13 @@ const onlineUsers = new Map();
 // Track which appointment room each socket is in
 const socketRooms = new Map(); // socketId -> appointmentId
 
+// Appointments just cancelled/completed, so every per-event signaling/chat
+// check (isSocketInAppointmentRoom) fails closed immediately, independent of
+// whether evictAllFromAppointmentRoom's own room-membership loop reaches
+// every socket. Self-expiring — a terminated appointment is never legitimately
+// re-signaled, so entries don't need to live past the eviction race window.
+const terminatedAppointmentRooms = new Set(); // appointmentId (string)
+
 // Track authenticated identity per socket
 const socketUsers = new Map(); // socketId -> { userId, role }
 
@@ -746,6 +753,7 @@ const io = new Server(server, {
 
 app.set("io", io);
 app.set("evictDoctorFromAppointmentRoom", evictDoctorFromAppointmentRoom);
+app.set("evictAllFromAppointmentRoom", evictAllFromAppointmentRoom);
 
 io.engine.on("connection_error", (err) => {
   console.warn("[socket] connection_error", {
@@ -926,6 +934,7 @@ async function resolveSocketIdentity(socket, requested = {}) {
 
 function isSocketInAppointmentRoom(socket, appointmentId) {
   if (!appointmentId) return false;
+  if (terminatedAppointmentRooms.has(String(appointmentId))) return false;
   const room = appointmentRoomName(appointmentId);
   return String(socketRooms.get(socket.id) || "") === String(appointmentId) && socket.rooms.has(room);
 }
@@ -955,6 +964,42 @@ function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
   }
 }
 
+// Statuses that end an appointment for good. Appointment uses lowercase
+// ("complete"/"cancelled"); CategoryConsultation uses capitalized
+// ("Completed"/"Cancelled") — compared case-insensitively below.
+const TERMINAL_APPOINTMENT_STATUSES = new Set(["complete", "completed", "cancelled"]);
+
+// Forcibly removes EVERY participant (patient + doctor) from an appointment's
+// room — used when the appointment's status itself changes to a terminal
+// state (cancelled/completed) and continued room access is no longer valid
+// for anyone, unlike reassignment above where only the outgoing doctor
+// should be evicted.
+function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
+  // Marked first, before the eviction loop below — so isSocketInAppointmentRoom
+  // fails closed for this appointment even if a signaling event is already
+  // in flight, or a socket the loop below can't find (e.g. adapter lag).
+  const idStr = String(appointmentId);
+  terminatedAppointmentRooms.add(idStr);
+  setTimeout(() => terminatedAppointmentRooms.delete(idStr), 5 * 60 * 1000).unref();
+
+  const room = appointmentRoomName(appointmentId);
+  const socketIds = io.sockets.adapter.rooms.get(room);
+  if (!socketIds) return;
+
+  for (const socketId of Array.from(socketIds)) {
+    const peerSocket = io.sockets.sockets.get(socketId);
+    if (!peerSocket) continue;
+    peerSocket.emit("appointment-access-revoked", {
+      msg: reason === "completed"
+        ? "This appointment has been marked complete."
+        : "This appointment has been cancelled.",
+      reason: reason || "unavailable",
+    });
+    peerSocket.leave(room);
+    socketRooms.delete(peerSocket.id);
+  }
+}
+
 async function canSocketAccessAppointment(socket, appointmentId, requestedIdentity = {}) {
   if (!appointmentId) return { allowed: false, reason: "missing_appointment" };
 
@@ -968,7 +1013,7 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
 
   try {
     appointment = await Appointment.findById(appointmentId)
-      .select("patientId doctorId")
+      .select("patientId doctorId status")
       .lean();
 
     if (appointment) {
@@ -977,7 +1022,7 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
         (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
     } else {
       const cc = await CategoryConsultation.findById(appointmentId)
-        .select("patientId assignedDoctorId")
+        .select("patientId assignedDoctorId status")
         .lean();
 
       if (cc) {
@@ -996,6 +1041,14 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
   }
 
   if (!appointment) return { allowed: false, reason: "appointment_not_found" };
+
+  // Once cancelled/completed, nobody may (re)join — this is what stops a
+  // participant evicted by evictAllFromAppointmentRoom from simply rejoining
+  // right after, since identity/ownership alone never changes on cancel or
+  // complete (unlike reassignment, where the doctorId itself changes).
+  if (TERMINAL_APPOINTMENT_STATUSES.has(String(appointment.status || "").toLowerCase())) {
+    return { allowed: false, reason: "appointment_ended", identity, appointment };
+  }
 
   return {
     allowed,

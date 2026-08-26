@@ -5,6 +5,8 @@ const contactStore = new Map();
 const loginStore = new Map();
 const otpRequestStore = new Map();
 const otpVerifyStore = new Map();
+const presignStore = new Map();
+const uploadStore = new Map();
 
 function getEntry(store, key) {
   return store.get(key) || { count: 0, firstAttemptAt: Date.now() };
@@ -17,13 +19,14 @@ function pruneExpired(store, windowMs) {
   }
 }
 
-function buildEmailLimiter({ windowMs, max, message, store }) {
+// Shared limiter engine: pruning, window/count bookkeeping, and the 429 +
+// Retry-After + recordSecurityEvent response. keyFn derives the bucket key
+// from the request (e.g. email or authenticated user id), falling back to IP.
+function buildKeyedLimiter({ windowMs, max, message, store, keyFn, describeKey }) {
   return (req, res, next) => {
     pruneExpired(store, windowMs);
 
-    const rawEmail = req.body?.email;
-    const email = (typeof rawEmail === "string" ? rawEmail : "").toLowerCase().trim();
-    const key   = email || req.ip;
+    const key = keyFn(req) || req.ip;
 
     const entry       = getEntry(store, key);
     const windowReset = Date.now() - entry.firstAttemptAt >= windowMs;
@@ -42,7 +45,7 @@ function buildEmailLimiter({ windowMs, max, message, store }) {
         severity: "high",
         title: "Rate limit exceeded",
         resource: req.originalUrl,
-        metadata: { email: email || "(no email)", limitMessage: message },
+        metadata: { key: describeKey ? describeKey(req, key) : key, limitMessage: message },
       });
 
       res.set("Retry-After", String(retryAfterSec));
@@ -57,6 +60,28 @@ function buildEmailLimiter({ windowMs, max, message, store }) {
     store.set(key, entry);
     next();
   };
+}
+
+function buildEmailLimiter({ windowMs, max, message, store }) {
+  return buildKeyedLimiter({
+    windowMs, max, message, store,
+    keyFn: (req) => {
+      const rawEmail = req.body?.email;
+      return (typeof rawEmail === "string" ? rawEmail : "").toLowerCase().trim();
+    },
+    describeKey: (req, key) => key || "(no email)",
+  });
+}
+
+// Keyed by the authenticated user's id (set by verifyToken before this
+// middleware runs), falling back to IP — unlike login/OTP flows, upload
+// requests carry no email to key on.
+function buildUserLimiter({ windowMs, max, message, store }) {
+  return buildKeyedLimiter({
+    windowMs, max, message, store,
+    keyFn: (req) => (req.user?.id ? String(req.user.id) : ""),
+    describeKey: (req, key) => `user:${key}`,
+  });
 }
 
 const registrationLimiter = buildEmailLimiter({
@@ -109,10 +134,32 @@ const otpVerifyLimiter = buildEmailLimiter({
   message:  "Too many OTP verification attempts. Please wait {min} minutes and try again.",
 });
 
+// Presign requests are cheap metadata-only calls (S3 does the actual byte
+// transfer) — a real enrollment/document session is a handful of files, so
+// 30/15min covers legitimate use plus retries while still bounding abuse.
+const presignLimiter = buildUserLimiter({
+  store:    presignStore,
+  windowMs: 15 * 60 * 1000,
+  max:      30,
+  message:  "Too many upload requests. Please wait {min} minutes and try again.",
+});
+
+// Direct uploads buffer the file and push it to S3 through this server, so
+// they're more expensive per request than presign — kept on a tighter cap
+// and a separate store so exhausting one doesn't block the other.
+const uploadLimiter = buildUserLimiter({
+  store:    uploadStore,
+  windowMs: 15 * 60 * 1000,
+  max:      20,
+  message:  "Too many uploads. Please wait {min} minutes and try again.",
+});
+
 module.exports = {
   registrationLimiter,
   contactLimiter,
   loginLimiter,
   otpRequestLimiter,
   otpVerifyLimiter,
+  presignLimiter,
+  uploadLimiter,
 };

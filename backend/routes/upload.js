@@ -5,6 +5,7 @@ const path     = require("path");
 const mongoose = require("mongoose");
 const { randomBytes } = require("crypto");
 const { verifyToken } = require("../middleware/verifyToken");
+const { presignLimiter, uploadLimiter } = require("../middleware/rateLimiters");
 const { storeUploadInS3, uploadKey } = require("../utils/uploadStorage");
 const { createS3PresignedPutUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 const User = require("../models/User");
@@ -201,7 +202,7 @@ function validateUploadMetadata({ originalName, contentType, size }) {
 }
 
 // POST /api/upload/presign — returns a private S3 PUT URL for direct browser upload
-router.post("/presign", verifyToken, async (req, res) => {
+router.post("/presign", verifyToken, presignLimiter, async (req, res) => {
   try {
     const originalName = String(req.body.originalName || req.body.name || "").trim();
     const contentType = String(req.body.contentType || req.body.type || "").trim();
@@ -249,7 +250,7 @@ router.post("/presign", verifyToken, async (req, res) => {
 });
 
 // POST /api/upload  — protected, any logged-in user or doctor
-router.post("/", verifyToken, upload.single("file"), async (req, res) => {
+router.post("/", verifyToken, uploadLimiter, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ msg: "No file uploaded." });
   try {
     const verifiedMime = await validateUploadedFile(req.file);
