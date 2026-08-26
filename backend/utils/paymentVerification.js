@@ -32,16 +32,30 @@ async function resolveDoctorFeeCents(doctorMongoId) {
   return toCents(feeAmount, feeCurrency);
 }
 
-// Category price, matched by Mongo _id (when the caller already resolved a
-// real id) or by name (the identifier used throughout the booking flows,
-// since the frontend matches categories by display name against
-// /api/appointment-tree). Applies the same CategoryPricing admin override
-// (see categoryPricing.js) that /api/appointment-tree uses, so the amount
-// actually charged always matches the amount the user was shown.
-async function resolveCategoryFeeCents(priceRef) {
+// Category price, matched by Mongo _id, by the stable `pricingSlug` (the
+// short id — e.g. "general" — that survives a category being renamed), or
+// by display name as a last resort for older callers that only have that.
+// Applies the same CategoryPricing admin override (see categoryPricing.js)
+// that /api/appointment-tree uses, so the amount actually charged always
+// matches the amount the user was shown.
+//
+// `requireActive` gates whether a deactivated category can still resolve:
+// - true (default) — used when *starting* a new charge (creating a Stripe/
+//   PayPal payment for a fresh selection). A category that's currently
+//   disabled must not be quotable.
+// - false — used when *finalizing* a booking after the payment already
+//   succeeded. By that point the charge is already real; the category
+//   being deactivated (or renamed) in the meantime must not turn an
+//   already-paid booking into an unrecoverable, orphaned charge.
+async function resolveCategoryFeeCents(priceRef, { requireActive = true } = {}) {
   if (!priceRef) return null;
-  const query = mongoose.isValidObjectId(priceRef) ? { _id: priceRef } : { name: priceRef };
-  const category = await HealthcareCategory.findOne({ ...query, isActive: true }).lean();
+  const ref = String(priceRef).trim();
+  if (!ref) return null;
+  const query = mongoose.isValidObjectId(ref)
+    ? { _id: ref }
+    : { $or: [{ pricingSlug: ref.toLowerCase() }, { name: ref }] };
+  if (requireActive) query.isActive = true;
+  const category = await HealthcareCategory.findOne(query).lean();
   if (!category) return null;
   const { price, currency } = await resolveEffectiveCategoryPrice(category);
   return toCents(price, currency);

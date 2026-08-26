@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Country } from "country-state-city";
 import api from "../../api";
 import "./AdminDashboard.css";
+
+function getCountryName(isoCode) {
+  if (!isoCode) return "";
+  const country = Country.getCountryByCode(isoCode);
+  return country?.name || isoCode;
+}
 
 function slugifyDoctorName(name) {
   return (
@@ -173,6 +180,7 @@ export default function OurDoctors() {
                   <th>Sr No</th>
                   <th>Doctor ID</th>
                   <th>Doctor</th>
+                  <th>Country</th>
                   <th>Specialization</th>
                   <th>Fees</th>
                   <th>Mobile Number</th>
@@ -239,6 +247,11 @@ export default function OurDoctors() {
                             </div>
                           </div>
                         </div>
+                      </td>
+                      <td>
+                        {getCountryName(d.country) || (
+                          <span style={{ color: "#94a3b8" }}>—</span>
+                        )}
                       </td>
                       <td>
                         {d.specialization ? (

@@ -325,11 +325,16 @@ export function PaymentStage({
   // The backend now resolves the charge amount itself from HealthcareCategory
   // / ServicePrice — it no longer trusts a client-supplied amount. We just
   // need to tell it *what* is being booked so it can look up the right price.
+  //
+  // For categories, selection.catId is the stable pricingSlug (e.g.
+  // "general") — it's sent ahead of the display name so that a category
+  // getting renamed between now (payment intent creation) and the booking
+  // being confirmed can't break the price lookup on the backend.
   const isServiceBooking = Boolean(selection?.isServiceBooking);
   const priceType = isServiceBooking ? "service" : "category";
   const priceRef = isServiceBooking
     ? selection?.serviceName || selection?.catId || ""
-    : selection?.categoryName || selection?.catLabel || selection?.catId || "";
+    : selection?.catId || selection?.categoryName || selection?.catLabel || "";
 
   const selectStripe = async () => {
     setStripeError("");

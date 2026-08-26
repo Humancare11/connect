@@ -188,6 +188,7 @@ export default function CategoryAppointmentConfirm() {
           medicalReports: reports,
           consultationPrice: Number(livePrice),
           categoryName: selection.categoryName || "",
+          categoryId: selection.catId || "",
           specialtyName: selection.specialtyName || "",
           conditionName: selection.conditionName || "",
           serviceName: selection.serviceName || "",
@@ -199,6 +200,7 @@ export default function CategoryAppointmentConfirm() {
       } else {
         const body = {
           category: selection.catLabel,
+          categoryId: selection.catId || "",
           specialty: selection.specName,
           condition: selection.condName,
           consultationPrice: Number(livePrice),
