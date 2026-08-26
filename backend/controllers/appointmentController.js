@@ -165,6 +165,7 @@ const createAppointment = async (req, res) => {
       paymentIntentId,
       paypalOrderId,
       category,
+      categoryId,
       specialty,
       condition,
       consultationPrice,
@@ -265,10 +266,16 @@ const createAppointment = async (req, res) => {
         return res.status(400).json({ msg: "Payment is required to submit an appointment request." });
       }
 
-      // Fail closed: if the category name doesn't resolve to a known,
-      // priced category, reject rather than silently skipping the amount
-      // check (an unresolved category must not become a way to bypass it).
-      const expectedCents = await resolveCategoryFeeCents(category);
+      // Fail closed: if the category doesn't resolve to a known, priced
+      // category, reject rather than silently skipping the amount check
+      // (an unresolved category must not become a way to bypass it).
+      //
+      // requireActive:false + preferring categoryId (stable pricingSlug/_id)
+      // over the display name — see the matching comment in
+      // CategoryConsultationController.js: this runs after the patient has
+      // already been charged, so an admin deactivating/renaming the
+      // category in the meantime must not strand that payment.
+      const expectedCents = await resolveCategoryFeeCents(categoryId || category, { requireActive: false });
       if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
         return res.status(400).json({ msg: "Unrecognized category. Please reselect and try again." });
       }

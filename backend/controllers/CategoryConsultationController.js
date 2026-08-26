@@ -61,7 +61,7 @@ const createCategoryConsultation = async (req, res) => {
       req.body.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE";
     const isFlexible = appointmentType === "FLEXIBLE_TIME";
 
-    const { paymentIntentId, paypalOrderId, serviceName, categoryName } = req.body;
+    const { paymentIntentId, paypalOrderId, serviceName, categoryName, categoryId } = req.body;
 
     // Payment validation
     if (!paymentIntentId && !paypalOrderId) {
@@ -80,9 +80,19 @@ const createCategoryConsultation = async (req, res) => {
       // The charged amount must match the real price of the service/category
       // being booked — resolved server-side, never trusted from the client.
       // Fail closed if neither identifies a known priced item.
+      //
+      // requireActive:false — the Stripe/PayPal payment for this booking was
+      // already created (and, by the time the client calls this endpoint,
+      // already charged) against whatever the category's price was back
+      // then. Re-requiring isActive here would let an admin deactivating or
+      // renaming the category *after* the charge went through turn an
+      // already-paid booking into an orphaned charge with no way to
+      // complete it. categoryId (the stable pricingSlug/_id, when the
+      // client sends one) is preferred over categoryName so a rename in
+      // that window can't break the lookup either.
       const expectedCents = serviceName
         ? await resolveServiceFeeCents(serviceName)
-        : await resolveCategoryFeeCents(categoryName);
+        : await resolveCategoryFeeCents(categoryId || categoryName, { requireActive: false });
       if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
         return res.status(400).json({
           success: false,
