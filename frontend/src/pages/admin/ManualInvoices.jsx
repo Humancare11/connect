@@ -2,9 +2,34 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../api";
 import "./ManualInvoices.css";
 
+// Replace this with the real asset path (or an imported file) later.
+const LOGO_SRC = "/humancare-logo.png";
+
+// The issuer block is printed, not typed — it is the same on every invoice,
+// and mirrors the FROM column drawn by backend/utils/invoicePdf.js.
+const ISSUER = {
+  name: "Humancare Connect, Inc.",
+  lines: [
+    "4 Peddlers Row, 1091 Newark,",
+    "DE 19702, USA",
+    "+1 (302) 303-9993",
+    "support@humancareconnect.co",
+  ],
+  support: "support@humancareconnect.co",
+  phone: "+1 (302) 303-9993",
+  footerAddress: "4 Peddlers Row, 1091 Newark, DE 19702, USA",
+};
+
+const CURRENCY_OPTIONS = [
+  { code: "EUR", label: "EUR (€)", symbol: "€" },
+  { code: "USD", label: "USD ($)", symbol: "$" },
+  { code: "GBP", label: "GBP (£)", symbol: "£" },
+  { code: "INR", label: "INR (₹)", symbol: "₹" },
+];
+
 // value/days pairs drive the "Payment Terms" select below — picking one
-// recomputes the Due Date field to issue-date + days, while the Due Date
-// itself stays freely editable afterward for a one-off exception.
+// recomputes the Due Date field to today + days, while the Due Date itself
+// stays freely editable afterward for a one-off exception.
 const PAYMENT_TERMS_OPTIONS = [
   { value: "Due on Receipt", days: 0 },
   { value: "Net 15 Days", days: 15 },
@@ -21,13 +46,19 @@ function toDateInputValue(date) {
 function computeItemAmountCents(item) {
   const quantity = Number(item.quantity);
   const rate = Number(item.rate);
-  if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(rate) || rate < 0) return 0;
+  if (
+    !Number.isFinite(quantity) ||
+    quantity <= 0 ||
+    !Number.isFinite(rate) ||
+    rate < 0
+  )
+    return 0;
   const rateCents = Math.round(rate * 100);
   return Math.round(quantity * rateCents);
 }
 
-function formatMoney(amountCents, currency = "USD") {
-  const code = String(currency || "USD").toUpperCase();
+function formatMoney(amountCents, currency = "EUR") {
+  const code = String(currency || "EUR").toUpperCase();
   try {
     return ((amountCents || 0) / 100).toLocaleString("en-US", {
       style: "currency",
@@ -36,6 +67,12 @@ function formatMoney(amountCents, currency = "USD") {
   } catch {
     return `${code} ${((amountCents || 0) / 100).toFixed(2)}`;
   }
+}
+
+function currencySymbol(code) {
+  return (
+    CURRENCY_OPTIONS.find((option) => option.code === code)?.symbol || code
+  );
 }
 
 function formatDate(value) {
@@ -49,12 +86,17 @@ function formatDate(value) {
   });
 }
 
-// Masthead date, printed the way the issued PDF prints it: "Aug 19, 2026".
+// Printed the way the issued PDF prints it: "Sep 19, 2026".
 function formatDocDate(value) {
   if (!value) return "—";
-  const d = new Date(value);
+  const d =
+    typeof value === "string" ? new Date(`${value}T00:00:00`) : new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function statusLabel(status) {
@@ -69,12 +111,17 @@ export default function ManualInvoices() {
   const [address, setAddress] = useState("");
   const [country, setCountry] = useState("");
   const [postalCode, setPostalCode] = useState("");
-  const [paymentTerms, setPaymentTerms] = useState(PAYMENT_TERMS_OPTIONS[2].value);
+  const [currency, setCurrency] = useState("EUR");
+  const [paymentTerms, setPaymentTerms] = useState(
+    PAYMENT_TERMS_OPTIONS[2].value,
+  );
   const [dueDate, setDueDate] = useState(() =>
-    toDateInputValue(Date.now() + PAYMENT_TERMS_OPTIONS[2].days * 86400000)
+    toDateInputValue(Date.now() + PAYMENT_TERMS_OPTIONS[2].days * 86400000),
   );
   const nextItemId = useRef(2);
-  const [items, setItems] = useState([{ id: 1, description: "", quantity: "1", rate: "" }]);
+  const [items, setItems] = useState([
+    { id: 1, description: "", quantity: "1", rate: "" },
+  ]);
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("due");
 
@@ -129,16 +176,20 @@ export default function ManualInvoices() {
 
   const markPaidInvoice = useMemo(
     () => history.find((invoice) => invoice._id === markPaidRowId) || null,
-    [history, markPaidRowId]
+    [history, markPaidRowId],
   );
 
-  const subtotalCentsPreview = useMemo(
+  const totalCentsPreview = useMemo(
     () => items.reduce((sum, item) => sum + computeItemAmountCents(item), 0),
-    [items]
+    [items],
   );
 
   const itemsValid = items.every(
-    (item) => item.description.trim() !== "" && Number(item.quantity) > 0 && item.rate !== "" && Number(item.rate) >= 0
+    (item) =>
+      item.description.trim() !== "" &&
+      Number(item.quantity) > 0 &&
+      item.rate !== "" &&
+      Number(item.rate) >= 0,
   );
 
   const canSubmit =
@@ -147,18 +198,25 @@ export default function ManualInvoices() {
     email.trim() !== "" &&
     items.length > 0 &&
     itemsValid &&
-    subtotalCentsPreview > 0;
+    totalCentsPreview > 0;
 
   const addItem = () => {
-    setItems((prev) => [...prev, { id: nextItemId.current++, description: "", quantity: "1", rate: "" }]);
+    setItems((prev) => [
+      ...prev,
+      { id: nextItemId.current++, description: "", quantity: "1", rate: "" },
+    ]);
   };
 
   const removeItem = (id) => {
-    setItems((prev) => (prev.length > 1 ? prev.filter((item) => item.id !== id) : prev));
+    setItems((prev) =>
+      prev.length > 1 ? prev.filter((item) => item.id !== id) : prev,
+    );
   };
 
   const updateItem = (id, field, value) => {
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    );
   };
 
   // Picking a preset re-anchors Due Date to today + N days; the field stays
@@ -166,8 +224,11 @@ export default function ManualInvoices() {
   // chosen terms label.
   const applyPaymentTerms = (value) => {
     setPaymentTerms(value);
-    const preset = PAYMENT_TERMS_OPTIONS.find((option) => option.value === value);
-    if (preset) setDueDate(toDateInputValue(Date.now() + preset.days * 86400000));
+    const preset = PAYMENT_TERMS_OPTIONS.find(
+      (option) => option.value === value,
+    );
+    if (preset)
+      setDueDate(toDateInputValue(Date.now() + preset.days * 86400000));
   };
 
   const resetForm = () => {
@@ -178,8 +239,11 @@ export default function ManualInvoices() {
     setAddress("");
     setCountry("");
     setPostalCode("");
+    setCurrency("EUR");
     setPaymentTerms(PAYMENT_TERMS_OPTIONS[2].value);
-    setDueDate(toDateInputValue(Date.now() + PAYMENT_TERMS_OPTIONS[2].days * 86400000));
+    setDueDate(
+      toDateInputValue(Date.now() + PAYMENT_TERMS_OPTIONS[2].days * 86400000),
+    );
     nextItemId.current = 2;
     setItems([{ id: 1, description: "", quantity: "1", rate: "" }]);
     setDescription("");
@@ -200,6 +264,7 @@ export default function ManualInvoices() {
         address,
         country,
         postalCode,
+        currency,
         paymentTerms,
         dueDate,
         items: items.map((item) => ({
@@ -224,9 +289,12 @@ export default function ManualInvoices() {
     setDownloadingId(id);
     try {
       const res = await api.get(`/api/admin/manual-invoices/${id}/download`);
-      if (res.data?.url) window.open(res.data.url, "_blank", "noopener,noreferrer");
+      if (res.data?.url)
+        window.open(res.data.url, "_blank", "noopener,noreferrer");
     } catch (err) {
-      window.alert(err.response?.data?.msg || "Failed to generate download link.");
+      window.alert(
+        err.response?.data?.msg || "Failed to generate download link.",
+      );
     } finally {
       setDownloadingId("");
     }
@@ -275,17 +343,20 @@ export default function ManualInvoices() {
     }
   };
 
-  const paidCount = history.filter((invoice) => invoice.status === "paid").length;
+  const paidCount = history.filter(
+    (invoice) => invoice.status === "paid",
+  ).length;
   const dueCount = history.length - paidCount;
 
+  const isPaid = status === "paid";
   const issueDateLabel = formatDocDate(Date.now());
   const termsLine =
     paymentTerms === "Due on Receipt"
-      ? "Payment due immediately on receipt of this invoice"
-      : `Payment due within ${paymentTerms.replace(/\D/g, "")} days from the invoice date (${paymentTerms.replace(
+      ? "Payment is due immediately on receipt of this invoice. Please remit payment for the amount above without delay."
+      : `Payment is due within ${paymentTerms.replace(/\D/g, "")} days from the invoice date (${paymentTerms.replace(
           " Days",
-          ""
-        )})`;
+          "",
+        )}). Please remit payment for the amount above by the due date indicated.`;
 
   return (
     <div className="mi-page">
@@ -297,63 +368,61 @@ export default function ManualInvoices() {
         <div className="mi-metrics">
           <div className="mi-metric">
             <span>Awaiting payment</span>
-            <strong className="mi-metric__value mi-metric__value--due">{dueCount}</strong>
+            <strong className="mi-metric__value mi-metric__value--due">
+              {dueCount}
+            </strong>
           </div>
           <div className="mi-metric">
             <span>Paid</span>
-            <strong className="mi-metric__value mi-metric__value--paid">{paidCount}</strong>
+            <strong className="mi-metric__value mi-metric__value--paid">
+              {paidCount}
+            </strong>
           </div>
         </div>
       </div>
 
-      {/* The form *is* the invoice: same masthead, steel rule, headline,
-          BILL TO / PAYMENT columns, item band, totals and footer blocks as
-          the issued PDF, with fields standing in for the printed values. */}
+      {/* The form *is* the invoice: same masthead, navy rule, FROM / BILL TO
+          columns, meta strip, navy item table, total box, status band and
+          TERMS footer as backend/utils/invoicePdf.js draws, with fields
+          standing in for the printed values. */}
       <form onSubmit={submit} className="mi-doc">
         <header className="mi-doc__masthead">
           <div className="mi-doc__brand">
-            <span className="mi-doc__mark" aria-hidden="true">
-              HC
-            </span>
-            <span className="mi-doc__issuer">Humancare Connect, Inc.</span>
+            <img
+              className="mi-doc__logo"
+              src={LOGO_SRC}
+              alt="Humancare Connect"
+              onError={(event) => {
+                event.currentTarget.style.visibility = "hidden";
+              }}
+            />
           </div>
           <div className="mi-doc__meta">
-            <strong className="mi-doc__number"># Draft</strong>
-            <span className="mi-doc__date">{issueDateLabel}</span>
+            <h1 className="mi-doc__title">INVOICE</h1>
+            <span
+              className="mi-doc__number"
+              title="Assigned when the invoice is generated"
+            >
+              # Draft
+            </span>
           </div>
         </header>
 
-        <h1 className="mi-doc__title">INVOICE</h1>
+        <div className="mi-doc__rule" aria-hidden="true" />
 
         <div className="mi-doc__parties">
           <section className="mi-doc__party">
+            <p className="mi-doc__caption">From</p>
+            <p className="mi-doc__issuer">{ISSUER.name}</p>
+            {ISSUER.lines.map((line) => (
+              <p className="mi-doc__issuer-line" key={line}>
+                {line}
+              </p>
+            ))}
+          </section>
+
+          <section className="mi-doc__party">
             <p className="mi-doc__caption">Bill to</p>
-
-            <label className="mi-line">
-              <span className="mi-line__label">Client name</span>
-              <input
-                type="text"
-                className="mi-input mi-input--strong"
-                maxLength={120}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Acme Corp Pvt Ltd"
-                required
-              />
-            </label>
-
-            <label className="mi-line">
-              <span className="mi-line__label">Client email</span>
-              <input
-                type="email"
-                className="mi-input"
-                maxLength={254}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="accounts@acmecorp.example"
-                required
-              />
-            </label>
 
             <label className="mi-line">
               <span className="mi-line__label">Company</span>
@@ -368,26 +437,28 @@ export default function ManualInvoices() {
             </label>
 
             <label className="mi-line">
-              <span className="mi-line__label">Personal number</span>
+              <span className="mi-line__label">Contact name</span>
               <input
                 type="text"
                 className="mi-input"
-                maxLength={60}
-                value={registrationNumber}
-                onChange={(event) => setRegistrationNumber(event.target.value)}
-                placeholder="1010600044330"
+                maxLength={120}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Nova Assistance"
+                required
               />
             </label>
 
             <label className="mi-line">
-              <span className="mi-line__label">Country</span>
+              <span className="mi-line__label">Email</span>
               <input
-                type="text"
+                type="email"
                 className="mi-input"
-                maxLength={100}
-                value={country}
-                onChange={(event) => setCountry(event.target.value)}
-                placeholder="Republic of Moldova"
+                maxLength={254}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="accounts@example.com"
+                required
               />
             </label>
 
@@ -403,119 +474,159 @@ export default function ManualInvoices() {
               />
             </label>
 
+            <div className="mi-line-pair">
+              <label className="mi-line">
+                <span className="mi-line__label">Country</span>
+                <input
+                  type="text"
+                  className="mi-input"
+                  maxLength={100}
+                  value={country}
+                  onChange={(event) => setCountry(event.target.value)}
+                  placeholder="Republic of Moldova"
+                />
+              </label>
+
+              <label className="mi-line">
+                <span className="mi-line__label">Postal code</span>
+                <input
+                  type="text"
+                  className="mi-input"
+                  maxLength={30}
+                  value={postalCode}
+                  onChange={(event) => setPostalCode(event.target.value)}
+                  placeholder="MD-2001"
+                />
+              </label>
+            </div>
+
             <label className="mi-line">
-              <span className="mi-line__label">Postal code</span>
+              <span className="mi-line__label">Reg. No.</span>
               <input
                 type="text"
                 className="mi-input"
-                maxLength={30}
-                value={postalCode}
-                onChange={(event) => setPostalCode(event.target.value)}
-                placeholder="MD-2001"
+                maxLength={60}
+                value={registrationNumber}
+                onChange={(event) => setRegistrationNumber(event.target.value)}
+                placeholder="1010600044330"
               />
             </label>
-          </section>
-
-          <section className="mi-doc__party">
-            <p className="mi-doc__caption">Payment</p>
-
-            <label className="mi-pair">
-              <span className="mi-pair__key">Due Date:</span>
-              <input
-                type="date"
-                className="mi-input mi-input--tight"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-              />
-            </label>
-
-            <label className="mi-pair">
-              <span className="mi-pair__key">Payment Terms:</span>
-              <select
-                className="mi-input mi-input--tight mi-select"
-                value={paymentTerms}
-                onChange={(event) => applyPaymentTerms(event.target.value)}
-              >
-                {PAYMENT_TERMS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.value}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="mi-pair">
-              <span className="mi-pair__key">Issue as:</span>
-              <select
-                className="mi-input mi-input--tight mi-select"
-                value={status}
-                onChange={(event) => setStatus(event.target.value)}
-              >
-                <option value="due">Bill — not yet paid</option>
-                <option value="paid">Receipt — already paid</option>
-              </select>
-            </label>
-
-            <small className="mi-hint">
-              {status === "paid"
-                ? "The PDF will be issued as a paid receipt."
-                : "The PDF will show an outstanding balance."}
-            </small>
           </section>
         </div>
 
+        {/* Meta strip — the four printed columns above the item table. */}
+        <div className="mi-meta">
+          <div className="mi-meta__cell">
+            <span className="mi-meta__key">Issue Date</span>
+            {/* Stamped server-side at generation time, so it is shown, not typed. */}
+            <span className="mi-meta__value">{issueDateLabel}</span>
+          </div>
+          <div className="mi-meta__cell">
+            <span className="mi-meta__key">Due Date</span>
+            <input
+              type="date"
+              className="mi-input mi-input--flush mi-input--accent"
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+            />
+          </div>
+          <div className="mi-meta__cell">
+            <span className="mi-meta__key">Payment Terms</span>
+            <select
+              className="mi-input mi-input--flush mi-select"
+              value={paymentTerms}
+              onChange={(event) => applyPaymentTerms(event.target.value)}
+            >
+              {PAYMENT_TERMS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.value}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mi-meta__cell">
+            <span className="mi-meta__key">Currency</span>
+            <select
+              className="mi-input mi-input--flush mi-select"
+              value={currency}
+              onChange={(event) => setCurrency(event.target.value)}
+            >
+              {CURRENCY_OPTIONS.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Item table — navy header band, one row per billed line. */}
         <div className="mi-items">
           <div className="mi-items__head">
-            <span>Item</span>
-            <span>Quantity</span>
-            <span>Rate</span>
-            <span>Amount</span>
+            <span>Description</span>
+            <span className="mi-items__center">Qty</span>
+            <span className="mi-items__right">Rate</span>
+            <span className="mi-items__right">Amount</span>
             <span aria-hidden="true" />
           </div>
           {items.map((item) => (
             <div className="mi-items__row" key={item.id}>
-              <span className="mi-items__mlabel">Item</span>
+              <span className="mi-items__mlabel">Description</span>
               <input
                 type="text"
-                className="mi-input mi-input--strong"
+                className="mi-input mi-input--flush"
                 maxLength={200}
                 value={item.description}
-                onChange={(event) => updateItem(item.id, "description", event.target.value)}
-                placeholder="229987-HCV-SPAIN-14AUG26"
+                onChange={(event) =>
+                  updateItem(item.id, "description", event.target.value)
+                }
+                placeholder="House Call Visit — Germany"
                 required
               />
-              <span className="mi-items__mlabel">Quantity</span>
+
+              <span className="mi-items__mlabel">Qty</span>
               <input
                 type="number"
-                className="mi-input mi-input--num"
+                className="mi-input mi-input--flush mi-input--center"
                 min="0.01"
                 step="0.01"
                 value={item.quantity}
-                onChange={(event) => updateItem(item.id, "quantity", event.target.value)}
+                onChange={(event) =>
+                  updateItem(item.id, "quantity", event.target.value)
+                }
                 required
               />
+
               <span className="mi-items__mlabel">Rate</span>
               <div className="mi-amount">
-                <span className="mi-amount__prefix">USD</span>
+                <span className="mi-amount__prefix">
+                  {currencySymbol(currency)}
+                </span>
                 <input
                   type="number"
-                  className="mi-input mi-input--num mi-amount__input"
+                  className="mi-input mi-input--flush mi-input--num mi-amount__input"
                   min="0"
                   step="0.01"
                   value={item.rate}
-                  onChange={(event) => updateItem(item.id, "rate", event.target.value)}
+                  onChange={(event) =>
+                    updateItem(item.id, "rate", event.target.value)
+                  }
                   placeholder="0.00"
                   required
                 />
               </div>
+
               <span className="mi-items__mlabel">Amount</span>
-              <span className="mi-items__amount">{formatMoney(computeItemAmountCents(item), "USD")}</span>
+              <span className="mi-items__amount">
+                {formatMoney(computeItemAmountCents(item), currency)}
+              </span>
+
               <button
                 type="button"
                 className="mi-icon-btn"
                 onClick={() => removeItem(item.id)}
                 disabled={items.length === 1}
-                aria-label="Remove item"
+                aria-label="Remove line"
               >
                 ×
               </button>
@@ -523,40 +634,63 @@ export default function ManualInvoices() {
           ))}
         </div>
 
-        <button type="button" className="mi-btn mi-btn--ghost mi-btn--sm mi-items__add" onClick={addItem}>
-          + Add Item
+        <button
+          type="button"
+          className="mi-btn mi-btn--ghost mi-btn--sm mi-items__add"
+          onClick={addItem}
+        >
+          + Add line
         </button>
 
-        <div className="mi-totals">
-          <div className="mi-totals__row">
-            <span>Subtotal</span>
-            <span>{formatMoney(subtotalCentsPreview, "USD")}</span>
-          </div>
-          <div className="mi-totals__row">
-            <span>Tax (0%)</span>
-            <span>{formatMoney(0, "USD")}</span>
-          </div>
-          <div className="mi-totals__row mi-totals__row--grand">
-            <span>Total</span>
-            <span>{formatMoney(subtotalCentsPreview, "USD")}</span>
+        <div className="mi-total">
+          <div className="mi-total__box">
+            <span>{isPaid ? "Total Paid:" : "Total Due:"}</span>
+            <strong>{formatMoney(totalCentsPreview, currency)}</strong>
           </div>
         </div>
 
+        {/* Status band — the same red/green bar the PDF prints, with the
+            issue-as control sitting inside the thing it changes. */}
+        <div className={`mi-statusbar mi-statusbar--${status}`}>
+          <p className="mi-statusbar__text">
+            {isPaid
+              ? "STATUS: PAID — Payment received in full. No balance outstanding."
+              : "STATUS: UNPAID — Payment is outstanding and due."}
+          </p>
+          <label className="mi-statusbar__control">
+            <span>Issue as</span>
+            <select
+              className="mi-input mi-input--flush mi-select"
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+            >
+              <option value="due">Bill — not yet paid</option>
+              <option value="paid">Receipt — already paid</option>
+            </select>
+          </label>
+        </div>
+
         <section className="mi-doc__block">
-          <p className="mi-doc__caption">Notes</p>
+          <p className="mi-doc__caption">Terms</p>
+          <p className="mi-doc__terms">{termsLine}</p>
+          <p className="mi-doc__terms-pair">
+            <strong>Payment Due Date:</strong> {formatDocDate(dueDate)}
+          </p>
+          <p className="mi-doc__terms-pair">
+            <strong>Payment Terms:</strong> {paymentTerms}
+          </p>
+        </section>
+
+        <section className="mi-doc__block">
+          <p className="mi-doc__caption">Closing note</p>
           <textarea
             className="mi-input mi-textarea"
             rows={2}
             maxLength={500}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="Thank you for your business. Please contact us if you have any questions regarding this invoice"
+            placeholder="Thank you for your business."
           />
-        </section>
-
-        <section className="mi-doc__block">
-          <p className="mi-doc__caption">Terms</p>
-          <p className="mi-doc__terms">{termsLine}</p>
         </section>
 
         {error && (
@@ -566,12 +700,23 @@ export default function ManualInvoices() {
         )}
 
         <div className="mi-doc__actions">
-          <small className="mi-hint">The invoice is emailed to the client as soon as it is generated.</small>
-          <button className="mi-btn mi-btn--primary" type="submit" disabled={!canSubmit}>
+          <small className="mi-hint">
+            The invoice is emailed to the client as soon as it is generated.
+          </small>
+          <button
+            className="mi-btn mi-btn--primary"
+            type="submit"
+            disabled={!canSubmit}
+          >
             {submitting && <span className="mi-spinner" aria-hidden="true" />}
             {submitting ? "Generating…" : "Generate & Send Invoice"}
           </button>
         </div>
+
+        <footer className="mi-doc__foot">
+          Humancare Connect &nbsp;|&nbsp; 24/7 Support: {ISSUER.support}{" "}
+          &nbsp;|&nbsp; {ISSUER.footerAddress} &nbsp;|&nbsp; {ISSUER.phone}
+        </footer>
       </form>
 
       {created && (
@@ -580,13 +725,18 @@ export default function ManualInvoices() {
             ✓
           </span>
           <div className="mi-banner__body">
-            <strong className="mi-banner__title">Invoice {created.invoiceNumber} created</strong>
+            <strong className="mi-banner__title">
+              Invoice {created.invoiceNumber} created
+            </strong>
             <span className="mi-banner__meta">
-              {formatMoney(created.amountCents, created.currency)} · {statusLabel(created.status)} ·{" "}
+              {formatMoney(created.amountCents, created.currency)} ·{" "}
+              {statusLabel(created.status)} ·{" "}
               {created.emailed ? (
                 "emailed to the client"
               ) : (
-                <em className="mi-banner__warn">email failed — retry from the history below</em>
+                <em className="mi-banner__warn">
+                  email failed — retry from the history below
+                </em>
               )}
             </span>
           </div>
@@ -601,7 +751,12 @@ export default function ManualInvoices() {
                 {downloadingId === created._id ? "Preparing…" : "Download PDF"}
               </button>
             )}
-            <button className="mi-icon-btn" type="button" onClick={() => setCreated(null)} aria-label="Dismiss">
+            <button
+              className="mi-icon-btn"
+              type="button"
+              onClick={() => setCreated(null)}
+              aria-label="Dismiss"
+            >
               ×
             </button>
           </div>
@@ -620,7 +775,12 @@ export default function ManualInvoices() {
             onClick={fetchHistory}
             disabled={historyLoading}
           >
-            {historyLoading && <span className="mi-spinner mi-spinner--dark" aria-hidden="true" />}
+            {historyLoading && (
+              <span
+                className="mi-spinner mi-spinner--dark"
+                aria-hidden="true"
+              />
+            )}
             {historyLoading ? "Refreshing…" : "Refresh"}
           </button>
         </div>
@@ -634,7 +794,11 @@ export default function ManualInvoices() {
         {historyLoading ? (
           // Skeleton rows rather than a "Loading..." line: the list keeps its
           // shape while it loads, so the page doesn't jump once rows arrive.
-          <div className="mi-skeleton" aria-busy="true" aria-label="Loading invoices">
+          <div
+            className="mi-skeleton"
+            aria-busy="true"
+            aria-label="Loading invoices"
+          >
             {[0, 1, 2, 3].map((row) => (
               <div className="mi-skeleton__row" key={row}>
                 <span className="mi-skeleton__bar" style={{ width: "16%" }} />
@@ -651,7 +815,9 @@ export default function ManualInvoices() {
               🧾
             </div>
             <strong>No manual invoices yet</strong>
-            <span>Invoices you generate above will appear here, newest first.</span>
+            <span>
+              Invoices you generate above will appear here, newest first.
+            </span>
           </div>
         ) : (
           <div className="mi-table-wrap">
@@ -682,7 +848,9 @@ export default function ManualInvoices() {
                     <td data-label="Client">
                       <div className="mi-person">
                         <strong>{invoice.clientName}</strong>
-                        <span title={invoice.clientEmail}>{invoice.clientEmail}</span>
+                        <span title={invoice.clientEmail}>
+                          {invoice.clientEmail}
+                        </span>
                       </div>
                     </td>
                     <td data-label="Description">
@@ -693,15 +861,23 @@ export default function ManualInvoices() {
                         {invoice.description}
                       </span>
                     </td>
-                    <td data-label="Amount" className="mi-col-amount mi-cell-amount">
+                    <td
+                      data-label="Amount"
+                      className="mi-col-amount mi-cell-amount"
+                    >
                       {formatMoney(invoice.amountCents, invoice.currency)}
                     </td>
                     <td data-label="Status">
-                      <span className={`mi-status mi-status--${invoice.status === "paid" ? "paid" : "due"}`}>
+                      <span
+                        className={`mi-status mi-status--${invoice.status === "paid" ? "paid" : "due"}`}
+                      >
                         {statusLabel(invoice.status)}
                       </span>
                       {!invoice.emailed && (
-                        <span className="mi-email-flag" title={invoice.emailError || "Email not yet sent"}>
+                        <span
+                          className="mi-email-flag"
+                          title={invoice.emailError || "Email not yet sent"}
+                        >
                           ⚠ not emailed
                         </span>
                       )}
@@ -714,7 +890,9 @@ export default function ManualInvoices() {
                           disabled={downloadingId === invoice._id}
                           onClick={() => download(invoice._id)}
                         >
-                          {downloadingId === invoice._id && <span className="mi-spinner" aria-hidden="true" />}
+                          {downloadingId === invoice._id && (
+                            <span className="mi-spinner" aria-hidden="true" />
+                          )}
                           Download
                         </button>
                         {invoice.status === "due" && (
@@ -733,7 +911,9 @@ export default function ManualInvoices() {
                             disabled={resendingId === invoice._id}
                             onClick={() => resendEmail(invoice._id)}
                           >
-                            {resendingId === invoice._id && <span className="mi-spinner" aria-hidden="true" />}
+                            {resendingId === invoice._id && (
+                              <span className="mi-spinner" aria-hidden="true" />
+                            )}
                             Resend Email
                           </button>
                         )}
@@ -751,7 +931,11 @@ export default function ManualInvoices() {
           inherited the table's width and horizontal scroll, so on a narrow
           screen the form sat off-canvas next to the row it belonged to. */}
       {markPaidInvoice && (
-        <div className="mi-modal" role="presentation" onMouseDown={closeMarkPaid}>
+        <div
+          className="mi-modal"
+          role="presentation"
+          onMouseDown={closeMarkPaid}
+        >
           <div
             className="mi-modal__panel"
             role="dialog"
@@ -783,7 +967,10 @@ export default function ManualInvoices() {
               <div>
                 <dt>Amount</dt>
                 <dd className="mi-cell-amount">
-                  {formatMoney(markPaidInvoice.amountCents, markPaidInvoice.currency)}
+                  {formatMoney(
+                    markPaidInvoice.amountCents,
+                    markPaidInvoice.currency,
+                  )}
                 </dd>
               </div>
             </dl>
@@ -796,7 +983,10 @@ export default function ManualInvoices() {
               />
               <span>
                 Email the updated receipt to the client
-                <small>Sends a fresh PDF marked as paid to {markPaidInvoice.clientEmail}.</small>
+                <small>
+                  Sends a fresh PDF marked as paid to{" "}
+                  {markPaidInvoice.clientEmail}.
+                </small>
               </span>
             </label>
 
@@ -807,7 +997,12 @@ export default function ManualInvoices() {
             )}
 
             <div className="mi-modal__buttons">
-              <button className="mi-btn mi-btn--ghost" type="button" onClick={closeMarkPaid} disabled={markPaidBusy}>
+              <button
+                className="mi-btn mi-btn--ghost"
+                type="button"
+                onClick={closeMarkPaid}
+                disabled={markPaidBusy}
+              >
                 Cancel
               </button>
               <button
@@ -816,7 +1011,9 @@ export default function ManualInvoices() {
                 disabled={markPaidBusy}
                 onClick={() => confirmMarkPaid(markPaidInvoice._id)}
               >
-                {markPaidBusy && <span className="mi-spinner" aria-hidden="true" />}
+                {markPaidBusy && (
+                  <span className="mi-spinner" aria-hidden="true" />
+                )}
                 {markPaidBusy ? "Saving…" : "Confirm Paid"}
               </button>
             </div>

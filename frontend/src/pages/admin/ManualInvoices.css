@@ -1,33 +1,38 @@
 /* ManualInvoices.css
-   The create form is rendered as the invoice document itself — masthead,
-   steel rule, INVOICE headline, BILL TO / PAYMENT columns, grey item band,
-   totals block and NOTES / TERMS footer, matching the issued PDF. */
+   The create form is rendered as the invoice document itself — logo masthead,
+   navy rule, FROM / BILL TO columns, meta strip, navy service table, Total Due
+   block, STATUS band and TERMS footer, matching the issued PDF. */
 
 .mi-page {
   --mi-bg: #eceff3;
   --mi-sheet: #ffffff;
   --mi-ink: #1a1a1a;
-  --mi-ink-soft: #4a4a4a;
+  --mi-ink-soft: #3d3d3d;
   --mi-muted: #8a8a8a;
   --mi-caption: #7d7d7d;
-  --mi-line: #e2e2e2;
-  --mi-band: #f2f3f4;
-  --mi-rule: #7c8b99;
-  --mi-accent: #0b5cab;
-  --mi-accent-dark: #084a8b;
-  --mi-accent-soft: #eaf2fb;
+  --mi-line: #dcdfe5;
+  --mi-band: #eef0f4;
+  --mi-navy: #16305e;
+  --mi-navy-dark: #0f2447;
+  --mi-blue: #2f6cb0;
+  --mi-blue-soft: #eaf1fa;
   --mi-paid: #0f7047;
+  --mi-paid-soft: #edf7f1;
   --mi-due: #9a5b00;
   --mi-danger: #b42318;
+  --mi-danger-soft: #fdf0f0;
   --mi-radius: 3px;
-  --mi-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 10px 30px rgba(26, 26, 26, 0.07);
+  --mi-shadow:
+    0 1px 2px rgba(26, 26, 26, 0.05), 0 10px 30px rgba(26, 26, 26, 0.07);
+  --mi-serif: Georgia, "Times New Roman", Times, serif;
 
   max-width: 1000px;
   margin: 0 auto;
   padding: 32px 20px 96px;
   box-sizing: border-box;
   color: var(--mi-ink);
-  font-family: "Helvetica Neue", Helvetica, Arial, "Segoe UI", system-ui, sans-serif;
+  font-family:
+    "Helvetica Neue", Helvetica, Arial, "Segoe UI", system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -99,102 +104,103 @@
   border: 1px solid var(--mi-line);
   border-radius: var(--mi-radius);
   box-shadow: var(--mi-shadow);
-  padding: 56px 64px 48px;
+  padding: 52px 60px 36px;
   margin-bottom: 28px;
 }
 
-/* Masthead: issuer left, number and date right, closed by the steel rule. */
+/* Masthead: logo left, INVOICE headline and number right, closed by the
+   navy rule that opens the document body. */
 .mi-doc__masthead {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding-bottom: 26px;
-  border-bottom: 4px solid var(--mi-rule);
+  padding-bottom: 22px;
+  border-bottom: 3px solid var(--mi-navy);
 }
 
 .mi-doc__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-top: 2px;
+  min-width: 0;
 }
 
-.mi-doc__mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex: none;
-  background: var(--mi-accent);
-  color: #fff;
-  border-radius: 2px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.mi-doc__issuer {
-  font-size: 15px;
-  font-weight: 700;
-  color: #3f3f3f;
+.mi-doc__logo {
+  display: block;
+  height: 62px;
+  width: auto;
+  max-width: 300px;
+  object-fit: contain;
 }
 
 .mi-doc__meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 2px;
   text-align: right;
-}
-
-.mi-doc__number {
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-
-.mi-doc__date {
-  font-size: 13px;
-  color: var(--mi-ink-soft);
+  flex: none;
 }
 
 .mi-doc__title {
-  margin: 44px 0 40px;
-  font-size: 56px;
-  line-height: 1;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  color: #2b2b2b;
+  margin: 0;
+  font-family: var(--mi-serif);
+  font-size: 34px;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--mi-navy);
 }
 
-/* Small uppercase captions: BILL TO / PAYMENT / NOTES / TERMS. */
+.mi-doc__number {
+  font-family: var(--mi-serif);
+  font-size: 15px;
+  color: var(--mi-ink-soft);
+  cursor: help;
+}
+
+/* Small uppercase captions: FROM / BILL TO / TERMS. */
 .mi-doc__caption {
-  margin: 0 0 12px;
-  font-size: 10px;
+  margin: 0 0 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--mi-caption);
+  color: var(--mi-blue);
 }
 
 .mi-doc__parties {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   gap: 40px;
-  margin-bottom: 44px;
+  padding: 28px 0 30px;
 }
 
 .mi-doc__party {
   min-width: 0;
 }
 
+/* FROM — printed, never typed. */
+.mi-doc__issuer {
+  margin: 0;
+  font-family: var(--mi-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--mi-ink);
+}
+
+.mi-doc__issuer-line {
+  margin: 0;
+  font-family: var(--mi-serif);
+  font-size: 14px;
+  color: var(--mi-ink-soft);
+}
+
 /* BILL TO stack — a floating label above each value so the block reads like
    the printed address block, but every line stays editable. */
 .mi-line {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .mi-line__label {
@@ -207,34 +213,23 @@
   margin-bottom: 1px;
 }
 
-/* PAYMENT column — "Due Date: <value>" on one line, as printed. */
-.mi-pair {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
-
-.mi-pair__key {
-  font-size: 13px;
-  color: var(--mi-ink-soft);
-  flex: none;
-}
-
 /* ------------------------------------------------------------- inputs ---- */
 
 .mi-input {
   width: 100%;
   padding: 4px 6px;
   font: inherit;
-  font-size: 13px;
+  font-family: var(--mi-serif);
+  font-size: 14px;
   color: var(--mi-ink-soft);
   background: transparent;
   border: 1px solid transparent;
-  border-bottom-color: #ececec;
+  border-bottom-color: #e6e8ec;
   border-radius: 2px;
-  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .mi-input::placeholder {
@@ -242,21 +237,26 @@
 }
 
 .mi-input:hover:not(:disabled) {
-  background: #fafafa;
-  border-bottom-color: #d5d5d5;
+  background: #fafbfc;
+  border-bottom-color: #cfd4dc;
 }
 
 .mi-input:focus {
   outline: none;
   background: #fff;
-  border-color: var(--mi-accent);
-  box-shadow: 0 0 0 3px rgba(11, 92, 171, 0.12);
+  border-color: var(--mi-blue);
+  box-shadow: 0 0 0 3px rgba(47, 108, 176, 0.14);
 }
 
 .mi-input--strong {
-  font-size: 14px;
   font-weight: 700;
   color: var(--mi-ink);
+}
+
+/* Sub-line under a service title — the grey descriptive sentence. */
+.mi-input--sub {
+  font-size: 13px;
+  color: #5f5f5f;
 }
 
 .mi-input--num {
@@ -264,36 +264,50 @@
   font-variant-numeric: tabular-nums;
 }
 
-.mi-input--tight {
-  width: auto;
-  min-width: 150px;
+.mi-input--accent {
   font-weight: 700;
-  color: var(--mi-ink);
+  color: var(--mi-navy);
+}
+
+/* Sits inside a table cell, so it carries no rule of its own. */
+.mi-input--flush {
+  border-bottom-color: transparent;
+}
+
+.mi-input--flush:hover:not(:disabled) {
+  border-bottom-color: #cfd4dc;
 }
 
 .mi-select {
   appearance: none;
-  padding-right: 26px;
-  background-image: linear-gradient(45deg, transparent 50%, #8a8a8a 50%),
+  padding-right: 24px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8a8a8a 50%),
     linear-gradient(135deg, #8a8a8a 50%, transparent 50%);
-  background-position: calc(100% - 13px) 55%, calc(100% - 9px) 55%;
-  background-size: 5px 5px, 5px 5px;
+  background-position:
+    calc(100% - 12px) 55%,
+    calc(100% - 8px) 55%;
+  background-size:
+    5px 5px,
+    5px 5px;
   background-repeat: no-repeat;
   cursor: pointer;
 }
 
 .mi-select:hover:not(:disabled),
 .mi-select:focus {
-  background-image: linear-gradient(45deg, transparent 50%, #8a8a8a 50%),
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8a8a8a 50%),
     linear-gradient(135deg, #8a8a8a 50%, transparent 50%);
 }
 
 .mi-textarea {
   resize: vertical;
-  min-height: 54px;
+  min-height: 52px;
   line-height: 1.55;
+  font-style: italic;
   border: 1px solid transparent;
-  border-bottom-color: #ececec;
+  border-bottom-color: #e6e8ec;
 }
 
 .mi-hint {
@@ -301,6 +315,41 @@
   margin-top: 10px;
   font-size: 12px;
   color: var(--mi-muted);
+}
+
+/* --------------------------------------------------------- meta strip ---- */
+
+.mi-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--mi-line);
+  border-bottom: 1px solid var(--mi-line);
+  margin-bottom: 28px;
+}
+
+.mi-meta__cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+}
+
+/* Each key carries the band colour, so the four cells read as one continuous
+   grey header row above their values — as printed. */
+.mi-meta__key {
+  padding: 9px 14px;
+  margin-bottom: 8px;
+  background: var(--mi-band);
+  font-family: var(--mi-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mi-ink);
+}
+
+.mi-meta__cell .mi-input {
+  padding-left: 14px;
+  margin-bottom: 10px;
 }
 
 /* -------------------------------------------------------- item section --- */
@@ -312,37 +361,36 @@
 .mi-items__head,
 .mi-items__row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px 150px 120px 30px;
+  grid-template-columns: 132px minmax(0, 1fr) 110px 140px 30px;
   gap: 14px;
-  align-items: center;
+  align-items: start;
 }
 
 .mi-items__head {
-  padding: 13px 16px;
-  background: var(--mi-band);
+  padding: 11px 14px;
+  background: var(--mi-navy);
+  color: #fff;
+  align-items: center;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #4f4f4f;
 }
 
-.mi-items__head span:nth-child(2),
-.mi-items__head span:nth-child(3),
-.mi-items__head span:nth-child(4) {
+.mi-items__right {
   text-align: right;
 }
 
 .mi-items__row {
-  padding: 12px 16px;
-  border-bottom: 1px solid #ededed;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e6e8ec;
 }
 
-.mi-items__amount {
-  text-align: right;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  color: var(--mi-ink-soft);
+.mi-items__desc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 /* Row headers used only by the stacked mobile layout. */
@@ -358,65 +406,148 @@
 .mi-amount {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .mi-amount__prefix {
-  font-size: 11px;
+  font-family: var(--mi-serif);
+  font-size: 14px;
   font-weight: 700;
-  color: #a8a8a8;
+  color: #9aa1ac;
   flex: none;
 }
 
 .mi-amount__input {
   flex: 1;
   min-width: 0;
+  font-weight: 700;
+  color: var(--mi-ink);
 }
 
 .mi-items__add {
-  margin: 14px 0 30px;
+  margin: 14px 0 26px;
 }
 
-/* ------------------------------------------------------------- totals ---- */
+/* ---------------------------------------------------------- total due ---- */
 
-.mi-totals {
-  margin-bottom: 40px;
+.mi-total {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 30px;
 }
 
-.mi-totals__row {
+.mi-total__box {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 11px 16px;
-  font-size: 13px;
-  color: #5a5a5a;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 300px;
+  padding: 14px 18px;
+  background: var(--mi-band);
+  font-family: var(--mi-serif);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--mi-navy);
+}
+
+.mi-total__box strong {
   font-variant-numeric: tabular-nums;
 }
 
-.mi-totals__row--grand {
-  margin-top: 6px;
-  padding: 16px 16px 4px;
-  border-top: 3px solid #2b2b2b;
-  color: var(--mi-ink);
-  font-size: 21px;
-  font-weight: 700;
+/* -------------------------------------------------------- status band ---- */
+
+.mi-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 11px 16px;
+  margin-bottom: 30px;
+  border-left: 4px solid var(--mi-danger);
+  background: var(--mi-danger-soft);
 }
 
-/* --------------------------------------------------- notes / terms / cta -- */
+.mi-statusbar--paid {
+  border-left-color: var(--mi-paid);
+  background: var(--mi-paid-soft);
+}
+
+.mi-statusbar__text {
+  margin: 0;
+  font-family: var(--mi-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mi-danger);
+}
+
+.mi-statusbar--paid .mi-statusbar__text {
+  color: var(--mi-paid);
+}
+
+.mi-statusbar__control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.mi-statusbar__control > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mi-caption);
+}
+
+.mi-statusbar__control .mi-input {
+  width: auto;
+  min-width: 178px;
+  background: #fff;
+  border-color: rgba(26, 26, 26, 0.12);
+  font-size: 13px;
+}
+
+/* --------------------------------------------------- terms / note / cta -- */
 
 .mi-doc__block {
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 
-.mi-doc__block .mi-doc__caption {
-  margin-bottom: 6px;
+.mi-doc__caption--accent {
+  margin-bottom: 8px;
 }
 
 .mi-doc__terms {
   margin: 0;
-  padding: 4px 6px;
-  font-size: 13px;
+  max-width: 74ch;
+  font-family: var(--mi-serif);
+  font-size: 14px;
+  color: var(--mi-ink-soft);
+}
+
+.mi-doc__terms-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 40px;
+  margin: 14px 0 0;
+  font-family: var(--mi-serif);
+  font-size: 14px;
+}
+
+.mi-doc__terms-grid > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.mi-doc__terms-grid dt {
+  font-weight: 700;
+  color: var(--mi-ink);
+}
+
+.mi-doc__terms-grid dd {
+  margin: 0;
   color: var(--mi-ink-soft);
 }
 
@@ -426,13 +557,22 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding-top: 24px;
-  margin-top: 12px;
+  padding-top: 22px;
+  margin-top: 10px;
   border-top: 1px solid var(--mi-line);
 }
 
 .mi-doc__actions .mi-hint {
   margin-top: 0;
+}
+
+.mi-doc__foot {
+  padding-top: 18px;
+  margin-top: 26px;
+  border-top: 1px solid var(--mi-line);
+  text-align: center;
+  font-size: 12px;
+  color: var(--mi-muted);
 }
 
 /* ------------------------------------------------------------ buttons ---- */
@@ -448,13 +588,17 @@
   border: 1px solid transparent;
   border-radius: var(--mi-radius);
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .mi-btn:focus-visible,
 .mi-icon-btn:focus-visible,
 .mi-check input:focus-visible {
-  outline: 2px solid var(--mi-accent);
+  outline: 2px solid var(--mi-blue);
   outline-offset: 2px;
 }
 
@@ -464,25 +608,25 @@
 }
 
 .mi-btn--primary {
-  background: var(--mi-accent);
-  border-color: var(--mi-accent);
+  background: var(--mi-navy);
+  border-color: var(--mi-navy);
   color: #fff;
 }
 
 .mi-btn--primary:hover:not(:disabled) {
-  background: var(--mi-accent-dark);
-  border-color: var(--mi-accent-dark);
+  background: var(--mi-navy-dark);
+  border-color: var(--mi-navy-dark);
 }
 
 .mi-btn--ghost {
   background: #fff;
-  border-color: #d7d7d7;
+  border-color: #d2d6dd;
   color: var(--mi-ink);
 }
 
 .mi-btn--ghost:hover:not(:disabled) {
-  background: #f7f7f7;
-  border-color: #bcbcbc;
+  background: #f6f7f9;
+  border-color: #b6bcc6;
 }
 
 .mi-btn--sm {
@@ -506,11 +650,11 @@
 }
 
 .mi-btn--accent {
-  color: var(--mi-accent);
+  color: var(--mi-blue);
 }
 
 .mi-btn--accent:hover:not(:disabled) {
-  color: var(--mi-accent-dark);
+  color: var(--mi-navy);
 }
 
 .mi-icon-btn {
@@ -527,7 +671,10 @@
   border: 1px solid transparent;
   border-radius: 2px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .mi-icon-btn:hover:not(:disabled) {
@@ -651,13 +798,15 @@
   flex-wrap: wrap;
   padding-bottom: 18px;
   margin-bottom: 20px;
-  border-bottom: 3px solid var(--mi-rule);
+  border-bottom: 3px solid var(--mi-navy);
 }
 
 .mi-card__title h2 {
   margin: 6px 0 0;
+  font-family: var(--mi-serif);
   font-size: 24px;
-  font-weight: 400;
+  font-weight: 700;
+  color: var(--mi-navy);
 }
 
 .mi-skeleton {
@@ -889,7 +1038,7 @@
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 16px;
-  border-bottom: 3px solid var(--mi-rule);
+  border-bottom: 3px solid var(--mi-navy);
 }
 
 .mi-modal__head h3 {
@@ -925,7 +1074,7 @@
   align-items: flex-start;
   gap: 11px;
   padding: 14px;
-  background: var(--mi-accent-soft);
+  background: var(--mi-blue-soft);
   border: 1px solid #cfe1f4;
   border-radius: var(--mi-radius);
   cursor: pointer;
@@ -936,7 +1085,7 @@
   width: 16px;
   height: 16px;
   flex: none;
-  accent-color: var(--mi-accent);
+  accent-color: var(--mi-blue);
   cursor: pointer;
 }
 
@@ -965,16 +1114,25 @@
 
 @media (max-width: 900px) {
   .mi-doc {
-    padding: 36px 28px 32px;
+    padding: 34px 26px 28px;
   }
 
   .mi-doc__title {
-    font-size: 42px;
-    margin: 32px 0 30px;
+    font-size: 28px;
+  }
+
+  .mi-doc__logo {
+    height: 50px;
   }
 
   .mi-card {
     padding: 24px 20px;
+  }
+
+  .mi-items__head,
+  .mi-items__row {
+    grid-template-columns: 118px minmax(0, 1fr) 88px 118px 28px;
+    gap: 10px;
   }
 }
 
@@ -985,24 +1143,29 @@
 
   .mi-doc__parties {
     grid-template-columns: minmax(0, 1fr);
-    gap: 30px;
+    gap: 28px;
   }
 
-  .mi-input--tight {
-    width: 100%;
-    min-width: 0;
+  /* Meta strip stacks two-up rather than squeezing four columns. */
+  .mi-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Line items stack into label/value pairs. */
+  .mi-meta__cell {
+    padding: 10px 8px 12px;
+  }
+
+  /* Service lines stack into label/value pairs. */
   .mi-items__head {
     display: none;
   }
 
   .mi-items__row {
-    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-columns: 92px minmax(0, 1fr);
     gap: 8px 12px;
     padding: 16px 12px;
     position: relative;
+    align-items: center;
     border-bottom: 1px solid #e6e6e6;
   }
 
@@ -1010,8 +1173,7 @@
     display: block;
   }
 
-  .mi-items__row .mi-input--num,
-  .mi-items__amount {
+  .mi-items__row .mi-input--num {
     text-align: left;
   }
 
@@ -1021,9 +1183,14 @@
     right: 6px;
   }
 
-  .mi-totals__row {
-    padding-left: 12px;
-    padding-right: 12px;
+  .mi-total__box {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mi-statusbar__control .mi-input {
+    width: 100%;
+    min-width: 0;
   }
 
   /* History table becomes stacked cards; each cell prints its own header. */
@@ -1100,15 +1267,12 @@
 
 @media (max-width: 520px) {
   .mi-doc {
-    padding: 26px 18px 26px;
-  }
-
-  .mi-doc__title {
-    font-size: 34px;
+    padding: 24px 16px 24px;
   }
 
   .mi-doc__masthead {
     flex-direction: column;
+    align-items: flex-start;
     gap: 14px;
   }
 
@@ -1117,12 +1281,32 @@
     text-align: left;
   }
 
-  .mi-doc__actions .mi-btn--primary {
-    width: 100%;
+  .mi-doc__title {
+    font-size: 26px;
   }
 
-  .mi-totals__row--grand {
-    font-size: 18px;
+  .mi-meta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mi-total__box {
+    font-size: 15px;
+  }
+
+  .mi-statusbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .mi-statusbar__control {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .mi-doc__actions .mi-btn--primary {
+    width: 100%;
   }
 
   .mi-modal {

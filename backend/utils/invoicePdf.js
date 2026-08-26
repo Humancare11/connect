@@ -36,6 +36,22 @@ const LINE = "#e2e6f0";
 const PANEL_BLUE = "#eef2fc";
 const WHITE = "#ffffff";
 
+// Manual-invoice ("Document" template) palette — a deliberate departure from
+// the consultation template's NAVY/ACCENT/PANEL_BLUE above, not a variant of
+// it, so it gets its own token names rather than reusing/overloading those.
+// Kept separate so nothing here can ever change what the consultation
+// branch renders.
+const MAN_NAVY = "#16305e";
+const MAN_CAPTION = "#2f6cb0";
+const MAN_GREY_BAND = "#eef0f4";
+const MAN_HAIRLINE = "#d5d9e0";
+const MAN_RED = "#c0392b";
+const MAN_RED_BG = "#fdeced";
+const MAN_GREEN = "#0f7047";
+const MAN_GREEN_BG = "#edf7f1";
+const MAN_INK = "#1c2230";
+const MAN_MUTED = "#5b6472";
+
 const PAGE_MARGIN = 50;
 const CONTENT_WIDTH = 495; // A4 width (595.28pt) minus left+right margins
 const RIGHT = PAGE_MARGIN + CONTENT_WIDTH;
@@ -77,6 +93,18 @@ function formatDate(date) {
 // Trims a quantity like 2.00 down to "2" or 1.50 down to "1.5" — line-item
 // quantities are typed with step="0.01" on the form but are whole numbers
 // far more often than not, and "2.00" reads as noise on a printed table.
+// "Sep 19, 2026" — short-month variant used only by the manual-invoice
+// ("Document" template) layout; the consultation template keeps the
+// long-month formatDate above untouched.
+function formatDateShort(date) {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 function formatQuantity(quantity) {
   const n = Number(quantity) || 0;
   return String(parseFloat(n.toFixed(2)));
@@ -237,6 +265,30 @@ function buildInvoicePdfBuffer({
       const left = PAGE_MARGIN;
       const amountDisplay = formatAmount(amountCents, currency);
       const hasItems = isManual && Array.isArray(items) && items.length > 0;
+
+      // Manual invoices get a fully separate rendering path (drawManualInvoice,
+      // defined below) — isolated here rather than interleaved with the
+      // consultation drawing so that branch below is never touched by this
+      // template and stays byte-identical to before this change.
+      if (isManual) {
+        drawManualInvoice(doc, {
+          invoiceNumber,
+          issuedAt,
+          billTo,
+          description,
+          amountCents,
+          amountDisplay,
+          currency,
+          status,
+          items,
+          hasItems,
+          dueDate,
+          paymentTerms,
+          left,
+        });
+        doc.end();
+        return;
+      }
 
       // ── Top bar ──
       doc.rect(0, 0, doc.page.width, 8).fill(NAVY);
@@ -531,6 +583,248 @@ function buildInvoicePdfBuffer({
       reject(err);
     }
   });
+}
+
+// ── Manual-invoice ("Document" template) ────────────────────────────────
+// Renders documentType: "manual" only. Fully separate from the consultation
+// drawing code above — different palette (MAN_* tokens), different font
+// family (Times/serif vs Helvetica) — so nothing here can perturb that
+// template. Only pure, non-branching helpers are shared (formatAmount,
+// formatDateShort, formatQuantity, currencyLabel, measureText, the segment
+// helpers) and none of them read documentType, so this function is the only
+// place manual-invoice styling lives.
+//
+// All values are still drawn via pdfkit's text API, never interpolated into
+// markup, so there is no injection surface — same invariant as the
+// consultation branch.
+function drawManualInvoice(doc, ctx) {
+  const { invoiceNumber, issuedAt, billTo, description, amountDisplay, currency, status, items, hasItems, dueDate, paymentTerms, left } = ctx;
+
+  const isPaid = status === "paid";
+
+  // ── Logo + title ──
+  const logoY = 30;
+  const logoHeight = 74;
+
+  if (LOGO_BUFFER) {
+    doc.image(LOGO_BUFFER, left, logoY, { height: logoHeight });
+  } else {
+    doc.font("Times-Bold").fontSize(20).fillColor(MAN_NAVY).text("Humancare Connect", left, logoY, { lineBreak: false });
+  }
+
+  doc.font("Times-Bold").fontSize(24).fillColor(MAN_NAVY).text("INVOICE", left, logoY, { width: CONTENT_WIDTH, align: "right" });
+  doc
+    .font("Times-Bold")
+    .fontSize(11)
+    .fillColor(MAN_MUTED)
+    .text(`# ${invoiceNumber || ""}`, left, logoY + 30, { width: CONTENT_WIDTH, align: "right" });
+
+  // ── Rule ──
+  let y = logoY + logoHeight + 18;
+  doc.rect(left, y, CONTENT_WIDTH, 2).fill(MAN_NAVY);
+  y += 24;
+
+  // ── FROM / BILL TO ──
+  const colGap = 24;
+  const colWidth = (CONTENT_WIDTH - colGap) / 2;
+  const fromX = left;
+  const billX = left + colWidth + colGap;
+  const captionY = y;
+
+  doc.font("Times-Bold").fontSize(8.5).fillColor(MAN_CAPTION).text("FROM", fromX, captionY, { characterSpacing: 0.5 });
+  doc.font("Times-Bold").fontSize(8.5).fillColor(MAN_CAPTION).text("BILL TO", billX, captionY, { characterSpacing: 0.5 });
+
+  let fromY = captionY + 16;
+  doc.font("Times-Bold").fontSize(11).fillColor(MAN_INK).text("Humancare Connect, Inc.", fromX, fromY, { width: colWidth });
+  fromY = doc.y + 4;
+  doc.font("Times-Roman").fontSize(9.5).fillColor(MAN_MUTED);
+  for (const line of [...COMPANY_ADDRESS_LINES, COMPANY_PHONE, COMPANY_EMAIL]) {
+    doc.text(line, fromX, fromY, { width: colWidth });
+    fromY = doc.y + 1;
+  }
+
+  // Company name first if present, else the contact's own name carries the
+  // bold line — a manual invoice with no company on file still gets a
+  // sensible BILL TO block instead of a blank bold line.
+  const hasCompany = Boolean(billTo?.company);
+  const billLines = [{ text: hasCompany ? billTo.company : billTo?.name || "—", font: "Times-Bold", size: 11, color: MAN_INK, gap: 4 }];
+  if (hasCompany && billTo?.name) billLines.push({ text: billTo.name, font: "Times-Roman", size: 9.5, color: MAN_MUTED, gap: 1 });
+  if (billTo?.email) billLines.push({ text: billTo.email, font: "Times-Roman", size: 9.5, color: MAN_MUTED, gap: 1 });
+  if (billTo?.address) billLines.push({ text: billTo.address, font: "Times-Roman", size: 9.5, color: MAN_MUTED, gap: 1 });
+  const locality = [billTo?.country, billTo?.postalCode].filter(Boolean).join(" · ");
+  if (locality) billLines.push({ text: locality, font: "Times-Roman", size: 9.5, color: MAN_MUTED, gap: 1 });
+  if (billTo?.registrationNumber) billLines.push({ text: `Reg. No. ${billTo.registrationNumber}`, font: "Times-Roman", size: 9.5, color: MAN_MUTED, gap: 1 });
+
+  let billY = captionY + 16;
+  for (const line of billLines) {
+    doc.font(line.font).fontSize(line.size).fillColor(line.color).text(line.text, billX, billY, { width: colWidth });
+    billY = doc.y + line.gap;
+  }
+
+  y = Math.max(fromY, billY) + 12;
+
+  // ── Meta strip: Issue Date | Due Date | Payment Terms | Currency ──
+  const colW = CONTENT_WIDTH / 4;
+  const metaCols = [
+    { label: "ISSUE DATE", value: formatDateShort(issuedAt), bold: false },
+    { label: "DUE DATE", value: dueDate ? formatDateShort(dueDate) : "—", bold: true },
+    { label: "PAYMENT TERMS", value: paymentTerms || "—", bold: false },
+    { label: "CURRENCY", value: currencyLabel(currency), bold: false },
+  ];
+  doc.rect(left, y, CONTENT_WIDTH, 20).fill(MAN_GREY_BAND);
+  metaCols.forEach((col, i) => {
+    doc
+      .font("Times-Bold")
+      .fontSize(7.5)
+      .fillColor(MAN_MUTED)
+      .text(col.label, left + i * colW + 10, y + 6, { characterSpacing: 0.3, width: colW - 16, lineBreak: false });
+  });
+  y += 20;
+  metaCols.forEach((col, i) => {
+    doc
+      .font(col.bold ? "Times-Bold" : "Times-Roman")
+      .fontSize(9.5)
+      .fillColor(col.bold ? MAN_NAVY : MAN_INK)
+      .text(col.value, left + i * colW + 10, y + 6, { width: colW - 16, lineBreak: false });
+  });
+  y += 20 + 22;
+
+  // ── Line-item table (paginates: the header bar is redrawn on any new
+  // page the rows spill onto, so it never ends up alone at a page bottom) ──
+  const amountColW = 90;
+  const rateColW = 80;
+  const qtyColW = 50;
+  const amountColRight = RIGHT - 14;
+  const rateColRight = amountColRight - amountColW - 12;
+  const qtyColLeft = rateColRight - rateColW - 12 - qtyColW;
+  const descWidth = qtyColLeft - 12 - (left + 14);
+
+  function drawTableHeader(headerY) {
+    doc.rect(left, headerY, CONTENT_WIDTH, 24).fill(MAN_NAVY);
+    doc.font("Times-Bold").fontSize(9.5).fillColor(WHITE).text("DESCRIPTION", left + 14, headerY + 7, { characterSpacing: 0.3, lineBreak: false });
+    doc.font("Times-Bold").fontSize(9.5).fillColor(WHITE).text("QTY", qtyColLeft, headerY + 7, { width: qtyColW, align: "center" });
+    doc
+      .font("Times-Bold")
+      .fontSize(9.5)
+      .fillColor(WHITE)
+      .text("RATE", rateColRight - rateColW, headerY + 7, { width: rateColW, align: "right" });
+    doc
+      .font("Times-Bold")
+      .fontSize(9.5)
+      .fillColor(WHITE)
+      .text("AMOUNT", amountColRight - amountColW, headerY + 7, { width: amountColW, align: "right" });
+    return headerY + 24;
+  }
+
+  const PAGE_BOTTOM = doc.page.height - PAGE_MARGIN;
+  let rowY = drawTableHeader(y) + 12;
+
+  function drawRow({ descText, qtyText, rateText, amountText, boldDesc }) {
+    const rowH = Math.max(16, measureText(doc, descText, { font: boldDesc ? "Times-Bold" : "Times-Roman", size: 9.5, width: descWidth }));
+    if (rowY + rowH + 14 > PAGE_BOTTOM - 30) {
+      doc.addPage();
+      rowY = drawTableHeader(PAGE_MARGIN) + 12;
+    }
+    doc
+      .font(boldDesc ? "Times-Bold" : "Times-Roman")
+      .fontSize(9.5)
+      .fillColor(MAN_INK)
+      .text(descText, left + 14, rowY, { width: descWidth });
+    if (qtyText !== null) doc.font("Times-Roman").fontSize(9.5).fillColor(MAN_INK).text(qtyText, qtyColLeft, rowY, { width: qtyColW, align: "center" });
+    if (rateText !== null) doc.font("Times-Roman").fontSize(9.5).fillColor(MAN_INK).text(rateText, rateColRight - rateColW, rowY, { width: rateColW, align: "right" });
+    doc.font("Times-Bold").fontSize(9.5).fillColor(MAN_INK).text(amountText, amountColRight - amountColW, rowY, { width: amountColW, align: "right" });
+    rowY += rowH + 10;
+    doc.rect(left + 14, rowY - 5, CONTENT_WIDTH - 28, 0.75).fill(MAN_HAIRLINE);
+  }
+
+  if (hasItems) {
+    for (const item of items) {
+      drawRow({
+        descText: item.description || "",
+        qtyText: formatQuantity(item.quantity),
+        rateText: formatAmount(Math.round((Number(item.rate) || 0) * 100), currency),
+        amountText: formatAmount(item.amountCents, currency),
+        boldDesc: false,
+      });
+    }
+  } else {
+    drawRow({
+      descText: description || "Invoice",
+      qtyText: null,
+      rateText: null,
+      amountText: amountDisplay,
+      boldDesc: true,
+    });
+  }
+
+  y = rowY + 10;
+
+  // ── Total box ──
+  const totalBoxW = 220;
+  const totalBoxX = RIGHT - totalBoxW;
+  const totalBoxH = 34;
+  if (y + totalBoxH > PAGE_BOTTOM - 140) {
+    doc.addPage();
+    y = PAGE_MARGIN;
+  }
+  doc.rect(totalBoxX, y, totalBoxW, totalBoxH).fill(MAN_GREY_BAND);
+  doc.font("Times-Roman").fontSize(10).fillColor(MAN_INK).text(isPaid ? "Total Paid:" : "Total Due:", totalBoxX + 14, y + 11, { lineBreak: false });
+  rightAlignedSegments(doc, [{ text: amountDisplay, size: 13, color: MAN_NAVY, font: "Times-Bold" }], y + 9, totalBoxX + totalBoxW - 14);
+  y += totalBoxH + 20;
+
+  // ── Status band ──
+  const bandColor = isPaid ? MAN_GREEN : MAN_RED;
+  const bandBg = isPaid ? MAN_GREEN_BG : MAN_RED_BG;
+  const bandText = isPaid ? "STATUS: PAID — Payment received in full. No balance outstanding." : "STATUS: UNPAID — Payment is outstanding and due.";
+  const bandH = 30;
+  doc.rect(left, y, CONTENT_WIDTH, bandH).fill(bandBg);
+  doc.rect(left, y, 4, bandH).fill(bandColor);
+  doc.font("Times-Bold").fontSize(10).fillColor(bandColor).text(bandText, left + 16, y + 10, { width: CONTENT_WIDTH - 30, lineBreak: false });
+  y += bandH + 22;
+
+  // ── Terms ──
+  doc.font("Times-Bold").fontSize(8.5).fillColor(MAN_CAPTION).text("TERMS", left, y, { characterSpacing: 0.5 });
+  y += 14;
+
+  // Mirrors the admin form's own preview copy (ManualInvoices.jsx) so the
+  // printed PDF never disagrees with what the admin saw before sending.
+  const termsLine =
+    !paymentTerms || paymentTerms === "Due on Receipt"
+      ? "Payment is due immediately on receipt of this invoice. Please remit payment for the amount above without delay."
+      : `Payment is due within ${String(paymentTerms).replace(/\D/g, "")} days from the invoice date (${String(paymentTerms).replace(" Days", "")}). Please remit payment for the amount above by the due date indicated.`;
+  doc.font("Times-Roman").fontSize(9.5).fillColor(MAN_INK).text(termsLine, left, y, { width: CONTENT_WIDTH, lineGap: 1.5 });
+  y = doc.y + 10;
+
+  drawSegmentsAt(
+    doc,
+    [
+      { text: "Payment Due Date: ", font: "Times-Bold", size: 9.5, color: MAN_INK },
+      { text: dueDate ? formatDateShort(dueDate) : "—", font: "Times-Roman", size: 9.5, color: MAN_INK },
+    ],
+    left,
+    y
+  );
+  y += 15;
+  drawSegmentsAt(
+    doc,
+    [
+      { text: "Payment Terms: ", font: "Times-Bold", size: 9.5, color: MAN_INK },
+      { text: paymentTerms || "—", font: "Times-Roman", size: 9.5, color: MAN_INK },
+    ],
+    left,
+    y
+  );
+  y += 22;
+
+  const closingText = description && String(description).trim() ? String(description).trim() : "Thank you for your business.";
+  doc.font("Times-Italic").fontSize(9.5).fillColor(MAN_MUTED).text(closingText, left, y, { width: CONTENT_WIDTH, lineGap: 1.5 });
+  y = doc.y + 16;
+
+  // ── Footer ──
+  const footerY = Math.max(y, doc.page.height - PAGE_MARGIN - 30);
+  doc.rect(left, footerY, CONTENT_WIDTH, 1).fill(MAN_HAIRLINE);
+  const footerText = `Humancare Connect  |  24/7 Support: ${COMPANY_EMAIL}  |  ${COMPANY_ADDRESS_LINES.join(" ")}  |  ${COMPANY_PHONE}`;
+  doc.font("Times-Roman").fontSize(8).fillColor(MAN_MUTED).text(footerText, left, footerY + 12, { width: CONTENT_WIDTH, align: "center" });
 }
 
 module.exports = { buildInvoicePdfBuffer, formatAmount, defaultManualNotes };
