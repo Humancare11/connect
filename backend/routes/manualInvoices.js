@@ -7,10 +7,78 @@ const { createManualInvoice, markManualInvoicePaid, resendManualInvoiceEmail } =
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
-const MAX_LENGTHS = { clientName: 120, clientEmail: 254, description: 500, paymentMethod: 80 };
+const MAX_LENGTHS = {
+  clientName: 120,
+  clientEmail: 254,
+  description: 500,
+  paymentMethod: 80,
+  companyName: 160,
+  registrationNumber: 60,
+  address: 200,
+  country: 100,
+  postalCode: 30,
+  paymentTerms: 40,
+  itemDescription: 200,
+};
 // $1,000,000 ceiling — guards against a fat-finger typo (e.g. a stray extra
 // digit) minting a wildly oversized invoice; not a business limit.
 const MAX_AMOUNT_CENTS = 100_000_000;
+const MAX_ITEMS = 50;
+
+// Same rounding rule the form's live preview uses (ManualInvoices.jsx's
+// computeItemAmountCents) — computed server-side here too since the client
+// total is never trusted as-is.
+function computeItemAmountCents(quantity, rate) {
+  const rateCents = Math.round(rate * 100);
+  return Math.round(quantity * rateCents);
+}
+
+// Validates and normalizes the raw items array from the request body.
+// Returns { items, amountCents } on success, or { error } on failure.
+function parseItems(rawItems) {
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    return { error: "Add at least one invoice item." };
+  }
+  if (rawItems.length > MAX_ITEMS) {
+    return { error: `An invoice can have at most ${MAX_ITEMS} items.` };
+  }
+
+  const items = [];
+  let amountCents = 0;
+  for (const raw of rawItems) {
+    const description = String(raw?.description || "").trim();
+    const quantity = Number(raw?.quantity);
+    const rate = Number(raw?.rate);
+
+    if (!description || description.length > MAX_LENGTHS.itemDescription) {
+      return { error: "Each item needs a description under 200 characters." };
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      return { error: "Each item needs a quantity greater than zero." };
+    }
+    if (!Number.isFinite(rate) || rate < 0) {
+      return { error: "Each item needs a valid, non-negative rate." };
+    }
+
+    const itemAmountCents = computeItemAmountCents(quantity, rate);
+    items.push({ description, quantity, rate, amountCents: itemAmountCents });
+    amountCents += itemAmountCents;
+  }
+
+  if (amountCents <= 0) {
+    return { error: "Enter a valid amount greater than zero." };
+  }
+  return { items, amountCents };
+}
+
+// dueDate arrives as a "YYYY-MM-DD" date-input string; empty/invalid input
+// is fine (dueDate is optional) but a non-empty unparsable string is not.
+function parseDueDate(raw) {
+  if (raw === undefined || raw === null || String(raw).trim() === "") return { dueDate: null };
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return { error: "Enter a valid due date." };
+  return { dueDate: parsed };
+}
 
 function serializeManualInvoice(doc) {
   const creator = doc.createdBy && typeof doc.createdBy === "object" ? doc.createdBy : null;
@@ -19,6 +87,14 @@ function serializeManualInvoice(doc) {
     invoiceNumber: doc.invoiceNumber,
     clientName: doc.clientName,
     clientEmail: doc.clientEmail,
+    companyName: doc.companyName || undefined,
+    registrationNumber: doc.registrationNumber || undefined,
+    address: doc.address || undefined,
+    country: doc.country || undefined,
+    postalCode: doc.postalCode || undefined,
+    paymentTerms: doc.paymentTerms || undefined,
+    dueDate: doc.dueDate || undefined,
+    items: Array.isArray(doc.items) && doc.items.length ? doc.items : undefined,
     description: doc.description,
     amountCents: doc.amountCents,
     currency: doc.currency,
@@ -41,13 +117,20 @@ router.post("/", verifyAdminToken, paymentAdminOnly, async (req, res) => {
   try {
     const clientName = String(req.body.name || "").trim();
     const clientEmail = String(req.body.email || "").trim().toLowerCase();
+    const companyName = String(req.body.companyName || "").trim();
+    const registrationNumber = String(req.body.registrationNumber || "").trim();
+    const address = String(req.body.address || "").trim();
+    const country = String(req.body.country || "").trim();
+    const postalCode = String(req.body.postalCode || "").trim();
+    const paymentTerms = String(req.body.paymentTerms || "").trim() || "Due on Receipt";
+    // description is now the optional free-text "Notes" field, not a
+    // required line-item description — the itemized lines below carry that.
     const description = String(req.body.description || "").trim();
     const status = req.body.status === "paid" ? "paid" : "due";
     const paymentMethod = String(req.body.paymentMethod || "").trim();
-    const amount = Number(req.body.amount);
 
-    if (!clientName || !clientEmail || !description) {
-      return res.status(400).json({ msg: "Name, email, and description are required." });
+    if (!clientName || !clientEmail) {
+      return res.status(400).json({ msg: "Name and email are required." });
     }
     if (!EMAIL_RE.test(clientEmail)) {
       return res.status(400).json({ msg: "Enter a valid client email address." });
@@ -56,23 +139,42 @@ router.post("/", verifyAdminToken, paymentAdminOnly, async (req, res) => {
       clientName.length > MAX_LENGTHS.clientName ||
       clientEmail.length > MAX_LENGTHS.clientEmail ||
       description.length > MAX_LENGTHS.description ||
-      paymentMethod.length > MAX_LENGTHS.paymentMethod
+      paymentMethod.length > MAX_LENGTHS.paymentMethod ||
+      companyName.length > MAX_LENGTHS.companyName ||
+      registrationNumber.length > MAX_LENGTHS.registrationNumber ||
+      address.length > MAX_LENGTHS.address ||
+      country.length > MAX_LENGTHS.country ||
+      postalCode.length > MAX_LENGTHS.postalCode ||
+      paymentTerms.length > MAX_LENGTHS.paymentTerms
     ) {
       return res.status(400).json({ msg: "One or more fields exceed the allowed length." });
     }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return res.status(400).json({ msg: "Enter a valid amount greater than zero." });
-    }
 
-    const amountCents = Math.round(amount * 100);
+    const { items, amountCents, error: itemsError } = parseItems(req.body.items);
+    if (itemsError) {
+      return res.status(400).json({ msg: itemsError });
+    }
     if (amountCents > MAX_AMOUNT_CENTS) {
       return res.status(400).json({ msg: "Amount is too large. Please double-check the value." });
+    }
+
+    const { dueDate, error: dueDateError } = parseDueDate(req.body.dueDate);
+    if (dueDateError) {
+      return res.status(400).json({ msg: dueDateError });
     }
 
     const invoice = await createManualInvoice({
       createdBy: req.user.id,
       clientName,
       clientEmail,
+      companyName,
+      registrationNumber,
+      address,
+      country,
+      postalCode,
+      paymentTerms,
+      dueDate,
+      items,
       description,
       amountCents,
       status,

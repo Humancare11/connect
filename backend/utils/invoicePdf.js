@@ -74,6 +74,14 @@ function formatDate(date) {
   });
 }
 
+// Trims a quantity like 2.00 down to "2" or 1.50 down to "1.5" — line-item
+// quantities are typed with step="0.01" on the form but are whole numbers
+// far more often than not, and "2.00" reads as noise on a printed table.
+function formatQuantity(quantity) {
+  const n = Number(quantity) || 0;
+  return String(parseFloat(n.toFixed(2)));
+}
+
 // e.g. "USD ($)" — derives the symbol from Intl so this stays correct for
 // any currency without hand-maintaining a symbol table.
 function currencyLabel(currency) {
@@ -145,23 +153,31 @@ function measureText(doc, text, { font = "Helvetica", size = 10, width }) {
 // is the admin-created B2B invoice (see manualInvoiceService.js); its notes
 // are generic billing terms rather than the teleconsultation cancellation
 // policy below, since a B2B invoice isn't necessarily for a consultation.
-function defaultNotes(documentType, status) {
-  if (documentType === "manual") {
-    if (status === "paid") {
-      return [
-        { bold: "Payment received.", rest: " This receipt confirms that payment for the amount above has been processed." },
-        { rest: "Please retain this receipt for your records." },
-        { rest: "For any questions about this invoice, please contact support@humancareconnect.co." },
-        { rest: "Please quote the invoice number in any correspondence regarding this payment." },
-      ];
-    }
+// Exported so manualInvoiceService.js can splice the admin's own "Notes"
+// text in ahead of the standard reminders (see buildManualNotes there)
+// instead of duplicating this copy.
+function defaultManualNotes(status) {
+  if (status === "paid") {
     return [
-      { bold: "Payment due.", rest: " Please arrange payment within 15 days of the invoice date shown above." },
-      { rest: "Payment can be made by bank transfer or another method agreed with Humancare Connect, referencing the invoice number." },
+      { bold: "Payment received.", rest: " This receipt confirms that payment for the amount above has been processed." },
+      { rest: "Please retain this receipt for your records." },
       { rest: "For any questions about this invoice, please contact support@humancareconnect.co." },
       { rest: "Please quote the invoice number in any correspondence regarding this payment." },
     ];
   }
+  return [
+    // "the due date above" rather than a hardcoded day count — the actual
+    // due date/terms are now shown in the document's meta rows and can be
+    // any of the admin's chosen payment terms, not always 15 days.
+    { bold: "Payment due.", rest: " Please arrange payment by the due date shown above." },
+    { rest: "Payment can be made by bank transfer or another method agreed with Humancare Connect, referencing the invoice number." },
+    { rest: "For any questions about this invoice, please contact support@humancareconnect.co." },
+    { rest: "Please quote the invoice number in any correspondence regarding this payment." },
+  ];
+}
+
+function defaultNotes(documentType, status) {
+  if (documentType === "manual") return defaultManualNotes(status);
 
   return [
     { bold: "Booking confirmed.", rest: " Booking details have been sent to the email address provided above." },
@@ -194,16 +210,22 @@ function buildInvoicePdfBuffer({
   documentType = "consultation",
   status,
   notes,
+  // "manual" only: itemized lines (each { description, quantity, rate,
+  // amountCents }), plus the due date/payment terms shown in the meta rows.
+  items,
+  dueDate,
+  paymentTerms,
 }) {
   return new Promise((resolve, reject) => {
     try {
+      const isManual = documentType === "manual";
       const doc = new PDFDocument({
         size: "A4",
         margin: PAGE_MARGIN,
         info: {
           Title: `Invoice ${invoiceNumber || ""}`.trim(),
           Author: "Humancare Connect",
-          Subject: description || "Consultation booking fee",
+          Subject: description || (isManual ? "Invoice" : "Consultation booking fee"),
           Creator: "Humancare Connect",
         },
       });
@@ -214,6 +236,7 @@ function buildInvoicePdfBuffer({
 
       const left = PAGE_MARGIN;
       const amountDisplay = formatAmount(amountCents, currency);
+      const hasItems = isManual && Array.isArray(items) && items.length > 0;
 
       // ── Top bar ──
       doc.rect(0, 0, doc.page.width, 8).fill(NAVY);
@@ -244,8 +267,10 @@ function buildInvoicePdfBuffer({
       const META_ROWS = [
         ["Invoice No.  ", invoiceNumber],
         ["Issue Date  ", formatDate(issuedAt)],
-        ["Currency  ", currencyLabel(currency)],
       ];
+      if (isManual && dueDate) META_ROWS.push(["Due Date  ", formatDate(dueDate)]);
+      if (isManual && paymentTerms) META_ROWS.push(["Terms  ", paymentTerms]);
+      META_ROWS.push(["Currency  ", currencyLabel(currency)]);
       let metaY = 66;
       for (const [metaLabel, metaValue] of META_ROWS) {
         rightAlignedSegments(
@@ -279,38 +304,103 @@ function buildInvoicePdfBuffer({
 
       const nameText = billTo?.name || "Patient";
       const emailText = billTo?.email || "";
-      const nameH = measureText(doc, nameText, { font: "Helvetica-Bold", size: 13, width: panelTextWidth });
-      const emailH = emailText ? measureText(doc, emailText, { font: "Helvetica", size: 10, width: panelTextWidth }) : 0;
-      const billToHeight = PANEL_PAD + 12 + nameH + (emailText ? emailH + 6 : 0) + PANEL_PAD;
+      const companyText = billTo?.company || "";
+      const registrationText = billTo?.registrationNumber ? `Reg. No. ${billTo.registrationNumber}` : "";
+      const addressText = billTo?.address || "";
+      const localityText = [billTo?.country, billTo?.postalCode].filter(Boolean).join(" · ");
+
+      // Stacked top-to-bottom: name always first, the rest only when present
+      // — a manual invoice with no company/address on file still renders a
+      // tight panel instead of empty lines.
+      const billToLines = [{ text: nameText, font: "Helvetica-Bold", size: 13, color: NAVY, gapBefore: 0 }];
+      if (companyText) billToLines.push({ text: companyText, font: "Helvetica-Bold", size: 10, color: INK, gapBefore: 5 });
+      if (emailText) billToLines.push({ text: emailText, font: "Helvetica", size: 10, color: ACCENT, gapBefore: 5 });
+      if (addressText) billToLines.push({ text: addressText, font: "Helvetica", size: 9, color: MUTED, gapBefore: 6 });
+      if (localityText) billToLines.push({ text: localityText, font: "Helvetica", size: 9, color: MUTED, gapBefore: 2 });
+      if (registrationText) billToLines.push({ text: registrationText, font: "Helvetica", size: 9, color: MUTED, gapBefore: 2 });
+
+      const billToLinesHeight = billToLines.reduce(
+        (sum, line) => sum + line.gapBefore + measureText(doc, line.text, { font: line.font, size: line.size, width: panelTextWidth }),
+        0
+      );
+      const LABEL_LINE_H = 12; // approx height of the 8.5pt "BILLED TO" label
+      const billToHeight = PANEL_PAD + LABEL_LINE_H + 16 + billToLinesHeight + PANEL_PAD;
 
       doc.roundedRect(left, billToY, CONTENT_WIDTH, billToHeight, 10).fill(PANEL_BLUE);
       doc.font("Helvetica-Bold").fontSize(8.5).fillColor(MUTED).text("BILLED TO", left + 16, billToY + PANEL_PAD, { characterSpacing: 0.5 });
-      doc.font("Helvetica-Bold").fontSize(13).fillColor(NAVY).text(nameText, left + 16, billToY + PANEL_PAD + 16, { width: panelTextWidth });
-      if (emailText) {
-        doc.font("Helvetica").fontSize(10).fillColor(ACCENT).text(emailText, left + 16, doc.y + 4, { width: panelTextWidth });
+      let billToLineY = billToY + PANEL_PAD + 16;
+      for (const line of billToLines) {
+        billToLineY += line.gapBefore;
+        doc.font(line.font).fontSize(line.size).fillColor(line.color).text(line.text, left + 16, billToLineY, { width: panelTextWidth });
+        billToLineY = doc.y;
       }
 
       // ── Line item table ──
       const tableY = billToY + billToHeight + PANEL_GUTTER;
       doc.rect(left, tableY, CONTENT_WIDTH, 26).fill(NAVY);
-      doc.font("Helvetica-Bold").fontSize(9.5).fillColor(WHITE).text("DESCRIPTION", left + 16, tableY + 9, { characterSpacing: 0.4 });
-      rightAlignedSegments(doc, [{ text: "AMOUNT", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, RIGHT - 16);
 
-      const itemY = tableY + 26 + 16;
-      const descriptionText = description || "Consultation booking fee";
-      // Wide enough to use the space the amount column doesn't need, but
-      // still short of it — the amount is right-aligned at RIGHT - 16.
-      const descriptionWidth = CONTENT_WIDTH - 32 - 120;
-      const descriptionH = measureText(doc, descriptionText, { font: "Helvetica-Bold", size: 11, width: descriptionWidth });
+      let lastRowBottom;
 
-      doc.font("Helvetica-Bold").fontSize(11).fillColor(INK).text(descriptionText, left + 16, itemY, { width: descriptionWidth });
-      rightAlignedSegments(doc, [{ text: amountDisplay, size: 11, color: INK, font: "Helvetica-Bold" }], itemY, RIGHT - 16);
+      if (hasItems) {
+        // Fixed-width QTY/RATE/AMOUNT columns, right-aligned; DESCRIPTION
+        // takes whatever's left so it's the only column that wraps.
+        const amountColRight = RIGHT - 16;
+        const rateColRight = amountColRight - 85 - 14;
+        const qtyColRight = rateColRight - 65 - 14;
+        const itemDescWidth = qtyColRight - 45 - 14 - (left + 16);
+
+        doc.font("Helvetica-Bold").fontSize(9.5).fillColor(WHITE).text("DESCRIPTION", left + 16, tableY + 9, { characterSpacing: 0.4 });
+        rightAlignedSegments(doc, [{ text: "QTY", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, qtyColRight);
+        rightAlignedSegments(doc, [{ text: "RATE", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, rateColRight);
+        rightAlignedSegments(doc, [{ text: "AMOUNT", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, amountColRight);
+
+        let rowY = tableY + 26 + 14;
+        items.forEach((item, index) => {
+          const rowDescText = item.description || "";
+          const rowDescH = measureText(doc, rowDescText, { font: "Helvetica-Bold", size: 10, width: itemDescWidth });
+
+          doc.font("Helvetica-Bold").fontSize(10).fillColor(INK).text(rowDescText, left + 16, rowY, { width: itemDescWidth });
+          rightAlignedSegments(doc, [{ text: formatQuantity(item.quantity), size: 10, color: INK, font: "Helvetica" }], rowY, qtyColRight);
+          rightAlignedSegments(
+            doc,
+            [{ text: formatAmount(Math.round((Number(item.rate) || 0) * 100), currency), size: 10, color: INK, font: "Helvetica" }],
+            rowY,
+            rateColRight
+          );
+          rightAlignedSegments(
+            doc,
+            [{ text: formatAmount(item.amountCents, currency), size: 10, color: INK, font: "Helvetica-Bold" }],
+            rowY,
+            amountColRight
+          );
+
+          rowY += rowDescH + 12;
+          if (index < items.length - 1) {
+            doc.rect(left + 16, rowY - 6, CONTENT_WIDTH - 32, 0.75).fill(LINE);
+          }
+        });
+        lastRowBottom = rowY;
+      } else {
+        doc.font("Helvetica-Bold").fontSize(9.5).fillColor(WHITE).text("DESCRIPTION", left + 16, tableY + 9, { characterSpacing: 0.4 });
+        rightAlignedSegments(doc, [{ text: "AMOUNT", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, RIGHT - 16);
+
+        const itemY = tableY + 26 + 16;
+        const descriptionText = description || "Consultation booking fee";
+        // Wide enough to use the space the amount column doesn't need, but
+        // still short of it — the amount is right-aligned at RIGHT - 16.
+        const descriptionWidth = CONTENT_WIDTH - 32 - 120;
+        const descriptionH = measureText(doc, descriptionText, { font: "Helvetica-Bold", size: 11, width: descriptionWidth });
+
+        doc.font("Helvetica-Bold").fontSize(11).fillColor(INK).text(descriptionText, left + 16, itemY, { width: descriptionWidth });
+        rightAlignedSegments(doc, [{ text: amountDisplay, size: 11, color: INK, font: "Helvetica-Bold" }], itemY, RIGHT - 16);
+        lastRowBottom = itemY + descriptionH + 4;
+      }
 
       // ── Total ──
-      // Sits below the *rendered* height of the description. With a fixed
-      // offset a two-line description ran straight through this rule.
-      const ruleY = itemY + descriptionH + 16;
-      const isManual = documentType === "manual";
+      // Sits below the *rendered* height of the last row. With a fixed
+      // offset a two-line description (or a multi-row item table) ran
+      // straight through this rule.
+      const ruleY = lastRowBottom + 12;
       const totalLabel = isManual && status === "due" ? "Amount Due   " : "Total Paid   ";
       doc.rect(left + CONTENT_WIDTH * 0.4, ruleY, CONTENT_WIDTH * 0.6, 1.5).fill(NAVY);
       rightAlignedSegments(
@@ -443,4 +533,4 @@ function buildInvoicePdfBuffer({
   });
 }
 
-module.exports = { buildInvoicePdfBuffer, formatAmount };
+module.exports = { buildInvoicePdfBuffer, formatAmount, defaultManualNotes };

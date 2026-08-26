@@ -1,5 +1,5 @@
 const ManualInvoice = require("../models/ManualInvoice");
-const { buildInvoicePdfBuffer, formatAmount } = require("./invoicePdf");
+const { buildInvoicePdfBuffer, formatAmount, defaultManualNotes } = require("./invoicePdf");
 const { storeUploadInS3, getUploadBuffer } = require("./uploadStorage");
 const { sendManualInvoiceEmail } = require("./sendEmail");
 const { nextInvoiceNumber } = require("./billing");
@@ -14,6 +14,14 @@ async function generateManualInvoicePdfAndUpload({
   issuedAt,
   clientName,
   clientEmail,
+  companyName,
+  registrationNumber,
+  address,
+  country,
+  postalCode,
+  paymentTerms,
+  dueDate,
+  items,
   description,
   amountCents,
   currency,
@@ -22,12 +30,24 @@ async function generateManualInvoicePdfAndUpload({
   const pdfBuffer = await buildInvoicePdfBuffer({
     invoiceNumber,
     issuedAt,
-    billTo: { name: clientName, email: clientEmail },
+    billTo: {
+      name: clientName,
+      email: clientEmail,
+      company: companyName,
+      registrationNumber,
+      address,
+      country,
+      postalCode,
+    },
     description,
+    notes: buildManualNotes(description, status),
     amountCents,
     currency,
     documentType: "manual",
     status,
+    items,
+    dueDate,
+    paymentTerms,
   });
 
   const filename = `${invoiceNumber}.pdf`;
@@ -45,6 +65,15 @@ async function generateManualInvoicePdfAndUpload({
   return { pdfBuffer, key };
 }
 
+// The admin's free-text "Notes" replace the default intro bullet (which
+// otherwise assumes generic boilerplate) while the standard payment-method/
+// contact/invoice-number reminders still follow it.
+function buildManualNotes(description, status) {
+  const custom = String(description || "").trim();
+  if (!custom) return undefined; // let the PDF fall back to its own defaults
+  return [{ rest: custom }, ...defaultManualNotes(status).slice(1)];
+}
+
 // Creates a manual B2B invoice (status "due" or "paid"), generates its PDF,
 // stores it, and emails it to the client. Runs synchronously as part of the
 // admin's explicit "Generate & Send" action (unlike the patient-booking
@@ -55,6 +84,14 @@ async function createManualInvoice({
   createdBy,
   clientName,
   clientEmail,
+  companyName,
+  registrationNumber,
+  address,
+  country,
+  postalCode,
+  paymentTerms,
+  dueDate,
+  items,
   description,
   amountCents,
   status,
@@ -70,6 +107,14 @@ async function createManualInvoice({
     issuedAt,
     clientName,
     clientEmail,
+    companyName,
+    registrationNumber,
+    address,
+    country,
+    postalCode,
+    paymentTerms,
+    dueDate,
+    items,
     description,
     amountCents,
     currency,
@@ -80,6 +125,14 @@ async function createManualInvoice({
     invoiceNumber,
     clientName,
     clientEmail,
+    companyName,
+    registrationNumber,
+    address,
+    country,
+    postalCode,
+    paymentTerms,
+    dueDate,
+    items,
     description,
     amountCents,
     currency,
@@ -130,6 +183,14 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod, resendEmail }) 
     issuedAt: invoice.createdAt,
     clientName: invoice.clientName,
     clientEmail: invoice.clientEmail,
+    companyName: invoice.companyName,
+    registrationNumber: invoice.registrationNumber,
+    address: invoice.address,
+    country: invoice.country,
+    postalCode: invoice.postalCode,
+    paymentTerms: invoice.paymentTerms,
+    dueDate: invoice.dueDate,
+    items: invoice.items,
     description: invoice.description,
     amountCents: invoice.amountCents,
     currency: invoice.currency,
