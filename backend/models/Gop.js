@@ -30,7 +30,7 @@ const gopSchema = new mongoose.Schema(
     providerEmail: { type: String, required: true, trim: true, lowercase: true },
 
     amountCents: { type: Number, required: true, min: 1 },
-    currency: { type: String, default: "eur" },
+    currency: { type: String, default: "usd" },
 
     // The name printed as "Authorized by" on the document — free text
     // entered on the form (see GOP.jsx), prefilled with but not locked to

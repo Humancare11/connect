@@ -94,12 +94,12 @@ async function createManualInvoice({
   items,
   description,
   amountCents,
+  currency,
   status,
   paymentMethod,
 }) {
   const invoiceNumber = await nextInvoiceNumber();
   const issuedAt = new Date();
-  const currency = "usd";
   const normalizedPaymentMethod = status === "paid" ? (paymentMethod || "Received") : "";
 
   const { pdfBuffer, key } = await generateManualInvoicePdfAndUpload({

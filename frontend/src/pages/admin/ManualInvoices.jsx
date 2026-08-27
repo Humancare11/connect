@@ -21,10 +21,9 @@ const ISSUER = {
 };
 
 const CURRENCY_OPTIONS = [
-  { code: "EUR", label: "EUR (€)", symbol: "€" },
   { code: "USD", label: "USD ($)", symbol: "$" },
+  { code: "EUR", label: "EUR (€)", symbol: "€" },
   { code: "GBP", label: "GBP (£)", symbol: "£" },
-  { code: "INR", label: "INR (₹)", symbol: "₹" },
 ];
 
 // value/days pairs drive the "Payment Terms" select below — picking one
@@ -66,8 +65,8 @@ function computeItemAmountCents(item) {
   return Math.round(quantity * rateCents);
 }
 
-function formatMoney(amountCents, currency = "EUR") {
-  const code = String(currency || "EUR").toUpperCase();
+function formatMoney(amountCents, currency = "USD") {
+  const code = String(currency || "USD").toUpperCase();
   try {
     return ((amountCents || 0) / 100).toLocaleString("en-US", {
       style: "currency",
@@ -117,7 +116,7 @@ export default function ManualInvoices() {
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [address, setAddress] = useState("");
-  const [currency, setCurrency] = useState("EUR");
+  const [currency, setCurrency] = useState("USD");
   const [paymentTerms, setPaymentTerms] = useState(
     PAYMENT_TERMS_OPTIONS[2].value,
   );
@@ -311,7 +310,7 @@ export default function ManualInvoices() {
     setEmail("");
     setCompanyName("");
     setAddress("");
-    setCurrency("EUR");
+    setCurrency("USD");
     setPaymentTerms(PAYMENT_TERMS_OPTIONS[2].value);
     setDueDate(
       toDateInputValue(Date.now() + PAYMENT_TERMS_OPTIONS[2].days * 86400000),

@@ -32,21 +32,39 @@ const HAIRLINE = "#d9dee7";
 
 const PAGE_MARGIN = 50;
 const CONTENT_WIDTH = 495; // A4 width (595.28pt) minus left+right margins
-const RIGHT = PAGE_MARGIN + CONTENT_WIDTH;
 const LABEL_COL_WIDTH = 165;
 const CELL_PAD_X = 10;
 const CELL_PAD_Y = 7;
 
-function formatAmount(amountCents, currency = "eur") {
+function formatAmount(amountCents, currency = "usd") {
   const amount = (Number(amountCents) || 0) / 100;
   try {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: String(currency || "eur").toUpperCase(),
+      currency: String(currency || "usd").toUpperCase(),
       minimumFractionDigits: 2,
     }).format(amount);
   } catch {
-    return `${String(currency || "EUR").toUpperCase()} ${amount.toFixed(2)}`;
+    return `${String(currency || "USD").toUpperCase()} ${amount.toFixed(2)}`;
+  }
+}
+
+// e.g. "USD ($)" — prints the currency explicitly (not just implied by the
+// $/€ symbol already embedded in the formatted amount), same convention as
+// the Manual Invoice template's own meta strip.
+function currencyLabel(currency) {
+  const code = String(currency || "usd").toUpperCase();
+  try {
+    const parts = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).formatToParts(0);
+    const symbol = parts.find((p) => p.type === "currency")?.value;
+    return symbol && symbol !== code ? `${code} (${symbol})` : code;
+  } catch {
+    return code;
   }
 }
 
@@ -197,6 +215,7 @@ function buildGopPdfBuffer({
         rows: [
           ["Date Issued:", formatDateLong(issuedAt)],
           ["Case Type:", caseType],
+          ["Currency:", currencyLabel(currency)],
           ["Status:", "AUTHORIZED"],
         ],
       });

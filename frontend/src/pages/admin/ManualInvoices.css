@@ -275,6 +275,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.mi-input--center {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 .mi-input--accent {
   font-weight: 700;
   color: var(--mi-navy);
@@ -364,16 +369,31 @@
   margin-bottom: 10px;
 }
 
+/* Issue Date is stamped, not typed, but still sits beside three .mi-input
+   siblings (Due Date, Payment Terms, Currency) — matches their padding and
+   type scale so all four meta values read as one aligned row. */
+.mi-meta__value {
+  padding: 4px 6px 4px 14px;
+  margin-bottom: 10px;
+  font-family: var(--mi-serif);
+  font-size: 14px;
+  color: var(--mi-ink-soft);
+}
+
 /* -------------------------------------------------------- item section --- */
 
 .mi-items {
   margin-bottom: 4px;
 }
 
+/* Column order matches the row markup: Description, Qty, Rate, Amount,
+   remove-button — Description gets the flexible track since it holds free
+   text, the rest are narrow fixed columns for short numeric/currency
+   values. */
 .mi-items__head,
 .mi-items__row {
   display: grid;
-  grid-template-columns: 132px minmax(0, 1fr) 110px 140px 30px;
+  grid-template-columns: minmax(0, 1fr) 70px 110px 140px 30px;
   gap: 14px;
   align-items: start;
 }
@@ -389,6 +409,10 @@
   text-transform: uppercase;
 }
 
+.mi-items__center {
+  text-align: center;
+}
+
 .mi-items__right {
   text-align: right;
 }
@@ -396,13 +420,6 @@
 .mi-items__row {
   padding: 12px 14px;
   border-bottom: 1px solid #e6e8ec;
-}
-
-.mi-items__desc {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
 }
 
 /* Row headers used only by the stacked mobile layout. */
@@ -538,29 +555,16 @@
   color: var(--mi-ink-soft);
 }
 
-.mi-doc__terms-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 40px;
-  margin: 14px 0 0;
+.mi-doc__terms-pair {
+  margin: 6px 0 0;
   font-family: var(--mi-serif);
   font-size: 14px;
+  color: var(--mi-ink-soft);
 }
 
-.mi-doc__terms-grid > div {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.mi-doc__terms-grid dt {
+.mi-doc__terms-pair strong {
   font-weight: 700;
   color: var(--mi-ink);
-}
-
-.mi-doc__terms-grid dd {
-  margin: 0;
-  color: var(--mi-ink-soft);
 }
 
 .mi-doc__actions {
@@ -1249,7 +1253,7 @@
 
   .mi-items__head,
   .mi-items__row {
-    grid-template-columns: 118px minmax(0, 1fr) 88px 118px 28px;
+    grid-template-columns: minmax(0, 1fr) 64px 88px 118px 28px;
     gap: 10px;
   }
 }
@@ -1291,7 +1295,8 @@
     display: block;
   }
 
-  .mi-items__row .mi-input--num {
+  .mi-items__row .mi-input--num,
+  .mi-items__row .mi-input--center {
     text-align: left;
   }
 

@@ -14,10 +14,9 @@ const ISSUER = {
 };
 
 const CURRENCY_OPTIONS = [
-  { code: "eur", label: "EUR (€)", symbol: "€" },
   { code: "usd", label: "USD ($)", symbol: "$" },
+  { code: "eur", label: "EUR (€)", symbol: "€" },
   { code: "gbp", label: "GBP (£)", symbol: "£" },
-  { code: "inr", label: "INR (₹)", symbol: "₹" },
 ];
 
 const CASE_TYPE_OPTIONS = ["House Call Visit", "Teleconsultation", "In-Clinic"];
@@ -40,8 +39,8 @@ function currencySymbol(code) {
   );
 }
 
-function formatMoney(amountCents, currency = "eur") {
-  const code = String(currency || "eur").toUpperCase();
+function formatMoney(amountCents, currency = "usd") {
+  const code = String(currency || "usd").toUpperCase();
   try {
     return ((amountCents || 0) / 100).toLocaleString("en-US", {
       style: "currency",
@@ -104,7 +103,7 @@ export default function GOP() {
   const [providerAddress, setProviderAddress] = useState("");
   const [providerEmail, setProviderEmail] = useState("");
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState("eur");
+  const [currency, setCurrency] = useState("usd");
   // Prefilled from the logged-in admin's own name, but freely editable —
   // the person authorizing a case isn't always the one at the keyboard.
   const [authorizedByName, setAuthorizedByName] = useState(admin?.name || "");
@@ -210,7 +209,7 @@ export default function GOP() {
     setProviderAddress("");
     setProviderEmail("");
     setAmount("");
-    setCurrency("eur");
+    setCurrency("usd");
     setAuthorizedByName(admin?.name || "");
   };
 

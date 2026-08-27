@@ -7,7 +7,10 @@ const { createGop, resendGopEmail } = require("../utils/gopService");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
-const ALLOWED_CURRENCIES = ["eur", "usd", "gbp", "inr"];
+// INR intentionally excluded — only these three currencies are offered on
+// the form (GOP.jsx), validated here too so a stored/printed GOP can never
+// end up in an arbitrary client-supplied currency.
+const ALLOWED_CURRENCIES = ["usd", "eur", "gbp"];
 // Fixed dropdown on the frontend — validated here too so the stored/printed
 // value can never be arbitrary client-supplied text.
 const CASE_TYPES = ["House Call Visit", "Teleconsultation", "In-Clinic"];
@@ -78,8 +81,8 @@ router.post("/", verifyAdminToken, adminOnly, async (req, res) => {
     const providerAddress = String(req.body.providerAddress || "").trim();
     const providerEmail = String(req.body.providerEmail || "").trim().toLowerCase();
     const authorizedByName = String(req.body.authorizedByName || "").trim();
-    const rawCurrency = String(req.body.currency || "eur").trim().toLowerCase();
-    const currency = ALLOWED_CURRENCIES.includes(rawCurrency) ? rawCurrency : "eur";
+    const rawCurrency = String(req.body.currency || "usd").trim().toLowerCase();
+    const currency = ALLOWED_CURRENCIES.includes(rawCurrency) ? rawCurrency : "usd";
 
     if (!patientName || !providerName || !providerEmail || !authorizedByName) {
       return res.status(400).json({ msg: "Patient name, provider name, provider email, and authorized-by name are required." });

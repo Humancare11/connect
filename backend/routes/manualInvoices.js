@@ -7,6 +7,10 @@ const { createManualInvoice, markManualInvoicePaid, resendManualInvoiceEmail } =
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
+// INR intentionally excluded — only these three currencies are offered on
+// the form (ManualInvoices.jsx), validated here too so a stored/printed
+// invoice can never end up in an arbitrary client-supplied currency.
+const ALLOWED_CURRENCIES = ["usd", "eur", "gbp"];
 const MAX_LENGTHS = {
   clientName: 120,
   clientEmail: 254,
@@ -127,6 +131,8 @@ router.post("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
     const description = String(req.body.description || "").trim();
     const status = req.body.status === "paid" ? "paid" : "due";
     const paymentMethod = String(req.body.paymentMethod || "").trim();
+    const rawCurrency = String(req.body.currency || "usd").trim().toLowerCase();
+    const currency = ALLOWED_CURRENCIES.includes(rawCurrency) ? rawCurrency : "usd";
 
     if (!clientName || !clientEmail) {
       return res.status(400).json({ msg: "Name and email are required." });
@@ -176,6 +182,7 @@ router.post("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
       items,
       description,
       amountCents,
+      currency,
       status,
       paymentMethod: status === "paid" ? paymentMethod : "",
     });
