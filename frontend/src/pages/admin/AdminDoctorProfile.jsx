@@ -345,6 +345,27 @@ function getRequestType(e) {
   return "none";
 }
 
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+// Treat updatedAt as a real edit only if it trails createdAt by more than a
+// few seconds — the initial create + first onboarding save can land within
+// the same request cycle and shouldn't read as a "last updated" event.
+function wasUpdatedAfterCreation(createdAt, updatedAt) {
+  if (!createdAt || !updatedAt) return false;
+  const created = new Date(createdAt).getTime();
+  const updated = new Date(updatedAt).getTime();
+  if (Number.isNaN(created) || Number.isNaN(updated)) return false;
+  return updated - created > 5000;
+}
+
 // ─── Shared display sub-components ───────────────────────────────────────────
 function Section({ icon, title, children, accent }) {
   return (
@@ -2914,6 +2935,20 @@ export default function AdminDoctorProfile() {
   ]
     .filter(Boolean)
     .join(", ");
+  // Older enrollments predate the createdAt field (backfilled separately),
+  // so "Last updated" must stand on its own until that migration runs.
+  const createdLabel = e.createdAt
+    ? `Created ${formatDateTime(e.createdAt)}`
+    : "";
+  const showUpdated =
+    e.updatedAt &&
+    (!e.createdAt || wasUpdatedAfterCreation(e.createdAt, e.updatedAt));
+  const updatedLabel = showUpdated
+    ? `${createdLabel ? "Last updated" : "Updated"} ${formatDateTime(e.updatedAt)}`
+    : "";
+  const timestampLabel = [createdLabel, updatedLabel]
+    .filter(Boolean)
+    .join(" · ");
   const langs = Array.isArray(e.languagesKnown)
     ? e.languagesKnown.join(", ")
     : e.languagesKnown || "";
@@ -3073,6 +3108,17 @@ export default function AdminDoctorProfile() {
           {location_ && (
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>
               📍 {location_}
+            </div>
+          )}
+          {timestampLabel && (
+            <div
+              style={{
+                fontSize: 12,
+                color: "rgba(255,255,255,0.6)",
+                marginTop: 6,
+              }}
+            >
+              🕒 {timestampLabel}
             </div>
           )}
         </div>

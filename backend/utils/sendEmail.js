@@ -230,7 +230,7 @@ const escapeHtml = (value) =>
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]
   ));
 
-const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, description, status }) => {
+const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, status }) => {
   const greeting = name ? `Hello ${escapeHtml(name)},` : `Hello,`;
   const isPaid = status === "paid";
   const badgeText = isPaid ? "Payment Receipt" : "Invoice";
@@ -261,7 +261,6 @@ const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, descr
     <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:20px 24px;margin:0 0 18px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Invoice Number</td><td style="font-size:13px;color:#1e1b4b;font-weight:700;text-align:right;padding:4px 0;">${escapeHtml(invoiceNumber)}</td></tr>
-        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Description</td><td style="font-size:13px;color:#1e1b4b;text-align:right;padding:4px 0;">${escapeHtml(description || "Invoice")}</td></tr>
         <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">${amountRowLabel}</td><td style="font-size:16px;color:#0a1f44;font-weight:800;text-align:right;padding:4px 0;">${escapeHtml(amountDisplay)}</td></tr>
       </table>
     </div>
@@ -294,14 +293,14 @@ const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, descr
 
 // status: "due" (bill — not yet paid) or "paid" (receipt). Recipient is an
 // admin-entered client address, not necessarily a registered platform user.
-const sendManualInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, description, status, pdfBuffer }) => {
+const sendManualInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, status, pdfBuffer }) => {
   await sendMail({
     from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
     subject: status === "paid"
       ? `Humancare Connect — Payment Receipt (${invoiceNumber})`
       : `Humancare Connect — Invoice ${invoiceNumber}`,
-    html: buildManualInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, description, status }),
+    html: buildManualInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, status }),
     attachments: [
       {
         filename: `${invoiceNumber}.pdf`,
@@ -312,4 +311,80 @@ const sendManualInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, 
   });
 };
 
-module.exports = { sendOTPEmail, sendEmail, sendInvoiceEmail, sendManualInvoiceEmail };
+// Recipient is the service provider (a doctor, typically) the GOP is
+// issued to — an admin-entered address, not necessarily a registered
+// platform user (see routes/gop.js / models/Gop.js).
+const buildGopEmailHTML = ({ providerName, gopNumber, patientName, caseType, amountDisplay }) => {
+  const greeting = providerName ? `Hello ${escapeHtml(providerName)},` : `Hello,`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Guarantee of Payment — Humancare Connect</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ff; padding: 10px 10px;">
+<div style="max-width:680px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden; border: 1px solid #0a1f44">
+
+  <div style="background:#dcebff;padding:20px 32px;text-align:center;border-radius: 16px 16px 0 0;">
+    <img src="https://humancareconnect.co/logo-email.png" alt="Humancare Connect" style="display:block;margin:0 auto 12px;object-fit:contain; width:220px; height:72px;"/>
+    <span style="display:inline-block;background:rgba(255,255,255,0.18);color: #0a1f44;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:20px; border: 1px solid #0a1f44">Guarantee of Payment</span>
+  </div>
+
+  <div style="padding:24px 32px;">
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 12px;">${greeting}</p>
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 20px;">Please find attached the Case Initiation &amp; Payment Authorization (Guarantee of Payment) for the case below. Please review the attached PDF for the full authorization terms and required documentation.</p>
+
+    <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:20px 24px;margin:0 0 18px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">GOP Number</td><td style="font-size:13px;color:#1e1b4b;font-weight:700;text-align:right;padding:4px 0;">${escapeHtml(gopNumber)}</td></tr>
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Patient</td><td style="font-size:13px;color:#1e1b4b;text-align:right;padding:4px 0;">${escapeHtml(patientName || "—")}</td></tr>
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Case Type</td><td style="font-size:13px;color:#1e1b4b;text-align:right;padding:4px 0;">${escapeHtml(caseType || "—")}</td></tr>
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Agreed Payment</td><td style="font-size:16px;color:#0a1f44;font-weight:800;text-align:right;padding:4px 0;">${escapeHtml(amountDisplay)}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr>
+        <td style="vertical-align:middle;width:140px;">
+          <img src="https://humancareconnect.co/logo-footer.png" alt="Humancare Connect"  style="display:block;object-fit:contain;width:140px;height:44px;"/>
+        </td>
+        <td style="vertical-align:middle;text-align:right;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin-left:auto;">
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="mailto:support@humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">support@humancareconnect.co</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="tel:+13023039993" style="color:#4b5db8;text-decoration:none;font-weight:500;">+1 302-303-9993</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="https://humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">humancareconnect.co</a></td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;text-align:center;">
+      <p style="margin:4px 0 0;font-size:11px;color:#b0b7c9;">© ${new Date().getFullYear()} Humancare Connect. All rights reserved.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+};
+
+const sendGopEmail = async (to, { providerName, gopNumber, patientName, caseType, amountDisplay, pdfBuffer }) => {
+  await sendMail({
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
+    to,
+    subject: `Humancare Connect — Guarantee of Payment (${gopNumber})`,
+    html: buildGopEmailHTML({ providerName, gopNumber, patientName, caseType, amountDisplay }),
+    attachments: [
+      {
+        filename: `${gopNumber}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  });
+};
+
+module.exports = { sendOTPEmail, sendEmail, sendInvoiceEmail, sendManualInvoiceEmail, sendGopEmail };

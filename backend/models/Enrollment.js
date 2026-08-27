@@ -137,8 +137,6 @@ const enrollmentSchema = new mongoose.Schema({
     enum: ["pending", "approved", "rejected"],
     default: "pending",
   },
-
-  updatedAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("Enrollment", enrollmentSchema);

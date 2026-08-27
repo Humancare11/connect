@@ -4,7 +4,6 @@ const PDFDocument = require("pdfkit");
 
 // const COMPANY_NAME = "Humancare Connect";
 const COMPANY_EMAIL = "support@humancareconnect.co";
-const COMPANY_WEB = "humancareconnect.co";
 const COMPANY_PHONE = "+1 (302) 303-9993";
 const COMPANY_ADDRESS_LINES = ["4 Peddlers Row, 1091 Newark,", "DE 19702, USA"];
 
@@ -15,7 +14,6 @@ const COMPANY_ADDRESS_LINES = ["4 Peddlers Row, 1091 Newark,", "DE 19702, USA"];
 // the invoice still renders — a text wordmark is drawn in its place — so a
 // bad deploy of this one asset can never break invoice generation.
 const LOGO_PATH = process.env.INVOICE_LOGO_PATH || path.join(__dirname, "..", "assets", "invoice-logo.png");
-const LOGO_ASPECT_RATIO = 225 / 90; // source Logo.png is 225x90
 
 let LOGO_BUFFER = null;
 try {
@@ -28,19 +26,15 @@ try {
 // (frontend/src/components/RxSlip.css) so every document a patient
 // receives reads as one consistent brand, plus a lighter blue-tinted panel
 // shade for the info boxes on this template.
-const NAVY = "#12296b";
-const ACCENT = "#3f6fd8";
 const INK = "#1c2230";
-const MUTED = "#667085";
-const LINE = "#e2e6f0";
-const PANEL_BLUE = "#eef2fc";
 const WHITE = "#ffffff";
 
-// Manual-invoice ("Document" template) palette — a deliberate departure from
-// the consultation template's NAVY/ACCENT/PANEL_BLUE above, not a variant of
-// it, so it gets its own token names rather than reusing/overloading those.
-// Kept separate so nothing here can ever change what the consultation
-// branch renders.
+// "Document" template palette — the single invoice design used for every
+// invoice this app generates: the admin's manual B2B invoices and a
+// patient's consultation-payment invoices alike (see drawInvoiceDocument
+// below). Token names keep their historical MAN_ prefix (from when this
+// template was manual-invoice-only) rather than being renamed wholesale,
+// to keep this file's diff scoped to unifying the two render paths.
 const MAN_NAVY = "#16305e";
 const MAN_CAPTION = "#2f6cb0";
 const MAN_GREY_BAND = "#eef0f4";
@@ -56,14 +50,6 @@ const PAGE_MARGIN = 50;
 const CONTENT_WIDTH = 495; // A4 width (595.28pt) minus left+right margins
 const RIGHT = PAGE_MARGIN + CONTENT_WIDTH;
 
-// Shared spacing tokens, so the vertical rhythm between panels is set in one
-// place instead of being re-typed as a different magic number at each call
-// site. PANEL_PAD is used as both the top and bottom inset of every panel,
-// which is what makes their contents look optically centred.
-const PANEL_PAD = 14;
-const PANEL_GUTTER = 22; // breathing room between two stacked blocks
-const FOOTER_BLOCK_H = 56; // rule + two centered lines
-
 function formatAmount(amountCents, currency = "usd") {
   const amount = (Number(amountCents) || 0) / 100;
   try {
@@ -77,25 +63,14 @@ function formatAmount(amountCents, currency = "usd") {
   }
 }
 
+// Trims a quantity like 2.00 down to "2" or 1.50 down to "1.5" — line-item
+// quantities are typed with step="0.01" on the form but are whole numbers
+// far more often than not, and "2.00" reads as noise on a printed table.
 // Rendered in UTC rather than the host's local zone: issuedAt is stored as a
 // UTC instant, so formatting it in (say) US/Pacific would print the previous
 // day for anything issued in the early-morning UTC hours, and the printed
 // date would then disagree with the Invoice document it was built from.
-function formatDate(date) {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
-
-// Trims a quantity like 2.00 down to "2" or 1.50 down to "1.5" — line-item
-// quantities are typed with step="0.01" on the form but are whole numbers
-// far more often than not, and "2.00" reads as noise on a printed table.
-// "Sep 19, 2026" — short-month variant used only by the manual-invoice
-// ("Document" template) layout; the consultation template keeps the
-// long-month formatDate above untouched.
+// "Sep 19, 2026" — short-month format used by the Document template.
 function formatDateShort(date) {
   return new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
@@ -165,10 +140,6 @@ function rightAlignedSegments(doc, segments, y, rightX = RIGHT) {
   drawSegmentsAt(doc, segments, rightX - measureSegments(doc, segments), y);
 }
 
-function centeredSegments(doc, segments, y, centerX = RIGHT / 2 + PAGE_MARGIN / 2) {
-  drawSegmentsAt(doc, segments, centerX - measureSegments(doc, segments) / 2, y);
-}
-
 // Height one string will occupy once wrapped at `width`, in the given font.
 // Used to size panels around their contents instead of assuming every value
 // is one line — a long transaction reference or a wrapped description would
@@ -204,28 +175,18 @@ function defaultManualNotes(status) {
   ];
 }
 
-function defaultNotes(documentType, status) {
-  if (documentType === "manual") return defaultManualNotes(status);
-
-  return [
-    { bold: "Booking confirmed.", rest: " Booking details have been sent to the email address provided above." },
-    { rest: "For all regular bookings, rescheduling or cancellation requests must be made at least 12 hours before the scheduled consultation time." },
-    { rest: "Urgent consultations are subject to availability and cannot be rescheduled or cancelled once the consultation has started." },
-    { rest: "Once the consultation has started, cancellation and refunds are not applicable." },
-    { rest: "Please quote the invoice number in any correspondence regarding this payment." },
-  ];
-}
-
 // Builds a single-page invoice PDF as a Buffer. All values are rendered via
 // pdfkit's text API (never interpolated into HTML/markup), so there is no
 // injection surface here — worst case a weird string just prints as-is.
 //
-// documentType: "consultation" (default, unchanged behavior — a patient's
-// verified Stripe/PayPal payment, shown with a Payment Details panel) or
-// "manual" (an admin-created B2B invoice — see manualInvoiceService.js),
-// which never shows that panel. For "manual", `status` ("due" or "paid")
-// controls the Total label ("Amount Due" vs "Total Paid"). `notes`
-// optionally overrides the default Notes & Terms.
+// Every invoice — a patient's consultation-payment invoice (documentType:
+// "consultation", the default) or the admin's manually-created B2B invoice
+// (documentType: "manual" — see manualInvoiceService.js) — renders through
+// the same Document template (drawInvoiceDocument below), so the app never
+// shows two different invoice designs. A consultation invoice is always
+// generated after a verified payment, so it always renders as "paid"; for
+// "manual", the caller's `status` ("due" or "paid") controls the Total
+// label and the status band.
 function buildInvoicePdfBuffer({
   invoiceNumber,
   issuedAt,
@@ -233,11 +194,8 @@ function buildInvoicePdfBuffer({
   description,
   amountCents,
   currency,
-  gateway,
-  gatewayReference,
   documentType = "consultation",
   status,
-  notes,
   // "manual" only: itemized lines (each { description, quantity, rate,
   // amountCents }), plus the due date/payment terms shown in the meta rows.
   items,
@@ -264,320 +222,28 @@ function buildInvoicePdfBuffer({
 
       const left = PAGE_MARGIN;
       const amountDisplay = formatAmount(amountCents, currency);
-      const hasItems = isManual && Array.isArray(items) && items.length > 0;
+      const hasItems = Array.isArray(items) && items.length > 0;
 
-      // Manual invoices get a fully separate rendering path (drawManualInvoice,
-      // defined below) — isolated here rather than interleaved with the
-      // consultation drawing so that branch below is never touched by this
-      // template and stays byte-identical to before this change.
-      if (isManual) {
-        drawManualInvoice(doc, {
-          invoiceNumber,
-          issuedAt,
-          billTo,
-          description,
-          amountCents,
-          amountDisplay,
-          currency,
-          status,
-          items,
-          hasItems,
-          dueDate,
-          paymentTerms,
-          left,
-        });
-        doc.end();
-        return;
-      }
-
-      // ── Top bar ──
-      doc.rect(0, 0, doc.page.width, 8).fill(NAVY);
-
-      // ── Logo ── (real brand asset — see LOGO_PATH above — placed directly
-      // with no synthetic frame/box around it, same as how the prescription
-      // slip and email templates place the logo image on their own)
-      const logoY = 30;
-      const logoWidth = 150;
-      const logoHeight = LOGO_BUFFER ? logoWidth / LOGO_ASPECT_RATIO : 22;
-
-      if (LOGO_BUFFER) {
-        doc.image(LOGO_BUFFER, left, logoY, { width: logoWidth });
-      } else {
-        doc.font("Helvetica-Bold").fontSize(18).fillColor(NAVY).text("Humancare Connect", left, logoY, { lineBreak: false });
-      }
-
-      // ── Title + meta (right side) ──
-      // Anchored to `left` + CONTENT_WIDTH rather than x=0, so the title's
-      // right edge is the same content edge every other right-aligned run
-      // uses instead of depending on pdfkit's page-margin defaults.
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(26)
-        .fillColor(NAVY)
-        .text("INVOICE", left, 30, { width: CONTENT_WIDTH, align: "right" });
-
-      const META_ROWS = [
-        ["Invoice No.  ", invoiceNumber],
-        ["Issue Date  ", formatDate(issuedAt)],
-      ];
-      if (isManual && dueDate) META_ROWS.push(["Due Date  ", formatDate(dueDate)]);
-      if (isManual && paymentTerms) META_ROWS.push(["Terms  ", paymentTerms]);
-      META_ROWS.push(["Currency  ", currencyLabel(currency)]);
-      let metaY = 66;
-      for (const [metaLabel, metaValue] of META_ROWS) {
-        rightAlignedSegments(
-          doc,
-          [
-            { text: metaLabel, size: 9, color: MUTED, font: "Helvetica" },
-            { text: metaValue, size: 9.5, color: NAVY, font: "Helvetica-Bold" },
-          ],
-          metaY
-        );
-        metaY += 14;
-      }
-
-      // ── Company block ──
-      let cy = logoY + logoHeight + 28;
-      doc.font("Helvetica-Bold").fontSize(11).fillColor(NAVY).text("Humancare Connect", left, cy);
-      cy += 16;
-      doc.font("Helvetica").fontSize(9).fillColor(MUTED);
-      for (const line of [...COMPANY_ADDRESS_LINES, COMPANY_PHONE, COMPANY_EMAIL, COMPANY_WEB]) {
-        doc.text(line, left, cy);
-        cy += 12;
-      }
-
-      // ── Billed To panel ──
-      // Positioned from whichever column actually ends lower rather than a
-      // hardcoded y: the left column's height moves with the logo (and
-      // collapses entirely on the text-wordmark fallback), so a fixed value
-      // is either cramped or gapped depending on which branch ran.
-      const billToY = Math.max(cy, metaY) + PANEL_GUTTER;
-      const panelTextWidth = CONTENT_WIDTH - 32;
-
-      const nameText = billTo?.name || "Patient";
-      const emailText = billTo?.email || "";
-      const companyText = billTo?.company || "";
-      const registrationText = billTo?.registrationNumber ? `Reg. No. ${billTo.registrationNumber}` : "";
-      const addressText = billTo?.address || "";
-      const localityText = [billTo?.country, billTo?.postalCode].filter(Boolean).join(" · ");
-
-      // Stacked top-to-bottom: name always first, the rest only when present
-      // — a manual invoice with no company/address on file still renders a
-      // tight panel instead of empty lines.
-      const billToLines = [{ text: nameText, font: "Helvetica-Bold", size: 13, color: NAVY, gapBefore: 0 }];
-      if (companyText) billToLines.push({ text: companyText, font: "Helvetica-Bold", size: 10, color: INK, gapBefore: 5 });
-      if (emailText) billToLines.push({ text: emailText, font: "Helvetica", size: 10, color: ACCENT, gapBefore: 5 });
-      if (addressText) billToLines.push({ text: addressText, font: "Helvetica", size: 9, color: MUTED, gapBefore: 6 });
-      if (localityText) billToLines.push({ text: localityText, font: "Helvetica", size: 9, color: MUTED, gapBefore: 2 });
-      if (registrationText) billToLines.push({ text: registrationText, font: "Helvetica", size: 9, color: MUTED, gapBefore: 2 });
-
-      const billToLinesHeight = billToLines.reduce(
-        (sum, line) => sum + line.gapBefore + measureText(doc, line.text, { font: line.font, size: line.size, width: panelTextWidth }),
-        0
-      );
-      const LABEL_LINE_H = 12; // approx height of the 8.5pt "BILLED TO" label
-      const billToHeight = PANEL_PAD + LABEL_LINE_H + 16 + billToLinesHeight + PANEL_PAD;
-
-      doc.roundedRect(left, billToY, CONTENT_WIDTH, billToHeight, 10).fill(PANEL_BLUE);
-      doc.font("Helvetica-Bold").fontSize(8.5).fillColor(MUTED).text("BILLED TO", left + 16, billToY + PANEL_PAD, { characterSpacing: 0.5 });
-      let billToLineY = billToY + PANEL_PAD + 16;
-      for (const line of billToLines) {
-        billToLineY += line.gapBefore;
-        doc.font(line.font).fontSize(line.size).fillColor(line.color).text(line.text, left + 16, billToLineY, { width: panelTextWidth });
-        billToLineY = doc.y;
-      }
-
-      // ── Line item table ──
-      const tableY = billToY + billToHeight + PANEL_GUTTER;
-      doc.rect(left, tableY, CONTENT_WIDTH, 26).fill(NAVY);
-
-      let lastRowBottom;
-
-      if (hasItems) {
-        // Fixed-width QTY/RATE/AMOUNT columns, right-aligned; DESCRIPTION
-        // takes whatever's left so it's the only column that wraps.
-        const amountColRight = RIGHT - 16;
-        const rateColRight = amountColRight - 85 - 14;
-        const qtyColRight = rateColRight - 65 - 14;
-        const itemDescWidth = qtyColRight - 45 - 14 - (left + 16);
-
-        doc.font("Helvetica-Bold").fontSize(9.5).fillColor(WHITE).text("DESCRIPTION", left + 16, tableY + 9, { characterSpacing: 0.4 });
-        rightAlignedSegments(doc, [{ text: "QTY", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, qtyColRight);
-        rightAlignedSegments(doc, [{ text: "RATE", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, rateColRight);
-        rightAlignedSegments(doc, [{ text: "AMOUNT", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, amountColRight);
-
-        let rowY = tableY + 26 + 14;
-        items.forEach((item, index) => {
-          const rowDescText = item.description || "";
-          const rowDescH = measureText(doc, rowDescText, { font: "Helvetica-Bold", size: 10, width: itemDescWidth });
-
-          doc.font("Helvetica-Bold").fontSize(10).fillColor(INK).text(rowDescText, left + 16, rowY, { width: itemDescWidth });
-          rightAlignedSegments(doc, [{ text: formatQuantity(item.quantity), size: 10, color: INK, font: "Helvetica" }], rowY, qtyColRight);
-          rightAlignedSegments(
-            doc,
-            [{ text: formatAmount(Math.round((Number(item.rate) || 0) * 100), currency), size: 10, color: INK, font: "Helvetica" }],
-            rowY,
-            rateColRight
-          );
-          rightAlignedSegments(
-            doc,
-            [{ text: formatAmount(item.amountCents, currency), size: 10, color: INK, font: "Helvetica-Bold" }],
-            rowY,
-            amountColRight
-          );
-
-          rowY += rowDescH + 12;
-          if (index < items.length - 1) {
-            doc.rect(left + 16, rowY - 6, CONTENT_WIDTH - 32, 0.75).fill(LINE);
-          }
-        });
-        lastRowBottom = rowY;
-      } else {
-        doc.font("Helvetica-Bold").fontSize(9.5).fillColor(WHITE).text("DESCRIPTION", left + 16, tableY + 9, { characterSpacing: 0.4 });
-        rightAlignedSegments(doc, [{ text: "AMOUNT", size: 9.5, color: WHITE, font: "Helvetica-Bold", spacing: 0.4 }], tableY + 9, RIGHT - 16);
-
-        const itemY = tableY + 26 + 16;
-        const descriptionText = description || "Consultation booking fee";
-        // Wide enough to use the space the amount column doesn't need, but
-        // still short of it — the amount is right-aligned at RIGHT - 16.
-        const descriptionWidth = CONTENT_WIDTH - 32 - 120;
-        const descriptionH = measureText(doc, descriptionText, { font: "Helvetica-Bold", size: 11, width: descriptionWidth });
-
-        doc.font("Helvetica-Bold").fontSize(11).fillColor(INK).text(descriptionText, left + 16, itemY, { width: descriptionWidth });
-        rightAlignedSegments(doc, [{ text: amountDisplay, size: 11, color: INK, font: "Helvetica-Bold" }], itemY, RIGHT - 16);
-        lastRowBottom = itemY + descriptionH + 4;
-      }
-
-      // ── Total ──
-      // Sits below the *rendered* height of the last row. With a fixed
-      // offset a two-line description (or a multi-row item table) ran
-      // straight through this rule.
-      const ruleY = lastRowBottom + 12;
-      const totalLabel = isManual && status === "due" ? "Amount Due   " : "Total Paid   ";
-      doc.rect(left + CONTENT_WIDTH * 0.4, ruleY, CONTENT_WIDTH * 0.6, 1.5).fill(NAVY);
-      rightAlignedSegments(
-        doc,
-        [
-          { text: totalLabel, size: 12, color: NAVY, font: "Helvetica-Bold" },
-          { text: amountDisplay, size: 14, color: NAVY, font: "Helvetica-Bold" },
-        ],
-        ruleY + 14
-      );
-
-      // ── Payment details (left accent border, like the site's ribbon
-      // sections but flatter to match this template) ──
-      // A "manual" (admin-created B2B) invoice never shows this panel —
-      // due or paid — since there is no gateway transaction to report and
-      // the admin-entered payment method isn't shown on the document.
-      // Only a "consultation" invoice (a patient's verified Stripe/PayPal
-      // payment) has a real transaction reference to display here.
-      const payY = ruleY + 48;
-      let ny;
-
-      if (isManual) {
-        ny = payY + 6;
-      } else {
-        const payLabelX = left + 16;
-        const payValueX = left + 150;
-        const payValueWidth = CONTENT_WIDTH - (payValueX - left) - 16;
-
-        const methodText = gateway === "paypal" ? "PayPal" : "Card";
-        const referenceText = gatewayReference || "—";
-        const methodH = measureText(doc, methodText, { font: "Helvetica-Bold", size: 9.5, width: payValueWidth });
-        const referenceH = measureText(doc, referenceText, { font: "Helvetica-Bold", size: 9.5, width: payValueWidth });
-        // Grows with a reference long enough to wrap (PayPal's are), so the
-        // second line can't sit on or below the panel's bottom edge.
-        const payH = PANEL_PAD + 12 + 10 + methodH + 10 + referenceH + PANEL_PAD;
-
-        doc.roundedRect(left, payY, CONTENT_WIDTH, payH, 8).fill(PANEL_BLUE);
-        // Clipped to the panel's rounded outline — an unclipped square bar
-        // overhangs the two rounded corners it shares with the panel.
-        doc.save();
-        doc.roundedRect(left, payY, CONTENT_WIDTH, payH, 8).clip();
-        doc.rect(left, payY, 4, payH).fill(ACCENT);
-        doc.restore();
-
-        doc.font("Helvetica-Bold").fontSize(8.5).fillColor(MUTED).text("PAYMENT DETAILS", payLabelX, payY + PANEL_PAD, { characterSpacing: 0.5 });
-
-        const methodY = payY + PANEL_PAD + 22;
-        doc.font("Helvetica").fontSize(9.5).fillColor(MUTED).text("Payment Method", payLabelX, methodY);
-        doc.font("Helvetica-Bold").fontSize(9.5).fillColor(INK).text(methodText, payValueX, methodY, { width: payValueWidth });
-
-        const referenceY = methodY + methodH + 10;
-        doc.font("Helvetica").fontSize(9.5).fillColor(MUTED).text("Transaction Ref.", payLabelX, referenceY);
-        doc.font("Helvetica-Bold").fontSize(9.5).fillColor(INK).text(referenceText, payValueX, referenceY, { width: payValueWidth });
-
-        ny = payY + payH + 30;
-      }
-
-      // ── Notes & terms ──
-      doc.font("Helvetica-Bold").fontSize(8.5).fillColor(MUTED).text("NOTES & TERMS", left, ny, { characterSpacing: 0.5 });
-      ny += 18;
-
-      // Longer notes than before, so these wrap (width + pdfkit's default
-      // line-break behavior) instead of the fixed-line-height + lineBreak:
-      // false approach used elsewhere in this file — that combo would run
-      // this text straight off the page. ny advances by doc.y (the actual
-      // rendered height) after each note, so wrapped notes never overlap.
-      const noteTextX = left + 16;
-      const noteTextWidth = CONTENT_WIDTH - 16;
-      const effectiveNotes = notes || defaultNotes(documentType, status);
-      for (const note of effectiveNotes) {
-        doc.font("Helvetica").fontSize(9).fillColor(MUTED).text("•", left + 5, ny, { lineBreak: false });
-        if (note.bold) {
-          doc
-            .font("Helvetica-Bold")
-            .fontSize(9)
-            .fillColor(INK)
-            .text(note.bold, noteTextX, ny, { width: noteTextWidth, lineGap: 1.5, continued: true });
-          doc.font("Helvetica").fillColor(MUTED).text(note.rest, { width: noteTextWidth, lineGap: 1.5 });
-        } else {
-          doc.font("Helvetica").fontSize(9).fillColor(MUTED).text(note.rest, noteTextX, ny, { width: noteTextWidth, lineGap: 1.5 });
-        }
-        ny = doc.y + 7;
-      }
-
-      // ── Thank-you line ──
-      ny += 12;
-      drawSegmentsAt(
-        doc,
-        [
-          { text: "Thank you for choosing ", size: 9.5, color: INK, font: "Helvetica" },
-          { text: "Humancare Connect", size: 9.5, color: NAVY, font: "Helvetica-Bold" },
-          { text: " — your Global Health Passport.", size: 9.5, color: INK, font: "Helvetica" },
-        ],
+      // A consultation invoice is only ever built after a verified payment
+      // (see billing.js), so there is no "due" consultation invoice — it
+      // always renders as paid. A manual invoice honors whatever status the
+      // admin chose ("due" or "paid").
+      drawInvoiceDocument(doc, {
+        invoiceNumber,
+        issuedAt,
+        billTo,
+        description,
+        amountCents,
+        amountDisplay,
+        currency,
+        status: isManual ? status : "paid",
+        items,
+        hasItems,
+        dueDate,
+        paymentTerms,
         left,
-        ny
-      );
-
-      // ── Footer ──
-      // Pinned to the bottom of the page rather than trailing the last note,
-      // so the footer rule lands in the same place on every invoice instead
-      // of floating mid-page whenever the content above happens to be short.
-      // The Math.max keeps it below the content if the notes ever grow past
-      // the pin point.
-      const footerRuleY = Math.max(ny + 32, doc.page.height - PAGE_MARGIN - FOOTER_BLOCK_H);
-      doc.rect(left, footerRuleY, CONTENT_WIDTH, 1).fill(LINE);
-      doc
-        .font("Helvetica")
-        .fontSize(8.5)
-        .fillColor(MUTED)
-        .text(
-          "This is a computer-generated invoice for services rendered by Humancare Connect and is valid without a signature.",
-          left,
-          footerRuleY + 16,
-          { width: CONTENT_WIDTH, align: "center" }
-        );
-      centeredSegments(
-        doc,
-        [
-          { text: "Questions about this invoice? Contact ", size: 8.5, color: MUTED, font: "Helvetica" },
-          { text: COMPANY_EMAIL, size: 8.5, color: ACCENT, font: "Helvetica-Bold" },
-          { text: `  ·  ${COMPANY_PHONE}`, size: 8.5, color: MUTED, font: "Helvetica" },
-        ],
-        footerRuleY + 32
-      );
-
+        isManual,
+      });
       doc.end();
     } catch (err) {
       reject(err);
@@ -585,20 +251,16 @@ function buildInvoicePdfBuffer({
   });
 }
 
-// ── Manual-invoice ("Document" template) ────────────────────────────────
-// Renders documentType: "manual" only. Fully separate from the consultation
-// drawing code above — different palette (MAN_* tokens), different font
-// family (Times/serif vs Helvetica) — so nothing here can perturb that
-// template. Only pure, non-branching helpers are shared (formatAmount,
-// formatDateShort, formatQuantity, currencyLabel, measureText, the segment
-// helpers) and none of them read documentType, so this function is the only
-// place manual-invoice styling lives.
+// ── Invoice "Document" template ──────────────────────────────────────────
+// The single rendering path for every invoice PDF this app produces: the
+// admin's manual B2B invoices and a patient's consultation-payment
+// invoices both draw through here (see the buildInvoicePdfBuffer callers
+// above) — there is no second template to keep in sync.
 //
-// All values are still drawn via pdfkit's text API, never interpolated into
-// markup, so there is no injection surface — same invariant as the
-// consultation branch.
-function drawManualInvoice(doc, ctx) {
-  const { invoiceNumber, issuedAt, billTo, description, amountDisplay, currency, status, items, hasItems, dueDate, paymentTerms, left } = ctx;
+// All values are drawn via pdfkit's text API, never interpolated into
+// markup, so there is no injection surface here.
+function drawInvoiceDocument(doc, ctx) {
+  const { invoiceNumber, issuedAt, billTo, description, amountDisplay, currency, status, items, hasItems, dueDate, paymentTerms, left, isManual } = ctx;
 
   const isPaid = status === "paid";
 
@@ -663,14 +325,17 @@ function drawManualInvoice(doc, ctx) {
 
   y = Math.max(fromY, billY) + 12;
 
-  // ── Meta strip: Issue Date | Due Date | Payment Terms | Currency ──
-  const colW = CONTENT_WIDTH / 4;
-  const metaCols = [
-    { label: "ISSUE DATE", value: formatDateShort(issuedAt), bold: false },
-    { label: "DUE DATE", value: dueDate ? formatDateShort(dueDate) : "—", bold: true },
-    { label: "PAYMENT TERMS", value: paymentTerms || "—", bold: false },
-    { label: "CURRENCY", value: currencyLabel(currency), bold: false },
-  ];
+  // ── Meta strip: Issue Date | [Due Date | Payment Terms —  manual only] | Currency ──
+  // A patient's consultation invoice is always paid in full at booking time,
+  // so a due date/payment terms are meaningless on it — only the admin's
+  // manual (B2B, may be "due") invoice shows those two columns.
+  const metaCols = [{ label: "ISSUE DATE", value: formatDateShort(issuedAt), bold: false }];
+  if (isManual) {
+    metaCols.push({ label: "DUE DATE", value: dueDate ? formatDateShort(dueDate) : "—", bold: true });
+    metaCols.push({ label: "PAYMENT TERMS", value: paymentTerms || "—", bold: false });
+  }
+  metaCols.push({ label: "CURRENCY", value: currencyLabel(currency), bold: false });
+  const colW = CONTENT_WIDTH / metaCols.length;
   doc.rect(left, y, CONTENT_WIDTH, 20).fill(MAN_GREY_BAND);
   metaCols.forEach((col, i) => {
     doc
@@ -691,23 +356,29 @@ function drawManualInvoice(doc, ctx) {
 
   // ── Line-item table (paginates: the header bar is redrawn on any new
   // page the rows spill onto, so it never ends up alone at a page bottom) ──
+  // QTY/RATE only apply to a manual invoice's itemized breakdown — a
+  // consultation invoice is always a single flat fee, so those columns (and
+  // their header labels) are dropped for it and DESCRIPTION simply takes
+  // the extra width.
   const amountColW = 90;
   const rateColW = 80;
   const qtyColW = 50;
   const amountColRight = RIGHT - 14;
   const rateColRight = amountColRight - amountColW - 12;
   const qtyColLeft = rateColRight - rateColW - 12 - qtyColW;
-  const descWidth = qtyColLeft - 12 - (left + 14);
+  const descWidth = (isManual ? qtyColLeft - 12 : amountColRight - amountColW - 12) - (left + 14);
 
   function drawTableHeader(headerY) {
     doc.rect(left, headerY, CONTENT_WIDTH, 24).fill(MAN_NAVY);
     doc.font("Times-Bold").fontSize(9.5).fillColor(WHITE).text("DESCRIPTION", left + 14, headerY + 7, { characterSpacing: 0.3, lineBreak: false });
-    doc.font("Times-Bold").fontSize(9.5).fillColor(WHITE).text("QTY", qtyColLeft, headerY + 7, { width: qtyColW, align: "center" });
-    doc
-      .font("Times-Bold")
-      .fontSize(9.5)
-      .fillColor(WHITE)
-      .text("RATE", rateColRight - rateColW, headerY + 7, { width: rateColW, align: "right" });
+    if (isManual) {
+      doc.font("Times-Bold").fontSize(9.5).fillColor(WHITE).text("QTY", qtyColLeft, headerY + 7, { width: qtyColW, align: "center" });
+      doc
+        .font("Times-Bold")
+        .fontSize(9.5)
+        .fillColor(WHITE)
+        .text("RATE", rateColRight - rateColW, headerY + 7, { width: rateColW, align: "right" });
+    }
     doc
       .font("Times-Bold")
       .fontSize(9.5)
@@ -748,8 +419,11 @@ function drawManualInvoice(doc, ctx) {
       });
     }
   } else {
+    // The direct user-facing (consultation) invoice always shows a fixed
+    // "Tele Consultation" line, regardless of the booking's own internal
+    // description — the admin's manual-invoice fallback text is untouched.
     drawRow({
-      descText: description || "Invoice",
+      descText: isManual ? description || "Consultation booking fee" : "Tele Consultation",
       qtyText: null,
       rateText: null,
       amountText: amountDisplay,
@@ -782,41 +456,55 @@ function drawManualInvoice(doc, ctx) {
   doc.font("Times-Bold").fontSize(10).fillColor(bandColor).text(bandText, left + 16, y + 10, { width: CONTENT_WIDTH - 30, lineBreak: false });
   y += bandH + 22;
 
-  // ── Terms ──
-  doc.font("Times-Bold").fontSize(8.5).fillColor(MAN_CAPTION).text("TERMS", left, y, { characterSpacing: 0.5 });
-  y += 14;
+  // ── Terms ── manual (admin) invoices only — a consultation invoice is
+  // always paid in full already, so due-date/payment-terms language would
+  // be meaningless (and this whole section, including its "Payment Due
+  // Date"/"Payment Terms" lines, is dropped for it).
+  if (isManual) {
+    doc.font("Times-Bold").fontSize(8.5).fillColor(MAN_CAPTION).text("TERMS", left, y, { characterSpacing: 0.5 });
+    y += 14;
 
-  // Mirrors the admin form's own preview copy (ManualInvoices.jsx) so the
-  // printed PDF never disagrees with what the admin saw before sending.
-  const termsLine =
-    !paymentTerms || paymentTerms === "Due on Receipt"
-      ? "Payment is due immediately on receipt of this invoice. Please remit payment for the amount above without delay."
-      : `Payment is due within ${String(paymentTerms).replace(/\D/g, "")} days from the invoice date (${String(paymentTerms).replace(" Days", "")}). Please remit payment for the amount above by the due date indicated.`;
-  doc.font("Times-Roman").fontSize(9.5).fillColor(MAN_INK).text(termsLine, left, y, { width: CONTENT_WIDTH, lineGap: 1.5 });
-  y = doc.y + 10;
+    // Mirrors the admin form's own preview copy (ManualInvoices.jsx) so the
+    // printed PDF never disagrees with what the admin saw before sending.
+    const termsLine =
+      !paymentTerms || paymentTerms === "Due on Receipt"
+        ? "Payment is due immediately on receipt of this invoice. Please remit payment for the amount above without delay."
+        : `Payment is due within ${String(paymentTerms).replace(/\D/g, "")} days from the invoice date (${String(paymentTerms).replace(" Days", "")}). Please remit payment for the amount above by the due date indicated.`;
+    doc.font("Times-Roman").fontSize(9.5).fillColor(MAN_INK).text(termsLine, left, y, { width: CONTENT_WIDTH, lineGap: 1.5 });
+    y = doc.y + 10;
 
-  drawSegmentsAt(
-    doc,
-    [
-      { text: "Payment Due Date: ", font: "Times-Bold", size: 9.5, color: MAN_INK },
-      { text: dueDate ? formatDateShort(dueDate) : "—", font: "Times-Roman", size: 9.5, color: MAN_INK },
-    ],
-    left,
-    y
-  );
-  y += 15;
-  drawSegmentsAt(
-    doc,
-    [
-      { text: "Payment Terms: ", font: "Times-Bold", size: 9.5, color: MAN_INK },
-      { text: paymentTerms || "—", font: "Times-Roman", size: 9.5, color: MAN_INK },
-    ],
-    left,
-    y
-  );
-  y += 22;
+    drawSegmentsAt(
+      doc,
+      [
+        { text: "Payment Due Date: ", font: "Times-Bold", size: 9.5, color: MAN_INK },
+        { text: dueDate ? formatDateShort(dueDate) : "—", font: "Times-Roman", size: 9.5, color: MAN_INK },
+      ],
+      left,
+      y
+    );
+    y += 15;
+    drawSegmentsAt(
+      doc,
+      [
+        { text: "Payment Terms: ", font: "Times-Bold", size: 9.5, color: MAN_INK },
+        { text: paymentTerms || "—", font: "Times-Roman", size: 9.5, color: MAN_INK },
+      ],
+      left,
+      y
+    );
+    y += 22;
+  }
 
-  const closingText = description && String(description).trim() ? String(description).trim() : "Thank you for your business.";
+  // `description` already appears as the single line item above when there's
+  // no item breakdown (the consultation case) — reusing it here too would
+  // print the same text twice, so only a manual invoice's closing note
+  // (paired with a real item table) echoes it; a consultation invoice gets
+  // the brand's standard thank-you line instead.
+  const closingText = hasItems
+    ? description && String(description).trim()
+      ? String(description).trim()
+      : "Thank you for your business."
+    : "Thank you for choosing Humancare Connect — your Global Health Passport.";
   doc.font("Times-Italic").fontSize(9.5).fillColor(MAN_MUTED).text(closingText, left, y, { width: CONTENT_WIDTH, lineGap: 1.5 });
   y = doc.y + 16;
 

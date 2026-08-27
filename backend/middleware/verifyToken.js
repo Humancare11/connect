@@ -248,6 +248,24 @@ const paymentAdminOnly = (req, res, next) => {
   next();
 };
 
+// Manual Invoices: superadmin + paymentadmin (same as paymentAdminOnly, the
+// gate this feature originally launched with) plus plain "admin" — kept as
+// its own middleware rather than widening paymentAdminOnly itself, so this
+// change can't also open up the unrelated Payment Links feature to admins.
+const manualInvoiceAccess = (req, res, next) => {
+  if (!["superadmin", "admin", "paymentadmin"].includes(req.user?.role)) {
+    recordSecurityEvent(req, {
+      type: "unauthorized_access",
+      severity: "high",
+      title: "Unauthorized role attempted manual-invoice access",
+      resource: req.originalUrl,
+      metadata: { requiredRole: "admin/paymentadmin/superadmin", actualRole: req.user?.role || "anonymous" },
+    });
+    return res.status(403).json({ msg: "Access denied." });
+  }
+  next();
+};
+
 const employeeAdminOnly = (req, res, next) => {
   if (req.user?.role !== "employeeadmin") {
     recordSecurityEvent(req, {
@@ -296,6 +314,7 @@ module.exports = {
   doctorOnly,
   adminOnly,
   paymentAdminOnly,
+  manualInvoiceAccess,
   employeeAdminOnly,
   superAdminOnly,
 };

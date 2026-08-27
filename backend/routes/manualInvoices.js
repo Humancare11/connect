@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const ManualInvoice = require("../models/ManualInvoice");
-const { verifyAdminToken, paymentAdminOnly } = require("../middleware/verifyToken");
+const { verifyAdminToken, manualInvoiceAccess } = require("../middleware/verifyToken");
 const { createManualInvoice, markManualInvoicePaid, resendManualInvoiceEmail } = require("../utils/manualInvoiceService");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 
@@ -109,11 +109,10 @@ function serializeManualInvoice(doc) {
 }
 
 /* POST /api/admin/manual-invoices
-   Creates and emails a manual B2B invoice. Restricted to superadmin +
-   paymentadmin (same role gate as the existing Payment Links feature) —
-   never plain "admin". Runs synchronously: the admin is waiting on the
-   result of an explicit "Generate & Send" action. */
-router.post("/", verifyAdminToken, paymentAdminOnly, async (req, res) => {
+   Creates and emails a manual B2B invoice. Open to superadmin, admin, and
+   paymentadmin (see manualInvoiceAccess). Runs synchronously: the admin is
+   waiting on the result of an explicit "Generate & Send" action. */
+router.post("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
     const clientName = String(req.body.name || "").trim();
     const clientEmail = String(req.body.email || "").trim().toLowerCase();
@@ -190,8 +189,9 @@ router.post("/", verifyAdminToken, paymentAdminOnly, async (req, res) => {
 
 /* GET /api/admin/manual-invoices
    History/search. A paymentadmin only ever sees invoices they created
-   (matching the existing Payment Links scoping); superadmin sees all. */
-router.get("/", verifyAdminToken, paymentAdminOnly, async (req, res) => {
+   (matching the existing Payment Links scoping); admin and superadmin see
+   all. */
+router.get("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
@@ -231,7 +231,7 @@ router.get("/", verifyAdminToken, paymentAdminOnly, async (req, res) => {
    Short-lived presigned S3 URL, same pattern as the patient invoice
    download route. Ownership-scoped for paymentadmin the same way the list
    endpoint is, so one paymentadmin can't fetch another's invoice by id. */
-router.get("/:id/download", verifyAdminToken, paymentAdminOnly, async (req, res) => {
+router.get("/:id/download", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(400).json({ msg: "Invalid invoice id." });
@@ -255,7 +255,7 @@ router.get("/:id/download", verifyAdminToken, paymentAdminOnly, async (req, res)
    Flips a "due" invoice to "paid", regenerating its PDF as a receipt
    (replacing the "due" bill — see manualInvoiceService.js) and optionally
    re-emailing it to the client. */
-router.patch("/:id/mark-paid", verifyAdminToken, paymentAdminOnly, async (req, res) => {
+router.patch("/:id/mark-paid", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(400).json({ msg: "Invalid invoice id." });
@@ -288,7 +288,7 @@ router.patch("/:id/mark-paid", verifyAdminToken, paymentAdminOnly, async (req, r
    Re-sends the invoice's email as-is — no new invoice number, no PDF
    regeneration, no change to status/amount/anything else. For an invoice
    whose original send failed (e.g. an SMTP outage) or was never attempted. */
-router.post("/:id/resend-email", verifyAdminToken, paymentAdminOnly, async (req, res) => {
+router.post("/:id/resend-email", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(400).json({ msg: "Invalid invoice id." });

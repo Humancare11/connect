@@ -22,7 +22,7 @@ function formatAmount(amountCents, currency = "usd") {
 }
 
 function gatewayLabel(gateway) {
-  return gateway === "paypal" ? "PayPal" : "Card (Stripe)";
+  return gateway === "paypal" ? "PayPal" : "Card";
 }
 
 export default function PaymentHistory() {
@@ -122,7 +122,7 @@ export default function PaymentHistory() {
                   {payments.map((p) => (
                     <tr key={p._id}>
                       <td>{formatDate(p.paidAt)}</td>
-                      <td>{p.description || "Consultation booking fee"}</td>
+                      <td>Tele Consultation</td>
                       <td>{gatewayLabel(p.gateway)}</td>
                       <td className="ph-amount">{formatAmount(p.amountCents, p.currency)}</td>
                       <td>

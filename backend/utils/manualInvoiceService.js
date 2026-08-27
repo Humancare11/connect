@@ -149,7 +149,6 @@ async function createManualInvoice({
     await sendManualInvoiceEmail(clientEmail, {
       name: clientName,
       invoiceNumber,
-      description,
       amountDisplay: formatAmount(amountCents, currency),
       status,
       pdfBuffer,
@@ -208,7 +207,6 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod, resendEmail }) 
       await sendManualInvoiceEmail(invoice.clientEmail, {
         name: invoice.clientName,
         invoiceNumber: invoice.invoiceNumber,
-        description: invoice.description,
         amountDisplay: formatAmount(invoice.amountCents, invoice.currency),
         status: "paid",
         pdfBuffer,
@@ -240,7 +238,6 @@ async function resendManualInvoiceEmail({ invoiceId }) {
     await sendManualInvoiceEmail(invoice.clientEmail, {
       name: invoice.clientName,
       invoiceNumber: invoice.invoiceNumber,
-      description: invoice.description,
       amountDisplay: formatAmount(invoice.amountCents, invoice.currency),
       status: invoice.status,
       pdfBuffer,

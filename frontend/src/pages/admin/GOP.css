@@ -1,0 +1,1035 @@
+/* GOP.css
+   Guarantee of Payment — the create form is rendered as the document itself:
+   centered masthead, navy rule, numbered sections with blue-labelled fact
+   tables, matching the PDF backend/utils/gopPdf.js generates. Same design
+   tokens/spacing rhythm as ManualInvoices.css (Admin Dashboard's design
+   system) but its own namespace/file, so nothing here can perturb the
+   approved Manual Invoice page. */
+
+.gop-page {
+  --gop-bg: #eceff3;
+  --gop-sheet: #ffffff;
+  --gop-ink: #1a1a1a;
+  --gop-ink-soft: #3d3d3d;
+  --gop-muted: #8a8a8a;
+  --gop-caption: #7d7d7d;
+  --gop-line: #dcdfe5;
+  --gop-band: #eef0f4;
+  --gop-navy: #16305e;
+  --gop-navy-dark: #0f2447;
+  --gop-blue: #2f6cb0;
+  --gop-blue-soft: #eaf1fa;
+  --gop-danger: #b42318;
+  --gop-danger-soft: #fdf0f0;
+  --gop-radius: 4px;
+  --gop-shadow:
+    0 1px 2px rgba(26, 26, 26, 0.05), 0 10px 30px rgba(26, 26, 26, 0.07);
+
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 20px 96px;
+  box-sizing: border-box;
+  color: var(--gop-ink);
+  font-family:
+    "Helvetica Neue", Helvetica, Arial, "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.gop-page *,
+.gop-page *::before,
+.gop-page *::after {
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------- page toolbar --- */
+
+.gop-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.gop-eyebrow {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gop-muted);
+}
+
+.gop-metrics {
+  display: flex;
+  gap: 28px;
+}
+
+.gop-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.gop-metric span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gop-muted);
+}
+
+.gop-metric__value {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gop-navy);
+}
+
+/* ------------------------------------------------------- the GOP sheet --- */
+
+.gop-doc {
+  background: var(--gop-sheet);
+  border: 1px solid var(--gop-line);
+  border-radius: var(--gop-radius);
+  box-shadow: var(--gop-shadow);
+  padding: 44px 56px 36px;
+  margin-bottom: 28px;
+}
+
+.gop-doc__masthead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.gop-doc__logo {
+  display: block;
+  height: 56px;
+  width: auto;
+  max-width: 260px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.gop-doc__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--gop-navy);
+}
+
+.gop-doc__subtitle {
+  margin: 4px 0 0;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-style: italic;
+  font-size: 13.5px;
+  color: var(--gop-ink-soft);
+}
+
+.gop-doc__rule {
+  height: 3px;
+  margin: 18px 0 22px;
+  background: var(--gop-navy);
+}
+
+/* ------------------------------------------------------------- inputs ---- */
+
+/* Same rationale as ManualInvoices.css: a visible fill + border at rest so
+   every field reads as editable, not just on hover/focus. */
+.gop-input {
+  width: 100%;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--gop-ink-soft);
+  background: #fbfcfe;
+  border: 1px solid #d7dbe3;
+  border-radius: 3px;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.gop-input::placeholder {
+  color: #9aa1ac;
+}
+
+.gop-input:hover:not(:disabled) {
+  background: #fff;
+  border-color: #b6bcc6;
+}
+
+.gop-input:focus {
+  outline: none;
+  background: #fff;
+  border-color: var(--gop-blue);
+  box-shadow: 0 0 0 3px rgba(47, 108, 176, 0.14);
+}
+
+.gop-input--flush {
+  background: #fff;
+  border-color: #dde1e8;
+}
+
+.gop-input--flush:hover:not(:disabled) {
+  border-color: #b6bcc6;
+}
+
+/* Sits inline within a line of running text (the subtitle's case-type
+   selector, the Issuer signature field) rather than filling its container —
+   declared after the base .gop-input so its width: auto actually wins. */
+.gop-input--inline {
+  display: inline-block;
+  width: auto;
+  min-width: 220px;
+  max-width: 100%;
+  text-align: center;
+  font-style: italic;
+}
+
+.gop-select {
+  appearance: none;
+  padding-right: 24px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8a8a8a 50%),
+    linear-gradient(135deg, #8a8a8a 50%, transparent 50%);
+  background-position:
+    calc(100% - 12px) 55%,
+    calc(100% - 8px) 55%;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.gop-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 52px;
+  line-height: 1.55;
+}
+
+.gop-hint {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--gop-muted);
+}
+
+/* --------------------------------------------------- fact tables (info) -- */
+
+/* The recurring "label cell (shaded) / value cell (white)" block — the meta
+   strip, Patient Information, and Service Provider all use this. */
+.gop-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 6px;
+  border: 1px solid #c9d3e0;
+}
+
+.gop-table tr + tr th,
+.gop-table tr + tr td {
+  border-top: 1px solid #c9d3e0;
+}
+
+.gop-table th {
+  width: 190px;
+  padding: 9px 12px;
+  background: var(--gop-blue-soft);
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--gop-navy);
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.gop-table td {
+  padding: 6px 10px;
+  background: #fff;
+  vertical-align: middle;
+}
+
+.gop-cell-printed {
+  padding: 9px 12px !important;
+  font-size: 13px;
+  color: var(--gop-ink);
+}
+
+.gop-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 2px;
+  background: #e6f4ec;
+  border: 1px solid #c2e2d1;
+  color: #0f7047;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ----------------------------------------------------------- sections ---- */
+
+.gop-doc__section {
+  margin: 26px 0;
+}
+
+.gop-doc__caption {
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--gop-navy);
+  border-bottom: 2px solid var(--gop-blue);
+}
+
+.gop-doc__terms {
+  margin: 10px 0 0;
+  max-width: 78ch;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--gop-ink-soft);
+}
+
+.gop-doclist {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13.5px;
+  color: var(--gop-ink-soft);
+}
+
+.gop-doclist li {
+  margin-bottom: 4px;
+}
+
+.gop-doc__issuer-label {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  color: var(--gop-ink-soft);
+}
+
+.gop-doc__issuer-input {
+  display: inline-block;
+  width: auto;
+  min-width: 260px;
+  max-width: 100%;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gop-ink);
+}
+
+.gop-doc__issuer-company {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--gop-muted);
+}
+
+/* -------------------------------------------------------- amount input --- */
+
+.gop-amount-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.gop-amount-row__label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--gop-navy);
+}
+
+.gop-amount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 140px;
+}
+
+.gop-amount__prefix {
+  font-size: 14px;
+  font-weight: 700;
+  color: #9aa1ac;
+  flex: none;
+}
+
+.gop-amount__input {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--gop-ink);
+}
+
+.gop-amount__currency {
+  width: auto;
+  min-width: 118px;
+}
+
+/* --------------------------------------------------------------- foot ---- */
+
+.gop-doc__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 22px;
+  margin-top: 10px;
+  border-top: 1px solid var(--gop-line);
+}
+
+.gop-doc__actions .gop-hint {
+  margin-top: 0;
+}
+
+.gop-doc__foot {
+  padding-top: 18px;
+  margin-top: 26px;
+  border-top: 1px solid var(--gop-line);
+  text-align: center;
+  font-size: 12px;
+  color: var(--gop-muted);
+}
+
+/* ------------------------------------------------------------ buttons ---- */
+
+.gop-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  font: inherit;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--gop-radius);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.gop-btn:focus-visible,
+.gop-icon-btn:focus-visible {
+  outline: 2px solid var(--gop-blue);
+  outline-offset: 2px;
+}
+
+.gop-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gop-btn--primary {
+  background: var(--gop-navy);
+  border-color: var(--gop-navy);
+  color: #fff;
+}
+
+.gop-btn--primary:hover:not(:disabled) {
+  background: var(--gop-navy-dark);
+  border-color: var(--gop-navy-dark);
+}
+
+.gop-btn--ghost {
+  background: #fff;
+  border-color: #d2d6dd;
+  color: var(--gop-ink);
+}
+
+.gop-btn--ghost:hover:not(:disabled) {
+  background: #f6f7f9;
+  border-color: #b6bcc6;
+}
+
+.gop-btn--sm {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+.gop-btn--link {
+  padding: 2px 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: var(--gop-ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gop-btn--link:hover:not(:disabled) {
+  color: var(--gop-ink);
+  border-bottom-color: currentColor;
+}
+
+.gop-btn--accent {
+  color: var(--gop-blue);
+}
+
+.gop-btn--accent:hover:not(:disabled) {
+  color: var(--gop-navy);
+}
+
+.gop-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  color: #bdbdbd;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.gop-icon-btn:hover:not(:disabled) {
+  background: #fdecea;
+  border-color: #f3c9c4;
+  color: var(--gop-danger);
+}
+
+.gop-spinner {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: gop-spin 0.7s linear infinite;
+}
+
+.gop-spinner--dark,
+.gop-btn--link .gop-spinner {
+  border-color: rgba(26, 26, 26, 0.2);
+  border-top-color: var(--gop-ink);
+}
+
+@keyframes gop-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------------------------- alerts and banners ---- */
+
+.gop-alert {
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  background: #fdecea;
+  border: 1px solid #f3c9c4;
+  border-left: 3px solid var(--gop-danger);
+  border-radius: var(--gop-radius);
+  color: #8c1d18;
+}
+
+.gop-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  background: var(--gop-sheet);
+  border: 1px solid var(--gop-line);
+  border-left: 3px solid #0f7047;
+  border-radius: var(--gop-radius);
+  box-shadow: var(--gop-shadow);
+}
+
+.gop-banner__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: #e6f4ec;
+  color: #0f7047;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.gop-banner__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.gop-banner__title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.gop-banner__meta {
+  font-size: 13px;
+  color: var(--gop-ink-soft);
+}
+
+.gop-banner__warn {
+  color: var(--gop-danger);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.gop-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+/* --------------------------------------------------------- history card -- */
+
+.gop-card {
+  background: var(--gop-sheet);
+  border: 1px solid var(--gop-line);
+  border-radius: var(--gop-radius);
+  box-shadow: var(--gop-shadow);
+  padding: 28px 32px 32px;
+}
+
+.gop-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 3px solid var(--gop-navy);
+}
+
+.gop-card__title h2 {
+  margin: 6px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gop-navy);
+}
+
+/* -------------------------------------------------- search & filter bar -- */
+
+.gop-history-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.gop-search {
+  position: relative;
+  flex: 1 1 260px;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.gop-search__icon {
+  position: absolute;
+  left: 11px;
+  color: var(--gop-muted);
+  pointer-events: none;
+}
+
+.gop-search__input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--gop-ink);
+  background: #fff;
+  border: 1px solid #d7dbe3;
+  border-radius: var(--gop-radius);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.gop-search__input::placeholder {
+  color: #9aa1ac;
+}
+
+.gop-search__input:hover:not(:disabled) {
+  border-color: #b6bcc6;
+}
+
+.gop-search__input:focus {
+  outline: none;
+  border-color: var(--gop-blue);
+  box-shadow: 0 0 0 3px rgba(47, 108, 176, 0.14);
+}
+
+.gop-search__input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------- pagination --- */
+
+.gop-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gop-line);
+}
+
+.gop-pagination__info {
+  font-size: 12.5px;
+  color: var(--gop-muted);
+}
+
+.gop-pagination__controls {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+/* -------------------------------------------------------- skeleton/empty - */
+
+.gop-skeleton {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gop-line);
+  border-radius: var(--gop-radius);
+  overflow: hidden;
+}
+
+.gop-skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--gop-line);
+}
+
+.gop-skeleton__row:last-child {
+  border-bottom: 0;
+}
+
+.gop-skeleton__bar {
+  height: 9px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e3e3e3 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: gop-shimmer 1.4s ease infinite;
+}
+
+@keyframes gop-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.gop-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 56px 24px;
+  text-align: center;
+  border: 1px dashed #d8d8d8;
+  border-radius: var(--gop-radius);
+  background: #fcfcfc;
+}
+
+.gop-empty__icon {
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+
+.gop-empty strong {
+  font-size: 15px;
+}
+
+.gop-empty span {
+  color: var(--gop-muted);
+}
+
+/* ------------------------------------------------------------ history table */
+
+.gop-table-wrap {
+  overflow-x: auto;
+}
+
+.gop-history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gop-history-table thead th {
+  padding: 12px 16px;
+  background: var(--gop-band);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #4f4f4f;
+  white-space: nowrap;
+}
+
+.gop-history-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #ededed;
+  vertical-align: top;
+}
+
+.gop-history-table tbody tr:hover td {
+  background: #fafafa;
+}
+
+.gop-col-amount {
+  text-align: right;
+}
+
+.gop-col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.gop-cell-muted {
+  color: var(--gop-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.gop-cell-number {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.gop-cell-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gop-person {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gop-person strong {
+  font-weight: 700;
+}
+
+.gop-person span {
+  font-size: 12.5px;
+  color: var(--gop-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+.gop-email-flag {
+  display: block;
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--gop-danger);
+  text-align: right;
+  cursor: help;
+}
+
+.gop-actions {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+/* --------------------------------------------------------- responsive ---- */
+
+@media (max-width: 900px) {
+  .gop-doc {
+    padding: 32px 24px 28px;
+  }
+
+  .gop-doc__title {
+    font-size: 20px;
+  }
+
+  .gop-card {
+    padding: 24px 20px;
+  }
+
+  .gop-table th {
+    width: 150px;
+  }
+}
+
+@media (max-width: 820px) {
+  .gop-page {
+    padding: 20px 14px 72px;
+  }
+
+  .gop-table th {
+    width: 130px;
+    font-size: 10.5px;
+  }
+
+  .gop-history-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gop-pagination {
+    justify-content: center;
+  }
+
+  .gop-pagination__controls {
+    width: 100%;
+  }
+
+  .gop-pagination__controls .gop-btn {
+    flex: 1;
+  }
+
+  /* History table becomes stacked cards; each cell prints its own header. */
+  .gop-table-wrap {
+    overflow-x: visible;
+  }
+
+  .gop-history-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .gop-history-table tbody tr {
+    display: block;
+    margin-bottom: 12px;
+    border: 1px solid var(--gop-line);
+    border-radius: var(--gop-radius);
+  }
+
+  .gop-history-table tbody td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 14px;
+    text-align: right;
+  }
+
+  .gop-history-table tbody tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .gop-history-table tbody tr:hover td {
+    background: transparent;
+  }
+
+  .gop-history-table tbody td::before {
+    content: attr(data-label);
+    flex: none;
+    padding-top: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--gop-caption);
+    text-align: left;
+  }
+
+  .gop-person {
+    align-items: flex-end;
+  }
+
+  .gop-person span {
+    max-width: 100%;
+    text-align: right;
+  }
+
+  .gop-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 14px;
+  }
+
+  .gop-banner {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 520px) {
+  .gop-doc {
+    padding: 24px 16px 24px;
+  }
+
+  .gop-doc__title {
+    font-size: 18px;
+  }
+
+  .gop-table th,
+  .gop-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .gop-table th {
+    border-bottom: 0;
+  }
+
+  .gop-amount-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gop-amount {
+    width: 100%;
+  }
+
+  .gop-doc__actions .gop-btn--primary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gop-page * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

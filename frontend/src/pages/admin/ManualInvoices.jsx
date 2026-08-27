@@ -37,6 +37,15 @@ const PAYMENT_TERMS_OPTIONS = [
   { value: "Net 60 Days", days: 60 },
 ];
 
+// Recent Invoices list: how many rows load per page.
+const HISTORY_PAGE_SIZE = 8;
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "due", label: "Due" },
+  { value: "paid", label: "Paid" },
+];
+
 function toDateInputValue(date) {
   const d = new Date(date);
   const offset = d.getTimezoneOffset();
@@ -107,10 +116,7 @@ export default function ManualInvoices() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [registrationNumber, setRegistrationNumber] = useState("");
   const [address, setAddress] = useState("");
-  const [country, setCountry] = useState("");
-  const [postalCode, setPostalCode] = useState("");
   const [currency, setCurrency] = useState("EUR");
   const [paymentTerms, setPaymentTerms] = useState(
     PAYMENT_TERMS_OPTIONS[2].value,
@@ -131,6 +137,17 @@ export default function ManualInvoices() {
 
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotalPages, setHistoryTotalPages] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [searchInput, setSearchInput] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  // Global due/paid counts for the toolbar metrics — fetched independently
+  // of the (now paginated, filterable) `history` list below, since that list
+  // only ever holds one page's worth of rows and can't be summed for a
+  // sitewide total.
+  const [dueCount, setDueCount] = useState(0);
+  const [paidCount, setPaidCount] = useState(0);
 
   const [markPaidRowId, setMarkPaidRowId] = useState("");
   const [markPaidResend, setMarkPaidResend] = useState(true);
@@ -140,18 +157,76 @@ export default function ManualInvoices() {
   const [resendingId, setResendingId] = useState("");
   const [resendError, setResendError] = useState("");
 
-  const fetchHistory = () => {
+  // Overrides let a caller (a pagination click, the search/filter effect
+  // below) request a specific page/status/query without waiting for a
+  // state update to land first — reading historyPage/statusFilter/
+  // searchInput directly here would otherwise use this render's (possibly
+  // stale, about-to-change) values instead of the ones the caller intends.
+  const fetchHistory = (overrides = {}) => {
+    const page = overrides.page ?? historyPage;
+    const status = overrides.status ?? statusFilter;
+    const q = overrides.q ?? searchInput;
+
     setHistoryLoading(true);
+    const params = { page, limit: HISTORY_PAGE_SIZE };
+    if (status !== "all") params.status = status;
+    if (q.trim()) params.q = q.trim();
+
     api
-      .get("/api/admin/manual-invoices")
-      .then((res) => setHistory(res.data.invoices || []))
-      .catch(() => setHistory([]))
+      .get("/api/admin/manual-invoices", { params })
+      .then((res) => {
+        setHistory(res.data.invoices || []);
+        setHistoryPage(res.data.page || page);
+        setHistoryTotalPages(res.data.totalPages || 1);
+        setHistoryTotal(res.data.total ?? 0);
+      })
+      .catch(() => {
+        setHistory([]);
+        setHistoryTotalPages(1);
+        setHistoryTotal(0);
+      })
       .finally(() => setHistoryLoading(false));
   };
 
+  // Cheap (limit: 1 — only the `total` count is read) sitewide totals,
+  // independent of whatever page/filter/search the list below is on.
+  const fetchCounts = () => {
+    Promise.all([
+      api.get("/api/admin/manual-invoices", { params: { status: "due", limit: 1 } }),
+      api.get("/api/admin/manual-invoices", { params: { status: "paid", limit: 1 } }),
+    ])
+      .then(([dueRes, paidRes]) => {
+        setDueCount(dueRes.data.total || 0);
+        setPaidCount(paidRes.data.total || 0);
+      })
+      .catch(() => {});
+  };
+
+  const goToHistoryPage = (page) => {
+    const target = Math.min(Math.max(1, page), historyTotalPages);
+    if (target === historyPage || historyLoading) return;
+    fetchHistory({ page: target });
+  };
+
+  const isFirstHistoryFetch = useRef(true);
+
+  // Runs once immediately on mount, then re-runs (debounced, so typing a
+  // search term doesn't fire a request per keystroke) whenever the search
+  // text or status filter changes — always resetting back to page 1, since
+  // the previous page number may no longer exist under the new filter.
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    if (isFirstHistoryFetch.current) {
+      isFirstHistoryFetch.current = false;
+      fetchHistory({ page: 1 });
+      fetchCounts();
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      fetchHistory({ page: 1 });
+    }, 350);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput, statusFilter]);
 
   // The mark-paid editor is a modal now, so it owns the page while open:
   // Escape closes it (unless a save is in flight, where closing would hide
@@ -235,10 +310,7 @@ export default function ManualInvoices() {
     setName("");
     setEmail("");
     setCompanyName("");
-    setRegistrationNumber("");
     setAddress("");
-    setCountry("");
-    setPostalCode("");
     setCurrency("EUR");
     setPaymentTerms(PAYMENT_TERMS_OPTIONS[2].value);
     setDueDate(
@@ -260,10 +332,7 @@ export default function ManualInvoices() {
         name,
         email,
         companyName,
-        registrationNumber,
         address,
-        country,
-        postalCode,
         currency,
         paymentTerms,
         dueDate,
@@ -277,7 +346,9 @@ export default function ManualInvoices() {
       });
       setCreated(res.data.invoice);
       resetForm();
-      fetchHistory();
+      // Back to page 1 so the just-created invoice (newest first) is visible.
+      fetchHistory({ page: 1 });
+      fetchCounts();
     } catch (err) {
       setError(err.response?.data?.msg || "Failed to generate invoice.");
     } finally {
@@ -336,17 +407,13 @@ export default function ManualInvoices() {
       });
       setMarkPaidRowId("");
       fetchHistory();
+      fetchCounts();
     } catch (err) {
       setMarkPaidError(err.response?.data?.msg || "Failed to update invoice.");
     } finally {
       setMarkPaidBusy(false);
     }
   };
-
-  const paidCount = history.filter(
-    (invoice) => invoice.status === "paid",
-  ).length;
-  const dueCount = history.length - paidCount;
 
   const isPaid = status === "paid";
   const issueDateLabel = formatDocDate(Date.now());
@@ -471,44 +538,6 @@ export default function ManualInvoices() {
                 value={address}
                 onChange={(event) => setAddress(event.target.value)}
                 placeholder="Chisinau, 10th Bucuresti Street"
-              />
-            </label>
-
-            <div className="mi-line-pair">
-              <label className="mi-line">
-                <span className="mi-line__label">Country</span>
-                <input
-                  type="text"
-                  className="mi-input"
-                  maxLength={100}
-                  value={country}
-                  onChange={(event) => setCountry(event.target.value)}
-                  placeholder="Republic of Moldova"
-                />
-              </label>
-
-              <label className="mi-line">
-                <span className="mi-line__label">Postal code</span>
-                <input
-                  type="text"
-                  className="mi-input"
-                  maxLength={30}
-                  value={postalCode}
-                  onChange={(event) => setPostalCode(event.target.value)}
-                  placeholder="MD-2001"
-                />
-              </label>
-            </div>
-
-            <label className="mi-line">
-              <span className="mi-line__label">Reg. No.</span>
-              <input
-                type="text"
-                className="mi-input"
-                maxLength={60}
-                value={registrationNumber}
-                onChange={(event) => setRegistrationNumber(event.target.value)}
-                placeholder="1010600044330"
               />
             </label>
           </section>
@@ -772,7 +801,7 @@ export default function ManualInvoices() {
           <button
             className="mi-btn mi-btn--ghost mi-btn--sm"
             type="button"
-            onClick={fetchHistory}
+            onClick={() => fetchHistory()}
             disabled={historyLoading}
           >
             {historyLoading && (
@@ -783,6 +812,50 @@ export default function ManualInvoices() {
             )}
             {historyLoading ? "Refreshing…" : "Refresh"}
           </button>
+        </div>
+
+        <div className="mi-history-controls">
+          <label className="mi-search" htmlFor="mi-history-search">
+            <svg
+              className="mi-search__icon"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              id="mi-history-search"
+              type="search"
+              className="mi-search__input"
+              placeholder="Search by client, email, or invoice #"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+            />
+          </label>
+
+          <label className="mi-filter" htmlFor="mi-history-status">
+            <span>Status</span>
+            <select
+              id="mi-history-status"
+              className="mi-input mi-select mi-filter__select"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              {STATUS_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {resendError && (
@@ -814,10 +887,19 @@ export default function ManualInvoices() {
             <div className="mi-empty__icon" aria-hidden="true">
               🧾
             </div>
-            <strong>No manual invoices yet</strong>
-            <span>
-              Invoices you generate above will appear here, newest first.
-            </span>
+            {searchInput.trim() || statusFilter !== "all" ? (
+              <>
+                <strong>No invoices match your search</strong>
+                <span>Try a different name, email, invoice number, or status filter.</span>
+              </>
+            ) : (
+              <>
+                <strong>No manual invoices yet</strong>
+                <span>
+                  Invoices you generate above will appear here, newest first.
+                </span>
+              </>
+            )}
           </div>
         ) : (
           <div className="mi-table-wrap">
@@ -923,6 +1005,33 @@ export default function ManualInvoices() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {!historyLoading && history.length > 0 && (
+          <div className="mi-pagination">
+            <span className="mi-pagination__info">
+              Page {historyPage} of {historyTotalPages} · {historyTotal}{" "}
+              invoice{historyTotal === 1 ? "" : "s"}
+            </span>
+            <div className="mi-pagination__controls">
+              <button
+                type="button"
+                className="mi-btn mi-btn--ghost mi-btn--sm"
+                onClick={() => goToHistoryPage(historyPage - 1)}
+                disabled={historyPage <= 1}
+              >
+                ← Previous
+              </button>
+              <button
+                type="button"
+                className="mi-btn mi-btn--ghost mi-btn--sm"
+                onClick={() => goToHistoryPage(historyPage + 1)}
+                disabled={historyPage >= historyTotalPages}
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
       </section>

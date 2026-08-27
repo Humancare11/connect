@@ -132,13 +132,24 @@ const NAV_ITEMS = [
         path: "/admin-dashboard/manual-invoices",
         paymentAdminPath: "/payment-admin/manual-invoices",
         label: "Manual Invoices",
-        roles: ["paymentadmin", "superadmin"],
+        roles: ["paymentadmin", "admin", "superadmin"],
         icon: (
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
             <line x1="16" y1="13" x2="8" y2="13" />
             <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+        ),
+      },
+      {
+        path: "/admin-dashboard/gop",
+        label: "Guarantee of Payment",
+        roles: ["admin", "superadmin"],
+        icon: (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-7.35 8.95a1 1 0 0 1-1.3 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.79 17 5 19 5a1 1 0 0 1 1 1z" />
+            <path d="m9 12 2 2 4-4" />
           </svg>
         ),
       },
