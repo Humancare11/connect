@@ -1118,6 +1118,37 @@ function isSocketInDirectRoom(socket, roomId) {
   return !!meta && String(meta.roomId) === String(roomId) && socket.rooms.has(room);
 }
 
+// The signaling server never interprets SDP — it only relays it between the
+// two peers in a room. But it should still refuse to forward anything that
+// isn't a well-formed session description: a malformed/oversized payload can
+// only ever crash or spam the receiving peer, never help it. Socket.IO's
+// default maxHttpBufferSize (1 MB) is the outer bound; a real offer/answer is
+// a few KB, so this cap is generous while still closing off abuse.
+const MAX_SDP_LENGTH = 100_000;
+// Matches both id shapes DirectVideoCall.jsx's makeOfferId() can produce:
+// a crypto.randomUUID() or an "offer-<ts>-<rand>" fallback.
+const DIRECT_OFFER_ID_PATTERN = /^[A-Za-z0-9-]{1,64}$/;
+
+function isValidSessionDescription(desc, expectedType) {
+  return (
+    !!desc &&
+    typeof desc === "object" &&
+    desc.type === expectedType &&
+    typeof desc.sdp === "string" &&
+    desc.sdp.length > 0 &&
+    desc.sdp.length <= MAX_SDP_LENGTH
+  );
+}
+
+// Returns a safe offerId to relay, or undefined if the peer sent none / sent
+// something that isn't a plausible id. Undefined is deliberately preserved
+// end to end so the receiving peer's stale-answer correlation still works.
+function sanitizeOfferId(offerId) {
+  return typeof offerId === "string" && DIRECT_OFFER_ID_PATTERN.test(offerId)
+    ? offerId
+    : undefined;
+}
+
 // Authenticate socket connections via HttpOnly cookies.
 io.use(async (socket, next) => {
   const cookies = parseCookieHeader(socket.handshake.headers.cookie || "");
@@ -1742,18 +1773,26 @@ io.on("connection", (socket) => {
     if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
   });
 
-  socket.on("direct-video-offer", ({ roomId, offer } = {}) => {
-    if (!roomId || !offer) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
+  socket.on("direct-video-offer", ({ roomId, offer, offerId } = {}) => {
+    if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
+    if (!isValidSessionDescription(offer, "offer")) return;
     if (!directSdpLimiter.allow(socket.id)) return;
-    socket.to(directRoomName(roomId)).emit("direct-video-offer", { offer });
+    // offerId is opaque to the server — relayed unchanged so the two peers can
+    // correlate an answer back to the offer it belongs to. DirectVideoCall.jsx
+    // rejects any answer whose offerId doesn't match its pending offer, so
+    // dropping it here wedges every call in "have-local-offer" until timeout.
+    socket
+      .to(directRoomName(roomId))
+      .emit("direct-video-offer", { offer, offerId: sanitizeOfferId(offerId) });
   });
 
-  socket.on("direct-video-answer", ({ roomId, answer } = {}) => {
-    if (!roomId || !answer) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
+  socket.on("direct-video-answer", ({ roomId, answer, offerId } = {}) => {
+    if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
+    if (!isValidSessionDescription(answer, "answer")) return;
     if (!directSdpLimiter.allow(socket.id)) return;
-    socket.to(directRoomName(roomId)).emit("direct-video-answer", { answer });
+    socket
+      .to(directRoomName(roomId))
+      .emit("direct-video-answer", { answer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("direct-ice-candidate", ({ roomId, candidate } = {}) => {
