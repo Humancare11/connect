@@ -132,7 +132,7 @@ export default function ProfileSettings() {
   const [saved, setSaved]   = useState(false);
   const [error, setError]   = useState("");
   const [formData, setFormData] = useState({
-    name: "", email: "", mobile: "", gender: "", dob: "", country: "",
+    name: "", email: "", mobile: "", gender: "", dob: "", country: "", state: "",
   });
 
   useEffect(() => {
@@ -144,6 +144,7 @@ export default function ProfileSettings() {
         gender:  user.gender  || "",
         dob:     user.dob     || "",
         country: user.country || "",
+        state:   user.state   || "",
       });
     }
   }, [user]);
@@ -164,6 +165,7 @@ export default function ProfileSettings() {
         gender:  user.gender  || "",
         dob:     user.dob     || "",
         country: user.country || "",
+        state:   user.state   || "",
       });
     }
     setSaved(false);
@@ -333,6 +335,9 @@ export default function ProfileSettings() {
                 {formData.country && (
                   <MetaRow icon="🌍" label="Country" value={getCountryName(formData.country)} />
                 )}
+                {formData.state && (
+                  <MetaRow icon="📍" label="State / Province" value={formData.state} />
+                )}
               </div>
             </div>
           </div>
@@ -461,6 +466,18 @@ export default function ProfileSettings() {
                     style={inputStyle} type="text" id="country" name="country"
                     value={getCountryName(formData.country)} onChange={handleChange}
                     placeholder="e.g. India, USA"
+                    onFocus={onFocus} onBlur={onBlur}
+                  />
+                </Field>
+              </div>
+
+              {/* Row 4: State / Province */}
+              <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
+                <Field label="State / Province" icon="📍">
+                  <input
+                    style={inputStyle} type="text" id="state" name="state"
+                    value={formData.state} onChange={handleChange}
+                    placeholder="e.g. Maharashtra"
                     onFocus={onFocus} onBlur={onBlur}
                   />
                 </Field>

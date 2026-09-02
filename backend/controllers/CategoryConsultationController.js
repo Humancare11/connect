@@ -305,7 +305,7 @@ const getCategoryConsultationById = async (req, res) => {
     const consultation = await CategoryConsultation.findById(req.params.id)
       .populate(
         "patientId",
-        "name email mobile gender country dob"
+        "name email mobile gender country state dob"
       )
       .populate(
         "assignedDoctorId",

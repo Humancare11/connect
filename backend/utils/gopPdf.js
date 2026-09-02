@@ -99,7 +99,7 @@ function measureText(doc, text, { font = "Helvetica", size = 10, width }) {
 // height depends on admin-typed free text (the two paragraph fields),
 // since those are the only sections here that can grow unpredictably.
 function ensureSpace(doc, y, needed) {
-  const bottom = doc.page.height - PAGE_MARGIN - 60;
+  const bottom = doc.page.height - PAGE_MARGIN - 48;
   if (y + needed <= bottom) return y;
   doc.addPage();
   return PAGE_MARGIN;

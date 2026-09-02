@@ -2213,6 +2213,7 @@ export default function DoctorOnboardingWizard({
     if (!s1.dob) e.dob = "Required";
     if (!s1.country) e.country = "Required";
     if (s1.country === "US" && !s1.state.trim()) e.state = "Required for US";
+    if (!s1.zip.trim()) e.zip = "Required";
     if (languagesKnown.length === 0) e.languages = "Required";
     setS1Errors(e);
     return Object.keys(e).length === 0;
@@ -2857,13 +2858,18 @@ export default function DoctorOnboardingWizard({
             </div>
 
             <div className="field-group">
-              <label className="field-label">ZIP / Postal Code</label>
+              <label className="field-label">
+                ZIP / Postal Code <span className="req">*</span>
+              </label>
               <input
-                className="field-input"
+                className={`field-input ${s1Errors.zip ? "error" : ""}`}
                 placeholder="ZIP or postal code"
                 value={s1.zip}
                 onChange={(e) => setS1({ ...s1, zip: e.target.value })}
               />
+              {s1Errors.zip && (
+                <div className="field-error">{s1Errors.zip}</div>
+              )}
             </div>
           </div>
 

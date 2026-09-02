@@ -521,6 +521,21 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
         let enrollment = await Enrollment.findOne({ doctorId });
         let responseMessage = "Enrollment submitted successfully";
 
+        // ZIP / Postal Code is a mandatory enrollment field. Enforce it on the
+        // initial submission and on resubmission after rejection (mirrors
+        // validateS1() on the frontend). Approved doctors' profile edits are
+        // staged through the diff flow below and keep their existing value, so
+        // they are intentionally excluded here — this guard never touches the
+        // autosave, progress, or admin-approval paths.
+        if (!enrollment || enrollment.approvalStatus !== "approved") {
+            const submittedZip =
+                typeof enrollmentData.zip === "string" ? enrollmentData.zip.trim() : "";
+            if (!submittedZip) {
+                return res.status(400).json({ message: "ZIP / Postal Code is required." });
+            }
+            enrollmentData.zip = submittedZip;
+        }
+
         if (enrollment) {
             const wasApproved = enrollment.approvalStatus === "approved";
             const wasRejected = enrollment.approvalStatus === "rejected";
