@@ -59,7 +59,7 @@ import TelemedicineInPerson from "./pages/Blogs/TelemedicineInPerson";
 import TelemedicineCost from "./pages/Blogs/TelemedicineCost";
 import OnlineDoctorRealDoctor from "./pages/Blogs/OnlineDoctorsRealDoctors";
 import FutureofTelemedicine from "./pages/Blogs/FutureofTelemedicine";
-
+import UTI from "./pages/Blogs/UTI";
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
@@ -832,9 +832,13 @@ const PartnerLayout = lazy(() => import("./pages/partner/PartnerLayout"));
 const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
 const PartnerSubmitCare = lazy(() => import("./pages/partner/SubmitCare"));
 const PartnerAllCases = lazy(() => import("./pages/partner/AllCases"));
-const PartnerCaseDetail = lazy(() => import("./pages/partner/PartnerCaseDetail"));
+const PartnerCaseDetail = lazy(
+  () => import("./pages/partner/PartnerCaseDetail"),
+);
 const AdminPartnerCases = lazy(() => import("./pages/admin/PartnerCases"));
-const AdminPartnerCaseDetail = lazy(() => import("./pages/admin/PartnerCaseDetail"));
+const AdminPartnerCaseDetail = lazy(
+  () => import("./pages/admin/PartnerCaseDetail"),
+);
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -1425,7 +1429,6 @@ function AppLayout() {
               </EmployeeAdminPrivateRoute>
             }
           />
-
           {/* ── Partner Dashboard ── */}
           <Route path="/partner-login" element={<PartnerLogin />} />
           <Route
@@ -1468,7 +1471,6 @@ function AppLayout() {
               </PartnerPrivateRoute>
             }
           />
-
           <Route
             path="/admin-dashboard/partner-cases"
             element={
@@ -1489,7 +1491,6 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-
           <Route
             path="/payment-admin"
             element={<Navigate to="/payment-admin/payment-links" replace />}
@@ -1865,7 +1866,10 @@ function AppLayout() {
             path="/chronic-care/cardiology/chest-pain"
             element={<ChestPain categoryId="chronic" />}
           />
-          <Route path="/chronic-kidney-disease" element={<ChronicKidney categoryId="chronic" />} />
+          <Route
+            path="/chronic-kidney-disease"
+            element={<ChronicKidney categoryId="chronic" />}
+          />
           <Route
             path="/chronic-care/neurology/chronic-migraine"
             element={<ChronicMigraine categoryId="chronic" />}
@@ -1946,7 +1950,10 @@ function AppLayout() {
             path="/online-second-medical-opinion/treatment-plan-review"
             element={<TreatmentPlanReview categoryId="chronic" />}
           />
-          <Route path="/chronic-care/neurology/tremor" element={<Tremor categoryId="chronic" />} />
+          <Route
+            path="/chronic-care/neurology/tremor"
+            element={<Tremor categoryId="chronic" />}
+          />
           <Route
             path="/chronic-care/endocrinology/type-2-diabetes"
             element={<TypeTwoDiabetes categoryId="chronic" />}
@@ -1967,7 +1974,10 @@ function AppLayout() {
             path="/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet"
             element={<CholesterolLoweringDiet categoryId="weight" />}
           />
-          <Route path="/dehydration" element={<Dehydration categoryId="chronic" />} />
+          <Route
+            path="/dehydration"
+            element={<Dehydration categoryId="chronic" />}
+          />
           <Route
             path="/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet"
             element={<DiabeticDiet categoryId="weight" />}
@@ -1980,7 +1990,10 @@ function AppLayout() {
             path="/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning"
             element={<FoodIntolerancePlanning categoryId="weight" />}
           />
-          <Route path="/gastritis" element={<Gastritis categoryId="chronic" />} />
+          <Route
+            path="/gastritis"
+            element={<Gastritis categoryId="chronic" />}
+          />
           <Route
             path="/glp-program-eligibility"
             element={<GlpProgramEligibility categoryId="chronic" />}
@@ -1989,8 +2002,14 @@ function AppLayout() {
             path="/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching"
             element={<HealthyHabitCoaching categoryId="weight" />}
           />
-          <Route path="/hemorrhoids" element={<Hemorrhoids categoryId="chronic" />} />
-          <Route path="/indigestion" element={<Indigestion categoryId="chronic" />} />
+          <Route
+            path="/hemorrhoids"
+            element={<Hemorrhoids categoryId="chronic" />}
+          />
+          <Route
+            path="/indigestion"
+            element={<Indigestion categoryId="chronic" />}
+          />
           <Route
             path="/chronic-care/gastroenterology/irritable-bowel-syndrome"
             element={<IrritableBowelSyndrome categoryId="chronic" />}
@@ -2007,7 +2026,10 @@ function AppLayout() {
             path="/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition"
             element={<SportNutrition categoryId="weight" />}
           />
-          <Route path="/metabolic-syndrome" element={<MetabolicSyndrome categoryId="chronic" />} />
+          <Route
+            path="/metabolic-syndrome"
+            element={<MetabolicSyndrome categoryId="chronic" />}
+          />
           <Route path="/vomiting" element={<Vomiting categoryId="chronic" />} />
           <Route
             path="/weight-and-nurtrition/weight-management/weight-loss-planning"
@@ -2057,8 +2079,14 @@ function AppLayout() {
             path="/chronic-care/neurology/numbness-and-tingling"
             element={<NumbnessAndTingling categoryId="chronic" />}
           />
-          <Route path="/eye-ear-bone/ophthalmology/stye" element={<Stye categoryId="eeb" />} />
-          <Route path="/swollen-feet-ankles" element={<SwollenFeetAnkles categoryId="eeb" />} />
+          <Route
+            path="/eye-ear-bone/ophthalmology/stye"
+            element={<Stye categoryId="eeb" />}
+          />
+          <Route
+            path="/swollen-feet-ankles"
+            element={<SwollenFeetAnkles categoryId="eeb" />}
+          />
           <Route
             path="/eye-ear-bone/ear-nose-throat/tonsillitis"
             element={<Tonsillitis categoryId="eeb" />}
@@ -2068,7 +2096,10 @@ function AppLayout() {
             path="/eye-ear-bone/ophthalmology/vision-changes"
             element={<VisionChanges categoryId="eeb" />}
           />
-          <Route path="/childhood-allergies" element={<ChildhoodAllergies categoryId="family" />} />
+          <Route
+            path="/childhood-allergies"
+            element={<ChildhoodAllergies categoryId="family" />}
+          />
           <Route
             path="/child-and-family-care/pediatrics/ear-pain-children"
             element={<EarPainChildren categoryId="family" />}
@@ -2093,7 +2124,10 @@ function AppLayout() {
             path="/child-and-family-care/pediatrics/pediatric-fever"
             element={<PediatricFever categoryId="family" />}
           />
-          <Route path="/pink-eye-children" element={<PinkEyeChildren categoryId="family" />} />
+          <Route
+            path="/pink-eye-children"
+            element={<PinkEyeChildren categoryId="family" />}
+          />
           <Route
             path="/child-and-family-care/adolescent-medicine/puberty-concerns"
             element={<PubertyConcerns categoryId="family" />}
@@ -2114,23 +2148,38 @@ function AppLayout() {
             path="/stomach-pain-children"
             element={<StomachPainChildren categoryId="family" />}
           />
-          <Route path="/growth-development" element={<GrowthDevelopment categoryId="family" />} />
+          <Route
+            path="/growth-development"
+            element={<GrowthDevelopment categoryId="family" />}
+          />
           <Route
             path="/vomiting-diarrhea-children"
             element={<VomitingDiarrheaChildren categoryId="family" />}
           />
-          <Route path="/doctors-note" element={<DoctorsNote categoryId="general" />} />
+          <Route
+            path="/doctors-note"
+            element={<DoctorsNote categoryId="general" />}
+          />
           <Route
             path="/follow-up-consultation"
             element={<FollowUpConsultation categoryId="general" />}
           />
-          <Route path="/lab-results-review" element={<LabResultsReview categoryId="general" />} />
-          <Route path="/medical-certificate" element={<MedicalCertificate categoryId="general" />} />
+          <Route
+            path="/lab-results-review"
+            element={<LabResultsReview categoryId="general" />}
+          />
+          <Route
+            path="/medical-certificate"
+            element={<MedicalCertificate categoryId="general" />}
+          />
           <Route
             path="/general-and-everyday-care/internal-medicine/medication-review"
             element={<MedicationReview categoryId="general" />}
           />
-          <Route path="/prescription-refill" element={<PrescriptionRefill categoryId="general" />} />
+          <Route
+            path="/prescription-refill"
+            element={<PrescriptionRefill categoryId="general" />}
+          />
           <Route
             path="/return-to-work-clearance"
             element={<ReturnWorkClearance categoryId="general" />}
@@ -2139,16 +2188,34 @@ function AppLayout() {
             path="/second-medical-opinion"
             element={<SecondMedicalOpinion categoryId="chronic" />}
           />
-          <Route path="/specialist-referral" element={<SpecialistReferral categoryId="general" />} />
-          <Route path="/allergic-rhinitis" element={<AllergicRhinitis categoryId="chronic" />} />
-          <Route path="/chronic-care/pulmonology/asthma" element={<Asthma categoryId="chronic" />} />
-          <Route path="/asthma-flare-up" element={<AsthmaFlareUp categoryId="chronic" />} />
-          <Route path="/chronic-care/pulmonology/copd" element={<Copd categoryId="chronic" />} />
+          <Route
+            path="/specialist-referral"
+            element={<SpecialistReferral categoryId="general" />}
+          />
+          <Route
+            path="/allergic-rhinitis"
+            element={<AllergicRhinitis categoryId="chronic" />}
+          />
+          <Route
+            path="/chronic-care/pulmonology/asthma"
+            element={<Asthma categoryId="chronic" />}
+          />
+          <Route
+            path="/asthma-flare-up"
+            element={<AsthmaFlareUp categoryId="chronic" />}
+          />
+          <Route
+            path="/chronic-care/pulmonology/copd"
+            element={<Copd categoryId="chronic" />}
+          />
           <Route
             path="/chronic-care/pulmonology/persistent-cough"
             element={<PersistentCough categoryId="chronic" />}
           />
-          <Route path="/pneumonia-follow-up" element={<PneumoniaFollowUp categoryId="chronic" />} />
+          <Route
+            path="/pneumonia-follow-up"
+            element={<PneumoniaFollowUp categoryId="chronic" />}
+          />
           <Route
             path="/chronic-care/pulmonology/shortness-of-breath"
             element={<ShortnessOfBreath categoryId="chronic" />}
@@ -2162,8 +2229,14 @@ function AppLayout() {
             path="/sexual-health/sexual-health-and-wellness/chlamydia"
             element={<Chlamydia categoryId="sexual" />}
           />
-          <Route path="/genital-itching" element={<GenitalItching categoryId="sexual" />} />
-          <Route path="/genital-rash" element={<GenitalRash categoryId="sexual" />} />
+          <Route
+            path="/genital-itching"
+            element={<GenitalItching categoryId="sexual" />}
+          />
+          <Route
+            path="/genital-rash"
+            element={<GenitalRash categoryId="sexual" />}
+          />
           <Route
             path="/sexual-health/sexual-health-and-wellness/gonorrhea"
             element={<Gonorrhea categoryId="sexual" />}
@@ -2192,13 +2265,22 @@ function AppLayout() {
             path="/skin-and-hair-care/dermatology/acne"
             element={<Acne categoryId="skin" />}
           />
-          <Route path="/athletes-foot" element={<AthletesFoot categoryId="skin" />} />
-          <Route path="/cellulitis" element={<Cellulitis categoryId="skin" />} />
+          <Route
+            path="/athletes-foot"
+            element={<AthletesFoot categoryId="skin" />}
+          />
+          <Route
+            path="/cellulitis"
+            element={<Cellulitis categoryId="skin" />}
+          />
           <Route
             path="/skin-and-hair-care/dermatology/cold-sores"
             element={<ColdSores categoryId="skin" />}
           />
-          <Route path="/contact-dermatitis" element={<ContactDermatitis categoryId="skin" />} />
+          <Route
+            path="/contact-dermatitis"
+            element={<ContactDermatitis categoryId="skin" />}
+          />
           <Route
             path="/skin-and-hair-care/dermatology/eczema"
             element={<Eczema categoryId="skin" />}
@@ -2275,7 +2357,10 @@ function AppLayout() {
             path="/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling"
             element={<MedicationRefillTraveling categoryId="travel" />}
           />
-          <Route path="/motion-sickness" element={<MotionSickness categoryId="travel" />} />
+          <Route
+            path="/motion-sickness"
+            element={<MotionSickness categoryId="travel" />}
+          />
           <Route
             path="/travel-and-global-care/travel-medicine/post-travel-symptoms"
             element={<PostTravelSymptoms categoryId="travel" />}
@@ -2308,7 +2393,10 @@ function AppLayout() {
             path="/general-and-everyday-care/general-physician/body-aches"
             element={<BodyAches categoryId="general" />}
           />
-          <Route path="/bronchitis" element={<Bronchitis categoryId="general" />} />
+          <Route
+            path="/bronchitis"
+            element={<Bronchitis categoryId="general" />}
+          />
           <Route
             path="/general-and-everyday-care/general-physician/cold-and-flu"
             element={<ColdAndFlu categoryId="general" />}
@@ -2339,17 +2427,26 @@ function AppLayout() {
             path="/general-and-everyday-care/general-physician/fever"
             element={<Fever categoryId="general" />}
           />
-          <Route path="/food-poisoning" element={<FoodPoisoning categoryId="general" />} />
+          <Route
+            path="/food-poisoning"
+            element={<FoodPoisoning categoryId="general" />}
+          />
           <Route
             path="/general-and-everyday-care/general-physician/headache"
             element={<Headache categoryId="general" />}
           />
-          <Route path="/insect-bite" element={<InsectBites categoryId="general" />} />
+          <Route
+            path="/insect-bite"
+            element={<InsectBites categoryId="general" />}
+          />
           <Route
             path="/chronic-care/neurology/migraine"
             element={<Migraine categoryId="chronic" />}
           />
-          <Route path="/minor-burns" element={<MinorBurns categoryId="general" />} />
+          <Route
+            path="/minor-burns"
+            element={<MinorBurns categoryId="general" />}
+          />
           <Route
             path="/general-and-everyday-care/general-physician/minor-infections"
             element={<MinorInfections categoryId="general" />}
@@ -2374,7 +2471,10 @@ function AppLayout() {
             path="/general-and-everyday-care/family-medicine/routine-check-ups"
             element={<RoutineCheckUps categoryId="general" />}
           />
-          <Route path="/seasonal-allergies" element={<SeasonalAllergies categoryId="general" />} />
+          <Route
+            path="/seasonal-allergies"
+            element={<SeasonalAllergies categoryId="general" />}
+          />
           <Route
             path="/general-and-everyday-care/general-physician/sinus-infection"
             element={<SinusInfection categoryId="general" />}
@@ -2383,7 +2483,10 @@ function AppLayout() {
             path="/eye-ear-bone/ear-nose-throat/sore-throat"
             element={<SoreThroat categoryId="eeb" />}
           />
-          <Route path="/strep-throat" element={<StrepThroat categoryId="general" />} />
+          <Route
+            path="/strep-throat"
+            element={<StrepThroat categoryId="general" />}
+          />
           <Route
             path="/general-and-everyday-care/internal-medicine/undiagnosed-symptoms"
             element={<UndiagnosedSymptoms categoryId="general" />}
@@ -2396,13 +2499,22 @@ function AppLayout() {
             path="/general-and-everyday-care/family-medicine/whole-family-illnesses"
             element={<WholeFamilyIllnesses categoryId="general" />}
           />
-          <Route path="/bladder-infection" element={<BladderInfection categoryId="men" />} />
+          <Route
+            path="/bladder-infection"
+            element={<BladderInfection categoryId="men" />}
+          />
           <Route
             path="/mens-health/urology/blood-in-urine"
             element={<BloodInUrine categoryId="men" />}
           />
-          <Route path="/burning-urination" element={<BurningUrination categoryId="men" />} />
-          <Route path="/frequent-urination" element={<FrequentUrination categoryId="men" />} />
+          <Route
+            path="/burning-urination"
+            element={<BurningUrination categoryId="men" />}
+          />
+          <Route
+            path="/frequent-urination"
+            element={<FrequentUrination categoryId="men" />}
+          />
           <Route
             path="/mens-health/urology/kidney-stones"
             element={<KidneyStones categoryId="men" />}
@@ -2427,7 +2539,10 @@ function AppLayout() {
             path="/emergency-contraception-guidance"
             element={<EmergencyContraceptionGuidance categoryId="women" />}
           />
-          <Route path="/heavy-periods" element={<HeavyPeriods categoryId="women" />} />
+          <Route
+            path="/heavy-periods"
+            element={<HeavyPeriods categoryId="women" />}
+          />
           <Route
             path="/women-health/obstetrics-and-gynaecology/irregular-periods"
             element={<IrregularPeriods categoryId="women" />}
@@ -2464,7 +2579,10 @@ function AppLayout() {
             path="/women-health/women-mental-health/perinatal-anxiety"
             element={<PerinatalAnxiety categoryId="women" />}
           />
-          <Route path="/postpartum-concerns" element={<PostpartumConcerns categoryId="women" />} />
+          <Route
+            path="/postpartum-concerns"
+            element={<PostpartumConcerns categoryId="women" />}
+          />
           <Route
             path="/women-health/women-mental-health/pmdd"
             element={<Pmdd categoryId="women" />}
@@ -2522,7 +2640,10 @@ function AppLayout() {
             path="/mental-health/psychiatry/bipolar-disorder-follow-up"
             element={<BipolarDisorderFollowUp categoryId="mental" />}
           />
-          <Route path="/mental-health/psychiatry/ptsd" element={<PTSD categoryId="mental" />} />
+          <Route
+            path="/mental-health/psychiatry/ptsd"
+            element={<PTSD categoryId="mental" />}
+          />
           <Route
             path="/mental-health/psychiatry/panic-attacks"
             element={<PanicAttacks categoryId="mental" />}
@@ -2639,7 +2760,10 @@ function AppLayout() {
             path="/mental-health/behavioral-health/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
           /> */}
-          <Route path="/doctors-note" element={<DoctorsNote categoryId="general" />} />
+          <Route
+            path="/doctors-note"
+            element={<DoctorsNote categoryId="general" />}
+          />
           {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
           {/* Legacy query-param URL — redirects to the path-based form URL above. */}
           <Route
@@ -2682,6 +2806,10 @@ function AppLayout() {
           <Route
             path="/future-of-telemedicine"
             element={<FutureofTelemedicine />}
+          />
+          <Route
+            path="/uti-symptoms-causes-treatment-&-when-to-see-a-doctor"
+            element={<UTI />}
           />
           {/* PRIVACY  */}
           {/* <Route path="/privacy-concerns" element={<PrivacyConcerns />} /> */}

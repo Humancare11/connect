@@ -13,6 +13,7 @@ import telemedicineServices from "../../assets/BlogImages/telemedicine-services.
 import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
+import UTIimage from "../../assets/BlogImages/uti-online-treatment.webp";
 import SEO from "../../components/Seo";
 
 import heroBg from "../../assets/BannerImages/blog-banner.webp";
@@ -35,7 +36,7 @@ const blogs = [
     description:
       "Telemedicine services are healthcare services provided remotely using digital technologies such as video consultations, phone calls, secure messaging, and online healthcare platforms",
     image: telemedicineServices,
-    path: "/top-telemedicine-platforms-providers",
+    path: "/telemedicine-services",
   },
   {
     id: 3,
@@ -44,7 +45,7 @@ const blogs = [
     description:
       "The future of telemedicine involves a combination of artificial intelligence, remote patient monitoring, wearable health technology, improved digital platforms, and more personalized virtual healthcare experiences. ",
     image: telemedicineAppointment,
-    path: "/future-of-telemedicine",
+    path: "/how-does-a-telemedicine-appointment-work",
   },
   {
     id: 4,
@@ -71,7 +72,7 @@ const blogs = [
     description:
       "The best telemedicine provider should offer qualified healthcare professionals, multiple medical specialties, secure technology, transparent pricing, convenient appointment scheduling, and reliable patient support. Patients should also consider privacy standards, ease of use, availability of second opinions, and the provider's overall healthcare approach before making a decision.",
     image: bestTelemedicineProvider,
-    path: "/top-telemedicine-platforms-providers",
+    path: "/conditions-treated-through-telemedicine",
   },
   {
     id: 7,
@@ -111,7 +112,7 @@ const blogs = [
     description:
       "Understanding telemedicine pricing, insurance coverage, and what to expect when comparing virtual care costs against traditional in-person visits.",
     image: telemedicineCost,
-    path: "/telemedicine-cost",
+    path: "/telemedicine-cost-usa",
     readTime: 6,
   },
   {
@@ -120,7 +121,7 @@ const blogs = [
     description:
       "A look at the licensed physicians and healthcare professionals who provide consultations through telemedicine platforms, and how their credentials are verified.",
     image: realDoctors,
-    path: "/real-doctors",
+    path: "/are-online-doctors-real-doctors",
     readTime: 6,
   },
   {
@@ -131,6 +132,15 @@ const blogs = [
     image: futureOfTelemedicine,
     path: "/future-of-telemedicine",
     readTime: 7,
+  },
+  {
+    id: 13,
+    title: "UTI: Symptoms, Causes, Treatment & When to See a Doctor",
+    description:
+      "UTI is short for urinary tract infection. It’s a common infection that can affect the bladder, urethra, ureters or kidneys. Most UTIs are caused by bacteria that enter the urinary tract and multiply. Cystitis is the most common type of UTI.",
+    image: UTIimage,
+    path: "/uti-symptoms-causes-treatment-&-when-to-see-a-doctor",
+    readTime: 8,
   },
 ];
 

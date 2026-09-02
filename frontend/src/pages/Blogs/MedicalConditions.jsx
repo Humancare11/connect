@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
-import medicalConditions from "../../assets/BlogImages/medical-conditions.webp";
+import bestTelemedicineProvider from "../../assets/BlogImages/best-telemedicine-provider.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
@@ -12,7 +12,7 @@ const PAGE_DESCRIPTION =
   "Learn how to choose the best telemedicine provider by evaluating doctor qualifications, specialties, security, technology, patient support, and more.";
 const PAGE_URL =
   "https://humancareconnect.co/blog/choose-best-telemedicine-provider";
-const PAGE_IMAGE = medicalConditions;
+const PAGE_IMAGE = bestTelemedicineProvider;
 
 const TOC_ITEMS = [
   {
@@ -312,7 +312,7 @@ export default function MedicalConditions() {
 
               <figure className="hero-media">
                 <img
-                  src={medicalConditions}
+                  src={bestTelemedicineProvider}
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
                 />
@@ -1086,7 +1086,11 @@ export default function MedicalConditions() {
                 </strong>
               </p>
               <div className="cta-buttons">
-                <Link to="/appointment-booking" state={{ tab: "cond" }} className="btn btn-primary">
+                <Link
+                  to="/appointment-booking"
+                  state={{ tab: "cond" }}
+                  className="btn btn-primary"
+                >
                   Book Online Consultation
                 </Link>
                 {/* <a href="/specialists" className="btn btn-secondary">

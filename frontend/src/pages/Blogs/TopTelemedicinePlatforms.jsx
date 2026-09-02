@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
+import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
+import telemedicine from "../../assets/BlogImages/telemedicine.webp";
+import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
+import telemedicineServices from "../../assets/BlogImages/telemedicine-services.webp";
 import SEO from "../../components/Seo";
 
 const PAGE_TITLE =
@@ -10,8 +14,7 @@ const PAGE_DESCRIPTION =
   "Discover the top telemedicine platforms, their key features, benefits, and how to choose the best virtual healthcare provider for your medical needs.";
 const PAGE_URL =
   "https://humancareconnect.co/blog/choose-best-telemedicine-provider";
-const PAGE_IMAGE =
-  "https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop";
+const PAGE_IMAGE = topTelemedicinePlatforms;
 
 const TOC_ITEMS = [
   {
@@ -80,30 +83,30 @@ const FAQ_ITEMS = [
 ];
 const RELATED_ARTICLES = [
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=800&auto=format&fit=crop",
-    alt: "Doctor reviewing patient chart",
-    cat: "Chronic Care",
-    title: "Managing Diabetes with Remote Monitoring",
-    desc: "How continuous glucose data and virtual check-ins improve long-term control.",
+    href: "/telemedicine-services",
+    img: telemedicineServices,
+    alt: "Telemedicine Services",
+    title:
+      "Telemedicine Services: Everything You Need to Know About Virtual Healthcare",
+    desc: "What Are Telemedicine Services?",
     time: "6 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?q=80&w=800&auto=format&fit=crop",
-    alt: "Person taking notes during a virtual therapy session",
-    cat: "Mental Health",
-    title: "Online Therapy: What to Expect from Your First Session",
-    desc: "A practical walkthrough of booking, privacy, and what happens in session one.",
+    href: "/what-is-telemedicine",
+    img: telemedicine,
+    alt: "What is Telemedicine",
+    title:
+      "What Is Telemedicine? Complete Guide to Meaning, Benefits, Types & How It Works",
+    desc: "Telemedicine refers to the delivery of healthcare services remotely through digital technologies.",
     time: "7 min read",
   },
   {
-    href: "#",
-    img: "https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=800&auto=format&fit=crop",
-    alt: "Pharmacist checking an e-prescription",
-    cat: "Prescriptions",
-    title: "How E-Prescriptions Work — and Where They're Valid",
-    desc: "Everything about getting, filling, and renewing prescriptions issued online.",
+    href: "/telemedicine-vs-in-person-doctor-visits",
+    img: telemedicineVsInPersonDoctorVisits,
+    alt: "Virtual doctor vs in person visit",
+    title:
+      "Telemedicine vs In-Person Doctor Visits: Benefits, Differences & Limitations",
+    desc: "Compare telemedicine and in-person doctor visits.",
     time: "5 min read",
   },
 ];
@@ -225,7 +228,12 @@ export default function TopTelemedicinePlatforms() {
 
   return (
     <>
-      <SEO title="Top Telemedicine Platforms & Providers | Best Telehealth Services" description="Discover the top telemedicine platforms and providers." keywords="Top telemedicine platforms" url="https://humancareconnect.co/top-telemedicine-platforms" />
+      <SEO
+        title="Top Telemedicine Platforms & Providers | Best Telehealth Services"
+        description="Discover the top telemedicine platforms and providers."
+        keywords="Top telemedicine platforms"
+        url="https://humancareconnect.co/top-telemedicine-platforms"
+      />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />
@@ -305,7 +313,7 @@ export default function TopTelemedicinePlatforms() {
 
               <figure className="hero-media">
                 <img
-                  src="https://images.unsplash.com/photo-1580281657702-257584239a55?q=80&w=1400&auto=format&fit=crop"
+                  src={topTelemedicinePlatforms}
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
                 />
@@ -1217,7 +1225,11 @@ export default function TopTelemedicinePlatforms() {
                 </strong>
               </p>
               <div className="cta-buttons">
-                <Link to="/appointment-booking" state={{ tab: "spec" }} className="btn btn-primary">
+                <Link
+                  to="/appointment-booking"
+                  state={{ tab: "spec" }}
+                  className="btn btn-primary"
+                >
                   Book Online Consultation
                 </Link>
                 {/* <a href="/specialists" className="btn btn-secondary">

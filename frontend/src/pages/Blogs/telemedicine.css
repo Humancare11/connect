@@ -203,6 +203,20 @@ h1.article-title{
 }
 .content-col h4{font-family: var(--font-primary); font-weight:700; font-size:16.5px; color:var(--navy-700); margin:20px 0 8px;}
 .content-col p{font-size:16.5px; line-height:1.85; margin:0 0 18px; color:var(--ink-body);}
+.content-col p a, .content-col a.interlink, .interlink {
+  color: var(--blue-600);
+  background: var(--blue-100);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  text-decoration: underline;
+  transition: all 0.2s ease;
+}
+.content-col p a:hover, .content-col a.interlink:hover, .interlink:hover {
+  color: #ffffff;
+  background: var(--blue-600);
+  text-decoration: underline;
+}
 .content-col ul, .content-col ol.plain{margin:0 0 20px; padding-left:22px; font-size:16.5px; line-height:1.85;}
 .content-col li{margin-bottom:8px;}
 .heading-link{
@@ -219,6 +233,7 @@ h1.article-title{
   content:""; position:absolute; inset:0; background:radial-gradient(600px 200px at 90% -10%, rgba(76,134,255,.35), transparent);
 }
 .takeaway-box h3{color:#fff; font-family: var(--font-primary); font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:.06em; margin:0 0 18px; display:flex; align-items:center; gap:8px; position:relative;}
+.takeaway-box p{color:#ffffff !important; position:relative; z-index:1; margin-bottom:0;}
 .takeaway-box ul{list-style:none; margin:0; padding:0; position:relative; display:grid; gap:12px;}
 .takeaway-box li{display:flex; gap:12px; font-size:15.5px; line-height:1.6; color:#DCE6FA;}
 .takeaway-box li svg{flex-shrink:0; margin-top:3px; color:#7FB3FF;}

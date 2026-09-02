@@ -250,7 +250,12 @@ export default function OnlineDoctorConsultation() {
 
   return (
     <>
-      <SEO title="Online Doctor Consultation Guide | Virtual Healthcare Benefits" description="Learn about online doctor consultation and virtual healthcare benefits." keywords="Online doctor consultation guide" url="https://humancareconnect.co/online-doctor-consultation-guide" />
+      <SEO
+        title="Online Doctor Consultation Guide | Virtual Healthcare Benefits"
+        description="Learn about online doctor consultation and virtual healthcare benefits."
+        keywords="Online doctor consultation guide"
+        url="https://humancareconnect.co/online-doctor-consultation-guide"
+      />
       <Helmet>
         <title>{PAGE_TITLE}</title>
         <meta name="description" content={PAGE_DESCRIPTION} />
@@ -1167,7 +1172,11 @@ export default function OnlineDoctorConsultation() {
                 </strong>
               </p>
               <div className="cta-buttons">
-                <Link to="/appointment-booking" state={{ tab: "spec" }} className="btn btn-primary">
+                <Link
+                  to="/appointment-booking"
+                  state={{ tab: "spec" }}
+                  className="btn btn-primary"
+                >
                   Book Online Consultation
                 </Link>
                 {/* <a href="/specialists" className="btn btn-secondary">
