@@ -1,7 +1,7 @@
 import axios from "axios";
 import { dispatchSessionActivity } from "./utils/session";
 
-const AUTH_ROLES = new Set(["user", "doctor", "admin", "superadmin", "paymentadmin", "employeeadmin"]);
+const AUTH_ROLES = new Set(["user", "doctor", "admin", "superadmin", "paymentadmin", "employeeadmin", "partner"]);
 const TOKEN_ROLE_ALIASES = {
   superadmin: "admin",
   paymentadmin: "admin",
@@ -11,6 +11,7 @@ const authTokens = {
   doctor: { accessToken: "", refreshToken: "" },
   admin: { accessToken: "", refreshToken: "" },
   employeeadmin: { accessToken: "", refreshToken: "" },
+  partner: { accessToken: "", refreshToken: "" },
 };
 let activeAuthRole = "";
 
@@ -35,6 +36,11 @@ const inferAuthRoleFromUrl = (url = "") => {
 
   if (value.startsWith("/api/auth/employee-admin")) return "employeeadmin";
   if (value.startsWith("/api/employee-admin")) return "employeeadmin";
+
+  if (value.startsWith("/api/auth/partner")) return "partner";
+  // NOTE: must stay above the generic /api/admin check below so that
+  // /api/admin/partner-cases still resolves to "admin", not "partner".
+  if (value.startsWith("/api/partner")) return "partner";
 
   if (
     value.startsWith("/api/admin") ||

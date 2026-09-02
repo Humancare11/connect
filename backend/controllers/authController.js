@@ -74,6 +74,8 @@ const safeUser = (user) => ({
   isVerified:      user.isVerified,
   rating:          user.rating,
   deletionRequestStatus: user.deletionRequestStatus,
+  // Only meaningful for role "partner"; null/undefined for everyone else.
+  partner:         user.partner || null,
 });
 
 const buildTokenPayload = (user, session) => ({
@@ -1175,11 +1177,137 @@ const employeeAdminLogout = async (req, res) => {
   res.json({ msg: "Logged out." });
 };
 
+// ── Partner (Partner Company) auth ───────────────────────────────────────────
+const Partner = require("../models/Partner");
+
+const partnerCompanySummary = (company) =>
+  company
+    ? {
+        _id: company._id,
+        partnerCode: company.partnerCode,
+        companyName: company.companyName,
+        status: company.status,
+        billingCurrency: company.billingCurrency,
+      }
+    : null;
+
+const partnerLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ msg: "Email and password are required." });
+
+    const clean = email.toLowerCase().trim();
+    const user = await User.findOne({ email: clean });
+
+    if (!user || user.role !== "partner") {
+      await recordActivity(req, {
+        action: "LOGIN_FAILED",
+        resource: "Partner",
+        userEmail: clean,
+        success: false,
+        details: { reason: "Invalid partner credentials" },
+      });
+      await recordFailedLogin(req, { email: clean, portal: "partner" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    if (user.accountDisabled) {
+      await recordSecurityEvent(req, {
+        type: "unauthorized_access",
+        severity: "high",
+        title: "Disabled partner login attempt",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { portal: "partner", disabledAt: user.disabledAt },
+      });
+      return res.status(403).json({ msg: "This account is disabled. Please contact your Super Admin." });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      await recordActivity(req, {
+        action: "LOGIN_FAILED",
+        resource: "Partner",
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: user.role,
+        success: false,
+        details: { reason: "Incorrect password" },
+      });
+      await recordFailedLogin(req, { email: clean, userId: user._id, userRole: user.role, portal: "partner" });
+      return res.status(401).json({ msg: "Invalid email or password." });
+    }
+
+    const company = user.partner ? await Partner.findById(user.partner).lean() : null;
+    if (!company || company.status !== "active") {
+      await recordSecurityEvent(req, {
+        type: "unauthorized_access",
+        severity: "high",
+        title: "Partner login against inactive/missing company",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        metadata: { partnerId: user.partner ? String(user.partner) : null },
+      });
+      return res.status(403).json({ msg: "Your Partner Company is inactive. Please contact support." });
+    }
+
+    const session = await issueAuthCookies(res, user);
+    const tokens = buildTokenPayload(user, session);
+
+    await recordActivity(req, {
+      action: "LOGIN_SUCCESS",
+      resource: "Partner",
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+    });
+
+    return res.json({
+      msg: "Login successful.",
+      user: safeUser(user),
+      partner: partnerCompanySummary(company),
+      ...tokens,
+    });
+  } catch (err) {
+    console.error("partnerLogin error:", err);
+    return res.status(500).json({ msg: "Server error. Please try again." });
+  }
+};
+
+const partnerMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user || user.role !== "partner") return res.status(404).json({ msg: "Partner account not found." });
+
+    const company = user.partner ? await Partner.findById(user.partner).lean() : null;
+    if (!company || company.status !== "active") {
+      return res.status(403).json({ msg: "Your Partner Company is inactive. Please contact support." });
+    }
+
+    return res.json({ user: safeUser(user), partner: partnerCompanySummary(company) });
+  } catch (err) {
+    console.error("partnerMe error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
+const partnerLogout = async (req, res) => {
+  await recordActivity(req, { action: "LOGOUT", resource: "Partner" });
+  if (req.user?.sid) await revokeSession(req.user.sid, "logout");
+  clearAuthCookies(res, "partner");
+  res.json({ msg: "Logged out." });
+};
+
 module.exports = {
   register, login, doctorRegister, doctorLogin, adminLogin, paymentAdminLogin,
   updateProfile, googleAuthUser, googleAuthDoctor,
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
+  partnerLogin, partnerMe, partnerLogout,
   requestAccountDeletion,
 };

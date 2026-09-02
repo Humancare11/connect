@@ -39,11 +39,30 @@ async function generatePatientId() {
   return value;
 }
 
+const PARTNER_SEQUENCE_NAME = "partner";
+const PARTNER_CASE_SEQUENCE_NAME = "partnerCase";
+
+// "PTR-0001" — human-friendly Partner Company identifier.
+async function generatePartnerCode() {
+  const value = await nextSequenceValue(PARTNER_SEQUENCE_NAME, { initialValue: 0 });
+  return `PTR-${String(value).padStart(4, "0")}`;
+}
+
+// "HC-2026-000001" — human-friendly Partner Case identifier.
+async function generatePartnerCaseNumber() {
+  const value = await nextSequenceValue(PARTNER_CASE_SEQUENCE_NAME, { initialValue: 0 });
+  return `HC-${new Date().getFullYear()}-${String(value).padStart(6, "0")}`;
+}
+
 module.exports = {
   generatePatientId,
+  generatePartnerCode,
+  generatePartnerCaseNumber,
   nextSequenceValue,
   PATIENT_SEQUENCE_NAME,
   PATIENT_ID_INITIAL_VALUE,
   PATIENT_ID_MAX_VALUE,
+  PARTNER_SEQUENCE_NAME,
+  PARTNER_CASE_SEQUENCE_NAME,
 };
 

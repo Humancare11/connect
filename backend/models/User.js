@@ -25,8 +25,18 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["user", "admin", "superadmin", "doctor", "paymentadmin", "employeeadmin"],
+      enum: ["user", "admin", "superadmin", "doctor", "paymentadmin", "employeeadmin", "partner"],
       default: "user",
+    },
+
+    // Set only when role === "partner": the Partner Company this login belongs
+    // to. Never accepted from a request body — assigned server-side by the
+    // Super Admin partner-creation flow.
+    partner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Partner",
+      default: null,
+      index: true,
     },
 
     mobile: { type: String, default: "" },

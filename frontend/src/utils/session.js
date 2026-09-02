@@ -7,6 +7,7 @@ export const ROLE_TIMEOUT_MS = {
   doctor: 60 * 60 * 1000,
   user: 45 * 60 * 1000,
   employeeadmin: 30 * 60 * 1000,
+  partner: 30 * 60 * 1000,
 };
 
 export const LOGOUT_PATH_BY_ROLE = {
@@ -15,6 +16,7 @@ export const LOGOUT_PATH_BY_ROLE = {
   doctor: "/doctor-login",
   user: "/login",
   employeeadmin: "/employee-admin-login",
+  partner: "/partner-login",
 };
 
 export function getActiveSessionRole({ admin, doctor, user }) {
@@ -48,6 +50,8 @@ export function clearClientSession() {
     "adminRefreshToken",
     "employeeAdminToken",
     "employeeAdminRefreshToken",
+    "partnerToken",
+    "partnerRefreshToken",
   ];
   const expires = "Thu, 01 Jan 1970 00:00:00 GMT";
 

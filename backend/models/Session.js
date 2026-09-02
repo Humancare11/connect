@@ -5,7 +5,7 @@ const sessionSchema = new mongoose.Schema(
     userId: { type: String, required: true, index: true },
     role: {
       type: String,
-      enum: ["user", "doctor", "admin", "superadmin", "paymentadmin", "employeeadmin"],
+      enum: ["user", "doctor", "admin", "superadmin", "paymentadmin", "employeeadmin", "partner"],
       required: true,
       index: true,
     },

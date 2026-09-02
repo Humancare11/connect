@@ -33,6 +33,7 @@ const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
+import { usePartner } from "./context/PartnerContext";
 import useLenis from "./hooks/useLenis";
 import api, { clearUserAuthToken } from "./api";
 import {
@@ -826,6 +827,15 @@ const EmployeeAdminDashboard = lazy(
 const EmployeeTasks = lazy(() => import("./pages/employee/EmployeeTasks"));
 const AssignTask = lazy(() => import("./pages/employee/Assigntask"));
 
+const PartnerLogin = lazy(() => import("./pages/partner/PartnerLogin"));
+const PartnerLayout = lazy(() => import("./pages/partner/PartnerLayout"));
+const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
+const PartnerSubmitCare = lazy(() => import("./pages/partner/SubmitCare"));
+const PartnerAllCases = lazy(() => import("./pages/partner/AllCases"));
+const PartnerCaseDetail = lazy(() => import("./pages/partner/PartnerCaseDetail"));
+const AdminPartnerCases = lazy(() => import("./pages/admin/PartnerCases"));
+const AdminPartnerCaseDetail = lazy(() => import("./pages/admin/PartnerCaseDetail"));
+
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
 const Appointments = lazy(() => import("./pages/user/Appointments"));
@@ -912,6 +922,13 @@ function EmployeeAdminPrivateRoute({ children }) {
   const { employeeAdmin, loading } = useEmployeeAdmin();
   if (loading) return null;
   if (!employeeAdmin) return <Navigate to="/employee-login" replace />;
+  return children;
+}
+
+function PartnerPrivateRoute({ children }) {
+  const { partnerUser, loading } = usePartner();
+  if (loading) return null;
+  if (!partnerUser) return <Navigate to="/partner-login" replace />;
   return children;
 }
 
@@ -1408,6 +1425,71 @@ function AppLayout() {
               </EmployeeAdminPrivateRoute>
             }
           />
+
+          {/* ── Partner Dashboard ── */}
+          <Route path="/partner-login" element={<PartnerLogin />} />
+          <Route
+            path="/partner-dashboard"
+            element={
+              <PartnerPrivateRoute>
+                <PartnerLayout>
+                  <PartnerDashboard />
+                </PartnerLayout>
+              </PartnerPrivateRoute>
+            }
+          />
+          <Route
+            path="/partner-dashboard/submit-care"
+            element={
+              <PartnerPrivateRoute>
+                <PartnerLayout>
+                  <PartnerSubmitCare />
+                </PartnerLayout>
+              </PartnerPrivateRoute>
+            }
+          />
+          <Route
+            path="/partner-dashboard/cases"
+            element={
+              <PartnerPrivateRoute>
+                <PartnerLayout>
+                  <PartnerAllCases />
+                </PartnerLayout>
+              </PartnerPrivateRoute>
+            }
+          />
+          <Route
+            path="/partner-dashboard/cases/:id"
+            element={
+              <PartnerPrivateRoute>
+                <PartnerLayout>
+                  <PartnerCaseDetail />
+                </PartnerLayout>
+              </PartnerPrivateRoute>
+            }
+          />
+
+          <Route
+            path="/admin-dashboard/partner-cases"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminPartnerCases />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/partner-cases/:id"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminPartnerCaseDetail />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+
           <Route
             path="/payment-admin"
             element={<Navigate to="/payment-admin/payment-links" replace />}

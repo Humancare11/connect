@@ -7,6 +7,7 @@ import ServicesPrices from "./ServicesPrices";
 import HealthcareManagement from "./HealthcareManagement";
 import PaymentLinks from "./PaymentLinks";
 import PaymentLinkHistory from "./PaymentLinkHistory";
+import PartnerCompaniesTab from "./PartnerCompaniesTab";
 
 function EyeIcon({ open }) {
   return open ? (
@@ -781,6 +782,12 @@ export default function SuperAdminDashboard() {
             Employee Admins
           </button>
           <button
+            className={`dash-nav-item${activeTab === "partnerCompanies" ? " active" : ""}`}
+            onClick={() => setActiveTab("partnerCompanies")}
+          >
+            Partner Companies
+          </button>
+          <button
             className={`dash-nav-item${activeTab === "healthcareManagement" ? " active" : ""}`}
             onClick={() => setActiveTab("healthcareManagement")}
           >
@@ -830,6 +837,7 @@ export default function SuperAdminDashboard() {
         <div className="dash-content">
           {activeTab === "admins" && <AdminsTab />}
           {activeTab === "employeeAdmins" && <EmployeeAdminsTab />}
+          {activeTab === "partnerCompanies" && <PartnerCompaniesTab />}
           {activeTab === "servicesPrices" && <ServicesPrices />}
           {activeTab === "healthcareManagement" && <HealthcareManagement />}
           {activeTab === "paymentLinks" && (

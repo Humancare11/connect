@@ -3,6 +3,7 @@ const Session = require("../models/Session");
 const RevokedToken = require("../models/RevokedToken");
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
+const Partner = require("../models/Partner");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 
 const ACCESS_TOKEN_MS = 15 * 60 * 1000;
@@ -26,6 +27,7 @@ const ACCESS_COOKIE_BY_ROLE = {
   superadmin: "adminToken",
   paymentadmin: "adminToken",
   employeeadmin: "employeeAdminToken",
+  partner: "partnerToken",
 };
 
 const REFRESH_COOKIE_BY_ROLE = {
@@ -35,6 +37,7 @@ const REFRESH_COOKIE_BY_ROLE = {
   superadmin: "adminRefreshToken",
   paymentadmin: "adminRefreshToken",
   employeeadmin: "employeeAdminRefreshToken",
+  partner: "partnerRefreshToken",
 };
 
 function extractBearerToken(req) {
@@ -95,7 +98,7 @@ async function validateDecodedSession(decoded) {
   const revoked = await RevokedToken.exists({ sessionId: String(decoded.sid), userId: String(decoded.id) });
   if (revoked) return false;
 
-  if (["user", "admin", "superadmin", "paymentadmin", "employeeadmin"].includes(decoded.role)) {
+  if (["user", "admin", "superadmin", "paymentadmin", "employeeadmin", "partner"].includes(decoded.role)) {
     const user = await User.findById(decoded.id).select("accountDisabled disabledAt role").lean();
     if (!user || user.accountDisabled) return false;
   }
@@ -121,6 +124,7 @@ const roleMap = {
   doctorToken: "doctor",
   adminToken: null,
   employeeAdminToken: "employeeadmin",
+  partnerToken: "partner",
 };
 
 function makeVerify(cookieName) {
@@ -168,6 +172,9 @@ const verifyToken = async (req, res, next) => {
     req.cookies?.doctorToken,
     req.cookies?.userToken,
     req.cookies?.employeeAdminToken,
+    // Partner cookie is tried last so a stray partnerToken can never shadow a
+    // higher-privilege session held in the same browser.
+    req.cookies?.partnerToken,
     extractBearerToken(req),
   ].filter(Boolean);
 
@@ -205,6 +212,7 @@ const verifyUserToken = makeVerify("userToken");
 const verifyDoctorToken = makeVerify("doctorToken");
 const verifyAdminToken = makeVerify("adminToken");
 const verifyEmployeeAdminToken = makeVerify("employeeAdminToken");
+const verifyPartnerToken = makeVerify("partnerToken");
 
 const doctorOnly = (req, res, next) => {
   if (req.user?.role !== "doctor") {
@@ -280,6 +288,51 @@ const employeeAdminOnly = (req, res, next) => {
   next();
 };
 
+const partnerOnly = (req, res, next) => {
+  if (req.user?.role !== "partner") {
+    recordSecurityEvent(req, {
+      type: "unauthorized_access",
+      severity: "high",
+      title: "Non-partner attempted partner access",
+      resource: req.originalUrl,
+      metadata: { requiredRole: "partner", actualRole: req.user?.role || "anonymous" },
+    });
+    return res.status(403).json({ msg: "Access denied. Partners only." });
+  }
+  next();
+};
+
+// Resolves the caller's Partner Company from the DB (never from the token or
+// request body) and rejects the request if the company is missing or
+// inactive. Sets req.partnerId for downstream ownership filters. Kept out of
+// the JWT so a company deactivation / re-link takes effect on the very next
+// request without re-issuing tokens.
+const attachPartnerCompany = async (req, res, next) => {
+  try {
+    const account = await User.findById(req.user.id).select("partner accountDisabled name").lean();
+    if (!account || account.accountDisabled || !account.partner) {
+      return res.status(403).json({ msg: "Partner account is not linked to an active company." });
+    }
+    const company = await Partner.findById(account.partner).select("status companyName").lean();
+    if (!company || company.status !== "active") {
+      recordSecurityEvent(req, {
+        type: "unauthorized_access",
+        severity: "medium",
+        title: "Partner request against inactive/missing company",
+        resource: req.originalUrl,
+        metadata: { partnerId: String(account.partner) },
+      });
+      return res.status(403).json({ msg: "Partner company is inactive. Please contact support." });
+    }
+    req.partnerId = String(account.partner);
+    req.partnerName = account.name || company.companyName || "Partner";
+    next();
+  } catch (err) {
+    console.error("attachPartnerCompany error:", err);
+    return res.status(500).json({ msg: "Server error." });
+  }
+};
+
 const superAdminOnly = (req, res, next) => {
   if (req.user?.role !== "superadmin") {
     recordSecurityEvent(req, {
@@ -311,10 +364,13 @@ module.exports = {
   verifyDoctorToken,
   verifyAdminToken,
   verifyEmployeeAdminToken,
+  verifyPartnerToken,
   doctorOnly,
   adminOnly,
   paymentAdminOnly,
   manualInvoiceAccess,
   employeeAdminOnly,
+  partnerOnly,
+  attachPartnerCompany,
   superAdminOnly,
 };

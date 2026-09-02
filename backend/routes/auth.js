@@ -8,11 +8,12 @@ const {
   sendRegisterOTP, sendForgotOTP, verifyForgotOTP, resetPasswordHandler,
   changePassword, me, adminMe, refresh, logout, adminLogout,
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
+  partnerLogin, partnerMe, partnerLogout,
   requestAccountDeletion,
 } = require("../controllers/authController");
 
 const authMiddleware                                                    = require("../middleware/authMiddleware");
-const { verifyUserToken, verifyAdminToken, verifyEmployeeAdminToken } = require("../middleware/verifyToken");
+const { verifyUserToken, verifyAdminToken, verifyEmployeeAdminToken, verifyPartnerToken } = require("../middleware/verifyToken");
 const {
   registrationLimiter,
   loginLimiter,
@@ -47,6 +48,11 @@ router.get ("/admin-me",     verifyAdminToken, adminMe);
 router.post("/employee-admin-login",  loginLimiter, employeeAdminLogin);
 router.post("/employee-admin-logout", verifyEmployeeAdminToken, employeeAdminLogout);
 router.get ("/employee-admin-me",     verifyEmployeeAdminToken, employeeAdminMe);
+
+// ── Partner auth ──────────────────────────────────────────────────────────────
+router.post("/partner-login",  loginLimiter, partnerLogin);
+router.post("/partner-logout", verifyPartnerToken, partnerLogout);
+router.get ("/partner-me",     verifyPartnerToken, partnerMe);
 
 // ── Doctor auth (legacy via authController) ───────────────────────────────────
 router.post("/doctor-register", registrationLimiter, doctorRegister);

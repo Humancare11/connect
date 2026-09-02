@@ -11,6 +11,7 @@ import { DoctorAuthProvider } from "./context/DoctorAuthContext";
 import { AdminProvider } from "./context/AdminContext";
 import { PricingProvider } from "./context/PricingContext";
 import { EmployeeAdminProvider } from "./context/EmployeeAdminContext";
+import { PartnerProvider } from "./context/PartnerContext";
 import "./index.css";
 import App from "./App.jsx";
 
@@ -35,9 +36,11 @@ createRoot(document.getElementById("root")).render(
             <DoctorAuthProvider>
               <AdminProvider>
                 <EmployeeAdminProvider>
-                  <PricingProvider>
-                    <App />
-                  </PricingProvider>
+                  <PartnerProvider>
+                    <PricingProvider>
+                      <App />
+                    </PricingProvider>
+                  </PartnerProvider>
                 </EmployeeAdminProvider>
               </AdminProvider>
             </DoctorAuthProvider>
@@ -49,9 +52,11 @@ createRoot(document.getElementById("root")).render(
         <AuthProvider>
           <DoctorAuthProvider>
             <AdminProvider>
-              <PricingProvider>
-                <App />
-              </PricingProvider>
+              <PartnerProvider>
+                <PricingProvider>
+                  <App />
+                </PricingProvider>
+              </PartnerProvider>
             </AdminProvider>
           </DoctorAuthProvider>
         </AuthProvider>
