@@ -1114,6 +1114,17 @@
   cursor: help;
 }
 
+/* "Not emailed" is a normal resting state now (invoices are never emailed
+   automatically), so it reads as neutral — the red flag is reserved for an
+   actual send failure. */
+.mi-email-flag--muted {
+  color: var(--mi-muted);
+}
+
+.mi-email-flag--sent {
+  color: var(--mi-paid);
+}
+
 .mi-actions {
   display: inline-flex;
   flex-direction: column;
@@ -1222,6 +1233,18 @@
 .mi-check small {
   font-weight: 400;
   font-size: 12.5px;
+  color: var(--mi-ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.mi-modal__note {
+  margin: 0;
+  padding: 14px;
+  background: var(--mi-blue-soft);
+  border: 1px solid #cfe1f4;
+  border-radius: var(--mi-radius);
+  font-size: 12.5px;
+  line-height: 1.5;
   color: var(--mi-ink-soft);
   overflow-wrap: anywhere;
 }

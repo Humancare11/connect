@@ -313,6 +313,10 @@ export default function AdminAppointmentDetails() {
             />
             <InfoTile label="Location" value={userLocation} />
             <InfoTile
+              label="State / Province"
+              value={patientDetails.state || appointment.patientId?.state}
+            />
+            <InfoTile
               label="Phone Number"
               value={appointment.patientId?.mobile || patientDetails.phone}
             />

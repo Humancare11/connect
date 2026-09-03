@@ -149,7 +149,6 @@ export default function ManualInvoices() {
   const [paidCount, setPaidCount] = useState(0);
 
   const [markPaidRowId, setMarkPaidRowId] = useState("");
-  const [markPaidResend, setMarkPaidResend] = useState(true);
   const [markPaidBusy, setMarkPaidBusy] = useState(false);
   const [markPaidError, setMarkPaidError] = useState("");
   const [downloadingId, setDownloadingId] = useState("");
@@ -370,17 +369,20 @@ export default function ManualInvoices() {
     }
   };
 
-  // Re-sends the existing invoice's email as-is — no new invoice, no PDF
-  // regeneration. For one whose original send failed (see its emailError)
-  // or was never attempted.
+  // Sends the invoice's email as-is — no new invoice, no PDF regeneration.
+  // Invoices are never emailed automatically at creation, so this is how the
+  // client gets the invoice: the admin picks which ones to send (and can
+  // send again later for one that already went out).
   const resendEmail = async (id) => {
     setResendingId(id);
     setResendError("");
     try {
       await api.post(`/api/admin/manual-invoices/${id}/resend-email`);
       fetchHistory();
+      return true;
     } catch (err) {
-      setResendError(err.response?.data?.msg || "Failed to resend the email.");
+      setResendError(err.response?.data?.msg || "Failed to send the email.");
+      return false;
     } finally {
       setResendingId("");
     }
@@ -388,7 +390,6 @@ export default function ManualInvoices() {
 
   const openMarkPaid = (id) => {
     setMarkPaidRowId(id);
-    setMarkPaidResend(true);
     setMarkPaidError("");
   };
 
@@ -401,9 +402,7 @@ export default function ManualInvoices() {
     setMarkPaidBusy(true);
     setMarkPaidError("");
     try {
-      await api.patch(`/api/admin/manual-invoices/${id}/mark-paid`, {
-        resendEmail: markPaidResend,
-      });
+      await api.patch(`/api/admin/manual-invoices/${id}/mark-paid`, {});
       setMarkPaidRowId("");
       fetchHistory();
       fetchCounts();
@@ -729,7 +728,9 @@ export default function ManualInvoices() {
 
         <div className="mi-doc__actions">
           <small className="mi-hint">
-            The invoice is emailed to the client as soon as it is generated.
+            The invoice is generated only — it is not emailed automatically.
+            Use “Send Invoice Email” in Recent Invoices below to email it to
+            the client.
           </small>
           <button
             className="mi-btn mi-btn--primary"
@@ -737,7 +738,7 @@ export default function ManualInvoices() {
             disabled={!canSubmit}
           >
             {submitting && <span className="mi-spinner" aria-hidden="true" />}
-            {submitting ? "Generating…" : "Generate & Send Invoice"}
+            {submitting ? "Generating…" : "Generate Invoice"}
           </button>
         </div>
 
@@ -759,16 +760,30 @@ export default function ManualInvoices() {
             <span className="mi-banner__meta">
               {formatMoney(created.amountCents, created.currency)} ·{" "}
               {statusLabel(created.status)} ·{" "}
-              {created.emailed ? (
-                "emailed to the client"
-              ) : (
-                <em className="mi-banner__warn">
-                  email failed — retry from the history below
-                </em>
-              )}
+              {created.emailed
+                ? "emailed to the client"
+                : "not emailed — send it when you're ready"}
             </span>
           </div>
           <div className="mi-banner__actions">
+            {created._id && !created.emailed && (
+              <button
+                className="mi-btn mi-btn--ghost mi-btn--sm mi-btn--accent"
+                type="button"
+                disabled={resendingId === created._id}
+                onClick={async () => {
+                  const ok = await resendEmail(created._id);
+                  if (ok)
+                    setCreated((prev) =>
+                      prev && prev._id === created._id
+                        ? { ...prev, emailed: true }
+                        : prev,
+                    );
+                }}
+              >
+                {resendingId === created._id ? "Sending…" : "Send Invoice Email"}
+              </button>
+            )}
             {created._id && (
               <button
                 className="mi-btn mi-btn--ghost mi-btn--sm"
@@ -954,12 +969,26 @@ export default function ManualInvoices() {
                       >
                         {statusLabel(invoice.status)}
                       </span>
-                      {!invoice.emailed && (
+                      {invoice.emailed ? (
+                        <span
+                          className="mi-email-flag mi-email-flag--sent"
+                          title={`Emailed to ${invoice.clientEmail}`}
+                        >
+                          ✓ emailed
+                        </span>
+                      ) : invoice.emailError ? (
                         <span
                           className="mi-email-flag"
-                          title={invoice.emailError || "Email not yet sent"}
+                          title={invoice.emailError}
                         >
-                          ⚠ not emailed
+                          ⚠ email failed
+                        </span>
+                      ) : (
+                        <span
+                          className="mi-email-flag mi-email-flag--muted"
+                          title="Not emailed to the client yet"
+                        >
+                          not emailed
                         </span>
                       )}
                     </td>
@@ -985,19 +1014,17 @@ export default function ManualInvoices() {
                             Mark as Paid
                           </button>
                         )}
-                        {!invoice.emailed && (
-                          <button
-                            className="mi-btn mi-btn--link mi-btn--accent"
-                            type="button"
-                            disabled={resendingId === invoice._id}
-                            onClick={() => resendEmail(invoice._id)}
-                          >
-                            {resendingId === invoice._id && (
-                              <span className="mi-spinner" aria-hidden="true" />
-                            )}
-                            Resend Email
-                          </button>
-                        )}
+                        <button
+                          className="mi-btn mi-btn--link mi-btn--accent"
+                          type="button"
+                          disabled={resendingId === invoice._id}
+                          onClick={() => resendEmail(invoice._id)}
+                        >
+                          {resendingId === invoice._id && (
+                            <span className="mi-spinner" aria-hidden="true" />
+                          )}
+                          {invoice.emailed ? "Resend Email" : "Send Invoice Email"}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1083,20 +1110,11 @@ export default function ManualInvoices() {
               </div>
             </dl>
 
-            <label className="mi-check">
-              <input
-                type="checkbox"
-                checked={markPaidResend}
-                onChange={(event) => setMarkPaidResend(event.target.checked)}
-              />
-              <span>
-                Email the updated receipt to the client
-                <small>
-                  Sends a fresh PDF marked as paid to{" "}
-                  {markPaidInvoice.clientEmail}.
-                </small>
-              </span>
-            </label>
+            <p className="mi-modal__note">
+              The invoice PDF is regenerated as a paid receipt. No email is
+              sent — use “Send Invoice Email” on the invoice afterward to send
+              the updated receipt to {markPaidInvoice.clientEmail}.
+            </p>
 
             {markPaidError && (
               <div className="mi-alert" role="alert">

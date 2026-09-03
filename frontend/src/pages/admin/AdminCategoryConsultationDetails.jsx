@@ -221,6 +221,7 @@ export default function AdminCategoryConsultationDetails() {
             <InfoTile label="Gender" value={patient.gender} />
             <InfoTile label="Date of Birth" value={patient.dob} />
             <InfoTile label="Location" value={userLocation} />
+            <InfoTile label="State / Province" value={patient.state} />
             <InfoTile
               label="Phone Number"
               value={patient.mobile || patient.phone}

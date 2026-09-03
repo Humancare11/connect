@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema(
 
     country: { type: String, default: "" },
 
+    state: { type: String, default: "" },
+
+    city: { type: String, default: "" },
+
     registrationIp: { type: String, default: "" },
 
     accountDisabled: { type: Boolean, default: false, index: true },

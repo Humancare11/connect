@@ -75,11 +75,12 @@ function buildManualNotes(description, status) {
 }
 
 // Creates a manual B2B invoice (status "due" or "paid"), generates its PDF,
-// stores it, and emails it to the client. Runs synchronously as part of the
-// admin's explicit "Generate & Send" action (unlike the patient-booking
-// invoice flow, this isn't a background side effect of something else — the
-// admin is waiting on the result), so failures here surface directly to the
-// request instead of being swallowed.
+// and stores it. The client email is NOT sent here — an admin decides
+// per-invoice whether to email it, via the "Send Invoice Email" action in
+// the history list (which routes to resendManualInvoiceEmail below). Runs
+// synchronously as part of the admin's explicit "Generate Invoice" action,
+// so failures here surface directly to the request instead of being
+// swallowed.
 async function createManualInvoice({
   createdBy,
   clientName,
@@ -102,7 +103,9 @@ async function createManualInvoice({
   const issuedAt = new Date();
   const normalizedPaymentMethod = status === "paid" ? (paymentMethod || "Received") : "";
 
-  const { pdfBuffer, key } = await generateManualInvoicePdfAndUpload({
+  // Only the S3 key is needed here — the PDF is not emailed at creation time,
+  // so the buffer generateManualInvoicePdfAndUpload also returns is unused.
+  const { key } = await generateManualInvoicePdfAndUpload({
     invoiceNumber,
     issuedAt,
     clientName,
@@ -143,30 +146,18 @@ async function createManualInvoice({
     createdBy,
   });
 
-  // The invoice record and its PDF already exist and are downloadable even
-  // if the email fails — record the failure rather than losing the invoice.
-  try {
-    await sendManualInvoiceEmail(clientEmail, {
-      name: clientName,
-      invoiceNumber,
-      amountDisplay: formatAmount(amountCents, currency),
-      status,
-      pdfBuffer,
-    });
-    invoice.emailedAt = new Date();
-  } catch (err) {
-    console.error(`[manual-invoice] Failed to email invoice ${invoiceNumber} to ${clientEmail}:`, err.message);
-    invoice.emailError = String(err.message || "Unknown error").slice(0, 500);
-  }
-  await invoice.save();
-
+  // No email is sent automatically. The invoice and its PDF exist and are
+  // downloadable immediately; an admin emails it to the client on demand
+  // via resendManualInvoiceEmail ("Send Invoice Email" in the history list).
   return invoice;
 }
 
 // Flips a "due" invoice to "paid": regenerates the PDF as a receipt (same
 // invoice number => same S3 key => the "due" bill is replaced, not kept
-// alongside the receipt) and optionally re-emails it to the client.
-async function markManualInvoicePaid({ invoiceId, paymentMethod, resendEmail }) {
+// alongside the receipt). No email is sent here — the admin decides whether
+// to email the updated receipt afterward via resendManualInvoiceEmail
+// ("Send Invoice Email").
+async function markManualInvoicePaid({ invoiceId, paymentMethod }) {
   const invoice = await ManualInvoice.findById(invoiceId);
   if (!invoice) return null;
   if (invoice.status === "paid") return invoice; // idempotent no-op
@@ -174,7 +165,7 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod, resendEmail }) 
   const normalizedPaymentMethod = (paymentMethod || "").trim() || "Received";
   const paidAt = new Date();
 
-  const { pdfBuffer } = await generateManualInvoicePdfAndUpload({
+  await generateManualInvoicePdfAndUpload({
     invoiceNumber: invoice.invoiceNumber,
     // Keep the ORIGINAL issue date on the receipt — an invoice's issue date
     // is when it was created/sent, not when payment was later confirmed.
@@ -202,22 +193,11 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod, resendEmail }) 
   // pdfKey is unchanged — generateManualInvoicePdfAndUpload always writes to
   // the same deterministic key for this invoiceNumber.
 
-  if (resendEmail) {
-    try {
-      await sendManualInvoiceEmail(invoice.clientEmail, {
-        name: invoice.clientName,
-        invoiceNumber: invoice.invoiceNumber,
-        amountDisplay: formatAmount(invoice.amountCents, invoice.currency),
-        status: "paid",
-        pdfBuffer,
-      });
-      invoice.emailedAt = new Date();
-      invoice.emailError = "";
-    } catch (err) {
-      console.error(`[manual-invoice] Failed to resend receipt ${invoice.invoiceNumber} to ${invoice.clientEmail}:`, err.message);
-      invoice.emailError = String(err.message || "Unknown error").slice(0, 500);
-    }
-  }
+  // The stored PDF is now a different document (a paid receipt, not the "due"
+  // bill that may have been emailed earlier), so clear the sent state: the
+  // history row shows "not emailed" again until the admin sends the receipt.
+  invoice.emailedAt = null;
+  invoice.emailError = "";
 
   await invoice.save();
   return invoice;

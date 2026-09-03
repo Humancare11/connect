@@ -399,6 +399,37 @@ export default function AuthPage() {
   };
 
   const selectedPhoneCountry = findCountryByName(registerForm.country);
+
+  // Trigger label for the Country dropdown. Resolve the selected country from the
+  // canonical location list (match by the stored name, use its ISO code for the
+  // flag) so every country renders — findCountryByName only matches the ~205
+  // whose spelling is identical in the phone-widget list. Falls back to the
+  // phone-widget match while the location list loads, then to the raw stored
+  // name so a country name always shows once one is selected. Display only —
+  // does not affect what is saved.
+  const selectedCountryDisplay =
+    countries.find((c) => c.name === registerForm.country) || null;
+  const selectedCountryName =
+    selectedCountryDisplay?.name ||
+    selectedPhoneCountry?.name ||
+    registerForm.country ||
+    "";
+  const selectedCountryFlagCode =
+    selectedCountryDisplay?.isoCode || selectedPhoneCountry?.code || "";
+
+  // The mobile widget names countries from its own list (PHONE_COUNTRIES), which
+  // differs from the location API's names for ~45 countries. Resolve the widget's
+  // ISO code back to the location-API country name so the value we persist matches
+  // the Country dropdown selection and the State/City lookups (keyed on that name)
+  // keep working.
+  const canonicalCountryName = (meta) => {
+    if (!meta) return "";
+    const match = countries.find(
+      (c) => c.isoCode?.toUpperCase() === String(meta.code || "").toUpperCase(),
+    );
+    return match?.name || meta?.name || "";
+  };
+
   const selectedGoogleCountry = countries.find(
     (country) => country.name === googleProfile.country,
   );
@@ -647,10 +678,13 @@ export default function AuthPage() {
     if (dobError) return setFormError(dobError);
     if (!registerForm.gender) return setFormError("Select Gender");
     if (!registerForm.country) return setFormError("Select your country");
-    // Some countries have no subdivisions in the location API (e.g.
-    // Singapore, Monaco) — only require a state when the API actually
-    // returned options, otherwise the field can never be filled in.
-    if (states.length > 0 && !registerForm.state) {
+    if (loadingStates) {
+      return setFormError("Please wait while we load the state / province list.");
+    }
+    // State / province is mandatory. Countries with subdivisions in the
+    // location API use the dropdown; countries with none (e.g. Singapore,
+    // Monaco) fall back to a free-text field — either way a value is required.
+    if (!registerForm.state.trim()) {
       return setFormError("Select your state / province");
     }
     if (cities.length > 0 && !registerForm.city) {
@@ -1455,19 +1489,21 @@ export default function AuthPage() {
                       if (!countryOpen) setCountrySearch("");
                     }}
                   >
-                    {selectedPhoneCountry ? (
+                    {selectedCountryName ? (
                       <>
-                        <img
-                          src={getFlagUrl(selectedPhoneCountry.code)}
-                          alt={selectedPhoneCountry.name}
-                          style={{
-                            width: 20,
-                            height: 15,
-                            objectFit: "cover",
-                            borderRadius: 2,
-                          }}
-                        />
-                        <span>{selectedPhoneCountry.name}</span>
+                        {selectedCountryFlagCode && (
+                          <img
+                            src={getFlagUrl(selectedCountryFlagCode)}
+                            alt={selectedCountryName}
+                            style={{
+                              width: 20,
+                              height: 15,
+                              objectFit: "cover",
+                              borderRadius: 2,
+                            }}
+                          />
+                        )}
+                        <span>{selectedCountryName}</span>
                       </>
                     ) : (
                       <span>Select Country</span>
@@ -1561,6 +1597,10 @@ export default function AuthPage() {
                                 setRegisterForm((p) => ({
                                   ...p,
                                   country: c.name,
+                                  // drop a subdivision picked for a different country
+                                  ...(p.country === c.name
+                                    ? {}
+                                    : { state: "", city: "" }),
                                   mobile: `+${c.phonecode}${local}`,
                                 }));
 
@@ -1602,16 +1642,28 @@ export default function AuthPage() {
                   value={registerForm.mobile}
                   onChange={(ph, meta) => {
                     countryManuallySelectedRef.current = true;
-                    setRegisterForm((p) => ({
-                      ...p,
-                      mobile: ph,
-                      country: meta?.name || p.country,
-                    }));
+                    setRegisterForm((p) => {
+                      const nextCountry =
+                        canonicalCountryName(meta) || p.country;
+                      return {
+                        ...p,
+                        mobile: ph,
+                        country: nextCountry,
+                        ...(nextCountry === p.country
+                          ? {}
+                          : { state: "", city: "" }),
+                      };
+                    });
                   }}
-                  onCountryChange={(meta) =>
-                    meta?.name &&
-                    setRegisterForm((p) => ({ ...p, country: meta.name }))
-                  }
+                  onCountryChange={(meta) => {
+                    const nextCountry = canonicalCountryName(meta);
+                    if (!nextCountry) return;
+                    setRegisterForm((p) =>
+                      p.country === nextCountry
+                        ? p
+                        : { ...p, country: nextCountry, state: "", city: "" },
+                    );
+                  }}
                   defaultCountry={selectedPhoneCountry?.code || "auto"}
                   placeholder="Mobile number"
                   required
@@ -1625,34 +1677,56 @@ export default function AuthPage() {
                 <label htmlFor="patient-register-state" style={VISUALLY_HIDDEN}>
                   State or Province
                 </label>
-                <select
-                  id="patient-register-state"
-                  name="patientRegisterState"
-                  className="hc-select hc-state-select"
-                  value={registerForm.state}
-                  onChange={(e) =>
-                    setRegisterForm((p) => ({
-                      ...p,
-                      state: e.target.value,
-                      city: "",
-                    }))
-                  }
-                  disabled={!registerForm.country}
-                  required
-                >
-                  <option value="">
-                    {loadingStates
-                      ? "Loading..."
-                      : registerForm.country
-                        ? "Select state / province"
-                        : "Select country first"}
-                  </option>
-                  {states.map((s) => (
-                    <option key={s.isoCode} value={s.name}>
-                      {s.name}
+                {registerForm.country && !loadingStates && states.length === 0 ? (
+                  // Selected country has no subdivisions in the location API
+                  // (e.g. Singapore, Monaco) — let the user type it so the
+                  // mandatory field can still be satisfied.
+                  <input
+                    id="patient-register-state"
+                    name="patientRegisterState"
+                    className="hc-input hc-state-input"
+                    type="text"
+                    placeholder="State / Province"
+                    value={registerForm.state}
+                    onChange={(e) =>
+                      setRegisterForm((p) => ({
+                        ...p,
+                        state: e.target.value,
+                        city: "",
+                      }))
+                    }
+                    required
+                  />
+                ) : (
+                  <select
+                    id="patient-register-state"
+                    name="patientRegisterState"
+                    className="hc-select hc-state-select"
+                    value={registerForm.state}
+                    onChange={(e) =>
+                      setRegisterForm((p) => ({
+                        ...p,
+                        state: e.target.value,
+                        city: "",
+                      }))
+                    }
+                    disabled={!registerForm.country || loadingStates}
+                    required
+                  >
+                    <option value="">
+                      {loadingStates
+                        ? "Loading..."
+                        : registerForm.country
+                          ? "Select state / province"
+                          : "Select country first"}
                     </option>
-                  ))}
-                </select>
+                    {states.map((s) => (
+                      <option key={s.isoCode} value={s.name}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="hc-field-wrap">
                 <label htmlFor="patient-register-city" style={VISUALLY_HIDDEN}>

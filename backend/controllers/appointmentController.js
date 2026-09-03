@@ -1012,14 +1012,14 @@ const getAllAppointments = async (req, res) => {
 const getAppointmentById = async (req, res) => {
   try {
     let appointment = await Appointment.findById(req.params.id)
-      .populate("patientId", "patientId name email mobile gender dob city country")
+      .populate("patientId", "patientId name email mobile gender dob city state country")
       .populate("doctorId", "name email doctorId")
       .lean();
 
     let isCategory = false;
     if (!appointment) {
       const cc = await CategoryConsultation.findById(req.params.id)
-        .populate("patientId", "patientId name email mobile gender dob city country")
+        .populate("patientId", "patientId name email mobile gender dob city state country")
         .populate("assignedDoctorId")
         .lean();
       if (cc) {

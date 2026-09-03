@@ -249,7 +249,8 @@ function UserModal({ user, onClose, onDelete, onApproveDelete, onRejectDelete })
             <InfoRow icon="📱" label="Mobile" value={user.mobile} />
             <InfoRow icon="⚧" label="Gender" value={user.gender} />
             <InfoRow icon="🎂" label="Date of Birth" value={user.dob} />
-            <InfoRow icon="🌍" label="Country" value={getCountryName(user.country)} noBorder />
+            <InfoRow icon="🌍" label="Country" value={getCountryName(user.country)} />
+            <InfoRow icon="📍" label="State / Province" value={user.state} noBorder />
           </InfoSection>
 
           {/* Account Information */}

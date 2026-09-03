@@ -63,6 +63,8 @@ const safeUser = (user) => ({
   dob:             user.dob,
   gender:          user.gender,
   country:         user.country,
+  state:           user.state,
+  city:            user.city,
   specialty:       user.specialty,
   degree:          user.degree,
   experience:      user.experience,
@@ -179,10 +181,17 @@ const sendRegisterOTP = async (req, res) => {
 // ════════════════════════════════════════════
 const register = async (req, res) => {
   try {
-    const { name, email, password, mobile, dob, gender, country, otp, privacyConsent, hipaaConsent } = req.body;
+    const { name, email, password, mobile, dob, gender, country, state, city, otp, privacyConsent, hipaaConsent } = req.body;
 
     if (!name || !email || !password || !otp)
       return res.status(400).json({ msg: "Name, email, password and OTP are required." });
+
+    const cleanCountry = String(country || "").trim();
+    const cleanState = String(state || "").trim();
+    const cleanCity = String(city || "").trim();
+    if (!cleanCountry || !cleanState)
+      return res.status(400).json({ msg: "Country and state/province are required." });
+
     if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent))
       return res.status(400).json({ msg: "Terms, Privacy Policy, and HIPAA consent must be accepted to register." });
     const dobCheck = validateDob(dob);
@@ -205,7 +214,7 @@ const register = async (req, res) => {
     const user = await User.create({
       name, email: clean, password: hashed, role: "user",
       mobile: mobile || "", dob: dob || "", gender: gender || "",
-      country: country || "", registrationIp: ip,
+      country: cleanCountry, state: cleanState, city: cleanCity, registrationIp: ip,
     });
     await rememberPassword({ userId: user._id, userType: "user", passwordHash: hashed });
 
@@ -222,7 +231,7 @@ const register = async (req, res) => {
       userName: user.name,
       userEmail: user.email,
       userRole: "user",
-      details: { gender: user.gender, country: user.country },
+      details: { gender: user.gender, country: user.country, state: user.state },
     });
 
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
@@ -543,7 +552,7 @@ const adminLogin = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, email, mobile, dob, gender, country } = req.body;
+    const { name, email, mobile, dob, gender, country, state } = req.body;
     const userId = req.user.id;
 
     if (!name || !email)
@@ -573,6 +582,7 @@ const updateProfile = async (req, res) => {
       dob: dob || "",
       gender: gender || "",
       country: country || "",
+      ...(state !== undefined ? { state: String(state).trim() } : {}),
     },
   },
   { returnDocument: "after", runValidators: false }
@@ -589,7 +599,7 @@ const updateProfile = async (req, res) => {
       userName: updated.name,
       userEmail: updated.email,
       userRole: updated.role,
-      details: { updatedFields: ["name", "email", "mobile", "dob", "gender", "country"] },
+      details: { updatedFields: ["name", "email", "mobile", "dob", "gender", "country", "state"] },
     });
 
     return res.json({ msg: "Profile updated successfully.", user: safeUser(updated) });

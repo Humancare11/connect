@@ -113,9 +113,10 @@ function serializeManualInvoice(doc) {
 }
 
 /* POST /api/admin/manual-invoices
-   Creates and emails a manual B2B invoice. Open to superadmin, admin, and
-   paymentadmin (see manualInvoiceAccess). Runs synchronously: the admin is
-   waiting on the result of an explicit "Generate & Send" action. */
+   Creates a manual B2B invoice and its PDF. Does NOT email the client — that
+   is a separate, explicit per-invoice action (POST :id/resend-email). Open
+   to superadmin, admin, and paymentadmin (see manualInvoiceAccess). Runs
+   synchronously: the admin is waiting on the result of "Generate Invoice". */
 router.post("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
     const clientName = String(req.body.name || "").trim();
@@ -260,8 +261,9 @@ router.get("/:id/download", verifyAdminToken, manualInvoiceAccess, async (req, r
 
 /* PATCH /api/admin/manual-invoices/:id/mark-paid
    Flips a "due" invoice to "paid", regenerating its PDF as a receipt
-   (replacing the "due" bill — see manualInvoiceService.js) and optionally
-   re-emailing it to the client. */
+   (replacing the "due" bill — see manualInvoiceService.js). Does NOT email
+   the client — sending the updated receipt is a separate, explicit action
+   (POST :id/resend-email). */
 router.patch("/:id/mark-paid", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
@@ -272,7 +274,6 @@ router.patch("/:id/mark-paid", verifyAdminToken, manualInvoiceAccess, async (req
     if (paymentMethod.length > MAX_LENGTHS.paymentMethod) {
       return res.status(400).json({ msg: "Payment method is too long." });
     }
-    const resendEmail = Boolean(req.body.resendEmail);
 
     const query = { _id: req.params.id };
     if (req.user.role === "paymentadmin") query.createdBy = req.user.id;
@@ -283,7 +284,7 @@ router.patch("/:id/mark-paid", verifyAdminToken, manualInvoiceAccess, async (req
       return res.status(400).json({ msg: "Invoice is already marked as paid." });
     }
 
-    const invoice = await markManualInvoicePaid({ invoiceId: existing._id, paymentMethod, resendEmail });
+    const invoice = await markManualInvoicePaid({ invoiceId: existing._id, paymentMethod });
     res.json({ invoice: serializeManualInvoice(invoice) });
   } catch (err) {
     console.error("mark manual invoice paid error:", err.message);
