@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import "./Blogs.css";
 import bestTelemedicineProvider from "../../assets/BlogImages/best-telemedicine-provider.webp";
 import doctorConsultation from "../../assets/BlogImages/doctor-consultation.webp";
@@ -14,6 +14,7 @@ import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedi
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import UTIimage from "../../assets/BlogImages/uti-online-treatment.webp";
+import MigraineVsHeadache from "../../assets/BlogImages/Migrane-Vs-Headache.webp";
 import SEO from "../../components/Seo";
 
 import heroBg from "../../assets/BannerImages/blog-banner.webp";
@@ -102,10 +103,6 @@ const blogs = [
     path: "/telemedicine-vs-in-person-doctor-visits",
   },
 
-  // ── PAGE 2 PLACEHOLDER ENTRIES ──
-  // Replace these with your real articles once you have more content.
-  // They exist so Next/Prev actually pages through a second set of 9 cards.
-  // Delete this block once real posts replace them.
   {
     id: 10,
     title: "The Cost of Telemedicine: What You Should Know Before Booking",
@@ -142,6 +139,15 @@ const blogs = [
     path: "/uti-symptoms-causes-treatment-&-when-to-see-a-doctor",
     readTime: 8,
   },
+  {
+    id: 14,
+    title: "Migraine vs. Headache: Symptoms, Causes, Differences & Treatment Options",
+    description:
+      "The majority of people experience headaches occasionally. Still, when the pain is very intense, the episodes are frequent, and it is accompanied by nausea and/or light sensitivity or a change in visual perception, you might ponder: is this a headache or a migraine?",
+    image: MigraineVsHeadache,
+    path: "/migraine-vs-headache-symptoms-causes-differences-and-treatment-options",
+    readTime: 9,
+  },
 ];
 
 const CARDS_PER_PAGE = 9;
@@ -161,9 +167,12 @@ const ALL_CATEGORIES = ["All"];
 // const ALL_CATEGORIES = ["All", ...Object.keys(categoryColors)];
 
 export default function BlogPage() {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const rawPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
   const filtered = useMemo(() => {
     return blogs.filter((b) => {
@@ -177,22 +186,49 @@ export default function BlogPage() {
   }, [activeCategory, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
+  const currentPage = Math.min(rawPage, totalPages);
   const start = (currentPage - 1) * CARDS_PER_PAGE;
   const visibleBlogs = filtered.slice(start, start + CARDS_PER_PAGE);
 
+  useEffect(() => {
+    if (currentPage > 1) {
+      const timer = setTimeout(() => {
+        document
+          .getElementById("blog-grid")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [currentPage]);
+
+  // eslint-disable-next-line no-unused-vars
   const handleCategoryChange = (cat) => {
     setActiveCategory(cat);
-    setCurrentPage(1);
+    if (searchParams.has("page")) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("page");
+      setSearchParams(nextParams, { replace: true });
+    }
   };
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1);
+    if (searchParams.has("page")) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("page");
+      setSearchParams(nextParams, { replace: true });
+    }
   };
 
   const goTo = (page) => {
     if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
+    const nextParams = new URLSearchParams(searchParams);
+    if (page === 1) {
+      nextParams.delete("page");
+    } else {
+      nextParams.set("page", String(page));
+    }
+    setSearchParams(nextParams);
     document
       .getElementById("blog-grid")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -204,7 +240,11 @@ export default function BlogPage() {
         title=" Healthcare & Wellness | Telemedicine Insights"
         description="Explore trusted healthcare insights, telemedicine guidance, wellness tips, and expert information to help you make informed decisions about your health."
         keywords="Healthcare insights, Telemedicine guidance, Wellness tips, Healthcare information, Expert guidance, Health and wellness"
-        url="https://humancareconnect.co/blogs"
+        url={
+          currentPage > 1
+            ? `https://humancareconnect.co/blogs?page=${currentPage}`
+            : "https://humancareconnect.co/blogs"
+        }
       />
       <div className="blog-page">
         {/* ── HERO ── */}
@@ -256,7 +296,11 @@ export default function BlogPage() {
                     className="search-clear"
                     onClick={() => {
                       setSearchQuery("");
-                      setCurrentPage(1);
+                      if (searchParams.has("page")) {
+                        const nextParams = new URLSearchParams(searchParams);
+                        nextParams.delete("page");
+                        setSearchParams(nextParams, { replace: true });
+                      }
                     }}
                     aria-label="Clear search"
                   >
@@ -323,6 +367,7 @@ export default function BlogPage() {
                 return (
                   <Link
                     to={blog.path}
+                    state={{ fromPage: currentPage }}
                     className="blog-card"
                     key={blog.id}
                     aria-label={blog.title}
@@ -375,6 +420,11 @@ export default function BlogPage() {
                 className="card-btn"
                 onClick={() => {
                   setSearchQuery("");
+                  if (searchParams.has("page")) {
+                    const nextParams = new URLSearchParams(searchParams);
+                    nextParams.delete("page");
+                    setSearchParams(nextParams, { replace: true });
+                  }
                 }}
               >
                 Clear filters
