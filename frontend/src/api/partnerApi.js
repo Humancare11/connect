@@ -23,6 +23,11 @@ export const partnerApi = {
     api
       .get(`/api/partner/cases/${id}/attachments/access-url`, { ...cfg, params: { key } })
       .then((r) => r.data),
+
+  listInvoices: () => api.get("/api/partner/invoices", cfg).then((r) => r.data),
+
+  invoiceDownloadUrl: (id) =>
+    api.get(`/api/partner/invoices/${id}/download`, cfg).then((r) => r.data),
 };
 
 export default partnerApi;

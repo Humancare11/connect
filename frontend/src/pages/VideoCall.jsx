@@ -373,19 +373,22 @@ const describeIceCandidate = (candidate = "") => {
 };
 
 // Turns the stats already gathered by startStatsCollection into a coarse,
-// user-facing quality bucket. Packet loss is derived from the DELTA between
-// this poll and the previous one (not the raw cumulative counter) — using
-// the cumulative value directly would mean a single lost packet early in a
-// long call marks the connection "poor" for its entire remaining duration.
+// user-facing quality bucket. Inbound packet loss is derived from the DELTA
+// between this poll and the previous one (not the raw cumulative counter) —
+// using the cumulative value directly would mean a single lost packet early
+// in a long call marks the connection "poor" for its entire remaining
+// duration. packetsLost / packetsReceived come from the inbound-rtp reports
+// (they don't exist on candidate-pair).
 const deriveConnectionQuality = (diagnostics, previousSample) => {
   if (diagnostics.rtt === null) return "unknown";
 
   let lossRatio = 0;
   if (previousSample) {
-    const deltaSent = diagnostics.packetsSent - previousSample.packetsSent;
+    const deltaReceived =
+      diagnostics.packetsReceived - previousSample.packetsReceived;
     const deltaLost = diagnostics.packetsLost - previousSample.packetsLost;
-    if (deltaSent > 0 && deltaLost > 0) {
-      lossRatio = deltaLost / (deltaSent + deltaLost);
+    if (deltaLost > 0 && deltaReceived + deltaLost > 0) {
+      lossRatio = deltaLost / (deltaReceived + deltaLost);
     }
   }
 
@@ -1335,6 +1338,7 @@ export default function VideoCall() {
           const diagnostics = {
             rtt: null,
             packetsSent: 0,
+            packetsReceived: 0,
             packetsLost: 0,
             bytesSent: 0,
             bytesReceived: 0,
@@ -1360,8 +1364,6 @@ export default function VideoCall() {
                 diagnostics.bytesReceived = report.bytesReceived;
               if (typeof report.packetsSent === "number")
                 diagnostics.packetsSent = report.packetsSent;
-              if (typeof report.packetsLost === "number")
-                diagnostics.packetsLost = report.packetsLost;
 
               const localId = report.localCandidateId;
               const remoteId = report.remoteCandidateId;
@@ -1378,6 +1380,13 @@ export default function VideoCall() {
                     inner.candidateType || inner.type;
                 }
               }
+            } else if (report.type === "inbound-rtp" && !report.isRemote) {
+              // packetsLost / packetsReceived live on inbound-rtp, summed
+              // across the audio + video streams.
+              if (typeof report.packetsReceived === "number")
+                diagnostics.packetsReceived += report.packetsReceived;
+              if (typeof report.packetsLost === "number")
+                diagnostics.packetsLost += report.packetsLost;
             }
           }
 
@@ -1392,7 +1401,7 @@ export default function VideoCall() {
             lastStatsSampleRef.current,
           );
           lastStatsSampleRef.current = {
-            packetsSent: diagnostics.packetsSent,
+            packetsReceived: diagnostics.packetsReceived,
             packetsLost: diagnostics.packetsLost,
           };
           setConnectionQuality(quality);

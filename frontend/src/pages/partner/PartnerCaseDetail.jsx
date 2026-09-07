@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import partnerApi from "../../api/partnerApi";
@@ -18,6 +18,8 @@ export default function PartnerCaseDetail() {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const [actionError, setActionError] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
+  const chatEndRef = useRef(null);
 
   const caseQ = useQuery({
     queryKey: ["partner", "case", id],
@@ -25,6 +27,11 @@ export default function PartnerCaseDetail() {
     refetchInterval: 20000,
     retry: false,
   });
+
+  const messageCount = caseQ.data?.messages?.length ?? 0;
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ block: "nearest" });
+  }, [messageCount]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["partner", "case", id] });
@@ -60,6 +67,31 @@ export default function PartnerCaseDetail() {
   }
 
   const c = caseQ.data;
+
+  const copyConsultationLink = async () => {
+    const link = c?.videoLink;
+    if (!link) return;
+    setActionError("");
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = link;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setActionError("Could not copy the link. Please copy it from the address bar after opening it.");
+    }
+  };
+
   const activeIdx = STATUS_PIPELINE.indexOf(c.status);
   const sm = STATUS_META[c.status] || { bg: "#e2e8f0", text: "#334155" };
 
@@ -166,15 +198,14 @@ export default function PartnerCaseDetail() {
               <p className="pt-card-title">Assigned physician</p>
               <div style={{ fontSize: 14, fontWeight: 600 }}>{c.assignedDoctorName}</div>
               {c.videoLink && (
-                <a
-                  href={c.videoLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="pt-btn"
-                  style={{ marginTop: 10 }}
-                >
-                  Join consultation
-                </a>
+                <div style={{ marginTop: 10 }}>
+                  <button type="button" className="pt-btn" onClick={copyConsultationLink}>
+                    {linkCopied ? "Link copied ✓" : "Copy consultation link"}
+                  </button>
+                  <p style={{ fontSize: 11, color: "#94a3b8", margin: "8px 0 0" }}>
+                    Share this link with the patient to join the video consultation.
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -188,24 +219,32 @@ export default function PartnerCaseDetail() {
           )}
         </div>
 
-        <div className="pt-card" style={{ display: "flex", flexDirection: "column" }}>
+        <div className="pt-card pt-chat-card">
           <p className="pt-card-title">Case messages</p>
           <div className="pt-chat">
-            {(c.messages || []).map((m) => (
-              <div
-                key={m._id}
-                className={`pt-msg${m.authorRole === "partner" ? " mine" : ""}${
-                  m.authorRole === "system" ? " system" : ""
-                }`}
-              >
-                {m.authorRole !== "system" && (
-                  <div className="pt-msg-meta">
-                    {m.authorName} · {new Date(m.createdAt).toLocaleString()}
-                  </div>
-                )}
-                <div className="pt-msg-bubble">{m.body}</div>
+            {(c.messages || []).length === 0 ? (
+              <div className="pt-chat-empty">
+                No messages yet. Use the box below to reach the Humancare team about this case.
               </div>
-            ))}
+            ) : (
+              (c.messages || []).map((m) => (
+                <div
+                  key={m._id}
+                  className={`pt-msg${m.authorRole === "partner" ? " mine" : ""}${
+                    m.authorRole === "system" ? " system" : ""
+                  }`}
+                >
+                  {m.authorRole !== "system" && (
+                    <div className="pt-msg-meta">
+                      <span className="pt-msg-author">{m.authorName}</span>
+                      <span className="pt-msg-time">{new Date(m.createdAt).toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="pt-msg-bubble">{m.body}</div>
+                </div>
+              ))
+            )}
+            <div ref={chatEndRef} />
           </div>
           {c.status !== "cancelled" && (
             <form
@@ -221,12 +260,18 @@ export default function PartnerCaseDetail() {
                 onChange={(e) => setMessage(e.target.value)}
               />
               <button type="submit" className="pt-btn" disabled={sendMsg.isPending || !message.trim()}>
-                Send
+                {sendMsg.isPending ? "Sending…" : "Send"}
               </button>
             </form>
           )}
         </div>
       </div>
+
+      {linkCopied && (
+        <div className="pt-toast" role="status">
+          Consultation link copied to clipboard
+        </div>
+      )}
     </div>
   );
 }

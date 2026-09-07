@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminPartnerApi from "../../api/adminPartnerApi";
@@ -31,6 +31,7 @@ export default function AdminPartnerCaseDetail() {
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [notesDirty, setNotesDirty] = useState(false);
+  const chatEndRef = useRef(null);
 
   const caseQ = useQuery({
     queryKey: ["admin", "partner-case", id],
@@ -41,6 +42,11 @@ export default function AdminPartnerCaseDetail() {
     },
   });
   const doctorsQ = useQuery({ queryKey: ["admin", "approved-doctors"], queryFn: adminPartnerApi.listDoctors });
+
+  const messageCount = caseQ.data?.messages?.length ?? 0;
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ block: "nearest" });
+  }, [messageCount]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["admin", "partner-case", id] });
@@ -249,24 +255,34 @@ export default function AdminPartnerCaseDetail() {
             </button>
           </div>
 
-          <div className="pt-card" style={{ display: "flex", flexDirection: "column" }}>
+          <div className="pt-card pt-chat-card">
             <p className="pt-card-title">Messages</p>
             <div className="pt-chat">
-              {(c.messages || []).map((m) => (
-                <div
-                  key={m._id}
-                  className={`pt-msg${m.authorRole === "admin" ? " mine" : ""}${
-                    m.authorRole === "system" ? " system" : ""
-                  }`}
-                >
-                  {m.authorRole !== "system" && (
-                    <div className="pt-msg-meta">
-                      {m.authorName} ({m.authorRole}) · {new Date(m.createdAt).toLocaleString()}
-                    </div>
-                  )}
-                  <div className="pt-msg-bubble">{m.body}</div>
+              {(c.messages || []).length === 0 ? (
+                <div className="pt-chat-empty">
+                  No messages yet. Replies you send here are visible to the partner.
                 </div>
-              ))}
+              ) : (
+                (c.messages || []).map((m) => (
+                  <div
+                    key={m._id}
+                    className={`pt-msg${m.authorRole === "admin" ? " mine" : ""}${
+                      m.authorRole === "system" ? " system" : ""
+                    }`}
+                  >
+                    {m.authorRole !== "system" && (
+                      <div className="pt-msg-meta">
+                        <span className="pt-msg-author">
+                          {m.authorName} ({m.authorRole})
+                        </span>
+                        <span className="pt-msg-time">{new Date(m.createdAt).toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="pt-msg-bubble">{m.body}</div>
+                  </div>
+                ))
+              )}
+              <div ref={chatEndRef} />
             </div>
             <form
               className="pt-chat-form"
@@ -281,7 +297,7 @@ export default function AdminPartnerCaseDetail() {
                 onChange={(e) => setMessage(e.target.value)}
               />
               <button type="submit" className="pt-btn" disabled={mMsg.isPending || !message.trim()}>
-                Send
+                {mMsg.isPending ? "Sending…" : "Send"}
               </button>
             </form>
           </div>

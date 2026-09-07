@@ -835,6 +835,7 @@ const PartnerAllCases = lazy(() => import("./pages/partner/AllCases"));
 const PartnerCaseDetail = lazy(
   () => import("./pages/partner/PartnerCaseDetail"),
 );
+const PartnerBilling = lazy(() => import("./pages/partner/PartnerBilling"));
 const AdminPartnerCases = lazy(() => import("./pages/admin/PartnerCases"));
 const AdminPartnerCaseDetail = lazy(
   () => import("./pages/admin/PartnerCaseDetail"),
@@ -1467,6 +1468,16 @@ function AppLayout() {
               <PartnerPrivateRoute>
                 <PartnerLayout>
                   <PartnerCaseDetail />
+                </PartnerLayout>
+              </PartnerPrivateRoute>
+            }
+          />
+          <Route
+            path="/partner-dashboard/billing"
+            element={
+              <PartnerPrivateRoute>
+                <PartnerLayout>
+                  <PartnerBilling />
                 </PartnerLayout>
               </PartnerPrivateRoute>
             }
