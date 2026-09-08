@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { usePartner } from "../../context/PartnerContext";
 import "./PartnerLogin.css";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/Logo.png";
 
 function EyeIcon({ open }) {
   return open ? (
