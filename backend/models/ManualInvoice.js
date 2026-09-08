@@ -22,6 +22,11 @@ const manualInvoiceItemSchema = new mongoose.Schema(
 const manualInvoiceSchema = new mongoose.Schema(
   {
     invoiceNumber: { type: String, required: true, unique: true, index: true },
+    // Optional link to a Partner Company. When set, the invoice also shows up
+    // in that partner's Billing section (routes/partner.js GET /invoices) and
+    // is downloadable by the partner. Left null for ordinary one-off B2B
+    // invoices that aren't tied to a registered partner.
+    partner: { type: mongoose.Schema.Types.ObjectId, ref: "Partner", default: null, index: true },
     clientName: { type: String, required: true, trim: true },
     clientEmail: { type: String, required: true, trim: true, lowercase: true },
     // Client/billing details shown in the "Billed To" block — all optional,

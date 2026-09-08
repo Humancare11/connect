@@ -1,0 +1,559 @@
+/* ==========================================================================
+   Submit Care — matches the Partner Dashboard design system
+   (deep-indigo #110072 accent, white cards on a transparent page).
+   All rules are scoped under .pt-submit-page so this file is safe to load
+   app-wide without leaking styles into other pages.
+ 
+   This page is light-theme only by design: `color-scheme: light` below
+   pins native form controls (date/time pickers, the select dropdown,
+   scrollbars) to light rendering even when the OS/browser is set to dark
+   mode, so nothing on this page ever flips to a dark control against the
+   white cards.
+   ========================================================================== */
+ 
+.pt-submit-page {
+  /* Force light rendering for native browser UI (date/time picker popups,
+     select dropdown list, scrollbars) regardless of OS/browser dark mode. */
+  color-scheme: light;
+ 
+  --pt-surface: #ffffff;
+  --pt-surface-2: #f4f3fa;
+ 
+  --pt-accent: #110072;
+  --pt-accent-dark: #0b0050;
+  --pt-accent-tint: #f4f3fa;
+ 
+  --pt-ink-900: #1a1730;
+  --pt-ink-700: #4a4760;
+  --pt-ink-600: #6b6b80;
+  --pt-ink-400: #9a99ac;
+ 
+  --pt-line: #e9e7f4;
+  --pt-line-strong: #ddd9f0;
+ 
+  --pt-danger: #b91c1c;
+  --pt-danger-tint: #fef2f2;
+  --pt-danger-line: #f3c6c6;
+ 
+  --pt-radius-sm: 8px;
+  --pt-radius-md: 10px;
+  --pt-radius-lg: 12px;
+ 
+  --pt-shadow-sm: 0 1px 2px rgba(17, 0, 114, 0.06), 0 1px 1px rgba(17, 0, 114, 0.03);
+ 
+  color: var(--pt-ink-900);
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+ 
+/* Higher specificity than a stray bundled `.pt-page` rule, so the page stays
+   full-width and transparent (no white sheet) regardless of stylesheet order. */
+.pt-page.pt-submit-page {
+  max-width: 100%;
+  width: 100%;
+  padding: 32px 24px 64px;
+  background: transparent;
+}
+ 
+.pt-submit-page *,
+.pt-submit-page *::before,
+.pt-submit-page *::after {
+  box-sizing: border-box;
+}
+ 
+/* ---------- page head ---------- */
+.pt-submit-page .pt-page-head {
+  margin-bottom: 24px;
+}
+.pt-submit-page .pt-page-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pt-accent);
+  margin-bottom: 6px;
+}
+.pt-submit-page .pt-page-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--pt-accent);
+  letter-spacing: -0.01em;
+}
+.pt-submit-page .pt-page-sub {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--pt-ink-600);
+}
+ 
+/* ---------- readable content column ---------- */
+/* The page stays full-width / transparent; the wizard content sits in a
+   centred, comfortably-readable column so form rows never stretch too wide
+   on large desktops. */
+.pt-submit-page .pt-page-head,
+.pt-submit-page .pt-stepper,
+.pt-submit-page .pt-card.pt-submit-card {
+  /* max-width: 780px; */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---------- stepper (1 -> 2 -> 3 -> 4) ---------- */
+.pt-submit-page .pt-stepper {
+  --pt-marker: 30px;
+  list-style: none;
+  display: flex;
+  margin: 0 auto 22px;
+  padding: 0;
+}
+.pt-submit-page .pt-stepper-item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+/* connector to the next step — runs centre-to-centre behind the opaque
+   markers, so it reads as a line joining the two circles. */
+.pt-submit-page .pt-stepper-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--pt-marker) / 2);
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: var(--pt-line-strong);
+  border-radius: 999px;
+  transition: background 0.18s ease;
+}
+.pt-submit-page .pt-stepper-item.is-done::after {
+  background: var(--pt-accent);
+}
+.pt-submit-page .pt-stepper-marker {
+  position: relative;
+  z-index: 1;
+  width: var(--pt-marker);
+  height: var(--pt-marker);
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--pt-surface);
+  border: 2px solid var(--pt-line-strong);
+  color: var(--pt-ink-400);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.pt-submit-page .pt-stepper-item.is-done .pt-stepper-marker {
+  background: var(--pt-accent);
+  border-color: var(--pt-accent);
+  color: #fff;
+}
+.pt-submit-page .pt-stepper-item.is-current .pt-stepper-marker {
+  border-color: var(--pt-accent);
+  color: var(--pt-accent);
+  box-shadow: 0 0 0 4px rgba(17, 0, 114, 0.1);
+}
+.pt-submit-page .pt-stepper-label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--pt-ink-400);
+  overflow-wrap: anywhere;
+}
+.pt-submit-page .pt-stepper-item.is-done .pt-stepper-label {
+  color: var(--pt-ink-700);
+}
+.pt-submit-page .pt-stepper-item.is-current .pt-stepper-label {
+  color: var(--pt-accent);
+}
+@media (max-width: 480px) {
+  .pt-submit-page .pt-stepper {
+    --pt-marker: 26px;
+  }
+  .pt-submit-page .pt-stepper-item {
+    gap: 6px;
+  }
+  .pt-submit-page .pt-stepper-label {
+    font-size: 11px;
+  }
+}
+ 
+/* ---------- card ---------- */
+.pt-submit-page .pt-card.pt-submit-card {
+  background: var(--pt-surface);
+  border: 1px solid var(--pt-line);
+  border-radius: var(--pt-radius-lg);
+  padding: 22px;
+  box-shadow: var(--pt-shadow-sm);
+}
+ 
+.pt-submit-page .pt-step-title {
+  margin: 0 0 18px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pt-ink-900);
+}
+ 
+/* ---------- error banner ---------- */
+.pt-submit-page .pt-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--pt-danger-tint);
+  color: var(--pt-danger);
+  border: 1px solid var(--pt-danger-line);
+  border-radius: var(--pt-radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+.pt-submit-page .pt-error svg {
+  flex: none;
+}
+ 
+/* ---------- fields ---------- */
+.pt-submit-page .pt-field {
+  margin-bottom: 16px;
+}
+.pt-submit-page .pt-field:last-child {
+  margin-bottom: 0;
+}
+.pt-submit-page .pt-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pt-ink-600);
+}
+.pt-submit-page .pt-field input,
+.pt-submit-page .pt-field select,
+.pt-submit-page .pt-field textarea {
+  width: 100%;
+  border: 1px solid var(--pt-line-strong);
+  background: var(--pt-surface);
+  color-scheme: light;
+  border-radius: var(--pt-radius-sm);
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: var(--pt-ink-900);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.pt-submit-page .pt-field input::placeholder,
+.pt-submit-page .pt-field textarea::placeholder {
+  color: var(--pt-ink-400);
+  opacity: 1;
+}
+.pt-submit-page .pt-field input:focus,
+.pt-submit-page .pt-field select:focus,
+.pt-submit-page .pt-field textarea:focus {
+  border-color: var(--pt-accent);
+  box-shadow: 0 0 0 3px rgba(17, 0, 114, 0.1);
+}
+.pt-submit-page .pt-field textarea {
+  resize: vertical;
+  min-height: 84px;
+  line-height: 1.5;
+}
+ 
+/* Custom dropdown arrow so the select matches the rest of the light-themed
+   inputs instead of falling back to the browser's native (often dark, in
+   dark-mode browsers) control chrome. */
+.pt-submit-page .pt-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b6b80' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+ 
+.pt-submit-page .pt-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .pt-submit-page .pt-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Country / State / Pincode row — collapses 3 -> 2 -> 1 columns fluidly. */
+.pt-submit-page .pt-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+/* Inside a grid, spacing comes from `gap` only; the grid block then keeps the
+   same vertical rhythm as a single field. Keeps rows evenly aligned when they
+   wrap on tablet / mobile. */
+.pt-submit-page .pt-grid-2,
+.pt-submit-page .pt-grid-3 {
+  margin-bottom: 16px;
+}
+.pt-submit-page .pt-grid-2:last-child,
+.pt-submit-page .pt-grid-3:last-child {
+  margin-bottom: 0;
+}
+.pt-submit-page .pt-grid-2 > .pt-field,
+.pt-submit-page .pt-grid-3 > .pt-field {
+  margin-bottom: 0;
+}
+
+/* ---------- urgency cards ---------- */
+.pt-submit-page .pt-urgency-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 900px) {
+  .pt-submit-page .pt-urgency-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .pt-submit-page .pt-urgency-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.pt-submit-page .pt-urgency-card {
+  --u-color: var(--pt-accent);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid var(--pt-line-strong);
+  background: var(--pt-surface);
+  border-radius: var(--pt-radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+.pt-submit-page .pt-urgency-card:hover {
+  border-color: var(--u-color);
+  transform: translateY(-1px);
+}
+.pt-submit-page .pt-urgency-card:focus-visible,
+.pt-submit-page .pt-service-card:focus-visible,
+.pt-submit-page .pt-btn:focus-visible {
+  outline: 2px solid var(--pt-accent);
+  outline-offset: 2px;
+}
+.pt-submit-page .pt-urgency-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pt-surface-2);
+  border: 1px solid var(--pt-line);
+  color: var(--pt-ink-600);
+  flex: none;
+}
+.pt-submit-page .pt-urgency-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--pt-ink-900);
+  padding-right: 14px;
+}
+.pt-submit-page .pt-urgency-dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pt-line-strong);
+}
+.pt-submit-page .pt-urgency-card.selected {
+  border-color: var(--u-color);
+  background: color-mix(in srgb, var(--u-color) 8%, white);
+}
+.pt-submit-page .pt-urgency-card.selected .pt-urgency-icon {
+  background: var(--u-color);
+  border-color: var(--u-color);
+  color: #fff;
+}
+.pt-submit-page .pt-urgency-card.selected .pt-urgency-label {
+  color: var(--u-color);
+}
+.pt-submit-page .pt-urgency-card.selected .pt-urgency-dot {
+  background: var(--u-color);
+}
+ 
+/* ---------- service cards ---------- */
+.pt-submit-page .pt-service-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pt-submit-page .pt-service-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--pt-line-strong);
+  background: var(--pt-surface);
+  border-radius: var(--pt-radius-md);
+  padding: 13px 15px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.pt-submit-page .pt-service-card:hover {
+  border-color: var(--pt-accent);
+  background: var(--pt-surface-2);
+}
+.pt-submit-page .pt-service-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pt-surface-2);
+  border: 1px solid var(--pt-line);
+  color: var(--pt-ink-700);
+}
+.pt-submit-page .pt-service-text {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.pt-submit-page .pt-service-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pt-ink-900);
+}
+.pt-submit-page .pt-service-desc {
+  font-size: 12px;
+  color: var(--pt-ink-600);
+  line-height: 1.4;
+}
+.pt-submit-page .pt-service-check {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: none;
+  border: 1.5px solid var(--pt-line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+}
+.pt-submit-page .pt-service-card.selected {
+  border-color: var(--pt-accent);
+  background: var(--pt-accent-tint);
+}
+.pt-submit-page .pt-service-card.selected .pt-service-icon {
+  background: var(--pt-accent);
+  border-color: var(--pt-accent);
+  color: #fff;
+}
+.pt-submit-page .pt-service-card.selected .pt-service-check {
+  background: var(--pt-accent);
+  border-color: var(--pt-accent);
+  color: #fff;
+}
+ 
+/* ---------- footer actions ---------- */
+.pt-submit-page .pt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pt-line);
+}
+.pt-submit-page .pt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 9px;
+  cursor: pointer;
+  padding: 10px 20px;
+  border: none;
+  background: var(--pt-accent);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(17, 0, 114, 0.15);
+  white-space: nowrap;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.pt-submit-page .pt-btn:hover:not(:disabled) {
+  background: var(--pt-accent-dark);
+  box-shadow: 0 4px 12px rgba(17, 0, 114, 0.22);
+}
+.pt-submit-page .pt-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.pt-submit-page .pt-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+ 
+.pt-submit-page .pt-btn-ghost {
+  background: var(--pt-surface);
+  border: 1px solid var(--pt-line-strong);
+  color: var(--pt-accent);
+  box-shadow: none;
+}
+.pt-submit-page .pt-btn-ghost:hover:not(:disabled) {
+  background: var(--pt-accent-tint);
+  box-shadow: none;
+}
+ 
+.pt-submit-page .pt-btn-submit {
+  background: var(--pt-accent);
+}
+.pt-submit-page .pt-btn-submit:hover:not(:disabled) {
+  background: var(--pt-accent-dark);
+}
+ 
+@media (max-width: 640px) {
+  .pt-page.pt-submit-page {
+    padding: 20px 16px 48px;
+  }
+  .pt-submit-page .pt-card.pt-submit-card {
+    padding: 18px;
+  }
+  .pt-submit-page .pt-actions {
+    flex-wrap: wrap;
+  }
+  .pt-submit-page .pt-actions .pt-btn {
+    flex: 1 1 auto;
+    padding: 10px 16px;
+  }
+}
+ 

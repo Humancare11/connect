@@ -1117,6 +1117,7 @@ function AppLayout() {
     location.pathname.startsWith("/payment-admin") ||
     location.pathname.startsWith("/superadmin") ||
     location.pathname.startsWith("/employee") ||
+    location.pathname.startsWith("/partner") ||
     location.pathname.startsWith("/user") ||
     location.pathname.startsWith("/pay/") ||
     location.pathname.startsWith("/video-call") ||
@@ -1443,7 +1444,7 @@ function AppLayout() {
             }
           />
           <Route
-            path="/partner-dashboard/submit-care"
+            path="/partner-dashboard/submit-case"
             element={
               <PartnerPrivateRoute>
                 <PartnerLayout>

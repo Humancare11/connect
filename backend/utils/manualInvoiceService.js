@@ -83,6 +83,7 @@ function buildManualNotes(description, status) {
 // swallowed.
 async function createManualInvoice({
   createdBy,
+  partner,
   clientName,
   clientEmail,
   companyName,
@@ -126,6 +127,7 @@ async function createManualInvoice({
 
   const invoice = await ManualInvoice.create({
     invoiceNumber,
+    partner: partner || null,
     clientName,
     clientEmail,
     companyName,

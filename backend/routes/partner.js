@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require("mongoose");
 
 const PartnerCase = require("../models/PartnerCase");
+const ManualInvoice = require("../models/ManualInvoice");
 const {
   verifyPartnerToken,
   partnerOnly,
@@ -55,15 +56,47 @@ router.get("/dashboard", async (req, res) => {
 });
 
 // GET /api/partner/cases — this company's cases (list view)
+//
+// Supports filtering by status, urgency and a free-text query. When the caller
+// passes `page` (or `limit`) the response is a paginated envelope
+// `{ items, total, page, limit, pages }`; otherwise it stays the legacy plain
+// array so existing consumers keep working unchanged.
 router.get("/cases", async (req, res) => {
   try {
     const filter = { partner: req.partnerId };
     if (PartnerCase.CASE_STATUSES.includes(req.query.status)) filter.status = req.query.status;
+    if (["routine", "urgent", "emergency"].includes(req.query.urgency)) {
+      filter.urgency = req.query.urgency;
+    }
 
     const q = cleanText(req.query.q, 80);
     if (q) {
       const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
       filter.$or = [{ caseNumber: rx }, { "patient.name": rx }];
+    }
+
+    const paginated = req.query.page != null || req.query.limit != null;
+    if (paginated) {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+
+      const [items, total] = await Promise.all([
+        PartnerCase.find(filter)
+          .populate("assignedDoctor", "name")
+          .sort({ createdAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+        PartnerCase.countDocuments(filter),
+      ]);
+
+      return res.json({
+        items: items.map(serializeCaseForPartner),
+        total,
+        page,
+        limit,
+        pages: Math.max(1, Math.ceil(total / limit)),
+      });
     }
 
     const cases = await PartnerCase.find(filter)
@@ -197,6 +230,60 @@ router.get("/cases/:id/attachments/access-url", loadOwnedCase, async (req, res) 
   } catch (err) {
     console.error("partner attachment access-url error:", err);
     res.status(500).json({ msg: "Server error." });
+  }
+});
+
+// ── Billing / Invoices ────────────────────────────────────────────────────
+// Invoices an admin has bound to this Partner Company (ManualInvoice.partner).
+// Scoped to req.partnerId — a partner can only ever see its own company's
+// invoices. Internal fields (createdBy, emailError, S3 key, ...) are not
+// serialised back.
+function serializeInvoiceForPartner(doc) {
+  return {
+    _id: doc._id,
+    invoiceNumber: doc.invoiceNumber,
+    amountCents: doc.amountCents,
+    currency: doc.currency,
+    status: doc.status,
+    dueDate: doc.dueDate || null,
+    paidAt: doc.paidAt || null,
+    description: doc.description || "",
+    items: Array.isArray(doc.items) && doc.items.length ? doc.items : undefined,
+    createdAt: doc.createdAt,
+  };
+}
+
+// GET /api/partner/invoices — this company's invoices, newest first
+router.get("/invoices", async (req, res) => {
+  try {
+    const invoices = await ManualInvoice.find({ partner: req.partnerId })
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
+    res.json(invoices.map(serializeInvoiceForPartner));
+  } catch (err) {
+    console.error("partner list invoices error:", err);
+    res.status(500).json({ msg: "Server error." });
+  }
+});
+
+// GET /api/partner/invoices/:id/download — short-lived presigned PDF URL,
+// ownership-scoped so a partner can't fetch another company's invoice by id.
+router.get("/invoices/:id/download", async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ msg: "Invoice not found." });
+    }
+    const invoice = await ManualInvoice.findOne({ _id: req.params.id, partner: req.partnerId })
+      .select("pdfKey invoiceNumber")
+      .lean();
+    if (!invoice) return res.status(404).json({ msg: "Invoice not found." });
+
+    const signed = await createS3PresignedGetUrl(invoice.pdfKey, { expiresIn: 300 });
+    res.json({ url: signed.url, invoiceNumber: invoice.invoiceNumber, expiresAt: signed.expiresAt });
+  } catch (err) {
+    console.error("partner invoice download error:", err);
+    res.status(500).json({ msg: "Failed to generate download link." });
   }
 });
 

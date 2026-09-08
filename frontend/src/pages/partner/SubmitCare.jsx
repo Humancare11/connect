@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import partnerApi from "../../api/partnerApi";
 import { URGENCY_META, SERVICE_META } from "./caseConstants";
-import "./partner.css";
-
+import "./Submit.css";
+ 
 const STEPS = ["When", "What", "Where", "Patient"];
-
+ 
 const EMPTY = {
   urgency: "routine",
   serviceType: "teleconsultation",
@@ -14,6 +14,7 @@ const EMPTY = {
   preferredTime: "",
   country: "",
   state: "",
+  postalCode: "",
   pharmacyAddress: "",
   clinicName: "",
   address: "",
@@ -22,19 +23,71 @@ const EMPTY = {
   gender: "",
   phone: "",
   language: "",
-  policyId: "",
   complaint: "",
 };
-
+ 
+/* ---- presentation-only icon maps (no logic here, just UI) ---- */
+const URGENCY_ICONS = {
+  routine: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 3" />
+    </svg>
+  ),
+  urgent: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 9v4M12 17h.01" />
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+    </svg>
+  ),
+  emergency: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  ),
+};
+const DEFAULT_URGENCY_ICON = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+  </svg>
+);
+ 
+const SERVICE_ICONS = {
+  teleconsultation: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 7l-7 5 7 5V7z" />
+      <rect x="1" y="5" width="15" height="14" rx="2" />
+    </svg>
+  ),
+  "house-call": (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9.5 12 3l9 6.5" />
+      <path d="M5 10v10h14V10" />
+      <path d="M9 20v-6h6v6" />
+    </svg>
+  ),
+  "in-clinic": (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 21V7l9-4 9 4v14" />
+      <path d="M9 21v-6h6v6M9 12h.01M15 12h.01M12 8h.01" />
+    </svg>
+  ),
+};
+const DEFAULT_SERVICE_ICON = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+  </svg>
+);
+ 
 export default function SubmitCare() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState("");
-
+ 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-
+ 
   const mutation = useMutation({
     mutationFn: (payload) => partnerApi.submitCase(payload),
     onSuccess: (created) => {
@@ -43,7 +96,7 @@ export default function SubmitCare() {
     },
     onError: (err) => setError(err.response?.data?.msg || "Could not submit the case."),
   });
-
+ 
   const submit = () => {
     setError("");
     if (!form.patientName.trim()) {
@@ -72,66 +125,95 @@ export default function SubmitCare() {
         gender: form.gender,
         phone: form.phone,
         language: form.language,
-        policyId: form.policyId,
         complaint: form.complaint,
       },
       location: {
         country: form.country,
         state: form.state,
+        postalCode: form.postalCode,
         pharmacyAddress: form.serviceType === "teleconsultation" ? form.pharmacyAddress : "",
         clinicName: form.serviceType === "in-clinic" ? form.clinicName : "",
         address: form.serviceType === "teleconsultation" ? "" : form.address,
       },
     });
   };
-
+ 
   return (
-    <div className="pt-page" style={{ maxWidth: 620 }}>
+    <div className="pt-page pt-submit-page">
       <div className="pt-page-head">
         <div>
+          <span className="pt-page-eyebrow">New case</span>
           <h1 className="pt-page-title">Submit new case</h1>
           <p className="pt-page-sub">Provide the details and our team will action it</p>
         </div>
       </div>
-
-      <div className="pt-wizard-steps">
-        {STEPS.map((label, i) => (
-          <div key={label}>
-            <div className={`pt-wizard-bar${step >= i + 1 ? " on" : ""}`} />
-            <p className={`pt-wizard-label${step === i + 1 ? " on" : ""}`}>
-              {i + 1}. {label}
-            </p>
+ 
+      <ol className="pt-stepper" aria-label={`Step ${step} of ${STEPS.length}`}>
+        {STEPS.map((label, i) => {
+          const n = i + 1;
+          const done = step > n;
+          const current = step === n;
+          return (
+            <li
+              key={label}
+              className={`pt-stepper-item${done ? " is-done" : ""}${
+                current ? " is-current" : ""
+              }`}
+              aria-current={current ? "step" : undefined}
+            >
+              <span className="pt-stepper-marker">
+                {done ? (
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                ) : (
+                  n
+                )}
+              </span>
+              <span className="pt-stepper-label">{label}</span>
+            </li>
+          );
+        })}
+      </ol>
+ 
+      <div className="pt-card pt-submit-card">
+        {error && (
+          <div className="pt-error">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v5M12 16h.01" />
+            </svg>
+            <span>{error}</span>
           </div>
-        ))}
-      </div>
-
-      <div className="pt-card">
-        {error && <div className="pt-error">{error}</div>}
-
+        )}
+ 
         {step === 1 && (
           <>
-            <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>When is the service needed?</h3>
+            <h3 className="pt-step-title">When is the service needed?</h3>
             <div className="pt-field">
               <label>Urgency level</label>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div className="pt-urgency-grid">
                 {Object.entries(URGENCY_META).map(([key, val]) => (
                   <button
                     key={key}
                     type="button"
                     onClick={() => set({ urgency: key })}
-                    style={{
-                      flex: 1,
-                      padding: "8px 10px",
-                      borderRadius: 8,
-                      border: form.urgency === key ? `2px solid ${val.color}` : "1.5px solid #e2e8f0",
-                      background: form.urgency === key ? `${val.color}18` : "#fff",
-                      color: form.urgency === key ? val.color : "#334155",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
+                    className={`pt-urgency-card${form.urgency === key ? " selected" : ""}`}
+                    style={{ "--u-color": val.color }}
                   >
-                    {val.label}
+                    <span className="pt-urgency-icon">{URGENCY_ICONS[key] || DEFAULT_URGENCY_ICON}</span>
+                    <span className="pt-urgency-label">{val.label}</span>
+                    <span className="pt-urgency-dot" />
                   </button>
                 ))}
               </div>
@@ -156,37 +238,38 @@ export default function SubmitCare() {
             </div>
           </>
         )}
-
+ 
         {step === 2 && (
           <>
-            <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>What type of service?</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <h3 className="pt-step-title">What type of service?</h3>
+            <div className="pt-service-list">
               {Object.entries(SERVICE_META).map(([key, val]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => set({ serviceType: key })}
-                  style={{
-                    textAlign: "left",
-                    padding: "12px 14px",
-                    borderRadius: 9,
-                    border: form.serviceType === key ? "2px solid #0ea5e9" : "1.5px solid #e2e8f0",
-                    background: form.serviceType === key ? "#e0f2fe" : "#fff",
-                    cursor: "pointer",
-                  }}
+                  className={`pt-service-card${form.serviceType === key ? " selected" : ""}`}
                 >
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{val.label}</div>
-                  <div style={{ fontSize: 12, color: "#64748b" }}>{val.desc}</div>
+                  <span className="pt-service-icon">{SERVICE_ICONS[key] || DEFAULT_SERVICE_ICON}</span>
+                  <span className="pt-service-text">
+                    <span className="pt-service-title">{val.label}</span>
+                    <span className="pt-service-desc">{val.desc}</span>
+                  </span>
+                  <span className="pt-service-check" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  </span>
                 </button>
               ))}
             </div>
           </>
         )}
-
+ 
         {step === 3 && (
           <>
-            <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>Where is the patient?</h3>
-            <div className="pt-grid-2">
+            <h3 className="pt-step-title">Where is the patient?</h3>
+            <div className="pt-grid-3">
               <div className="pt-field">
                 <label>Country *</label>
                 <input value={form.country} onChange={(e) => set({ country: e.target.value })} />
@@ -194,6 +277,16 @@ export default function SubmitCare() {
               <div className="pt-field">
                 <label>State / Province</label>
                 <input value={form.state} onChange={(e) => set({ state: e.target.value })} />
+              </div>
+              <div className="pt-field">
+                <label>Pincode / ZIP code</label>
+                <input
+                  value={form.postalCode}
+                  onChange={(e) => set({ postalCode: e.target.value })}
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  placeholder="e.g. 560001"
+                />
               </div>
             </div>
             {form.serviceType === "teleconsultation" && (
@@ -219,10 +312,10 @@ export default function SubmitCare() {
             )}
           </>
         )}
-
+ 
         {step === 4 && (
           <>
-            <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>Patient information</h3>
+            <h3 className="pt-step-title">Patient information</h3>
             <div className="pt-field">
               <label>Full name *</label>
               <input
@@ -254,10 +347,6 @@ export default function SubmitCare() {
               </div>
             </div>
             <div className="pt-field">
-              <label>Policy / insurance ID</label>
-              <input value={form.policyId} onChange={(e) => set({ policyId: e.target.value })} />
-            </div>
-            <div className="pt-field">
               <label>Chief complaint / symptoms *</label>
               <textarea
                 rows={3}
@@ -267,16 +356,8 @@ export default function SubmitCare() {
             </div>
           </>
         )}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: 18,
-            paddingTop: 14,
-            borderTop: "1px solid #f1f5f9",
-          }}
-        >
+ 
+        <div className="pt-actions">
           <button
             type="button"
             className="pt-btn pt-btn-ghost"
@@ -286,6 +367,9 @@ export default function SubmitCare() {
               setStep((s) => Math.max(1, s - 1));
             }}
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
             Back
           </button>
           {step < 4 ? (
@@ -298,9 +382,12 @@ export default function SubmitCare() {
               }}
             >
               Next
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
             </button>
           ) : (
-            <button type="button" className="pt-btn" disabled={mutation.isPending} onClick={submit}>
+            <button type="button" className="pt-btn pt-btn-submit" disabled={mutation.isPending} onClick={submit}>
               {mutation.isPending ? "Submitting…" : "Submit case"}
             </button>
           )}

@@ -65,7 +65,7 @@ const PARTNER_NAV_ITEMS = [
   {
     section: "Cases",
     items: [
-      { path: "/partner-dashboard/submit-care", label: "Submit Care", icon: SubmitIcon },
+      { path: "/partner-dashboard/submit-case", label: "Submit Care", icon: SubmitIcon },
       { path: "/partner-dashboard/cases", label: "All Cases", icon: CasesIcon },
     ],
   },

@@ -31,14 +31,14 @@ export default function AllCases() {
   const rows = casesQ.data || [];
 
   return (
-    <div className="pt-page">
+    <div className="pt-page" style={{ maxWidth: "100%" }}>
       <div className="pt-page-head">
         <div>
           <h1 className="pt-page-title">All Cases</h1>
           <p className="pt-page-sub">Every care case your company has submitted</p>
         </div>
-        <Link to="/partner-dashboard/submit-care" className="pt-btn">
-          + Submit Care
+        <Link to="/partner-dashboard/submit-case" className="pt-btn">
+          + Submit Case
         </Link>
       </div>
 

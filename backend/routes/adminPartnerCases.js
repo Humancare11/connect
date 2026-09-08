@@ -132,8 +132,10 @@ router.patch("/:id/assign", loadCase, async (req, res) => {
 
     doc.assignedDoctor = doctor._id;
     doc.assignedBy = { id: req.user.id, name: actor(req).name, at: new Date() };
+    // A video consultation link only applies to teleconsultation cases; ignore
+    // it for house-call / in-clinic so it is never sent to the partner.
     const videoLink = cleanText(req.body.videoLink, 1000);
-    if (videoLink) doc.videoLink = videoLink;
+    if (videoLink && doc.serviceType === "teleconsultation") doc.videoLink = videoLink;
     if (doc.status === "submitted") {
       doc.status = "assigned";
       doc.statusHistory.push({ status: "assigned", at: new Date(), byId: req.user.id, byName: actor(req).name, byRole: req.user.role });

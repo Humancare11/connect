@@ -91,6 +91,7 @@ const partnerCaseSchema = new mongoose.Schema(
     location: {
       country: { type: String, default: "" },
       state: { type: String, default: "" },
+      postalCode: { type: String, default: "" },
       pharmacyAddress: { type: String, default: "" },
       clinicName: { type: String, default: "" },
       address: { type: String, default: "" },

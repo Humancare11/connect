@@ -10,7 +10,22 @@ import {
   statusLabel,
   formatMoney,
 } from "./caseConstants";
-import "./partner.css";
+import "./PartnerCaseDetail.css";
+
+// System notices that just echo the status pipeline — hidden from the chat
+// thread so it reads as a conversation, not an audit log.
+const HIDDEN_SYSTEM_MESSAGES = new Set([
+  "Case submitted.",
+  'Status updated to "assigned".',
+  'Status updated to "in-progress".',
+  'Status updated to "completed".',
+  'Status updated to "invoiced".',
+]);
+
+const chatMessages = (messages) =>
+  (messages || []).filter(
+    (m) => !(m.authorRole === "system" && HIDDEN_SYSTEM_MESSAGES.has(m.body)),
+  );
 
 export default function PartnerCaseDetail() {
   const { id } = useParams();
@@ -19,6 +34,7 @@ export default function PartnerCaseDetail() {
   const [message, setMessage] = useState("");
   const [actionError, setActionError] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const chatEndRef = useRef(null);
 
   const caseQ = useQuery({
@@ -28,10 +44,11 @@ export default function PartnerCaseDetail() {
     retry: false,
   });
 
-  const messageCount = caseQ.data?.messages?.length ?? 0;
+  const messageCount = chatMessages(caseQ.data?.messages).length;
   useEffect(() => {
+    if (!chatOpen) return;
     chatEndRef.current?.scrollIntoView({ block: "nearest" });
-  }, [messageCount]);
+  }, [messageCount, chatOpen]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["partner", "case", id] });
@@ -54,10 +71,15 @@ export default function PartnerCaseDetail() {
     onError: (err) => setActionError(err.response?.data?.msg || "Could not cancel the case."),
   });
 
-  if (caseQ.isLoading) return <div className="pt-page pt-empty">Loading case…</div>;
+  if (caseQ.isLoading)
+    return (
+      <div className="pt-page pt-empty" style={{ maxWidth: "100%" }}>
+        Loading case…
+      </div>
+    );
   if (caseQ.isError) {
     return (
-      <div className="pt-page pt-empty">
+      <div className="pt-page pt-empty" style={{ maxWidth: "100%" }}>
         Case not found.{" "}
         <Link to="/partner-dashboard/cases" style={{ color: "#0369a1" }}>
           Back to All Cases
@@ -96,7 +118,7 @@ export default function PartnerCaseDetail() {
   const sm = STATUS_META[c.status] || { bg: "#e2e8f0", text: "#334155" };
 
   return (
-    <div className="pt-page">
+    <div className="pt-page" style={{ maxWidth: "100%" }}>
       <div className="pt-page-head">
         <div>
           <button
@@ -160,7 +182,7 @@ export default function PartnerCaseDetail() {
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 16 }} className="pt-detail-cols">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }} className="pt-detail-cols">
         <div>
           <div className="pt-card">
             <p className="pt-card-title">Patient</p>
@@ -169,7 +191,9 @@ export default function PartnerCaseDetail() {
             <Row label="Gender" value={c.patient?.gender} />
             <Row label="Phone" value={c.patient?.phone} />
             <Row label="Language" value={c.patient?.language} />
-            <Row label="Policy / insurance ID" value={c.patient?.policyId} />
+            {c.patient?.policyId && (
+              <Row label="Policy / insurance ID" value={c.patient.policyId} />
+            )}
             <div
               style={{
                 marginTop: 10,
@@ -188,6 +212,9 @@ export default function PartnerCaseDetail() {
             <p className="pt-card-title">Location</p>
             <Row label="Country" value={c.location?.country} />
             <Row label="State / Province" value={c.location?.state} />
+            {c.location?.postalCode && (
+              <Row label="Pincode / ZIP code" value={c.location.postalCode} />
+            )}
             {c.location?.pharmacyAddress && <Row label="Pharmacy" value={c.location.pharmacyAddress} />}
             {c.location?.clinicName && <Row label="Clinic" value={c.location.clinicName} />}
             {c.location?.address && <Row label="Address" value={c.location.address} />}
@@ -197,7 +224,7 @@ export default function PartnerCaseDetail() {
             <div className="pt-card">
               <p className="pt-card-title">Assigned physician</p>
               <div style={{ fontSize: 14, fontWeight: 600 }}>{c.assignedDoctorName}</div>
-              {c.videoLink && (
+              {c.serviceType === "teleconsultation" && c.videoLink && (
                 <div style={{ marginTop: 10 }}>
                   <button type="button" className="pt-btn" onClick={copyConsultationLink}>
                     {linkCopied ? "Link copied ✓" : "Copy consultation link"}
@@ -219,53 +246,83 @@ export default function PartnerCaseDetail() {
           )}
         </div>
 
-        <div className="pt-card pt-chat-card">
-          <p className="pt-card-title">Case messages</p>
-          <div className="pt-chat">
-            {(c.messages || []).length === 0 ? (
-              <div className="pt-chat-empty">
-                No messages yet. Use the box below to reach the Humancare team about this case.
-              </div>
-            ) : (
-              (c.messages || []).map((m) => (
-                <div
-                  key={m._id}
-                  className={`pt-msg${m.authorRole === "partner" ? " mine" : ""}${
-                    m.authorRole === "system" ? " system" : ""
-                  }`}
-                >
-                  {m.authorRole !== "system" && (
-                    <div className="pt-msg-meta">
-                      <span className="pt-msg-author">{m.authorName}</span>
-                      <span className="pt-msg-time">{new Date(m.createdAt).toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="pt-msg-bubble">{m.body}</div>
-                </div>
-              ))
-            )}
-            <div ref={chatEndRef} />
-          </div>
-          {c.status !== "cancelled" && (
-            <form
-              className="pt-chat-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (message.trim()) sendMsg.mutate();
-              }}
-            >
-              <input
-                placeholder="Type a message…"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-              <button type="submit" className="pt-btn" disabled={sendMsg.isPending || !message.trim()}>
-                {sendMsg.isPending ? "Sending…" : "Send"}
-              </button>
-            </form>
-          )}
-        </div>
       </div>
+
+      {!chatOpen && (
+        <button
+          type="button"
+          className="pt-chat-fab"
+          onClick={() => setChatOpen(true)}
+          aria-label="Open case messages"
+        >
+          <ChatIcon />
+          Messages
+          {messageCount > 0 && <span className="pt-chat-fab__count">{messageCount}</span>}
+        </button>
+      )}
+
+      {chatOpen && (
+        <>
+          <div className="pt-chat-overlay" onClick={() => setChatOpen(false)} />
+          <aside className="pt-chat-drawer" role="dialog" aria-label="Case messages">
+            <div className="pt-chat-drawer__head">
+              <p className="pt-chat-drawer__title">Case messages</p>
+              <button
+                type="button"
+                className="pt-chat-drawer__close"
+                onClick={() => setChatOpen(false)}
+                aria-label="Close case messages"
+              >
+                ×
+              </button>
+            </div>
+            <div className="pt-chat">
+              {chatMessages(c.messages).length === 0 ? (
+                <div className="pt-chat-empty">
+                  <span className="pt-chat-empty__icon" aria-hidden="true">💬</span>
+                  No messages yet. Send a message to reach the Humancare team about this case.
+                </div>
+              ) : (
+                chatMessages(c.messages).map((m) => (
+                  <div
+                    key={m._id}
+                    className={`pt-msg${m.authorRole === "partner" ? " mine" : ""}${
+                      m.authorRole === "system" ? " system" : ""
+                    }`}
+                  >
+                    {m.authorRole !== "system" && (
+                      <div className="pt-msg-meta">
+                        <span className="pt-msg-author">{m.authorName}</span>
+                        <span className="pt-msg-time">{new Date(m.createdAt).toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="pt-msg-bubble">{m.body}</div>
+                  </div>
+                ))
+              )}
+              <div ref={chatEndRef} />
+            </div>
+            {c.status !== "cancelled" && (
+              <form
+                className="pt-chat-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (message.trim()) sendMsg.mutate();
+                }}
+              >
+                <input
+                  placeholder="Type a message…"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+                <button type="submit" className="pt-btn" disabled={sendMsg.isPending || !message.trim()}>
+                  {sendMsg.isPending ? "Sending…" : "Send"}
+                </button>
+              </form>
+            )}
+          </aside>
+        </>
+      )}
 
       {linkCopied && (
         <div className="pt-toast" role="status">
@@ -282,5 +339,13 @@ function Row({ label, value }) {
       <span style={{ color: "#64748b" }}>{label}</span>
       <span style={{ fontWeight: 500, textAlign: "right" }}>{value || "—"}</span>
     </div>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
   );
 }

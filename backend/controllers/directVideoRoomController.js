@@ -9,7 +9,13 @@ const MAX_EXPIRY_HOURS = 72;
 const DEFAULT_EXPIRY_HOURS = 24;
 
 function roomJoinLink(req, roomId) {
-  const origin = process.env.FRONTEND_URL || `${req.protocol}://${req.get("host")}`;
+  // FRONTEND_URL may hold a comma-separated list (it's parsed that way for
+  // CORS in server.js) — use the first entry, not the raw string, or the
+  // generated link would be "https://a.com,https://b.com/direct-video-call/…".
+  const configured = String(process.env.FRONTEND_URL || "")
+    .split(",")[0]
+    .trim();
+  const origin = configured || `${req.protocol}://${req.get("host")}`;
   return `${origin.replace(/\/+$/, "")}/direct-video-call/${roomId}`;
 }
 

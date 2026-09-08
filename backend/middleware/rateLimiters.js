@@ -7,6 +7,7 @@ const otpRequestStore = new Map();
 const otpVerifyStore = new Map();
 const presignStore = new Map();
 const uploadStore = new Map();
+const directVideoRoomPublicStore = new Map();
 
 function getEntry(store, key) {
   return store.get(key) || { count: 0, firstAttemptAt: Date.now() };
@@ -154,6 +155,22 @@ const uploadLimiter = buildUserLimiter({
   message:  "Too many uploads. Please wait {min} minutes and try again.",
 });
 
+// The public Direct Video Room endpoints (GET /:roomId/status and
+// /:roomId/ice-servers) carry no login or email, so they're keyed by
+// IP + roomId — different rooms behind one office NAT don't share a bucket.
+// A real participant hits each a handful of times per join (plus reconnect
+// re-fetches); the cap is well above that but bounds someone scripting the
+// /ice-servers endpoint, which mints short-lived TURN (HMAC) credentials on
+// every call.
+const directVideoRoomPublicLimiter = buildKeyedLimiter({
+  store:    directVideoRoomPublicStore,
+  windowMs: 60 * 1000,
+  max:      40,
+  message:  "Too many requests for this meeting. Please wait a moment and try again.",
+  keyFn:    (req) => `${req.ip}:${req.params?.roomId || ""}`,
+  describeKey: (req, key) => `ip+room:${key}`,
+});
+
 module.exports = {
   registrationLimiter,
   contactLimiter,
@@ -162,4 +179,5 @@ module.exports = {
   otpVerifyLimiter,
   presignLimiter,
   uploadLimiter,
+  directVideoRoomPublicLimiter,
 };

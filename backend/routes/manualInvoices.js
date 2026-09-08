@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const ManualInvoice = require("../models/ManualInvoice");
+const Partner = require("../models/Partner");
 const { verifyAdminToken, manualInvoiceAccess } = require("../middleware/verifyToken");
 const { createManualInvoice, markManualInvoicePaid, resendManualInvoiceEmail } = require("../utils/manualInvoiceService");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
@@ -86,9 +87,15 @@ function parseDueDate(raw) {
 
 function serializeManualInvoice(doc) {
   const creator = doc.createdBy && typeof doc.createdBy === "object" ? doc.createdBy : null;
+  // Only when populated — a bare ObjectId is also typeof "object".
+  const partner =
+    doc.partner && typeof doc.partner === "object" && doc.partner.companyName ? doc.partner : null;
   return {
     _id: doc._id,
     invoiceNumber: doc.invoiceNumber,
+    partner: partner
+      ? { _id: partner._id, companyName: partner.companyName, partnerCode: partner.partnerCode }
+      : undefined,
     clientName: doc.clientName,
     clientEmail: doc.clientEmail,
     companyName: doc.companyName || undefined,
@@ -169,8 +176,24 @@ router.post("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
       return res.status(400).json({ msg: dueDateError });
     }
 
+    // Optional: bind this invoice to a Partner Company so it also appears in
+    // that partner's Billing section. Validated against a real, active
+    // Partner — a bad/inactive id is rejected rather than silently dropped.
+    let partnerId = null;
+    if (req.body.partnerId) {
+      if (!mongoose.isValidObjectId(req.body.partnerId)) {
+        return res.status(400).json({ msg: "Invalid partner selected." });
+      }
+      const partnerDoc = await Partner.findById(req.body.partnerId).select("status").lean();
+      if (!partnerDoc || partnerDoc.status !== "active") {
+        return res.status(400).json({ msg: "Selected partner company was not found or is inactive." });
+      }
+      partnerId = req.body.partnerId;
+    }
+
     const invoice = await createManualInvoice({
       createdBy: req.user.id,
+      partner: partnerId,
       clientName,
       clientEmail,
       companyName,
@@ -207,6 +230,9 @@ router.get("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
 
     if (req.user.role === "paymentadmin") query.createdBy = req.user.id;
     if (["due", "paid"].includes(req.query.status)) query.status = req.query.status;
+    if (req.query.partner && mongoose.isValidObjectId(req.query.partner)) {
+      query.partner = req.query.partner;
+    }
     if (req.query.q) {
       const pattern = new RegExp(String(req.query.q).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
       query.$or = [{ clientName: pattern }, { clientEmail: pattern }, { invoiceNumber: pattern }];
@@ -215,6 +241,7 @@ router.get("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
     const [invoices, total] = await Promise.all([
       ManualInvoice.find(query)
         .populate("createdBy", "name email")
+        .populate("partner", "companyName partnerCode")
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -232,6 +259,33 @@ router.get("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   } catch (err) {
     console.error("list manual invoices error:", err.message);
     res.status(500).json({ msg: "Failed to load invoices." });
+  }
+});
+
+/* GET /api/admin/manual-invoices/partners
+   Active Partner Companies for the "Bill to a Partner" picker on the invoice
+   form. Read-only projection — no credentials or internal fields. */
+router.get("/partners", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
+  try {
+    const partners = await Partner.find({ status: "active" })
+      .select("companyName partnerCode contactPersonName contactEmail address country billingCurrency")
+      .sort({ companyName: 1 })
+      .lean();
+    res.json({
+      partners: partners.map((p) => ({
+        _id: p._id,
+        companyName: p.companyName,
+        partnerCode: p.partnerCode,
+        contactPersonName: p.contactPersonName || "",
+        contactEmail: p.contactEmail || "",
+        address: p.address || "",
+        country: p.country || "",
+        billingCurrency: (p.billingCurrency || "usd").toUpperCase(),
+      })),
+    });
+  } catch (err) {
+    console.error("list invoice partners error:", err.message);
+    res.status(500).json({ msg: "Failed to load partner companies." });
   }
 });
 

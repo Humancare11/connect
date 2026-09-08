@@ -5,6 +5,7 @@ const Appointment = require("../models/Appointment");
 const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { recordActivity } = require("../utils/activityLogger");
+const { sendDoctorApprovalEmail } = require("../utils/sendEmail");
 const { randomInt } = require("crypto");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { revokeUserSessions } = require("../utils/tokenRevocation");
@@ -32,6 +33,38 @@ const inferProgressFromFields = (enrollment) => {
   if (hasStep2) return { completedSteps: 2, currentStep: 3 };
   if (hasStep1) return { completedSteps: 1, currentStep: 2 };
   return { completedSteps: 0, currentStep: 1 };
+};
+
+// Doctor login page URL for approval emails. FRONTEND_URL may be a comma-
+// separated list (see server.js origin parsing) — use the first entry.
+const doctorLoginUrl = () => {
+  const base = String(process.env.FRONTEND_URL || "https://humancareconnect.co")
+    .split(",")[0]
+    .trim()
+    .replace(/\/+$/, "");
+  return `${base}/doctor-login`;
+};
+
+// Fire-and-forget the "profile approved" welcome email. Never throws — an
+// email failure must not break the admin approval action.
+const notifyDoctorApproved = async (enrollment) => {
+  try {
+    const to =
+      enrollment.email ||
+      (enrollment.doctorId && enrollment.doctorId.email) ||
+      null;
+    if (!to) {
+      console.warn("notifyDoctorApproved: no email for enrollment", enrollment._id?.toString());
+      return;
+    }
+    const name =
+      [enrollment.firstName, enrollment.surname].filter(Boolean).join(" ") ||
+      (enrollment.doctorId && enrollment.doctorId.name) ||
+      "";
+    await sendDoctorApprovalEmail(to, { name, loginUrl: doctorLoginUrl() });
+  } catch (err) {
+    console.error("notifyDoctorApproved: failed to send approval email:", err.message);
+  }
 };
 
 const deriveApplicationStatus = (enrollment) => {
@@ -123,7 +156,7 @@ const getAllDoctors = async (req, res) => {
 // PUT /api/admin/doctors/:id/approve
 const approveDoctor = async (req, res) => {
   try {
-    const enrollment = await Enrollment.findById(req.params.id);
+    const enrollment = await Enrollment.findById(req.params.id).populate("doctorId", "name email doctorId isEnrolled");
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
 
     if (enrollment.profileDeleteRequestStatus === "pending") {
@@ -131,6 +164,7 @@ const approveDoctor = async (req, res) => {
     }
 
     const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
+    const wasApproved = enrollment.approvalStatus === "approved";
 
     if (isProfileUpdateRequest) {
       (enrollment.pendingProfileChanges || []).forEach((change) => {
@@ -179,15 +213,21 @@ const approveDoctor = async (req, res) => {
     await enrollment.save();
 
     if (enrollment.doctorId) {
-      await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: true });
+      await Doctor.findByIdAndUpdate(enrollment.doctorId._id || enrollment.doctorId, { isEnrolled: true });
     }
 
     await recordActivity(req, {
       action: "ADMIN_APPROVE_DOCTOR",
       resource: "Enrollment",
       resourceId: req.params.id,
-      details: { doctorId: enrollment.doctorId?.toString() },
+      details: { doctorId: enrollment.doctorId?._id?.toString() || enrollment.doctorId?.toString() },
     });
+
+    // Welcome email — only on a genuine first approval of an enrollment, not
+    // on profile-update approvals or re-approving an already-approved doctor.
+    if (!isProfileUpdateRequest && !wasApproved) {
+      await notifyDoctorApproved(enrollment);
+    }
 
     res.status(200).json({ msg: "Doctor approved", enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()) });
   } catch (error) {
@@ -752,8 +792,10 @@ const processDoctorPayout = async (req, res) => {
 // PUT /api/admin/doctors/:id — admin edits a doctor's enrollment record (all fields)
 const updateDoctorByAdmin = async (req, res) => {
   try {
-    const enrollment = await Enrollment.findById(req.params.id);
+    const enrollment = await Enrollment.findById(req.params.id).populate("doctorId", "name email doctorId isEnrolled");
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
+
+    const wasApprovedBeforeUpdate = enrollment.approvalStatus === "approved";
 
     const {
       // Personal
@@ -874,7 +916,13 @@ const updateDoctorByAdmin = async (req, res) => {
     await enrollment.save();
 
     if (enrollment.doctorId && ["approved", "rejected"].includes(enrollment.approvalStatus)) {
-      await Doctor.findByIdAndUpdate(enrollment.doctorId, { isEnrolled: enrollment.approvalStatus === "approved" });
+      await Doctor.findByIdAndUpdate(enrollment.doctorId._id || enrollment.doctorId, { isEnrolled: enrollment.approvalStatus === "approved" });
+    }
+
+    // Send the welcome email only if this update actually flipped the doctor
+    // from not-approved to approved (mirrors the /approve endpoint).
+    if (!wasApprovedBeforeUpdate && enrollment.approvalStatus === "approved") {
+      await notifyDoctorApproved(enrollment);
     }
 
     return res.status(200).json({

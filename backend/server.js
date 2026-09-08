@@ -1069,7 +1069,12 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
 // tracked by a client-generated guestId (not an authenticated identity) purely
 // so a page refresh in the same tab is treated as a rejoin, not a 3rd seat.
 const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
-// roomId -> { initiatorGuestId, participantGuestIds: Set }
+// roomId -> {
+//   initiatorGuestId,          // stable impolite-peer assignment (see below)
+//   participantGuestIds: Set,  // every guestId ever seen in this room
+//   seats: Map<guestId, ms>,   // held seats — value is "last seen" epoch ms
+//   cleanupTimer,              // deferred teardown once the room is empty
+// }
 // Assigns the initiator/polite role once per guestId, the first time it's
 // ever seen in a room, and keeps it stable across refreshes/reconnects.
 // Recomputing this role from "who else is currently connected" (as before)
@@ -1078,12 +1083,85 @@ const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
 // deadlocks perfect-negotiation's offer-collision handling on both sides.
 const directRoomRoles = new Map();
 
-function getDirectRoomRole(roomId, guestId) {
+// A participant who drops out mid-call (page refresh, a brief network loss,
+// a Wi-Fi <-> cellular switch) keeps their seat reserved for this long, so a
+// third person who also has the link can't slip into it before they get
+// back — which previously locked the original participant out of their own
+// call with a "meeting already has two participants" error. A deliberate
+// "Leave call" gives the seat up immediately (see leave-direct-room), so
+// this window only ever holds a seat open for an *unintended* disconnect.
+const DIRECT_ROOM_SEAT_RESERVATION_MS = Math.max(
+  5000,
+  Number(process.env.DIRECT_ROOM_SEAT_RESERVATION_MS || 60000),
+);
+
+function getDirectRoomEntry(roomId) {
   let entry = directRoomRoles.get(roomId);
   if (!entry) {
-    entry = { initiatorGuestId: null, participantGuestIds: new Set() };
+    entry = {
+      initiatorGuestId: null,
+      participantGuestIds: new Set(),
+      seats: new Map(),
+      cleanupTimer: null,
+    };
     directRoomRoles.set(roomId, entry);
   }
+  return entry;
+}
+
+// guestIds that currently have at least one live socket in the room.
+function connectedGuestIdsForRoom(roomId) {
+  const ids = new Set();
+  for (const meta of directRoomSockets.values()) {
+    if (String(meta.roomId) === String(roomId) && meta.guestId) ids.add(meta.guestId);
+  }
+  return ids;
+}
+
+// Release seats held by guests who are neither connected right now nor still
+// within their post-disconnect reservation window.
+function pruneDirectRoomSeats(roomId, entry = directRoomRoles.get(roomId)) {
+  if (!entry) return;
+  const now = Date.now();
+  const connected = connectedGuestIdsForRoom(roomId);
+  for (const [guestId, lastSeenAt] of entry.seats) {
+    if (connected.has(guestId)) continue;
+    if (now - lastSeenAt > DIRECT_ROOM_SEAT_RESERVATION_MS) entry.seats.delete(guestId);
+  }
+}
+
+// Tear down a room's role/seat bookkeeping once it has no live sockets — but
+// not before any still-reserved seats have had their full window to
+// reconnect (this is what covers both participants dropping at once).
+function scheduleDirectRoomRolesCleanup(roomId) {
+  const entry = directRoomRoles.get(roomId);
+  if (!entry) return;
+  if (connectedGuestIdsForRoom(roomId).size > 0) return; // someone is still here
+  pruneDirectRoomSeats(roomId, entry);
+  if (entry.seats.size === 0) {
+    clearDirectRoomRoles(roomId);
+    return;
+  }
+  if (entry.cleanupTimer) clearTimeout(entry.cleanupTimer);
+  const now = Date.now();
+  let newestReservation = 0;
+  for (const lastSeenAt of entry.seats.values()) {
+    newestReservation = Math.max(newestReservation, lastSeenAt);
+  }
+  const delay = Math.max(
+    1000,
+    DIRECT_ROOM_SEAT_RESERVATION_MS - (now - newestReservation) + 1000,
+  );
+  entry.cleanupTimer = setTimeout(() => {
+    const current = directRoomRoles.get(roomId);
+    if (!current) return;
+    current.cleanupTimer = null;
+    scheduleDirectRoomRolesCleanup(roomId);
+  }, delay);
+}
+
+function getDirectRoomRole(roomId, guestId) {
+  const entry = getDirectRoomEntry(roomId);
 
   const isReturningGuest = entry.participantGuestIds.has(guestId);
   entry.participantGuestIds.add(guestId);
@@ -1099,6 +1177,8 @@ function getDirectRoomRole(roomId, guestId) {
 }
 
 function clearDirectRoomRoles(roomId) {
+  const entry = directRoomRoles.get(roomId);
+  if (entry?.cleanupTimer) clearTimeout(entry.cleanupTimer);
   directRoomRoles.delete(roomId);
 }
 const DIRECT_ROOM_ID_PATTERN = /^[a-f0-9]{16,128}$/i;
@@ -1694,8 +1774,20 @@ io.on("connection", (socket) => {
     const room = directRoomName(roomId);
 
     if (socket.rooms.has(room)) {
-      // Duplicate emit from a re-run effect — just re-signal, don't re-count seats.
-      socket.to(room).emit("direct-peer-joined", { name: guestName });
+      // Either a duplicate emit from a re-run effect, or a Socket.IO
+      // connection-state-recovered socket: the library restores socket.rooms
+      // but NOT our directRoomSockets bookkeeping (cleared in "disconnect"),
+      // and every downstream relay is gated on isSocketInDirectRoom() which
+      // checks it — so repair it here, keep the seat reservation fresh, and
+      // nudge the peer to renegotiate before returning.
+      directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+      const recoveredEntry = getDirectRoomEntry(roomId);
+      if (recoveredEntry.cleanupTimer) {
+        clearTimeout(recoveredEntry.cleanupTimer);
+        recoveredEntry.cleanupTimer = null;
+      }
+      recoveredEntry.seats.set(guestId, Date.now());
+      socket.to(room).emit("direct-peer-joined", { name: guestName, resumedCall: true });
       return;
     }
 
@@ -1738,7 +1830,22 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (uniqueGuestIds.size >= (roomDoc.maxParticipants || 2) && !alreadyInRoom) {
+    const maxParticipants = roomDoc.maxParticipants || 2;
+    const roomEntry = getDirectRoomEntry(roomId);
+    if (roomEntry.cleanupTimer) {
+      clearTimeout(roomEntry.cleanupTimer);
+      roomEntry.cleanupTimer = null;
+    }
+    pruneDirectRoomSeats(roomId, roomEntry);
+
+    // A guest who already holds a seat — connected right now, OR briefly
+    // disconnected and still inside their reconnection window — is always let
+    // back in. A brand-new guest is refused once every seat is taken,
+    // *including* a seat still reserved for a participant who just dropped
+    // and may be reconnecting. (uniqueGuestIds, the live-socket view, still
+    // drives stale-socket eviction and the peer-name lookup above.)
+    const holdsSeat = roomEntry.seats.has(guestId);
+    if (!holdsSeat && roomEntry.seats.size >= maxParticipants) {
       socket.emit("direct-room-error", { code: "full", msg: "This meeting already has two participants." });
       return;
     }
@@ -1752,6 +1859,7 @@ io.on("connection", (socket) => {
 
     socket.join(room);
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+    roomEntry.seats.set(guestId, Date.now());
 
     const now = new Date();
     DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => { });
@@ -1766,13 +1874,23 @@ io.on("connection", (socket) => {
     if (!roomId) return;
     if (!isSocketInDirectRoom(socket, roomId)) return;
 
+    const meta = directRoomSockets.get(socket.id);
     const room = directRoomName(roomId);
     socket.to(room).emit("direct-participant-left");
     socket.leave(room);
     directRoomSockets.delete(socket.id);
 
+    // A deliberate "Leave call" gives up the seat right away — only an
+    // *unintended* drop (disconnect) keeps it reserved. Don't release it if
+    // this guest still has another live socket in the room (e.g. closed one
+    // of two tabs).
+    const entry = directRoomRoles.get(roomId);
+    if (entry && meta?.guestId && !connectedGuestIdsForRoom(roomId).has(meta.guestId)) {
+      entry.seats.delete(meta.guestId);
+    }
+
     const remaining = io.sockets.adapter.rooms.get(room);
-    if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
+    if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
   });
 
   socket.on("direct-video-offer", ({ roomId, offer, offerId } = {}) => {
@@ -1836,6 +1954,18 @@ io.on("connection", (socket) => {
 
     directRoomSockets.delete(socket.id);
 
+    // Start (or restart) this guest's seat-reservation clock from the moment
+    // they drop, so a reconnect within DIRECT_ROOM_SEAT_RESERVATION_MS still
+    // finds their seat held (see the join handler). If they still have
+    // another live socket in the room, they never lost the seat.
+    const roleEntry = directRoomRoles.get(roomId);
+    if (
+      roleEntry?.seats.has(guestId) &&
+      !connectedGuestIdsForRoom(roomId).has(guestId)
+    ) {
+      roleEntry.seats.set(guestId, Date.now());
+    }
+
     setTimeout(() => {
       const sameGuestStillInRoom = Array.from(directRoomSockets.values()).some(
         (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
@@ -1844,7 +1974,7 @@ io.on("connection", (socket) => {
       if (!sameGuestStillInRoom) {
         io.to(room).emit("direct-participant-left");
         const remaining = io.sockets.adapter.rooms.get(room);
-        if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
+        if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
       }
     }, SOCKET_LEAVE_GRACE_MS);
   });

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { usePartner } from "../../context/PartnerContext";
 import "./PartnerLogin.css";
+import logo from "../../assets/logo.png";
 
 function EyeIcon({ open }) {
   return open ? (
@@ -46,9 +47,10 @@ export default function PartnerLogin() {
     <div className="ptl-login-wrapper">
       <div className="ptl-login-card">
         <div className="ptl-login-brand">
-          <div className="ptl-login-brand-mark">H</div>
-          <span className="ptl-login-brand-name">Humancare</span>
-        </div>
+
+<div className="ptl-login-logo">
+<img src={logo} alt="Logo" />
+  </div>        </div>
 
         <h1 className="ptl-login-title">Partner Portal</h1>
         <p className="ptl-login-subtitle">Sign in to submit and track care cases</p>

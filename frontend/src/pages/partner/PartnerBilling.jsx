@@ -53,7 +53,7 @@ export default function PartnerBilling() {
   };
 
   return (
-    <div className="pt-page">
+    <div className="pt-page" style={{ maxWidth: "100%" }}>
       <div className="pt-page-head">
         <div>
           <h1 className="pt-page-title">Billing</h1>
