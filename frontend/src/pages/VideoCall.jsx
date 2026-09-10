@@ -840,6 +840,11 @@ export default function VideoCall() {
   const makingOfferRef = useRef(false);
   const ignoreOfferRef = useRef(false);
   const ignoreOfferResetTimerRef = useRef(null);
+  // Bridges the main effect's createAndSendOffer() to callbacks defined
+  // outside that effect (retryMediaPermissions). Reassigned on every effect
+  // run so it always closes over the current RTCPeerConnection; its own
+  // internal guards make a stale call a safe no-op.
+  const createAndSendOfferRef = useRef(null);
   const settingRemoteAnswerPendingRef = useRef(false);
   // Most recent measured round-trip time (ms) from getStats(), used to widen
   // the offer-answer timeout on high-latency connections. null until the
@@ -1774,6 +1779,7 @@ export default function VideoCall() {
         makingOfferRef.current = false;
       }
     };
+    createAndSendOfferRef.current = createAndSendOffer;
 
     const startConnectionWatchdog = () => {
       clearTimeout(connectionFailTimerRef.current);
@@ -3020,6 +3026,28 @@ export default function VideoCall() {
           answer: pc.localDescription,
           offerId: lastReceivedOfferIdRef.current,
         });
+      } else if (!isDoctor && peerJoinedRef.current && !inCallRef.current) {
+        // Media was denied on the first attempt, so the patient — the only
+        // side that self-initiates an offer — never sent one, and there's no
+        // remote offer waiting to answer. handlePeerJoined's offer nudge only
+        // re-fires on a fresh "peer-joined", which emitOnlineAndJoinRoom()
+        // above skips when this socket is already in the room — so kick the
+        // handshake here too. Short delay mirrors handlePeerJoined so any
+        // in-flight (re)join settles first; pcRef/createAndSendOffer are read
+        // fresh, and createAndSendOffer's own guards (mounted / signalingState
+        // / makingOfferRef / isReadyRef) keep it idempotent against the
+        // handlePeerJoined nudge if that also fires.
+        window.setTimeout(() => {
+          const activePc = pcRef.current;
+          if (!activePc || activePc.signalingState !== "stable") return;
+          if (
+            activePc.connectionState === "connected" ||
+            activePc.iceConnectionState === "connected" ||
+            activePc.iceConnectionState === "completed"
+          )
+            return;
+          void createAndSendOfferRef.current?.({ iceRestart: false });
+        }, 400);
       }
     } catch (err) {
       setCamError(true);
@@ -3036,6 +3064,7 @@ export default function VideoCall() {
     appointmentId,
     attachLocalMediaStream,
     emitOnlineAndJoinRoom,
+    isDoctor,
     logVideoEvent,
     retryingMedia,
   ]);

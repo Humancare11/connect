@@ -151,7 +151,22 @@ const getDirectVideoRoomStatus = async (req, res) => {
       return res.status(200).json({ valid: false, reason: status });
     }
 
-    res.status(200).json({ valid: true, expiresAt: room.expiresAt, maxParticipants: room.maxParticipants });
+    // Best-effort occupancy hint so the pre-join screen can warn "this
+    // meeting looks full" before the guest sets up their devices. Counts live
+    // sockets in the room (not unique guests / reserved seats), so it's
+    // advisory only — the socket join handler remains the real capacity gate.
+    const maxParticipants = room.maxParticipants || 2;
+    const io = req.app.get("io");
+    const occupants =
+      io?.sockets?.adapter?.rooms?.get(`direct_room_${req.params.roomId}`)?.size ?? 0;
+
+    res.status(200).json({
+      valid: true,
+      expiresAt: room.expiresAt,
+      maxParticipants,
+      occupants,
+      full: occupants >= maxParticipants,
+    });
   } catch (error) {
     console.error("getDirectVideoRoomStatus error:", error);
     res.status(500).json({ valid: false, reason: "server_error" });
@@ -177,6 +192,7 @@ const getDirectVideoRoomIceServers = async (req, res) => {
 
     const iceServers = buildStunServers();
     let ttlSeconds = null;
+    let turnAdded = false;
     for (const region of TURN_REGIONS) {
       if (!region.secret) {
         console.warn("[direct-video-room] A TURN region has urls configured but no matching secret — skipping it.");
@@ -191,14 +207,22 @@ const getDirectVideoRoomIceServers = async (req, res) => {
         credential: creds.credential,
         credentialType: "password",
       });
+      turnAdded = true;
       ttlSeconds = ttlSeconds === null ? creds.ttlSeconds : Math.min(ttlSeconds, creds.ttlSeconds);
     }
 
-    if (!TURN_REGIONS.length) {
-      console.warn("[direct-video-room] No TURN region is configured — serving STUN-only ICE config.");
+    if (!turnAdded) {
+      console.warn("[direct-video-room] No usable TURN region — serving STUN-only ICE config. Calls across strict NATs will fail.");
     }
 
-    res.status(200).json({ iceServers, ttlSeconds: ttlSeconds || 0 });
+    // `warning` lets the guest client surface a "relay unavailable" notice
+    // instead of silently spinning on "Connecting…" when strict-NAT traversal
+    // has no chance. STUN-only is still returned so permissive networks work.
+    res.status(200).json({
+      iceServers,
+      ttlSeconds: ttlSeconds || 0,
+      ...(turnAdded ? {} : { warning: "no_turn" }),
+    });
   } catch (error) {
     console.error("getDirectVideoRoomIceServers error:", error);
     res.status(500).json({ msg: "Failed to fetch ICE server configuration." });

@@ -670,26 +670,31 @@ setInterval(sweepRoomActivated, Math.min(ROOM_ACTIVATED_TTL_MS, 60 * 60 * 1000))
 // (ICE candidates are naturally bursty during gathering; SDP offers/answers
 // and chat/telemetry are not) so real users never notice them.
 const chatMessageLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
-const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
+// max: 6. A normal appointment handshake is one SDP per side per second, but
+// recovery paths legitimately burst above that: the patient's offer-answer
+// watchdog does a rollback + re-offer, and the doctor now also sends an
+// ICE-restart offer when the patient explicitly requests one (see
+// VideoCall.jsx handleIceRestartRequest — it no longer returns early for the
+// doctor). A bad reconnect can therefore produce offer + re-offer + answer
+// inside one second. At max: 2 the SDP message that actually completed the
+// handshake was being silently dropped, wedging the call at "connecting".
+// 6 keeps headroom for that burst while still capping well below a flood.
+const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 const telemetryLimiter = makeSocketLimiter({ windowMs: 1000, max: 10 });
 const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
-// max: 6, not 2 like videoSdpLimiter above. That budget works for the
-// appointment flow because only one side (the patient) ever self-initiates
-// an offer there — the doctor only answers, so a normal handshake never
-// sends more than one SDP message per side per second. Direct Video Call
-// guests are symmetric peers: both sides independently create their
-// RTCPeerConnection and add tracks, so an initial "offer glare" (both sides
-// firing onnegotiationneeded at once) is expected, and the polite side's
-// rollback can itself re-trigger onnegotiationneeded, producing a real
-// burst of up to 3 legitimate SDP messages (offer, re-offer, then the
-// answer) within under a second. At max: 2, the answer that actually
-// completes the handshake was being silently dropped by this limiter,
-// leaving the call stuck at "connecting" forever. 6 keeps comfortable
-// headroom for that burst while still capping well below anything a real
-// flood needs.
+// max: 6, matching videoSdpLimiter above. Direct Video Call guests are
+// symmetric peers: both sides independently create their RTCPeerConnection
+// and add tracks, so an initial "offer glare" (both sides firing
+// onnegotiationneeded at once) is expected, and the polite side's rollback
+// can itself re-trigger onnegotiationneeded, producing a real burst of up to
+// 3 legitimate SDP messages (offer, re-offer, then the answer) within under a
+// second. At max: 2, the answer that actually completes the handshake was
+// being silently dropped by this limiter, leaving the call stuck at
+// "connecting" forever. 6 keeps comfortable headroom for that burst while
+// still capping well below anything a real flood needs.
 const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
 const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
@@ -1095,6 +1100,18 @@ const DIRECT_ROOM_SEAT_RESERVATION_MS = Math.max(
   Number(process.env.DIRECT_ROOM_SEAT_RESERVATION_MS || 60000),
 );
 
+// How long the direct-room "disconnect" handler waits before telling the peer
+// someone left. Longer than the appointment flow's SOCKET_LEAVE_GRACE_MS
+// (15s) because a guest-link call has no login to fall back on and the seat
+// is held for DIRECT_ROOM_SEAT_RESERVATION_MS anyway — so a 20-50s mobile
+// blip should reconnect silently instead of flashing "the other participant
+// left" and forcing a from-scratch renegotiation. Capped at the seat
+// reservation so the notice never outlives the seat itself.
+const DIRECT_ROOM_LEAVE_GRACE_MS = Math.min(
+  DIRECT_ROOM_SEAT_RESERVATION_MS,
+  Math.max(5000, Number(process.env.DIRECT_ROOM_LEAVE_GRACE_MS || 30000)),
+);
+
 function getDirectRoomEntry(roomId) {
   let entry = directRoomRoles.get(roomId);
   if (!entry) {
@@ -1207,9 +1224,14 @@ function isSocketInDirectRoom(socket, roomId) {
 // default maxHttpBufferSize (1 MB) is the outer bound; a real offer/answer is
 // a few KB, so this cap is generous while still closing off abuse.
 const MAX_SDP_LENGTH = 100_000;
-// Matches both id shapes DirectVideoCall.jsx's makeOfferId() can produce:
-// a crypto.randomUUID() or an "offer-<ts>-<rand>" fallback.
-const DIRECT_OFFER_ID_PATTERN = /^[A-Za-z0-9-]{1,64}$/;
+// Matches the id shapes makeOfferId() produces in VideoCall.jsx /
+// DirectVideoCall.jsx (a crypto.randomUUID() or an "offer-<ts>-<rand>"
+// fallback). `_` and `.` are also allowed so common id-library alphabets
+// (e.g. nanoid) from any other first-party client pass through untouched —
+// the purpose here is only to reject oversized / structured injection, not
+// to enforce one exact format. Shared by the appointment and direct-room
+// signaling relays.
+const DIRECT_OFFER_ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
 
 function isValidSessionDescription(desc, expectedType) {
   return (
@@ -1620,23 +1642,30 @@ io.on("connection", (socket) => {
   socket.on("video-offer", ({ appointmentId, offer, offerId }) => {
     if (!appointmentId || !offer) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    // Refuse to relay anything that isn't a well-formed offer (malformed /
+    // oversized SDP can only crash or spam the peer). Checked before the rate
+    // limiter so junk payloads don't burn a legitimate participant's budget —
+    // mirrors the direct-room relay.
+    if (!isValidSessionDescription(offer, "offer")) return;
     if (!videoSdpLimiter.allow(socket.id)) return;
 
-    // offerId is opaque to the server — just relayed so the two peers can
-    // correlate an answer back to the offer it's meant for (see VideoCall.jsx).
+    // offerId is opaque to the server — sanitized (any non-plausible value
+    // becomes undefined) and relayed so the two peers can correlate an answer
+    // back to the offer it's meant for (see VideoCall.jsx handleAnswer).
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-offer", { offer, offerId });
+      .emit("video-offer", { offer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("video-answer", ({ appointmentId, answer, offerId }) => {
     if (!appointmentId || !answer) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!isValidSessionDescription(answer, "answer")) return;
     if (!videoSdpLimiter.allow(socket.id)) return;
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-answer", { answer, offerId });
+      .emit("video-answer", { answer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
@@ -1756,8 +1785,17 @@ io.on("connection", (socket) => {
     }
 
     if (roomDoc.status === "active" && roomDoc.expiresAt && roomDoc.expiresAt.getTime() <= Date.now()) {
-      roomDoc.status = "expired";
-      await roomDoc.save().catch(() => { });
+      // A call already under way is allowed to finish even if the room ticks
+      // past its expiry mid-consult — but only for a guest reconnecting into
+      // a room that's still tracked as live (holds a reserved seat). A
+      // brand-new join of an expired room is still refused, and the stale
+      // rooms whose in-memory entry has already been cleaned up fall through
+      // to expiry normally.
+      const guestReconnecting = !!directRoomRoles.get(roomId)?.seats.has(guestId);
+      if (!guestReconnecting) {
+        roomDoc.status = "expired";
+        await roomDoc.save().catch(() => { });
+      }
     }
 
     if (roomDoc.status !== "active") {
@@ -1861,6 +1899,19 @@ io.on("connection", (socket) => {
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
     roomEntry.seats.set(guestId, Date.now());
 
+    // Belt-and-braces over-capacity guard. Today nothing awaits between the
+    // seat check above and here, so that check is authoritative — but an
+    // await ever slipped into that span would open a TOCTOU window where two
+    // brand-new guests both pass the check and both claim a seat, breaking
+    // WebRTC for everyone in a now-3-way room. Back the loser out cleanly.
+    if (!holdsSeat && roomEntry.seats.size > maxParticipants) {
+      roomEntry.seats.delete(guestId);
+      socket.leave(room);
+      directRoomSockets.delete(socket.id);
+      socket.emit("direct-room-error", { code: "full", msg: "This meeting already has two participants." });
+      return;
+    }
+
     const now = new Date();
     DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => { });
     DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => { });
@@ -1896,7 +1947,13 @@ io.on("connection", (socket) => {
   socket.on("direct-video-offer", ({ roomId, offer, offerId } = {}) => {
     if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
     if (!isValidSessionDescription(offer, "offer")) return;
-    if (!directSdpLimiter.allow(socket.id)) return;
+    if (!directSdpLimiter.allow(socket.id)) {
+      // A dropped offer/answer wedges the peer in "have-local-offer" until
+      // its ~8s watchdog — log it so a real glare-storm is visible rather
+      // than silently degrading the call.
+      console.warn(`[direct-room] SDP rate limit hit (${socket.id}) — offer dropped`);
+      return;
+    }
     // offerId is opaque to the server — relayed unchanged so the two peers can
     // correlate an answer back to the offer it belongs to. DirectVideoCall.jsx
     // rejects any answer whose offerId doesn't match its pending offer, so
@@ -1909,7 +1966,10 @@ io.on("connection", (socket) => {
   socket.on("direct-video-answer", ({ roomId, answer, offerId } = {}) => {
     if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
     if (!isValidSessionDescription(answer, "answer")) return;
-    if (!directSdpLimiter.allow(socket.id)) return;
+    if (!directSdpLimiter.allow(socket.id)) {
+      console.warn(`[direct-room] SDP rate limit hit (${socket.id}) — answer dropped`);
+      return;
+    }
     socket
       .to(directRoomName(roomId))
       .emit("direct-video-answer", { answer, offerId: sanitizeOfferId(offerId) });
@@ -1976,7 +2036,7 @@ io.on("connection", (socket) => {
         const remaining = io.sockets.adapter.rooms.get(room);
         if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
       }
-    }, SOCKET_LEAVE_GRACE_MS);
+    }, DIRECT_ROOM_LEAVE_GRACE_MS);
   });
 
 }); // end io.on("connection")

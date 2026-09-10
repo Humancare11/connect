@@ -28,7 +28,7 @@ const isSupportedIceUrl = (url) =>
 const sanitizeIceCredential = (value) =>
   typeof value === "string" ? value.trim() : value;
 
-const sanitizeIceServers = (iceServers) => {
+export const sanitizeIceServers = (iceServers) => {
   if (!Array.isArray(iceServers)) return [];
 
   return iceServers.reduce((servers, server) => {
@@ -57,7 +57,7 @@ const sanitizeIceServers = (iceServers) => {
   }, []);
 };
 
-const validateIceServers = (iceServers) => {
+export const validateIceServers = (iceServers) => {
   if (!Array.isArray(iceServers) || iceServers.length === 0) {
     return "No ICE servers are configured.";
   }
@@ -78,7 +78,7 @@ const validateIceServers = (iceServers) => {
   return "";
 };
 
-const hasTurnServer = (iceServers) =>
+export const hasTurnServer = (iceServers) =>
   Array.isArray(iceServers) &&
   iceServers.some((server) => normalizeIceUrls(server?.urls).some(isTurnUrl));
 
