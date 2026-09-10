@@ -515,7 +515,11 @@ const getConsultationMediaStream = async () => {
     );
     try {
       return await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
         video: true,
       });
     } catch (secondErr) {
@@ -1001,6 +1005,11 @@ export default function VideoCall() {
   // would miss them.
   const setMainVideoRef = useCallback((node) => {
     mainVideoRef.current = node;
+    // Enforce muting imperatively as well as via the JSX `muted` prop — React
+    // applies `muted` as a property post-mount, and the belt-and-braces set
+    // here closes any window where a freshly-attached node could play the
+    // local stream's audio. Remote audio plays only through remoteAudioRef.
+    if (node) node.muted = true;
     mainVideoOrientationCleanupRef.current?.();
     mainVideoOrientationCleanupRef.current = node
       ? watchVideoOrientation(node, setIsMainVideoPortrait)
@@ -1009,6 +1018,7 @@ export default function VideoCall() {
 
   const setPipVideoRef = useCallback((node) => {
     pipVideoRef.current = node;
+    if (node) node.muted = true;
     pipVideoOrientationCleanupRef.current?.();
     pipVideoOrientationCleanupRef.current = node
       ? watchVideoOrientation(node, setIsPipVideoPortrait)
@@ -3719,12 +3729,21 @@ export default function VideoCall() {
               visibility. It must never live inside a conditionally-rendered
               block: the main video is always muted (audio plays only
               through this element), so unmounting it would silently cut
-              the remote party's audio while self-view is minimized. */}
+              the remote party's audio while self-view is minimized. Kept
+              rendered-but-invisible rather than display:none — some engines
+              (older mobile Safari) won't start playback on a display:none
+              media element. Mirrors DirectVideoCall.jsx. */}
           <audio
             ref={remoteAudioRef}
             autoPlay
             playsInline
-            style={{ display: "none" }}
+            style={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              opacity: 0,
+              pointerEvents: "none",
+            }}
           />
 
           {/* Peer joined toast */}

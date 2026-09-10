@@ -70,7 +70,14 @@ async function getCallMediaStream() {
     return await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
   } catch {
     try {
-      return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: true,
+      });
     } catch (secondErr) {
       const partialStream = new MediaStream();
       let lastErr = secondErr;
@@ -581,7 +588,12 @@ export default function DirectVideoCall() {
         }
         localStreamRef.current = stream;
         if (!cancelled) {
-          if (previewVideoRef.current) previewVideoRef.current.srcObject = stream;
+          if (previewVideoRef.current) {
+            // Belt-and-braces over the JSX `muted` prop — the preview shows
+            // the local stream, so it must never route mic audio to speakers.
+            previewVideoRef.current.muted = true;
+            previewVideoRef.current.srcObject = stream;
+          }
           setPreviewMicOn(stream.getAudioTracks().length > 0);
           setPreviewCamOn(stream.getVideoTracks().length > 0);
         }
@@ -712,6 +724,11 @@ export default function DirectVideoCall() {
 
   const setMainVideoRef = useCallback((node) => {
     mainVideoRef.current = node;
+    // Enforce muting imperatively as well as via the JSX `muted` prop — React
+    // applies `muted` as a property post-mount, and the belt-and-braces set
+    // here closes any window where a freshly-attached node could play the
+    // local stream's audio. Remote audio plays only through remoteAudioRef.
+    if (node) node.muted = true;
     mainVideoOrientationCleanupRef.current?.();
     mainVideoOrientationCleanupRef.current = node
       ? watchVideoOrientation(node, setIsMainVideoPortrait)
@@ -720,6 +737,7 @@ export default function DirectVideoCall() {
 
   const setPipVideoRef = useCallback((node) => {
     pipVideoRef.current = node;
+    if (node) node.muted = true;
     pipVideoOrientationCleanupRef.current?.();
     pipVideoOrientationCleanupRef.current = node
       ? watchVideoOrientation(node, setIsPipVideoPortrait)
